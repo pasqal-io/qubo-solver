@@ -1,0 +1,193 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "qubo-solver"
+description = "A Quadratic Unconstrained Binary Optimization (QUBO) solver library using quantum and classical approaches."
+readme = "README.md"
+version = "0.1.0"
+requires-python = ">=3.10,<3.13"
+license = { text = "MIT-derived" }
+keywords = ["quantum"]
+authors = [
+  { name = "Manu Lahariya", email = "manu.lahariya@pasqal.com" },
+  { name = "Yassine Naghmouchi", email = "yassine.naghmouchi@pasqal.com" },
+  { name = "Quentin Ma", email = "quentin.ma@pasqal.com" },
+  { name = "Monique Garzillo", email = "monique.garzillo@pasqal.com" },
+  { name = "Charles Moussa", email = "charles.moussa@pasqal.com" },
+  { name = "Daniele Cucurachi", email = "daniele.cucurachi@pasqal.com" },
+]
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+# always specify a version for each package
+# to maintain consistency
+dependencies = [
+  "numpy",
+  "torch",
+  "pulser",
+  "pasqal-cloud",
+  "emu-mps",
+  "emu-sv",
+  "scikit-learn",
+  "pandas",
+  "seaborn",
+  "scikit-optimize",
+  "dimod",
+  "dwave-preprocessing",
+  "dwave-neal",
+  "cplex",
+  "pydantic>=2",
+  "qoolqit==0.1.1",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+allow-ambiguous-features = true
+
+[project.optional-dependencies]
+extras = [
+  "jupyter",
+  "tqdm",
+]
+
+[project.urls]
+#Documentation = "https://pqs.pages.pasqal.com/maximum-independent-set/"
+Issues = "https://github.com/pasqal-io/maximum-independent-set/issues"
+Source = "https://github.com/pasqal-io/maximum-independent-set"
+
+[tool.hatch.envs.default]
+features = ["extras"]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+  "pytest-xdist",
+  "nbconvert",
+  "ipykernel",
+  "pre-commit",
+  "black",
+  "ruff",
+  "dvc-gs",
+  "google-cloud-storage",
+  "requests-mock",
+]
+
+
+[tool.hatch.envs.default.scripts]
+test = "pytest -vvv --cov-report=term-missing --cov-config=pyproject.toml --cov=qubosolver --cov=tests --ignore=./tests/test_examples.py --ignore=./tests/test_notebooks.py {args}"
+test-notebooks = "pytest -vvv ./tests/test_notebooks.py {args}"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = """-vvv --cov-report=xml --cov-config=pyproject.toml --cov=mis --cov=tests --markdown-docs"""
+xfail_strict = true
+filterwarnings = [
+  "ignore:Call to deprecated create function FieldDescriptor",
+  "ignore:Call to deprecated create function Descriptor",
+  "ignore:Call to deprecated create function EnumDescriptor",
+  "ignore:Call to deprecated create function EnumValueDescriptor",
+  "ignore:Call to deprecated create function FileDescriptor",
+  "ignore:Call to deprecated create function OneofDescriptor",
+  "ignore:distutils Version classes are deprecated.",
+]
+asyncio_mode="auto"
+asyncio_default_fixture_loop_scope="function"
+
+[tool.hatch.envs.docs]
+dependencies = [
+  "mkdocs",
+  "mkdocs-material",
+  "mkdocstrings",
+  "mkdocstrings-python",
+  "mkdocs-section-index",
+  "mkdocs-exclude",
+  "mkdocs-jupyter",
+  "markdown-exec",
+  "mike",
+]
+
+[tool.hatch.envs.docs.scripts]
+build = "mkdocs build --clean --strict {args}"
+serve = "mkdocs serve --dev-addr localhost:8000"
+test = "mkdocs build --clean --strict"
+
+[[tool.hatch.envs.test.matrix]]
+python = ["310", "311", "312"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/.gitignore",
+    "/.pre-commit-config.yml",
+    "/tests",
+    "/docs",
+    "/examples",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["qubosolver"]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+# uncomment to omit any file from the
+# coverage. Regexps can be used
+# to select all files from a folder
+#omit = [
+#  "template_python/to_omit.py",
+#]
+
+[tool.coverage.report]
+exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
+
+[tool.ruff]
+line-length = 100
+
+[lint]
+extend-ignore = ["F841"]
+select = ["E", "F", "I", "Q"]
+
+[lint.isort]
+required-imports = ["from __future__ import annotations"]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[lint.mccabe]
+max-complexity = 15
+
+[lint.flake8-quotes]
+docstring-quotes = "double"
+
+[tool.black]
+line-length = 100
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+no_implicit_optional = false
+ignore_missing_imports = true
