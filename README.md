@@ -9,14 +9,6 @@ Users setting their first steps into quantum computing will learn how to impleme
 
 ## Development tools
 
-The library uses the following tools:
-
-* [hatch](https://hatch.pypa.io/latest/) for managing virtual environment and dependencies
-* [pytest](https://docs.pytest.org/en/7.2.x/contents.html) for building the unit tests suite
-* [black](https://black.readthedocs.io/en/stable/), [isort](https://pycqa.github.io/isort/) and [flake8](https://flake8.pycqa.org/en/latest/) for code formatting and linting
-* [mypy](https://mypy.readthedocs.io/en/stable/) for static type checking
-* [pre-commit](https://pre-commit.com/) for applying linting and formatting automatically before committing new code
-
 ## Installation
 
 ### Install as a dependency
@@ -116,29 +108,15 @@ solution = classical_solver.solve()
 ```
 
 
-## Document
+## Documentation
 
-You can improve the documentation of the package by editing this file for the landing page or adding new
-markdown or Jupyter notebooks to the `docs/` folder in the root of the project. In order to modify the
-table of contents, edit the `mkdocs.yml` file in the root of the project.
+- [Documentation](https://pasqal-io.github.io/qubo-solver/latest/)
+- [Notebooks Tutorials](https://pasqal-io.github.io/qubo-solver/latest/tutorial/01-dataset-generation-and-loading/).
+- [Full API documentation](https://pasqal-io.github.io/qubo-solver/latest/api/qubo_instance/).
 
-In order to build and serve the documentation locally, you can use `hatch` with the right environment:
-
-```bash
-python -m hatch -v run docs:build
-python -m hatch -v run docs:serve
-```
-
-If you don't want to use `hatch`, just check into your favorite virtual environment and
-execute the following commands:
-
-```bash
-python -m pip install -r docs/requirements.txt
-mkdocs build
-mkdocs serve
-```
 
 ## Getting in touch
 
 - [Pasqal Community Portal](https://community.pasqal.com/) (forums, chat, tutorials, examples, code library).
+- [Github repository](https://github.com/pasqal-io/qubo-solver) (source code, issue tracker).
 - [Professional Support](https://www.pasqal.com/contact-us/) (if you need tech support, custom licenses, a variant of this library optimized for your workload, your own QPU, remote access to a QPU, ...)
