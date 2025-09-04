@@ -14,8 +14,8 @@ authors = [
   { name = "Manu Lahariya", email = "manu.lahariya@pasqal.com" },
   { name = "Yassine Naghmouchi", email = "yassine.naghmouchi@pasqal.com" },
   { name = "Quentin Ma", email = "quentin.ma@pasqal.com" },
+  { name = "Charles Moussa", email = "c.moussa@pasqal.com" },
   { name = "Monique Garzillo", email = "monique.garzillo@pasqal.com" },
-  { name = "Charles Moussa", email = "charles.moussa@pasqal.com" },
   { name = "Daniele Cucurachi", email = "daniele.cucurachi@pasqal.com" },
 ]
 
@@ -61,9 +61,9 @@ extras = [
 ]
 
 [project.urls]
-#Documentation = "https://pqs.pages.pasqal.com/maximum-independent-set/"
-Issues = "https://github.com/pasqal-io/maximum-independent-set/issues"
-Source = "https://github.com/pasqal-io/maximum-independent-set"
+Documentation = "https://pasqal-io.github.io/qubo-solver/"
+Issues = "https://github.com/pasqal-io/qubo-solver/issues"
+Source = "https://github.com/pasqal-io/qubo-solver"
 
 [tool.hatch.envs.default]
 features = ["extras"]
@@ -76,19 +76,17 @@ dependencies = [
   "pre-commit",
   "black",
   "ruff",
-  "dvc-gs",
-  "google-cloud-storage",
   "requests-mock",
 ]
 
 
 [tool.hatch.envs.default.scripts]
-test = "pytest -vvv --cov-report=term-missing --cov-config=pyproject.toml --cov=qubosolver --cov=tests --ignore=./tests/test_examples.py --ignore=./tests/test_notebooks.py {args}"
-test-notebooks = "pytest -vvv ./tests/test_notebooks.py {args}"
+test = "pytest -n auto -vvv --cov-report=term-missing --cov-config=pyproject.toml --cov=qubosolver --cov=tests --ignore=./tests/test_examples.py --ignore=./tests/test_notebooks.py {args}"
+test-notebooks = "pytest -n auto -vvv ./tests/test_notebooks.py {args}"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = """-vvv --cov-report=xml --cov-config=pyproject.toml --cov=mis --cov=tests --markdown-docs"""
+addopts = """-vvv --cov-report=xml --cov-config=pyproject.toml --cov=mis --cov=tests"""
 xfail_strict = true
 filterwarnings = [
   "ignore:Call to deprecated create function FieldDescriptor",
