@@ -14,7 +14,7 @@ from qubosolver.qubo_types import SolutionStatusType
 
 
 def bit_flip_local_search(
-    qubo_func: Callable[[np.ndarray], float], s: np.ndarray
+    qubo_func: Callable[[np.ndarray], float], s: np.ndarray, shuffle: bool = True
 ) -> tuple[np.ndarray, float]:
     """
     Performs a local search by flipping bits to improve the objective value.
@@ -22,24 +22,33 @@ def bit_flip_local_search(
     Args:
         qubo_func: Function that computes the objective value for a solution array.
         s (np.ndarray): Binary array representing a candidate solution.
+        shuffle (bool, optional): Shuffle to diversify
 
     Returns:
-        Tuple[np.ndarray, float]: The improved solution and its objective value.
+        tuple[np.ndarray, float]: The improved solution and its objective value.
     """
     s_current = s.copy()
     current_objective = qubo_func(s_current)
-    improved = True
-    while improved:
-        improved = False
-        for i in range(len(s_current)):
+    while True:
+        best_idx = None
+        best_obj = current_objective
+        indices = list(range(len(s_current)))
+        if shuffle:
+            np.random.shuffle(indices)  # option to diversify
+        # Evaluate all possible flips, keep best
+        for i in indices:
             s_new = s_current.copy()
             s_new[i] = 1 - s_new[i]
             new_objective = qubo_func(s_new)
-            if new_objective < current_objective:
-                s_current = s_new
-                current_objective = new_objective
-                improved = True
-                break
+            if new_objective < best_obj:
+                best_obj = new_objective
+                best_idx = i
+        # If no improvements, stop
+        if best_idx is None:
+            break
+        # Apply best flip
+        s_current[best_idx] = 1 - s_current[best_idx]
+        current_objective = best_obj
     return s_current, current_objective
 
 
