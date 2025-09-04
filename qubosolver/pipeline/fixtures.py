@@ -67,12 +67,8 @@ def hansen_fixing(qubo: QUBOInstance) -> Dict[int, int]:
     for i in range(size):
         ci = qubo.coefficients[i, i].item()  # Diagonal element
 
-        q_minus = sum(
-            min(0, qubo.coefficients[i, j].item()) for j in range(size) if j != i
-        )
-        q_plus = sum(
-            max(0, qubo.coefficients[i, j].item()) for j in range(size) if j != i
-        )
+        q_minus = sum(min(0, qubo.coefficients[i, j].item()) for j in range(size) if j != i)
+        q_plus = sum(max(0, qubo.coefficients[i, j].item()) for j in range(size) if j != i)
 
         if ci + q_minus * 2 >= -epsilon:
             fixed_dict[i] = 0
@@ -105,9 +101,7 @@ def dwave_roof_duality_fixing(qubo_inst: QUBOInstance) -> Dict[int, int]:
     _, raw_fixed = roof_duality(bqm, strict=True)
 
     # Reconstruire un Dict[int, int] pour satisfaire MyPy
-    fixed_variables: Dict[int, int] = {
-        int(var): int(val) for var, val in raw_fixed.items()
-    }
+    fixed_variables: Dict[int, int] = {int(var): int(val) for var, val in raw_fixed.items()}
     return fixed_variables
 
 
@@ -156,10 +150,7 @@ class Fixtures:
         """
 
         # Check if postprocessing is enabled via the configuration.
-        if (
-            not hasattr(self.config, "do_postprocessing")
-            or not self.config.do_postprocessing
-        ):
+        if not hasattr(self.config, "do_postprocessing") or not self.config.do_postprocessing:
             return self.instance
 
         # Apply every rules until exhaustion
@@ -182,10 +173,7 @@ class Fixtures:
             QUBOSolution: The updated solution with improved bitstrings and costs.
         """
 
-        if (
-            not hasattr(self.config, "do_postprocessing")
-            or not self.config.do_postprocessing
-        ):
+        if not hasattr(self.config, "do_postprocessing") or not self.config.do_postprocessing:
             return solution
 
         # If there are no bitstrings, return the solution unchanged.
@@ -210,9 +198,7 @@ class Fixtures:
             improved_costs.append(new_cost)
 
         # Create new tensors for the improved solutions and their costs.
-        new_bitstrings_tensor = torch.tensor(
-            np.array(improved_bitstrings), dtype=torch.float32
-        )
+        new_bitstrings_tensor = torch.tensor(np.array(improved_bitstrings), dtype=torch.float32)
         new_costs_tensor = torch.tensor(improved_costs, dtype=torch.float32)
 
         # Update the solution object.
@@ -263,9 +249,7 @@ class Fixtures:
         self.reduced_qubo.coefficients = Q
         self.reduced_qubo.update_metrics()
 
-    def apply_rule(
-        self, fixation_rule: Callable[[QUBOInstance], Dict[int, int]]
-    ) -> int:
+    def apply_rule(self, fixation_rule: Callable[[QUBOInstance], Dict[int, int]]) -> int:
         """
         Applies a given variable fixation rule to the reduced QUBO instance.
 
@@ -323,14 +307,11 @@ class Fixtures:
             return bitstring
 
         should_restore = not self.config.use_quantum or (
-            self.instance.size is not None
-            and len(bitstring_list[0]) < self.instance.size
+            self.instance.size is not None and len(bitstring_list[0]) < self.instance.size
         )
 
         if should_restore:
-            bitstring_list = [
-                reinsert_fixed_variables(bitstring) for bitstring in bitstring_list
-            ]
+            bitstring_list = [reinsert_fixed_variables(bitstring) for bitstring in bitstring_list]
 
         bitstrings = torch.tensor(bitstring_list, dtype=torch.float32)
 

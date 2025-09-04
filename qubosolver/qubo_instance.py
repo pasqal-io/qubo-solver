@@ -117,12 +117,8 @@ class QUBOInstance:
         if self.size and max_index >= self.size:
             self._expand_size(max_index + 1)
 
-        indices = torch.tensor(
-            list(new_coefficients.keys()), dtype=torch.long, device=self.device
-        )
-        values = torch.tensor(
-            list(new_coefficients.values()), dtype=self.dtype, device=self.device
-        )
+        indices = torch.tensor(list(new_coefficients.keys()), dtype=torch.long, device=self.device)
+        values = torch.tensor(list(new_coefficients.values()), dtype=self.dtype, device=self.device)
         self._coefficients[indices[:, 0], indices[:, 1]] = values  # type: ignore[index]
         off_diagonal_mask = indices[:, 0] != indices[:, 1]
         symmetric_indices = indices[off_diagonal_mask]
@@ -173,9 +169,7 @@ class QUBOInstance:
         Raises:
             ValueError: If the solution size does not match the QUBO size.
         """
-        solution_tensor = convert_to_tensor(
-            solution, device=self.device, dtype=self.dtype
-        )
+        solution_tensor = convert_to_tensor(solution, device=self.device, dtype=self.dtype)
         if self._coefficients is None or solution_tensor.size(0) != self.size:
             raise ValueError("Solution size does not match the QUBO problem size.")
         cost = torch.matmul(

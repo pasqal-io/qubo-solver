@@ -118,13 +118,9 @@ def test_greedy_max_radial_distance_constraint_with_extra_traps(
         solver = QuboSolver(qubo_instance_for_embedding, greedy_config)
         geometry = solver.embedding()
 
-        assert len(geometry.register.qubits) == len(
-            expected_greedy_positions[scenario_idx]
-        )
+        assert len(geometry.register.qubits) == len(expected_greedy_positions[scenario_idx])
 
         for qubit_id, coordinate in enumerate(geometry.register.qubits.values()):
-            x, y = (
-                coordinate.as_tensor().clone().detach().to(dtype=torch.float16).tolist()
-            )
+            x, y = coordinate.as_tensor().clone().detach().to(dtype=torch.float16).tolist()
             x_, y_ = expected_greedy_positions[scenario_idx][qubit_id]
             assert (x == x_) and (y == y_)

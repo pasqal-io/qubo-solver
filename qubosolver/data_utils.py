@@ -16,9 +16,7 @@ def convert_to_tensor(
 
 
 @convert_to_tensor.register
-def from_dict(
-    data: dict, device: str = "cpu", dtype: torch.dtype = torch.float32
-) -> torch.Tensor:
+def from_dict(data: dict, device: str = "cpu", dtype: torch.dtype = torch.float32) -> torch.Tensor:
     if all(isinstance(k, int) and isinstance(v, (int, float)) for k, v in data.items()):
         size = max(data.keys()) + 1
         tensor = torch.zeros(size, dtype=dtype, device=device)
@@ -48,9 +46,7 @@ def from_dict(
 
 
 @convert_to_tensor.register
-def from_list(
-    data: list, device: str = "cpu", dtype: torch.dtype = torch.float32
-) -> torch.Tensor:
+def from_list(data: list, device: str = "cpu", dtype: torch.dtype = torch.float32) -> torch.Tensor:
     array = np.asarray(data, dtype=float)
     return torch.tensor(array, dtype=dtype, device=device)
 
@@ -103,9 +99,7 @@ def generate_symmetric_mask(
         x, y = 1, 0
     else:
         x = possible_x[
-            torch.randint(
-                0, len(possible_x), (1,), device=device, generator=generator
-            ).item()
+            torch.randint(0, len(possible_x), (1,), device=device, generator=generator).item()
         ]
         y = (target - x) // 2
 
@@ -119,9 +113,7 @@ def generate_symmetric_mask(
         device=device,
     )
     if upper_indices.size(0) > 0 and y > 0:
-        perm = torch.randperm(
-            upper_indices.size(0), device=device, generator=generator
-        )[:y]
+        perm = torch.randperm(upper_indices.size(0), device=device, generator=generator)[:y]
         chosen_upper = upper_indices[perm]
         for i, j in chosen_upper.tolist():
             mask[i, j] = True

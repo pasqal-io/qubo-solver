@@ -42,9 +42,7 @@ class BaseSolver(ABC):
             self.config = config
 
         if instance.size:
-            self.config.embedding.traps = max(
-                self.config.embedding.traps, instance.size
-            )
+            self.config.embedding.traps = max(self.config.embedding.traps, instance.size)
 
         self.backend = get_backend(self.config.backend_config)
 

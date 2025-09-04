@@ -84,7 +84,7 @@ For the classical solver, its configuration can be set via the `ClassicalConfig`
 
 ### Pre-Post processing parameters
 
-We can also apply preprocessing of the QUBO instance (to reduce it to another smaller instance) or postprocessing the solution after solving. 
+We can also apply preprocessing of the QUBO instance (to reduce it to another smaller instance) or postprocessing the solution after solving.
 
 | Field         | Type          | Description |
 |---------------|---------------|-------------|

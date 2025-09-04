@@ -39,9 +39,7 @@ class Greedy:
     # ----------------------------
     # Layout utilities
     # ----------------------------
-    def get_predefined_coordinates(
-        self, params: dict
-    ) -> tuple[RegisterLayout, torch.Tensor]:
+    def get_predefined_coordinates(self, params: dict) -> tuple[RegisterLayout, torch.Tensor]:
         """
         Build the initial Pulser layout and return its coordinates.
 
@@ -55,9 +53,7 @@ class Greedy:
         spacing = params["spacing"]
 
         # default layout: TRIANGULAR
-        layout: RegisterLayout = LayoutType.TRIANGULAR.value(
-            n_traps=n_traps, spacing=spacing
-        )
+        layout: RegisterLayout = LayoutType.TRIANGULAR.value(n_traps=n_traps, spacing=spacing)
 
         # accept both enum and string "square"
         if type_layout == LayoutType.SQUARE or (
@@ -225,9 +221,7 @@ class Greedy:
                     {
                         "step": step_id,
                         "picked_node": int(v),
-                        "picked_trap": int(
-                            self.MAPPING_COORDS_POSITIONS.get(init_coord, -1)
-                        ),
+                        "picked_trap": int(self.MAPPING_COORDS_POSITIONS.get(init_coord, -1)),
                         "placed_nodes": list(positioned),
                         "used_traps": list(used_traps),
                         "inc_mismatch": 0.0,
@@ -248,9 +242,7 @@ class Greedy:
             u = self.get_best(Q, positioned, copy.deepcopy(vertices))
 
             # If visualization is enabled, ask for candidates too
-            want_candidates = bool(
-                params.get("draw_steps", False) or (on_step is not None)
-            )
+            want_candidates = bool(params.get("draw_steps", False) or (on_step is not None))
             if want_candidates:
                 res4 = self.optimize_position(
                     Z=Z,
@@ -301,9 +293,7 @@ class Greedy:
                             {
                                 "step": step_id,
                                 "picked_node": int(u),
-                                "picked_trap": int(
-                                    self.MAPPING_COORDS_POSITIONS[u_coordinates]
-                                ),
+                                "picked_trap": int(self.MAPPING_COORDS_POSITIONS[u_coordinates]),
                                 "placed_nodes": list(positioned),
                                 "used_traps": list(used_traps),
                                 "inc_mismatch": 0.0,
@@ -342,9 +332,7 @@ class Greedy:
                         {
                             "step": step_id,
                             "picked_node": int(u),
-                            "picked_trap": int(
-                                self.MAPPING_COORDS_POSITIONS[u_coordinates]
-                            ),
+                            "picked_trap": int(self.MAPPING_COORDS_POSITIONS[u_coordinates]),
                             "placed_nodes": list(positioned),
                             "used_traps": list(used_traps),
                             "inc_mismatch": float(inc_val),
@@ -488,18 +476,10 @@ class Greedy:
             fontweight="bold",
         )
 
-        val_step = ax_info.text(
-            value_x, y0 - 0 * dy, "", ha="left", va="center", fontsize=11
-        )
-        val_last = ax_info.text(
-            value_x, y0 - 1 * dy, "", ha="left", va="center", fontsize=11
-        )
-        val_inc = ax_info.text(
-            value_x, y0 - 2 * dy, "", ha="left", va="center", fontsize=11
-        )
-        val_total = ax_info.text(
-            value_x, y0 - 3 * dy, "", ha="left", va="center", fontsize=11
-        )
+        val_step = ax_info.text(value_x, y0 - 0 * dy, "", ha="left", va="center", fontsize=11)
+        val_last = ax_info.text(value_x, y0 - 1 * dy, "", ha="left", va="center", fontsize=11)
+        val_inc = ax_info.text(value_x, y0 - 2 * dy, "", ha="left", va="center", fontsize=11)
+        val_total = ax_info.text(value_x, y0 - 3 * dy, "", ha="left", va="center", fontsize=11)
 
         # Vertical list of candidates (avoid overlap)
         val_cand = ax_info.text(
@@ -537,11 +517,7 @@ class Greedy:
                 placed_scatter.set_offsets(np.array(pos))
                 # (re)create labels above points
                 for q_idx, trap_idx in trap_of.items():
-                    if (
-                        trap_idx is None
-                        or trap_idx < 0
-                        or trap_idx >= len(all_coords_np)
-                    ):
+                    if trap_idx is None or trap_idx < 0 or trap_idx >= len(all_coords_np):
                         continue
                     x, y = all_coords_np[trap_idx]
                     labels.append(
@@ -569,11 +545,7 @@ class Greedy:
 
             # Vertical list of top candidates
             top = st.get("per_trap_candidates", [])[:top_k]
-            bullets = (
-                "\n".join([f"• trap {p}  ({inc:.3f})" for p, inc in top])
-                if top
-                else "—"
-            )
+            bullets = "\n".join([f"• trap {p}  ({inc:.3f})" for p, inc in top]) if top else "—"
             val_cand.set_text(bullets)
 
             return (
@@ -682,12 +654,8 @@ class Greedy:
         results: dict = {}
 
         # Decide instrumentation/animation from params only
-        anim_flag = bool(
-            params.get("animation", False) or params.get("draw_steps", False)
-        )
-        instrument = bool(
-            params.get("draw_steps", False) or on_step is not None or anim_flag
-        )
+        anim_flag = bool(params.get("animation", False) or params.get("draw_steps", False))
+        instrument = bool(params.get("draw_steps", False) or on_step is not None or anim_flag)
 
         frames: List[Dict[str, Any]] = []
 

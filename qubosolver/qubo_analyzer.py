@@ -117,9 +117,7 @@ class QUBOAnalyzer:
         bit_lists = [[int(x) for x in bitstr] for bitstr in bitstring_list]
         return torch.tensor(bit_lists, dtype=torch.int)
 
-    def _solution_to_dataframe(
-        self, solution: QUBOSolution, solution_label: str
-    ) -> pd.DataFrame:
+    def _solution_to_dataframe(self, solution: QUBOSolution, solution_label: str) -> pd.DataFrame:
         """
         Converts a single QUBOSolution into a pandas DataFrame.
         For better readability, each bitstring is converted to a string representation.
@@ -203,13 +201,9 @@ class QUBOAnalyzer:
 
         # Validate target labels
         if len(target_labels) != 2:
-            raise ValueError(
-                "Exactly two target labels must be provided for comparison."
-            )
+            raise ValueError("Exactly two target labels must be provided for comparison.")
         if not all(label in self.labels for label in target_labels):
-            raise ValueError(
-                "All target labels must be present in the QUBOAnalyzer's labels."
-            )
+            raise ValueError("All target labels must be present in the QUBOAnalyzer's labels.")
 
         # Extract bitstrings for each target label
         bs_list1 = self.df[self.df["labels"] == target_labels[0]]["bitstrings"].tolist()
@@ -261,9 +255,7 @@ class QUBOAnalyzer:
             raise ValueError("No probabilities available in the DataFrame.")
         return df[df[_PROBS] > min_probability]
 
-    def filter_by_cost(
-        self, max_cost: float, df: pd.DataFrame | None = None
-    ) -> pd.DataFrame:
+    def filter_by_cost(self, max_cost: float, df: pd.DataFrame | None = None) -> pd.DataFrame:
         """
         Returns a DataFrame limited to bitstrings whose cost
         is smaller than the provided threshold.
@@ -334,16 +326,12 @@ class QUBOAnalyzer:
             raise ValueError("top_percent must be a float between 0 and 1.")
 
         if order not in ("ascending", "descending"):
-            raise ValueError(
-                "The keep parameter must be either 'ascending' or 'descending'."
-            )
+            raise ValueError("The keep parameter must be either 'ascending' or 'descending'.")
 
         filtered_list = []
         for label, group in df.groupby(_LABELS):
             # Sort the group based on the specified column using the desired order.
-            sorted_group = group.sort_values(
-                by=column, ascending=(order == "ascending")
-            )
+            sorted_group = group.sort_values(by=column, ascending=(order == "ascending"))
             cumulative = 0.0
             selected_indices = []
             # Use the _PROBS column to accumulate probability
@@ -424,9 +412,7 @@ class QUBOAnalyzer:
         self.df[_COSTS] = self.df[_BITSTRINGS].apply(Q.evaluate_solution)
         return self.df
 
-    def calculate_gaps(
-        self, opt_cost: float, Q: QUBOInstance | None = None
-    ) -> pd.DataFrame:
+    def calculate_gaps(self, opt_cost: float, Q: QUBOInstance | None = None) -> pd.DataFrame:
         """
         Calculates the gaps for each bitstring using the provided optimal cost.
         If costs aren ot present calculates costs as
@@ -471,8 +457,7 @@ class QUBOAnalyzer:
 
         if len(counts) != len(self.df):
             raise ValueError(
-                "The number of counts must match"
-                " the number of bitstrings in the DataFrame."
+                "The number of counts must match" " the number of bitstrings in the DataFrame."
             )
 
         if _PROBS in self.df.columns:
@@ -503,8 +488,7 @@ class QUBOAnalyzer:
 
         if len(probs) != len(self.df):
             raise ValueError(
-                "The number of counts must match"
-                "the number of bitstrings in the DataFrame."
+                "The number of counts must match" "the number of bitstrings in the DataFrame."
             )
 
         if _COUNTS in self.df.columns:
@@ -564,9 +548,7 @@ class QUBOAnalyzer:
                 values=y_axis,
                 fill_value=0,
             ).reset_index()
-            df = df.melt(
-                id_vars=[_BITSTRINGS, sort_by], var_name=_LABELS, value_name=y_axis
-            )
+            df = df.melt(id_vars=[_BITSTRINGS, sort_by], var_name=_LABELS, value_name=y_axis)
             df = df.sort_values(by=sort_by, ascending=(sort_order == "ascending"))
 
         # Set color palette

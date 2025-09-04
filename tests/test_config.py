@@ -79,10 +79,7 @@ def test_qutip_config_backend(qutip_solver_config: SolverConfig) -> None:
 
 def test_greedy_embedding_config(greedy_embedding_config: SolverConfig) -> None:
     assert greedy_embedding_config.embedding.embedding_method == EmbedderType.GREEDY
-    assert (
-        greedy_embedding_config.backend_config.device
-        == DeviceType.DIGITAL_ANALOG_DEVICE
-    )
+    assert greedy_embedding_config.backend_config.device == DeviceType.DIGITAL_ANALOG_DEVICE
     assert greedy_embedding_config.embedding.layout_greedy_embedder == LayoutType.SQUARE
     assert greedy_embedding_config.embedding.traps == 10
     assert greedy_embedding_config.embedding.spacing == 5.0
@@ -92,16 +89,11 @@ def test_initialization_device() -> None:
     from qoolqit._solvers.types import DeviceType
 
     solver = SolverConfig()
-    assert (
-        solver.embedding.traps
-        == DeviceType.DIGITAL_ANALOG_DEVICE.value.min_layout_traps
-    )
+    assert solver.embedding.traps == DeviceType.DIGITAL_ANALOG_DEVICE.value.min_layout_traps
     assert solver.embedding.spacing == float(
         DeviceType.DIGITAL_ANALOG_DEVICE.value.min_atom_distance
     )
 
     solver = SolverConfig.from_kwargs(**{"device": DeviceType.ANALOG_DEVICE})
     assert solver.embedding.traps == DeviceType.ANALOG_DEVICE.value.min_layout_traps
-    assert solver.embedding.spacing == float(
-        DeviceType.ANALOG_DEVICE.value.min_atom_distance
-    )
+    assert solver.embedding.spacing == float(DeviceType.ANALOG_DEVICE.value.min_atom_distance)

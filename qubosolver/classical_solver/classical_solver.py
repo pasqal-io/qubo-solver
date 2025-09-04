@@ -93,9 +93,7 @@ class CplexSolver(BaseClassicalSolver):
             return QUBOSolution(bitstrings=bitstring_tensor, costs=cost_tensor)
 
         # Convert the coefficient matrix into CPLEX sparse pairs format using the conversion tool.
-        sparsepairs: List[cplex.SparsePair] = qubo_instance_to_sparsepairs(
-            self.instance
-        )
+        sparsepairs: List[cplex.SparsePair] = qubo_instance_to_sparsepairs(self.instance)
 
         # Open a log file.
         log_file = open(log_path, "w")
@@ -125,9 +123,7 @@ class CplexSolver(BaseClassicalSolver):
         log_file.close()
 
         # Convert the solution into a QUBOSolution.
-        bitstring_tensor = torch.tensor(
-            [[int(b) for b in solution_values]], dtype=torch.float32
-        )
+        bitstring_tensor = torch.tensor([[int(b) for b in solution_values]], dtype=torch.float32)
         cost_tensor = torch.tensor([solution_cost], dtype=torch.float32)
 
         return QUBOSolution(bitstrings=bitstring_tensor, costs=cost_tensor)
@@ -184,9 +180,7 @@ def get_classical_solver(
     Raises:
         ValueError: If the requested solver type is not supported.
     """
-    solver_type = (
-        config.get("classical_solver_type", "cplex") if config is not None else "cplex"
-    )
+    solver_type = config.get("classical_solver_type", "cplex") if config is not None else "cplex"
     solver_type = solver_type.lower()
 
     if solver_type == "cplex":

@@ -82,9 +82,7 @@ class QUBOSolution:
 
         total_counts = self.counts.sum().item()
         probabilities = (
-            self.counts / total_counts
-            if total_counts > 0
-            else torch.zeros_like(self.counts)
+            self.counts / total_counts if total_counts > 0 else torch.zeros_like(self.counts)
         )
         return probabilities
 
@@ -125,9 +123,7 @@ class QUBODataset(Dataset):
             Class method to generate a QUBODataset with random coefficient matrices.
     """
 
-    def __init__(
-        self, coefficients: torch.Tensor, solutions: list[QUBOSolution] | None = None
-    ):
+    def __init__(self, coefficients: torch.Tensor, solutions: list[QUBOSolution] | None = None):
         """
         Initializes a QUBODataset.
 
@@ -271,8 +267,7 @@ class QUBODataset(Dataset):
                         for idx_pair in nz.tolist()
                         if not (
                             idx_pair[0] == idx_pair[1]
-                            and coeff[idx_pair[0], idx_pair[1]].item()
-                            == coefficient_bounds[0]
+                            and coeff[idx_pair[0], idx_pair[1]].item() == coefficient_bounds[0]
                         )
                     ]
                     if filtered:

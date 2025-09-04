@@ -18,9 +18,7 @@ from qubosolver.qubo_instance import QUBOInstance
 
 @pytest.fixture
 def dummy_register() -> Register:
-    register = Register(
-        device=DigitalAnalogDevice, register=[(0.0, 0.0), (1.0, 0.0), (2.0, 3.0)]
-    )
+    register = Register(device=DigitalAnalogDevice, register=[(0.0, 0.0), (1.0, 0.0), (2.0, 3.0)])
     return register
 
 
@@ -45,9 +43,7 @@ def test_generate_returns_pulse_and_solution_optimized(
     simple_qubo_instance: QUBOInstance,
     optimized_pulse_shaping: PulseShapingConfig,
 ) -> None:
-    default_config = SolverConfig(
-        use_quantum=True, pulse_shaping=optimized_pulse_shaping
-    )
+    default_config = SolverConfig(use_quantum=True, pulse_shaping=optimized_pulse_shaping)
     backend = get_backend(default_config.backend_config)
     shaper = AdiabaticPulseShaper(simple_qubo_instance, default_config, backend)
     pulse, solution = shaper.generate(dummy_register, simple_qubo_instance)
@@ -140,9 +136,7 @@ def test_normalized_weights_in_pulse(
     assert pytest.approx(norm_weights, rel=1e-6) == expected_norm
 
 
-def test_pulse_duration_set(
-    dummy_register: Register, simple_qubo_instance: QUBOInstance
-) -> None:
+def test_pulse_duration_set(dummy_register: Register, simple_qubo_instance: QUBOInstance) -> None:
     default_config = SolverConfig(use_quantum=True)
     backend = get_backend(default_config.backend_config)
     shaper = get_pulse_shaper(simple_qubo_instance, default_config, backend)

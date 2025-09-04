@@ -72,9 +72,7 @@ def run_sampler(sampler: dimod.Sampler, qubo: QUBOInstance) -> QUBOSolution:
         sampleset: dimod.SampleSet = sampler.sample(bqm)
 
     # Convert the sampled solutions into a PyTorch tensor of binary values (0/1).
-    bitstrings = torch.tensor(
-        (sampleset.record.sample > 0).astype(int), dtype=torch.float32
-    )
+    bitstrings = torch.tensor((sampleset.record.sample > 0).astype(int), dtype=torch.float32)
 
     # Compute the cost of each solution using the QUBO's evaluation function.
     costs = torch.tensor(

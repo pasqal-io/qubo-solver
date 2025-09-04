@@ -32,22 +32,14 @@ def classical_solver_config() -> SolverConfig:
 
 
 @pytest.fixture(
-    params=[
-        BackendConfig(backend=BackendType(b))
-        for b in BackendType.list()
-        if "remote" not in b
-    ],
+    params=[BackendConfig(backend=BackendType(b)) for b in BackendType.list() if "remote" not in b],
 )
 def local_backend(request: pytest.Fixture) -> BackendConfig:
     return request.param  # type: ignore[no-any-return]
 
 
 @pytest.fixture(
-    params=[
-        BackendConfig(backend=BackendType(b))
-        for b in BackendType.list()
-        if "remote" in b
-    ],
+    params=[BackendConfig(backend=BackendType(b)) for b in BackendType.list() if "remote" in b],
 )
 def remote_backend(request: pytest.Fixture) -> BackendConfig:
     return request.param  # type: ignore[no-any-return]

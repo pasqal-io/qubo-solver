@@ -37,9 +37,7 @@ class BasePulseShaper(ABC):
 
     """
 
-    def __init__(
-        self, instance: QUBOInstance, config: SolverConfig, backend: BaseBackend
-    ):
+    def __init__(self, instance: QUBOInstance, config: SolverConfig, backend: BaseBackend):
         """
         Initialize the pulse shaping module with a QUBO instance.
 
@@ -238,11 +236,7 @@ class OptimizedPulseShaper(BasePulseShaper):
         max_det -= 1e-6
         # same
 
-        bounds = (
-            [(1, max_amp)] * n_amp
-            + [(-max_det, 0)]
-            + [(-max_det, max_det)] * (n_det - 1)
-        )
+        bounds = [(1, max_amp)] * n_amp + [(-max_det, 0)] + [(-max_det, max_det)] * (n_det - 1)
         x0 = (
             self.config.pulse_shaping.initial_omega_parameters
             + self.config.pulse_shaping.initial_detuning_parameters
@@ -270,9 +264,7 @@ class OptimizedPulseShaper(BasePulseShaper):
                         best_bitstring,
                     )
                 if not np.isfinite(cost_eval):
-                    print(
-                        f"[Warning] Non-finite cost encountered: {cost_eval} at x={x}"
-                    )
+                    print(f"[Warning] Non-finite cost encountered: {cost_eval} at x={x}")
                     cost_eval = 1e4
 
             except Exception as e:
@@ -296,9 +288,7 @@ class OptimizedPulseShaper(BasePulseShaper):
                 self.costs,
                 self.best_cost,
                 self.best_bitstring,
-            ) = self.run_simulation(
-                self.register, self.pulse, QUBO, convert_to_tensor=True
-            )
+            ) = self.run_simulation(self.register, self.pulse, QUBO, convert_to_tensor=True)
 
         if self.bitstrings is None or self.counts is None:
             # TODO: what needs to be returned here?
@@ -328,8 +318,7 @@ class OptimizedPulseShaper(BasePulseShaper):
         weights_list = torch.abs(torch.diag(QUBO)).tolist()
         max_node_weight = max(weights_list) if weights_list else 1.0
         norm_weights_list = [
-            1 - (w / max_node_weight) if max_node_weight != 0 else 0.0
-            for w in weights_list
+            1 - (w / max_node_weight) if max_node_weight != 0 else 0.0 for w in weights_list
         ]
         return norm_weights_list
 
@@ -400,9 +389,7 @@ class OptimizedPulseShaper(BasePulseShaper):
             )
             bitstring_counts = self.backend.run(program).counts
 
-            cost_dict = {
-                b: self.compute_qubo_cost(b, QUBO) for b in bitstring_counts.keys()
-            }
+            cost_dict = {b: self.compute_qubo_cost(b, QUBO) for b in bitstring_counts.keys()}
 
             best_bitstring = min(cost_dict, key=cost_dict.get)  # type: ignore[arg-type]
             best_cost = cost_dict[best_bitstring]

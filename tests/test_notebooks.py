@@ -21,16 +21,14 @@ def get_ipynb_files(dir: Path) -> List[Path]:
     files = []
 
     for it in dir.iterdir():
-        if it.suffix == ".ipynb" and not it.match('*.ipynb_checkpoints*'):
+        if it.suffix == ".ipynb" and not it.match("*.ipynb_checkpoints*"):
             files.append(it)
         elif it.is_dir():
             files.extend(get_ipynb_files(it))
     return files
 
 
-notebooks_dir = (
-    Path(__file__).parent.parent.joinpath("docs").joinpath("tutorial").resolve()
-)
+notebooks_dir = Path(__file__).parent.parent.joinpath("docs").joinpath("tutorial").resolve()
 assert notebooks_dir.exists()
 notebooks = get_ipynb_files(notebooks_dir)
 notebooks_names = [f"{example.relative_to(notebooks_dir)}" for example in notebooks]

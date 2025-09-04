@@ -44,11 +44,11 @@ nav:
     - Configs: api/config.md
     - Data: api/data.md
     - Quantum: api/quantum.md
-  
+
   - Open-source:
     - Licence (MIT-Derived): LICENSE.md
     - Contributor Agreement: CONTRIBUTOR AGREEMENT.md
-  
+
   - Contributing:
     - First contact: contributing/first contact.md
     - How to contribute: contributing/how to contribute.md

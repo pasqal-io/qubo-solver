@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 import typing
 import warnings
 from abc import ABC, abstractmethod
@@ -26,9 +25,7 @@ class BaseEmbedder(ABC):
     Returns a Register compatible with Pasqal/Pulser devices.
     """
 
-    def __init__(
-        self, instance: QUBOInstance, config: SolverConfig, backend: BaseBackend
-    ):
+    def __init__(self, instance: QUBOInstance, config: SolverConfig, backend: BaseBackend):
         """
         Args:
             instance (QUBOInstance): The QUBO problem to embed.
@@ -51,11 +48,12 @@ class BaseEmbedder(ABC):
 
 class GreedyEmbedder(BaseEmbedder):
     """Create an embedding in a greedy fashion.
-    
+
     At each step, place one logical node onto one trap to minimize the
     incremental mismatch between the logical QUBO matrix Q and the physical
     interaction matrix U (approx. C / ||r_i - r_j||^6).
     """
+
     @typing.no_type_check
     def embed(self) -> TargetRegister:
         """
@@ -81,18 +79,13 @@ class GreedyEmbedder(BaseEmbedder):
             "traps": int(self.config.embedding.traps),
             "spacing": float(self.config.embedding.spacing),
             # animation controls (all read by Greedy)
-            "draw_steps": bool(
-                self.config.embedding.draw_steps
-            ),  # collect per-step data
-            "animation": bool(
-                self.config.embedding.draw_steps
-            ),  # render animation after run
+            "draw_steps": bool(self.config.embedding.draw_steps),  # collect per-step data
+            "animation": bool(self.config.embedding.draw_steps),  # render animation after run
             "animation_save_path": self.config.embedding.animation_save_path,  # optional export
             # "animation_top_k": 5,  # (optional) uncomment if you add support for this in Greedy
         }
 
         # --- DEBUG / INFO: show where Greedy comes from + the params we’ll pass
-        greedy_src = inspect.getsourcefile(Greedy)
         dev = params["device"]
         dev_str = (
             getattr(dev, "name", None)

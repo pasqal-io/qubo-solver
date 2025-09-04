@@ -42,9 +42,7 @@ def test_bitstrings_to_tensor() -> None:
     assert torch.equal(result, expected)
 
 
-def test_solution_to_dataframe(
-    analyzer: QUBOAnalyzer, basic_solution: QUBOSolution
-) -> None:
+def test_solution_to_dataframe(analyzer: QUBOAnalyzer, basic_solution: QUBOSolution) -> None:
     df = analyzer._solution_to_dataframe(basic_solution, "sol1")
     assert "bitstrings" in df.columns
     assert "probs" in df.columns

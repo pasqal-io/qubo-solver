@@ -172,9 +172,7 @@ class PulseShapingConfig(Config):
     )  # ---> default initial pulse parameters: delta = (-10, 0, 10)
     re_execute_opt_pulse: bool = False
     custom_qubo_cost: Callable[[str, torch.Tensor], float] | None = None
-    custom_objective: Callable[[list, list, list, list, float, str], float] | None = (
-        None
-    )
+    custom_objective: Callable[[list, list, list, list, float, str], float] | None = None
     callback_objective: Callable[..., None] | None = None
 
     @field_validator("pulse_shaping_method")
@@ -208,9 +206,7 @@ class PulseShapingConfig(Config):
         if len(val) == 3:
             return val
         else:
-            raise ValueError(
-                "`initial_omega_parameters` should be a list of 3 numbers."
-            )
+            raise ValueError("`initial_omega_parameters` should be a list of 3 numbers.")
 
     @field_validator("initial_detuning_parameters")
     @classmethod
@@ -218,9 +214,7 @@ class PulseShapingConfig(Config):
         if len(val) == 3:
             return val
         else:
-            raise ValueError(
-                "`initial_detuning_parameters` should be a list of 3 numbers."
-            )
+            raise ValueError("`initial_detuning_parameters` should be a list of 3 numbers.")
 
 
 class SolverConfig(Config):
@@ -312,18 +306,12 @@ class SolverConfig(Config):
             SolverConfig: An instance from values.
         """
         # Extract fields from pydantic BaseModel
-        backend_config_fields = {
-            k: v for k, v in kwargs.items() if k in BackendConfig.model_fields
-        }
-        embedding_fields = {
-            k: v for k, v in kwargs.items() if k in EmbeddingConfig.model_fields
-        }
+        backend_config_fields = {k: v for k, v in kwargs.items() if k in BackendConfig.model_fields}
+        embedding_fields = {k: v for k, v in kwargs.items() if k in EmbeddingConfig.model_fields}
         pulse_shaping_fields = {
             k: v for k, v in kwargs.items() if k in PulseShapingConfig.model_fields
         }
-        classical_fields = {
-            k: v for k, v in kwargs.items() if k in ClassicalConfig.model_fields
-        }
+        classical_fields = {k: v for k, v in kwargs.items() if k in ClassicalConfig.model_fields}
 
         solver_fields = {
             k: v
