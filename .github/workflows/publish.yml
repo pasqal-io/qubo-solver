@@ -38,7 +38,7 @@ jobs:
           timeout-minutes: 5
           run: |
             VERSION=${GITHUB_REF#refs/tags/v}
-            until pip download maximum-independent-set==$VERSION
+            until pip download qubo-solver==$VERSION
             do
                 echo "Failed to download from PyPI, will wait for upload and retry."
                 sleep 1

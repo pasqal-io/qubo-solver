@@ -13,23 +13,23 @@ For more information on how to get in touch, see our [Community Portal](https://
 
 We're very interested in your feedback!
 
-The best way to request a change, whether it's an improvement, a new feature or a bugfix, is through [GitHub issues](https://github.com/pasqal-io/maximum-independent-set/issues). Before filing a new issue, don't forget to search if there's already an issue on the same topic.
+The best way to request a change, whether it's an improvement, a new feature or a bugfix, is through [GitHub issues](https://github.com/pasqal-io/qubo-solver/issues). Before filing a new issue, don't forget to search if there's already an issue on the same topic.
 
 If you're willing to help getting that issue resolved, that's even better! See the next section.
 
 
 ## Opening Pull Requests
 
-We're grateful for your [Pull Requests](https://github.com/pasqal-io/maximum-independent-set/pulls) (i.e. submissions) to the code, documentation, tutorials, even this document!
+We're grateful for your [Pull Requests](https://github.com/pasqal-io/qubo-solver/pulls) (i.e. submissions) to the code, documentation, tutorials, even this document!
 
 Before your first Pull Request, you'll need to:
 
-1. [Fork](https://github.com/pasqal-io/maximum-independent-set/fork) the repository;
+1. [Fork](https://github.com/pasqal-io/qubo-solver/fork) the repository;
 2. Clone your forked repository locally, either through the GitHub console, or
 ```sh
-$ git clone git@github.com:YOUR_USERNAME/maximum-independent-set.git
-$ cd maximum-independent-set
-$ git remote add upstream https://github.com/pasqal-io/maximum-independent-set.git
+$ git clone git@github.com:YOUR_USERNAME/qubo-solver.git
+$ cd qubo-solver
+$ git remote add upstream https://github.com/pasqal-io/qubo-solver.git
 ```
 3. [Setup your development environment](./first%20contact.md#hatch-instructions).
 
