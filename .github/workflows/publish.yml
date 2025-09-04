@@ -67,10 +67,6 @@ jobs:
         - name: Install Hatch
           run: |
             pip install hatch
-        - name: Copy notebooks and test files to build docs
-          run: |
-            cp examples/*.ipynb docs/
-            cp -r examples/datasets/ docs/
         - name: Deploy docs
           run: |
             git config user.name "GitHub Actions"
