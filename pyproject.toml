@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "qubo-solver"
 description = "A Quadratic Unconstrained Binary Optimization (QUBO) solver library using quantum and classical approaches."
 readme = "README.md"
-version = "0.0.2"
+version = "0.0.3"
 requires-python = ">=3.10,<3.13"
 license = { text = "MIT-derived" }
 keywords = ["quantum", "qubo", "solver", "optimization", "combinatorial"]
@@ -61,11 +61,12 @@ extras = [
 ]
 
 [project.urls]
-Documentation = "https://pasqal-io.github.io/qubo-solver/"
+Documentation = "https://pasqal-io.github.io/qubo-solver/latest/"
 Issues = "https://github.com/pasqal-io/qubo-solver/issues"
 Source = "https://github.com/pasqal-io/qubo-solver"
 
 [tool.hatch.envs.default]
+installer = "uv"
 features = ["extras"]
 dependencies = [
   "pytest",
@@ -101,6 +102,7 @@ asyncio_mode="auto"
 asyncio_default_fixture_loop_scope="function"
 
 [tool.hatch.envs.docs]
+installer = "uv"
 dependencies = [
   "mkdocs",
   "mkdocs-material",

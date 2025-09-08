@@ -1,5 +1,5 @@
 site_name: Qubo Solver
-repo_url: "https://pasqal-io.github.io/qubo-solver/latest/"
+repo_url: "https://pasqal-io.github.io/qubo-solver/"
 repo_name: "Qubo Solver"
 
 nav:

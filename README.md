@@ -56,6 +56,12 @@ Alternatively, you can also:
 
 Note the package is not compatible with Windows systems. We recommend using the Windows Subsystem for Linux (WSL).
 
+### Cplex Installation
+
+The `cplex` dependency may cause installation problems. We recommend using python `3.11` or try another supported version when installing `qubo-solver`.
+If you wish to use the licensed version of CPLEX, it is required to set the environment variable `ILOG_LICENSE_FILE` to the location of the license file.
+
+
 ## QuickStart
 
 ### With a quantum solver
