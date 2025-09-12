@@ -36,7 +36,6 @@ def draw_weighted_graph(
     edge_labels: Optional[dict] = None,
     ax: Axes | None = None,
 ) -> None:
-    # print(f"{thresholds=}")
     plt.figure(1, figsize=(30, 12), dpi=60)
     ax = get_ax(ax)
 
@@ -51,7 +50,6 @@ def draw_weighted_graph(
     pos_all_dims = dict(graph.nodes.data("pos"))  # type: ignore
     pos = {k: v[0:2] for k, v in pos_all_dims.items()}
 
-    # plt.axis('scaled')
     ax.set_aspect("equal", adjustable="box")
 
     # nodes
@@ -106,8 +104,6 @@ def draw_weighted_graph(
 
     ax.margins(0.08)
     ax.axis("off")
-    # ax.tight_layout()
-    # plt.show()
 
 
 def draw_set_graph_coords(
@@ -130,8 +126,6 @@ def draw_graph_including_actual_weights(
         dist = np.linalg.norm(positions[u] - positions[v])
         new_weights[(u, v)] = interaction(device=device, dist=float(dist))
         new_weights_matrix[min(u, v), max(u, v)] = eformat(new_weights[(u, v)])
-
-    print(f"Max actual weight: {max(new_weights.values())}")
 
     df = pd.DataFrame(new_weights_matrix)
 

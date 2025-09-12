@@ -51,7 +51,13 @@ class BaseEmbedder(ABC):
 
 class BLaDEmbedder(BaseEmbedder):
     """
-    BLaDE
+    BLaDE (Balanced Latently Dimensional Embedder)
+
+    Computes positions for nodes so that their interactions according to a device
+    approach the desired values at best. The result can be used as an embedding.
+    Its prior target is on interaction matrices or QUBOs, but it can also be used
+    for MIS with limitations if the adjacency matrix is converted into a QUBO.
+    The general principle is based on the Fruchterman-Reingold algorithm.
     """
 
     @typing.no_type_check

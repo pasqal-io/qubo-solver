@@ -115,8 +115,6 @@ def test_force_based_embedding() -> None:
     min_dist = local_device.min_atom_distance
     max_dist = local_device.max_radial_distance
 
-    print(f"{min_dist=}, {max_dist=}")
-
     factor_dist_0_1 = 1 / 1.1
     factor_dist_2_3 = 1.2
 
@@ -140,8 +138,6 @@ def test_force_based_embedding() -> None:
 
     new_min_dist = np.linalg.norm(positions[0] - positions[1])
     new_max_dist = new_min_dist * (max_dist / min_dist)
-
-    print(f"{min_dist=}, {max_dist=}, {new_min_dist=}, {new_max_dist=}")
 
     assert np.isclose(
         np.linalg.norm(positions[0] - positions[1]), new_min_dist
