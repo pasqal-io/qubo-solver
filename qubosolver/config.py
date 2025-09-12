@@ -84,7 +84,7 @@ class EmbeddingConfig(Config):
     layout_greedy_embedder: LayoutType | str = LayoutType.TRIANGULAR
     blade_steps_per_round: int | None = 200
     starting_positions: torch.Tensor | None = None
-    blade_dimensions: list[int] = field(default_factory=lambda:  [5, 4, 3, 2, 2, 2])
+    blade_dimensions: list[int] = field(default_factory=lambda: [5, 4, 3, 2, 2, 2])
     traps: int = DeviceType.DIGITAL_ANALOG_DEVICE.value.min_layout_traps
     spacing: float = float(DeviceType.DIGITAL_ANALOG_DEVICE.value.min_atom_distance)
     density: float | None = None
