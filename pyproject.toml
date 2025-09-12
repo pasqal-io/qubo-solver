@@ -114,6 +114,7 @@ dependencies = [
   "mkdocs-jupyter",
   "markdown-exec",
   "mike",
+  "python-markdown-math",
 ]
 
 [tool.hatch.envs.docs.scripts]
