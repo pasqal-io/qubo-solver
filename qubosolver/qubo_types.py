@@ -47,6 +47,7 @@ class EmbedderType(StrEnum):
     """
 
     GREEDY = "greedy"
+    BLADE = "blade"
 
 
 class LayoutType(Enum):

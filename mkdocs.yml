@@ -33,6 +33,7 @@ nav:
     - Pre-processing: tutorial/02-preprocessing.ipynb
     - Post-processing: tutorial/03-postprocessing.ipynb
     - Qubo embedding: tutorial/04-qubo-embedding.ipynb
+    - Qubo embedding with BLaDE: tutorial/04-blade.ipynb
     - Pulse shaping methods: tutorial/05-pulse-shaping-methods.ipynb
     - Classical Heuristics: tutorial/06-classical-heuristics.ipynb
     - CPLEX: tutorial/07-classical-cplex.ipynb

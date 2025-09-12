@@ -55,8 +55,24 @@ def qutip_solver_config() -> SolverConfig:
 
 
 @pytest.fixture
+def blade_config() -> SolverConfig:
+    embed_method = EmbeddingConfig(embedding_method="blade", blade_dimensions=[2])
+    backend_config = BackendConfig(device=DeviceType.DIGITAL_ANALOG_DEVICE)
+    return SolverConfig(
+        backend_config=backend_config,
+        embedding=embed_method,
+    )
+
+
+@pytest.fixture
 def optimized_pulse_shaping() -> PulseShapingConfig:
     return PulseShapingConfig(pulse_shaping_method=PulseType.OPTIMIZED)
+
+
+@pytest.fixture
+def blade_clear_dimensions_config() -> SolverConfig:
+    embed_method = EmbeddingConfig(blade_dimensions=[6, 5, 4, 3, 2])
+    return SolverConfig(embedding=embed_method)
 
 
 @pytest.fixture
