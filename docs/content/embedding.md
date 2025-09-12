@@ -28,6 +28,22 @@ geometry = solver.embedding()
 # geometry.register.draw()
 ```
 
+## BLaDE config
+The following configuration uses the BLaDE method with specific dimension layers and a number of steps per round (i.e. the number of iterations per layer). Starting positions are implicitely defined but it can be set here, as long as it matches the first dimension layer.
+
+```python exec="on" source="material-block" html="1" session="embedding"
+embedconfig = EmbeddingConfig(embedding_method="blade", blade_dimensions=[5, 4, 3, 2], blade_steps_per_round=300)
+blade_config = SolverConfig(
+    use_quantum=True,
+    embedding=embedconfig,
+)
+
+solver = QuboSolver(instance, blade_config)
+geometry = solver.embedding()
+
+# geometry.register.draw()
+```
+
 ## Greedy embedder config
 The following uses the greedy embedding method on a triangular lattice layout with a number of traps equals to the size of the QUBO. It also allows working on a square lattice layout, as well as increasing the number of traps according to the device specifications.
 

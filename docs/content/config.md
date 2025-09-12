@@ -41,7 +41,16 @@ The embedding configuration part (the `embedding` field of `SolverConfig`) can b
 #### Method parameter
 | Field         | Type          | Description |
 |---------------|---------------|-------------|
-| `embedding_method` | `str` \| `EmbedderType` \| `Type[BaseEmbedder]` | The type of embedding method used to place atoms on the register according to the QUBO problem. (e.g., 'greedy', but we can also create our own custom embedding method). |
+| `embedding_method` | `str` \| `EmbedderType` \| `Type[BaseEmbedder]` | The type of embedding method used to place atoms on the register according to the QUBO problem. (e.g., 'blade', 'greedy', but we can also create our own custom embedding method). |
+| `draw_steps` | `bool` | Show generated graph at each step of the optimization. Defaults to False. |
+
+
+#### BLaDE embedding parameters
+| Field         | Type          | Description |
+|---------------|---------------|-------------|
+| `blade_dimensions` | `list[int]` | A list of dimension degrees to explore one after the other (default is [5, 4, 3, 2, 2, 2]). |
+| `starting_positions` | `torch.Tensor` | The starting parameters according to the specified dimensions. |
+| `blade_steps_per_round` | `int` \| `None` | The number of steps for each layer of dimension for the BLaDE embedder method. Defaults to 200. |
 
 
 #### Greedy embedding parameters
