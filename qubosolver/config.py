@@ -61,7 +61,7 @@ class EmbeddingConfig(Config):
         layout_greedy_embedder (LayoutType | str, optional): Layout type for the
             greedy embedder method. Defaults to `LayoutType.TRIANGULAR`.
         blade_steps_per_round (int, optional): The number of steps
-            for each layer of dimension for the space embedder method.
+            for each layer of dimension for BLaDE.
             Defaults to 200.
         starting_positions (torch.Tensor | None, optional): The starting parameters
             according to the specified dimensions.
