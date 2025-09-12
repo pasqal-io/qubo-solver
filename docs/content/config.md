@@ -50,7 +50,7 @@ The embedding configuration part (the `embedding` field of `SolverConfig`) can b
 |---------------|---------------|-------------|
 | `blade_dimensions` | `list[int]` | A list of dimension degrees to explore one after the other (default is [5, 4, 3, 2, 2, 2]). |
 | `starting_positions` | `torch.Tensor` | The starting parameters according to the specified dimensions. |
-| `blade_steps_per_round` | `int` \| `None` | The number of steps for each layer of dimension for the space embedder method. Defaults to 200. |
+| `blade_steps_per_round` | `int` \| `None` | The number of steps for each layer of dimension for the BLaDE embedder method. Defaults to 200. |
 
 
 #### Greedy embedding parameters
