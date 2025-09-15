@@ -52,14 +52,19 @@ Alternatively, you can also:
   you will install all the dependencies, including extras.
 * install it with `conda` by simply using `pip` inside the Conda environment.
 
-### Install on Windows
+### Windows Note
 
-Note the package is not compatible with Windows systems. We recommend using the Windows Subsystem for Linux (WSL).
+This package require features available on Unix systems. Under Windows, these features can be installed as
+part of the [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/).
 
 ### Cplex Installation
 
-The `cplex` dependency may cause installation problems. We recommend using python `3.11` or try another supported version when installing `qubo-solver`.
-If you wish to use the licensed version of CPLEX, it is required to set the environment variable `ILOG_LICENSE_FILE` to the location of the license file.
+The `cplex` package is only available under some combinations of platforms and versions of Python. We
+recommend using python `3.11` or `3.12`, which we have tested to work with cplex.
+
+If you wish to use the licensed version of cplex, you will need to set the environment
+variable `ILOG_LICENSE_FILE` to the location of the license file -- for more details, see the documentation
+of cplex.
 
 
 ## QuickStart
