@@ -3,11 +3,14 @@ from __future__ import annotations
 import typing
 import warnings
 from abc import ABC, abstractmethod
+import numpy as np
+import torch
 
 from pulser.register import Register as PulserRegister
 from qoolqit._solvers import BaseBackend
 
 from qubosolver import QUBOInstance
+from qubosolver.algorithms.blade.blade import em_blade
 from qubosolver.algorithms.greedy.greedy import Greedy
 from qubosolver.config import EmbedderType, SolverConfig
 from qubosolver.utils.density import calculate_density
@@ -44,6 +47,62 @@ class BaseEmbedder(ABC):
         Returns:
             Register: The register.
         """
+
+
+class BLaDEmbedder(BaseEmbedder):
+    """
+    BLaDE (Balanced Latently Dimensional Embedder)
+
+    Computes positions for nodes so that their interactions according to a device
+    approach the desired values at best. The result can be used as an embedding.
+    Its prior target is on interaction matrices or QUBOs, but it can also be used
+    for MIS with limitations if the adjacency matrix is converted into a QUBO.
+    The general principle is based on the Fruchterman-Reingold algorithm.
+    """
+
+    @typing.no_type_check
+    @staticmethod
+    def _preprocessing_qubo(Q: torch.Tensor) -> torch.Tensor:
+        def has_empty_positions(X: np.ndarray) -> bool:
+            return True if sum([torch.sum(~torch.any(X, dim=0))]) else False
+
+        def get_position_indexes(X: np.ndarray) -> int:
+            return np.where(~torch.any(X, dim=0))[-1]
+
+        Q = torch.tensor(Q)
+
+        if has_empty_positions(Q):
+            Q_ = Q.detach().clone()
+
+            non_zero_diag = Q.diagonal()[Q.diagonal() != 0]
+            min_coeff = non_zero_diag.min() if non_zero_diag.numel() else Q[Q != 0].min()
+
+            for empty_position_index in get_position_indexes(Q):
+                Q_[empty_position_index][empty_position_index] = min_coeff * 1e-05
+
+            return torch.abs(Q_ / torch.norm(Q_))
+
+        return torch.abs(Q / torch.norm(Q))
+
+    @typing.no_type_check
+    def embed(self) -> TargetRegister:
+
+        coords = em_blade(
+            qubo=BLaDEmbedder._preprocessing_qubo(self.instance.coefficients.numpy()),
+            device=self.backend.device(),
+            draw_steps=self.config.embedding.draw_steps,
+            dimensions=self.config.embedding.blade_dimensions,
+            starting_positions=(
+                self.config.embedding.starting_positions.numpy()
+                if self.config.embedding.starting_positions is not None
+                else None
+            ),
+            steps_per_round=self.config.embedding.blade_steps_per_round,
+        )
+
+        qubits = {f"q{i}": coord for i, coord in enumerate(coords)}
+        register = PulserRegister(qubits)
+        return TargetRegister(self.backend.device(), register)
 
 
 class GreedyEmbedder(BaseEmbedder):
@@ -123,7 +182,9 @@ def get_embedder(
         (BaseEmbedder): The representative embedder object.
     """
 
-    if config.embedding.embedding_method == EmbedderType.GREEDY:
+    if config.embedding.embedding_method == EmbedderType.BLADE:
+        return BLaDEmbedder(instance, config, backend)
+    elif config.embedding.embedding_method == EmbedderType.GREEDY:
         return GreedyEmbedder(instance, config, backend)
     elif issubclass(config.embedding.embedding_method, BaseEmbedder):
         return typing.cast(

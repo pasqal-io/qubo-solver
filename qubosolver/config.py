@@ -60,6 +60,14 @@ class EmbeddingConfig(Config):
             Defaults to `EmbedderType.GREEDY`.
         layout_greedy_embedder (LayoutType | str, optional): Layout type for the
             greedy embedder method. Defaults to `LayoutType.TRIANGULAR`.
+        blade_steps_per_round (int, optional): The number of steps
+            for each layer of dimension for BLaDE.
+            Defaults to 200.
+        starting_positions (torch.Tensor | None, optional): The starting parameters
+            according to the specified dimensions.
+            Defaults to None.
+        blade_dimensions (list[int], optional): A list of dimension degrees
+            to explore one after the other (default is `[5, 4, 3, 2, 2, 2]`).
         traps (int, optional): The number of traps on the register.
             Defaults to `DeviceType.ANALOG_DEVICE.value.min_layout_traps`.
         spacing (float, optional): The minimum distance between atoms.
@@ -74,6 +82,9 @@ class EmbeddingConfig(Config):
 
     embedding_method: Any = EmbedderType.GREEDY
     layout_greedy_embedder: LayoutType | str = LayoutType.TRIANGULAR
+    blade_steps_per_round: int | None = 200
+    starting_positions: torch.Tensor | None = None
+    blade_dimensions: list[int] = field(default_factory=lambda: [5, 4, 3, 2, 2, 2])
     traps: int = DeviceType.DIGITAL_ANALOG_DEVICE.value.min_layout_traps
     spacing: float = float(DeviceType.DIGITAL_ANALOG_DEVICE.value.min_atom_distance)
     density: float | None = None
@@ -87,10 +98,9 @@ class EmbeddingConfig(Config):
         if isinstance(val, EmbedderType):
             return val
         elif isinstance(val, str):
-            u = val.upper()
-            if u == EmbedderType.GREEDY.name:
-                return EmbedderType.GREEDY
-            else:
+            try:
+                return EmbedderType[val.upper()]
+            except KeyError:
                 raise ValueError(f"Invalid str embedding method '{val}'.")
         elif inspect.isclass(val):
             from qubosolver.pipeline.embedder import BaseEmbedder

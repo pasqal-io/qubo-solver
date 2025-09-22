@@ -4,7 +4,8 @@ import pytest
 import torch
 from qoolqit._solvers.data import BackendConfig
 
-from qubosolver.config import SolverConfig
+from qubosolver.config import EmbeddingConfig, SolverConfig
+from qubosolver.qubo_types import EmbedderType
 from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical
 
 
@@ -50,7 +51,8 @@ def test_run_local_backends(
         SolverConfig(
             use_quantum=True,
             backend_config=local_backend,
+            embedding=EmbeddingConfig(embedding_method=EmbedderType.BLADE),
         ),
     )
     solutions = solver.solve()
-    assert solutions.costs.min().detach().item() < 0
+    assert solutions.costs.min() == torch.tensor(-4.4000)

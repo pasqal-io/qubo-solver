@@ -77,6 +77,21 @@ def test_qutip_config_backend(qutip_solver_config: SolverConfig) -> None:
     assert qutip_solver_config.backend_config.backend == BackendType.QUTIP
 
 
+def test_blade_config(blade_config: SolverConfig) -> None:
+    assert blade_config.embedding.embedding_method == EmbedderType.BLADE
+    assert (
+        blade_config.backend_config.device == DeviceType.DIGITAL_ANALOG_DEVICE
+        and blade_config.embedding.blade_dimensions == [2]
+    )
+    assert blade_config.embedding.blade_dimensions == [2]
+
+
+def test_blade_clear_dimensions_config(
+    blade_clear_dimensions_config: SolverConfig,
+) -> None:
+    assert blade_clear_dimensions_config.embedding.blade_dimensions == [6, 5, 4, 3, 2]
+
+
 def test_greedy_embedding_config(greedy_embedding_config: SolverConfig) -> None:
     assert greedy_embedding_config.embedding.embedding_method == EmbedderType.GREEDY
     assert greedy_embedding_config.backend_config.device == DeviceType.DIGITAL_ANALOG_DEVICE
