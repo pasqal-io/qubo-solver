@@ -7,6 +7,10 @@ The core of the library is focused on the development of several algorithms for 
 
 Users setting their first steps into quantum computing will learn how to implement the core algorithm in a few simple steps and run it using the Pasqal Neutral Atom QPU. More experienced users will find this library to provide the right environment to explore new ideas - both in terms of methodologies and data domain - while always interacting with a simple and intuitive QPU interface.
 
+!!! warning "Usage restrictions"
+    At the moment, only QUBO matrices in symmetric form with non-negative off diagonal terms are supported.
+    We plan to handle negative off diagonal terms in a future release.
+
 ## Development tools
 
 ## Installation
