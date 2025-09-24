@@ -32,14 +32,14 @@ To install the `pipy` package using `pip` or `pipx`
 1. Create a `venv` if that's not done yet
 
 ```sh
-$ python -m venv venv
+$ python -m venv .venv
 
 ```
 
 2. Enter the venv
 
 ```sh
-$ . venv/bin/activate
+$ source .venv/bin/activate
 ```
 
 3. Install the package
