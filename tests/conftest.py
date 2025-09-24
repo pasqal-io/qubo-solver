@@ -6,6 +6,7 @@ import pytest
 import torch
 from qoolqit._solvers.data import BackendConfig
 from qoolqit._solvers.types import BackendType, DeviceType
+import os
 
 from qubosolver import QUBOInstance
 from qubosolver.config import (
@@ -31,15 +32,35 @@ def classical_solver_config() -> SolverConfig:
     return SolverConfig(use_quantum=False)
 
 
+if os.name == "posix":
+    locals_bkds = [
+        BackendConfig(backend=BackendType(b)) for b in BackendType.list() if "remote" not in b
+    ]
+    remote_bkds = [
+        BackendConfig(backend=BackendType(b)) for b in BackendType.list() if "remote" in b
+    ]
+else:
+    locals_bkds = [
+        BackendConfig(backend=BackendType(b))
+        for b in BackendType.list()
+        if "remote" not in b and "emu" not in b
+    ]
+    remote_bkds = [
+        BackendConfig(backend=BackendType(b))
+        for b in BackendType.list()
+        if "remote" in b and "emu" not in b
+    ]
+
+
 @pytest.fixture(
-    params=[BackendConfig(backend=BackendType(b)) for b in BackendType.list() if "remote" not in b],
+    params=locals_bkds,
 )
 def local_backend(request: pytest.Fixture) -> BackendConfig:
     return request.param  # type: ignore[no-any-return]
 
 
 @pytest.fixture(
-    params=[BackendConfig(backend=BackendType(b)) for b in BackendType.list() if "remote" in b],
+    params=remote_bkds,
 )
 def remote_backend(request: pytest.Fixture) -> BackendConfig:
     return request.param  # type: ignore[no-any-return]
