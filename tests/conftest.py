@@ -32,6 +32,7 @@ def classical_solver_config() -> SolverConfig:
     return SolverConfig(use_quantum=False)
 
 
+# emulators not available in windows
 if os.name == "posix":
     locals_bkds = [
         BackendConfig(backend=BackendType(b)) for b in BackendType.list() if "remote" not in b
