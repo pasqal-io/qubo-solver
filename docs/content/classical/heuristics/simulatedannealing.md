@@ -9,7 +9,7 @@ class DwaveSASolver(BaseClassicalSolver):
 ```
 
 ### Description
-This solver uses a Simulated Annealing backend to probabilistically explore the solution space. It is suitable for approximating solutions on medium-sized QUBO instances. Computation is entirely classical and based on the `SimulatedAnnealingSampler` from DWave's Ocean SDK [add the ref below ?]. The output is fully compatible with the `QUBOSolution` structure used in the `qubo-solver` package.
+This solver uses a Simulated Annealing backend to probabilistically explore the solution space. It is suitable for approximating solutions on medium-sized QUBO instances. Computation is entirely classical and based on the `SimulatedAnnealingSampler` from DWave's Ocean SDK[^1]. The output is fully compatible with the `QUBOSolution` structure used in the `qubo-solver` package.
 
 ## Fields
 
@@ -39,5 +39,4 @@ Recommended for local, classical solving when exact optimization is not required
 
 ### References
 
-- D-Wave Systems Inc., *Ocean SDK — SimulatedAnnealingSampler*
-  [doc](https://docs.dwavequantum.com/en/latest/ocean/api_ref_samplers/)
+[^1]: [D-Wave Systems Inc., *Ocean SDK — SimulatedAnnealingSampler*](https://docs.dwavequantum.com/en/latest/ocean/api_ref_samplers/)

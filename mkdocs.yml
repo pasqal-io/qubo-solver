@@ -25,19 +25,17 @@ nav:
         - Tabu Search: content/classical/heuristics/tabu.md
         - Simulated Annealing: content/classical/heuristics/simulatedannealing.md
     - Pre and Post Processing:
-      - Post-processing: content/classical/post-and-pre_processing/postprocessing.md
       - Pre-processing: content/classical/post-and-pre_processing/preprocessing.md
+      - Post-processing: content/classical/post-and-pre_processing/postprocessing.md
 
   - Tutorials:
     - Dataset generation and loading: tutorial/01-dataset-generation-and-loading.ipynb
-    - Pre-processing: tutorial/02-preprocessing.ipynb
-    - Post-processing: tutorial/03-postprocessing.ipynb
+    - Pre-processing: tutorial/02-qubosolver.ipynb
+    - Post-processing: tutorial/03-prepostprocessing.ipynb
     - Qubo embedding: tutorial/04-qubo-embedding.ipynb
-    - Qubo embedding with BLaDE: tutorial/04-blade.ipynb
-    - Pulse shaping methods: tutorial/05-pulse-shaping-methods.ipynb
-    - Classical Heuristics: tutorial/06-classical-heuristics.ipynb
-    - CPLEX: tutorial/07-classical-cplex.ipynb
-    - Qubo Analyzer: tutorial/08-qubo_analyzer.ipynb
+    - Qubo embedding with BLaDE: tutorial/05-blade.ipynb
+    - Pulse shaping methods: tutorial/06-pulse-shaping-methods.ipynb
+    - Qubo Analyzer: tutorial/07-qubo_analyzer.ipynb
 
   - API:
     - QUBOInstance: api/qubo_instance.md
