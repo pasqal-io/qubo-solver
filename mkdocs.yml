@@ -30,12 +30,13 @@ nav:
 
   - Tutorials:
     - Dataset generation and loading: tutorial/01-dataset-generation-and-loading.ipynb
-    - Pre-processing: tutorial/02-qubosolver.ipynb
-    - Post-processing: tutorial/03-prepostprocessing.ipynb
+    - Solving a QUBO: tutorial/02-qubosolver.ipynb
+    - Pre-processing and Post-processing: tutorial/03-prepostprocessing.ipynb
     - Qubo embedding: tutorial/04-qubo-embedding.ipynb
     - Qubo embedding with BLaDE: tutorial/05-blade.ipynb
     - Pulse shaping methods: tutorial/06-pulse-shaping-methods.ipynb
-    - Qubo Analyzer: tutorial/07-qubo_analyzer.ipynb
+    - Classical heuristics: tutorial/07-classical-heuristics.ipynb
+    - Qubo Analyzer: tutorial/08-qubo_analyzer.ipynb
 
   - API:
     - QUBOInstance: api/qubo_instance.md
