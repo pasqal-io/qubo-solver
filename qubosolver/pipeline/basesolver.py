@@ -160,4 +160,16 @@ class BaseSolver(ABC):
                 solution_status=SolutionStatusType.TRIVIALONE,
             )
 
+        # Case 3: diagonal cases
+        # negative coeffs gets 1, positive gets 0
+        diagonal = torch.diag(coeffs)
+        if (torch.diag(diagonal) == coeffs).all():
+            raw = (diagonal < 0).long()
+            cost = self.instance.evaluate_solution(raw)
+            batch = raw.unsqueeze(0)
+            return QUBOSolution(
+                bitstrings=batch,
+                costs=torch.tensor([cost], dtype=dtype, device=device),
+                solution_status=SolutionStatusType.TRIVIALONE,
+            )
         return None

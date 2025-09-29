@@ -55,3 +55,17 @@ def test_quantum_all_negative_trivial(local_backend: BackendConfig) -> None:
     assert (
         sol.solution_status == "trivial-one"
     ), f"Expected status 'trivial-one', got {sol.solution_status}"
+
+
+def test_diagonal_trivial(local_backend: BackendConfig) -> None:
+    coeffs = [[-1.0, 0.0], [0.0, 3.0]]
+    instance = QUBOInstance(coefficients=coeffs)
+    config = SolverConfig(use_quantum=True, backend_config=local_backend)
+
+    solver = QuboSolverQuantum(instance, config)
+    sol = solver.solve()
+    assert torch.all(sol.bitstrings == torch.tensor([1, 0], dtype=torch.int64))
+    assert hasattr(sol, "solution_status"), "QUBOSolution missing 'solution_status' attribute"
+    assert (
+        sol.solution_status == "trivial-one"
+    ), f"Expected status 'trivial-one', got {sol.solution_status}"
