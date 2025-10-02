@@ -6,9 +6,12 @@ import torch
 from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.config import ClassicalConfig, SolverConfig
 from qubosolver.solver import QuboSolver
+from qubosolver.classical_solver import get_classical_solver
 
 
 def test_qubo_solver_dwave_SA() -> None:
+    from qubosolver.classical_solver.classical_solver import DwaveSASolver
+
     # Create a simple 2x2 QUBO instance.
     # For example, consider a QUBO where the optimum is known.
     # Here we use an identity matrix.
@@ -18,6 +21,9 @@ def test_qubo_solver_dwave_SA() -> None:
     # Create a SolverConfig object with classical solver options.
     classical_config = ClassicalConfig(classical_solver_type="dwave_sa")
     config = SolverConfig(use_quantum=False, classical=classical_config)
+
+    # insure get_classical_solver works properly
+    assert isinstance(get_classical_solver(instance, config.classical.model_dump()), DwaveSASolver)
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
     classical_solver = QuboSolver(instance, config)
@@ -41,6 +47,8 @@ def test_qubo_solver_dwave_SA() -> None:
 
 
 def test_qubo_solver_dwave_tabu() -> None:
+    from qubosolver.classical_solver.classical_solver import DwaveTabuSolver
+
     # Create a simple 2x2 QUBO instance.
     # For example, consider a QUBO where the optimum is known.
     # Here we use an identity matrix.
@@ -50,6 +58,10 @@ def test_qubo_solver_dwave_tabu() -> None:
     # Create a SolverConfig object with classical solver options.
     classical_config = ClassicalConfig(classical_solver_type="dwave_tabu")
     config = SolverConfig(use_quantum=False, classical=classical_config)
+
+    assert isinstance(
+        get_classical_solver(instance, config.classical.model_dump()), DwaveTabuSolver
+    )
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
     classical_solver = QuboSolver(instance, config)
