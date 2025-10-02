@@ -23,7 +23,7 @@ def test_qubo_solver_dwave_SA() -> None:
     config = SolverConfig(use_quantum=False, classical=classical_config)
 
     # insure get_classical_solver works properly
-    assert isinstance(get_classical_solver(instance, config.classical.dict()), DwaveSASolver)
+    assert isinstance(get_classical_solver(instance, config.classical.model_dump()), DwaveSASolver)
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
     classical_solver = QuboSolver(instance, config)
@@ -59,7 +59,9 @@ def test_qubo_solver_dwave_tabu() -> None:
     classical_config = ClassicalConfig(classical_solver_type="dwave_tabu")
     config = SolverConfig(use_quantum=False, classical=classical_config)
 
-    assert isinstance(get_classical_solver(instance, config.classical.dict()), DwaveTabuSolver)
+    assert isinstance(
+        get_classical_solver(instance, config.classical.model_dump()), DwaveTabuSolver
+    )
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
     classical_solver = QuboSolver(instance, config)

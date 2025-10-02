@@ -220,7 +220,7 @@ class QuboSolverClassical(BaseSolver):
         # 2) else delegate to quantum or classical solver
         # Delegate the solving to the classical solver module.
         # Convert the SolverConfig instance to a dictionary.
-        config_dict = self.config.classical.dict()
+        config_dict = self.config.classical.model_dump()
 
         if self.config.do_preprocessing:
             # Apply preprocessing and change the solved QUBO by the reduced one
