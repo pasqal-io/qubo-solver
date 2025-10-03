@@ -12,6 +12,7 @@ import pytest
 
 expected_fail: dict = {}
 skip: dict = {
+    "00-a-tour-of-qubo.ipynb": "Requires qubovert",
     "01-dataset-generation-and-loading.ipynb": "Must manually save data",
     "03-prepostprocessing.ipynb": "Must manually save data from notebook 01",
 }

@@ -9,6 +9,7 @@ import torch
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from qoolqit._solvers.data import BackendConfig
 from qoolqit._solvers.types import DeviceType
+from qoolqit._solvers.types import BackendType
 
 from qubosolver.qubo_types import (
     EmbedderType,
@@ -26,6 +27,7 @@ __all__: list[str] = [
     "PulseShapingConfig",
     "BackendConfig",
     "SolverConfig",
+    "BackendType",
 ]
 
 
