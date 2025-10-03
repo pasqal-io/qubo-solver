@@ -1,5 +1,5 @@
 site_name: Qubo Solver
-repo_url: "https://pasqal-io.github.io/qubo-solver/"
+repo_url: "https://github.com/pasqal-io/qubo-solver/"
 repo_name: "Qubo Solver"
 
 nav:
@@ -29,6 +29,7 @@ nav:
       - Post-processing: content/classical/post-and-pre_processing/postprocessing.md
 
   - Tutorials:
+    - A tour of QUBO: tutorial/00-a-tour-of-qubo.ipynb
     - Dataset generation and loading: tutorial/01-dataset-generation-and-loading.ipynb
     - Solving a QUBO: tutorial/02-qubosolver.ipynb
     - Pre-processing and Post-processing: tutorial/03-prepostprocessing.ipynb
