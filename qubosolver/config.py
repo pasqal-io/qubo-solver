@@ -45,11 +45,29 @@ class ClassicalConfig(Config):
         classical_solver_type (str, optional): Classical solver type. Defaults to "cplex".
         cplex_maxtime (float, optional): CPLEX maximum runtime. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
+        max_iter: Maximum number of iterations to perform.
+        initial_temp: Starting temperature (controls exploration).
+        final_temp: Minimum temperature threshold for stopping.
+        alpha: Cooling rate; should be slightly below 1 (e.g., 0.95–0.99).
+        x0: The initial binary solution tensor of shape (n,).
+        tabu_tenure: Number of iterations a move (bit flip) remains tabu.
+        max_no_improve: Maximum number of consecutive iterations
+            without improvement before termination.
     """
 
     classical_solver_type: str = "cplex"
     cplex_maxtime: float = 600.0
     cplex_log_path: str = "solver.log"
+
+    max_iter: int = 100
+
+    initial_temp: float = 10.0
+    final_temp: float = 0.1
+    alpha: float = 0.99
+
+    x0: torch.Tensor | None = None
+    tabu_tenure: int = 7
+    max_no_improve: int = 20
 
 
 class EmbeddingConfig(Config):

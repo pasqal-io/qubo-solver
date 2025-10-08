@@ -19,7 +19,7 @@ def test_qubo_solver_dwave_SA() -> None:
     instance = QUBOInstance(coefficients=Q)
 
     # Create a SolverConfig object with classical solver options.
-    classical_config = ClassicalConfig(classical_solver_type="dwave_sa")
+    classical_config = ClassicalConfig(classical_solver_type="simulated_annealing")
     config = SolverConfig(use_quantum=False, classical=classical_config)
 
     # insure get_classical_solver works properly
@@ -56,7 +56,7 @@ def test_qubo_solver_dwave_tabu() -> None:
     instance = QUBOInstance(coefficients=Q)
 
     # Create a SolverConfig object with classical solver options.
-    classical_config = ClassicalConfig(classical_solver_type="dwave_tabu")
+    classical_config = ClassicalConfig(classical_solver_type="tabu_search")
     config = SolverConfig(use_quantum=False, classical=classical_config)
 
     assert isinstance(

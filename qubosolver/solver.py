@@ -228,7 +228,7 @@ class QuboSolverClassical(BaseSolver):
             self.instance = self.fixtures.reduced_qubo
             self.n_fixed_variables_preprocessing = self.fixtures.n_fixed_variables
 
-        classical_solver = get_classical_solver(self.instance, config_dict)
+        classical_solver = get_classical_solver(self.instance, self.config.classical)
         solution = (
             classical_solver.solve()
         )  # This is a reduced solution if pre-procesing is applied

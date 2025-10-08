@@ -1,25 +1,155 @@
 from __future__ import annotations
 
-from dwave.samplers.tabu import TabuSampler
+import torch
 
 from qubosolver import QUBOInstance, QUBOSolution
-from qubosolver.classical_solver.classical_solver_conversion_tools import run_sampler
 
 
-def quboTABUdwave(qubo: QUBOInstance) -> QUBOSolution:
+def qubo_tabu_search(
+    qubo: QUBOInstance,
+    x0: torch.Tensor,
+    max_iter: int = 100,
+    tabu_tenure: int = 7,
+    max_no_improve: int = 20,
+) -> QUBOSolution:
     """
-    Solves a QUBO optimization problem using D-Wave's Tabu Search heuristic.
+    Solve a QUBO problem using a simple Tabu Search heuristic.
 
-    Parameters:
-    qubo (QUBOInstance): A QUBO problem instance encoded in the custom QUBOInstance format.
+    This function wraps the core `tabu_search()` routine and converts
+    its output into a standardized `QUBOSolution` object, including
+    the bitstrings and their evaluated costs.
+
+    Args:
+        qubo: The QUBO instance to optimize, providing the cost matrix
+            and an evaluation method.
+        x0: The initial solution as a binary tensor of shape (n,).
+        max_iter: Maximum number of iterations to perform.
+        tabu_tenure: Number of iterations a flipped variable remains tabu.
+        max_no_improve: Stop criterion based on consecutive iterations
+            without improvement.
 
     Returns:
-    dict: The result of the QUBO optimization, as returned by the run_sampler function.
+        A `QUBOSolution` object containing:
+            - `bitstrings`: The best solution found as a tensor.
+            - `costs`: The corresponding objective value tensor.
+
+    Example:
+        >>> solution = qubo_tabu_search(qubo, x0=torch.randint(0, 2, (10,)))
+        >>> print(solution.costs)
     """
-    # Initialize the Tabu Search sampler from D-Wave
-    sampler = TabuSampler()
+    best_solution, _ = tabu_search(
+        qubo=qubo, x0=x0, max_iter=max_iter, tabu_tenure=tabu_tenure, max_no_improve=max_no_improve
+    )
+    bitstrings = torch.tensor(best_solution, dtype=torch.float32)
+    costs = torch.tensor(
+        [qubo.evaluate_solution(sample.tolist()) for sample in bitstrings], dtype=torch.float32
+    )
+    return QUBOSolution(bitstrings=bitstrings, costs=costs)
 
-    # Execute the QUBO instance using the sampler and return the results
-    solution: QUBOSolution = run_sampler(sampler, qubo)
 
-    return solution
+def qubo_cost(x: torch.Tensor, Q: torch.Tensor) -> torch.Tensor:
+    """
+    Compute the quadratic cost of a given binary vector under a QUBO matrix.
+
+    The cost is defined as the quadratic form :math:`x^T Q x`.
+
+    Args:
+        x: Binary tensor of shape (n,) or (n, 1).
+        Q: Symmetric QUBO coefficient matrix of shape (n, n).
+
+    Returns:
+        A scalar tensor representing the cost value.
+
+    Example:
+        >>> Q = torch.tensor([[1., -1.], [-1., 2.]])
+        >>> x = torch.tensor([1., 0.])
+        >>> qubo_cost(x, Q)
+        tensor(1.)
+    """
+    return x.T @ Q @ x
+
+
+def tabu_search(
+    qubo: QUBOInstance,
+    x0: torch.Tensor,
+    max_iter: int = 100,
+    tabu_tenure: int = 7,
+    max_no_improve: int = 20,
+) -> tuple[torch.Tensor, float]:
+    """
+    Perform Tabu Search on a QUBO instance to find a low-cost bitstring.
+
+    The algorithm iteratively flips bits in the current solution to
+    explore neighboring solutions, while maintaining a tabu list to
+    prevent cycling. It keeps track of the best solution encountered
+    and stops when no improvement is observed for a given number of
+    iterations.
+
+    Args:
+        qubo: The QUBO instance providing the cost matrix.
+        x0: The initial binary solution tensor of shape (n,).
+        max_iter: Maximum number of search iterations.
+        tabu_tenure: Number of iterations a move (bit flip) remains tabu.
+        max_no_improve: Maximum number of consecutive iterations
+            without improvement before termination.
+
+    Returns:
+        A tuple `(x_best, f_best)` where:
+            - `x_best`: Tensor representing the best bitstring found.
+            - `f_best`: Corresponding objective value as a float.
+
+    Example:
+        >>> best_x, best_cost = tabu_search(qubo, torch.randint(0, 2, (10,)))
+        >>> print(best_x, best_cost)
+    """
+    Q = qubo.coefficients
+    n: int = x0.size(dim=1)
+
+    x_best = x0.clone()
+    f_best: float = qubo_cost(x_best, Q).item()
+
+    x_current = x0.clone()
+    f_current: float = f_best
+
+    # Tabu list: store iteration number until which each move is tabu
+    tabu_list = torch.zeros(n)
+
+    iter_since_last_improve: int = 0
+
+    for iteration in range(max_iter):
+        best_candidate: torch.Tensor = torch.tensor([])
+        best_candidate_cost: float = torch.inf
+        best_move: int = -1
+
+        for i in range(n):
+            x_candidate = x_current.clone()
+            x_candidate[i] = 1 - x_candidate[i]  # Bitflip
+            f_candidate: float = qubo_cost(x_candidate, Q).item()
+
+            # Check if move is tabu OR aspiration criterion (better than best)
+            if tabu_list[i] <= iteration or f_candidate < f_best:
+                if f_candidate < best_candidate_cost:
+                    best_candidate = x_candidate
+                    best_candidate_cost = f_candidate
+                    best_move = i
+
+        if best_candidate is None:
+            break  # No valid move found
+
+        # Apply best move
+        x_current = best_candidate
+        f_current = best_candidate_cost
+        tabu_list[best_move] = iteration + tabu_tenure
+
+        # Update best solution if improved
+        if f_current < f_best:
+            x_best = x_current.clone()
+            f_best = f_current
+            iter_since_last_improve = 0
+        else:
+            iter_since_last_improve += 1
+
+        if iter_since_last_improve >= max_no_improve:
+            break  # Stop if no improvement for a while
+
+    return x_best, f_best
