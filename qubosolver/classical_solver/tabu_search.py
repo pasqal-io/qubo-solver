@@ -103,7 +103,7 @@ def tabu_search(
         >>> print(best_x, best_cost)
     """
     Q = qubo.coefficients
-    n: int = x0.size(dim=1)
+    n: int = x0.size(dim=0)
 
     x_best = x0.clone()
     f_best: float = qubo_cost(x_best, Q).item()
