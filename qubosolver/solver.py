@@ -217,11 +217,6 @@ class QuboSolverClassical(BaseSolver):
         if trivial is not None:
             return trivial
 
-        # 2) else delegate to quantum or classical solver
-        # Delegate the solving to the classical solver module.
-        # Convert the SolverConfig instance to a dictionary.
-        config_dict = self.config.classical.model_dump()
-
         if self.config.do_preprocessing:
             # Apply preprocessing and change the solved QUBO by the reduced one
             self.fixtures.preprocess()
