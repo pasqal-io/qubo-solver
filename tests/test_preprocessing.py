@@ -6,7 +6,7 @@ from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.config import SolverConfig
 from qubosolver.pipeline.fixtures import (
     Fixtures,
-    dwave_roof_duality_fixing,
+    roof_duality_fixing,
     hansen_fixing,
 )
 from qubosolver.qubo_types import SolutionStatusType
@@ -67,7 +67,7 @@ def test_dwave_roof_duality_fixing() -> None:
 
     qubo_reducible = QUBOInstance(matrix_reducible)
 
-    fixed_var = dwave_roof_duality_fixing(qubo_reducible)
+    fixed_var = roof_duality_fixing(qubo_reducible)
 
     assert isinstance(fixed_var, dict)
 

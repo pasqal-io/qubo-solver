@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Callable, Dict, List, cast
+from typing import Callable, Dict, List, cast, Any
 
-import dimod
 import numpy as np
 import torch
-from dwave.preprocessing.lower_bounds import roof_duality
 
 from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.config import SolverConfig
 from qubosolver.qubo_types import SolutionStatusType
+import maxflow
 
 
 def bit_flip_local_search(
@@ -87,9 +86,9 @@ def hansen_fixing(qubo: QUBOInstance) -> Dict[int, int]:
     return fixed_dict
 
 
-def dwave_roof_duality_fixing(qubo_inst: QUBOInstance) -> Dict[int, int]:
+def roof_duality_fixing(qubo_inst: QUBOInstance) -> Dict[int, int]:
     """
-    Applies D-Wave's roof duality method to identify and fix variables in a QUBO instance.
+    Applies roof duality method to identify and fix variables in a QUBO instance.
 
     Roof duality provides a way to determine certain variable values with certainty
     without solving the entire optimization problem.
@@ -103,14 +102,63 @@ def dwave_roof_duality_fixing(qubo_inst: QUBOInstance) -> Dict[int, int]:
     if qubo_inst.coefficients is None:
         raise ValueError("QUBO coefficients are not initialized.")
 
-    # Convert QUBO matrix to a Binary Quadratic Model (BQM) format
-    bqm = dimod.BinaryQuadraticModel.from_qubo(qubo_inst.coefficients.cpu().numpy())
+    # Create graph: two non-terminal nodes per variable -> 2*n nodes
+    n = qubo_inst.coefficients.shape[0]
+    g = maxflow.Graph[float]()
+    node_ids = g.add_nodes(2 * n)
 
-    # Apply roof duality to identify fixable variables
-    _, raw_fixed = roof_duality(bqm, strict=True)
+    Q_np = qubo_inst.coefficients.detach().cpu().numpy().astype(float)
 
-    # Reconstruire un Dict[int, int] pour satisfaire MyPy
-    fixed_variables: Dict[int, int] = {int(var): int(val) for var, val in raw_fixed.items()}
+    def p_idx(i: int) -> Any:
+        return node_ids[2 * i]
+
+    def q_idx(i: int) -> Any:
+        return node_ids[2 * i + 1]
+
+    # Linear terms: diagonal entries Q[i,i]
+    for i in range(n):
+        ui = float(Q_np[i, i])
+        pi = p_idx(i)
+        qi = q_idx(i)
+        if ui >= 0:
+            # source -> p with cap ui ; q -> sink with cap ui
+            g.add_tedge(pi, ui, 0.0)
+            g.add_tedge(qi, 0.0, ui)
+        else:
+            # negative -> encourage 1: source -> q with cap -ui ; p -> sink with cap -ui
+            g.add_tedge(qi, -ui, 0.0)
+            g.add_tedge(pi, 0.0, -ui)
+
+    # Quadratic terms: off-diagonal Q[i,j], i < j
+    for i in range(n):
+        for j in range(i + 1, n):
+            a = float(Q_np[i, j])
+            if abs(a) < 1e-16:
+                continue
+            pi, qi = p_idx(i), q_idx(i)
+            pj, qj = p_idx(j), q_idx(j)
+            if a >= 0:
+                # submodular-like construction: connect p-p and q-q with capacity a
+                g.add_edge(pi, pj, a, a)
+                g.add_edge(qi, qj, a, a)
+            else:
+                # non-submodular part: connect p_i to q_j and p_j to q_i with weight -a
+                w = -a
+                g.add_edge(pi, qj, w, w)
+                g.add_edge(pj, qi, w, w)
+
+    # Compute maxflow / mincut
+    g.maxflow()
+    fixed_variables = dict()
+    for i in range(n):
+        rp = g.get_segment(p_idx(i)) == 0
+        rq = g.get_segment(q_idx(i)) == 0
+        if rp and (not rq):
+            fixed_variables[i] = 0
+        elif rq and (not rp):
+            fixed_variables[i] = 1
+        else:
+            fixed_variables[i] = 0
     return fixed_variables
 
 
@@ -137,7 +185,7 @@ class Fixtures:
         self.reduced_qubo: QUBOInstance = deepcopy(instance)
         self.fixation_rule_list: List[Callable[[QUBOInstance], Dict[int, int]]] = [
             hansen_fixing,
-            dwave_roof_duality_fixing,
+            roof_duality_fixing,
         ]
         self.fixed_var_dict_list: List[Dict[int, int]] = []
 
