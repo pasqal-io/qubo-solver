@@ -6,7 +6,7 @@ from dataclasses import field
 from typing import Any, Callable
 
 import torch
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator, model_serializer
 from qoolqit._solvers.data import BackendConfig
 from qoolqit._solvers.types import DeviceType
 from qoolqit._solvers.types import BackendType
@@ -68,6 +68,33 @@ class ClassicalConfig(Config):
     tabu_x0: torch.Tensor | None = None
     tabu_tenure: int = 7
     tabu_max_no_improve: int = 20
+
+    @model_serializer(mode="plain")
+    def serialize_model(self) -> dict[str, Any]:
+        serialization: dict = {"classical_solver_type": self.classical_solver_type}
+        if self.classical_solver_type == "cplex":
+            serialization.update(
+                {"cplex_maxtime": self.cplex_maxtime, "cplex_log_path": self.cplex_log_path}
+            )
+        if self.classical_solver_type == "simulated_annealing":
+            serialization.update(
+                {
+                    "max_iter": self.max_iter,
+                    "sa_initial_temp": self.sa_initial_temp,
+                    "sa_final_temp": self.sa_final_temp,
+                    "sa_alpha": self.sa_alpha,
+                }
+            )
+        if self.classical_solver_type == "tabu_search":
+            serialization.update(
+                {
+                    "max_iter": self.max_iter,
+                    "tabu_x0": self.tabu_x0,
+                    "tabu_tenure": self.tabu_tenure,
+                    "tabu_max_no_improve": self.tabu_max_no_improve,
+                }
+            )
+        return serialization
 
 
 class EmbeddingConfig(Config):
