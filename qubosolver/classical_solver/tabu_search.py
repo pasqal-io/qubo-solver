@@ -3,6 +3,7 @@ from __future__ import annotations
 import torch
 
 from qubosolver import QUBOInstance, QUBOSolution
+from qubosolver.utils.qubo_eval import qubo_cost
 
 
 def qubo_tabu_search(
@@ -40,33 +41,9 @@ def qubo_tabu_search(
     best_solution, _ = tabu_search(
         qubo=qubo, x0=x0, max_iter=max_iter, tabu_tenure=tabu_tenure, max_no_improve=max_no_improve
     )
-    bitstrings = torch.tensor(best_solution, dtype=torch.float32)
-    costs = torch.tensor(
-        [qubo.evaluate_solution(sample.tolist()) for sample in bitstrings], dtype=torch.float32
-    )
+    bitstrings = best_solution.unsqueeze(0).to(torch.float32)
+    costs = torch.tensor([qubo.evaluate_solution(best_solution.tolist())], dtype=torch.float32)
     return QUBOSolution(bitstrings=bitstrings, costs=costs)
-
-
-def qubo_cost(x: torch.Tensor, Q: torch.Tensor) -> torch.Tensor:
-    """
-    Compute the quadratic cost of a given binary vector under a QUBO matrix.
-
-    The cost is defined as the quadratic form :math:`x^T Q x`.
-
-    Args:
-        x: Binary tensor of shape (n,) or (n, 1).
-        Q: Symmetric QUBO coefficient matrix of shape (n, n).
-
-    Returns:
-        A scalar tensor representing the cost value.
-
-    Example:
-        >>> Q = torch.tensor([[1., -1.], [-1., 2.]])
-        >>> x = torch.tensor([1., 0.])
-        >>> qubo_cost(x, Q)
-        tensor(1.)
-    """
-    return x.T @ Q @ x
 
 
 def tabu_search(
@@ -103,9 +80,9 @@ def tabu_search(
         >>> print(best_x, best_cost)
     """
     Q = qubo.coefficients
-    n: int = x0.size(dim=0)
+    n: int = x0.numel()
 
-    x_best = x0.clone()
+    x_best = x0.clone().to(torch.int64)
     f_best: float = qubo_cost(x_best, Q).item()
 
     x_current = x0.clone()
@@ -113,13 +90,12 @@ def tabu_search(
 
     # Tabu list: store iteration number until which each move is tabu
     tabu_list = torch.zeros(n)
-
     iter_since_last_improve: int = 0
 
     for iteration in range(max_iter):
-        best_candidate: torch.Tensor = torch.tensor([])
-        best_candidate_cost: float = torch.inf
-        best_move: int = -1
+        best_candidate = None
+        best_candidate_cost = torch.inf
+        best_move = -1
 
         for i in range(n):
             x_candidate = x_current.clone()
@@ -137,7 +113,7 @@ def tabu_search(
             break  # No valid move found
 
         # Apply best move
-        x_current = best_candidate
+        x_current = best_candidate.clone()
         f_current = best_candidate_cost
         tabu_list[best_move] = iteration + tabu_tenure
 

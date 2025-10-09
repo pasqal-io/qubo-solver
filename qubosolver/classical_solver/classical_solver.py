@@ -123,9 +123,9 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
         simulated_annealing_solution = qubo_simulated_annealing(
             qubo=self.instance,
             max_iter=self.config.max_iter,
-            initial_temp=self.config.initial_temp,
-            final_temp=self.config.final_temp,
-            alpha=self.config.alpha,
+            initial_temp=self.config.sa_initial_temp,
+            final_temp=self.config.sa_final_temp,
+            alpha=self.config.sa_alpha,
         )
         return simulated_annealing_solution
 
@@ -136,18 +136,18 @@ class TabuSearchSolver(BaseClassicalSolver):
     """
 
     def solve(self) -> QUBOSolution:
-        if not self.config.x0:
+        if not self.config.tabu_x0:
             assert self.instance.size
             x0 = torch.randint(0, 2, size=(self.instance.size,))
         else:
-            x0 = self.config.x0
+            x0 = self.config.tabu_x0
 
         tabu_search_solution = qubo_tabu_search(
             qubo=self.instance,
             x0=x0,
             max_iter=self.config.max_iter,
             tabu_tenure=self.config.tabu_tenure,
-            max_no_improve=self.config.max_no_improve,
+            max_no_improve=self.config.tabu_max_no_improve,
         )
         return tabu_search_solution
 

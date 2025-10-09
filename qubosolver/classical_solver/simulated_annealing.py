@@ -3,6 +3,7 @@ from __future__ import annotations
 import torch
 
 from qubosolver import QUBOInstance, QUBOSolution
+from qubosolver.utils.qubo_eval import qubo_cost
 
 
 def qubo_simulated_annealing(
@@ -40,31 +41,11 @@ def qubo_simulated_annealing(
         >>> print(solution.bitstrings, solution.costs)
     """
     best_solution, _ = simulated_annealing(qubo, max_iter, initial_temp, final_temp, alpha)
-    bitstrings = torch.tensor(best_solution, dtype=torch.float32)
-    costs = torch.tensor([qubo.evaluate_solution(sample.tolist()) for sample in bitstrings])
+    # add one dimension instead of rebuilding a ne tensor
+    bitstrings = best_solution.unsqueeze(0).to(torch.float32)
+    # bitstrings = torch.tensor([best_solution], dtype=torch.float32)
+    costs = torch.tensor([qubo.evaluate_solution(best_solution.tolist())])
     return QUBOSolution(bitstrings=bitstrings, costs=costs)
-
-
-def qubo_energy(x: torch.Tensor, Q: torch.Tensor) -> torch.Tensor:
-    """
-    Compute the energy (objective value) of a QUBO configuration.
-
-    This corresponds to evaluating the quadratic form :math:`x^T Q x`.
-
-    Args:
-        x: Binary tensor of shape (n,) or (n, 1) representing a solution.
-        Q: QUBO coefficient matrix of shape (n, n).
-
-    Returns:
-        A scalar tensor containing the energy value.
-
-    Example:
-        >>> Q = torch.tensor([[1., -1.], [-1., 2.]])
-        >>> x = torch.tensor([1., 0.])
-        >>> qubo_energy(x, Q)
-        tensor(1.)
-    """
-    return x.T @ Q @ x
 
 
 def simulated_annealing(
@@ -106,7 +87,7 @@ def simulated_annealing(
 
     # Start with a random binary vector
     current_solution = torch.randint(low=0, high=2, size=(n,))
-    current_energy = qubo_energy(current_solution, qubo.coefficients)
+    current_energy = qubo_cost(current_solution, qubo.coefficients)
 
     best_solution = current_solution.clone()
     best_energy = current_energy
@@ -120,11 +101,11 @@ def simulated_annealing(
         flip_index = torch.randint(low=0, high=n - 1, size=(1,))
         new_solution[flip_index.data] ^= 1  # Bitflip
 
-        new_energy = qubo_energy(new_solution, qubo.coefficients)
+        new_energy = qubo_cost(new_solution, qubo.coefficients)
         delta = new_energy - current_energy
 
         # Decide whether to accept the new solution
-        if delta < 0 or torch.rand() < torch.exp(-delta / temp):
+        if delta < 0 or torch.rand(1) < torch.exp(-delta / temp):
             current_solution = new_solution
             current_energy = new_energy
 
