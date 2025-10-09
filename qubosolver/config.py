@@ -45,13 +45,13 @@ class ClassicalConfig(Config):
         classical_solver_type (str, optional): Classical solver type. Defaults to "cplex".
         cplex_maxtime (float, optional): CPLEX maximum runtime. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
-        max_iter: Maximum number of iterations to perform.
-        sa_initial_temp: Starting temperature (controls exploration).
-        sa_final_temp: Minimum temperature threshold for stopping.
-        sa_alpha: Cooling rate; should be slightly below 1 (e.g., 0.95–0.99).
-        tabu_x0: The initial binary solution tensor of shape (n,).
-        tabu_tenure: Number of iterations a move (bit flip) remains tabu.
-        tabu_max_no_improve: Maximum number of consecutive iterations
+        max_iter (int, optional): Maximum number of iterations to perform for simulated annealing or tabu search.
+        sa_initial_temp (float, optional): Starting temperature (controls exploration).
+        sa_final_temp (float, optional): Minimum temperature threshold for stopping.
+        sa_alpha (float, optional): Cooling rate - should be slightly below 1 (e.g., 0.95–0.99).
+        tabu_x0 (torch.Tensor | None, optional): The initial binary solution tensor of shape (n,).
+        tabu_tenure (int, optional): Number of iterations a move (bit flip) remains tabu.
+        tabu_max_no_improve (int, optional): Maximum number of consecutive iterations
             without improvement before termination.
     """
 
