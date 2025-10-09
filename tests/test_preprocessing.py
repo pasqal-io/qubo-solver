@@ -62,7 +62,7 @@ def test_hansen_fixing() -> None:
     assert empty_fixed_var == {}
 
 
-def test_dwave_roof_duality_fixing() -> None:
+def test_roof_duality_fixing() -> None:
     matrix_reducible = torch.tensor([[-10, 1], [1, -10]], dtype=torch.int32)
 
     qubo_reducible = QUBOInstance(matrix_reducible)
