@@ -17,7 +17,10 @@ This solver uses a Simulated Annealing to probabilistically explore the solution
 |------------------------|---------|-------------|
 | `use_quantum`           | `bool`  | Have to be `False` to uses a classical solver. |
 | `classical_solver_type` | `str`   | Set to `"simulated_annealing"` to use Simulated Annealing as the solving method. |
-
+| `max_iter`    | `int` | Maximum number of iterations to perform for simulated annealing or tabu search. |
+| `sa_initial_temp`    | `float` | Starting temperature (controls exploration). |
+| `sa_final_temp`    | `float` | Minimum temperature threshold for stopping. |
+| `sa_alpha`    | `float` | Cooling rate - should be slightly below 1 (e.g., 0.95–0.99). |
 
 ### Usage
 ```python exec="on" source="material-block" html="1"
