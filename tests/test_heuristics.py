@@ -10,7 +10,7 @@ from qubosolver.classical_solver import get_classical_solver
 from qubosolver.classical_solver.classical_solver import SimulatedAnnealingSolver, TabuSearchSolver
 
 
-def test_qubo_solver_dwave_SA() -> None:
+def test_qubo_solver_SA() -> None:
     # Create a simple 2x2 QUBO instance.
     # For example, consider a QUBO where the optimum is known.
     # Here we use an identity matrix.
@@ -45,7 +45,7 @@ def test_qubo_solver_dwave_SA() -> None:
     assert pytest.approx(actual_cost, rel=1e-3) == expected_cost
 
 
-def test_qubo_solver_dwave_tabu() -> None:
+def test_qubo_solver_tabu() -> None:
     # Create a simple 2x2 QUBO instance.
     # For example, consider a QUBO where the optimum is known.
     # Here we use an identity matrix.
