@@ -107,8 +107,6 @@ def roof_duality_fixing(qubo_inst: QUBOInstance) -> Dict[int, int]:
     g = maxflow.Graph[float]()
     node_ids = g.add_nodes(2 * n)
 
-    Q_np = qubo_inst.coefficients.detach().cpu().numpy().astype(float)
-
     def p_idx(i: int) -> Any:
         return node_ids[2 * i]
 
@@ -116,36 +114,43 @@ def roof_duality_fixing(qubo_inst: QUBOInstance) -> Dict[int, int]:
         return node_ids[2 * i + 1]
 
     # Linear terms: diagonal entries Q[i,i]
-    for i in range(n):
-        ui = float(Q_np[i, i])
-        pi = p_idx(i)
-        qi = q_idx(i)
-        if ui >= 0:
-            # source -> p with cap ui ; q -> sink with cap ui
-            g.add_tedge(pi, ui, 0.0)
-            g.add_tedge(qi, 0.0, ui)
-        else:
-            # negative -> encourage 1: source -> q with cap -ui ; p -> sink with cap -ui
-            g.add_tedge(qi, -ui, 0.0)
-            g.add_tedge(pi, 0.0, -ui)
+    diag = qubo_inst.coefficients.diagonal()
+    pos_mask = diag >= 0
+    neg_mask = ~pos_mask
+    pos_idx = torch.nonzero(pos_mask, as_tuple=False).flatten()
+    neg_idx = torch.nonzero(neg_mask, as_tuple=False).flatten()
+
+    for i in pos_idx.tolist():
+        ui = float(diag[i])
+        g.add_tedge(p_idx(i), ui, 0.0)
+        g.add_tedge(q_idx(i), 0.0, ui)
+    for i in neg_idx.tolist():
+        ui = float(-diag[i])
+        g.add_tedge(q_idx(i), ui, 0.0)
+        g.add_tedge(p_idx(i), 0.0, ui)
 
     # Quadratic terms: off-diagonal Q[i,j], i < j
-    for i in range(n):
-        for j in range(i + 1, n):
-            a = float(Q_np[i, j])
-            if abs(a) < 1e-16:
-                continue
-            pi, qi = p_idx(i), q_idx(i)
-            pj, qj = p_idx(j), q_idx(j)
-            if a >= 0:
-                # submodular-like construction: connect p-p and q-q with capacity a
-                g.add_edge(pi, pj, a, a)
-                g.add_edge(qi, qj, a, a)
-            else:
-                # non-submodular part: connect p_i to q_j and p_j to q_i with weight -a
-                w = -a
-                g.add_edge(pi, qj, w, w)
-                g.add_edge(pj, qi, w, w)
+    # Get upper triangle indices
+    i_idx, j_idx = torch.triu_indices(n, n, offset=1)
+    coeffs = qubo_inst.coefficients[i_idx, j_idx]
+    pos_mask = coeffs >= 0
+    neg_mask = ~pos_mask
+
+    # positive edges (submodular)
+    pos_i = i_idx[pos_mask].tolist()
+    pos_j = j_idx[pos_mask].tolist()
+    pos_w = coeffs[pos_mask].tolist()
+    for i, j, w in zip(pos_i, pos_j, pos_w):
+        g.add_edge(p_idx(i), p_idx(j), w, w)
+        g.add_edge(q_idx(i), q_idx(j), w, w)
+
+    # negative edges (non-submodular)
+    neg_i = i_idx[neg_mask].tolist()
+    neg_j = j_idx[neg_mask].tolist()
+    neg_w = (-coeffs[neg_mask]).tolist()
+    for i, j, w in zip(neg_i, neg_j, neg_w):
+        g.add_edge(p_idx(i), q_idx(j), w, w)
+        g.add_edge(p_idx(j), q_idx(i), w, w)
 
     # Compute maxflow / mincut
     g.maxflow()
