@@ -48,7 +48,7 @@ qubo = QUBOInstance(coefficients=[[-2.0, 1.0], [1.0, -2.0]])
 # Create a SolverConfig object with classical solver options.
 config = SolverConfig(
     use_quantum=False,
-    classical=ClassicalConfig(classical_solver_type="dwave_tabu"),
+    classical=ClassicalConfig(classical_solver_type="simulated_annealing"),
     do_preprocessing=True
 )
 

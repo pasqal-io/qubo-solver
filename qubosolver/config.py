@@ -6,7 +6,7 @@ from dataclasses import field
 from typing import Any, Callable
 
 import torch
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator, model_serializer
 from qoolqit._solvers.data import BackendConfig
 from qoolqit._solvers.types import DeviceType
 from qoolqit._solvers.types import BackendType
@@ -45,11 +45,56 @@ class ClassicalConfig(Config):
         classical_solver_type (str, optional): Classical solver type. Defaults to "cplex".
         cplex_maxtime (float, optional): CPLEX maximum runtime. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
+        max_iter (int, optional): Maximum number of iterations to perform for simulated annealing or tabu search.
+        sa_initial_temp (float, optional): Starting temperature (controls exploration).
+        sa_final_temp (float, optional): Minimum temperature threshold for stopping.
+        sa_alpha (float, optional): Cooling rate - should be slightly below 1 (e.g., 0.95–0.99).
+        tabu_x0 (torch.Tensor | None, optional): The initial binary solution tensor of shape (n,).
+        tabu_tenure (int, optional): Number of iterations a move (bit flip) remains tabu.
+        tabu_max_no_improve (int, optional): Maximum number of consecutive iterations
+            without improvement before termination.
     """
 
     classical_solver_type: str = "cplex"
     cplex_maxtime: float = 600.0
     cplex_log_path: str = "solver.log"
+
+    max_iter: int = 100
+
+    sa_initial_temp: float = 10.0
+    sa_final_temp: float = 0.1
+    sa_alpha: float = 0.99
+
+    tabu_x0: torch.Tensor | None = None
+    tabu_tenure: int = 7
+    tabu_max_no_improve: int = 20
+
+    @model_serializer(mode="plain")
+    def serialize_model(self) -> dict[str, Any]:
+        serialization: dict = {"classical_solver_type": self.classical_solver_type}
+        if self.classical_solver_type == "cplex":
+            serialization.update(
+                {"cplex_maxtime": self.cplex_maxtime, "cplex_log_path": self.cplex_log_path}
+            )
+        if self.classical_solver_type == "simulated_annealing":
+            serialization.update(
+                {
+                    "max_iter": self.max_iter,
+                    "sa_initial_temp": self.sa_initial_temp,
+                    "sa_final_temp": self.sa_final_temp,
+                    "sa_alpha": self.sa_alpha,
+                }
+            )
+        if self.classical_solver_type == "tabu_search":
+            serialization.update(
+                {
+                    "max_iter": self.max_iter,
+                    "tabu_x0": self.tabu_x0,
+                    "tabu_tenure": self.tabu_tenure,
+                    "tabu_max_no_improve": self.tabu_max_no_improve,
+                }
+            )
+        return serialization
 
 
 class EmbeddingConfig(Config):

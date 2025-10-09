@@ -41,7 +41,6 @@ dependencies = [
   "scikit-optimize",
   "dimod",
   "dwave-preprocessing",
-  "dwave-neal",
   "cplex",
   "pydantic>=2",
   "qoolqit[solvers]==0.1.3",

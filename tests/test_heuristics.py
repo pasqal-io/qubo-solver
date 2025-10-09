@@ -7,11 +7,10 @@ from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.config import ClassicalConfig, SolverConfig
 from qubosolver.solver import QuboSolver
 from qubosolver.classical_solver import get_classical_solver
+from qubosolver.classical_solver.classical_solver import SimulatedAnnealingSolver, TabuSearchSolver
 
 
-def test_qubo_solver_dwave_SA() -> None:
-    from qubosolver.classical_solver.classical_solver import DwaveSASolver
-
+def test_qubo_solver_SA() -> None:
     # Create a simple 2x2 QUBO instance.
     # For example, consider a QUBO where the optimum is known.
     # Here we use an identity matrix.
@@ -19,11 +18,11 @@ def test_qubo_solver_dwave_SA() -> None:
     instance = QUBOInstance(coefficients=Q)
 
     # Create a SolverConfig object with classical solver options.
-    classical_config = ClassicalConfig(classical_solver_type="dwave_sa")
+    classical_config = ClassicalConfig(classical_solver_type="simulated_annealing")
     config = SolverConfig(use_quantum=False, classical=classical_config)
 
     # insure get_classical_solver works properly
-    assert isinstance(get_classical_solver(instance, config.classical.model_dump()), DwaveSASolver)
+    assert isinstance(get_classical_solver(instance, config.classical), SimulatedAnnealingSolver)
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
     classical_solver = QuboSolver(instance, config)
@@ -46,9 +45,7 @@ def test_qubo_solver_dwave_SA() -> None:
     assert pytest.approx(actual_cost, rel=1e-3) == expected_cost
 
 
-def test_qubo_solver_dwave_tabu() -> None:
-    from qubosolver.classical_solver.classical_solver import DwaveTabuSolver
-
+def test_qubo_solver_tabu() -> None:
     # Create a simple 2x2 QUBO instance.
     # For example, consider a QUBO where the optimum is known.
     # Here we use an identity matrix.
@@ -56,12 +53,10 @@ def test_qubo_solver_dwave_tabu() -> None:
     instance = QUBOInstance(coefficients=Q)
 
     # Create a SolverConfig object with classical solver options.
-    classical_config = ClassicalConfig(classical_solver_type="dwave_tabu")
+    classical_config = ClassicalConfig(classical_solver_type="tabu_search")
     config = SolverConfig(use_quantum=False, classical=classical_config)
 
-    assert isinstance(
-        get_classical_solver(instance, config.classical.model_dump()), DwaveTabuSolver
-    )
+    assert isinstance(get_classical_solver(instance, config.classical), TabuSearchSolver)
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
     classical_solver = QuboSolver(instance, config)

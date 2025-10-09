@@ -12,39 +12,27 @@ Description:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import List
 
 import cplex
 import torch
 
-# D-Wave imports
-from dwave.samplers import SimulatedAnnealingSampler
-
-# For Tabu Search, we need:
-from dwave.samplers.tabu import TabuSampler
-
-# QUBO solver imports
+from qubosolver.config import ClassicalConfig
 from qubosolver import QUBOInstance, QUBOSolution
-
-# Import conversion utilities from classical_solver_conversion_tools.
+from qubosolver.classical_solver.simulated_annealing import qubo_simulated_annealing
+from qubosolver.classical_solver.tabu_search import qubo_tabu_search
 from qubosolver.classical_solver.classical_solver_conversion_tools import (
     qubo_instance_to_sparsepairs,
 )
-from qubosolver.classical_solver.classical_solver_conversion_tools import (
-    run_sampler as conversion_run_sampler,
-)
 
 
-# =============================================================================
-# Abstract base class and solver implementations
-# =============================================================================
 class BaseClassicalSolver(ABC):
     """
     Abstract base class for all classical QUBO solvers.
     Stores the QUBO instance and an optional configuration dictionary.
     """
 
-    def __init__(self, instance: QUBOInstance, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, instance: QUBOInstance, config: ClassicalConfig):
         """
         Initializes the solver with a given QUBO instance and configuration.
 
@@ -54,7 +42,7 @@ class BaseClassicalSolver(ABC):
             (e.g., cplex_maxtime, cplex_log_path, classical_solver_type).
         """
         self.instance = instance
-        self.config = config if config is not None else {}
+        self.config = config
 
     @abstractmethod
     def solve(self) -> QUBOSolution:
@@ -68,9 +56,6 @@ class BaseClassicalSolver(ABC):
         pass
 
 
-# -----------------------------------------------------------------------------
-# CPLEX-based QUBO solver implementation.
-# -----------------------------------------------------------------------------
 class CplexSolver(BaseClassicalSolver):
     """
     QUBO solver based on CPLEX.
@@ -78,8 +63,8 @@ class CplexSolver(BaseClassicalSolver):
 
     def solve(self) -> QUBOSolution:
         # Extract configuration parameters using new keys.
-        log_path: str = self.config.get("cplex_log_path", "solver.log")
-        maxtime: float = self.config.get("cplex_maxtime", 600.0)
+        log_path: str = self.config.cplex_log_path
+        maxtime: float = self.config.cplex_maxtime
 
         if self.instance.coefficients is None:
             raise ValueError("The QUBO instance does not contain coefficients.")
@@ -129,43 +114,45 @@ class CplexSolver(BaseClassicalSolver):
         return QUBOSolution(bitstrings=bitstring_tensor, costs=cost_tensor)
 
 
-# -----------------------------------------------------------------------------
-# D-Wave Simulated Annealing (SA) solver implementation.
-# -----------------------------------------------------------------------------
-class DwaveSASolver(BaseClassicalSolver):
+class SimulatedAnnealingSolver(BaseClassicalSolver):
     """
-    QUBO solver using D-Wave's Simulated Annealing sampler.
+    QUBO solver using Simulated annealing solver.
     """
 
     def solve(self) -> QUBOSolution:
-        # Initialize the D-Wave Simulated Annealing sampler.
-        sampler = SimulatedAnnealingSampler()
-        # Use the conversion tool's run_sampler (which returns a QUBOSolution).
-        solution: QUBOSolution = conversion_run_sampler(sampler, self.instance)
-        return solution
+        simulated_annealing_solution = qubo_simulated_annealing(
+            qubo=self.instance,
+            max_iter=self.config.max_iter,
+            initial_temp=self.config.sa_initial_temp,
+            final_temp=self.config.sa_final_temp,
+            alpha=self.config.sa_alpha,
+        )
+        return simulated_annealing_solution
 
 
-# -----------------------------------------------------------------------------
-# D-Wave Tabu Search solver implementation.
-# -----------------------------------------------------------------------------
-class DwaveTabuSolver(BaseClassicalSolver):
+class TabuSearchSolver(BaseClassicalSolver):
     """
-    QUBO solver using D-Wave's Tabu Search heuristic.
+    QUBO solver using Tabu search solver.
     """
 
     def solve(self) -> QUBOSolution:
-        # Initialize the D-Wave Tabu Search sampler.
-        sampler = TabuSampler()
-        solution: QUBOSolution = conversion_run_sampler(sampler, self.instance)
-        return solution
+        if not self.config.tabu_x0:
+            assert self.instance.size
+            x0 = torch.randint(0, 2, size=(self.instance.size,))
+        else:
+            x0 = self.config.tabu_x0
+
+        tabu_search_solution = qubo_tabu_search(
+            qubo=self.instance,
+            x0=x0,
+            max_iter=self.config.max_iter,
+            tabu_tenure=self.config.tabu_tenure,
+            max_no_improve=self.config.tabu_max_no_improve,
+        )
+        return tabu_search_solution
 
 
-# =============================================================================
-# Factory function to select the appropriate solver based on configuration.
-# =============================================================================
-def get_classical_solver(
-    instance: QUBOInstance, config: Optional[Dict[str, Any]] = None
-) -> BaseClassicalSolver:
+def get_classical_solver(instance: QUBOInstance, config: ClassicalConfig) -> BaseClassicalSolver:
     """
     Returns the appropriate QUBO solver based on the configuration.
 
@@ -180,14 +167,14 @@ def get_classical_solver(
     Raises:
         ValueError: If the requested solver type is not supported.
     """
-    solver_type = config.get("classical_solver_type", "cplex") if config is not None else "cplex"
+    solver_type = config.classical_solver_type
     solver_type = solver_type.lower()
 
     if solver_type == "cplex":
         return CplexSolver(instance, config)
-    elif solver_type == "dwave_sa":
-        return DwaveSASolver(instance, config)
-    elif solver_type == "dwave_tabu":
-        return DwaveTabuSolver(instance, config)
-    else:
-        raise ValueError(f"Solver type not supported: {solver_type}")
+    if solver_type == "simulated_annealing":
+        return SimulatedAnnealingSolver(instance, config)
+    if solver_type == "tabu_search":
+        return TabuSearchSolver(instance, config)
+
+    raise ValueError(f"Solver type not supported: {solver_type}")
