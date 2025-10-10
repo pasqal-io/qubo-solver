@@ -15,6 +15,7 @@ from qubosolver.qubo_types import (
     EmbedderType,
     LayoutType,
     PulseType,
+    ClassicalSolverType,
 )
 
 # to handle torch Tensor
@@ -42,7 +43,7 @@ class ClassicalConfig(Config):
         part of a `SolverConfig`.
 
     Attributes:
-        classical_solver_type (str, optional): Classical solver type. Defaults to "cplex".
+        classical_solver_type (str | ClassicalSolverType, optional): Classical solver type. Defaults to "cplex".
         cplex_maxtime (float, optional): CPLEX maximum runtime. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
         max_iter (int, optional): Maximum number of iterations to perform for simulated annealing or tabu search.
@@ -55,7 +56,7 @@ class ClassicalConfig(Config):
             without improvement before termination.
     """
 
-    classical_solver_type: str = "cplex"
+    classical_solver_type: str | ClassicalSolverType = "cplex"
     cplex_maxtime: float = 600.0
     cplex_log_path: str = "solver.log"
 
@@ -68,6 +69,24 @@ class ClassicalConfig(Config):
     tabu_x0: torch.Tensor | None = None
     tabu_tenure: int = 7
     tabu_max_no_improve: int = 20
+
+    @field_validator("classical_solver_type")
+    @classmethod
+    def _normalize_classical_solver_type(
+        cls, val: str | ClassicalSolverType
+    ) -> ClassicalSolverType | Any:
+        """Normalize the classical_solver_type attribute."""
+        if isinstance(val, ClassicalSolverType):
+            return val
+        u = val.upper()
+        if u == ClassicalSolverType.CPLEX.name:
+            return ClassicalSolverType.CPLEX
+        elif u == ClassicalSolverType.TABU_SEARCH.name:
+            return ClassicalSolverType.TABU_SEARCH
+        elif u == ClassicalSolverType.SIMULATED_ANNEALING.name:
+            return ClassicalSolverType.SIMULATED_ANNEALING
+        else:
+            raise ValueError(f"Invalid classical_solver_type '{val}'.")
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:

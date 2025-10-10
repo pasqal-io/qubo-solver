@@ -16,7 +16,7 @@ Two deterministic rules are applied iteratively until no further variables can b
   A rule based on the diagonal and off-diagonal entries of the QUBO matrix. It fixes variables whose contribution to the objective function can be bounded independently of the rest of the problem.
 
 - **Roof Duality**
-  A technique based on duality theory that provides provably optimal variable fixations. It is implemented using the `roof_duality` function from the D-Wave Ocean SDK.
+  A technique based on duality theory that provides provably optimal variable fixations.
 
 These rules are applied in sequence until convergence, reducing the QUBO instance before it is passed to the solver.
 
@@ -69,5 +69,5 @@ print(solution)
 ### References
 
 - Hansen, P. (1979). *Method of non-linear 0-1 programming*. Annals of Discrete Mathematics, 5:53–70.
-- D-Wave Systems Inc., *Ocean SDK — dwave.preprocessing.roof_duality*
-  [doc](https://docs.dwavequantum.com/en/latest/ocean/api_ref_preprocessing/api_ref.html)
+- Boros et al. (2008). *A max-flow approach to improved lower bounds for quadratic unconstrained binary optimization (QUBO)*
+  [doc](https://www.sciencedirect.com/science/article/pii/S1572528607000400)

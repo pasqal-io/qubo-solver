@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "qubo-solver"
 description = "A Quadratic Unconstrained Binary Optimization (QUBO) solver library using quantum and classical approaches."
 readme = "README.md"
-version = "0.0.6"
+version = "0.1.0"
 requires-python = ">=3.10,<3.13"
 license = { text = "MIT-derived" }
 keywords = ["quantum", "qubo", "solver", "optimization", "combinatorial"]
@@ -39,8 +39,7 @@ dependencies = [
   "pandas",
   "seaborn",
   "scikit-optimize",
-  "dimod",
-  "dwave-preprocessing",
+  "PyMaxflow",
   "cplex",
   "pydantic>=2",
   "qoolqit[solvers]==0.1.3",

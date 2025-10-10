@@ -7,7 +7,8 @@ import torch
 # Import the classical solver factory from our classical_solver module.
 from qoolqit._solvers import get_backend
 
-from qubosolver import QUBOInstance, QUBOSolution
+from qubosolver.qubo_instance import QUBOInstance
+from qubosolver.data import QUBOSolution
 from qubosolver.classical_solver import get_classical_solver
 from qubosolver.config import SolverConfig
 from qubosolver.pipeline import (
@@ -18,6 +19,10 @@ from qubosolver.pipeline import (
     get_embedder,
     get_pulse_shaper,
 )
+
+
+# Modules to be automatically added to the qubosolver namespace
+__all__: list[str] = ["QuboSolver"]
 
 
 class QuboSolver(BaseSolver):

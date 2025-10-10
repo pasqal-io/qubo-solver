@@ -12,6 +12,10 @@ from .utils.density import (
 )
 
 
+# Modules to be automatically added to the qubosolver namespace
+__all__: list[str] = ["QUBOInstance"]
+
+
 class QUBOInstance:
     """
     Represents a single instance of a Quadratic Unconstrained Binary Optimization (QUBO) problem.
@@ -189,7 +193,3 @@ class QUBOInstance:
             f"QUBOInstance of size = {self.size},"
             f"density = {round(self.density, 2) if self.density else None},"
         )
-
-
-# Modules to be automatically added to the qubosolver namespace
-__all__ = ["QUBOInstance"]  # type: ignore
