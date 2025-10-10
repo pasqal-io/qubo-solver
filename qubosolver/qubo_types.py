@@ -80,3 +80,11 @@ class SolutionStatusType(StrEnum):
 
     TRIVIALONE = "trivial-one"
     TRIVIALZERO = "trivial-zero"
+
+
+class ClassicalSolverType(StrEnum):
+    """Type of classical solver used."""
+
+    TABU_SEARCH = "tabu_search"
+    SIMULATED_ANNEALING = "simulated_annealing"
+    CPLEX = "cplex"

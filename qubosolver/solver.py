@@ -20,6 +20,10 @@ from qubosolver.pipeline import (
 )
 
 
+# Modules to be automatically added to the qubosolver namespace
+__all__: list[str] = ["QuboSolver"]
+
+
 class QuboSolver(BaseSolver):
     """
     Dispatcher that selects the appropriate solver (quantum or classical)
