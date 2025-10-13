@@ -14,7 +14,6 @@ from qubosolver.classical_solver.classical_solver import (
 )
 
 
-@pytest.mark.flaky(reruns=5)
 def test_qubo_solver_SA() -> None:
     # Create a simple 2x2 QUBO instance.
     # For example, consider a QUBO where the optimum is known.
@@ -52,7 +51,6 @@ def test_qubo_solver_SA() -> None:
     assert pytest.approx(actual_cost, rel=1e-3) == expected_cost
 
 
-@pytest.mark.flaky(reruns=5)
 def test_qubo_solver_tabu() -> None:
     # Create a simple 2x2 QUBO instance.
     # For example, consider a QUBO where the optimum is known.
