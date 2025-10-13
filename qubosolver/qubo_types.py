@@ -88,3 +88,4 @@ class ClassicalSolverType(StrEnum):
     TABU_SEARCH = "tabu_search"
     SIMULATED_ANNEALING = "simulated_annealing"
     CPLEX = "cplex"
+    RANDOM = "random"

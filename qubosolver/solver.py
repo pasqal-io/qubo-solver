@@ -219,7 +219,7 @@ class QuboSolverClassical(BaseSolver):
     def solve(self) -> QUBOSolution:
         # 1) try trivial
         trivial = self._trivial_solution()
-        if trivial is not None:
+        if trivial is not None and self.config.activate_trivial_solutions:
             return trivial
 
         if self.config.do_preprocessing:
