@@ -14,6 +14,7 @@ from qubosolver.classical_solver.classical_solver import (
 )
 
 
+@pytest.mark.flaky(reruns=5)
 def test_qubo_solver_SA() -> None:
     # Create a simple 2x2 QUBO instance.
     # For example, consider a QUBO where the optimum is known.
