@@ -125,6 +125,28 @@ class BaseSolver(ABC):
 
         return bitstrings, counts
 
+    def draw_sequence(self, pulse: Pulse, embedding: Register) -> None:
+        """Draw sequence of the `QuantumProgram` submitted.
+
+        Args:
+            pulse (Pulse): Pulse used in program.
+            embedding (Register): embedding program is defined over.
+        """
+        if self.config.use_quantum:
+            from qoolqit._solvers.backends.base_backend import make_sequence
+
+            detunings = pulse.detuning(embedding.register)
+            program = QuantumProgram(
+                device=self.backend.device(),
+                register=embedding.register,
+                pulse=pulse.pulse,
+                detunings=detunings,
+            )
+            sequence = make_sequence(program)
+            sequence.draw(
+                draw_detuning_maps=len(detunings) > 0,
+            )
+
     def _trivial_solution(self) -> Optional[QUBOSolution]:
         """
         Check for the two trivial QUBO cases:
