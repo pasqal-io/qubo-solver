@@ -25,9 +25,8 @@ def qubo_cost(x: torch.Tensor, Q: torch.Tensor) -> torch.Tensor:
     x = x.to(torch.float32)
     Q = Q.to(torch.float32)
     if x.dim() == 1:
-        return x.T @ Q @ x
-    else:
-        return torch.einsum("bi,ij,bj->b", x, Q, x)
+        return x @ Q @ x
+    return torch.einsum("bi,ij,bj->b", x, Q, x)
 
 
 def calculate_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float:
