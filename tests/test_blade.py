@@ -131,7 +131,7 @@ def test_force_based_embedding() -> None:
         qubo=qubo,
         device=local_device,
         steps_per_round=1000,
-        starting_positions=np.array([[-1, 1], [1, 1], [1, -1], [-1, -1]]) * max_dist / 3,
+        blade_starting_positions=np.array([[-1, 1], [1, 1], [1, -1], [-1, -1]]) * max_dist / 3,
         dimensions=[2, 2],
         enforce_min_max_dist_ratio=True,
     )

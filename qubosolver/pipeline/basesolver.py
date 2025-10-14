@@ -42,7 +42,9 @@ class BaseSolver(ABC):
             self.config = config
 
         if instance.size:
-            self.config.embedding.traps = max(self.config.embedding.traps, instance.size)
+            self.config.embedding.greedy_traps = max(
+                self.config.embedding.greedy_traps, instance.size
+            )
 
         self.backend = get_backend(self.config.backend_config)
 
@@ -106,7 +108,7 @@ class BaseSolver(ABC):
                 pulse=pulse.pulse,
                 detunings=pulse.detuning(embedding.register),
             )
-            execution_result = self.backend.run(program, self.config.num_shots)
+            execution_result = self.backend.run(program, self.config.quantum_num_shots)
             counts = execution_result.counts
             bitstrings = list(counts.keys())
 
@@ -119,7 +121,7 @@ class BaseSolver(ABC):
                 pulse=pulse.pulse,
                 detunings=pulse.detuning(embedding.register),
             )
-            execution_result = self.backend.run(program, self.config.num_shots)
+            execution_result = self.backend.run(program, self.config.quantum_num_shots)
             counts = execution_result.counts
             bitstrings = list(counts.keys())
 

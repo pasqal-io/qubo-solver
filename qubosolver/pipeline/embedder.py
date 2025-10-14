@@ -92,9 +92,9 @@ class BLaDEmbedder(BaseEmbedder):
             device=self.backend.device(),
             draw_steps=self.config.embedding.draw_steps,
             dimensions=self.config.embedding.blade_dimensions,
-            starting_positions=(
-                self.config.embedding.starting_positions.numpy()
-                if self.config.embedding.starting_positions is not None
+            blade_starting_positions=(
+                self.config.embedding.blade_starting_positions.numpy()
+                if self.config.embedding.blade_starting_positions is not None
                 else None
             ),
             steps_per_round=self.config.embedding.blade_steps_per_round,
@@ -121,9 +121,9 @@ class GreedyEmbedder(BaseEmbedder):
         Returns:
             Register: The register.
         """
-        if self.config.embedding.traps < self.instance.size:
+        if self.config.embedding.greedy_traps < self.instance.size:
             raise ValueError(
-                "Number of traps must be at least equal to the number of atoms on the register."
+                "Number of greedy_traps must be at least equal to the number of atoms on the register."
             )
 
         # compute density (unchanged)
@@ -134,14 +134,13 @@ class GreedyEmbedder(BaseEmbedder):
         # build params for the Greedy algorithm
         params = {
             "device": self.backend.device(),
-            "layout": self.config.embedding.layout_greedy_embedder,
-            "traps": int(self.config.embedding.traps),
-            "spacing": float(self.config.embedding.spacing),
+            "layout": self.config.embedding.greedy_layout,
+            "greedy_traps": int(self.config.embedding.greedy_traps),
+            "greedy_spacing": float(self.config.embedding.greedy_spacing),
             # animation controls (all read by Greedy)
             "draw_steps": bool(self.config.embedding.draw_steps),  # collect per-step data
             "animation": bool(self.config.embedding.draw_steps),  # render animation after run
             "animation_save_path": self.config.embedding.animation_save_path,  # optional export
-            # "animation_top_k": 5,  # (optional) uncomment if you add support for this in Greedy
         }
 
         # --- DEBUG / INFO: show where Greedy comes from + the params we’ll pass

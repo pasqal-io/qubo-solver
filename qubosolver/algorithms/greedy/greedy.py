@@ -45,22 +45,24 @@ class Greedy:
 
         Expected `params` keys:
           - "layout": LayoutType (TRIANGULAR or SQUARE) or "triangular"/"square"
-          - "traps": int (number of trap sites)
-          - "spacing": float (minimum inter-site spacing)
+          - "greedy_traps": int (number of trap sites)
+          - "greedy_spacing": float (minimum inter-site greedy_spacing)
         """
         type_layout = params["layout"]
-        n_traps = params["traps"]
-        spacing = params["spacing"]
+        n_greedy_traps = params["greedy_traps"]
+        greedy_spacing = params["greedy_spacing"]
 
         # default layout: TRIANGULAR
-        layout: RegisterLayout = LayoutType.TRIANGULAR.value(n_traps=n_traps, spacing=spacing)
+        layout: RegisterLayout = LayoutType.TRIANGULAR.value(
+            n_greedy_traps=n_greedy_traps, greedy_spacing=greedy_spacing
+        )
 
         # accept both enum and string "square"
         if type_layout == LayoutType.SQUARE or (
             isinstance(type_layout, str) and type_layout.lower() == "square"
         ):
-            n = int(torch.ceil(torch.sqrt(torch.tensor(n_traps))).item())
-            layout = LayoutType.SQUARE.value(n, n, spacing=spacing)
+            n = int(torch.ceil(torch.sqrt(torch.tensor(n_greedy_traps))).item())
+            layout = LayoutType.SQUARE.value(n, n, greedy_spacing=greedy_spacing)
 
         # build fast maps coord <-> trap index
         self.MAPPING_COORDS_POSITIONS.clear()
@@ -79,15 +81,15 @@ class Greedy:
     ) -> torch.Tensor:
         """
         Precompute Z[i,j,p,q] = | Q[i,j] - U[p,q] | where U[p,q] is the
-        physical interaction between traps p and q (C / r^6).
+        physical interaction between greedy_traps p and q (C / r^6).
         """
         n_nodes = Q.shape[0]
-        n_traps = len(coordinates)
+        n_greedy_traps = len(coordinates)
 
-        # Physical interaction matrix U on traps
-        U = torch.zeros((n_traps, n_traps), dtype=torch.float32)
-        for p in range(n_traps):
-            for q in range(p + 1, n_traps):
+        # Physical interaction matrix U on greedy_traps
+        U = torch.zeros((n_greedy_traps, n_greedy_traps), dtype=torch.float32)
+        for p in range(n_greedy_traps):
+            for q in range(p + 1, n_greedy_traps):
                 U[p, q] = (
                     params["device"].interaction_coeff
                     / torch.norm(coordinates[p] - coordinates[q]) ** 6
@@ -95,8 +97,8 @@ class Greedy:
                 U[q, p] = U[p, q]
 
         # Z: node-node vs trap-trap mismatch
-        Z = torch.zeros((n_nodes, n_nodes, n_traps, n_traps), dtype=torch.float32)
-        p_idx, q_idx = torch.triu_indices(n_traps, n_traps, offset=1)
+        Z = torch.zeros((n_nodes, n_nodes, n_greedy_traps, n_greedy_traps), dtype=torch.float32)
+        p_idx, q_idx = torch.triu_indices(n_greedy_traps, n_greedy_traps, offset=1)
         # broadcast Q to all trap pairs, compare to U[p,q]
         diffs = torch.abs(Q[:, :, None].clone().detach() - U[p_idx, q_idx])
         Z[:, :, p_idx, q_idx] = diffs
@@ -131,12 +133,12 @@ class Greedy:
         u: int,
         positioned: set,
         positioned_coords: dict,
-        all_traps: set,
-        used_traps: set,
+        all_greedy_traps: set,
+        used_greedy_traps: set,
         return_candidates: bool = False,
     ) -> tuple[Any, Any, Any] | tuple[Any, Any, Any, List[Tuple[int, float]]]:
         """
-        Evaluate all available traps p for node u and pick the one that minimizes:
+        Evaluate all available greedy_traps p for node u and pick the one that minimizes:
             s(p) = sum_{j in positioned} Z[u, j, p, trap(j)].
 
         Returns (choice_p, choice_coordinates, min_val)
@@ -144,7 +146,7 @@ class Greedy:
                 (choice_p, choice_coordinates, min_val, candidates)
             where candidates = [(trap_index, incremental_mismatch), ...]
         """
-        available_traps = all_traps.difference(used_traps)
+        available_greedy_traps = all_greedy_traps.difference(used_greedy_traps)
 
         i = u
         choice_p: int = -1
@@ -152,7 +154,7 @@ class Greedy:
         min_val: float = float("inf")
         candidates: List[Tuple[int, float]] = []
 
-        for p in available_traps:
+        for p in available_greedy_traps:
             s = 0.0
             for j in positioned:
                 q = self.MAPPING_COORDS_POSITIONS[positioned_coords[j]]
@@ -190,19 +192,19 @@ class Greedy:
         nodes = list(range(Q.shape[0]))
 
         vertices = set(nodes)
-        all_traps = set(list(layout.traps_dict.keys()))
+        all_greedy_traps = set(list(layout.greedy_traps_dict.keys()))
 
         n: int = len(Q)
-        n_traps: int = len(layout.coords)
-        n_extra_traps: int = 0
+        n_greedy_traps: int = len(layout.coords)
+        n_extra_greedy_traps: int = 0
         init_coord: tuple = (0, 0)
         positioned: set = set([v])
         positioned_coords: dict = {v: init_coord}
         used_coords: set = set([init_coord])
-        used_traps: set = set([self.MAPPING_COORDS_POSITIONS[init_coord]])
+        used_greedy_traps: set = set([self.MAPPING_COORDS_POSITIONS[init_coord]])
 
-        if n_traps > n:
-            n_extra_traps = n_traps - n
+        if n_greedy_traps > n:
+            n_extra_greedy_traps = n_greedy_traps - n
 
         # helpers for instrumentation
         def _trap_of_from_coords() -> Dict[int, int]:
@@ -223,7 +225,7 @@ class Greedy:
                         "picked_node": int(v),
                         "picked_trap": int(self.MAPPING_COORDS_POSITIONS.get(init_coord, -1)),
                         "placed_nodes": list(positioned),
-                        "used_traps": list(used_traps),
+                        "used_greedy_traps": list(used_greedy_traps),
                         "inc_mismatch": 0.0,
                         "total_mismatch": 0.0,
                         "per_trap_candidates": [],
@@ -236,7 +238,7 @@ class Greedy:
 
         while len(positioned) < len(nodes):
             # NOTE: kept as in source, although it's likely meant to compare counts
-            if used_traps == n_traps:
+            if used_greedy_traps == n_greedy_traps:
                 break
 
             u = self.get_best(Q, positioned, copy.deepcopy(vertices))
@@ -249,8 +251,8 @@ class Greedy:
                     u=u,
                     positioned=positioned,
                     positioned_coords=positioned_coords,
-                    all_traps=copy.deepcopy(all_traps),
-                    used_traps=used_traps,
+                    all_greedy_traps=copy.deepcopy(all_greedy_traps),
+                    used_greedy_traps=used_greedy_traps,
                     return_candidates=True,
                 )
                 # Help mypy: explicitly cast 4-tuple
@@ -264,8 +266,8 @@ class Greedy:
                     u=u,
                     positioned=positioned,
                     positioned_coords=positioned_coords,
-                    all_traps=copy.deepcopy(all_traps),
-                    used_traps=used_traps,
+                    all_greedy_traps=copy.deepcopy(all_greedy_traps),
+                    used_greedy_traps=used_greedy_traps,
                     return_candidates=False,
                 )
                 # Help mypy: explicitly cast 3-tuple
@@ -277,15 +279,15 @@ class Greedy:
 
             # check whether trap coordinate is within the maximal radial distance
             if x_ >= max_radial_distance or y_ >= max_radial_distance:
-                if n_extra_traps == 0:
+                if n_extra_greedy_traps == 0:
                     raise ValueError(
-                        f"no traps found to place qubit '{u}' "
+                        f"no greedy_traps found to place qubit '{u}' "
                         f"within {max_radial_distance}µm from origin."
                     )
 
                 used_coords.add(u_coordinates)
-                used_traps.add(self.MAPPING_COORDS_POSITIONS[u_coordinates])
-                n_extra_traps -= 1
+                used_greedy_traps.add(self.MAPPING_COORDS_POSITIONS[u_coordinates])
+                n_extra_greedy_traps -= 1
                 # snapshot of the skip (optional)
                 if on_step is not None:
                     try:
@@ -295,7 +297,7 @@ class Greedy:
                                 "picked_node": int(u),
                                 "picked_trap": int(self.MAPPING_COORDS_POSITIONS[u_coordinates]),
                                 "placed_nodes": list(positioned),
-                                "used_traps": list(used_traps),
+                                "used_greedy_traps": list(used_greedy_traps),
                                 "inc_mismatch": 0.0,
                                 "total_mismatch": float(total_mismatch),
                                 "per_trap_candidates": candidates,
@@ -311,7 +313,7 @@ class Greedy:
             positioned_coords[u] = u_coordinates
             positioned.add(u)
             used_coords.add(u_coordinates)
-            used_traps.add(self.MAPPING_COORDS_POSITIONS[u_coordinates])
+            used_greedy_traps.add(self.MAPPING_COORDS_POSITIONS[u_coordinates])
 
             # incremental mismatch (recompute from Z for clarity)
             inc_val = 0.0
@@ -334,7 +336,7 @@ class Greedy:
                             "picked_node": int(u),
                             "picked_trap": int(self.MAPPING_COORDS_POSITIONS[u_coordinates]),
                             "placed_nodes": list(positioned),
-                            "used_traps": list(used_traps),
+                            "used_greedy_traps": list(used_greedy_traps),
                             "inc_mismatch": float(inc_val),
                             "total_mismatch": float(total_mismatch),
                             "per_trap_candidates": candidates,
@@ -354,7 +356,7 @@ class Greedy:
         positioned_coords.clear()
         positioned.clear()
         used_coords.clear()
-        used_traps.clear()
+        used_greedy_traps.clear()
 
         # compute final total distance (as in original code)
         diff = 0.0
@@ -376,13 +378,13 @@ class Greedy:
         self,
         frames: List[Dict[str, Any]],
         all_coords_np: "np.ndarray",
-        spacing: float,
+        greedy_spacing: float,
         layout_name: str,
         top_k: int = 5,
         save_path: Optional[str] = None,
         fps: float = 1.25,
     ) -> Optional[Any]:
-        """Post-run animation (traps = gray, qubits = green). No persistent rings."""
+        """Post-run animation (greedy_traps = gray, qubits = green). No persistent rings."""
         if not _VIZ_OK:
             return None  # matplotlib or numpy not available
 
@@ -395,8 +397,8 @@ class Greedy:
         from matplotlib.animation import FFMpegWriter, PillowWriter
 
         X, Y = all_coords_np[:, 0], all_coords_np[:, 1]
-        xmin, xmax = X.min() - spacing, X.max() + spacing
-        ymin, ymax = Y.min() - spacing, Y.max() + spacing
+        xmin, xmax = X.min() - greedy_spacing, X.max() + greedy_spacing
+        ymin, ymax = Y.min() - greedy_spacing, Y.max() + greedy_spacing
 
         # ---- Figure & axes
         fig = plt.figure(figsize=(8, 6))
@@ -410,7 +412,7 @@ class Greedy:
         ax_top.set_xlim(xmin, xmax)
         ax_top.set_ylim(ymin, ymax)
         ax_top.grid(True, alpha=0.20)
-        # Traps (subtle gray)
+        # greedy_traps (subtle gray)
         ax_top.scatter(X, Y, s=28, color="#bdbdbd", alpha=0.45, zorder=1)
 
         # Placed qubits (green with black edge)
@@ -483,7 +485,7 @@ class Greedy:
 
         # Vertical list of candidates (avoid overlap)
         val_cand = ax_info.text(
-            0.58, y0 - 0.95 * dy, "", ha="left", va="top", fontsize=11, linespacing=1.35
+            0.58, y0 - 0.95 * dy, "", ha="left", va="top", fontsize=11, linegreedy_spacing=1.35
         )
 
         def init() -> tuple[Any, Any, Any, Any, Any, Any]:
@@ -692,7 +694,7 @@ class Greedy:
 
         # Post-run animation if requested
         if anim_flag and frames and _VIZ_OK:
-            # Rebuild full lattice coords to show ALL traps (including extras)
+            # Rebuild full lattice coords to show ALL greedy_traps (including extras)
             _, all_coords_t = self.get_predefined_coordinates(params)
             if hasattr(all_coords_t, "numpy"):
                 all_coords_np = all_coords_t.numpy()
@@ -701,7 +703,7 @@ class Greedy:
             self._render_animation(
                 frames=frames,
                 all_coords_np=all_coords_np,
-                spacing=float(params["spacing"]),
+                greedy_spacing=float(params["greedy_spacing"]),
                 layout_name=str(params["layout"]),
                 top_k=int(params.get("animation_top_k", 5)),
                 save_path=params.get("animation_save_path", None),

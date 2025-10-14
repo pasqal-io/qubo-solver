@@ -29,8 +29,8 @@ def _base_params(n: int) -> Dict[str, Any]:
     # Paramètres de base, sans animation par défaut
     return {
         "layout": LayoutType.TRIANGULAR,
-        "traps": n + 4,
-        "spacing": 5.0,
+        "greedy_traps": n + 4,
+        "greedy_spacing": 5.0,
         "device": DeviceType.DIGITAL_ANALOG_DEVICE.value,
     }
 
@@ -69,7 +69,7 @@ def test_greedy_animation_calls_renderer(monkeypatch: Any) -> None:
         self: Greedy,
         frames: List[Dict[str, Any]],
         all_coords_np: Any,
-        spacing: float,
+        greedy_spacing: float,
         layout_name: str,
         top_k: int = 5,
         save_path: Optional[str] = None,

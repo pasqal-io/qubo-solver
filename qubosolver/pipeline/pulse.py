@@ -154,21 +154,21 @@ class OptimizedPulseShaper(BasePulseShaper):
         counts (Tensor | list): Frequencies of bitstrings.
         probabilities (Tensor | list): Probabilities of bitstrings.
         costs (Tensor | list): Qubo cost.
-        custom_qubo_cost (Callable[[str, torch.Tensor], float], optional):
+        optimized_custom_qubo_cost (Callable[[str, torch.Tensor], float], optional):
             Apply a different qubo cost evaluation during optimization.
             Must be defined as:
-            `def custom_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float`.
+            `def optimized_custom_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float`.
             Defaults to None, meaning we use the default QUBO evaluation.
-        custom_objective_fn (Callable[[list, list, list, list, float, str], float], optional):
+        optimized_custom_objective_fn (Callable[[list, list, list, list, float, str], float], optional):
             For bayesian optimization, one can change the output of
             `self.run_simulation` to optimize differently. Instead of using the best cost
             out of the samples, one can change the objective for an average,
             or any function out of the form
-            `cost_eval = custom_objective_fn(bitstrings,
+            `cost_eval = optimized_custom_objective_fn(bitstrings,
                 counts, probabilities, costs, best_cost, best_bitstring)`
             Defaults to None, which means we optimize using the best cost
             out of the samples.
-        callback_objective (Callable[..., None], optional): Apply a callback
+        optimized_callback_objective (Callable[..., None], optional): Apply a callback
             during bayesian optimization. Only accepts one input dictionary
             created during optimization `d = {"x": x, "cost_eval": cost_eval}`
             hence should be defined as:
@@ -200,9 +200,9 @@ class OptimizedPulseShaper(BasePulseShaper):
         self.counts = None
         self.probabilities = None
         self.costs = None
-        self.custom_qubo_cost = self.config.pulse_shaping.custom_qubo_cost
-        self.custom_objective_fn = self.config.pulse_shaping.custom_objective
-        self.callback_objective = self.config.pulse_shaping.callback_objective
+        self.optimized_custom_qubo_cost = self.config.pulse_shaping.optimized_custom_qubo_cost
+        self.optimized_custom_objective_fn = self.config.pulse_shaping.optimized_custom_objective
+        self.optimized_callback_objective = self.config.pulse_shaping.optimized_callback_objective
 
     def generate(
         self,
@@ -239,8 +239,8 @@ class OptimizedPulseShaper(BasePulseShaper):
 
         bounds = [(1, max_amp)] * n_amp + [(-max_det, 0)] + [(-max_det, max_det)] * (n_det - 1)
         x0 = (
-            self.config.pulse_shaping.initial_omega_parameters
-            + self.config.pulse_shaping.initial_detuning_parameters
+            self.config.pulse_shaping.optimized_initial_omega_parameters
+            + self.config.pulse_shaping.optimized_initial_detuning_parameters
         )
 
         def objective(x: list[float]) -> float:
@@ -255,8 +255,8 @@ class OptimizedPulseShaper(BasePulseShaper):
                         convert_to_tensor=False,
                     )
                 )
-                if self.custom_objective_fn is not None:
-                    cost_eval = self.custom_objective_fn(
+                if self.optimized_custom_objective_fn is not None:
+                    cost_eval = self.optimized_custom_objective_fn(
                         bitstrings,
                         counts,
                         probabilities,
@@ -272,8 +272,8 @@ class OptimizedPulseShaper(BasePulseShaper):
                 print(f"[Exception] Error during simulation at x={x}: {e}")
                 cost_eval = 1e4
 
-            if self.callback_objective is not None:
-                self.callback_objective({"x": x, "cost_eval": cost_eval})
+            if self.optimized_callback_objective is not None:
+                self.optimized_callback_objective({"x": x, "cost_eval": cost_eval})
             return float(cost_eval)
 
         opt_result = gp_minimize(objective, bounds, x0=x0, n_calls=self.config.n_calls)
@@ -360,10 +360,10 @@ class OptimizedPulseShaper(BasePulseShaper):
         Returns:
             float: respective cost of bitstring.
         """
-        if self.custom_qubo_cost is None:
+        if self.optimized_custom_qubo_cost is None:
             return calculate_qubo_cost(bitstring, QUBO)
 
-        return cast(float, self.custom_qubo_cost(bitstring, QUBO))
+        return cast(float, self.optimized_custom_qubo_cost(bitstring, QUBO))
 
     def run_simulation(
         self,

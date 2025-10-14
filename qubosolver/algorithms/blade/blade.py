@@ -369,7 +369,7 @@ def em_blade(
     device: BaseDevice,
     draw_steps: bool | list[int] = False,
     dimensions: list[int] = [5, 4, 3, 2, 2, 2],
-    starting_positions: Optional[np.ndarray] = None,
+    blade_starting_positions: Optional[np.ndarray] = None,
     pca: bool = False,
     steps_per_round: int = 200,
     enforce_min_max_dist_ratio: bool = False,
@@ -397,7 +397,7 @@ def em_blade(
         twice the same value. For a 2D embedding, the last value should be 2.
         Increasing the number of intermediate dimensions can help to escape
         from local minima.
-    starting_positions: If provided, initial positions to start from. Otherwise,
+    blade_starting_positions: If provided, initial positions to start from. Otherwise,
         random positions will be generated.
     pca: Whether to apply Principal Component Analysis to prioritize dimensions
         to keep when transitioning from a space to a space with fewer dimensions.
@@ -443,10 +443,10 @@ def em_blade(
     qubo_obj = Qubo.from_matrix(qubo)
     qubo_graph = qubo_obj.as_graph()
 
-    if starting_positions is None:
+    if blade_starting_positions is None:
         positions = generate_random_positions(qubo=qubo, device=device, dimension=dimensions[0])
     else:
-        positions = starting_positions
+        positions = blade_starting_positions
 
     for u, v in nx.non_edges(qubo_graph):
         qubo_graph.add_edge(u, v, weight=0)

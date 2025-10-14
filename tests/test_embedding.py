@@ -34,7 +34,7 @@ def test_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) -> None:
     config = SolverConfig(
         use_quantum=True,
         embedding=EmbeddingConfig(
-            embedding_method="greedy", traps=qubo_instance_for_embedding.size
+            embedding_method="greedy", greedy_traps=qubo_instance_for_embedding.size
         ),
     )
     solver = QuboSolver(qubo_instance_for_embedding, config)
@@ -66,8 +66,8 @@ def test_greedy_max_radial_distance_constraint(
             use_quantum=True,
             embedding=EmbeddingConfig(
                 embedding_method="greedy",
-                traps=qubo_instance_for_embedding.size,
-                spacing=device.value.max_radial_distance,
+                greedy_traps=qubo_instance_for_embedding.size,
+                greedy_spacing=device.value.max_radial_distance,
             ),
             backend_config=BackendConfig(device=device),
         )
@@ -78,7 +78,7 @@ def test_greedy_max_radial_distance_constraint(
             solver.embedding()
 
 
-def test_greedy_max_radial_distance_constraint_with_extra_traps(
+def test_greedy_max_radial_distance_constraint_with_extra_greedy_traps(
     qubo_instance_for_embedding: QUBOInstance,
 ) -> None:
     assert qubo_instance_for_embedding.size is not None
@@ -109,8 +109,8 @@ def test_greedy_max_radial_distance_constraint_with_extra_traps(
             use_quantum=True,
             embedding=EmbeddingConfig(
                 embedding_method="greedy",
-                traps=qubo_instance_for_embedding.size * 2,
-                spacing=device.value.max_radial_distance / 2,
+                greedy_traps=qubo_instance_for_embedding.size * 2,
+                greedy_spacing=device.value.max_radial_distance / 2,
             ),
             backend_config=BackendConfig(device=device),
         )

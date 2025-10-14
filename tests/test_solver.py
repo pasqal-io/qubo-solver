@@ -36,7 +36,7 @@ def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
     assert solutions.counts.sum() == 500  # type: ignore[union-attr]
 
     lessshots_solver = QuboSolver(
-        simple_qubo_instance, SolverConfig(use_quantum=True, num_shots=100)
+        simple_qubo_instance, SolverConfig(use_quantum=True, quantum_num_shots=100)
     )
     solutions = lessshots_solver.solve()
     assert solutions.counts.sum() == 100  # type: ignore[union-attr]
