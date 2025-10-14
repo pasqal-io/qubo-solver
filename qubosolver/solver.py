@@ -124,10 +124,11 @@ class QuboSolverQuantum(BaseSolver):
         Returns:
             QUBOSolution: Final result after execution and postprocessing.
         """
-        # 1) try trivial and verify size
-        trivial = self._trivial_solution()
-        if trivial is not None and self.config.activate_trivial_solutions:
-            return trivial
+        # 1) try trivial
+        if self.config.activate_trivial_solutions:
+            trivial = self._trivial_solution()
+            if trivial is not None:
+                return trivial
         self._check_size_limit()
 
         # 2) else delegate to quantum or classical solver
@@ -218,9 +219,10 @@ class QuboSolverClassical(BaseSolver):
 
     def solve(self) -> QUBOSolution:
         # 1) try trivial
-        trivial = self._trivial_solution()
-        if trivial is not None and self.config.activate_trivial_solutions:
-            return trivial
+        if self.config.activate_trivial_solutions:
+            trivial = self._trivial_solution()
+            if trivial is not None:
+                return trivial
 
         if self.config.do_preprocessing:
             # Apply preprocessing and change the solved QUBO by the reduced one
