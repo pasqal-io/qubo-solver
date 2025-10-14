@@ -130,14 +130,15 @@ class AdiabaticPulseShaper(BasePulseShaper):
         # are building an instance of PulserPulse.
         assert isinstance(pulser_pulse, PulserPulse)
 
-        shaped_pulse = Pulse(pulse=pulser_pulse)
-        shaped_pulse.norm_weights = norm_weights_list
-        shaped_pulse.duration = T
-
-        self.pulse = shaped_pulse
+        shaped_pulse = Pulse(
+            pulse=pulser_pulse,
+            duration=T,
+            norm_weights=norm_weights_list,
+            final_detuning=-delta_f if self.config.pulse_shaping.dmm and (delta_f > 0) else None,
+        )
         solution = QUBOSolution(torch.Tensor(), torch.Tensor())
 
-        return self.pulse, solution
+        return shaped_pulse, solution
 
 
 class OptimizedPulseShaper(BasePulseShaper):
@@ -343,9 +344,10 @@ class OptimizedPulseShaper(BasePulseShaper):
             pulse=pulser_pulse,
             norm_weights=self.norm_weights_list,
             duration=5000,
+            final_detuning=(
+                -params[3] if self.config.pulse_shaping.dmm and (params[3] > 0) else None
+            ),
         )
-        # pulse.pulse.norm_weights = self.norm_weights_list
-        # pulse.pulse.duration = 5000
         return pulse
 
     def compute_qubo_cost(self, bitstring: str, QUBO: torch.Tensor) -> float:

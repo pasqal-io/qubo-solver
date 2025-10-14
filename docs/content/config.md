@@ -72,6 +72,7 @@ The pulse shaping configuration part (the `pulse_shaping` field of `SolverConfig
 | Field         | Type          | Description |
 |---------------|---------------|-------------|
 | `pulse_shaping_method` | `str` \| `PulseType` \| `Type[BasePulseShaper]` | The type of pulse-shaping method used (e.g., 'adiabatic', 'optimized'). |
+| `dmm` | `bool` | Whether to use a detuning map when applying pulse shaping or not. This gets added to the pulse sequence as a ConstantWaveform. |
 | `initial_omega_parameters`   | `list[float]` | The list of initial amplitude $\Omega$ parameters ($3$ floating numbers) to be used in the first round of optimization.|
 | `initial_detuning_parameters`   | `list[float]` | The list of global detuning $\delta$ parameters ($3$ floating numbers) to be used in the first round of optimization.|
 | `re_execute_opt_pulse` | `bool` | Whether to re-run the optimal pulse sequence. |
