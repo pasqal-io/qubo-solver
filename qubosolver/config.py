@@ -339,7 +339,7 @@ class SolverConfig(Config):
     def __repr__(self) -> str:
         return self.config_name
 
-    def _specs(self) -> str:
+    def specs(self) -> str:
         """Return the specs of the `SolverConfig`, that is all attributes.
 
         Returns:
@@ -351,7 +351,7 @@ class SolverConfig(Config):
 
     def print_specs(self) -> None:
         """Print specs."""
-        print(self._specs())
+        print(self.specs())
 
     @model_validator(mode="after")
     def _set_greedy_traps_greedy_spacing_from_device(self) -> SolverConfig:

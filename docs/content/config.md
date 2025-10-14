@@ -126,23 +126,7 @@ from qoolqit._solvers.types import BackendType, DeviceType
 from qubosolver.qubo_types import EmbedderType
 
 config = SolverConfig()
-config.print_specs()
-```
-which returns the following default specifications:
-```python
-config_name: ''
-use_quantum: False
-backend: qutip
-device: DeviceType.DIGITAL_ANALOG_DEVICE
-project_id: ''
-username: ''
-password: ''
-n_calls: 20
-embedding: {'embedding_method': <EmbedderType.GREEDY: 'greedy'>, 'greedy_layout': <LayoutType.SQUARE: <class 'pulser.register.special_layouts.SquareLatticeLayout'>>, 'draw_steps': False, 'greedy_traps': 1, 'greedy_spacing': 5.0, 'greedy_density': None}
-pulse_shaping: {'pulse_shaping_method': <PulseType.ADIABATIC: 'adiabatic'>, 'optimized_initial_omega_parameters': [5.0, 10.0, 5.0,], 'optimized_initial_detuning_parameters': [-10.0, 0.0, 10.0], 're_execute_opt_pulse': False}
-classical: {'classical_solver_type': 'cplex', 'cplex_maxtime': 600.0, 'cplex_log_path': 'solver.log'}
-do_postprocessing: False
-do_preprocessing: False
+print(config.specs())
 ```
 Although the default configuration is straightforward, all parameters can be modified by the user to better suit the specific QUBO instance. Below is an example of a configuration that uses a different embedder with customized parameters on a specific device:
 ```python exec="on" source="material-block"
