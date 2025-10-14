@@ -92,7 +92,7 @@ class BLaDEmbedder(BaseEmbedder):
             device=self.backend.device(),
             draw_steps=self.config.embedding.draw_steps,
             dimensions=self.config.embedding.blade_dimensions,
-            blade_starting_positions=(
+            starting_positions=(
                 self.config.embedding.blade_starting_positions.numpy()
                 if self.config.embedding.blade_starting_positions is not None
                 else None
@@ -123,11 +123,11 @@ class GreedyEmbedder(BaseEmbedder):
         """
         if self.config.embedding.greedy_traps < self.instance.size:
             raise ValueError(
-                "Number of greedy_traps must be at least equal to the number of atoms on the register."
+                "Number of traps must be at least equal to the number of atoms on the register."
             )
 
         # compute density (unchanged)
-        self.config.embedding.density = calculate_density(
+        self.config.embedding.greedy_density = calculate_density(
             self.instance.coefficients, self.instance.size
         )
 
@@ -135,12 +135,13 @@ class GreedyEmbedder(BaseEmbedder):
         params = {
             "device": self.backend.device(),
             "layout": self.config.embedding.greedy_layout,
-            "greedy_traps": int(self.config.embedding.greedy_traps),
-            "greedy_spacing": float(self.config.embedding.greedy_spacing),
+            "traps": int(self.config.embedding.greedy_traps),
+            "spacing": float(self.config.embedding.greedy_spacing),
             # animation controls (all read by Greedy)
             "draw_steps": bool(self.config.embedding.draw_steps),  # collect per-step data
             "animation": bool(self.config.embedding.draw_steps),  # render animation after run
             "animation_save_path": self.config.embedding.animation_save_path,  # optional export
+            # "animation_top_k": 5,  # (optional) uncomment if you add support for this in Greedy
         }
 
         # --- DEBUG / INFO: show where Greedy comes from + the params we’ll pass

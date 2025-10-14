@@ -276,7 +276,9 @@ class OptimizedPulseShaper(BasePulseShaper):
                 self.optimized_callback_objective({"x": x, "cost_eval": cost_eval})
             return float(cost_eval)
 
-        opt_result = gp_minimize(objective, bounds, x0=x0, n_calls=self.config.n_calls)
+        opt_result = gp_minimize(
+            objective, bounds, x0=x0, n_calls=self.config.pulse_shaping.optimized_n_calls
+        )
 
         if opt_result and opt_result.x:
             self.best_params = opt_result.x
