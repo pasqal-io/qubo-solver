@@ -105,6 +105,7 @@ def test_random() -> None:
     # Assert that the solution is an instance of QUBOSolution.
     assert isinstance(solution, QUBOSolution)
     assert solution.bitstrings.shape[0] == classical_config.max_bitstrings
+    assert len(solution.costs) == classical_config.max_bitstrings
     assert solution.bitstrings.shape[1] == 2  # two variables
 
 
