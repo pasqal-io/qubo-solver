@@ -47,6 +47,7 @@ class ClassicalConfig(Config):
         cplex_maxtime (float, optional): CPLEX maximum runtime. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
         max_iter (int, optional): Maximum number of iterations to perform for simulated annealing or tabu search.
+        max_bitstrings (int, optional): Maximal number of bitstrings returned as solutions.
         sa_initial_temp (float, optional): Starting temperature (controls exploration).
         sa_final_temp (float, optional): Minimum temperature threshold for stopping.
         sa_alpha (float, optional): Cooling rate - should be slightly below 1 (e.g., 0.95–0.99).
@@ -61,6 +62,7 @@ class ClassicalConfig(Config):
     cplex_log_path: str = "solver.log"
 
     max_iter: int = 100
+    max_bitstrings: int = 1
 
     sa_initial_temp: float = 10.0
     sa_final_temp: float = 0.1
@@ -79,12 +81,9 @@ class ClassicalConfig(Config):
         if isinstance(val, ClassicalSolverType):
             return val
         u = val.upper()
-        if u == ClassicalSolverType.CPLEX.name:
-            return ClassicalSolverType.CPLEX
-        elif u == ClassicalSolverType.TABU_SEARCH.name:
-            return ClassicalSolverType.TABU_SEARCH
-        elif u == ClassicalSolverType.SIMULATED_ANNEALING.name:
-            return ClassicalSolverType.SIMULATED_ANNEALING
+        all_names = [c.name for c in ClassicalSolverType]
+        if u in all_names:
+            return ClassicalSolverType[u]
         else:
             raise ValueError(f"Invalid classical_solver_type '{val}'.")
 

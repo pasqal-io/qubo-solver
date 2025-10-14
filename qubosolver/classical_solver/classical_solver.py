@@ -24,6 +24,8 @@ from qubosolver.classical_solver.tabu_search import qubo_tabu_search
 from qubosolver.classical_solver.classical_solver_conversion_tools import (
     qubo_instance_to_sparsepairs,
 )
+from qubosolver.qubo_types import ClassicalSolverType
+from qubosolver.utils.qubo_eval import qubo_cost
 
 
 class BaseClassicalSolver(ABC):
@@ -152,6 +154,19 @@ class TabuSearchSolver(BaseClassicalSolver):
         return tabu_search_solution
 
 
+class RandomSolver(BaseClassicalSolver):
+    """
+    QUBO solver with random generation.
+    """
+
+    def solve(self) -> QUBOSolution:
+        bitstrings = torch.randint(0, 2, size=(self.config.max_bitstrings, self.instance.size)).to(
+            torch.float32
+        )
+        costs = qubo_cost(bitstrings, self.instance.coefficients)
+        return QUBOSolution(bitstrings=bitstrings, costs=costs)
+
+
 def get_classical_solver(instance: QUBOInstance, config: ClassicalConfig) -> BaseClassicalSolver:
     """
     Returns the appropriate QUBO solver based on the configuration.
@@ -170,11 +185,13 @@ def get_classical_solver(instance: QUBOInstance, config: ClassicalConfig) -> Bas
     solver_type = config.classical_solver_type
     solver_type = solver_type.lower()
 
-    if solver_type == "cplex":
+    if solver_type == ClassicalSolverType.CPLEX:
         return CplexSolver(instance, config)
-    if solver_type == "simulated_annealing":
+    if solver_type == ClassicalSolverType.SIMULATED_ANNEALING:
         return SimulatedAnnealingSolver(instance, config)
-    if solver_type == "tabu_search":
+    if solver_type == ClassicalSolverType.TABU_SEARCH:
         return TabuSearchSolver(instance, config)
+    if solver_type == ClassicalSolverType.RANDOM:
+        return RandomSolver(instance, config)
 
     raise ValueError(f"Solver type not supported: {solver_type}")

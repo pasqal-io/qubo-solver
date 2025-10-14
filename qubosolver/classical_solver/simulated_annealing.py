@@ -105,11 +105,12 @@ def simulated_annealing(
         delta = new_energy - current_energy
 
         # Decide whether to accept the new solution
-        if delta < 0 or torch.rand(1) < torch.exp(-delta / temp):
+        if (delta < 0).all() or (torch.rand(1) < torch.exp(-delta / temp)).all():
             current_solution = new_solution
             current_energy = new_energy
 
-            if current_energy < best_energy:
+            if (current_energy < best_energy).all():
+
                 best_solution = current_solution.clone()
                 best_energy = current_energy
 

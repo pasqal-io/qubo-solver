@@ -91,6 +91,7 @@ For the classical solver, its configuration can be set via the `ClassicalConfig`
 | `cplex_maxtime`    | `float` | CPLEX maximum runtime. |
 | `cplex_log_path`    | `str` | CPLEX logging path. |
 | `max_iter`    | `int` | Maximum number of iterations to perform for simulated annealing or tabu search. |
+| `max_bitstrings`    | `int` | Maximal number of bitstrings returned as solutions. |
 | `sa_initial_temp`    | `float` | Starting temperature (controls exploration). |
 | `sa_final_temp`    | `float` | Minimum temperature threshold for stopping. |
 | `sa_alpha`    | `float` | Cooling rate - should be slightly below 1 (e.g., 0.95–0.99). |

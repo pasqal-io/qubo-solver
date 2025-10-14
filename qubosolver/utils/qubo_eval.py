@@ -10,7 +10,7 @@ def qubo_cost(x: torch.Tensor, Q: torch.Tensor) -> torch.Tensor:
     The cost is defined as the quadratic form :math:`x^T Q x`.
 
     Args:
-        x: Binary tensor of shape (n,) or (n, 1).
+        x: Binary tensor of shape (n,) or (n, 1), or (b,n) if batched.
         Q: Symmetric QUBO coefficient matrix of shape (n, n).
 
     Returns:
@@ -24,7 +24,10 @@ def qubo_cost(x: torch.Tensor, Q: torch.Tensor) -> torch.Tensor:
     """
     x = x.to(torch.float32)
     Q = Q.to(torch.float32)
-    return x.T @ Q @ x
+    if x.dim() == 1:
+        return x.T @ Q @ x
+    else:
+        return torch.einsum("bi,ij,bj->b", x, Q, x)
 
 
 def calculate_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float:
