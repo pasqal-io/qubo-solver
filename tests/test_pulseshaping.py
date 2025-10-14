@@ -14,6 +14,7 @@ from qubosolver.pipeline.pulse import (
 )
 from qubosolver.pipeline.targets import Pulse, Register
 from qubosolver.qubo_instance import QUBOInstance
+from qubosolver.qubo_types import PulseType
 
 
 @pytest.fixture
@@ -120,10 +121,15 @@ def test_generate_optimized_pulse_shaper(
     assert opt_res[-1]["cost_eval"] == float(1e4)
 
 
+@pytest.mark.parametrize("pulse_method", list(PulseType))
+@pytest.mark.parametrize("dmm", [True, False])
 def test_normalized_weights_in_pulse(
-    dummy_register: Register, simple_qubo_instance: QUBOInstance
+    pulse_method: str, dmm: bool, dummy_register: Register, simple_qubo_instance: QUBOInstance
 ) -> None:
-    default_config = SolverConfig(use_quantum=True)
+    default_config = SolverConfig(
+        use_quantum=True,
+        pulse_shaping=PulseShapingConfig(pulse_shaping_method=pulse_method, dmm=dmm),
+    )
     backend = get_backend(default_config.backend_config)
     shaper = get_pulse_shaper(simple_qubo_instance, default_config, backend)
     pulse, _ = shaper.generate(dummy_register, simple_qubo_instance)
@@ -134,6 +140,8 @@ def test_normalized_weights_in_pulse(
     expected_norm = [1 - (w / max_w) for w in weights]
 
     assert pytest.approx(norm_weights, rel=1e-6) == expected_norm
+    if dmm and pulse.final_detuning:
+        assert pulse.final_detuning < 0
 
 
 def test_pulse_duration_set(dummy_register: Register, simple_qubo_instance: QUBOInstance) -> None:
