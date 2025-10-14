@@ -25,6 +25,7 @@ from qubosolver.classical_solver.classical_solver_conversion_tools import (
     qubo_instance_to_sparsepairs,
 )
 from qubosolver.qubo_types import ClassicalSolverType
+from qubosolver.utils.qubo_eval import qubo_cost
 
 
 class BaseClassicalSolver(ABC):
@@ -162,7 +163,7 @@ class RandomSolver(BaseClassicalSolver):
         bitstrings = torch.randint(0, 2, size=(self.config.max_bitstrings, self.instance.size)).to(
             torch.float32
         )
-        costs = torch.einsum("bi,ij,bj->b", bitstrings, self.instance.coefficients, bitstrings)
+        costs = qubo_cost(bitstrings, self.instance.coefficients)
         return QUBOSolution(bitstrings=bitstrings, costs=costs)
 
 
