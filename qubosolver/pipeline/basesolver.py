@@ -104,6 +104,7 @@ class BaseSolver(ABC):
                 device=self.backend.device(),
                 register=embedding.register,
                 pulse=pulse.pulse,
+                detunings=pulse.detuning(embedding.register),
             )
             execution_result = self.backend.run(program, self.config.num_shots)
             counts = execution_result.counts
@@ -116,6 +117,7 @@ class BaseSolver(ABC):
                 device=self.backend.device(),
                 register=embedding.register,
                 pulse=pulse.pulse,
+                detunings=pulse.detuning(embedding.register),
             )
             execution_result = self.backend.run(program, self.config.num_shots)
             counts = execution_result.counts

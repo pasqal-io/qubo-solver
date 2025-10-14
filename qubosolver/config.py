@@ -199,6 +199,9 @@ class PulseShapingConfig(Config):
     Attributes:
         pulse_shaping_method (str | PulseType | type[BasePulseShaper], optional): Pulse shaping
             method used. Defauts to `PulseType.ADIABATIC`.
+        dmm (bool, optional): Whether to use a detuning map when applying pulse shaping or not.
+            This gets added to the pulse sequence as a ConstantWaveform.
+            Defaults to True, which applies DMM in pulse.
         initial_omega_parameters (List[float], optional): Default initial omega parameters
             for the pulse. Defaults to Omega = (5, 10, 5).
         initial_detuning_parameters (List[float], optional): Default initial detuning parameters
@@ -231,6 +234,7 @@ class PulseShapingConfig(Config):
     """
 
     pulse_shaping_method: Any = PulseType.ADIABATIC
+    dmm: bool = True
     initial_omega_parameters: list[float] = field(
         default_factory=lambda: [
             5.0,
