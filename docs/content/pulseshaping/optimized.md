@@ -79,7 +79,7 @@ Q = torch.tensor([[-63.9423,   0.0000], [0.0000, -44.1916]])
 instance = QUBOInstance(Q)
 
 default_config = SolverConfig(
-    use_quantum = True, pulse_shaping=PulseShapingConfig(pulse_shaping_method=PulseType.OPTIMIZED), optimized_n_calls = 25
+    use_quantum = True, pulse_shaping=PulseShapingConfig(pulse_shaping_method=PulseType.OPTIMIZED, optimized_n_calls = 25),
 )
 solver = QuboSolver(instance, default_config)
 
