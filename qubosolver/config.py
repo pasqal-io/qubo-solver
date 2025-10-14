@@ -90,11 +90,11 @@ class ClassicalConfig(Config):
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
         serialization: dict = {"classical_solver_type": self.classical_solver_type}
-        if self.classical_solver_type == "cplex":
+        if self.classical_solver_type == ClassicalSolverType.CPLEX:
             serialization.update(
                 {"cplex_maxtime": self.cplex_maxtime, "cplex_log_path": self.cplex_log_path}
             )
-        if self.classical_solver_type == "simulated_annealing":
+        if self.classical_solver_type == ClassicalSolverType.SIMULATED_ANNEALING:
             serialization.update(
                 {
                     "max_iter": self.max_iter,
@@ -103,7 +103,7 @@ class ClassicalConfig(Config):
                     "sa_alpha": self.sa_alpha,
                 }
             )
-        if self.classical_solver_type == "tabu_search":
+        if self.classical_solver_type == ClassicalSolverType.TABU_SEARCH:
             serialization.update(
                 {
                     "max_iter": self.max_iter,
@@ -155,6 +155,30 @@ class EmbeddingConfig(Config):
     blade_dimensions: list[int] = field(default_factory=lambda: [5, 4, 3, 2, 2, 2])
     draw_steps: bool = False
     animation_save_path: str | None = None
+
+    @model_serializer(mode="plain")
+    def serialize_model(self) -> dict[str, Any]:
+        serialization: dict = {
+            "embedding_method": self.embedding_method,
+            "draw_steps": self.draw_steps,
+            "animation_save_path": self.animation_save_path,
+        }
+
+        dict_all_fields = self.__dict__
+        if self.embedding_method == EmbedderType.GREEDY:
+            serialization.update(
+                {
+                    k: v
+                    for k, v in dict_all_fields.items()
+                    if k.startswith(EmbedderType.GREEDY.value)
+                }
+            )
+
+        if self.embedding_method == EmbedderType.BLADE:
+            serialization.update(
+                {k: v for k, v in dict_all_fields.items() if k.startswith(EmbedderType.BLADE.value)}
+            )
+        return serialization
 
     @field_validator("embedding_method")
     @classmethod
@@ -256,6 +280,24 @@ class PulseShapingConfig(Config):
     optimized_custom_qubo_cost: Callable[[str, torch.Tensor], float] | None = None
     optimized_custom_objective: Callable[[list, list, list, list, float, str], float] | None = None
     optimized_callback_objective: Callable[..., None] | None = None
+
+    @model_serializer(mode="plain")
+    def serialize_model(self) -> dict[str, Any]:
+        serialization: dict = {
+            "pulse_shaping_method": self.pulse_shaping_method,
+            "dmm": self.dmm,
+            "re_execute_opt_pulse": self.re_execute_opt_pulse,
+        }
+        if self.pulse_shaping_method == PulseType.OPTIMIZED:
+            dict_all_fields = self.__dict__
+            serialization.update(
+                {
+                    k: v
+                    for k, v in dict_all_fields.items()
+                    if k.startswith(PulseType.OPTIMIZED.value)
+                }
+            )
+        return serialization
 
     @field_validator("pulse_shaping_method")
     @classmethod
