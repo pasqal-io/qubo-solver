@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 import torch
-from pulser.devices import DigitalAnalogDevice
+from pulser.devices import DigitalAnalogDevice, AnalogDevice
 from qoolqit._solvers import get_backend
 
 from qubosolver.config import PulseShapingConfig, SolverConfig
@@ -150,7 +150,8 @@ def test_pulse_duration_set(dummy_register: Register, simple_qubo_instance: QUBO
     shaper = get_pulse_shaper(simple_qubo_instance, default_config, backend)
     pulse, _ = shaper.generate(dummy_register, simple_qubo_instance)
 
-    assert pulse.duration == 4000
+    # enforces AnalogDevice maximum sequence duration because Digital's one is a really specific number
+    assert pulse.duration == AnalogDevice.max_sequence_duration
 
 
 def test_custom_pulse_shaper(simple_qubo_instance: QUBOInstance) -> None:

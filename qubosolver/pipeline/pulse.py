@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from pulser import Pulse as PulserPulse
 from pulser.waveforms import InterpolatedWaveform
+from pulser.devices import AnalogDevice
 from qoolqit._solvers import BaseBackend
 from qoolqit._solvers.data import QuantumProgram
 from skopt import gp_minimize
@@ -72,9 +73,6 @@ class BasePulseShaper(ABC):
         pass
 
 
-# ------- Adiabatic Pulse -------
-
-
 class AdiabaticPulseShaper(BasePulseShaper):
     """
     A Standard Adiabatic Pulse shaper.
@@ -107,12 +105,14 @@ class AdiabaticPulseShaper(BasePulseShaper):
         max_node_weight = max(weights_list)
         norm_weights_list = [1 - (w / max_node_weight) for w in weights_list]
 
-        T = 4000
+        # enforces AnalogDevice max sequence duration since Digital's one is really specific
+
         off_diag = QUBO[
-            ~torch.eye(QUBO.shape[0], dtype=bool)
+            ~torch.eye(QUBO.shape[0], dtype=torch.bool)
         ]  # Selecting off-diagonal terms of the Qubo with a mask
+
         rydberg_global = self.device.channels["rydberg_global"]
-        assert rydberg_global.max_amp is not None  # FIXME: Document why
+
         Omega = min(
             torch.max(off_diag).item(),
             rydberg_global.max_amp - 1e-9,
@@ -121,8 +121,11 @@ class AdiabaticPulseShaper(BasePulseShaper):
         delta_0 = torch.min(torch.diag(QUBO)).item()
         delta_f = -delta_0
 
-        amp_wave = InterpolatedWaveform(T, [1e-9, Omega, 1e-9])
-        det_wave = InterpolatedWaveform(T, [delta_0, 0, delta_f])
+        max_seq_duration = AnalogDevice.max_sequence_duration
+        assert max_seq_duration is not None
+
+        amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9, Omega, 1e-9])
+        det_wave = InterpolatedWaveform(max_seq_duration, [delta_0, 0, delta_f])
 
         pulser_pulse = PulserPulse(amp_wave, det_wave, 0)
         # PulserPulse has some magic that ensures its constructor does not always return
@@ -132,7 +135,7 @@ class AdiabaticPulseShaper(BasePulseShaper):
 
         shaped_pulse = Pulse(
             pulse=pulser_pulse,
-            duration=T,
+            duration=max_seq_duration,
             norm_weights=norm_weights_list,
             final_detuning=-delta_f if self.config.pulse_shaping.dmm and (delta_f > 0) else None,
         )
@@ -334,8 +337,11 @@ class OptimizedPulseShaper(BasePulseShaper):
         Returns:
             Pulse: pulse sequence.
         """
-        amp = InterpolatedWaveform(5000, [1e-9] + list(params[:3]) + [1e-9])
-        det = InterpolatedWaveform(5000, [params[3]] + list(params[4:]) + [params[3]])
+        max_seq_duration = AnalogDevice.max_sequence_duration
+        assert max_seq_duration is not None
+
+        amp = InterpolatedWaveform(max_seq_duration, [1e-9] + list(params[:3]) + [1e-9])
+        det = InterpolatedWaveform(max_seq_duration, [params[3]] + list(params[4:]) + [params[3]])
         pulser_pulse = PulserPulse(amp, det, 0)
         # PulserPulse has some magic that ensures its constructor does not always return
         # an instance of PulserPulse. Let's make sure (and help mypy realize) that we
@@ -345,7 +351,7 @@ class OptimizedPulseShaper(BasePulseShaper):
         pulse = Pulse(
             pulse=pulser_pulse,
             norm_weights=self.norm_weights_list,
-            duration=5000,
+            duration=max_seq_duration,
             final_detuning=(
                 -params[3] if self.config.pulse_shaping.dmm and (params[3] > 0) else None
             ),
