@@ -93,8 +93,8 @@ class BLaDEmbedder(BaseEmbedder):
             draw_steps=self.config.embedding.draw_steps,
             dimensions=self.config.embedding.blade_dimensions,
             starting_positions=(
-                self.config.embedding.starting_positions.numpy()
-                if self.config.embedding.starting_positions is not None
+                self.config.embedding.blade_starting_positions.numpy()
+                if self.config.embedding.blade_starting_positions is not None
                 else None
             ),
             steps_per_round=self.config.embedding.blade_steps_per_round,
@@ -121,22 +121,22 @@ class GreedyEmbedder(BaseEmbedder):
         Returns:
             Register: The register.
         """
-        if self.config.embedding.traps < self.instance.size:
+        if self.config.embedding.greedy_traps < self.instance.size:
             raise ValueError(
                 "Number of traps must be at least equal to the number of atoms on the register."
             )
 
         # compute density (unchanged)
-        self.config.embedding.density = calculate_density(
+        self.config.embedding.greedy_density = calculate_density(
             self.instance.coefficients, self.instance.size
         )
 
         # build params for the Greedy algorithm
         params = {
             "device": self.backend.device(),
-            "layout": self.config.embedding.layout_greedy_embedder,
-            "traps": int(self.config.embedding.traps),
-            "spacing": float(self.config.embedding.spacing),
+            "layout": self.config.embedding.greedy_layout,
+            "traps": int(self.config.embedding.greedy_traps),
+            "spacing": float(self.config.embedding.greedy_spacing),
             # animation controls (all read by Greedy)
             "draw_steps": bool(self.config.embedding.draw_steps),  # collect per-step data
             "animation": bool(self.config.embedding.draw_steps),  # render animation after run

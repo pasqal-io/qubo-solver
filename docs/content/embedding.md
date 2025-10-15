@@ -45,12 +45,12 @@ geometry = solver.embedding()
 ```
 
 ## Greedy embedder config
-The following uses the greedy embedding method on a triangular lattice layout with a number of traps equals to the size of the QUBO. It also allows working on a square lattice layout, as well as increasing the number of traps according to the device specifications.
+The following uses the greedy embedding method on a triangular lattice layout with a number of traps (`greedy_traps`) equals to the size of the QUBO. It also allows working on a square lattice layout, as well as increasing the number of traps according to the device specifications.
 
 ```python exec="on" source="material-block" html="1" session="embedding"
 from qoolqit._solvers.types import DeviceType
 
-embedconfig = EmbeddingConfig(embedding_method="greedy", traps=instance.size, layout_greedy_embedder="triangular",)
+embedconfig = EmbeddingConfig(embedding_method="greedy", greedy_traps=instance.size, greedy_layout="triangular",)
 backend = BackendConfig(device=DeviceType.ANALOG_DEVICE)
 greedy_config = SolverConfig(
     use_quantum=True,

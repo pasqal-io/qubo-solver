@@ -101,9 +101,9 @@ def blade_clear_dimensions_config() -> SolverConfig:
 def greedy_embedding_config() -> SolverConfig:
     embed_method = EmbeddingConfig(
         embedding_method="greedy",
-        layout_greedy_embedder=LayoutType.SQUARE,
-        traps=10,
-        spacing=5.0,
+        greedy_layout=LayoutType.SQUARE,
+        greedy_traps=10,
+        greedy_spacing=5.0,
     )
     backend_config = BackendConfig(device=DeviceType.DIGITAL_ANALOG_DEVICE)
     return SolverConfig(

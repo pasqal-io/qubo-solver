@@ -90,11 +90,11 @@ class ClassicalConfig(Config):
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
         serialization: dict = {"classical_solver_type": self.classical_solver_type}
-        if self.classical_solver_type == "cplex":
+        if self.classical_solver_type == ClassicalSolverType.CPLEX:
             serialization.update(
                 {"cplex_maxtime": self.cplex_maxtime, "cplex_log_path": self.cplex_log_path}
             )
-        if self.classical_solver_type == "simulated_annealing":
+        if self.classical_solver_type == ClassicalSolverType.SIMULATED_ANNEALING:
             serialization.update(
                 {
                     "max_iter": self.max_iter,
@@ -103,7 +103,7 @@ class ClassicalConfig(Config):
                     "sa_alpha": self.sa_alpha,
                 }
             )
-        if self.classical_solver_type == "tabu_search":
+        if self.classical_solver_type == ClassicalSolverType.TABU_SEARCH:
             serialization.update(
                 {
                     "max_iter": self.max_iter,
@@ -123,22 +123,22 @@ class EmbeddingConfig(Config):
         embedding_method (str | EmbedderType | type[BaseEmbedder], optional): The type of
             embedding method used to place atoms on the register according to the QUBO problem.
             Defaults to `EmbedderType.GREEDY`.
-        layout_greedy_embedder (LayoutType | str, optional): Layout type for the
+        greedy_layout (LayoutType | str, optional): Layout type for the
             greedy embedder method. Defaults to `LayoutType.TRIANGULAR`.
+        greedy_traps (int, optional): The number of traps on the register.
+            Defaults to `DeviceType.ANALOG_DEVICE.value.min_layout_traps`.
+        greedy_spacing (float, optional): The minimum distance between atoms.
+            Defaults to `DeviceType.ANALOG_DEVICE.value.min_atom_distance`.
+        greedy_density (float, optional): The estimated density of the QUBO matrix.
+            Defaults to None.
         blade_steps_per_round (int, optional): The number of steps
             for each layer of dimension for BLaDE.
             Defaults to 200.
-        starting_positions (torch.Tensor | None, optional): The starting parameters
+        blade_starting_positions (torch.Tensor | None, optional): The starting parameters
             according to the specified dimensions.
             Defaults to None.
         blade_dimensions (list[int], optional): A list of dimension degrees
             to explore one after the other (default is `[5, 4, 3, 2, 2, 2]`).
-        traps (int, optional): The number of traps on the register.
-            Defaults to `DeviceType.ANALOG_DEVICE.value.min_layout_traps`.
-        spacing (float, optional): The minimum distance between atoms.
-            Defaults to `DeviceType.ANALOG_DEVICE.value.min_atom_distance`.
-        density (float, optional): The estimated density of the QUBO matrix.
-            Defaults to None.
         draw_steps (bool, optional): Show generated graph at each step of the optimization.
             Defaults to `False`.
         animation_save_path (str | None, optional): If provided, path to save animation.
@@ -146,15 +146,39 @@ class EmbeddingConfig(Config):
     """
 
     embedding_method: Any = EmbedderType.GREEDY
-    layout_greedy_embedder: LayoutType | str = LayoutType.TRIANGULAR
+    greedy_layout: LayoutType | str = LayoutType.TRIANGULAR
+    greedy_traps: int = DeviceType.DIGITAL_ANALOG_DEVICE.value.min_layout_traps
+    greedy_spacing: float = float(DeviceType.DIGITAL_ANALOG_DEVICE.value.min_atom_distance)
+    greedy_density: float | None = None
     blade_steps_per_round: int | None = 200
-    starting_positions: torch.Tensor | None = None
+    blade_starting_positions: torch.Tensor | None = None
     blade_dimensions: list[int] = field(default_factory=lambda: [5, 4, 3, 2, 2, 2])
-    traps: int = DeviceType.DIGITAL_ANALOG_DEVICE.value.min_layout_traps
-    spacing: float = float(DeviceType.DIGITAL_ANALOG_DEVICE.value.min_atom_distance)
-    density: float | None = None
     draw_steps: bool = False
     animation_save_path: str | None = None
+
+    @model_serializer(mode="plain")
+    def serialize_model(self) -> dict[str, Any]:
+        serialization: dict = {
+            "embedding_method": self.embedding_method,
+            "draw_steps": self.draw_steps,
+            "animation_save_path": self.animation_save_path,
+        }
+
+        dict_all_fields = self.__dict__
+        if self.embedding_method == EmbedderType.GREEDY:
+            serialization.update(
+                {
+                    k: v
+                    for k, v in dict_all_fields.items()
+                    if k.startswith(EmbedderType.GREEDY.value)
+                }
+            )
+
+        if self.embedding_method == EmbedderType.BLADE:
+            serialization.update(
+                {k: v for k, v in dict_all_fields.items() if k.startswith(EmbedderType.BLADE.value)}
+            )
+        return serialization
 
     @field_validator("embedding_method")
     @classmethod
@@ -177,7 +201,7 @@ class EmbeddingConfig(Config):
         else:
             raise TypeError("Invalid embedding method type.")
 
-    @field_validator("layout_greedy_embedder")
+    @field_validator("greedy_layout")
     @classmethod
     def _normalize_layout(cls, val: str | LayoutType) -> LayoutType:
         """Normalize the layout attribute."""
@@ -202,30 +226,32 @@ class PulseShapingConfig(Config):
         dmm (bool, optional): Whether to use a detuning map when applying pulse shaping or not.
             This gets added to the pulse sequence as a ConstantWaveform.
             Defaults to True, which applies DMM in pulse.
-        initial_omega_parameters (List[float], optional): Default initial omega parameters
-            for the pulse. Defaults to Omega = (5, 10, 5).
-        initial_detuning_parameters (List[float], optional): Default initial detuning parameters
-            for the pulse. Defaults to delta = (-10, 0, 10).
         re_execute_opt_pulse (bool, optional): Whether to re-run the optimal pulse sequence.
             Defaults to False.
-        custom_qubo_cost (Callable[[str, torch.Tensor], float], optional): Apply a different
+        optimized_n_calls (int, optional): Number of calls for the optimization process inside VQA.
+            Defaults to 20. Note the optimizer accepts a minimal value of 12.
+        optimized_initial_omega_parameters (List[float], optional): Default initial omega parameters
+            for the pulse. Defaults to Omega = (5, 10, 5).
+        optimized_initial_detuning_parameters (List[float], optional): Default initial detuning parameters
+            for the pulse. Defaults to delta = (-10, 0, 10).
+        optimized_custom_qubo_cost (Callable[[str, torch.Tensor], float], optional): Apply a different
             qubo cost evaluation
             than the default QUBO evaluation defined in
             `qubosolver/pipeline/pulse.py:OptimizedPulseShaper.compute_qubo_cost`.
             Must be defined as:
-            `def custom_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float`.
+            `def optimized_custom_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float`.
             Defaults to None, meaning we use the default QUBO evaluation.
-        custom_objective_fn (Callable[[list, list, list, list, float, str], float], optional):
+        optimized_custom_objective_fn (Callable[[list, list, list, list, float, str], float], optional):
             For bayesian optimization, one can change the output of
             `qubosolver/pipeline/pulse.py:OptimizedPulseShaper.run_simulation`
             to optimize differently. Instead of using the best cost
             out of the samples, one can change the objective for an average,
             or any function out of the form
-            `cost_eval = custom_objective_fn(bitstrings,
+            `cost_eval = optimized_custom_objective_fn(bitstrings,
                 counts, probabilities, costs, best_cost, best_bitstring)`
             Defaults to None, which means we optimize using the best cost
             out of the samples.
-        callback_objective (Callable[..., None], optional): Apply a callback
+        optimized_callback_objective (Callable[..., None], optional): Apply a callback
             during bayesian optimization. Only accepts one input dictionary
             created during optimization `d = {"x": x, "cost_eval": cost_eval}`
             hence should be defined as:
@@ -235,24 +261,43 @@ class PulseShapingConfig(Config):
 
     pulse_shaping_method: Any = PulseType.ADIABATIC
     dmm: bool = True
-    initial_omega_parameters: list[float] = field(
+    re_execute_opt_pulse: bool = False
+    optimized_n_calls: int = 20
+    optimized_initial_omega_parameters: list[float] = field(
         default_factory=lambda: [
             5.0,
             10.0,
             5.0,
         ]
     )  # ---> default initial pulse parameters: Omega = (5, 10, 5)
-    initial_detuning_parameters: list[float] = field(
+    optimized_initial_detuning_parameters: list[float] = field(
         default_factory=lambda: [
             -10.0,
             0.0,
             10.0,
         ]
     )  # ---> default initial pulse parameters: delta = (-10, 0, 10)
-    re_execute_opt_pulse: bool = False
-    custom_qubo_cost: Callable[[str, torch.Tensor], float] | None = None
-    custom_objective: Callable[[list, list, list, list, float, str], float] | None = None
-    callback_objective: Callable[..., None] | None = None
+    optimized_custom_qubo_cost: Callable[[str, torch.Tensor], float] | None = None
+    optimized_custom_objective: Callable[[list, list, list, list, float, str], float] | None = None
+    optimized_callback_objective: Callable[..., None] | None = None
+
+    @model_serializer(mode="plain")
+    def serialize_model(self) -> dict[str, Any]:
+        serialization: dict = {
+            "pulse_shaping_method": self.pulse_shaping_method,
+            "dmm": self.dmm,
+            "re_execute_opt_pulse": self.re_execute_opt_pulse,
+        }
+        if self.pulse_shaping_method == PulseType.OPTIMIZED:
+            dict_all_fields = self.__dict__
+            serialization.update(
+                {
+                    k: v
+                    for k, v in dict_all_fields.items()
+                    if k.startswith(PulseType.OPTIMIZED.value)
+                }
+            )
+        return serialization
 
     @field_validator("pulse_shaping_method")
     @classmethod
@@ -279,21 +324,23 @@ class PulseShapingConfig(Config):
         else:
             raise TypeError("Invalid pulse shaping method type.")
 
-    @field_validator("initial_omega_parameters")
+    @field_validator("optimized_initial_omega_parameters")
     @classmethod
-    def _check_initial_omega_parameters(cls, val: list[float]) -> list[float]:
+    def _check_optimized_initial_omega_parameters(cls, val: list[float]) -> list[float]:
         if len(val) == 3:
             return val
         else:
-            raise ValueError("`initial_omega_parameters` should be a list of 3 numbers.")
+            raise ValueError("`optimized_initial_omega_parameters` should be a list of 3 numbers.")
 
-    @field_validator("initial_detuning_parameters")
+    @field_validator("optimized_initial_detuning_parameters")
     @classmethod
-    def _check_initial_detuning_parameters(cls, val: list[float]) -> list[float]:
+    def _check_optimized_initial_detuning_parameters(cls, val: list[float]) -> list[float]:
         if len(val) == 3:
             return val
         else:
-            raise ValueError("`initial_detuning_parameters` should be a list of 3 numbers.")
+            raise ValueError(
+                "`optimized_initial_detuning_parameters` should be a list of 3 numbers."
+            )
 
 
 class SolverConfig(Config):
@@ -309,16 +356,11 @@ class SolverConfig(Config):
             or a classical approach (`False`). Defaults to False.
         backend (BackendConfig, optional): Which underlying backend configuration is used.
             Defaults to the default BackendConfig using `BackendType.QUTIP`.
-
-        n_calls (int, optional): Number of calls for the optimization process inside VQA.
-            Defaults to 20. Note the optimizer accepts a minimal value of 12.
         embedding (EmbeddingConfig, optional): Embedding part configuration of the solver.
         pulse_shaping (PulseShapingConfig, optional): Pulse-shaping part configuration
             of the solver.
         classical (ClassicalConfig, optional): Classical part configuration of the solver.
-
         num_shots (int, optional): Number of samples. Defaults to 500.
-
         do_postprocessing (bool, optional): Whether we apply post-processing (`True`)
             or not (`False`).
         do_preprocessing (bool, optional): Whether we apply pre-processing (`True`)
@@ -328,7 +370,6 @@ class SolverConfig(Config):
     config_name: str = ""
     use_quantum: bool | None = False
     backend_config: BackendConfig = BackendConfig()
-    n_calls: int = 20
     embedding: EmbeddingConfig = EmbeddingConfig()
     pulse_shaping: PulseShapingConfig = PulseShapingConfig()
     classical: ClassicalConfig = ClassicalConfig()
@@ -340,7 +381,7 @@ class SolverConfig(Config):
     def __repr__(self) -> str:
         return self.config_name
 
-    def _specs(self) -> str:
+    def specs(self) -> str:
         """Return the specs of the `SolverConfig`, that is all attributes.
 
         Returns:
@@ -352,24 +393,24 @@ class SolverConfig(Config):
 
     def print_specs(self) -> None:
         """Print specs."""
-        print(self._specs())
+        print(self.specs())
 
     @model_validator(mode="after")
-    def _set_traps_spacing_from_device(self) -> SolverConfig:
+    def _set_greedy_traps_greedy_spacing_from_device(self) -> SolverConfig:
 
         if self.backend_config.device:
             device = self.backend_config.device
             if hasattr(device, "value"):
                 if device.value.min_layout_traps:
-                    if self.embedding.traps < device.value.min_layout_traps:
+                    if self.embedding.greedy_traps < device.value.min_layout_traps:
                         self.embedding = self.embedding.model_copy(
-                            update={"traps": device.value.min_layout_traps}
+                            update={"greedy_traps": device.value.min_layout_traps}
                         )
                 if device.value.min_atom_distance:
-                    spacing_device = float(device.value.min_atom_distance)
-                    if self.embedding.spacing < spacing_device:
+                    greedy_spacing_device = float(device.value.min_atom_distance)
+                    if self.embedding.greedy_spacing < greedy_spacing_device:
                         self.embedding = self.embedding.model_copy(
-                            update={"spacing": spacing_device}
+                            update={"greedy_spacing": greedy_spacing_device}
                         )
         return self
 

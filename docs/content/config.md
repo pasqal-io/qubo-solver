@@ -15,7 +15,6 @@ Besides `ClassicalConfig`, the other configurations represents different parts o
 | `config_name` | `str` | The name of the current configuration
 | `use_quantum` | `bool` | Whether to solve using a quantum approach (`True`) such as QAA or VQA or a classical approach (`False`). |
 | `backend_config`     | `BackendConfig` | Backend part configuration of the solver. |
-| `n_calls` | `int` \| `None` | Number of optimization rounds taken to find the best set of parameters for the optimization process inside VQA. The minimum value is 20. Note the optimizer accepts a minimal value of 12. |
 | `embedding` | `EmbeddingConfig` | Embedding part configuration of the solver. |
 | `pulse_shaping` | `PulseShapingConfig` | Pulse-shaping part configuration of the solver. |
 | `classical` | `ClassicalConfig` | Classical part configuration of the solver. |
@@ -49,7 +48,7 @@ The embedding configuration part (the `embedding` field of `SolverConfig`) can b
 | Field         | Type          | Description |
 |---------------|---------------|-------------|
 | `blade_dimensions` | `list[int]` | A list of dimension degrees to explore one after the other (default is [5, 4, 3, 2, 2, 2]). |
-| `starting_positions` | `torch.Tensor` | The starting parameters according to the specified dimensions. |
+| `blade_starting_positions` | `torch.Tensor` | The starting parameters according to the specified dimensions. |
 | `blade_steps_per_round` | `int` \| `None` | The number of steps for each layer of dimension for the BLaDE embedder method. Defaults to 200. |
 
 
@@ -59,26 +58,28 @@ We made available a greedy embedding method (given a fixed lattice or layout, it
 
 | Field         | Type          | Description |
 |---------------|---------------|-------------|
-| `layout_greedy_embedder` | `str` \| `LayoutType` \| `None` | Type of layout to run the greedy embedder method on (e.g., 'SquareLatticeLayout', 'TriangularLatticeLayout'). |
-| `traps` | `int` \| `None` | The number of traps on the register. |
-| `spacing` | `int` \| `None` | The minimum distance between atoms. |
-| `density` | `int` \| `None` | The estimated density of the QUBO matrix for the greedy algorithm. |
+| `greedy_layout` | `str` \| `LayoutType` \| `None` | Type of layout to run the greedy embedder method on (e.g., 'SquareLatticeLayout', 'TriangularLatticeLayout'). |
+| `greedy_traps` | `int` \| `None` | The number of greedy_traps on the register. |
+| `greedy_spacing` | `int` \| `None` | The minimum distance between atoms. |
+| `greedy_density` | `int` \| `None` | The estimated density of the QUBO matrix for the greedy algorithm. |
 
 ### Pulse Shaping configuration
 
 Quantum devices can be programmed by specifying a sequence of pulses.
 The pulse shaping configuration part (the `pulse_shaping` field of `SolverConfig`) is set via the `PulseShapingConfig` class, and defines how the pulse parameters are constructed (in an adiabatic fashion, via optimization, ...).
+Note, for parameters concerning exclusively the optimized pulse shaping method, an `optimized_` prefix is present.
 
 | Field         | Type          | Description |
 |---------------|---------------|-------------|
 | `pulse_shaping_method` | `str` \| `PulseType` \| `Type[BasePulseShaper]` | The type of pulse-shaping method used (e.g., 'adiabatic', 'optimized'). |
 | `dmm` | `bool` | Whether to use a detuning map when applying pulse shaping or not. This gets added to the pulse sequence as a ConstantWaveform. |
-| `initial_omega_parameters`   | `list[float]` | The list of initial amplitude $\Omega$ parameters ($3$ floating numbers) to be used in the first round of optimization.|
-| `initial_detuning_parameters`   | `list[float]` | The list of global detuning $\delta$ parameters ($3$ floating numbers) to be used in the first round of optimization.|
 | `re_execute_opt_pulse` | `bool` | Whether to re-run the optimal pulse sequence. |
-| `custom_qubo_cost` | `callable` \| `None` | To apply a different qubo cost evaluation than the default. Must be defined as: `def custom_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float`. |
-| `custom_objective_fn` | `callable` \| `None` | Change the bayesian optimization objective. Instead of using the best cost (`best_cost`) out of the samples, one can change the objective for an average, or any function out of the form `cost_eval = custom_objective_fn(bitstrings, counts, probabilities, costs, best_cost, best_bitstring)` |
-| `callback_objective` | `callable` \| `None` | Apply a callback during bayesian optimization. Only accepts one input dictionary created during optimization `d = {"x": x, "cost_eval": cost_eval}` hence should be defined as: `def callback_fn(d: dict) -> None:`. |
+| `optimized_n_calls` | `int` \| `None` | Number of optimization rounds taken to find the best set of parameters for the optimization process inside VQA. The minimum value is 20. Note the optimizer accepts a minimal value of 12. |
+| `optimized_initial_omega_parameters`   | `list[float]` | The list of initial amplitude $\Omega$ parameters ($3$ floating numbers) to be used in the first round of optimization.|
+| `optimized_initial_detuning_parameters`   | `list[float]` | The list of global detuning $\delta$ parameters ($3$ floating numbers) to be used in the first round of optimization.|
+| `optimized_custom_qubo_cost` | `callable` \| `None` | To apply a different qubo cost evaluation than the default. Must be defined as: `def optimized_custom_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float`. |
+| `optimized_custom_objective_fn` | `callable` \| `None` | Change the bayesian optimization objective. Instead of using the best cost (`best_cost`) out of the samples, one can change the objective for an average, or any function out of the form `cost_eval = optimized_custom_objective_fn(bitstrings, counts, probabilities, costs, best_cost, best_bitstring)` |
+| `optimized_callback_objective` | `callable` \| `None` | Apply a callback during bayesian optimization. Only accepts one input dictionary created during optimization `d = {"x": x, "cost_eval": cost_eval}` hence should be defined as: `def callback_fn(d: dict) -> None:`. |
 
 
 
@@ -99,6 +100,9 @@ For the classical solver, its configuration can be set via the `ClassicalConfig`
 | `tabu_x0`    | `torch.Tensor` \| `None` | The initial binary solution tensor. |
 | `tabu_tenure`    | `int` | Number of iterations a move (bit flip) remains tabu. |
 | `tabu_max_no_improve`    | `int` | Maximum number of consecutive iterations without improvement before termination. |
+
+Note, for parameters concerning exclusively simulated annealing, an `sa_` prefix is present.
+Similarly for tabu search, the prefix is `tabu_`.
 
 
 ### Pre-Post processing parameters
@@ -122,23 +126,7 @@ from qoolqit._solvers.types import BackendType, DeviceType
 from qubosolver.qubo_types import EmbedderType
 
 config = SolverConfig()
-config.print_specs()
-```
-which returns the following default specifications:
-```python
-config_name: ''
-use_quantum: False
-backend: qutip
-device: DeviceType.DIGITAL_ANALOG_DEVICE
-project_id: ''
-username: ''
-password: ''
-n_calls: 20
-embedding: {'embedding_method': <EmbedderType.GREEDY: 'greedy'>, 'layout_greedy_embedder': <LayoutType.SQUARE: <class 'pulser.register.special_layouts.SquareLatticeLayout'>>, 'draw_steps': False, 'traps': 1, 'spacing': 5.0, 'density': None}
-pulse_shaping: {'pulse_shaping_method': <PulseType.ADIABATIC: 'adiabatic'>, 'initial_omega_parameters': [5.0, 10.0, 5.0,], 'initial_detuning_parameters': [-10.0, 0.0, 10.0], 're_execute_opt_pulse': False}
-classical: {'classical_solver_type': 'cplex', 'cplex_maxtime': 600.0, 'cplex_log_path': 'solver.log'}
-do_postprocessing: False
-do_preprocessing: False
+print(config.specs())
 ```
 Although the default configuration is straightforward, all parameters can be modified by the user to better suit the specific QUBO instance. Below is an example of a configuration that uses a different embedder with customized parameters on a specific device:
 ```python exec="on" source="material-block"
@@ -149,7 +137,7 @@ from qoolqit._solvers.types import DeviceType
 coefficients = [[0, 1, 2], [1, 0, 3], [2, 3, 0]]
 instance = QUBOInstance(coefficients=coefficients)
 
-embedding_config = EmbeddingConfig(embedding_method="greedy", traps=instance.size)
+embedding_config = EmbeddingConfig(embedding_method="greedy", greedy_traps=instance.size)
 backend_config = BackendConfig(backend="qutip", device=DeviceType.DIGITAL_ANALOG_DEVICE,)
 
 config = SolverConfig(
@@ -176,6 +164,6 @@ config = SolverConfig.from_kwargs(
     backend="qutip",
     device=DeviceType.ANALOG_DEVICE,
     embedding_method="greedy",
-    traps=instance.size
+    greedy_traps=instance.size
 )
 ```

@@ -102,9 +102,9 @@ def test_generate_optimized_pulse_shaper(
 
     custom_fn_ps = PulseShapingConfig(
         pulse_shaping_method=default_config.pulse_shaping.pulse_shaping_method,
-        custom_objective=custom_ojective,
-        callback_objective=callback_fn,
-        custom_qubo_cost=custom_qubo,
+        optimized_custom_objective=custom_ojective,
+        optimized_callback_objective=callback_fn,
+        optimized_custom_qubo_cost=custom_qubo,
     )
     backend = get_backend(default_config.backend_config)
     shaper = get_pulse_shaper(
@@ -113,9 +113,9 @@ def test_generate_optimized_pulse_shaper(
         backend,
     )
     assert isinstance(shaper, OptimizedPulseShaper)
-    assert shaper.custom_objective_fn is not None
-    assert shaper.callback_objective is not None
-    assert shaper.custom_qubo_cost is not None
+    assert shaper.optimized_custom_objective_fn is not None
+    assert shaper.optimized_callback_objective is not None
+    assert shaper.optimized_custom_qubo_cost is not None
     pulse, solution = shaper.generate(dummy_register, simple_qubo_instance)
     assert len(opt_res) > 0
     assert opt_res[-1]["cost_eval"] == float(1e4)
