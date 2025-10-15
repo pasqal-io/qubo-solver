@@ -360,7 +360,7 @@ class SolverConfig(Config):
         pulse_shaping (PulseShapingConfig, optional): Pulse-shaping part configuration
             of the solver.
         classical (ClassicalConfig, optional): Classical part configuration of the solver.
-        quantum_num_shots (int, optional): Number of samples. Defaults to 500.
+        num_shots (int, optional): Number of samples. Defaults to 500.
         do_postprocessing (bool, optional): Whether we apply post-processing (`True`)
             or not (`False`).
         do_preprocessing (bool, optional): Whether we apply pre-processing (`True`)
@@ -373,7 +373,7 @@ class SolverConfig(Config):
     embedding: EmbeddingConfig = EmbeddingConfig()
     pulse_shaping: PulseShapingConfig = PulseShapingConfig()
     classical: ClassicalConfig = ClassicalConfig()
-    quantum_num_shots: int = 500
+    num_shots: int = 500
     do_postprocessing: bool = False
     do_preprocessing: bool = False
     activate_trivial_solutions: bool = True

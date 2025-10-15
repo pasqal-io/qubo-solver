@@ -72,7 +72,7 @@ def qutip_solver_config() -> SolverConfig:
     return SolverConfig(
         use_quantum=True,
         backend_config=BackendConfig(),
-        quantum_num_shots=100,
+        num_shots=100,
     )
 
 

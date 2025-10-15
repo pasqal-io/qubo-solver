@@ -18,7 +18,7 @@ Besides `ClassicalConfig`, the other configurations represents different parts o
 | `embedding` | `EmbeddingConfig` | Embedding part configuration of the solver. |
 | `pulse_shaping` | `PulseShapingConfig` | Pulse-shaping part configuration of the solver. |
 | `classical` | `ClassicalConfig` | Classical part configuration of the solver. |
-| `quantum_num_shots` | `int` | Number of samples when using a quantum device. Defaults to 500. |
+| `num_shots` | `int` | Number of samples when using a quantum device. Defaults to 500. |
 
 ### Backend configuration
 

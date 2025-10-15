@@ -108,7 +108,7 @@ class BaseSolver(ABC):
                 pulse=pulse.pulse,
                 detunings=pulse.detuning(embedding.register),
             )
-            execution_result = self.backend.run(program, self.config.quantum_num_shots)
+            execution_result = self.backend.run(program, self.config.num_shots)
             counts = execution_result.counts
             bitstrings = list(counts.keys())
 
@@ -121,7 +121,7 @@ class BaseSolver(ABC):
                 pulse=pulse.pulse,
                 detunings=pulse.detuning(embedding.register),
             )
-            execution_result = self.backend.run(program, self.config.quantum_num_shots)
+            execution_result = self.backend.run(program, self.config.num_shots)
             counts = execution_result.counts
             bitstrings = list(counts.keys())
 
