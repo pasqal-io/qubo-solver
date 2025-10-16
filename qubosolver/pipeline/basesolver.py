@@ -99,9 +99,10 @@ class BaseSolver(ABC):
             drive=drive,
         )
         program.compile_to(self.device)
-        execution_result = self.backend.run(program)
-        counts = execution_result.counts
-        bitstrings = list(counts.keys())
+        execution_result = self.backend.run(program)[0]
+        counter = execution_result.final_bitstrings
+        bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())])
+        counts = torch.tensor(list(counter.values()))
 
         if self.config.drive_shaping.re_execute_opt_pulse and (
             bitstrings is None or counts is None
@@ -112,8 +113,9 @@ class BaseSolver(ABC):
             )
             program.compile_to(self.device)
             execution_result = self.backend.run(program)
-            counts = execution_result.counts
-            bitstrings = list(counts.keys())
+            counter = execution_result.final_bitstrings
+            bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())])
+            counts = torch.tensor(list(counter.values()))
 
         return bitstrings, counts
 
