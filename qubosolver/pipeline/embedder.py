@@ -84,7 +84,7 @@ class BLaDEmbedder(BaseEmbedder):
 
         coords = em_blade(
             qubo=BLaDEmbedder._preprocessing_qubo(self.instance.coefficients.numpy()),
-            device=self.config.device,
+            device=self.config.backend_config.device._device,
             draw_steps=self.config.embedding.draw_steps,
             dimensions=self.config.embedding.blade_dimensions,
             starting_positions=(
@@ -128,7 +128,7 @@ class GreedyEmbedder(BaseEmbedder):
 
         # build params for the Greedy algorithm
         params = {
-            "device": self.config.device,
+            "device": self.config.backend_config.device._device,
             "layout": self.config.embedding.greedy_layout,
             "traps": int(self.config.embedding.greedy_traps),
             "spacing": float(self.config.embedding.greedy_spacing),
