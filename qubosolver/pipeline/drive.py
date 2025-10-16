@@ -408,7 +408,7 @@ class OptimizedDriveShaper(BaseDriveShaper):
             program = QuantumProgram(
                 register=register.register, pulse=drive.pulse, device=self.device
             )
-            bitstring_counts = self.backend.run(program).counts
+            bitstring_counts = self.backend.run(program).final_bitstrings
 
             cost_dict = {b: self.compute_qubo_cost(b, QUBO) for b in bitstring_counts.keys()}
 
