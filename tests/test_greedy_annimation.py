@@ -31,7 +31,7 @@ def _base_params(n: int) -> Dict[str, Any]:
         "layout": LayoutType.TRIANGULAR,
         "traps": n + 4,
         "spacing": 5.0,
-        "device": DigitalAnalogDevice(),
+        "device": DigitalAnalogDevice()._device,
     }
 
 
