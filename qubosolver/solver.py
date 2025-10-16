@@ -5,7 +5,7 @@ from collections import Counter
 import torch
 
 # Import the classical solver factory from our classical_solver module.
-from qoolqit._solvers import get_backend
+from qoolqit import Register
 
 from qubosolver.qubo_instance import QUBOInstance
 from qubosolver.data import QUBOSolution
@@ -15,7 +15,6 @@ from qubosolver.pipeline import (
     BaseSolver,
     Fixtures,
     Pulse,
-    Register,
     get_embedder,
     get_pulse_shaper,
 )
@@ -73,7 +72,7 @@ class QuboSolverQuantum(BaseSolver):
         self._check_size_limit()
 
         self.fixtures = Fixtures(self.instance, self.config)
-        self.backend = get_backend(self.config.backend_config)
+        self.backend = self.config.backend_config.backend
         self.embedder = get_embedder(self.instance, self.config, self.backend)
         self.pulse_shaper = get_pulse_shaper(self.instance, self.config, self.backend)
 

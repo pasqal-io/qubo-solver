@@ -47,8 +47,10 @@ class BackendConfig(Config):
 
     Attributes:
         backend (LocalEmulator | RemoteEmulator | QPU, optional): backend
-            for running quantum programs. Note we can parametrize the backend
-            such as `dt` for `emu_mps`.
+            for running quantum programs. Note that parameters
+            such as `dt` are directly set when creating LocalEmulator | RemoteEmulator | QPU,
+            hence they are deprecated compared to previous qubo-solver versions.
+            Also the number of shots is set there as well.
             Defaults to a LocalEmulator using qutip.
         wait (bool, optional): For a remote backend where we submit a batch of jobs.
             Defaults to False.
@@ -381,7 +383,6 @@ class SolverConfig(Config):
         pulse_shaping (PulseShapingConfig, optional): Pulse-shaping part configuration
             of the solver.
         classical (ClassicalConfig, optional): Classical part configuration of the solver.
-        num_shots (int, optional): Number of samples. Defaults to 500.
         do_postprocessing (bool, optional): Whether we apply post-processing (`True`)
             or not (`False`).
         do_preprocessing (bool, optional): Whether we apply pre-processing (`True`)
@@ -394,7 +395,6 @@ class SolverConfig(Config):
     embedding: EmbeddingConfig = EmbeddingConfig()
     pulse_shaping: PulseShapingConfig = PulseShapingConfig()
     classical: ClassicalConfig = ClassicalConfig()
-    num_shots: int = 500
     do_postprocessing: bool = False
     do_preprocessing: bool = False
     activate_trivial_solutions: bool = True

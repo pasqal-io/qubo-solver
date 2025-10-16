@@ -4,15 +4,14 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import torch
-from qoolqit._solvers import get_backend
-from qoolqit._solvers.data import QuantumProgram
+from qoolqit import Register, QuantumProgram
 
 from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig
 from qubosolver.data import QUBOSolution
 from qubosolver.qubo_types import SolutionStatusType
 
-from .targets import Pulse, Register
+from .targets import Pulse
 
 
 class BaseSolver(ABC):
@@ -46,7 +45,8 @@ class BaseSolver(ABC):
                 self.config.embedding.greedy_traps, instance.size
             )
 
-        self.backend = get_backend(self.config.backend_config)
+        self.backend = self.config.backend_config.backend
+        self.device = self.config.backend_config.device
 
     @abstractmethod
     def solve(self) -> QUBOSolution:
@@ -103,12 +103,11 @@ class BaseSolver(ABC):
         else:
             # If not, we need to execute the simulation
             program = QuantumProgram(
-                device=self.backend.device(),
-                register=embedding.register,
-                pulse=pulse.pulse,
-                detunings=pulse.detuning(embedding.register),
+                register=embedding,
+                drive=pulse,
             )
-            execution_result = self.backend.run(program, self.config.num_shots)
+            program.compile_to(self.device)
+            execution_result = self.backend.run(program)
             counts = execution_result.counts
             bitstrings = list(counts.keys())
 
@@ -116,12 +115,11 @@ class BaseSolver(ABC):
             bitstrings is None or counts is None
         ):
             program = QuantumProgram(
-                device=self.backend.device(),
-                register=embedding.register,
-                pulse=pulse.pulse,
-                detunings=pulse.detuning(embedding.register),
+                register=embedding,
+                drive=pulse,
             )
-            execution_result = self.backend.run(program, self.config.num_shots)
+            program.compile_to(self.device)
+            execution_result = self.backend.run(program)
             counts = execution_result.counts
             bitstrings = list(counts.keys())
 
@@ -137,10 +135,10 @@ class BaseSolver(ABC):
         if self.config.use_quantum:
             from qoolqit._solvers.backends.base_backend import make_sequence
 
-            detunings = pulse.detuning(embedding.register)
+            detunings = pulse.detuning(embedding)
             program = QuantumProgram(
                 device=self.backend.device(),
-                register=embedding.register,
+                register=embedding,
                 pulse=pulse.pulse,
                 detunings=detunings,
             )
