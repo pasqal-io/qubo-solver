@@ -63,8 +63,26 @@ class InterpolatedWaveform(Waveform):
             **interpolator_kwargs,
         }
 
+    def min(self) -> float:
+        return 0.0
+
     def function(self, t: float) -> float:
         return float(self._interp_func(t))
+
+class ParabolWaveform(Waveform):
+    def __init__(
+        self,
+        duration: float,
+        bottom: float,
+        top: float,
+        
+
+    ):
+        super().__init__(duration, bottom=bottom, top=top)
+
+    def function(self, t: float) -> float:
+        A = 4 * (self.bottom-self.top) / (self.duration ** 2)
+        return A * ((t- self.duration / 2.0)**2) + self.top
 
 
 def weighted_detunings(

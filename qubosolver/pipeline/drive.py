@@ -9,7 +9,7 @@ from skopt import gp_minimize
 
 from pulser.devices import AnalogDevice
 
-from qoolqit import Register, QuantumProgram, Drive
+from qoolqit import Register, QuantumProgram, Drive, Ramp
 from qoolqit.execution.backend import BaseBackend
 
 
@@ -18,7 +18,7 @@ from qubosolver.config import SolverConfig
 from qubosolver.data import QUBOSolution
 from qubosolver.qubo_types import DriveType
 from qubosolver.utils import calculate_qubo_cost
-from qubosolver.pipeline.waveforms import InterpolatedWaveform, weighted_detunings
+from qubosolver.pipeline.waveforms import InterpolatedWaveform, weighted_detunings, ParabolWaveform
 
 
 class BaseDriveShaper(ABC):
@@ -123,9 +123,10 @@ class AdiabaticDriveShaper(BaseDriveShaper):
 
         max_seq_duration = AnalogDevice.max_sequence_duration
         assert max_seq_duration is not None
-
         amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9, Omega, 1e-9])
         det_wave = InterpolatedWaveform(max_seq_duration, [delta_0, 0, delta_f])
+        # amp_wave = ParabolWaveform(max_seq_duration, bottom=1e-9, top=Omega)
+        # det_wave = Ramp(max_seq_duration, delta_0, delta_f)
         wdetunings = weighted_detunings(
             register,
             max_seq_duration,
