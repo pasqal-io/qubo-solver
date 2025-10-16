@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 import torch
-from pulser.devices import DigitalAnalogDevice, AnalogDevice
+from pulser.devices import AnalogDevice
 from qoolqit.register import Register
 from qubosolver.config import DriveShapingConfig, SolverConfig
 from qubosolver.data import QUBOSolution

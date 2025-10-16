@@ -4,15 +4,19 @@ from __future__ import annotations
 
 import pytest
 import torch
-from qoolqit._solvers.data import BackendConfig
-from qoolqit._solvers.types import BackendType, DeviceType
-import os
+
+from qoolqit import DigitalAnalogDevice
+from pulser_simulation import QutipBackendV2
+from emu_sv import SVBackend
+from emu_mps import MPSBackend
 
 from qubosolver import QUBOInstance
 from qubosolver.config import (
     EmbeddingConfig,
     DriveShapingConfig,
     SolverConfig,
+    BackendConfig,
+    LocalEmulator,
 )
 from qubosolver.qubo_types import LayoutType, DriveType
 
@@ -33,37 +37,17 @@ def classical_solver_config() -> SolverConfig:
 
 
 # emulators not available in windows
-if os.name == "posix":
-    locals_bkds = [
-        BackendConfig(backend=BackendType(b)) for b in BackendType.list() if "remote" not in b
-    ]
-    remote_bkds = [
-        BackendConfig(backend=BackendType(b)) for b in BackendType.list() if "remote" in b
-    ]
-else:
-    locals_bkds = [
-        BackendConfig(backend=BackendType(b))
-        for b in BackendType.list()
-        if "remote" not in b and "emu" not in b
-    ]
-    remote_bkds = [
-        BackendConfig(backend=BackendType(b))
-        for b in BackendType.list()
-        if "remote" in b and "emu" not in b
-    ]
+locals_bkds: list[LocalEmulator] = [
+    LocalEmulator(backend_type=QutipBackendV2),
+    LocalEmulator(backend_type=SVBackend),
+    LocalEmulator(backend_type=MPSBackend),
+]
 
 
 @pytest.fixture(
     params=locals_bkds,
 )
 def local_backend(request: pytest.Fixture) -> BackendConfig:
-    return request.param  # type: ignore[no-any-return]
-
-
-@pytest.fixture(
-    params=remote_bkds,
-)
-def remote_backend(request: pytest.Fixture) -> BackendConfig:
     return request.param  # type: ignore[no-any-return]
 
 
@@ -79,7 +63,7 @@ def qutip_solver_config() -> SolverConfig:
 @pytest.fixture
 def blade_config() -> SolverConfig:
     embed_method = EmbeddingConfig(embedding_method="blade", blade_dimensions=[2])
-    backend_config = BackendConfig(device=DeviceType.DIGITAL_ANALOG_DEVICE)
+    backend_config = BackendConfig(device=DigitalAnalogDevice)
     return SolverConfig(
         backend_config=backend_config,
         embedding=embed_method,
@@ -105,7 +89,7 @@ def greedy_embedding_config() -> SolverConfig:
         greedy_traps=10,
         greedy_spacing=5.0,
     )
-    backend_config = BackendConfig(device=DeviceType.DIGITAL_ANALOG_DEVICE)
+    backend_config = BackendConfig(device=DigitalAnalogDevice)
     return SolverConfig(
         embedding=embed_method,
         backend_config=backend_config,
