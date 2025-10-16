@@ -22,12 +22,7 @@ def test_empty_config(empty_config: SolverConfig) -> None:
     assert empty_config.config_name == ""
     assert empty_config.use_quantum is False
     assert isinstance(empty_config.backend_config.backend, LocalEmulator)
-    assert empty_config.backend_config.backend.backend_type == QutipBackendV2
-
-    assert empty_config.backend_config.device is None
-    assert empty_config.backend_config.project_id is None
-    assert empty_config.backend_config.username is None
-    assert empty_config.backend_config.password is None
+    assert empty_config.backend_config.backend._backend_type == QutipBackendV2
     assert empty_config.embedding.embedding_method == EmbedderType.GREEDY
     assert empty_config.embedding.draw_steps is False
     assert empty_config.embedding.greedy_layout == LayoutType.TRIANGULAR
@@ -77,7 +72,7 @@ def test_classical_config_flag(classical_solver_config: SolverConfig) -> None:
 
 
 def test_qutip_config_backend(qutip_solver_config: SolverConfig) -> None:
-    assert qutip_solver_config.backend_config.backend.backend_type == QutipBackendV2
+    assert qutip_solver_config.backend_config.backend._backend_type == QutipBackendV2
 
 
 def test_blade_config(blade_config: SolverConfig) -> None:

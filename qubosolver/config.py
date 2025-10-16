@@ -470,7 +470,7 @@ class SolverConfig(Config):
                 if "embedding" not in kwargs
                 else kwargs["embedding"]
             ),
-            pulse_shaping=(
+            drive_shaping=(
                 DriveShapingConfig(**drive_shaping_fields)
                 if "drive_shaping" not in kwargs
                 else kwargs["drive_shaping"]

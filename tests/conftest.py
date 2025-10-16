@@ -55,15 +55,14 @@ def local_backend(request: pytest.Fixture) -> BackendConfig:
 def qutip_solver_config() -> SolverConfig:
     return SolverConfig(
         use_quantum=True,
-        backend_config=BackendConfig(),
-        num_shots=100,
+        backend_config=BackendConfig(backend=LocalEmulator(backend_type=QutipBackendV2, runs=100)),
     )
 
 
 @pytest.fixture
 def blade_config() -> SolverConfig:
     embed_method = EmbeddingConfig(embedding_method="blade", blade_dimensions=[2])
-    backend_config = BackendConfig(device=DigitalAnalogDevice)
+    backend_config = BackendConfig(device=DigitalAnalogDevice())
     return SolverConfig(
         backend_config=backend_config,
         embedding=embed_method,
@@ -89,7 +88,7 @@ def greedy_embedding_config() -> SolverConfig:
         greedy_traps=10,
         greedy_spacing=5.0,
     )
-    backend_config = BackendConfig(device=DigitalAnalogDevice)
+    backend_config = BackendConfig(device=DigitalAnalogDevice())
     return SolverConfig(
         embedding=embed_method,
         backend_config=backend_config,

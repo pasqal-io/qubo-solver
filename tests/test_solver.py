@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 import torch
-from qubosolver.config import EmbeddingConfig, SolverConfig, BackendConfig
+from qubosolver.config import EmbeddingConfig, SolverConfig, BackendConfig, LocalEmulator
 from qubosolver.qubo_types import EmbedderType
 from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical
 
@@ -28,13 +28,24 @@ def test_implicit_solver_config(
 
 
 def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
+    from pulser_simulation import QutipBackendV2
 
-    default_solver = QuboSolver(simple_qubo_instance, SolverConfig(use_quantum=True))
+    default_solver = QuboSolver(
+        simple_qubo_instance,
+        SolverConfig(
+            use_quantum=True,
+            backend_config=BackendConfig(LocalEmulator(backend_type=QutipBackendV2, runs=500)),
+        ),
+    )
     solutions = default_solver.solve()
     assert solutions.counts.sum() == 500  # type: ignore[union-attr]
 
     lessshots_solver = QuboSolver(
-        simple_qubo_instance, SolverConfig(use_quantum=True, num_shots=100)
+        simple_qubo_instance,
+        SolverConfig(
+            use_quantum=True,
+            backend_config=BackendConfig(LocalEmulator(backend_type=QutipBackendV2, runs=100)),
+        ),
     )
     solutions = lessshots_solver.solve()
     assert solutions.counts.sum() == 100  # type: ignore[union-attr]
