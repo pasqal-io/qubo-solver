@@ -34,6 +34,9 @@ class BaseEmbedder(ABC):
         self.register: QoolqitRegister | None = None
         self.backend = backend
 
+        # for converting to qoolqit
+        self._distance_conversion = self.config.backend_config.device.converter.factors[2]
+
     @abstractmethod
     def embed(self) -> QoolqitRegister:
         """
@@ -82,17 +85,20 @@ class BLaDEmbedder(BaseEmbedder):
     @typing.no_type_check
     def embed(self) -> QoolqitRegister:
 
-        coords = em_blade(
-            qubo=BLaDEmbedder._preprocessing_qubo(self.instance.coefficients.numpy()),
-            device=self.config.backend_config.device._device,
-            draw_steps=self.config.embedding.draw_steps,
-            dimensions=self.config.embedding.blade_dimensions,
-            starting_positions=(
-                self.config.embedding.blade_starting_positions.numpy()
-                if self.config.embedding.blade_starting_positions is not None
-                else None
-            ),
-            steps_per_round=self.config.embedding.blade_steps_per_round,
+        coords = (
+            em_blade(
+                qubo=BLaDEmbedder._preprocessing_qubo(self.instance.coefficients.numpy()),
+                device=self.config.backend_config.device._device,
+                draw_steps=self.config.embedding.draw_steps,
+                dimensions=self.config.embedding.blade_dimensions,
+                starting_positions=(
+                    self.config.embedding.blade_starting_positions.numpy()
+                    if self.config.embedding.blade_starting_positions is not None
+                    else None
+                ),
+                steps_per_round=self.config.embedding.blade_steps_per_round,
+            )
+            / self._distance_conversion
         )
 
         qubits = {f"q{i}": coord for i, coord in enumerate(coords)}
@@ -153,6 +159,7 @@ class GreedyEmbedder(BaseEmbedder):
             params=params,
             # no extra kwargs; Greedy reads animation/draw/save_path from params
         )
+        coords /= self._distance_conversion
 
         # build the register (unchanged)
         qubits = {f"q{i}": coord for i, coord in enumerate(coords)}
