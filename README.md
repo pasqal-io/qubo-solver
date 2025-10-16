@@ -76,6 +76,7 @@ of cplex.
 ### With a quantum solver
 
 ```python
+import torch
 from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig
 from qubosolver.solver import QuboSolver
@@ -94,11 +95,13 @@ solver = QuboSolver(instance, config)
 
 # Solve the QUBO problem.
 solution = solver.solve()
+print(solution)
 ```
 
 ### With a classical solver
 
 ```python
+import torch
 from qubosolver import QUBOInstance
 from qubosolver.config import ClassicalConfig, SolverConfig
 from qubosolver.solver import QuboSolverClassical, QuboSolverQuantum
@@ -120,6 +123,7 @@ classical_solver = QuboSolver(instance, config)
 
 # Solve the QUBO problem.
 solution = classical_solver.solve()
+print(solution)
 ```
 
 

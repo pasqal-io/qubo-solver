@@ -16,7 +16,7 @@ from qoolqit.execution import LocalEmulator, RemoteEmulator, QPU
 from qubosolver.qubo_types import (
     EmbedderType,
     LayoutType,
-    PulseType,
+    DriveType,
     ClassicalSolverType,
 )
 
@@ -30,7 +30,7 @@ __all__: list[str] = [
     "QPU",
     "ClassicalConfig",
     "EmbeddingConfig",
-    "PulseShapingConfig",
+    "DriveShapingConfig",
     "BackendConfig",
     "SolverConfig",
 ]
@@ -218,7 +218,7 @@ class EmbeddingConfig(Config):
             from qubosolver.pipeline.embedder import BaseEmbedder
 
             if not issubclass(val, BaseEmbedder):
-                raise TypeError("Class must be a subclass of BaseEmbedder")
+                raise TypeError(f"Class must be a subclass of {BaseEmbedder.__name__}")
             else:
                 return val
         else:
@@ -239,12 +239,11 @@ class EmbeddingConfig(Config):
             raise ValueError(f"Invalid layout '{val}'.")
 
 
-class PulseShapingConfig(Config):
-    """A `PulseShapingConfig` instance defines the pulse shaping
-        part of a `SolverConfig`.
+class DriveShapingConfig(Config):
+    """A `DriveShapingConfig` instance defines the drive shaping part of a `SolverConfig`.
 
     Attributes:
-        pulse_shaping_method (str | PulseType | type[BasePulseShaper], optional): Pulse shaping
+        drive_shaping_method (str | PulseType | type[BaseDriveShaper], optional): Pulse shaping
             method used. Defauts to `PulseType.ADIABATIC`.
         dmm (bool, optional): Whether to use a detuning map when applying pulse shaping or not.
             This gets added to the pulse sequence as a ConstantWaveform.
@@ -282,7 +281,7 @@ class PulseShapingConfig(Config):
             Defaults to None, which means no callback is applied.
     """
 
-    pulse_shaping_method: Any = PulseType.ADIABATIC
+    drive_shaping_method: Any = DriveType.ADIABATIC
     dmm: bool = True
     re_execute_opt_pulse: bool = False
     optimized_n_calls: int = 20
@@ -307,45 +306,45 @@ class PulseShapingConfig(Config):
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
         serialization: dict = {
-            "pulse_shaping_method": self.pulse_shaping_method,
+            "drive_shaping_method": self.drive_shaping_method,
             "dmm": self.dmm,
             "re_execute_opt_pulse": self.re_execute_opt_pulse,
         }
-        if self.pulse_shaping_method == PulseType.OPTIMIZED:
+        if self.drive_shaping_method == DriveType.OPTIMIZED:
             dict_all_fields = self.__dict__
             serialization.update(
                 {
                     k: v
                     for k, v in dict_all_fields.items()
-                    if k.startswith(PulseType.OPTIMIZED.value)
+                    if k.startswith(DriveType.OPTIMIZED.value)
                 }
             )
         return serialization
 
-    @field_validator("pulse_shaping_method")
+    @field_validator("drive_shaping_method")
     @classmethod
-    def _normalize_pulse_shaping_method(cls, val: Any) -> PulseType | Any:
+    def _normalize_pulse_shaping_method(cls, val: Any) -> DriveType | Any:
         """Normalize the `pulse_shaping_method` attribute."""
-        if isinstance(val, PulseType):
+        if isinstance(val, DriveType):
             return val
         elif isinstance(val, str):
             u = val.upper()
-            if u == PulseType.ADIABATIC.name:
-                return PulseType.ADIABATIC
-            elif u == PulseType.OPTIMIZED.name:
-                return PulseType.OPTIMIZED
+            if u == DriveType.ADIABATIC.name:
+                return DriveType.ADIABATIC
+            elif u == DriveType.OPTIMIZED.name:
+                return DriveType.OPTIMIZED
             else:
-                raise ValueError(f"Invalid pulse shaping method '{val}'.")
+                raise ValueError(f"Invalid drive shaping method '{val}'.")
 
         elif inspect.isclass(val):
-            from qubosolver.pipeline.pulse import BasePulseShaper
+            from qubosolver.pipeline.drive import BaseDriveShaper
 
-            if not issubclass(val, BasePulseShaper):
-                raise TypeError("Class must be a subclass of BasePulseShaper")
+            if not issubclass(val, BaseDriveShaper):
+                raise TypeError(f"Class must be a subclass of {BaseDriveShaper.__name__}")
             else:
                 return val
         else:
-            raise TypeError("Invalid pulse shaping method type.")
+            raise TypeError("Invalid drive shaping method type.")
 
     @field_validator("optimized_initial_omega_parameters")
     @classmethod
@@ -380,7 +379,7 @@ class SolverConfig(Config):
         backend (BackendConfig, optional): Which underlying backend configuration is used.
             Defaults to the default BackendConfig using `BackendType.QUTIP`.
         embedding (EmbeddingConfig, optional): Embedding part configuration of the solver.
-        pulse_shaping (PulseShapingConfig, optional): Pulse-shaping part configuration
+        drive_shaping (DriveShapingConfig, optional): Drive-shaping part configuration
             of the solver.
         classical (ClassicalConfig, optional): Classical part configuration of the solver.
         do_postprocessing (bool, optional): Whether we apply post-processing (`True`)
@@ -393,7 +392,7 @@ class SolverConfig(Config):
     use_quantum: bool | None = False
     backend_config: BackendConfig = BackendConfig()
     embedding: EmbeddingConfig = EmbeddingConfig()
-    pulse_shaping: PulseShapingConfig = PulseShapingConfig()
+    drive_shaping: DriveShapingConfig = DriveShapingConfig()
     classical: ClassicalConfig = ClassicalConfig()
     do_postprocessing: bool = False
     do_preprocessing: bool = False
@@ -439,7 +438,7 @@ class SolverConfig(Config):
         """Create an instance based on entries of other configs.
 
         Note that if any of the keywords
-        ("backend_config", "embedding", "pulse_shaping", "classical")
+        ("backend_config", "embedding", "drive_shaping", "classical")
         are present in kwargs, the values are taken directly.
 
         Returns:
@@ -448,8 +447,8 @@ class SolverConfig(Config):
         # Extract fields from pydantic BaseModel
         backend_config_fields = {k: v for k, v in kwargs.items() if k in BackendConfig.model_fields}
         embedding_fields = {k: v for k, v in kwargs.items() if k in EmbeddingConfig.model_fields}
-        pulse_shaping_fields = {
-            k: v for k, v in kwargs.items() if k in PulseShapingConfig.model_fields
+        drive_shaping_fields = {
+            k: v for k, v in kwargs.items() if k in DriveShapingConfig.model_fields
         }
         classical_fields = {k: v for k, v in kwargs.items() if k in ClassicalConfig.model_fields}
 
@@ -457,7 +456,7 @@ class SolverConfig(Config):
             k: v
             for k, v in kwargs.items()
             if k in cls.model_fields
-            and k not in ("backend_config", "embedding", "pulse_shaping", "classical")
+            and k not in ("backend_config", "embedding", "drive_shaping", "classical")
         }
 
         return cls(
@@ -472,9 +471,9 @@ class SolverConfig(Config):
                 else kwargs["embedding"]
             ),
             pulse_shaping=(
-                PulseShapingConfig(**pulse_shaping_fields)
-                if "pulse_shaping" not in kwargs
-                else kwargs["pulse_shaping"]
+                DriveShapingConfig(**drive_shaping_fields)
+                if "drive_shaping" not in kwargs
+                else kwargs["drive_shaping"]
             ),
             classical=(
                 ClassicalConfig(**classical_fields)

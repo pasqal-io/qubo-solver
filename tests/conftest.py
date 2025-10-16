@@ -11,10 +11,10 @@ import os
 from qubosolver import QUBOInstance
 from qubosolver.config import (
     EmbeddingConfig,
-    PulseShapingConfig,
+    DriveShapingConfig,
     SolverConfig,
 )
-from qubosolver.qubo_types import LayoutType, PulseType
+from qubosolver.qubo_types import LayoutType, DriveType
 
 
 @pytest.fixture
@@ -87,8 +87,8 @@ def blade_config() -> SolverConfig:
 
 
 @pytest.fixture
-def optimized_pulse_shaping() -> PulseShapingConfig:
-    return PulseShapingConfig(pulse_shaping_method=PulseType.OPTIMIZED)
+def optimized_pulse_shaping() -> DriveShapingConfig:
+    return DriveShapingConfig(drive_shaping_method=DriveType.OPTIMIZED)
 
 
 @pytest.fixture

@@ -5,7 +5,7 @@ from collections import Counter
 import torch
 
 # Import the classical solver factory from our classical_solver module.
-from qoolqit import Register
+from qoolqit import Register, Drive
 
 from qubosolver.qubo_instance import QUBOInstance
 from qubosolver.data import QUBOSolution
@@ -14,9 +14,8 @@ from qubosolver.config import SolverConfig
 from qubosolver.pipeline import (
     BaseSolver,
     Fixtures,
-    Pulse,
     get_embedder,
-    get_pulse_shaper,
+    get_drive_shaper,
 )
 
 
@@ -47,8 +46,8 @@ class QuboSolver(BaseSolver):
     def embedding(self) -> Register:
         return self._solver.embedding()
 
-    def pulse(self, embedding: Register) -> tuple:
-        return self._solver.pulse(embedding)
+    def drive(self, embedding: Register) -> tuple:
+        return self._solver.drive(embedding)
 
     def solve(self) -> QUBOSolution:
         return self._solver.solve()
@@ -57,7 +56,7 @@ class QuboSolver(BaseSolver):
 class QuboSolverQuantum(BaseSolver):
     """
     Quantum solver that orchestrates the solving of a QUBO problem using
-    embedding, pulse shaping, and quantum execution pipelines.
+    embedding, drive shaping, and quantum execution pipelines.
     """
 
     def __init__(self, instance: QUBOInstance, config: SolverConfig | None = None):
@@ -74,10 +73,10 @@ class QuboSolverQuantum(BaseSolver):
         self.fixtures = Fixtures(self.instance, self.config)
         self.backend = self.config.backend_config.backend
         self.embedder = get_embedder(self.instance, self.config, self.backend)
-        self.pulse_shaper = get_pulse_shaper(self.instance, self.config, self.backend)
+        self.drive_shaper = get_drive_shaper(self.instance, self.config, self.backend)
 
         self._register: Register | None = None
-        self._pulse: Pulse | None = None
+        self._drive: Drive | None = None
 
     def _check_size_limit(self) -> None:
         if (self.instance._coefficients is not None) and self.instance.size > 80:  # type: ignore[operator]
@@ -97,9 +96,9 @@ class QuboSolverQuantum(BaseSolver):
         self._register = self.embedder.embed()
         return self._register
 
-    def pulse(self, embedding: Register) -> tuple:
+    def drive(self, embedding: Register) -> tuple:
         """
-        Generate the pulse sequence based on the given embedding.
+        Generate the drive sequence based on the given embedding.
 
         Args:
             embedding (Register): The embedded register layout.
@@ -107,18 +106,18 @@ class QuboSolverQuantum(BaseSolver):
         Returns:
             tuple:
                 A tuple of
-                    - Pulse: Pulse schedule for quantum execution.
-                    - QUBOSolution: Initial solution of generated from pulse shaper
+                    - Drive: Drive schedule for quantum execution.
+                    - QUBOSolution: Initial solution of generated from drive shaper
 
         """
-        pulse, qubo_solution = self.pulse_shaper.generate(embedding, self.instance)
+        drive, qubo_solution = self.drive_shaper.generate(embedding, self.instance)
 
-        self._pulse = pulse
-        return pulse, qubo_solution
+        self._drive = drive
+        return drive, qubo_solution
 
     def solve(self) -> QUBOSolution:
         """
-        Execute the full quantum pipeline: preprocess, embed, pulse, execute, postprocess.
+        Execute the full quantum pipeline: preprocess, embed, drive, execute, postprocess.
 
         Returns:
             QUBOSolution: Final result after execution and postprocessing.
@@ -145,7 +144,7 @@ class QuboSolverQuantum(BaseSolver):
 
         embedding = self.embedding()
 
-        pulse, qubo_solution = self.pulse(embedding)
+        drive, qubo_solution = self.drive(embedding)
 
         bitstrings, counts, _, _ = (
             qubo_solution.bitstrings,
@@ -155,8 +154,8 @@ class QuboSolverQuantum(BaseSolver):
         )
         if (
             len(bitstrings) == 0 and qubo_solution.counts is None
-        ) or self.config.pulse_shaping.re_execute_opt_pulse:
-            bitstrings, counts = self.execute(pulse, embedding)
+        ) or self.config.drive_shaping.re_execute_opt_drive:
+            bitstrings, counts = self.execute(drive, embedding)
 
         bitstring_strs = bitstrings
         bitstrings_tensor = torch.tensor(
@@ -213,7 +212,7 @@ class QuboSolverClassical(BaseSolver):
         # Classical solvers do not require an embedding.
         return  # type: ignore[return-value]
 
-    def pulse(self, embedding: Register) -> tuple:
+    def drive(self, embedding: Register) -> tuple:
         return  # type: ignore[return-value]
 
     def solve(self) -> QUBOSolution:

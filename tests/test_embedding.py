@@ -7,12 +7,15 @@ from qoolqit._solvers import get_backend
 from qubosolver import QUBOInstance
 from qubosolver.config import (
     BackendConfig,
-    DeviceType,
     EmbeddingConfig,
     SolverConfig,
 )
 from qubosolver.pipeline.embedder import GreedyEmbedder, get_embedder
 from qubosolver.solver import QuboSolver
+from pulser.devices import Device, DigitalAnalogDevice, AnalogDevice
+
+
+devices: list[Device] = [DigitalAnalogDevice, AnalogDevice]
 
 
 def test_custom_embedder(simple_qubo_instance: QUBOInstance) -> None:
@@ -53,9 +56,6 @@ def test_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) -> None:
         assert (x == x_) and (y == y_)
 
 
-devices: list[DeviceType] = [DeviceType.ANALOG_DEVICE, DeviceType.DIGITAL_ANALOG_DEVICE]
-
-
 def test_greedy_max_radial_distance_constraint(
     qubo_instance_for_embedding: QUBOInstance,
 ) -> None:
@@ -67,7 +67,7 @@ def test_greedy_max_radial_distance_constraint(
             embedding=EmbeddingConfig(
                 embedding_method="greedy",
                 greedy_traps=qubo_instance_for_embedding.size,
-                greedy_spacing=device.value.max_radial_distance,
+                greedy_spacing=device.max_radial_distance,
             ),
             backend_config=BackendConfig(device=device),
         )
@@ -110,7 +110,7 @@ def test_greedy_max_radial_distance_constraint_with_extra_greedy_traps(
             embedding=EmbeddingConfig(
                 embedding_method="greedy",
                 greedy_traps=qubo_instance_for_embedding.size * 2,
-                greedy_spacing=device.value.max_radial_distance / 2,
+                greedy_spacing=device.max_radial_distance / 2,
             ),
             backend_config=BackendConfig(device=device),
         )

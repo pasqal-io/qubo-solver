@@ -6,13 +6,13 @@ from qoolqit._solvers.types import BackendType, DeviceType
 from qubosolver.config import (
     ClassicalConfig,
     EmbeddingConfig,
-    PulseShapingConfig,
+    DriveShapingConfig,
     SolverConfig,
 )
 from qubosolver.qubo_types import (
     EmbedderType,
     LayoutType,
-    PulseType,
+    DriveType,
 )
 
 
@@ -41,15 +41,15 @@ def test_classical_part() -> None:
 
 
 def test_pulseshape_part() -> None:
-    default_pshaper = PulseShapingConfig()
-    assert default_pshaper.pulse_shaping_method == PulseType.ADIABATIC
+    default_pshaper = DriveShapingConfig()
+    assert default_pshaper.drive_shaping_method == DriveType.ADIABATIC
     assert not default_pshaper.re_execute_opt_pulse
 
     assert len(default_pshaper.optimized_initial_detuning_parameters) == 3
     assert len(default_pshaper.optimized_initial_omega_parameters) == 3
 
     with pytest.raises(ValueError):
-        PulseShapingConfig(pulse_shaping_method="dummy")
+        DriveShapingConfig(drive_shaping_method="dummy")
 
 
 def test_embedder_part() -> None:

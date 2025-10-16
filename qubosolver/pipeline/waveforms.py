@@ -8,6 +8,7 @@ from qoolqit.drive import WeightedDetuning
 from qoolqit.waveforms import Waveform, Constant
 import scipy.interpolate as interpolate
 
+
 class InterpolatedWaveform(Waveform):
     """A waveform created from interpolation of a set of data points.
 
@@ -33,7 +34,7 @@ class InterpolatedWaveform(Waveform):
         **interpolator_kwargs: Any,
     ):
         """Initializes a new InterpolatedWaveform."""
-        super().__init__(duration, values = values)
+        super().__init__(duration, values=values)
 
         self._values = np.array(values, dtype=float)
         if times is not None:
@@ -51,12 +52,7 @@ class InterpolatedWaveform(Waveform):
             )
         interp_cls = getattr(interpolate, interpolator)
         self._data_pts = np.array(
-            [
-                (round(t), v)
-                for t, v in zip(
-                    self._times * (self._duration - 1), self._values
-                )
-            ]
+            [(round(t), v) for t, v in zip(self._times * (self._duration - 1), self._values)]
         )
         self._interp_func = interp_cls(
             self._data_pts[:, 0], self._data_pts[:, 1], **interpolator_kwargs
@@ -66,11 +62,17 @@ class InterpolatedWaveform(Waveform):
             "interpolator": interpolator,
             **interpolator_kwargs,
         }
-    
+
     def function(self, t: float) -> float:
         return float(self._interp_func(t))
 
-def weighted_detunings(embedding: Register, duration: float, norm_weights: list[float], final_detuning: float | None = None) -> list[WeightedDetuning]:
+
+def weighted_detunings(
+    embedding: Register,
+    duration: float,
+    norm_weights: list[float],
+    final_detuning: float | None = None,
+) -> list[WeightedDetuning]:
     if final_detuning is not None:
         waveform = Constant(duration, final_detuning)
         return [
