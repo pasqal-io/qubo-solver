@@ -9,7 +9,7 @@ from skopt import gp_minimize
 
 from pulser.devices import AnalogDevice
 
-from qoolqit import Register, QuantumProgram, Drive, Ramp
+from qoolqit import Register, QuantumProgram, Drive
 from qoolqit.execution.backend import BaseBackend
 
 
@@ -18,7 +18,7 @@ from qubosolver.config import SolverConfig
 from qubosolver.data import QUBOSolution
 from qubosolver.qubo_types import DriveType
 from qubosolver.utils import calculate_qubo_cost
-from qubosolver.pipeline.waveforms import InterpolatedWaveform, weighted_detunings, ParabolWaveform
+from qubosolver.pipeline.waveforms import InterpolatedWaveform, weighted_detunings
 
 
 class BaseDriveShaper(ABC):
@@ -100,10 +100,13 @@ class AdiabaticDriveShaper(BaseDriveShaper):
                     - float | None: The counts of each bitstring -> Not computed
         """
 
+        # for conversions to qoolqit
+        TIME, _, _ = self.device.converter.factors
+
         QUBO = instance.coefficients
         weights_list = torch.abs(torch.diag(QUBO)).tolist()
         max_node_weight = max(weights_list)
-        norm_weights_list = [1 - (w / max_node_weight) for w in weights_list]
+        norm_weights_list = [(1 - (w / max_node_weight)) / TIME for w in weights_list]
 
         # enforces AnalogDevice max sequence duration since Digital's one is really specific
 
@@ -111,7 +114,7 @@ class AdiabaticDriveShaper(BaseDriveShaper):
             ~torch.eye(QUBO.shape[0], dtype=torch.bool)
         ]  # Selecting off-diagonal terms of the Qubo with a mask
 
-        rydberg_global = self.device._device.channels["rydberg_global"]
+        rydberg_global = self.device.channels["rydberg_global"]
 
         Omega = min(
             torch.max(off_diag).item(),
@@ -123,10 +126,14 @@ class AdiabaticDriveShaper(BaseDriveShaper):
 
         max_seq_duration = AnalogDevice.max_sequence_duration
         assert max_seq_duration is not None
-        amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9, Omega, 1e-9])
+
+        max_seq_duration /= TIME
+        Omega /= TIME
+        delta_0 /= TIME
+        delta_f /= TIME
+
+        amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9 / TIME, Omega, 1e-9 / TIME])
         det_wave = InterpolatedWaveform(max_seq_duration, [delta_0, 0, delta_f])
-        # amp_wave = ParabolWaveform(max_seq_duration, bottom=1e-9, top=Omega)
-        # det_wave = Ramp(max_seq_duration, delta_0, delta_f)
         wdetunings = weighted_detunings(
             register,
             max_seq_duration,
@@ -222,6 +229,7 @@ class OptimizedDriveShaper(BaseDriveShaper):
         # TODO: Harmonize the output of the pulse_shaper generate
         QUBO = instance.coefficients
         self.register = register
+
         self.norm_weights_list = self._compute_norm_weights(QUBO)
 
         n_amp = 3
@@ -317,10 +325,12 @@ class OptimizedDriveShaper(BaseDriveShaper):
         Returns:
             list[float]: normalization weights.
         """
+        TIME, _, _ = self.device.converter.factors
         weights_list = torch.abs(torch.diag(QUBO)).tolist()
         max_node_weight = max(weights_list) if weights_list else 1.0
         norm_weights_list = [
-            1 - (w / max_node_weight) if max_node_weight != 0 else 0.0 for w in weights_list
+            (1 - (w / max_node_weight)) / TIME if max_node_weight != 0 else 0.0
+            for w in weights_list
         ]
         return norm_weights_list
 
@@ -336,17 +346,22 @@ class OptimizedDriveShaper(BaseDriveShaper):
         max_seq_duration = AnalogDevice.max_sequence_duration
         assert max_seq_duration is not None
 
-        amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9] + list(params[:3]) + [1e-9])
-        det_wave = InterpolatedWaveform(
-            max_seq_duration, [params[3]] + list(params[4:]) + [params[3]]
-        )
+        TIME, _, _ = self.device.converter.factors
+        max_seq_duration /= TIME
+        amp_params = [1e-9] + list(params[:3]) + [1e-9]
+        det_params = [params[3]] + list(params[4:]) + [params[3]]
+        amp_params = [p / TIME for p in amp_params]
+        det_params = [p / TIME for p in det_params]
+
+        amp_wave = InterpolatedWaveform(max_seq_duration, amp_params)
+        det_wave = InterpolatedWaveform(max_seq_duration, det_params)
 
         wdetunings = weighted_detunings(
             self.register,
             max_seq_duration,
             self.norm_weights_list,
             final_detuning=(
-                -params[3] if self.config.drive_shaping.dmm and (params[3] > 0) else None
+                -params[3] / TIME if self.config.drive_shaping.dmm and (params[3] > 0) else None
             ),
         )
 

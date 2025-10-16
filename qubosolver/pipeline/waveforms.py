@@ -35,14 +35,12 @@ class InterpolatedWaveform(Waveform):
     ):
         """Initializes a new InterpolatedWaveform."""
         super().__init__(duration, values=values)
-
         self._values = np.array(values, dtype=float)
-        if times is not None:
+        if times:
             times = cast(ArrayLike, times)
-            times_ = np.array(times, dtype=float)
-            self._times = times_
+            self._times = np.array(times, dtype=float)
         else:
-            self._times = np.linspace(0, 1, num=len(self._values))
+            self._times = np.linspace(0, duration, num=len(self._values))
 
         valid_interpolators = ("PchipInterpolator", "interp1d")
         if interpolator not in valid_interpolators:
@@ -51,38 +49,16 @@ class InterpolatedWaveform(Waveform):
                 "accepts: " + ", ".join(valid_interpolators)
             )
         interp_cls = getattr(interpolate, interpolator)
-        self._data_pts = np.array(
-            [(round(t), v) for t, v in zip(self._times * (self._duration - 1), self._values)]
-        )
-        self._interp_func = interp_cls(
-            self._data_pts[:, 0], self._data_pts[:, 1], **interpolator_kwargs
-        )
-        self._kwargs: dict[str, Any] = {
-            "times": times,
-            "interpolator": interpolator,
-            **interpolator_kwargs,
-        }
+        self._interp_func = interp_cls(self._times, self._values, **interpolator_kwargs)
 
     def min(self) -> float:
-        return 0.0
+        return float(min(self._values))
+
+    def max(self) -> float:
+        return float(max(self._values))
 
     def function(self, t: float) -> float:
         return float(self._interp_func(t))
-
-class ParabolWaveform(Waveform):
-    def __init__(
-        self,
-        duration: float,
-        bottom: float,
-        top: float,
-        
-
-    ):
-        super().__init__(duration, bottom=bottom, top=top)
-
-    def function(self, t: float) -> float:
-        A = 4 * (self.bottom-self.top) / (self.duration ** 2)
-        return A * ((t- self.duration / 2.0)**2) + self.top
 
 
 def weighted_detunings(
