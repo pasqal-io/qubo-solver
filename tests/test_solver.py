@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import pytest
 import torch
-from qoolqit._solvers.data import BackendConfig
-
-from qubosolver.config import EmbeddingConfig, SolverConfig
+from qubosolver.config import EmbeddingConfig, SolverConfig, BackendConfig
 from qubosolver.qubo_types import EmbedderType
 from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical
 

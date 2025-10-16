@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pytest
 import torch
-from qoolqit._solvers import get_backend
 
 from qubosolver import QUBOInstance
 from qubosolver.config import (
@@ -27,7 +26,7 @@ def test_custom_embedder(simple_qubo_instance: QUBOInstance) -> None:
         use_quantum=True,
         embedding=EmbeddingConfig(embedding_method=MockGreedyEmbedder),
     )
-    backend = get_backend(config.backend_config)
+    backend = config.backend_config.backend
     shaper = get_embedder(simple_qubo_instance, config, backend)
     assert isinstance(shaper, MockGreedyEmbedder)
 

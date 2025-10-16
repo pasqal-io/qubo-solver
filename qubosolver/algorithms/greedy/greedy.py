@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import torch
 from pulser.register.register_layout import RegisterLayout
-from qoolqit._solvers.types import DeviceType
+from qoolqit.devices.device import DigitalAnalogDevice
 
 from qubosolver.qubo_types import LayoutType
 
@@ -685,7 +685,7 @@ class Greedy:
 
         lb_radius = params["device"].rydberg_blockade_radius(1)
         ub_radius = params["device"].rydberg_blockade_radius(
-            1 if params["device"] == DeviceType.DIGITAL_ANALOG_DEVICE else 200
+            1 if isinstance(params["device"], DigitalAnalogDevice) else 200
         )
         blockade_radius = (ub_radius - lb_radius) + lb_radius
         omega = params["device"].rabi_from_blockade(blockade_radius)

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import pytest
-from qoolqit._solvers.types import BackendType, DeviceType
-
+from pulser.devices import DigitalAnalogDevice as PulserDADevice
+from pulser_simulation import QutipBackendV2
+from qoolqit.devices.device import DigitalAnalogDevice, AnalogDevice
 from qubosolver.config import (
+    LocalEmulator,
     ClassicalConfig,
     EmbeddingConfig,
     DriveShapingConfig,
@@ -19,7 +21,8 @@ from qubosolver.qubo_types import (
 def test_empty_config(empty_config: SolverConfig) -> None:
     assert empty_config.config_name == ""
     assert empty_config.use_quantum is False
-    assert empty_config.backend_config.backend == BackendType.QUTIP
+    assert isinstance(empty_config.backend_config.backend, LocalEmulator)
+    assert empty_config.backend_config.backend.backend_type == QutipBackendV2
 
     assert empty_config.backend_config.device is None
     assert empty_config.backend_config.project_id is None
@@ -74,13 +77,13 @@ def test_classical_config_flag(classical_solver_config: SolverConfig) -> None:
 
 
 def test_qutip_config_backend(qutip_solver_config: SolverConfig) -> None:
-    assert qutip_solver_config.backend_config.backend == BackendType.QUTIP
+    assert qutip_solver_config.backend_config.backend.backend_type == QutipBackendV2
 
 
 def test_blade_config(blade_config: SolverConfig) -> None:
     assert blade_config.embedding.embedding_method == EmbedderType.BLADE
     assert (
-        blade_config.backend_config.device == DeviceType.DIGITAL_ANALOG_DEVICE
+        blade_config.backend_config.device._device == PulserDADevice
         and blade_config.embedding.blade_dimensions == [2]
     )
     assert blade_config.embedding.blade_dimensions == [2]
@@ -94,23 +97,20 @@ def test_blade_clear_dimensions_config(
 
 def test_greedy_embedding_config(greedy_embedding_config: SolverConfig) -> None:
     assert greedy_embedding_config.embedding.embedding_method == EmbedderType.GREEDY
-    assert greedy_embedding_config.backend_config.device == DeviceType.DIGITAL_ANALOG_DEVICE
+    assert greedy_embedding_config.backend_config.device._device == PulserDADevice
     assert greedy_embedding_config.embedding.greedy_layout == LayoutType.SQUARE
     assert greedy_embedding_config.embedding.greedy_traps == 10
     assert greedy_embedding_config.embedding.greedy_spacing == 5.0
 
 
 def test_initialization_device() -> None:
-    from qoolqit._solvers.types import DeviceType
 
     solver = SolverConfig()
-    assert solver.embedding.greedy_traps == DeviceType.DIGITAL_ANALOG_DEVICE.value.min_layout_traps
-    assert solver.embedding.greedy_spacing == float(
-        DeviceType.DIGITAL_ANALOG_DEVICE.value.min_atom_distance
-    )
+    device = DigitalAnalogDevice()
+    assert solver.embedding.greedy_traps == device._device.min_layout_traps
+    assert solver.embedding.greedy_spacing == float(device._device.min_atom_distance)
 
-    solver = SolverConfig.from_kwargs(**{"device": DeviceType.ANALOG_DEVICE})
-    assert solver.embedding.greedy_traps == DeviceType.ANALOG_DEVICE.value.min_layout_traps
-    assert solver.embedding.greedy_spacing == float(
-        DeviceType.ANALOG_DEVICE.value.min_atom_distance
-    )
+    deviceanalog = AnalogDevice()
+    solver = SolverConfig.from_kwargs(**{"device": deviceanalog})
+    assert solver.embedding.greedy_traps == deviceanalog._device.min_layout_traps
+    assert solver.embedding.greedy_spacing == float(deviceanalog._device.min_atom_distance)

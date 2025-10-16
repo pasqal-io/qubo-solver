@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 import torch
-from qoolqit._solvers.types import DeviceType
+from qoolqit.devices.device import DigitalAnalogDevice
 
 from qubosolver.algorithms.greedy.greedy import Greedy
 from qubosolver.qubo_types import LayoutType
@@ -31,7 +31,7 @@ def _base_params(n: int) -> Dict[str, Any]:
         "layout": LayoutType.TRIANGULAR,
         "traps": n + 4,
         "spacing": 5.0,
-        "device": DeviceType.DIGITAL_ANALOG_DEVICE.value,
+        "device": DigitalAnalogDevice(),
     }
 
 
