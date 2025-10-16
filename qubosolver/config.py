@@ -7,9 +7,11 @@ from typing import Any, Callable
 
 import torch
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator, model_serializer
-from qoolqit._solvers.data import BackendConfig
-from qoolqit._solvers.types import DeviceType
-from qoolqit._solvers.types import BackendType
+
+from pulser_simulation import QutipBackendV2
+from pulser.devices import DigitalAnalogDevice as PulserDigitalAnalogDevice
+from qoolqit.devices.device import Device, DigitalAnalogDevice
+from qoolqit.execution import LocalEmulator, RemoteEmulator, QPU
 
 from qubosolver.qubo_types import (
     EmbedderType,
@@ -23,12 +25,14 @@ BaseModel.model_config["arbitrary_types_allowed"] = True
 
 # Modules to be automatically added to the qubosolver namespace
 __all__: list[str] = [
+    "LocalEmulator",
+    "RemoteEmulator",
+    "QPU",
     "ClassicalConfig",
     "EmbeddingConfig",
     "PulseShapingConfig",
     "BackendConfig",
     "SolverConfig",
-    "BackendType",
 ]
 
 
@@ -36,6 +40,23 @@ class Config(BaseModel, ABC):
     """Pydantic class for configs."""
 
     model_config = ConfigDict(extra="forbid")
+
+
+class BackendConfig(Config):
+    """Generic configuration for backends.
+
+    Attributes:
+        backend (LocalEmulator | RemoteEmulator | QPU, optional): backend
+            for running quantum programs. Note we can parametrize the backend
+            such as `dt` for `emu_mps`.
+            Defaults to a LocalEmulator using qutip.
+        wait (bool, optional): For a remote backend where we submit a batch of jobs.
+            Defaults to False.
+    """
+
+    backend: LocalEmulator | RemoteEmulator | QPU = LocalEmulator(backend_type=QutipBackendV2)
+    device: Device = DigitalAnalogDevice()
+    wait: bool = False
 
 
 class ClassicalConfig(Config):
@@ -126,9 +147,9 @@ class EmbeddingConfig(Config):
         greedy_layout (LayoutType | str, optional): Layout type for the
             greedy embedder method. Defaults to `LayoutType.TRIANGULAR`.
         greedy_traps (int, optional): The number of traps on the register.
-            Defaults to `DeviceType.ANALOG_DEVICE.value.min_layout_traps`.
+            Defaults to `pulser.DigitalAnalogDevice.min_layout_traps`.
         greedy_spacing (float, optional): The minimum distance between atoms.
-            Defaults to `DeviceType.ANALOG_DEVICE.value.min_atom_distance`.
+            Defaults to `pulser.PulserDigitalAnalogDevice.min_atom_distance`.
         greedy_density (float, optional): The estimated density of the QUBO matrix.
             Defaults to None.
         blade_steps_per_round (int, optional): The number of steps
@@ -147,8 +168,8 @@ class EmbeddingConfig(Config):
 
     embedding_method: Any = EmbedderType.GREEDY
     greedy_layout: LayoutType | str = LayoutType.TRIANGULAR
-    greedy_traps: int = DeviceType.DIGITAL_ANALOG_DEVICE.value.min_layout_traps
-    greedy_spacing: float = float(DeviceType.DIGITAL_ANALOG_DEVICE.value.min_atom_distance)
+    greedy_traps: int = PulserDigitalAnalogDevice.min_layout_traps
+    greedy_spacing: float = float(PulserDigitalAnalogDevice.min_atom_distance)
     greedy_density: float | None = None
     blade_steps_per_round: int | None = 200
     blade_starting_positions: torch.Tensor | None = None
@@ -399,19 +420,18 @@ class SolverConfig(Config):
     def _set_greedy_traps_greedy_spacing_from_device(self) -> SolverConfig:
 
         if self.backend_config.device:
-            device = self.backend_config.device
-            if hasattr(device, "value"):
-                if device.value.min_layout_traps:
-                    if self.embedding.greedy_traps < device.value.min_layout_traps:
-                        self.embedding = self.embedding.model_copy(
-                            update={"greedy_traps": device.value.min_layout_traps}
-                        )
-                if device.value.min_atom_distance:
-                    greedy_spacing_device = float(device.value.min_atom_distance)
-                    if self.embedding.greedy_spacing < greedy_spacing_device:
-                        self.embedding = self.embedding.model_copy(
-                            update={"greedy_spacing": greedy_spacing_device}
-                        )
+            device = self.backend_config.device._device
+            if hasattr(device, "min_layout_traps"):
+                if self.embedding.greedy_traps < device.min_layout_traps:
+                    self.embedding = self.embedding.model_copy(
+                        update={"greedy_traps": device.value.min_layout_traps}
+                    )
+            if hasattr(device, "min_atom_distance"):
+                greedy_spacing_device = float(device.min_atom_distance)
+                if self.embedding.greedy_spacing < greedy_spacing_device:
+                    self.embedding = self.embedding.model_copy(
+                        update={"greedy_spacing": greedy_spacing_device}
+                    )
         return self
 
     @classmethod
