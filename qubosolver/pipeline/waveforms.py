@@ -77,7 +77,7 @@ def weighted_detunings(
         waveform = Constant(duration, final_detuning)
         return [
             WeightedDetuning(
-                weights={embedding.qubit_ids[i]: w for i, w in enumerate(norm_weights)},
+                weights={embedding.qubits_ids[i]: w for i, w in enumerate(norm_weights)},
                 waveform=waveform,
             )
         ]

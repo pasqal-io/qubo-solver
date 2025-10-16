@@ -37,10 +37,13 @@ def classical_solver_config() -> SolverConfig:
 
 
 # emulators not available in windows
-locals_bkds: list[LocalEmulator] = [
-    LocalEmulator(backend_type=QutipBackendV2),
-    LocalEmulator(backend_type=SVBackend),
-    LocalEmulator(backend_type=MPSBackend),
+locals_bkds: list[BackendConfig] = [
+    BackendConfig(backend=LocalEmulator(backend_type=btype))
+    for btype in [
+        QutipBackendV2,
+        SVBackend,
+        MPSBackend,
+    ]
 ]
 
 

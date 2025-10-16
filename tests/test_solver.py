@@ -34,7 +34,9 @@ def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
         simple_qubo_instance,
         SolverConfig(
             use_quantum=True,
-            backend_config=BackendConfig(LocalEmulator(backend_type=QutipBackendV2, runs=500)),
+            backend_config=BackendConfig(
+                backend=LocalEmulator(backend_type=QutipBackendV2, runs=500)
+            ),
         ),
     )
     solutions = default_solver.solve()
@@ -44,7 +46,9 @@ def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
         simple_qubo_instance,
         SolverConfig(
             use_quantum=True,
-            backend_config=BackendConfig(LocalEmulator(backend_type=QutipBackendV2, runs=100)),
+            backend_config=BackendConfig(
+                backend=LocalEmulator(backend_type=QutipBackendV2, runs=100)
+            ),
         ),
     )
     solutions = lessshots_solver.solve()
