@@ -114,7 +114,7 @@ class AdiabaticDriveShaper(BaseDriveShaper):
             ~torch.eye(QUBO.shape[0], dtype=torch.bool)
         ]  # Selecting off-diagonal terms of the Qubo with a mask
 
-        rydberg_global = self.device.channels["rydberg_global"]
+        rydberg_global = self.device._device.channels["rydberg_global"]
 
         Omega = min(
             torch.max(off_diag).item(),
