@@ -5,20 +5,20 @@ from typing import cast
 
 import numpy as np
 import torch
-from pulser import Pulse as PulserPulse
-from pulser.waveforms import InterpolatedWaveform
-from pulser.devices import AnalogDevice
-from qoolqit._solvers import BaseBackend
-from qoolqit._solvers.data import QuantumProgram
 from skopt import gp_minimize
+
+from pulser.devices import AnalogDevice
+
+from qoolqit import Register, QuantumProgram, Drive
+from qoolqit.execution.backend import BaseBackend
+
 
 from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig
 from qubosolver.data import QUBOSolution
 from qubosolver.qubo_types import PulseType
 from qubosolver.utils import calculate_qubo_cost
-
-from .targets import Pulse, Register
+from qubosolver.pipeline.waveforms import InterpolatedWaveform, weighted_detunings
 
 
 class BasePulseShaper(ABC):
@@ -32,7 +32,7 @@ class BasePulseShaper(ABC):
     Attributes:
         instance (QUBOInstance): The QUBO problem instance.
         config (SolverConfig): The solver configuration.
-        pulse (Pulse, optional): A saved current pulse obtained by `generate`.
+        pulse (Drive, optional): A saved current drive or pulse obtained by `generate`.
         backend (BaseBackend): Backend to use.
         device (Device): Device from backend.
 
@@ -49,7 +49,7 @@ class BasePulseShaper(ABC):
         """
         self.instance: QUBOInstance = instance
         self.config: SolverConfig = config
-        self.pulse: Pulse | None = None
+        self.pulse: Drive | None = None
         self.backend = backend
         self.device = backend.device()
 
@@ -58,7 +58,7 @@ class BasePulseShaper(ABC):
         self,
         register: Register,
         instance: QUBOInstance,
-    ) -> tuple[Pulse, QUBOSolution]:
+    ) -> tuple[Drive, QUBOSolution]:
         """
         Generate a pulse based on the problem and the provided register.
 
@@ -82,7 +82,7 @@ class AdiabaticPulseShaper(BasePulseShaper):
         self,
         register: Register,
         instance: QUBOInstance,
-    ) -> tuple[Pulse, QUBOSolution]:
+    ) -> tuple[Drive, QUBOSolution]:
         """
         Generate an adiabatic pulse based on the QUBO instance and physical register.
 
@@ -91,8 +91,8 @@ class AdiabaticPulseShaper(BasePulseShaper):
             instance (QUBOInstance): The QUBO instance.
 
         Returns:
-            tuple[Pulse, QUBOSolution | None]:
-                - Pulse: A generated pulse object wrapping a Pulser pulse.
+            tuple[Drive, QUBOSolution | None]:
+                - Drive: A generated Drive object.
                 - QUBOSolution: An instance of the qubo solution
                     - str | None: The bitstring (solution) -> Not computed
                     - float | None: The cost (energy value) -> Not computed
@@ -126,19 +126,14 @@ class AdiabaticPulseShaper(BasePulseShaper):
 
         amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9, Omega, 1e-9])
         det_wave = InterpolatedWaveform(max_seq_duration, [delta_0, 0, delta_f])
-
-        pulser_pulse = PulserPulse(amp_wave, det_wave, 0)
-        # PulserPulse has some magic that ensures its constructor does not always return
-        # an instance of PulserPulse. Let's make sure (and help mypy realize) that we
-        # are building an instance of PulserPulse.
-        assert isinstance(pulser_pulse, PulserPulse)
-
-        shaped_pulse = Pulse(
-            pulse=pulser_pulse,
-            duration=max_seq_duration,
-            norm_weights=norm_weights_list,
-            final_detuning=-delta_f if self.config.pulse_shaping.dmm and (delta_f > 0) else None,
+        wdetunings = weighted_detunings(
+            register,
+            max_seq_duration,
+            norm_weights_list,
+            -delta_f if self.config.pulse_shaping.dmm and (delta_f > 0) else None,
         )
+
+        shaped_pulse = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=wdetunings)
         solution = QUBOSolution(torch.Tensor(), torch.Tensor())
 
         return shaped_pulse, solution
