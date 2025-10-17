@@ -41,7 +41,6 @@ locals_bkds = [
     ]
 ]
 
-backend_config = BackendConfig()
 
 config = SolverConfig(
     use_quantum=True,
@@ -50,7 +49,7 @@ config = SolverConfig(
 )
 ```
 
-Alternatively use the `SolverConfig.from_kwargs` method with the `BackendConfig` parameters:
+Alternatively use the `SolverConfig.from_kwargs` method:
 
 ```python exec="on" source="material-backend"
 

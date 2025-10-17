@@ -64,7 +64,7 @@ print(config.specs())
 Although the default configuration is straightforward, all parameters can be modified by the user to better suit the specific QUBO instance. Below is an example of a configuration that uses a different embedder with customized parameters on a specific device:
 ```python exec="on" source="material-block"
 from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, EmbeddingConfig, BackendConfig
+from qubosolver.config import SolverConfig, EmbeddingConfig
 from qoolqit._solvers.types import DeviceType
 
 coefficients = [[0, 1, 2], [1, 0, 3], [2, 3, 0]]
