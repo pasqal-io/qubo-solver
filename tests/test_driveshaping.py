@@ -4,6 +4,7 @@ import pytest
 import torch
 from pulser.devices import AnalogDevice
 from qoolqit.register import Register
+from qoolqit.drive import Drive
 from qubosolver.config import DriveShapingConfig, SolverConfig
 from qubosolver.data import QUBOSolution
 from qubosolver.pipeline.drive import (
@@ -11,7 +12,6 @@ from qubosolver.pipeline.drive import (
     OptimizedDriveShaper,
     get_drive_shaper,
 )
-from qubosolver.pipeline.targets import Pulse
 from qubosolver.qubo_instance import QUBOInstance
 from qubosolver.qubo_types import DriveType
 
@@ -22,15 +22,15 @@ def dummy_register() -> Register:
     return register
 
 
-def test_generate_returns_pulse_and_solution_adiabatic(
+def test_generate_returns_drive_and_solution_adiabatic(
     dummy_register: Register, simple_qubo_instance: QUBOInstance
 ) -> None:
     default_config = SolverConfig(use_quantum=True)
     backend = default_config.backend_config.backend
     shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)
-    pulse, solution = shaper.generate(dummy_register, simple_qubo_instance)
+    drive, solution = shaper.generate(dummy_register, simple_qubo_instance)
 
-    assert isinstance(pulse, Pulse)
+    assert isinstance(drive, Drive)
     assert isinstance(solution, QUBOSolution)
     assert len(solution.bitstrings) == 0
     assert len(solution.costs) == 0
@@ -38,17 +38,17 @@ def test_generate_returns_pulse_and_solution_adiabatic(
     assert solution.counts is None
 
 
-def test_generate_returns_pulse_and_solution_optimized(
+def test_generate_returns_drive_and_solution_optimized(
     dummy_register: Register,
     simple_qubo_instance: QUBOInstance,
-    optimized_pulse_shaping: DriveShapingConfig,
+    optimized_drive_shaping: DriveShapingConfig,
 ) -> None:
-    default_config = SolverConfig(use_quantum=True, pulse_shaping=optimized_pulse_shaping)
+    default_config = SolverConfig(use_quantum=True, drive_shaping=optimized_drive_shaping)
     backend = default_config.backend_config.backend
     shaper = AdiabaticDriveShaper(simple_qubo_instance, default_config, backend)
-    pulse, solution = shaper.generate(dummy_register, simple_qubo_instance)
+    drive, solution = shaper.generate(dummy_register, simple_qubo_instance)
 
-    assert isinstance(pulse, Pulse)
+    assert isinstance(drive, Drive)
     assert isinstance(solution, QUBOSolution)
     assert len(solution.bitstrings) == 0
     assert len(solution.costs) == 0
@@ -56,21 +56,21 @@ def test_generate_returns_pulse_and_solution_optimized(
     assert solution.counts is None
 
 
-def test_generate_optimized_pulse_shaper(
+def test_generate_optimized_drive_shaper(
     dummy_register: Register,
     simple_qubo_instance: QUBOInstance,
-    optimized_pulse_shaping: DriveShapingConfig,
+    optimized_drive_shaping: DriveShapingConfig,
 ) -> None:
     default_config = SolverConfig(
         use_quantum=True,
-        pulse_shaping=optimized_pulse_shaping,
+        drive_shaping=optimized_drive_shaping,
     )
     backend = default_config.backend_config.backend
     shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)
     assert isinstance(shaper, OptimizedDriveShaper)
-    pulse, solution = shaper.generate(dummy_register, simple_qubo_instance)
+    drive, solution = shaper.generate(dummy_register, simple_qubo_instance)
 
-    assert isinstance(pulse, Pulse)
+    assert isinstance(drive, Drive)
     assert isinstance(solution, QUBOSolution)
     assert solution.bitstrings.numel() == 0  # empty tensor
     assert solution.costs.numel() == 0  # empty tensor
@@ -108,60 +108,66 @@ def test_generate_optimized_pulse_shaper(
     backend = default_config.backend_config.backend
     shaper = get_drive_shaper(
         simple_qubo_instance,
-        SolverConfig(use_quantum=True, pulse_shaping=custom_fn_ps),
+        SolverConfig(use_quantum=True, drive_shaping=custom_fn_ps),
         backend,
     )
     assert isinstance(shaper, OptimizedDriveShaper)
     assert shaper.optimized_custom_objective_fn is not None
     assert shaper.optimized_callback_objective is not None
     assert shaper.optimized_custom_qubo_cost is not None
-    pulse, solution = shaper.generate(dummy_register, simple_qubo_instance)
+    drive, solution = shaper.generate(dummy_register, simple_qubo_instance)
     assert len(opt_res) > 0
     assert opt_res[-1]["cost_eval"] == float(1e4)
 
 
-@pytest.mark.parametrize("pulse_method", list(DriveType))
+@pytest.mark.parametrize("drive_method", list(DriveType))
 @pytest.mark.parametrize("dmm", [True, False])
-def test_normalized_weights_in_pulse(
-    pulse_method: str, dmm: bool, dummy_register: Register, simple_qubo_instance: QUBOInstance
+def test_normalized_weights_in_drive(
+    drive_method: str, dmm: bool, dummy_register: Register, simple_qubo_instance: QUBOInstance
 ) -> None:
     default_config = SolverConfig(
         use_quantum=True,
-        pulse_shaping=DriveShapingConfig(drive_shaping_method=pulse_method, dmm=dmm),
+        drive_shaping=DriveShapingConfig(drive_shaping_method=drive_method, dmm=dmm),
     )
     backend = default_config.backend_config.backend
     shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)
-    pulse, _ = shaper.generate(dummy_register, simple_qubo_instance)
+    drive, _ = shaper.generate(dummy_register, simple_qubo_instance)
 
-    norm_weights = pulse.norm_weights
-    weights = torch.abs(torch.diag(simple_qubo_instance.coefficients)).tolist()
-    max_w = max(weights)
-    expected_norm = [1 - (w / max_w) for w in weights]
+    wdetuning = drive.weighted_detunings
+    if len(wdetuning) > 0:
+        assert len(wdetuning) == 1
+        norm_weights = list(wdetuning[0].weights.values())
+        weights = torch.abs(torch.diag(simple_qubo_instance.coefficients)).tolist()
+        max_w = max(weights)
+        TIME = default_config.backend_config.device.converter.factors[0]
+        expected_norm = [(1 - (w / max_w)) / TIME for w in weights]
 
-    assert pytest.approx(norm_weights, rel=1e-6) == expected_norm
-    if dmm and pulse.final_detuning:
-        assert pulse.final_detuning < 0
+        assert pytest.approx(norm_weights, rel=1e-6) == expected_norm
+        assert wdetuning[0].waveform.min() < 0
 
 
-def test_pulse_duration_set(dummy_register: Register, simple_qubo_instance: QUBOInstance) -> None:
+def test_drive_duration_set(dummy_register: Register, simple_qubo_instance: QUBOInstance) -> None:
     default_config = SolverConfig(use_quantum=True)
     backend = default_config.backend_config.backend
     shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)
-    pulse, _ = shaper.generate(dummy_register, simple_qubo_instance)
+    drive, _ = shaper.generate(dummy_register, simple_qubo_instance)
 
     # enforces AnalogDevice maximum sequence duration because Digital's one is a really specific number
-    assert pulse.duration == AnalogDevice.max_sequence_duration
+    assert (
+        drive.duration * default_config.backend_config.device.converter.factors[0]
+        == AnalogDevice.max_sequence_duration
+    )
 
 
-def test_custom_pulse_shaper(simple_qubo_instance: QUBOInstance) -> None:
+def test_custom_drive_shaper(simple_qubo_instance: QUBOInstance) -> None:
 
-    class MockAdiabaticPulseShaper(AdiabaticDriveShaper):
+    class MockAdiabaticdriveShaper(AdiabaticDriveShaper):
         pass
 
     config = SolverConfig(
         use_quantum=True,
-        pulse_shaping=DriveShapingConfig(drive_shaping_method=MockAdiabaticPulseShaper),
+        drive_shaping=DriveShapingConfig(drive_shaping_method=MockAdiabaticdriveShaper),
     )
     backend = config.backend_config.backend
     shaper = get_drive_shaper(simple_qubo_instance, config, backend)
-    assert isinstance(shaper, MockAdiabaticPulseShaper)
+    assert isinstance(shaper, MockAdiabaticdriveShaper)

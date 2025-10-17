@@ -38,7 +38,7 @@ def classical_solver_config() -> SolverConfig:
 
 # emulators not available in windows
 locals_bkds: list[BackendConfig] = [
-    BackendConfig(backend=LocalEmulator(backend_type=btype))
+    BackendConfig(backend=LocalEmulator(backend_type=btype, runs=500))
     for btype in [
         QutipBackendV2,
         SVBackend,
@@ -58,7 +58,7 @@ def local_backend(request: pytest.Fixture) -> BackendConfig:
 def qutip_solver_config() -> SolverConfig:
     return SolverConfig(
         use_quantum=True,
-        backend_config=BackendConfig(backend=LocalEmulator(backend_type=QutipBackendV2, runs=100)),
+        backend_config=BackendConfig(backend=LocalEmulator(backend_type=QutipBackendV2, runs=500)),
     )
 
 
@@ -73,7 +73,7 @@ def blade_config() -> SolverConfig:
 
 
 @pytest.fixture
-def optimized_pulse_shaping() -> DriveShapingConfig:
+def optimized_drive_shaping() -> DriveShapingConfig:
     return DriveShapingConfig(drive_shaping_method=DriveType.OPTIMIZED)
 
 

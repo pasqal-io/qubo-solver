@@ -52,13 +52,10 @@ class BackendConfig(Config):
             hence they are deprecated compared to previous qubo-solver versions.
             Also the number of shots is set there as well.
             Defaults to a LocalEmulator using qutip.
-        wait (bool, optional): For a remote backend where we submit a batch of jobs.
-            Defaults to False.
     """
 
     backend: LocalEmulator | RemoteEmulator | QPU = LocalEmulator(backend_type=QutipBackendV2)
     device: Device = DigitalAnalogDevice()
-    wait: bool = False
 
 
 class ClassicalConfig(Config):
