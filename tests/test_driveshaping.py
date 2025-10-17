@@ -72,12 +72,12 @@ def test_generate_optimized_drive_shaper(
 
     assert isinstance(drive, Drive)
     assert isinstance(solution, QUBOSolution)
-    assert solution.bitstrings.numel() == 0  # empty tensor
-    assert solution.costs.numel() == 0  # empty tensor
+    assert solution.bitstrings.numel() > 0
+    assert solution.costs.numel() > 0
     if isinstance(solution.probabilities, torch.Tensor):
-        assert solution.probabilities.numel() == 0
+        assert solution.probabilities.numel() > 0
     if isinstance(solution.counts, torch.Tensor):
-        assert solution.counts.numel() == 0  # empty tensor
+        assert solution.counts.numel() > 0
 
     # try with custom objective_fn
 
