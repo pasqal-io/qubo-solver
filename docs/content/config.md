@@ -3,102 +3,37 @@
 The `SolverConfig` class defines how a QUBO problem should be solved — specifying whether to use a quantum or classical approach, which backend to run on, and additional execution parameters.
 
 This configuration is passed into any solver (e.g., `QuboSolver`) and guides its behavior.
-Note that `SolverConfig` uses four other configuration objects: 'BackendConfig', `EmbeddingConfig`, `ClassicalConfig` and `DriveShapingConfig`.
+Note that `SolverConfig` uses three other configuration objects: `EmbeddingConfig`, `ClassicalConfig` and `DriveShapingConfig`.
 Besides `ClassicalConfig`, the other configurations represents different parts of the solver when using a quantum approach:
 
 ---
 
 ## Fields for SolverConfig
 ### Generic parameters
-| Field         | Type          | Description |
-|---------------|---------------|-------------|
-| `config_name` | `str` | The name of the current configuration
-| `use_quantum` | `bool` | Whether to solve using a quantum approach (`True`) such as QAA or VQA or a classical approach (`False`). |
-| `backend_config`     | `BackendConfig` | Backend part configuration of the solver. |
-| `embedding` | `EmbeddingConfig` | Embedding part configuration of the solver. |
-| `pulse_shaping` | `DriveShapingConfig` | Pulse-shaping part configuration of the solver. |
-| `classical` | `ClassicalConfig` | Classical part configuration of the solver. |
+::: qubosolver.config.SolverConfig
 
-### Backend configuration
-
-The backend configuration part (the `backend_config` field) is set via the `BackendConfig` class. It defines how we will run our quantum programs (via a local emulator, or via remote connection).
-
-| Field         | Type          | Description |
-|---------------|---------------|-------------|
-| `backend`     | `BackendType` | (optional) Which backend to use (e.g., `'qutip'`, `'emu_mps'`, `'emu_sv'`, `'remote_qpu'`, `'remote_emumps'`). |
-| `device`      | `NamedDevice` \| `DeviceType` \| `None` | (optional) If `None`, the backend will pick a reasonable device. If `DeviceType`, choose a device by its capabilities, e.g. `DeviceType.DIGITAL_ANALOG`. If `NamedDevice`, requiest a specific device. Only remote backends make use of `NamedDevice`.|
-| `project_id`  | `str` | (optional) Project ID for accessing remote Pasqal services. Only used for remote backends. |
-| `username`    | `str` | (optional) Username for Pasqal Cloud authentication. Only used for remote backends. |
-| `password`    | `str` | (optional) Password for Pasqal Cloud authentication. Only used for remote backends. |
 
 ### Embedding configuration
 
 When solving with a quantum approach, we need to define an embedding method, that is how we define the geometry (register) of atoms based on the QUBO instance and compatibility with a device.
-The embedding configuration part (the `embedding` field of `SolverConfig`) can be divided into two groups of parameters.
+The embedding configuration part (the `embedding` field of `SolverConfig`) is divided into several attributes that concerns the `embedding_method` chosen (`BLaDE` or `Greedy`, for which a prefix enables defning to which method they belong):
 
-#### Method parameter
-| Field         | Type          | Description |
-|---------------|---------------|-------------|
-| `embedding_method` | `str` \| `EmbedderType` \| `Type[BaseEmbedder]` | The type of embedding method used to place atoms on the register according to the QUBO problem. (e.g., 'blade', 'greedy', but we can also create our own custom embedding method). |
-| `draw_steps` | `bool` | Show generated graph at each step of the optimization. Defaults to False. |
+::: qubosolver.config.EmbeddingConfig
 
 
-#### BLaDE embedding parameters
-| Field         | Type          | Description |
-|---------------|---------------|-------------|
-| `blade_dimensions` | `list[int]` | A list of dimension degrees to explore one after the other (default is [5, 4, 3, 2, 2, 2]). |
-| `blade_starting_positions` | `torch.Tensor` | The starting parameters according to the specified dimensions. |
-| `blade_steps_per_round` | `int` \| `None` | The number of steps for each layer of dimension for the BLaDE embedder method. Defaults to 200. |
+### Drive Shaping configuration
 
+Quantum devices can be programmed by specifying a Drive. A program in the Rydberg analog model is defined as a time-dependent drive Hamiltonian that is imposed on the qubits.
+The drive shaping configuration part (the `drive_shaping` field of `SolverConfig`) is set via the `DriveShapingConfig` class, and defines how the drive parameters are constructed (in an adiabatic fashion, via bayesian optimization, ...).
+Note, for parameters concerning exclusively the optimized drive shaping method (bayesian optimization), an `optimized_` prefix is present.
 
-#### Greedy embedding parameters
-
-We made available a greedy embedding method (given a fixed lattice or layout, it will defines the register to minimize the incremental mismatch between the logical QUBO matrix Q and the physical device interactions), whose related fields are:
-
-| Field         | Type          | Description |
-|---------------|---------------|-------------|
-| `greedy_layout` | `str` \| `LayoutType` \| `None` | Type of layout to run the greedy embedder method on (e.g., 'SquareLatticeLayout', 'TriangularLatticeLayout'). |
-| `greedy_traps` | `int` \| `None` | The number of greedy_traps on the register. |
-| `greedy_spacing` | `int` \| `None` | The minimum distance between atoms. |
-| `greedy_density` | `int` \| `None` | The estimated density of the QUBO matrix for the greedy algorithm. |
-
-### Pulse Shaping configuration
-
-Quantum devices can be programmed by specifying a sequence of pulses.
-The pulse shaping configuration part (the `pulse_shaping` field of `SolverConfig`) is set via the `DriveShapingConfig` class, and defines how the pulse parameters are constructed (in an adiabatic fashion, via optimization, ...).
-Note, for parameters concerning exclusively the optimized pulse shaping method, an `optimized_` prefix is present.
-
-| Field         | Type          | Description |
-|---------------|---------------|-------------|
-| `drive_shaping_method` | `str` \| `DriveType` \| `Type[BasePulseShaper]` | The type of pulse-shaping method used (e.g., 'adiabatic', 'optimized'). |
-| `dmm` | `bool` | Whether to use a detuning map when applying pulse shaping or not. This gets added to the pulse sequence as a ConstantWaveform. |
-| `re_execute_opt_drive` | `bool` | Whether to re-run the optimal pulse sequence. |
-| `optimized_n_calls` | `int` \| `None` | Number of optimization rounds taken to find the best set of parameters for the optimization process inside VQA. The minimum value is 20. Note the optimizer accepts a minimal value of 12. |
-| `optimized_initial_omega_parameters`   | `list[float]` | The list of initial amplitude $\Omega$ parameters ($3$ floating numbers) to be used in the first round of optimization.|
-| `optimized_initial_detuning_parameters`   | `list[float]` | The list of global detuning $\delta$ parameters ($3$ floating numbers) to be used in the first round of optimization.|
-| `optimized_custom_qubo_cost` | `callable` \| `None` | To apply a different qubo cost evaluation than the default. Must be defined as: `def optimized_custom_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float`. |
-| `optimized_custom_objective_fn` | `callable` \| `None` | Change the bayesian optimization objective. Instead of using the best cost (`best_cost`) out of the samples, one can change the objective for an average, or any function out of the form `cost_eval = optimized_custom_objective_fn(bitstrings, counts, probabilities, costs, best_cost, best_bitstring)` |
-| `optimized_callback_objective` | `callable` \| `None` | Apply a callback during bayesian optimization. Only accepts one input dictionary created during optimization `d = {"x": x, "cost_eval": cost_eval}` hence should be defined as: `def callback_fn(d: dict) -> None:`. |
-
-
+::: qubosolver.config.DriveShapingConfig
 
 ### Classical solver configuration
 
 For the classical solver, its configuration can be set via the `ClassicalConfig` class:
 
-| Field         | Type          | Description |
-|---------------|---------------|-------------|
-| `classical_solver_type`    | `str` | Classical solver type. |
-| `cplex_maxtime`    | `float` | CPLEX maximum runtime. |
-| `cplex_log_path`    | `str` | CPLEX logging path. |
-| `max_iter`    | `int` | Maximum number of iterations to perform for simulated annealing or tabu search. |
-| `max_bitstrings`    | `int` | Maximal number of bitstrings returned as solutions. |
-| `sa_initial_temp`    | `float` | Starting temperature (controls exploration). |
-| `sa_final_temp`    | `float` | Minimum temperature threshold for stopping. |
-| `sa_alpha`    | `float` | Cooling rate - should be slightly below 1 (e.g., 0.95–0.99). |
-| `tabu_x0`    | `torch.Tensor` \| `None` | The initial binary solution tensor. |
-| `tabu_tenure`    | `int` | Number of iterations a move (bit flip) remains tabu. |
-| `tabu_max_no_improve`    | `int` | Maximum number of consecutive iterations without improvement before termination. |
+::: qubosolver.config.ClassicalConfig
 
 Note, for parameters concerning exclusively simulated annealing, an `sa_` prefix is present.
 Similarly for tabu search, the prefix is `tabu_`.
@@ -118,10 +53,9 @@ We can also apply preprocessing of the QUBO instance (to reduce it to another sm
 ## Example
 The `SolverConfig` is designed in such way that all parameters have a default value which fulfilled the minimum required configuration to execute the necessary steps to solve a QUBO.
 
-All the parameters are `Optional` which allows for running `SolverConfig` without specifying any parameter:
+All the parameters are optional which allows for running `SolverConfig` without specifying any parameter:
 ```python exec="on" source="material-block"
 from qubosolver.config import SolverConfig
-from qoolqit._solvers.types import BackendType, DeviceType
 from qubosolver.qubo_types import EmbedderType
 
 config = SolverConfig()
@@ -137,12 +71,10 @@ coefficients = [[0, 1, 2], [1, 0, 3], [2, 3, 0]]
 instance = QUBOInstance(coefficients=coefficients)
 
 embedding_config = EmbeddingConfig(embedding_method="greedy", greedy_traps=instance.size)
-backend_config = BackendConfig(backend="qutip", device=DeviceType.DIGITAL_ANALOG_DEVICE,)
 
 config = SolverConfig(
     config_name="my_config",
     use_quantum=True,
-    backend_config = backend_config,
     embedding = embedding_config,
 )
 ```
@@ -160,8 +92,6 @@ instance = QUBOInstance(coefficients=coefficients)
 config = SolverConfig.from_kwargs(
     config_name="my_config",
     use_quantum=True,
-    backend="qutip",
-    device=DeviceType.ANALOG_DEVICE,
     embedding_method="greedy",
     greedy_traps=instance.size
 )
