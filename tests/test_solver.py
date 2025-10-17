@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 import torch
-from qubosolver.config import EmbeddingConfig, SolverConfig, BackendConfig, LocalEmulator
+from qubosolver.config import EmbeddingConfig, SolverConfig, LocalEmulator
 from qubosolver.qubo_types import EmbedderType
 from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical
 
@@ -33,10 +33,7 @@ def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
     default_solver = QuboSolver(
         simple_qubo_instance,
         SolverConfig(
-            use_quantum=True,
-            backend_config=BackendConfig(
-                backend=LocalEmulator(backend_type=QutipBackendV2, runs=500)
-            ),
+            use_quantum=True, backend=LocalEmulator(backend_type=QutipBackendV2, runs=500)
         ),
     )
     solutions = default_solver.solve()
@@ -45,10 +42,7 @@ def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
     lessshots_solver = QuboSolver(
         simple_qubo_instance,
         SolverConfig(
-            use_quantum=True,
-            backend_config=BackendConfig(
-                backend=LocalEmulator(backend_type=QutipBackendV2, runs=100)
-            ),
+            use_quantum=True, backend=LocalEmulator(backend_type=QutipBackendV2, runs=100)
         ),
     )
     solutions = lessshots_solver.solve()
@@ -57,14 +51,13 @@ def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
 
 @pytest.mark.flaky(reruns=5)
 def test_run_local_backends(
-    simple_qubo_instance: QUBOInstance, local_backend: BackendConfig
+    simple_qubo_instance: QUBOInstance, local_backend: LocalEmulator
 ) -> None:
-    print(local_backend.backend._backend_type)
     solver = QuboSolver(
         simple_qubo_instance,
         SolverConfig(
             use_quantum=True,
-            backend_config=local_backend,
+            backend=local_backend,
             embedding=EmbeddingConfig(embedding_method=EmbedderType.BLADE),
         ),
     )

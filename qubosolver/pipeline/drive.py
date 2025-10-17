@@ -51,7 +51,7 @@ class BaseDriveShaper(ABC):
         self.config: SolverConfig = config
         self.drive: Drive | None = None
         self.backend = backend
-        self.device = self.config.backend_config.device
+        self.device = self.config.device
 
     @abstractmethod
     def generate(

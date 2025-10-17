@@ -4,7 +4,7 @@ import pytest
 import torch
 
 from qubosolver import QUBOInstance
-from qubosolver.config import BackendConfig, SolverConfig
+from qubosolver.config import SolverConfig, LocalEmulator
 from qubosolver.solver import QuboSolverClassical, QuboSolverQuantum
 
 
@@ -30,7 +30,7 @@ def test_classical_all_positive_trivial() -> None:
     ), f"Expected status 'trivial-zero', got {sol.solution_status}"
 
 
-def test_quantum_all_negative_trivial(local_backend: BackendConfig) -> None:
+def test_quantum_all_negative_trivial(local_backend: LocalEmulator) -> None:
     """
     For a QUBO with all coefficients <= 0, the quantum solver
     should return a batch of one all-one bitstring
@@ -43,7 +43,7 @@ def test_quantum_all_negative_trivial(local_backend: BackendConfig) -> None:
 
     coeffs = [[-1.0, 0.0], [0.0, -3.0]]
     instance = QUBOInstance(coefficients=coeffs)
-    config = SolverConfig(use_quantum=True, backend_config=local_backend)
+    config = SolverConfig(use_quantum=True, backend=local_backend)
 
     solver = QuboSolverQuantum(instance, config)
     sol = solver.solve()
@@ -57,10 +57,10 @@ def test_quantum_all_negative_trivial(local_backend: BackendConfig) -> None:
     ), f"Expected status 'trivial-one', got {sol.solution_status}"
 
 
-def test_diagonal_trivial(local_backend: BackendConfig) -> None:
+def test_diagonal_trivial(local_backend: LocalEmulator) -> None:
     coeffs = [[-1.0, 0.0], [0.0, 3.0]]
     instance = QUBOInstance(coefficients=coeffs)
-    config = SolverConfig(use_quantum=True, backend_config=local_backend)
+    config = SolverConfig(use_quantum=True, backend=local_backend)
 
     solver = QuboSolverQuantum(instance, config)
     sol = solver.solve()

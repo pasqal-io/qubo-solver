@@ -85,7 +85,7 @@ class FixedEmbedder(BaseEmbedder):
     def embed(self) -> TargetRegister:
         qubits = {f"q{i}": (i,0) for i in range(self.instance.coefficients.shape[0])}
         register = PulserRegister(qubits)
-        return TargetRegister(self.config.backend_config.device, register)
+        return TargetRegister(self.config.device, register)
 
 
 config = SolverConfig(

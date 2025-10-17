@@ -35,7 +35,7 @@ class BaseEmbedder(ABC):
         self.backend = backend
 
         # for converting to qoolqit
-        self._distance_conversion = self.config.backend_config.device.converter.factors[2]
+        self._distance_conversion = self.config.device.converter.factors[2]
 
     @abstractmethod
     def embed(self) -> QoolqitRegister:
@@ -88,7 +88,7 @@ class BLaDEmbedder(BaseEmbedder):
         coords = (
             em_blade(
                 qubo=BLaDEmbedder._preprocessing_qubo(self.instance.coefficients.numpy()),
-                device=self.config.backend_config.device._device,
+                device=self.config.device._device,
                 draw_steps=self.config.embedding.draw_steps,
                 dimensions=self.config.embedding.blade_dimensions,
                 starting_positions=(
@@ -134,7 +134,7 @@ class GreedyEmbedder(BaseEmbedder):
 
         # build params for the Greedy algorithm
         params = {
-            "device": self.config.backend_config.device._device,
+            "device": self.config.device._device,
             "layout": self.config.embedding.greedy_layout,
             "traps": int(self.config.embedding.greedy_traps),
             "spacing": float(self.config.embedding.greedy_spacing),

@@ -42,8 +42,8 @@ class BaseSolver(ABC):
                 self.config.embedding.greedy_traps, instance.size
             )
 
-        self.backend = self.config.backend_config.backend
-        self.device = self.config.backend_config.device
+        self.backend = self.config.backend
+        self.device = self.config.device
 
     @abstractmethod
     def solve(self) -> QUBOSolution:

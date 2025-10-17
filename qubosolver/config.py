@@ -31,7 +31,6 @@ __all__: list[str] = [
     "ClassicalConfig",
     "EmbeddingConfig",
     "DriveShapingConfig",
-    "BackendConfig",
     "SolverConfig",
 ]
 
@@ -40,22 +39,6 @@ class Config(BaseModel, ABC):
     """Pydantic class for configs."""
 
     model_config = ConfigDict(extra="forbid")
-
-
-class BackendConfig(Config):
-    """Generic configuration for backends.
-
-    Attributes:
-        backend (LocalEmulator | RemoteEmulator | QPU, optional): backend
-            for running quantum programs. Note that parameters
-            such as `dt` are directly set when creating LocalEmulator | RemoteEmulator | QPU,
-            hence they are deprecated compared to previous qubo-solver versions.
-            Also the number of shots is set there as well.
-            Defaults to a LocalEmulator using qutip.
-    """
-
-    backend: LocalEmulator | RemoteEmulator | QPU = LocalEmulator(backend_type=QutipBackendV2)
-    device: Device = DigitalAnalogDevice()
 
 
 class ClassicalConfig(Config):
@@ -373,24 +356,31 @@ class SolverConfig(Config):
             Defaults to ''.
         use_quantum (bool, optional): Whether to solve using a quantum approach (`True`)
             or a classical approach (`False`). Defaults to False.
-        backend (BackendConfig, optional): Which underlying backend configuration is used.
-            Defaults to the default BackendConfig using `BackendType.QUTIP`.
         embedding (EmbeddingConfig, optional): Embedding part configuration of the solver.
         drive_shaping (DriveShapingConfig, optional): Drive-shaping part configuration
             of the solver.
         classical (ClassicalConfig, optional): Classical part configuration of the solver.
+        backend (LocalEmulator | RemoteEmulator | QPU, optional): backend
+            for running quantum programs. Note that parameters
+            such as `dt` are directly set when creating LocalEmulator | RemoteEmulator | QPU,
+            hence they are deprecated compared to previous qubo-solver versions.
+            Also the number of shots is set there as well.
+            Defaults to a LocalEmulator using qutip.
+        device (Device, optional): The quantum device specification. Defaults to `DigitalAnalogDevice`.
         do_postprocessing (bool, optional): Whether we apply post-processing (`True`)
             or not (`False`).
         do_preprocessing (bool, optional): Whether we apply pre-processing (`True`)
             or not (`False`)
+
     """
 
     config_name: str = ""
     use_quantum: bool | None = False
-    backend_config: BackendConfig = BackendConfig()
     embedding: EmbeddingConfig = EmbeddingConfig()
     drive_shaping: DriveShapingConfig = DriveShapingConfig()
     classical: ClassicalConfig = ClassicalConfig()
+    backend: LocalEmulator | RemoteEmulator | QPU = LocalEmulator(backend_type=QutipBackendV2)
+    device: Device = DigitalAnalogDevice()
     do_postprocessing: bool = False
     do_preprocessing: bool = False
     activate_trivial_solutions: bool = True
@@ -415,8 +405,8 @@ class SolverConfig(Config):
     @model_validator(mode="after")
     def _set_greedy_traps_greedy_spacing_from_device(self) -> SolverConfig:
 
-        if self.backend_config.device:
-            device = self.backend_config.device._device
+        if self.device:
+            device = self.device._device
             if hasattr(device, "min_layout_traps"):
                 if self.embedding.greedy_traps < device.min_layout_traps:
                     self.embedding = self.embedding.model_copy(
@@ -435,14 +425,13 @@ class SolverConfig(Config):
         """Create an instance based on entries of other configs.
 
         Note that if any of the keywords
-        ("backend_config", "embedding", "drive_shaping", "classical")
+        ("embedding", "drive_shaping", "classical")
         are present in kwargs, the values are taken directly.
 
         Returns:
             SolverConfig: An instance from values.
         """
         # Extract fields from pydantic BaseModel
-        backend_config_fields = {k: v for k, v in kwargs.items() if k in BackendConfig.model_fields}
         embedding_fields = {k: v for k, v in kwargs.items() if k in EmbeddingConfig.model_fields}
         drive_shaping_fields = {
             k: v for k, v in kwargs.items() if k in DriveShapingConfig.model_fields
@@ -452,16 +441,10 @@ class SolverConfig(Config):
         solver_fields = {
             k: v
             for k, v in kwargs.items()
-            if k in cls.model_fields
-            and k not in ("backend_config", "embedding", "drive_shaping", "classical")
+            if k in cls.model_fields and k not in ("embedding", "drive_shaping", "classical")
         }
 
         return cls(
-            backend_config=(
-                BackendConfig(**backend_config_fields)
-                if "backend_config" not in kwargs
-                else kwargs["backend_config"]
-            ),
             embedding=(
                 EmbeddingConfig(**embedding_fields)
                 if "embedding" not in kwargs

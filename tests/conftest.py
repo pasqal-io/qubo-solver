@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 import torch
 
-from qoolqit import DigitalAnalogDevice
 from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
@@ -15,7 +14,6 @@ from qubosolver.config import (
     EmbeddingConfig,
     DriveShapingConfig,
     SolverConfig,
-    BackendConfig,
     LocalEmulator,
 )
 from qubosolver.qubo_types import LayoutType, DriveType
@@ -37,8 +35,8 @@ def classical_solver_config() -> SolverConfig:
 
 
 # emulators not available in windows
-locals_bkds: list[BackendConfig] = [
-    BackendConfig(backend=LocalEmulator(backend_type=btype, runs=500))
+locals_bkds: list = [
+    LocalEmulator(backend_type=btype, runs=500)
     for btype in [
         QutipBackendV2,
         SVBackend,
@@ -50,7 +48,7 @@ locals_bkds: list[BackendConfig] = [
 @pytest.fixture(
     params=locals_bkds,
 )
-def local_backend(request: pytest.Fixture) -> BackendConfig:
+def local_backend(request: pytest.Fixture) -> LocalEmulator:
     return request.param  # type: ignore[no-any-return]
 
 
@@ -58,16 +56,14 @@ def local_backend(request: pytest.Fixture) -> BackendConfig:
 def qutip_solver_config() -> SolverConfig:
     return SolverConfig(
         use_quantum=True,
-        backend_config=BackendConfig(backend=LocalEmulator(backend_type=QutipBackendV2, runs=500)),
+        backend=LocalEmulator(backend_type=QutipBackendV2, runs=500),
     )
 
 
 @pytest.fixture
 def blade_config() -> SolverConfig:
     embed_method = EmbeddingConfig(embedding_method="blade", blade_dimensions=[2])
-    backend_config = BackendConfig(device=DigitalAnalogDevice())
     return SolverConfig(
-        backend_config=backend_config,
         embedding=embed_method,
     )
 
@@ -91,10 +87,8 @@ def greedy_embedding_config() -> SolverConfig:
         greedy_traps=10,
         greedy_spacing=5.0,
     )
-    backend_config = BackendConfig(device=DigitalAnalogDevice())
     return SolverConfig(
         embedding=embed_method,
-        backend_config=backend_config,
     )
 
 

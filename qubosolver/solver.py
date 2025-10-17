@@ -71,7 +71,7 @@ class QuboSolverQuantum(BaseSolver):
         self._check_size_limit()
 
         self.fixtures = Fixtures(self.instance, self.config)
-        self.backend = self.config.backend_config.backend
+        self.backend = self.config.backend
         self.embedder = get_embedder(self.instance, self.config, self.backend)
         self.drive_shaper = get_drive_shaper(self.instance, self.config, self.backend)
 
