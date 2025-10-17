@@ -21,7 +21,7 @@ A backend will use device specifications to perform quantum computations. The li
 
 ### Running locally with an emulator
 
-We can perform quantum simulations locally via an emulator (here, we choose the `BackendType.QUTIP` emulator).
+We can perform quantum simulations locally via an emulator (here, we choose the `QUTIP` emulator).
 
 ```python exec="on" source="material-block" html="1"
 import torch

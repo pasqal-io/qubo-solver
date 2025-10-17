@@ -9,9 +9,8 @@ Besides `ClassicalConfig`, the other configurations represents different parts o
 ---
 
 ## Fields for SolverConfig
-### Generic parameters
-::: qubosolver.config.SolverConfig
 
+::: qubosolver.config.SolverConfig
 
 ### Embedding configuration
 

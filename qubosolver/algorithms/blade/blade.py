@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import Callable, Optional
+import warnings
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -23,6 +24,9 @@ from ._qubo_mapper import Qubo
 from .drawing import draw_graph_including_actual_weights
 
 logger = logging.getLogger(__name__)
+
+
+warnings.filterwarnings("ignore", module="pulser")
 
 
 def update_positions(

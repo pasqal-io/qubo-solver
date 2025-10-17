@@ -16,7 +16,6 @@ from qubosolver.config import EmbedderType, SolverConfig
 from qubosolver.utils.density import calculate_density
 
 warnings.filterwarnings("ignore", module="pulser")
-warnings.filterwarnings("ignore", module="numpy")
 
 
 class BaseEmbedder(ABC):

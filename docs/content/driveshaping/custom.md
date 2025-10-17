@@ -3,16 +3,18 @@ If one desires to develop his own drive shaping method, a subclass of `qubosolve
 
 The `generate` method syntax is `generate(register: Register, instance: QUBOInstance) -> tuple[Drive, QUBOSolution]`
  with arguments:
+
 - a `Register` instance specifying the qubits we work with.
 - a `QUBOInstance` specifying the qubo problem we target.
 
 It returns:
+
 - an instance of `qoolqit.Drive`
 - a `QUBOSolution` specyfing the solution that may be used by a solver.
 
 For concrete examples, we have the [`AdiabaticDriveShaper`](./adiabatic.md) and the [`OptimizedDriveShaper`](./optimized.md) and their current implementations lie in `qubosolver.pipeline.drive.py`.
 
-Let us show an example of Adiabatic drive shaper but with a duration divided by 20.
+Let us show an example of custom Adiabatic drive shaper but with a duration divided by 20.
 
 ```python exec="on" source="material-block" html="1"
 import typing

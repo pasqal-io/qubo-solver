@@ -38,7 +38,7 @@ The drive starts with an `InterpolatedWaveform` with the points:
 - $\delta = [-10, 0, 10]$
 
 ### Methods Overview
-- `generate(self, target: Register, instance: QUBOInstance) -> tuple[Drive, QUBOSolution]`:
+- `generate(self, register: Register, instance: QUBOInstance) -> tuple[Drive, QUBOSolution]`:
 Runs the Bayesian optimization loop and returns the optimized drive and corresponding solution. Handles fallback cases if simulation fails.
 
 - `build_drive(self, params: list) -> Drive`:
