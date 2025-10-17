@@ -34,7 +34,6 @@ def classical_solver_config() -> SolverConfig:
     return SolverConfig(use_quantum=False)
 
 
-# emulators not available in windows
 locals_bkds: list = [
     LocalEmulator(backend_type=btype, runs=500)
     for btype in [
