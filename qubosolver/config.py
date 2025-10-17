@@ -12,6 +12,7 @@ from pulser_simulation import QutipBackendV2
 from pulser.devices import DigitalAnalogDevice as PulserDigitalAnalogDevice
 from qoolqit.devices.device import Device, DigitalAnalogDevice
 from qoolqit.execution import LocalEmulator, RemoteEmulator, QPU
+from pulser_pasqal import PasqalCloud
 
 from qubosolver.qubo_types import (
     EmbedderType,
@@ -28,6 +29,7 @@ __all__: list[str] = [
     "LocalEmulator",
     "RemoteEmulator",
     "QPU",
+    "PasqalCloud",
     "ClassicalConfig",
     "EmbeddingConfig",
     "DriveShapingConfig",
@@ -223,29 +225,29 @@ class DriveShapingConfig(Config):
     """A `DriveShapingConfig` instance defines the drive shaping part of a `SolverConfig`.
 
     Attributes:
-        drive_shaping_method (str | PulseType | type[BaseDriveShaper], optional): Pulse shaping
-            method used. Defauts to `PulseType.ADIABATIC`.
-        dmm (bool, optional): Whether to use a detuning map when applying pulse shaping or not.
-            This gets added to the pulse sequence as a ConstantWaveform.
-            Defaults to True, which applies DMM in pulse.
-        re_execute_opt_pulse (bool, optional): Whether to re-run the optimal pulse sequence.
-            Defaults to False.
-        optimized_n_calls (int, optional): Number of calls for the optimization process inside VQA.
+        drive_shaping_method (str | DriveType | type[BaseDriveShaper], optional): Drive shaping
+            method used. Defauts to `DriveType.ADIABATIC`.
+        dmm (bool, optional): Whether to use a detuning map when applying drive shaping or not.
+            This adds WeightedDetuning with a Constant Waveform.
+            Defaults to True, which applies DMM.
+        optimized_re_execute_opt_drive (bool, optional): Whether to re-run the optimal drive sequence
+            after optimization. Defaults to False.
+        optimized_n_calls (int, optional): Number of calls for the optimization process.
             Defaults to 20. Note the optimizer accepts a minimal value of 12.
         optimized_initial_omega_parameters (List[float], optional): Default initial omega parameters
-            for the pulse. Defaults to Omega = (5, 10, 5).
+            for the drive. Defaults to Omega = (5, 10, 5).
         optimized_initial_detuning_parameters (List[float], optional): Default initial detuning parameters
-            for the pulse. Defaults to delta = (-10, 0, 10).
+            for the drive. Defaults to delta = (-10, 0, 10).
         optimized_custom_qubo_cost (Callable[[str, torch.Tensor], float], optional): Apply a different
             qubo cost evaluation
             than the default QUBO evaluation defined in
-            `qubosolver/pipeline/pulse.py:OptimizedPulseShaper.compute_qubo_cost`.
+            `qubosolver/pipeline/drive.py:OptimizedDriveShaper.compute_qubo_cost`.
             Must be defined as:
             `def optimized_custom_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float`.
             Defaults to None, meaning we use the default QUBO evaluation.
         optimized_custom_objective_fn (Callable[[list, list, list, list, float, str], float], optional):
             For bayesian optimization, one can change the output of
-            `qubosolver/pipeline/pulse.py:OptimizedPulseShaper.run_simulation`
+            `qubosolver/pipeline/drive.py:OptimizedDriveShaper.run_simulation`
             to optimize differently. Instead of using the best cost
             out of the samples, one can change the objective for an average,
             or any function out of the form
@@ -263,7 +265,7 @@ class DriveShapingConfig(Config):
 
     drive_shaping_method: Any = DriveType.ADIABATIC
     dmm: bool = True
-    re_execute_opt_pulse: bool = False
+    optimized_re_execute_opt_drive: bool = False
     optimized_n_calls: int = 20
     optimized_initial_omega_parameters: list[float] = field(
         default_factory=lambda: [
@@ -288,7 +290,6 @@ class DriveShapingConfig(Config):
         serialization: dict = {
             "drive_shaping_method": self.drive_shaping_method,
             "dmm": self.dmm,
-            "re_execute_opt_pulse": self.re_execute_opt_pulse,
         }
         if self.drive_shaping_method == DriveType.OPTIMIZED:
             dict_all_fields = self.__dict__
@@ -303,8 +304,8 @@ class DriveShapingConfig(Config):
 
     @field_validator("drive_shaping_method")
     @classmethod
-    def _normalize_pulse_shaping_method(cls, val: Any) -> DriveType | Any:
-        """Normalize the `pulse_shaping_method` attribute."""
+    def _normalize_drive_shaping_method(cls, val: Any) -> DriveType | Any:
+        """Normalize the `drive_shaping_method` attribute."""
         if isinstance(val, DriveType):
             return val
         elif isinstance(val, str):
@@ -367,11 +368,12 @@ class SolverConfig(Config):
             Also the number of shots is set there as well.
             Defaults to a LocalEmulator using qutip.
         device (Device, optional): The quantum device specification. Defaults to `DigitalAnalogDevice`.
-        do_postprocessing (bool, optional): Whether we apply post-processing (`True`)
-            or not (`False`).
-        do_preprocessing (bool, optional): Whether we apply pre-processing (`True`)
-            or not (`False`)
-
+        do_postprocessing (bool, optional): Whether we apply post-processing (`True`) or not (`False`).
+            Defaults to True.
+        do_preprocessing (bool, optional): Whether we apply pre-processing (`True`) or not (`False`).
+            Defaults to True.
+        activate_trivial_solutions (bool, optional): Whether calculate trivial solutions (`True`)
+            or not (`False`). Defaults to True.
     """
 
     config_name: str = ""

@@ -154,7 +154,7 @@ class QuboSolverQuantum(BaseSolver):
         )
         if (
             len(bitstrings) == 0 and qubo_solution.counts is None
-        ) or self.config.drive_shaping.re_execute_opt_drive:
+        ) or self.config.drive_shaping.optimized_re_execute_opt_drive:
             bitstrings, counts = self.execute(drive, embedding)
 
         bitstring_strs = bitstrings

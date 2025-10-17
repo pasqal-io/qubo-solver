@@ -21,7 +21,7 @@ from qubosolver.solver import QUBOInstance
 from qubosolver.data import QUBOSolution
 from qubosolver.pipeline.targets import Register as TargetRegister
 from qubosolver.config import (
-    PulseShapingConfig,
+    DriveShapingConfig,
     SolverConfig,
 )
 from qubosolver.pipeline.targets import Pulse, Register
@@ -72,6 +72,6 @@ class LimitedAdiabaticPulseShaper(BasePulseShaper):
 
 config = SolverConfig(
     use_quantum=True,
-    pulse_shaping=PulseShapingConfig(pulse_shaping_method=LimitedAdiabaticPulseShaper),
+    pulse_shaping=DriveShapingConfig(drive_shaping_method=LimitedAdiabaticPulseShaper),
 )
 ```

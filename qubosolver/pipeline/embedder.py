@@ -4,6 +4,7 @@ import typing
 from abc import ABC, abstractmethod
 import numpy as np
 import torch
+import warnings
 
 from qoolqit import Register as QoolqitRegister
 from qoolqit.execution.backend import BaseBackend
@@ -13,6 +14,9 @@ from qubosolver.algorithms.blade.blade import em_blade
 from qubosolver.algorithms.greedy.greedy import Greedy
 from qubosolver.config import EmbedderType, SolverConfig
 from qubosolver.utils.density import calculate_density
+
+warnings.filterwarnings("ignore", module="pulser")
+warnings.filterwarnings("ignore", module="numpy")
 
 
 class BaseEmbedder(ABC):

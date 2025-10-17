@@ -68,10 +68,10 @@ This way, the qubits with lower weights receive higher detuning values, whilst t
 import torch
 
 from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, PulseShapingConfig
+from qubosolver.config import SolverConfig, DriveShapingConfig
 from qoolqit._solvers.types import BackendType, DeviceType
 from qubosolver.solver import QuboSolver
-from qubosolver.qubo_types import PulseType
+from qubosolver.qubo_types import DriveType
 
 
 Q = torch.tensor([
@@ -90,7 +90,7 @@ Q = torch.tensor([
 instance = QUBOInstance(Q)
 
 default_config = SolverConfig(
-    use_quantum = True, pulse_shaping=PulseShapingConfig(pulse_shaping_method=PulseType.ADIABATIC, dmm=True)
+    use_quantum = True, pulse_shaping=DriveShapingConfig(drive_shaping_method=DriveType.ADIABATIC, dmm=True)
 )
 solver = QuboSolver(instance, default_config)
 
@@ -100,6 +100,6 @@ print(solution)
 ```
 This will return a `QUBOSolution` instance, which comprehends the solution bitstrings, the counts of each bitstring, their probabilities and costs.
 
-Obs.: The `ADIABATIC` method is the default one, it's explicit in `pulse_shaping_method` for ilustration purposes.
+Obs.: The `ADIABATIC` method is the default one, it's explicit in `drive_shaping_method` for ilustration purposes.
 
 ---

@@ -302,8 +302,8 @@ class OptimizedDriveShaper(BaseDriveShaper):
 
         if self.bitstrings is None or self.counts is None:
             # TODO: what needs to be returned here?
-            # the generate function should always return a pulse - even if it is not good.
-            # we need to return a pulse (self.pulse) - which is none here.
+            # the generate function should always return a drive - even if it is not good.
+            # we need to return a drive (self.srive) - which is none here.
             return self.drive, QUBOSolution(None, None)  # type: ignore[return-value]
 
         assert self.costs is not None
@@ -405,10 +405,10 @@ class OptimizedDriveShaper(BaseDriveShaper):
             tuple: tuple of (bitstrings, counts, probabilities, costs, best cost, best bitstring)
         """
         try:
-            program = QuantumProgram(
-                register=register.register, pulse=drive.pulse, device=self.device
-            )
-            bitstring_counts = self.backend.run(program).final_bitstrings
+            program = QuantumProgram(register=register, drive=drive)
+            program.compile_to(device=self.device)
+            execution_result = self.backend.run(program)[0]
+            bitstring_counts = execution_result.final_bitstrings
 
             cost_dict = {b: self.compute_qubo_cost(b, QUBO) for b in bitstring_counts.keys()}
 

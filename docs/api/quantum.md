@@ -1,9 +1,9 @@
 
 # Quantum-related components of a QUBO solver
 
-## Pulse Shapping
+## Drive Shapping
 
-::: qubosolver.pipeline.pulse
+::: qubosolver.pipeline.drive
 
 ## Embedding
 

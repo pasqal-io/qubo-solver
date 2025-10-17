@@ -68,10 +68,10 @@ After the final round of optimization, the following attributes are populated:
 import torch
 
 from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, PulseShapingConfig
+from qubosolver.config import SolverConfig, DriveShapingConfig
 from qoolqit._solvers.types import BackendType, DeviceType
 from qubosolver.solver import QuboSolver
-from qubosolver.qubo_types import PulseType
+from qubosolver.qubo_types import DriveType
 
 
 Q = torch.tensor([[-63.9423,   0.0000], [0.0000, -44.1916]])
@@ -79,7 +79,7 @@ Q = torch.tensor([[-63.9423,   0.0000], [0.0000, -44.1916]])
 instance = QUBOInstance(Q)
 
 default_config = SolverConfig(
-    use_quantum = True, pulse_shaping=PulseShapingConfig(pulse_shaping_method=PulseType.OPTIMIZED, optimized_n_calls = 25),
+    use_quantum = True, pulse_shaping=DriveShapingConfig(drive_shaping_method=DriveType.OPTIMIZED, optimized_n_calls = 25),
 )
 solver = QuboSolver(instance, default_config)
 

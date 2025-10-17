@@ -3,7 +3,7 @@
 The `SolverConfig` class defines how a QUBO problem should be solved — specifying whether to use a quantum or classical approach, which backend to run on, and additional execution parameters.
 
 This configuration is passed into any solver (e.g., `QuboSolver`) and guides its behavior.
-Note that `SolverConfig` uses four other configuration objects: 'BackendConfig', `EmbeddingConfig`, `ClassicalConfig` and `PulseShapingConfig`.
+Note that `SolverConfig` uses four other configuration objects: 'BackendConfig', `EmbeddingConfig`, `ClassicalConfig` and `DriveShapingConfig`.
 Besides `ClassicalConfig`, the other configurations represents different parts of the solver when using a quantum approach:
 
 ---
@@ -16,7 +16,7 @@ Besides `ClassicalConfig`, the other configurations represents different parts o
 | `use_quantum` | `bool` | Whether to solve using a quantum approach (`True`) such as QAA or VQA or a classical approach (`False`). |
 | `backend_config`     | `BackendConfig` | Backend part configuration of the solver. |
 | `embedding` | `EmbeddingConfig` | Embedding part configuration of the solver. |
-| `pulse_shaping` | `PulseShapingConfig` | Pulse-shaping part configuration of the solver. |
+| `pulse_shaping` | `DriveShapingConfig` | Pulse-shaping part configuration of the solver. |
 | `classical` | `ClassicalConfig` | Classical part configuration of the solver. |
 
 ### Backend configuration
@@ -65,14 +65,14 @@ We made available a greedy embedding method (given a fixed lattice or layout, it
 ### Pulse Shaping configuration
 
 Quantum devices can be programmed by specifying a sequence of pulses.
-The pulse shaping configuration part (the `pulse_shaping` field of `SolverConfig`) is set via the `PulseShapingConfig` class, and defines how the pulse parameters are constructed (in an adiabatic fashion, via optimization, ...).
+The pulse shaping configuration part (the `pulse_shaping` field of `SolverConfig`) is set via the `DriveShapingConfig` class, and defines how the pulse parameters are constructed (in an adiabatic fashion, via optimization, ...).
 Note, for parameters concerning exclusively the optimized pulse shaping method, an `optimized_` prefix is present.
 
 | Field         | Type          | Description |
 |---------------|---------------|-------------|
-| `pulse_shaping_method` | `str` \| `PulseType` \| `Type[BasePulseShaper]` | The type of pulse-shaping method used (e.g., 'adiabatic', 'optimized'). |
+| `drive_shaping_method` | `str` \| `DriveType` \| `Type[BasePulseShaper]` | The type of pulse-shaping method used (e.g., 'adiabatic', 'optimized'). |
 | `dmm` | `bool` | Whether to use a detuning map when applying pulse shaping or not. This gets added to the pulse sequence as a ConstantWaveform. |
-| `re_execute_opt_pulse` | `bool` | Whether to re-run the optimal pulse sequence. |
+| `re_execute_opt_drive` | `bool` | Whether to re-run the optimal pulse sequence. |
 | `optimized_n_calls` | `int` \| `None` | Number of optimization rounds taken to find the best set of parameters for the optimization process inside VQA. The minimum value is 20. Note the optimizer accepts a minimal value of 12. |
 | `optimized_initial_omega_parameters`   | `list[float]` | The list of initial amplitude $\Omega$ parameters ($3$ floating numbers) to be used in the first round of optimization.|
 | `optimized_initial_detuning_parameters`   | `list[float]` | The list of global detuning $\delta$ parameters ($3$ floating numbers) to be used in the first round of optimization.|
