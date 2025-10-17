@@ -9,14 +9,7 @@ One main decision is about the [backend](backend.md), that is how we choose to p
 
 ### Available backend types and devices
 
-The list of backend types available can be found via the `BackendType` enumeration from [`Qooqit`](https://github.com/pasqal-io/qoolqit), a Python package designed for algorithm development in the Rydberg Analog Model.
-
-```python exec="on" source="material-block" html="1"
-from qoolqit._solvers.types import BackendType
-all_backends = BackendType.list()
-print('Local Backends: ', list(filter(lambda b: 'remote' not in b, all_backends)))
-print('Remote Backends: ', list(filter(lambda b: 'remote' in b, all_backends)))
-```
+The supported backends are available via [`Qooqit`](https://pasqal-io.github.io/qoolqit/latest/api/qoolqit/execution/backends/), a Python package designed for algorithm development in the Rydberg Analog Model.
 
 The backends can be divided into 3 main categories:
 
@@ -24,12 +17,7 @@ The backends can be divided into 3 main categories:
 - [Remote emulators]((https://docs.pasqal.com/cloud/emu-tn/)), which can be accessed via [`pasqal_cloud`](https://docs.pasqal.com/cloud/),
 - [A remote QPU, such as Fresnel](https://docs.pasqal.com/cloud/fresnel-job/).
 
-For emulators, we use device specifications when performing quantum runs via `DeviceType`:
-
-```python exec="on" source="material-block" html="1"
-from qoolqit._solvers.types import DeviceType
-print([e.value for e in DeviceType])
-```
+A backend will use device specifications to perform quantum computations. The list of supported devices can be found in [`the QoolQit devices documentation`](https://pasqal-io.github.io/qoolqit/latest/api/qoolqit/devices/).
 
 ### Running locally with an emulator
 
@@ -38,17 +26,27 @@ We can perform quantum simulations locally via an emulator (here, we choose the 
 ```python exec="on" source="material-block" html="1"
 import torch
 from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig
+from qubosolver.config import SolverConfig, LocalEmulator
 from qubosolver.solver import QuboSolver
-from qoolqit._solvers.data import BackendConfig
-from qoolqit._solvers.types import BackendType
+from pulser_simulation import QutipBackendV2
+from emu_sv import SVBackend
+from emu_mps import MPSBackend
+
+locals_bkds = [
+    LocalEmulator(backend_type=btype, runs=500)
+    for btype in [
+        QutipBackendV2,
+        SVBackend,
+        MPSBackend,
+    ]
+]
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
 instance = QUBOInstance(coefficients=Q)
 
 # Create a SolverConfig object to use a quantum backend
-config = SolverConfig(use_quantum=True, backend_config = BackendConfig(backend=BackendType.QUTIP))
+config = SolverConfig(use_quantum=True, backend = locals_bkds[0])
 
 # Instantiate the quantum solver.
 solver = QuboSolver(instance, config)
@@ -69,10 +67,8 @@ The code above can be modified to solve the QUBO instance using our real QPU rem
 ```python
 import torch
 from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig
+from qubosolver.config import SolverConfig, RemoteEmulator
 from qubosolver.solver import QuboSolver
-from qoolqit._solvers.data import BackendConfig
-from qoolqit._solvers.types import BackendType, DeviceType
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
@@ -82,7 +78,7 @@ instance = QUBOInstance(coefficients=Q)
 backendconf = BackendConfig(backend=BackendType.REMOTE_QPU, username='#TO_PROVIDE', password='#TO_PROVIDE', project_id='#TO_PROVIDE')
 
 # Instantiate the quantum solver.
-solver = QuboSolver(instance, backend_config=backendconf)
+solver = QuboSolver(instance, backend=backendconf)
 
 # Solve the QUBO problem.
 solution = solver.solve()

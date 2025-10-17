@@ -22,7 +22,7 @@ Local backends perform simulations locally. The main available backends are:
 
 To use any, simply instantiate a `SolverConfig` with a `backend` and `device` as follows:
 
-```python exec="on" source="material-block"
+```python exec="on" source="material-backend"
 from qubosolver.config import SolverConfig, LocalEmulator
 from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
@@ -52,7 +52,7 @@ config = SolverConfig(
 
 Alternatively use the `SolverConfig.from_kwargs` method with the `BackendConfig` parameters:
 
-```python exec="on" source="material-block"
+```python exec="on" source="material-backend"
 
 config = SolverConfig.from_kwargs(
     use_quantum=True,
@@ -62,13 +62,12 @@ config = SolverConfig.from_kwargs(
 ```
 
 
-## Remote backends
+## Remote emulators
 
 Remote backends submit jobs to a remote server via [pasqal-cloud](https://docs.pasqal.com/cloud/).
-For this, we require specifying a `RemoteEmulator` and connection details.
-We can also target a remote QPU.
+For this, we require specifying a `RemoteEmulator` or `QPU` and connection details.
 
-```python exec="on" source="material-block"
+```python exec="on" source="material-backend"
 from qubosolver.config import SolverConfig, PasqalCloud, RemoteEmulator
 from pulser_pasqal.backends import EmuFreeBackendV2, EmuMPSBackend
 
@@ -77,11 +76,33 @@ USERNAME="#TO_PROVIDE"
 PROJECT_ID="#TO_PROVIDE"
 PASSWORD=None
 
-remote_emulators = [RemoteEmulator(backend_type=btype, runs=500)
+if PASSWORD is not None:
+    connection = PasqalCloud(
+        username=USERNAME,
+        password=PASSWORD,
+        project_id=PROJECT_ID,
+    )
+    remote_emulators = [RemoteEmulator(backend_type=btype, connection=connection, runs=500)
     for btype in [
         EmuFreeBackendV2,
         EmuMPSBackend,
     ]]
+    config = SolverConfig(
+        use_quantum=True,
+        backend = remote_emulators[0],
+    )
+```
+
+We can also target a remote QPU as follows:
+
+```python exec="on" source="material-backend"
+from qubosolver.config import SolverConfig, PasqalCloud, QPU
+from pulser_pasqal.backends import EmuFreeBackendV2, EmuMPSBackend
+
+# Replace with your username, project id and password on the Pasqal Cloud.
+USERNAME="#TO_PROVIDE"
+PROJECT_ID="#TO_PROVIDE"
+PASSWORD=None
 
 if PASSWORD is not None:
     connection = PasqalCloud(
@@ -91,6 +112,7 @@ if PASSWORD is not None:
     )
     config = SolverConfig(
         use_quantum=True,
-        backend = remote_emulators[0],
+        backend = QPU(connection=connection, runs=500),
     )
+
 ```
