@@ -67,48 +67,73 @@ The code above can be modified to solve the QUBO instance using our real QPU rem
 ```python
 import torch
 from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, RemoteEmulator
+from qubosolver.config import SolverConfig, QPU
 from qubosolver.solver import QuboSolver
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
 instance = QUBOInstance(coefficients=Q)
 
-# define a remote backend
-backendconf = BackendConfig(backend=BackendType.REMOTE_QPU, username='#TO_PROVIDE', password='#TO_PROVIDE', project_id='#TO_PROVIDE')
+# define credentials
+username='#TO_PROVIDE'
+password='#TO_PROVIDE'
+project_id='#TO_PROVIDE'
 
-# Instantiate the quantum solver.
-solver = QuboSolver(instance, backend=backendconf)
 
-# Solve the QUBO problem.
-solution = solver.solve()
+if PASSWORD is not None:
+    connection = PasqalCloud(
+        username=USERNAME,
+        password=PASSWORD,
+        project_id=PROJECT_ID,
+    )
+
+
+    # define a remote backend
+    backendconf = QPU(connection=connection)
+
+    # Instantiate the quantum solver.
+    solver = QuboSolver(instance, backend=backendconf)
+
+    # Solve the QUBO problem.
+    solution = solver.solve()
 ```
 
 #### On a remote emulators
 
-Emulators are also available remotely.
-Note that the default device set for remote connections is our QPU, but for emulators, you can specify a `DeviceType` as follows:
+Emulators are also available remotely:
 
 ```python
 import torch
 from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig
+from qubosolver.config import SolverConfig, RemoteEmulator, PasqalCloud
 from qubosolver.solver import QuboSolver
-from qoolqit._solvers.data import BackendConfig
-from qoolqit._solvers.types import BackendType, DeviceType
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
 instance = QUBOInstance(coefficients=Q)
 
-# define a remote backend
-backendconf = BackendConfig(backend=BackendType.REMOTE_EMUFREE, device=DeviceType.DIGITAL_ANALOG_DEVICE, username='#TO_PROVIDE', password='#TO_PROVIDE', project_id='#TO_PROVIDE')
+# define credentials
+username='#TO_PROVIDE'
+password='#TO_PROVIDE'
+project_id='#TO_PROVIDE'
 
-# Instantiate the quantum solver.
-solver = QuboSolver(instance, backend_config=backendconf)
 
-# Solve the QUBO problem.
-solution = solver.solve()
+if PASSWORD is not None:
+    connection = PasqalCloud(
+        username=USERNAME,
+        password=PASSWORD,
+        project_id=PROJECT_ID,
+    )
+
+
+    # define a remote backend
+    backendconf = RemoteEmulator(connection=connection)
+
+    # Instantiate the quantum solver.
+    solver = QuboSolver(instance, backend=backendconf)
+
+    # Solve the QUBO problem.
+    solution = solver.solve()
 ```
 
 
