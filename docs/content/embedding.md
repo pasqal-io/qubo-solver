@@ -70,13 +70,12 @@ The `embed` method `def embed(self) -> qoolqit.Register` specify how the problem
 
 ```python exec="on" source="material-block" html="1" session="embedding"
 import typing
+from qoolqit import Register
 from qubosolver.pipeline.embedder import BaseEmbedder
-from qubosolver.pipeline.targets import Register as TargetRegister
 from qubosolver.config import (
     EmbeddingConfig,
     SolverConfig,
 )
-from pulser.register import Register as PulserRegister
 
 class FixedEmbedder(BaseEmbedder):
 
