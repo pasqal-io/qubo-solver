@@ -82,13 +82,13 @@ class BaseSolver(ABC):
 
     def execute(self, drive: Drive, embedding: Register) -> tuple:
         """
-        Execute the pulse schedule on the backend and retrieve the solution.
+        Execute the drive schedule on the backend and retrieve the solution.
         # TODO: We do not currently execute using the async run.
         # We are sumbitting a single job, defined in the executor.
         # In future we need to run the async functions.
 
         Args:
-            drive (Drive): The pulse schedule or execution payload.
+            drive (Drive): The drive schedule or execution payload.
             embedding (Register): The register to be executed.
 
         Returns:

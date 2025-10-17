@@ -86,6 +86,6 @@ class LimitedAdiabaticDriveShaper(BaseDriveShaper):
 
 config = SolverConfig(
     use_quantum=True,
-    pulse_shaping=DriveShapingConfig(drive_shaping_method=LimitedAdiabaticDriveShaper),
+    drive_shaping=DriveShapingConfig(drive_shaping_method=LimitedAdiabaticDriveShaper),
 )
 ```

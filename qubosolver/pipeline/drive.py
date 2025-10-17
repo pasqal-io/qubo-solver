@@ -216,7 +216,7 @@ class OptimizedDriveShaper(BaseDriveShaper):
         instance: QUBOInstance,
     ) -> tuple[Drive, QUBOSolution]:
         """
-        Generate a pulse via optimization.
+        Generate a drive via optimization.
 
         Args:
             register (Register): The physical register layout.

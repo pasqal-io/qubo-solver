@@ -1,6 +1,6 @@
 ## Adiabatic Drive Shaper
 
-`AdiabaticDriveShaper` is a class for implementing a standard adiabatic pulse shaping method. It creates an `InterpolatedWaveform` drive for solving a `QUBOInstance` using adiabatic quantum evolution, There are no parameters to be customized.
+`AdiabaticDriveShaper` is a class for implementing a standard adiabatic drive shaping method. It creates an `InterpolatedWaveform` drive for solving a `QUBOInstance` using adiabatic quantum evolution, There are no parameters to be customized.
 
 ### How it works:
 - Creates a normalized weights list for the later application of Detuning Map Modulator (DMM).
@@ -15,8 +15,8 @@
 
 
 #### Methods
-`generate(register: Register, instance: QUBOInstance) -> tuple[Pulse, QUBOSolution]`
-Generates a shaped adiabatic pulse for the given QUBO problem and register layout.
+`generate(register: Register, instance: QUBOInstance) -> tuple[Drive, QUBOSolution]`
+Generates a shaped adiabatic drive for the given QUBO problem and register layout.
 
 | Argument      | Type           | Description |
 |---------------|----------------|-------------|
@@ -52,11 +52,12 @@ $$\delta_f = -\delta_0$$
 
 ### Application of DMM
 
-Along with the pulse created with the amplitude and detuning values, the detuning of individual qubits (defined as list of values between 0 and 1) is applied using a channel called **Detuning Map Modulator** or `DMM`. Proportionally to the weights of each qubit, a drive of zero amplitude and negative detuning is applied. Here, the values of the detuning are normalized in terms of the maximum absolute value of the diagonal terms and subtracted from 1 (and normalized by device specs). For each qubit $i$ the value is:
+Along with the drive created with the amplitude and detuning values, the detuning of individual qubits (defined as list of values between 0 and 1) is applied using a channel called **Detuning Map Modulator** or `DMM`. Proportionally to the weights of each qubit, a drive of zero amplitude and negative detuning is applied. Here, the values of the detuning are normalized in terms of the maximum absolute value of the diagonal terms and subtracted from 1 (and normalized by device specs). For each qubit $i$ the value is:
 
 $$DMM = 1 - (w_i/w_{max}) $$
 
 This way, the qubits with lower weights receive higher detuning values, whilst the ones with higher weights receive lower values.
+To activate DMM, specify in `SolverConfig` the `dmm` to True.
 
 ### Example
 
@@ -85,7 +86,7 @@ Q = torch.tensor([
 instance = QUBOInstance(Q)
 
 default_config = SolverConfig(
-    use_quantum = True, pulse_shaping=DriveShapingConfig(drive_shaping_method=DriveType.ADIABATIC, dmm=True)
+    use_quantum = True, drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.ADIABATIC, dmm=True)
 )
 solver = QuboSolver(instance, default_config)
 

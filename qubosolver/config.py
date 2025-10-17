@@ -273,14 +273,14 @@ class DriveShapingConfig(Config):
             10.0,
             5.0,
         ]
-    )  # ---> default initial pulse parameters: Omega = (5, 10, 5)
+    )  # ---> default initial drive parameters: Omega = (5, 10, 5)
     optimized_initial_detuning_parameters: list[float] = field(
         default_factory=lambda: [
             -10.0,
             0.0,
             10.0,
         ]
-    )  # ---> default initial pulse parameters: delta = (-10, 0, 10)
+    )  # ---> default initial drive parameters: delta = (-10, 0, 10)
     optimized_custom_qubo_cost: Callable[[str, torch.Tensor], float] | None = None
     optimized_custom_objective: Callable[[list, list, list, list, float, str], float] | None = None
     optimized_callback_objective: Callable[..., None] | None = None
