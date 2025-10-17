@@ -65,7 +65,6 @@ Although the default configuration is straightforward, all parameters can be mod
 ```python exec="on" source="material-block"
 from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig, EmbeddingConfig
-from qoolqit._solvers.types import DeviceType
 
 coefficients = [[0, 1, 2], [1, 0, 3], [2, 3, 0]]
 instance = QUBOInstance(coefficients=coefficients)
@@ -83,7 +82,6 @@ Equivalently, one can instantiate a `SolverConfig` simply using the keyword argu
 
 ```python exec="on" source="material-block"
 from qubosolver import QUBOInstance
-from qoolqit._solvers.types import DeviceType
 from qubosolver.config import SolverConfig
 
 coefficients = [[0, 1, 2], [1, 0, 3], [2, 3, 0]]

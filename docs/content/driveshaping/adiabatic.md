@@ -65,7 +65,6 @@ import torch
 
 from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig, DriveShapingConfig
-from qoolqit._solvers.types import BackendType, DeviceType
 from qubosolver.solver import QuboSolver
 from qubosolver.qubo_types import DriveType
 
