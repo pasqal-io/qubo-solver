@@ -75,9 +75,9 @@ Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
 instance = QUBOInstance(coefficients=Q)
 
 # define credentials
-username='#TO_PROVIDE'
-password='#TO_PROVIDE'
-project_id='#TO_PROVIDE'
+USERNAME='#TO_PROVIDE'
+PROJECT_ID='#TO_PROVIDE'
+PASSWORD= None
 
 
 if PASSWORD is not None:
@@ -113,10 +113,9 @@ Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
 instance = QUBOInstance(coefficients=Q)
 
 # define credentials
-username='#TO_PROVIDE'
-password='#TO_PROVIDE'
-project_id='#TO_PROVIDE'
-
+USERNAME='#TO_PROVIDE'
+PROJECT_ID='#TO_PROVIDE'
+PASSWORD= None
 
 if PASSWORD is not None:
     connection = PasqalCloud(
