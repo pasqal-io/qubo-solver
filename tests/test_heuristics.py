@@ -100,7 +100,6 @@ def test_random() -> None:
 
     # Solve the QUBO problem.
     solution = classical_solver.solve()
-    print(solution)
 
     # Assert that the solution is an instance of QUBOSolution.
     assert isinstance(solution, QUBOSolution)

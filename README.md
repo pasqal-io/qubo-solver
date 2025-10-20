@@ -76,29 +76,31 @@ of cplex.
 ### With a quantum solver
 
 ```python
+import torch
 from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig
 from qubosolver.solver import QuboSolver
-from qoolqit._solvers.data import BackendConfig
-from qoolqit._solvers.types import BackendType
+
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
 instance = QUBOInstance(coefficients=Q)
 
 # Create a SolverConfig object to use a quantum backend
-config = SolverConfig(use_quantum=True, backend_config = BackendConfig(backend=BackendType.QUTIP))
+config = SolverConfig(use_quantum=True)
 
 # Instantiate the quantum solver.
 solver = QuboSolver(instance, config)
 
 # Solve the QUBO problem.
 solution = solver.solve()
+print(solution)
 ```
 
 ### With a classical solver
 
 ```python
+import torch
 from qubosolver import QUBOInstance
 from qubosolver.config import ClassicalConfig, SolverConfig
 from qubosolver.solver import QuboSolverClassical, QuboSolverQuantum
@@ -120,6 +122,7 @@ classical_solver = QuboSolver(instance, config)
 
 # Solve the QUBO problem.
 solution = classical_solver.solve()
+print(solution)
 ```
 
 

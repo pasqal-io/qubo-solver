@@ -107,8 +107,6 @@ from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig, ClassicalConfig
 from qubosolver.solver import QuboSolver
 import emu_mps
-from qoolqit._solvers.types import BackendType
-
 
 # Assume `first_qubo_coefficients` is your 2×2 QUBO matrix (e.g., identity):
 first_qubo_coefficients = torch.eye(2)

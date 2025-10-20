@@ -59,9 +59,9 @@ class LayoutType(Enum):
     TRIANGULAR = TriangularLatticeLayout
 
 
-class PulseType(Enum):
+class DriveType(Enum):
     """
-    Type of pulse shaping method used for solving the QUBO
+    Type of drive shaping method used for solving the QUBO
     """
 
     ADIABATIC = "adiabatic"

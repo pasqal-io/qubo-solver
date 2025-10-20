@@ -2,17 +2,19 @@ from __future__ import annotations
 
 import pytest
 import torch
-from qoolqit._solvers import get_backend
 
+import numpy as np
+from qoolqit.devices import Device, DigitalAnalogDevice, AnalogDevice
 from qubosolver import QUBOInstance
 from qubosolver.config import (
-    BackendConfig,
-    DeviceType,
     EmbeddingConfig,
     SolverConfig,
 )
 from qubosolver.pipeline.embedder import GreedyEmbedder, get_embedder
 from qubosolver.solver import QuboSolver
+
+
+devices: list[Device] = [AnalogDevice(), DigitalAnalogDevice()]
 
 
 def test_custom_embedder(simple_qubo_instance: QUBOInstance) -> None:
@@ -24,7 +26,7 @@ def test_custom_embedder(simple_qubo_instance: QUBOInstance) -> None:
         use_quantum=True,
         embedding=EmbeddingConfig(embedding_method=MockGreedyEmbedder),
     )
-    backend = get_backend(config.backend_config)
+    backend = config.backend
     shaper = get_embedder(simple_qubo_instance, config, backend)
     assert isinstance(shaper, MockGreedyEmbedder)
 
@@ -40,20 +42,21 @@ def test_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) -> None:
     solver = QuboSolver(qubo_instance_for_embedding, config)
     positions = solver.embedding()
 
-    expected_greedy_positions = torch.tensor(
-        [[2.0000, 3.4641], [0.0000, 0.0000], [-2.0000, 3.4641], [4.0000, 0.0000]],
-        dtype=torch.float16,
-    ).tolist()
+    expected_greedy_positions = (
+        torch.tensor(
+            [[2.0000, 3.4641], [0.0000, 0.0000], [-2.0000, 3.4641], [4.0000, 0.0000]],
+            dtype=torch.float16,
+        )
+        / solver.device.converter.factors[2]
+    )
+    expected_greedy_positions = expected_greedy_positions.tolist()
 
-    assert len(positions.register.qubits) == len(expected_greedy_positions)
+    assert len(positions.qubits) == len(expected_greedy_positions)
 
-    for qubit_id, coordinate in enumerate(positions.register.qubits.values()):
-        x, y = coordinate.as_tensor().clone().detach().to(dtype=torch.float16).tolist()
+    for qubit_id, coordinate in enumerate(positions.qubits.values()):
+        x, y = coordinate.clone().detach().to(dtype=torch.float16).tolist()
         x_, y_ = expected_greedy_positions[qubit_id]
-        assert (x == x_) and (y == y_)
-
-
-devices: list[DeviceType] = [DeviceType.ANALOG_DEVICE, DeviceType.DIGITAL_ANALOG_DEVICE]
+        assert np.allclose(x, x_, atol=1e-3) and np.allclose(y, y_, atol=1e-3)
 
 
 def test_greedy_max_radial_distance_constraint(
@@ -67,9 +70,9 @@ def test_greedy_max_radial_distance_constraint(
             embedding=EmbeddingConfig(
                 embedding_method="greedy",
                 greedy_traps=qubo_instance_for_embedding.size,
-                greedy_spacing=device.value.max_radial_distance,
+                greedy_spacing=device._device.max_radial_distance,
             ),
-            backend_config=BackendConfig(device=device),
+            device=device,
         )
 
         solver = QuboSolver(qubo_instance_for_embedding, greedy_config)
@@ -105,22 +108,25 @@ def test_greedy_max_radial_distance_constraint_with_extra_greedy_traps(
     ]
 
     for scenario_idx, device in enumerate(devices):
+        conv = device.converter.factors[2]
         greedy_config = SolverConfig(
             use_quantum=True,
             embedding=EmbeddingConfig(
                 embedding_method="greedy",
                 greedy_traps=qubo_instance_for_embedding.size * 2,
-                greedy_spacing=device.value.max_radial_distance / 2,
+                greedy_spacing=device._device.max_radial_distance / 2,
             ),
-            backend_config=BackendConfig(device=device),
+            device=device,
         )
 
         solver = QuboSolver(qubo_instance_for_embedding, greedy_config)
         geometry = solver.embedding()
 
-        assert len(geometry.register.qubits) == len(expected_greedy_positions[scenario_idx])
+        assert len(geometry.qubits) == len(expected_greedy_positions[scenario_idx])
 
-        for qubit_id, coordinate in enumerate(geometry.register.qubits.values()):
-            x, y = coordinate.as_tensor().clone().detach().to(dtype=torch.float16).tolist()
+        for qubit_id, coordinate in enumerate(geometry.qubits.values()):
+            x, y = coordinate.clone().detach().to(dtype=torch.float16).tolist()
             x_, y_ = expected_greedy_positions[scenario_idx][qubit_id]
-            assert (x == x_) and (y == y_)
+            x_ /= conv
+            y_ /= conv
+            assert np.allclose(x, x_, atol=1e-3) and np.allclose(y, y_, atol=1e-3)

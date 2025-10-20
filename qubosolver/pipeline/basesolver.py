@@ -4,26 +4,22 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import torch
-from qoolqit._solvers import get_backend
-from qoolqit._solvers.data import QuantumProgram
+from qoolqit import Register, Drive, QuantumProgram
 
 from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig
 from qubosolver.data import QUBOSolution
 from qubosolver.qubo_types import SolutionStatusType
 
-from .targets import Pulse, Register
-
 
 class BaseSolver(ABC):
     """
     Abstract base class for all solvers (quantum or classical).
 
-    Provides the interface for solving, embedding, pulse shaping,
+    Provides the interface for solving, embedding, drive shaping,
     and execution of QUBO problems.
 
-    The BaseSolver also provides a method to execute the Pulse and
-    Register
+    The BaseSolver also provides a method to execute the QuantumProgram.
     """
 
     def __init__(self, instance: QUBOInstance, config: SolverConfig | None = None):
@@ -46,7 +42,8 @@ class BaseSolver(ABC):
                 self.config.embedding.greedy_traps, instance.size
             )
 
-        self.backend = get_backend(self.config.backend_config)
+        self.backend = self.config.backend
+        self.device = self.config.device
 
     @abstractmethod
     def solve(self) -> QUBOSolution:
@@ -69,85 +66,71 @@ class BaseSolver(ABC):
         pass
 
     @abstractmethod
-    def pulse(self, embedding: Register) -> tuple:
+    def drive(self, embedding: Register) -> tuple:
         """
-        Generate a pulse schedule for the quantum device based on the embedding.
+        Generate a drive for the quantum device based on the embedding.
 
         Args:
             embedding (dict): Embedding information.
 
         Returns:
             tuple:
-                - Pulse schedule or related data.
+                - Drive or related data.
                 - QUBOsolution
         """
         pass
 
-    def execute(self, pulse: Pulse, embedding: Register) -> tuple:
+    def execute(self, drive: Drive, embedding: Register) -> tuple:
         """
-        Execute the pulse schedule on the backend and retrieve the solution.
+        Execute the drive schedule on the backend and retrieve the solution.
         # TODO: We do not currently execute using the async run.
         # We are sumbitting a single job, defined in the executor.
         # In future we need to run the async functions.
 
         Args:
-            pulse (Pulse): The pulse schedule or execution payload.
+            drive (Drive): The drive schedule or execution payload.
             embedding (Register): The register to be executed.
 
         Returns:
             tuple: A tuple of (bitstrings, counts) from the execution.
         """
-        if hasattr(pulse, "bitstrings") and hasattr(pulse, "counts"):
-            # FIXME: Can this happend?
-            bitstrings, counts = pulse.bitstrings, pulse.counts
-        else:
-            # If not, we need to execute the simulation
-            program = QuantumProgram(
-                device=self.backend.device(),
-                register=embedding.register,
-                pulse=pulse.pulse,
-                detunings=pulse.detuning(embedding.register),
-            )
-            execution_result = self.backend.run(program, self.config.num_shots)
-            counts = execution_result.counts
-            bitstrings = list(counts.keys())
+        program = QuantumProgram(
+            register=embedding,
+            drive=drive,
+        )
+        program.compile_to(self.device)
+        execution_result = self.backend.run(program)[0]
+        counter = execution_result.final_bitstrings
+        bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())])
+        counts = torch.tensor(list(counter.values()))
 
-        if self.config.pulse_shaping.re_execute_opt_pulse and (
-            bitstrings is None or counts is None
-        ):
+        if self.config.drive_shaping.optimized_re_execute_opt_drive:
             program = QuantumProgram(
-                device=self.backend.device(),
-                register=embedding.register,
-                pulse=pulse.pulse,
-                detunings=pulse.detuning(embedding.register),
+                register=embedding,
+                drive=drive,
             )
-            execution_result = self.backend.run(program, self.config.num_shots)
-            counts = execution_result.counts
-            bitstrings = list(counts.keys())
+            program.compile_to(self.device)
+            execution_result = self.backend.run(program)[0]
+            counter = execution_result.final_bitstrings
+            bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())])
+            counts = torch.tensor(list(counter.values()))
 
         return bitstrings, counts
 
-    def draw_sequence(self, pulse: Pulse, embedding: Register) -> None:
+    def draw_sequence(self, drive: Drive, embedding: Register) -> None:
         """Draw sequence of the `QuantumProgram` submitted.
 
         Args:
-            pulse (Pulse): Pulse used in program.
+            drive (Drive): Drive used in program.
             embedding (Register): embedding program is defined over.
         """
         if self.config.use_quantum:
-            from qoolqit._solvers.backends.base_backend import make_sequence
-
-            detunings = pulse.detuning(embedding.register)
             program = QuantumProgram(
-                device=self.backend.device(),
-                register=embedding.register,
-                pulse=pulse.pulse,
-                detunings=detunings,
+                register=embedding,
+                drive=drive,
             )
-            sequence = make_sequence(program)
-            sequence.draw(
-                draw_detuning_maps=len(detunings) > 0,
-            )
+            program.compile_to(self.device)
+            program.draw(compiled=True)
 
     def _trivial_solution(self) -> Optional[QUBOSolution]:
         """

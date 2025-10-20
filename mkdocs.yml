@@ -14,10 +14,10 @@ nav:
       - Analyzing QUBO solutions: content/qubo_analyzer.md
       - Utilities: content/utilities.md
     - Quantum solver components:
-      - Pulse Shaping:
-        - Adiabatic Pulse: content/pulseshaping/adiabatic.md
-        - Optimized Pulse: content/pulseshaping/optimized.md
-        - Custom: content/pulseshaping/custom.md
+      - Drive Shaping:
+        - Adiabatic Drive: content/driveshaping/adiabatic.md
+        - Optimized Drive: content/driveshaping/optimized.md
+        - Custom: content/driveshaping/custom.md
       - Embedding: content/embedding.md
     - Classical solvers:
       - CPLEX Solver: content/classical/cplex_solver/cplex_solving.md
@@ -35,7 +35,7 @@ nav:
     - Pre-processing and Post-processing: tutorial/03-prepostprocessing.ipynb
     - Qubo embedding: tutorial/04-qubo-embedding.ipynb
     - Qubo embedding with BLaDE: tutorial/05-blade.ipynb
-    - Pulse shaping methods: tutorial/06-pulse-shaping-methods.ipynb
+    - Drive shaping methods: tutorial/06-drive-shaping-methods.ipynb
     - Classical heuristics: tutorial/07-classical-heuristics.ipynb
     - Qubo Analyzer: tutorial/08-qubo_analyzer.ipynb
 

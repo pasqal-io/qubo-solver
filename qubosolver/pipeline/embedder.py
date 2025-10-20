@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import typing
-import warnings
 from abc import ABC, abstractmethod
 import numpy as np
 import torch
+import warnings
 
-from pulser.register import Register as PulserRegister
-from qoolqit._solvers import BaseBackend
+from qoolqit import Register as QoolqitRegister
+from qoolqit.execution.backend import BaseBackend
 
 from qubosolver import QUBOInstance
 from qubosolver.algorithms.blade.blade import em_blade
@@ -15,9 +15,7 @@ from qubosolver.algorithms.greedy.greedy import Greedy
 from qubosolver.config import EmbedderType, SolverConfig
 from qubosolver.utils.density import calculate_density
 
-from .targets import Register as TargetRegister
-
-warnings.filterwarnings("ignore", category=RuntimeWarning, module="pulser")
+warnings.filterwarnings("ignore", module="pulser")
 
 
 class BaseEmbedder(ABC):
@@ -36,11 +34,14 @@ class BaseEmbedder(ABC):
         """
         self.instance: QUBOInstance = instance
         self.config: SolverConfig = config
-        self.register: TargetRegister | None = None
+        self.register: QoolqitRegister | None = None
         self.backend = backend
 
+        # for converting to qoolqit
+        self._distance_conversion = self.config.device.converter.factors[2]
+
     @abstractmethod
-    def embed(self) -> TargetRegister:
+    def embed(self) -> QoolqitRegister:
         """
         Creates a layout of atoms as the register.
 
@@ -85,24 +86,27 @@ class BLaDEmbedder(BaseEmbedder):
         return torch.abs(Q / torch.norm(Q))
 
     @typing.no_type_check
-    def embed(self) -> TargetRegister:
+    def embed(self) -> QoolqitRegister:
 
-        coords = em_blade(
-            qubo=BLaDEmbedder._preprocessing_qubo(self.instance.coefficients.numpy()),
-            device=self.backend.device(),
-            draw_steps=self.config.embedding.draw_steps,
-            dimensions=self.config.embedding.blade_dimensions,
-            starting_positions=(
-                self.config.embedding.blade_starting_positions.numpy()
-                if self.config.embedding.blade_starting_positions is not None
-                else None
-            ),
-            steps_per_round=self.config.embedding.blade_steps_per_round,
+        coords = (
+            em_blade(
+                qubo=BLaDEmbedder._preprocessing_qubo(self.instance.coefficients.numpy()),
+                device=self.config.device._device,
+                draw_steps=self.config.embedding.draw_steps,
+                dimensions=self.config.embedding.blade_dimensions,
+                starting_positions=(
+                    self.config.embedding.blade_starting_positions.numpy()
+                    if self.config.embedding.blade_starting_positions is not None
+                    else None
+                ),
+                steps_per_round=self.config.embedding.blade_steps_per_round,
+            )
+            / self._distance_conversion
         )
 
         qubits = {f"q{i}": coord for i, coord in enumerate(coords)}
-        register = PulserRegister(qubits)
-        return TargetRegister(self.backend.device(), register)
+        register = QoolqitRegister(qubits)
+        return register
 
 
 class GreedyEmbedder(BaseEmbedder):
@@ -114,7 +118,7 @@ class GreedyEmbedder(BaseEmbedder):
     """
 
     @typing.no_type_check
-    def embed(self) -> TargetRegister:
+    def embed(self) -> QoolqitRegister:
         """
         Creates a layout of atoms as the register.
 
@@ -133,7 +137,7 @@ class GreedyEmbedder(BaseEmbedder):
 
         # build params for the Greedy algorithm
         params = {
-            "device": self.backend.device(),
+            "device": self.config.device._device,
             "layout": self.config.embedding.greedy_layout,
             "traps": int(self.config.embedding.greedy_traps),
             "spacing": float(self.config.embedding.greedy_spacing),
@@ -141,7 +145,6 @@ class GreedyEmbedder(BaseEmbedder):
             "draw_steps": bool(self.config.embedding.draw_steps),  # collect per-step data
             "animation": bool(self.config.embedding.draw_steps),  # render animation after run
             "animation_save_path": self.config.embedding.animation_save_path,  # optional export
-            # "animation_top_k": 5,  # (optional) uncomment if you add support for this in Greedy
         }
 
         # --- DEBUG / INFO: show where Greedy comes from + the params we’ll pass
@@ -159,11 +162,12 @@ class GreedyEmbedder(BaseEmbedder):
             params=params,
             # no extra kwargs; Greedy reads animation/draw/save_path from params
         )
+        coords /= self._distance_conversion
 
         # build the register (unchanged)
         qubits = {f"q{i}": coord for i, coord in enumerate(coords)}
-        register = PulserRegister(qubits)
-        return TargetRegister(self.backend.device(), register)
+        register = QoolqitRegister(qubits)
+        return register
 
 
 def get_embedder(

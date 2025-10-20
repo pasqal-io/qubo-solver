@@ -5,34 +5,34 @@ from typing import cast
 
 import numpy as np
 import torch
-from pulser import Pulse as PulserPulse
-from pulser.waveforms import InterpolatedWaveform
-from pulser.devices import AnalogDevice
-from qoolqit._solvers import BaseBackend
-from qoolqit._solvers.data import QuantumProgram
 from skopt import gp_minimize
+
+from pulser.devices import AnalogDevice
+
+from qoolqit import Register, QuantumProgram, Drive
+from qoolqit.execution.backend import BaseBackend
+
 
 from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig
 from qubosolver.data import QUBOSolution
-from qubosolver.qubo_types import PulseType
+from qubosolver.qubo_types import DriveType
 from qubosolver.utils import calculate_qubo_cost
+from qubosolver.pipeline.waveforms import InterpolatedWaveform, weighted_detunings
 
-from .targets import Pulse, Register
 
-
-class BasePulseShaper(ABC):
+class BaseDriveShaper(ABC):
     """
-    Abstract base class for generating pulse schedules based on a QUBO problem.
+    Abstract base class for generating Qoolqit drives based on a QUBO problem.
 
     This class transforms the structure of a QUBOInstance into a quantum
-    pulse sequence that can be applied to a physical register. The register
-    is passed at the time of pulse generation, not during initialization.
+    waveform sequence or drive that can be applied to a physical register. The register
+    is passed at the time of drive generation, not during initialization.
 
     Attributes:
         instance (QUBOInstance): The QUBO problem instance.
         config (SolverConfig): The solver configuration.
-        pulse (Pulse, optional): A saved current pulse obtained by `generate`.
+        drive (Drive, optional): A saved current drive obtained by `generate`.
         backend (BaseBackend): Backend to use.
         device (Device): Device from backend.
 
@@ -40,7 +40,7 @@ class BasePulseShaper(ABC):
 
     def __init__(self, instance: QUBOInstance, config: SolverConfig, backend: BaseBackend):
         """
-        Initialize the pulse shaping module with a QUBO instance.
+        Initialize the drive shaping module with a QUBO instance.
 
         Args:
             instance (QUBOInstance): The QUBO problem instance.
@@ -49,50 +49,50 @@ class BasePulseShaper(ABC):
         """
         self.instance: QUBOInstance = instance
         self.config: SolverConfig = config
-        self.pulse: Pulse | None = None
+        self.drive: Drive | None = None
         self.backend = backend
-        self.device = backend.device()
+        self.device = self.config.device
 
     @abstractmethod
     def generate(
         self,
         register: Register,
         instance: QUBOInstance,
-    ) -> tuple[Pulse, QUBOSolution]:
+    ) -> tuple[Drive, QUBOSolution]:
         """
-        Generate a pulse based on the problem and the provided register.
+        Generate a drive based on the problem and the provided register.
 
         Args:
             register (Register): The physical register layout.
             instance (QUBOInstance): The QUBO instance.
 
         Returns:
-            Pulse: A generated pulse object wrapping a Pulser pulse.
+            Drive: A generated Drive.
             QUBOSolution: An instance of the qubo solution
         """
         pass
 
 
-class AdiabaticPulseShaper(BasePulseShaper):
+class AdiabaticDriveShaper(BaseDriveShaper):
     """
-    A Standard Adiabatic Pulse shaper.
+    A Standard Adiabatic Drive shaper.
     """
 
     def generate(
         self,
         register: Register,
         instance: QUBOInstance,
-    ) -> tuple[Pulse, QUBOSolution]:
+    ) -> tuple[Drive, QUBOSolution]:
         """
-        Generate an adiabatic pulse based on the QUBO instance and physical register.
+        Generate an adiabatic drive based on the QUBO instance and physical register.
 
         Args:
             register (Register): The physical register layout for the quantum system.
             instance (QUBOInstance): The QUBO instance.
 
         Returns:
-            tuple[Pulse, QUBOSolution | None]:
-                - Pulse: A generated pulse object wrapping a Pulser pulse.
+            tuple[Drive, QUBOSolution | None]:
+                - Drive: A generated Drive object.
                 - QUBOSolution: An instance of the qubo solution
                     - str | None: The bitstring (solution) -> Not computed
                     - float | None: The cost (energy value) -> Not computed
@@ -100,10 +100,13 @@ class AdiabaticPulseShaper(BasePulseShaper):
                     - float | None: The counts of each bitstring -> Not computed
         """
 
+        # for conversions to qoolqit
+        TIME, _, _ = self.device.converter.factors
+
         QUBO = instance.coefficients
         weights_list = torch.abs(torch.diag(QUBO)).tolist()
         max_node_weight = max(weights_list)
-        norm_weights_list = [1 - (w / max_node_weight) for w in weights_list]
+        norm_weights_list = [(1 - (w / max_node_weight)) / TIME for w in weights_list]
 
         # enforces AnalogDevice max sequence duration since Digital's one is really specific
 
@@ -111,7 +114,7 @@ class AdiabaticPulseShaper(BasePulseShaper):
             ~torch.eye(QUBO.shape[0], dtype=torch.bool)
         ]  # Selecting off-diagonal terms of the Qubo with a mask
 
-        rydberg_global = self.device.channels["rydberg_global"]
+        rydberg_global = self.device._device.channels["rydberg_global"]
 
         Omega = min(
             torch.max(off_diag).item(),
@@ -124,33 +127,33 @@ class AdiabaticPulseShaper(BasePulseShaper):
         max_seq_duration = AnalogDevice.max_sequence_duration
         assert max_seq_duration is not None
 
-        amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9, Omega, 1e-9])
+        max_seq_duration /= TIME
+        Omega /= TIME
+        delta_0 /= TIME
+        delta_f /= TIME
+
+        amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9 / TIME, Omega, 1e-9 / TIME])
         det_wave = InterpolatedWaveform(max_seq_duration, [delta_0, 0, delta_f])
-
-        pulser_pulse = PulserPulse(amp_wave, det_wave, 0)
-        # PulserPulse has some magic that ensures its constructor does not always return
-        # an instance of PulserPulse. Let's make sure (and help mypy realize) that we
-        # are building an instance of PulserPulse.
-        assert isinstance(pulser_pulse, PulserPulse)
-
-        shaped_pulse = Pulse(
-            pulse=pulser_pulse,
-            duration=max_seq_duration,
-            norm_weights=norm_weights_list,
-            final_detuning=-delta_f if self.config.pulse_shaping.dmm and (delta_f > 0) else None,
+        wdetunings = weighted_detunings(
+            register,
+            max_seq_duration,
+            norm_weights_list,
+            -delta_f if self.config.drive_shaping.dmm and (delta_f > 0) else None,
         )
+
+        shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=wdetunings)
         solution = QUBOSolution(torch.Tensor(), torch.Tensor())
 
-        return shaped_pulse, solution
+        return shaped_drive, solution
 
 
-class OptimizedPulseShaper(BasePulseShaper):
+class OptimizedDriveShaper(BaseDriveShaper):
     """
-    Pulse shaper that uses optimization to find the best pulse parameters for solving QUBOs.
-    Returns an optimized pulse, the bitstrings, their counts, probabilities, and costs.
+    Drive shaper that uses optimization to find the best drive parameters for solving QUBOs.
+    Returns an optimized drive, the bitstrings, their counts, probabilities, and costs.
 
     Attributes:
-        pulse (Pulse): current pulse.
+        drive (Drive): current drive.
         best_cost (float): Current best cost.
         best_bitstring (Tensor | list): Current best bitstring.
         bitstrings (Tensor | list): List of current bitstrings obtained.
@@ -185,7 +188,7 @@ class OptimizedPulseShaper(BasePulseShaper):
         config: SolverConfig,
         backend: BaseBackend,
     ):
-        """Instantiate an `OptimizedPulseShaper`.
+        """Instantiate an `OptimizedDriveShaper`.
 
         Args:
             instance (QUBOInstance): Qubo instance.
@@ -195,7 +198,7 @@ class OptimizedPulseShaper(BasePulseShaper):
         """
         super().__init__(instance, config, backend)
 
-        self.pulse = None
+        self.drive = None
         self.best_cost = None
         self.best_bitstring = None
         self.best_params = None
@@ -203,57 +206,58 @@ class OptimizedPulseShaper(BasePulseShaper):
         self.counts = None
         self.probabilities = None
         self.costs = None
-        self.optimized_custom_qubo_cost = self.config.pulse_shaping.optimized_custom_qubo_cost
-        self.optimized_custom_objective_fn = self.config.pulse_shaping.optimized_custom_objective
-        self.optimized_callback_objective = self.config.pulse_shaping.optimized_callback_objective
+        self.optimized_custom_qubo_cost = self.config.drive_shaping.optimized_custom_qubo_cost
+        self.optimized_custom_objective_fn = self.config.drive_shaping.optimized_custom_objective
+        self.optimized_callback_objective = self.config.drive_shaping.optimized_callback_objective
 
     def generate(
         self,
         register: Register,
         instance: QUBOInstance,
-    ) -> tuple[Pulse, QUBOSolution]:
+    ) -> tuple[Drive, QUBOSolution]:
         """
-        Generate a pulse via optimization.
+        Generate a drive via optimization.
 
         Args:
             register (Register): The physical register layout.
             instance (QUBOInstance): The QUBO instance.
 
         Returns:
-            Pulse: A generated pulse object wrapping a Pulser pulse.
+            Drive: A generated Drive.
             QUBOSolution: An instance of the qubo solution
         """
         # TODO: Harmonize the output of the pulse_shaper generate
         QUBO = instance.coefficients
         self.register = register
+
         self.norm_weights_list = self._compute_norm_weights(QUBO)
 
         n_amp = 3
         n_det = 3
-        max_amp = self.device.channels["rydberg_global"].max_amp
+        max_amp = self.device._device.channels["rydberg_global"].max_amp
         assert max_amp is not None
         max_amp = max_amp - 1e-6
         # added to avoid rouding errors that make the simulation fail (overcoming max_amp)
 
-        max_det = self.device.channels["rydberg_global"].max_abs_detuning
+        max_det = self.device._device.channels["rydberg_global"].max_abs_detuning
         assert max_det is not None
         max_det -= 1e-6
         # same
 
         bounds = [(1, max_amp)] * n_amp + [(-max_det, 0)] + [(-max_det, max_det)] * (n_det - 1)
         x0 = (
-            self.config.pulse_shaping.optimized_initial_omega_parameters
-            + self.config.pulse_shaping.optimized_initial_detuning_parameters
+            self.config.drive_shaping.optimized_initial_omega_parameters
+            + self.config.drive_shaping.optimized_initial_detuning_parameters
         )
 
         def objective(x: list[float]) -> float:
-            pulse = self.build_pulse(x)
+            drive = self.build_drive(x)
 
             try:
                 bitstrings, counts, probabilities, costs, cost_eval, best_bitstring = (
                     self.run_simulation(
                         self.register,
-                        pulse,
+                        drive,
                         QUBO,
                         convert_to_tensor=False,
                     )
@@ -280,12 +284,12 @@ class OptimizedPulseShaper(BasePulseShaper):
             return float(cost_eval)
 
         opt_result = gp_minimize(
-            objective, bounds, x0=x0, n_calls=self.config.pulse_shaping.optimized_n_calls
+            objective, bounds, x0=x0, n_calls=self.config.drive_shaping.optimized_n_calls
         )
 
         if opt_result and opt_result.x:
             self.best_params = opt_result.x
-            self.pulse = self.build_pulse(self.best_params)  # type: ignore[arg-type]
+            self.drive = self.build_drive(self.best_params)  # type: ignore[arg-type]
 
             (
                 self.bitstrings,
@@ -294,13 +298,13 @@ class OptimizedPulseShaper(BasePulseShaper):
                 self.costs,
                 self.best_cost,
                 self.best_bitstring,
-            ) = self.run_simulation(self.register, self.pulse, QUBO, convert_to_tensor=True)
+            ) = self.run_simulation(self.register, self.drive, QUBO, convert_to_tensor=True)
 
         if self.bitstrings is None or self.counts is None:
             # TODO: what needs to be returned here?
-            # the generate function should always return a pulse - even if it is not good.
-            # we need to return a pulse (self.pulse) - which is none here.
-            return self.pulse, QUBOSolution(None, None)  # type: ignore[return-value]
+            # the generate function should always return a drive - even if it is not good.
+            # we need to return a drive (self.srive) - which is none here.
+            return self.drive, QUBOSolution(None, None)  # type: ignore[return-value]
 
         assert self.costs is not None
         solution = QUBOSolution(
@@ -309,8 +313,8 @@ class OptimizedPulseShaper(BasePulseShaper):
             probabilities=self.probabilities,
             costs=self.costs,
         )
-        assert self.pulse is not None
-        return self.pulse, solution
+        assert self.drive is not None
+        return self.drive, solution
 
     def _compute_norm_weights(self, QUBO: torch.Tensor) -> list[float]:
         """Compute normalization weights.
@@ -321,42 +325,49 @@ class OptimizedPulseShaper(BasePulseShaper):
         Returns:
             list[float]: normalization weights.
         """
+        TIME, _, _ = self.device.converter.factors
         weights_list = torch.abs(torch.diag(QUBO)).tolist()
         max_node_weight = max(weights_list) if weights_list else 1.0
         norm_weights_list = [
-            1 - (w / max_node_weight) if max_node_weight != 0 else 0.0 for w in weights_list
+            (1 - (w / max_node_weight)) / TIME if max_node_weight != 0 else 0.0
+            for w in weights_list
         ]
         return norm_weights_list
 
-    def build_pulse(self, params: list) -> Pulse:
-        """Build the pulse from a list of parameters for the objective.
+    def build_drive(self, params: list) -> Drive:
+        """Build the drive from a list of parameters for the objective.
 
         Args:
             params (list): List of parameters.
 
         Returns:
-            Pulse: pulse sequence.
+            Drive: Drive sequence.
         """
         max_seq_duration = AnalogDevice.max_sequence_duration
         assert max_seq_duration is not None
 
-        amp = InterpolatedWaveform(max_seq_duration, [1e-9] + list(params[:3]) + [1e-9])
-        det = InterpolatedWaveform(max_seq_duration, [params[3]] + list(params[4:]) + [params[3]])
-        pulser_pulse = PulserPulse(amp, det, 0)
-        # PulserPulse has some magic that ensures its constructor does not always return
-        # an instance of PulserPulse. Let's make sure (and help mypy realize) that we
-        # are building an instance of PulserPulse.
-        assert isinstance(pulser_pulse, PulserPulse)
+        TIME, _, _ = self.device.converter.factors
+        max_seq_duration /= TIME
+        amp_params = [1e-9] + list(params[:3]) + [1e-9]
+        det_params = [params[3]] + list(params[4:]) + [params[3]]
+        amp_params = [p / TIME for p in amp_params]
+        det_params = [p / TIME for p in det_params]
 
-        pulse = Pulse(
-            pulse=pulser_pulse,
-            norm_weights=self.norm_weights_list,
-            duration=max_seq_duration,
+        amp_wave = InterpolatedWaveform(max_seq_duration, amp_params)
+        det_wave = InterpolatedWaveform(max_seq_duration, det_params)
+
+        wdetunings = weighted_detunings(
+            self.register,
+            max_seq_duration,
+            self.norm_weights_list,
             final_detuning=(
-                -params[3] if self.config.pulse_shaping.dmm and (params[3] > 0) else None
+                -params[3] / TIME if self.config.drive_shaping.dmm and (params[3] > 0) else None
             ),
         )
-        return pulse
+
+        shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=wdetunings)
+
+        return shaped_drive
 
     def compute_qubo_cost(self, bitstring: str, QUBO: torch.Tensor) -> float:
         """The qubo cost for a single bitstring to apply during optimization.
@@ -376,7 +387,7 @@ class OptimizedPulseShaper(BasePulseShaper):
     def run_simulation(
         self,
         register: Register,
-        pulse: Pulse,
+        drive: Drive,
         QUBO: torch.Tensor,
         convert_to_tensor: bool = True,
     ) -> tuple:
@@ -385,7 +396,7 @@ class OptimizedPulseShaper(BasePulseShaper):
 
         Args:
             register (Register): register of quantum program.
-            pulse (Pulse): pulse sequence to run on backend.
+            drive (Drive): drive to run on backend.
             QUBO (torch.Tensor): Qubo coefficients.
             convert_to_tensor (bool, optional): Convert tuple components to tensors.
                 Defaults to True.
@@ -394,10 +405,10 @@ class OptimizedPulseShaper(BasePulseShaper):
             tuple: tuple of (bitstrings, counts, probabilities, costs, best cost, best bitstring)
         """
         try:
-            program = QuantumProgram(
-                register=register.register, pulse=pulse.pulse, device=self.device
-            )
-            bitstring_counts = self.backend.run(program).counts
+            program = QuantumProgram(register=register, drive=drive)
+            program.compile_to(device=self.device)
+            execution_result = self.backend.run(program)[0]
+            bitstring_counts = execution_result.final_bitstrings
 
             cost_dict = {b: self.compute_qubo_cost(b, QUBO) for b in bitstring_counts.keys()}
 
@@ -450,33 +461,33 @@ class OptimizedPulseShaper(BasePulseShaper):
             )
 
 
-def get_pulse_shaper(
+def get_drive_shaper(
     instance: QUBOInstance,
     config: SolverConfig,
     backend: BaseBackend,
-) -> BasePulseShaper:
+) -> BaseDriveShaper:
     """
-    Method that returns the correct PulseShaper based on configuration.
-    The correct pulse shaping method can be identified using the config, and an
-    object of this pulseshaper can be returned using this function.
+    Method that returns the correct DriveShaper based on configuration.
+    The correct drive shaping method can be identified using the config, and an
+    object of this driveshaper can be returned using this function.
 
     Args:
         instance (QUBOInstance): The QUBO problem to embed.
         config (SolverConfig): The solver configuration used.
         backend (BaseBackend): Backend to extract device from or to use
-            during pulse shaping.
+            during drive shaping.
 
     Returns:
-        (BasePulseShaper): The representative Pulse Shaper object.
+        (BaseDriveShaper): The representative Drive Shaper object.
     """
-    if config.pulse_shaping.pulse_shaping_method == PulseType.ADIABATIC:
-        return AdiabaticPulseShaper(instance, config, backend)
-    elif config.pulse_shaping.pulse_shaping_method == PulseType.OPTIMIZED:
-        return OptimizedPulseShaper(instance, config, backend)
-    elif issubclass(config.pulse_shaping.pulse_shaping_method, BasePulseShaper):
+    if config.drive_shaping.drive_shaping_method == DriveType.ADIABATIC:
+        return AdiabaticDriveShaper(instance, config, backend)
+    elif config.drive_shaping.drive_shaping_method == DriveType.OPTIMIZED:
+        return OptimizedDriveShaper(instance, config, backend)
+    elif issubclass(config.drive_shaping.drive_shaping_method, BaseDriveShaper):
         return cast(
-            BasePulseShaper,
-            config.pulse_shaping.pulse_shaping_method(instance, config, backend),
+            BaseDriveShaper,
+            config.drive_shaping.drive_shaping_method(instance, config, backend),
         )
     else:
         raise NotImplementedError
