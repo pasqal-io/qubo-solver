@@ -8,7 +8,6 @@ import torch
 from skopt import gp_minimize
 
 from pulser.devices import AnalogDevice
-
 from qoolqit import Register, QuantumProgram, Drive
 from qoolqit.execution.backend import BaseBackend
 
@@ -108,8 +107,6 @@ class AdiabaticDriveShaper(BaseDriveShaper):
         max_node_weight = max(weights_list)
         norm_weights_list = [(1 - (w / max_node_weight)) / TIME for w in weights_list]
 
-        # enforces AnalogDevice max sequence duration since Digital's one is really specific
-
         off_diag = QUBO[
             ~torch.eye(QUBO.shape[0], dtype=torch.bool)
         ]  # Selecting off-diagonal terms of the Qubo with a mask
@@ -124,6 +121,7 @@ class AdiabaticDriveShaper(BaseDriveShaper):
         delta_0 = torch.min(torch.diag(QUBO)).item()
         delta_f = -delta_0
 
+        # enforces AnalogDevice max sequence duration since Digital's has no max duration
         max_seq_duration = AnalogDevice.max_sequence_duration
         assert max_seq_duration is not None
 
@@ -343,6 +341,7 @@ class OptimizedDriveShaper(BaseDriveShaper):
         Returns:
             Drive: Drive sequence.
         """
+        # enforces AnalogDevice max sequence duration since Digital's has no max duration
         max_seq_duration = AnalogDevice.max_sequence_duration
         assert max_seq_duration is not None
 
