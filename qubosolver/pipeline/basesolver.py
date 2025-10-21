@@ -104,7 +104,9 @@ class BaseSolver(ABC):
         bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())])
         counts = torch.tensor(list(counter.values()))
 
-        if self.config.drive_shaping.optimized_re_execute_opt_drive:
+        if self.config.drive_shaping.optimized_re_execute_opt_drive and (
+            bitstrings.numel() == 0 or counts.numel() == 0
+        ):
             program = QuantumProgram(
                 register=embedding,
                 drive=drive,
