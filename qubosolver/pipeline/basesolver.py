@@ -99,7 +99,7 @@ class BaseSolver(ABC):
             drive=drive,
         )
         program.compile_to(self.device)
-        execution_result = self.backend.run(program)[0]
+        execution_result = self.backend.run(program)
 
         if isinstance(execution_result, tuple):
             # local emulator result
