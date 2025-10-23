@@ -42,7 +42,7 @@ dependencies = [
   "PyMaxflow",
   "cplex",
   "pydantic>=2",
-  "qoolqit==0.2.0",
+  "qoolqit==0.2.1",
   "pasqal-cloud>=0.20.3",
   "emu_sv",
 ]
