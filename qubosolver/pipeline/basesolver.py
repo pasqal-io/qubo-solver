@@ -100,7 +100,16 @@ class BaseSolver(ABC):
         )
         program.compile_to(self.device)
         execution_result = self.backend.run(program)[0]
-        counter = execution_result.final_bitstrings
+
+        if isinstance(execution_result, tuple):
+            # local emulator result
+            execution_result = execution_result[-1]
+            counter = execution_result.final_bitstrings
+        else:
+            # remote emulator result
+            execution_result = execution_result[-1]
+            counter = execution_result.bitstring_counts
+
         bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())])
         counts = torch.tensor(list(counter.values()))
 
@@ -112,8 +121,15 @@ class BaseSolver(ABC):
                 drive=drive,
             )
             program.compile_to(self.device)
-            execution_result = self.backend.run(program)[0]
-            counter = execution_result.final_bitstrings
+            execution_result = self.backend.run(program)
+            if isinstance(execution_result, tuple):
+                # local emulator result
+                execution_result = execution_result[-1]
+                counter = execution_result.final_bitstrings
+            else:
+                # remote emulator result
+                execution_result = execution_result[-1]
+                counter = execution_result.bitstring_counts
             bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())])
             counts = torch.tensor(list(counter.values()))
 
