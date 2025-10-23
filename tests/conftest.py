@@ -34,7 +34,7 @@ def classical_solver_config() -> SolverConfig:
     return SolverConfig(use_quantum=False)
 
 
-locals_bkds: list = [
+locals_bkds: list[LocalEmulator] = [
     LocalEmulator(backend_type=btype, runs=500)
     for btype in [
         QutipBackendV2,

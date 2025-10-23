@@ -52,6 +52,11 @@ class BaseDriveShaper(ABC):
         self.backend = backend
         self.device = self.config.device
 
+        # check if device allow DMM
+        self.dmm = self.config.drive_shaping.dmm and (
+            len(list(self.config.device._device.dmm_channels.keys())) > 0
+        )
+
     @abstractmethod
     def generate(
         self,
@@ -132,12 +137,15 @@ class AdiabaticDriveShaper(BaseDriveShaper):
 
         amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9 / TIME, Omega, 1e-9 / TIME])
         det_wave = InterpolatedWaveform(max_seq_duration, [delta_0, 0, delta_f])
-        wdetunings = weighted_detunings(
-            register,
-            max_seq_duration,
-            norm_weights_list,
-            -delta_f if self.config.drive_shaping.dmm and (delta_f > 0) else None,
-        )
+
+        wdetunings = None
+        if self.dmm and delta_f > 0:
+            wdetunings = weighted_detunings(
+                register,
+                max_seq_duration,
+                norm_weights_list,
+                -delta_f,
+            )
 
         shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=wdetunings)
         solution = QUBOSolution(torch.Tensor(), torch.Tensor())
@@ -355,14 +363,15 @@ class OptimizedDriveShaper(BaseDriveShaper):
         amp_wave = InterpolatedWaveform(max_seq_duration, amp_params)
         det_wave = InterpolatedWaveform(max_seq_duration, det_params)
 
-        wdetunings = weighted_detunings(
-            self.register,
-            max_seq_duration,
-            self.norm_weights_list,
-            final_detuning=(
-                -params[3] / TIME if self.config.drive_shaping.dmm and (params[3] > 0) else None
-            ),
-        )
+        wdetunings = None
+        final_detuning = det_params[-1]
+        if self.dmm and final_detuning > 0:
+            wdetunings = weighted_detunings(
+                self.register,
+                max_seq_duration,
+                self.norm_weights_list,
+                final_detuning=-final_detuning,
+            )
 
         shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=wdetunings)
 
