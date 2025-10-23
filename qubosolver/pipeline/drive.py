@@ -144,7 +144,7 @@ class AdiabaticDriveShaper(BaseDriveShaper):
                 register,
                 max_seq_duration,
                 norm_weights_list,
-                -delta_f if self.config.drive_shaping.dmm and (delta_f > 0) else None,
+                -delta_f if delta_f > 0 else None,
             )
 
         shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=wdetunings)
@@ -369,9 +369,7 @@ class OptimizedDriveShaper(BaseDriveShaper):
                 self.register,
                 max_seq_duration,
                 self.norm_weights_list,
-                final_detuning=(
-                    -params[3] / TIME if self.config.drive_shaping.dmm and (params[3] > 0) else None
-                ),
+                final_detuning=(-params[3] / TIME if params[3] > 0 else None),
             )
 
         shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=wdetunings)
