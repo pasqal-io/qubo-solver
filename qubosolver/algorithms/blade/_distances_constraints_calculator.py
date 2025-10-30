@@ -62,7 +62,8 @@ def compute_best_scaling_for_qubo(
         )
 
     best_scaling = (
-        np.sum(filtered_embedded_qubo_triu**2) / np.sum(filtered_embedded_qubo_triu * target_qubo_triu)
+        np.sum(filtered_embedded_qubo_triu**2)
+        / np.sum(filtered_embedded_qubo_triu * target_qubo_triu)
     ) ** (1 / 6)
 
     assert not np.isnan(best_scaling) and not np.isinf(best_scaling)
