@@ -124,10 +124,14 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
     def solve(self) -> QUBOSolution:
         simulated_annealing_solution = qubo_simulated_annealing(
             qubo=self.instance,
+            top_k=self.config.sa_top_k,
             max_iter=self.config.max_iter,
             initial_temp=self.config.sa_initial_temp,
             final_temp=self.config.sa_final_temp,
-            alpha=self.config.sa_alpha,
+            cooling_rate=self.config.sa_cooling_rate,
+            seed=self.config.sa_seed,
+            start=self.config.sa_start,
+            energy_tol=self.config.sa_energy_tol,
         )
         return simulated_annealing_solution
 

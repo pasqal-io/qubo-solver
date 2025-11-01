@@ -14,24 +14,20 @@ from qubosolver.classical_solver.classical_solver import (
 )
 
 
-def test_qubo_solver_SA() -> None:
-    # Create a simple 2x2 QUBO instance.
-    # For example, consider a QUBO where the optimum is known.
-    # Here we use an identity matrix.
-    Q = torch.tensor([[1.0, 0.0], [1.0, 1.0]])
-    instance = QUBOInstance(coefficients=Q)
-
+def test_qubo_solver_sa(simple_qubo_instance: QUBOInstance) -> None:
     # Create a SolverConfig object with classical solver options.
-    classical_config = ClassicalConfig(classical_solver_type="simulated_annealing")
+    classical_config = ClassicalConfig(classical_solver_type="simulated_annealing", sa_top_k=1)
     config = SolverConfig(
         use_quantum=False, classical=classical_config, activate_trivial_solutions=False
     )
 
     # insure get_classical_solver works properly
-    assert isinstance(get_classical_solver(instance, config.classical), SimulatedAnnealingSolver)
+    assert isinstance(
+        get_classical_solver(simple_qubo_instance, config.classical), SimulatedAnnealingSolver
+    )
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
-    classical_solver = QuboSolver(instance, config)
+    classical_solver = QuboSolver(simple_qubo_instance, config)
 
     # Solve the QUBO problem.
     solution = classical_solver.solve()
@@ -43,7 +39,22 @@ def test_qubo_solver_SA() -> None:
     # so expect a cost of 0.
     # Also, check that the bitstring has the expected shape, e.g., [1,2].
     assert solution.bitstrings.shape[0] == 1  # one solution returned
-    assert solution.bitstrings.shape[1] == 2  # two variables
+    assert solution.bitstrings.shape[1] == 3  # three variables
+
+
+def test_qubo_solver_topk_sa(simple_qubo_instance: QUBOInstance) -> None:
+    classical_config = ClassicalConfig(classical_solver_type="simulated_annealing", sa_top_k=3)
+    config = SolverConfig(
+        use_quantum=False, classical=classical_config, activate_trivial_solutions=False
+    )
+    assert isinstance(
+        get_classical_solver(simple_qubo_instance, config.classical), SimulatedAnnealingSolver
+    )
+    solver = QuboSolver(simple_qubo_instance, config)
+    solution = solver.solve()
+    assert isinstance(solution, QUBOSolution)
+    assert solution.bitstrings.shape[0] == 3
+    assert solution.bitstrings.shape[1] == 3
 
 
 def test_qubo_solver_tabu() -> None:

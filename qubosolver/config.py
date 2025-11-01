@@ -69,9 +69,13 @@ class ClassicalConfig(Config):
     max_iter: int = 100
     max_bitstrings: int = 1
 
+    sa_top_k: int = 5
     sa_initial_temp: float = 10.0
     sa_final_temp: float = 0.1
-    sa_alpha: float = 0.99
+    sa_cooling_rate: float | None = None
+    sa_seed: int | None = None
+    sa_start: torch.Tensor | None = None
+    sa_energy_tol: float = 0.0
 
     tabu_x0: torch.Tensor | None = None
     tabu_tenure: int = 7
