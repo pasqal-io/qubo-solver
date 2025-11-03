@@ -335,11 +335,12 @@ def evolve_with_dimension_transition(
         positions = pca_inst.fit_transform(positions)
 
     if final_dimensions > starting_dimensions:
-        variance = np.mean(np.var(positions, axis=0))
-        noise_factor = variance / 20
+        quantiles = np.quantile(positions, q=0.75, axis=0) - np.quantile(positions, q=0.5, axis=0)
+        volume_per_point = np.prod(quantiles) / positions.shape[0]
+        edge = volume_per_point ** (1 / positions.shape[1])
         positions_noise = np.random.uniform(
-            low=-noise_factor,
-            high=noise_factor,
+            low=-edge / 2,
+            high=edge / 2,
             size=(len(qubo), final_dimensions - starting_dimensions),
         )
         positions = np.concatenate((positions, positions_noise), axis=1)
