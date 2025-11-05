@@ -155,6 +155,7 @@ class BaseSolver(ABC):
         Check for the two trivial QUBO cases:
           1) all coefficients >= 0  → solution = 0^n
           2) all coefficients <= 0  → solution = 1^n
+          3) diagonal qubo,  negative coeffs gets 1, positive gets 0
 
         Returns:
             QUBOSolution if a trivial case applies, else None.
@@ -197,6 +198,6 @@ class BaseSolver(ABC):
             return QUBOSolution(
                 bitstrings=batch,
                 costs=torch.tensor([cost], dtype=dtype, device=device),
-                solution_status=SolutionStatusType.TRIVIALONE,
+                solution_status=SolutionStatusType.TRIVIALDIAGONAL,
             )
         return None

@@ -67,5 +67,5 @@ def test_diagonal_trivial(local_backend: LocalEmulator) -> None:
     assert torch.all(sol.bitstrings == torch.tensor([1, 0], dtype=torch.int64))
     assert hasattr(sol, "solution_status"), "QUBOSolution missing 'solution_status' attribute"
     assert (
-        sol.solution_status == "trivial-one"
-    ), f"Expected status 'trivial-one', got {sol.solution_status}"
+        sol.solution_status == "trivial-diagonal"
+    ), f"Expected status 'trivial-diagonal', got {sol.solution_status}"
