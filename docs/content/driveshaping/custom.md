@@ -19,10 +19,11 @@ Let us show an example of custom Adiabatic drive shaper but with a duration divi
 ```python exec="on" source="material-block" html="1"
 import typing
 from qoolqit import Drive, Register
+from qoolqit.waveforms import Interpolated as InterpolatedWaveform
 from qubosolver.pipeline.drive import BaseDriveShaper
 from qubosolver.solver import QUBOInstance
 from qubosolver.data import QUBOSolution
-from qubosolver.pipeline.waveforms import InterpolatedWaveform, weighted_detunings
+from qubosolver.pipeline.waveforms import weighted_detunings
 from qubosolver.config import (
     DriveShapingConfig,
     SolverConfig,

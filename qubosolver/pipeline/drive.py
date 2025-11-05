@@ -10,6 +10,7 @@ from skopt import gp_minimize
 from pulser.devices import AnalogDevice
 from qoolqit import Register, QuantumProgram, Drive
 from qoolqit.execution.backend import BaseBackend
+from qoolqit.waveforms import Interpolated as InterpolatedWaveform
 
 
 from qubosolver import QUBOInstance
@@ -17,7 +18,7 @@ from qubosolver.config import SolverConfig
 from qubosolver.data import QUBOSolution
 from qubosolver.qubo_types import DriveType
 from qubosolver.utils import calculate_qubo_cost
-from qubosolver.pipeline.waveforms import InterpolatedWaveform, weighted_detunings
+from qubosolver.pipeline.waveforms import weighted_detunings
 
 
 class BaseDriveShaper(ABC):

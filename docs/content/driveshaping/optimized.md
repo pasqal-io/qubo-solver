@@ -32,7 +32,7 @@ These waveforms:
 Always start and end in zero amplitude;
 Use 3 intermediate amplitude values ($\Omega_1$ to $\Omega_3$) and 3 detuning values ($\delta_1$ to $\delta_3$), which are the parameters optimized.
 
-The drive starts with an `InterpolatedWaveform` with the points:
+The drive starts with an `InterpolatedWaveform` with the points (later they are normalized to fit device constraints):
 
 - $\Omega = [0, 5, 10, 5, 0]$
 - $\delta = [-10, 0, 10]$
