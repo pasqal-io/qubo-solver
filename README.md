@@ -32,22 +32,27 @@ To install the `pipy` package using `pip` or `pipx`
 1. Create a `venv` if that's not done yet
 
 ```sh
-$ python -m venv .venv
-
+python -m venv .venv
 ```
 
 2. Enter the venv
 
 ```sh
-$ source .venv/bin/activate
+source .venv/bin/activate
+```
+or on Windows:
+```sh
+.venv\Scripts\activate
 ```
 
 3. Install the package
 
 ```sh
-$ pip install qubo-solver
-# or
-$ pipx install qubo-solver
+pip install qubo-solver
+```
+or
+```sh
+pipx install qubo-solver
 ```
 
 Alternatively, you can also:
@@ -95,7 +100,13 @@ solver = QuboSolver(instance, config)
 # Solve the QUBO problem.
 solution = solver.solve()
 print(solution)
+
+# Returns the following
+# QUBOSolution(bitstrings=tensor([[0, 0]]), costs=tensor([0.]), counts=None, probabilities=None, solution_status=<SolutionStatusType.TRIVIALZERO: 'trivial-zero'>)
 ```
+
+The solver returns a `QUBOSolution` instance containing candidates or bitstrings solutions found by the solver,
+with their respective QUBO costs. If sampling was performed, we would also obtain respective counts (frequencies a solution has been sampled), and the respective probabilities (counts divided by the number of samples). Finally, the `solution_status` determines if preprocessing (technique to reduve our qubo instance to another smaller instance) or postprocessing were applied (modification of the solution after solving), or the solution found is trivial as obtaining the solution from the QUBO instance is straighforward (as the case above).
 
 ### With a classical solver
 
