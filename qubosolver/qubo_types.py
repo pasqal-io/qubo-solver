@@ -80,6 +80,7 @@ class SolutionStatusType(StrEnum):
 
     TRIVIALONE = "trivial-one"
     TRIVIALZERO = "trivial-zero"
+    TRIVIALDIAGONAL = "trivial-diagonal"
 
 
 class ClassicalSolverType(StrEnum):
