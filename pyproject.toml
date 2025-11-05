@@ -42,7 +42,7 @@ dependencies = [
   "PyMaxflow",
   "cplex",
   "pydantic>=2",
-  "qoolqit[solvers]==0.2.1",
+  "qoolqit[solvers]==0.3.0",
 ]
 
 [tool.hatch.metadata]
