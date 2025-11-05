@@ -126,3 +126,41 @@ def qubo_instance_for_embedding() -> QUBOInstance:
             dtype=torch.int32,
         )
     )
+
+
+def generate_qubo_matrix(
+    size: int, density: float, value_range: tuple[int, int], seed: int | None = None
+) -> torch.Tensor:
+    """Generate a random symmetric qubo matrix with negative diagonal coefficients
+       and positive off-diagonal elements.
+
+    Args:
+        size (int): Size of qubo.
+        density (float): Density.
+        value_range (tuple[int, int]): Value range of elements.
+        seed (int | None, optional): Random seed for reproducibility. Defaults to None.
+
+    Returns:
+        torch.Tensor: Qubo matrix.
+    """
+
+    import numpy as np
+
+    if seed is not None:
+        np.random.seed(seed)
+    matrix = np.zeros((size, size))
+    for i in range(size):
+        matrix[i, i] = -np.abs(np.random.uniform(0, 100))  # Negative diagonal
+        for j in range(i + 1, size):
+            if np.random.rand() < density:
+                value = np.abs(
+                    np.random.uniform(value_range[0], value_range[1])
+                )  # Positive off-diagonal
+                matrix[i, j] = value
+                matrix[j, i] = value
+    return torch.tensor(matrix)
+
+
+@pytest.fixture
+def decomposable_qubo() -> QUBOInstance:
+    return QUBOInstance(generate_qubo_matrix(50, 0.30, (0, 20), 1))

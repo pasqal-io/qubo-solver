@@ -43,6 +43,7 @@ dependencies = [
   "cplex",
   "pydantic>=2",
   "qoolqit[solvers]==0.3.0",
+  "shapely",
 ]
 
 [tool.hatch.metadata]
