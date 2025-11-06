@@ -55,7 +55,10 @@ class ClassicalConfig(Config):
         max_bitstrings (int, optional): Maximal number of bitstrings returned as solutions.
         sa_initial_temp (float, optional): Starting temperature (controls exploration).
         sa_final_temp (float, optional): Minimum temperature threshold for stopping.
-        sa_alpha (float, optional): Cooling rate - should be slightly below 1 (e.g., 0.95–0.99).
+        sa_cooling_rate (float, optional): Cooling rate - should be slightly below 1 (e.g., 0.95–0.99).
+        sa_seed (int, optional): Random seed for reproducibility.
+        sa_start (torch.Tensor | None, optional): Optioanl initial bitstring of shape (n,).
+        sa_energy_tol (float, optional): Energy tolerance for considering two solutions as equivalent.
         tabu_x0 (torch.Tensor | None, optional): The initial binary solution tensor of shape (n,).
         tabu_tenure (int, optional): Number of iterations a move (bit flip) remains tabu.
         tabu_max_no_improve (int, optional): Maximum number of consecutive iterations
