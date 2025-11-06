@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 import torch
 from qubosolver import QUBOInstance
 
@@ -7,7 +8,8 @@ from qubosolver.config import SolverConfig, DecompositionConfig
 from qubosolver.solver import DecomposeQuboSolver, QuboSolver
 
 
-def test_initial_steps_solver(decomposable_qubo: QUBOInstance) -> None:
+@pytest.mark.parametrize("use_quantum", [True, False])
+def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool) -> None:
     """Test that the first steps of the decomposition (initialization +
     one loop iteration of a decomposition) are yielding corrent tensors
     or dictionaries of right sizes.
@@ -26,7 +28,7 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance) -> None:
     qubo_mat = decomposable_qubo.coefficients.clone()
 
     decompose_config = DecompositionConfig()
-    config = SolverConfig(use_quantum=False, decompose=decompose_config)
+    config = SolverConfig(use_quantum=use_quantum, decompose=decompose_config)
     solver = QuboSolver(decomposable_qubo, config)
 
     ## Check the distance interaction matrix matches the qubo matrix
@@ -85,8 +87,9 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance) -> None:
     assert len(current_vertices_dict) < size
 
 
-def test_decomp_solver(decomposable_qubo: torch.Tensor) -> None:
-    config = SolverConfig(use_quantum=False, decompose=DecompositionConfig())
+@pytest.mark.parametrize("use_quantum", [True, False])
+def test_decomp_solver(decomposable_qubo: QUBOInstance, use_quantum: bool) -> None:
+    config = SolverConfig(use_quantum=use_quantum, decompose=DecompositionConfig())
     solver = QuboSolver(decomposable_qubo, config)
 
     assert isinstance(solver._solver, DecomposeQuboSolver)
@@ -122,3 +125,15 @@ def test_small_qubo_solver(simple_qubo_instance: QUBOInstance) -> None:
     assert decompose_solver._solver.number_iterations == 0
 
     assert torch.allclose(solutions2.costs.min(), solutions1.costs.min())
+
+
+def test_scope(decomposable_qubo: QUBOInstance) -> None:
+
+    config = SolverConfig(use_quantum=False, decompose=DecompositionConfig())
+
+    # check negative off-diagonal are not supported
+    coeffs = decomposable_qubo.coefficients
+    coeffs[0][1] = -1.0
+
+    with pytest.raises(ValueError):
+        QuboSolver(QUBOInstance(coeffs), config)
