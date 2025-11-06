@@ -40,9 +40,7 @@ class WeightedZone:
         circle_end_blocking: circle delimiting end of blocking_zone.
     """
 
-    def __init__(
-        self, id: int, x: float, y: float, weight: float, device: pulser.devices.Device
-    ):
+    def __init__(self, id: int, x: float, y: float, weight: float, device: pulser.devices.Device):
 
         self.id = id
         self.x = x
@@ -146,9 +144,7 @@ def vertices_to_place(
         separated_vertices = separated_vertices[separated_vertices != i]
 
         # 0.1 is an arbitrary value to consider them neighbor.
-        neighbors = torch.argwhere(
-            (distances > 0.1) & (distances < separation_threshold)
-        )
+        neighbors = torch.argwhere((distances > 0.1) & (distances < separation_threshold))
         neighbors = neighbors[neighbors != i]
 
         vertices_dict[i] = {
@@ -181,28 +177,21 @@ def update_vertex_info_from_placed(
     temp_neighborsid_not_placed = dict_vertices_to_place[vertex]["neighbors_id"][
         neighbors_notplaced
     ]
-    temp_neighborsweight_not_placed = dict_vertices_to_place[vertex][
-        "neighbors_weight"
-    ][neighbors_notplaced]
+    temp_neighborsweight_not_placed = dict_vertices_to_place[vertex]["neighbors_weight"][
+        neighbors_notplaced
+    ]
 
-    temp_cond = (
-        temp_neighborsweight_not_placed > -dict_vertices_to_place[vertex]["weight"]
-    ) | (
+    temp_cond = (temp_neighborsweight_not_placed > -dict_vertices_to_place[vertex]["weight"]) | (
         -torch.tensor(
-            [
-                dict_vertices_to_place[n.item()]["weight"]
-                for n in temp_neighborsid_not_placed
-            ]
+            [dict_vertices_to_place[n.item()]["weight"] for n in temp_neighborsid_not_placed]
         )
         < temp_neighborsweight_not_placed
     )
-    temp = dict_vertices_to_place[vertex]["neighbors_id"][neighbors_notplaced][
-        temp_cond
-    ]
+    temp = dict_vertices_to_place[vertex]["neighbors_id"][neighbors_notplaced][temp_cond]
 
-    dict_vertices_to_place[vertex]["neighbors_id"] = dict_vertices_to_place[vertex][
-        "neighbors_id"
-    ][neighbors_notplaced]
+    dict_vertices_to_place[vertex]["neighbors_id"] = dict_vertices_to_place[vertex]["neighbors_id"][
+        neighbors_notplaced
+    ]
     dict_vertices_to_place[vertex]["neighbors_weight"] = dict_vertices_to_place[vertex][
         "neighbors_weight"
     ][neighbors_notplaced]
@@ -212,9 +201,7 @@ def update_vertex_info_from_placed(
     )
     dict_vertices_to_place[vertex]["blocking_vertices"] = torch.cat(
         [
-            dict_vertices_to_place[vertex]["blocking_vertices"][
-                blocking_cond_notplaced
-            ],
+            dict_vertices_to_place[vertex]["blocking_vertices"][blocking_cond_notplaced],
             temp,
         ]
     )
@@ -222,9 +209,9 @@ def update_vertex_info_from_placed(
     separated_cond_notplaced = ~torch.isin(
         dict_vertices_to_place[vertex]["separated_vertices"], placed_vertices
     )
-    dict_vertices_to_place[vertex]["separated_vertices"] = dict_vertices_to_place[
-        vertex
-    ]["separated_vertices"][separated_cond_notplaced]
+    dict_vertices_to_place[vertex]["separated_vertices"] = dict_vertices_to_place[vertex][
+        "separated_vertices"
+    ][separated_cond_notplaced]
 
     neighbord_cond = (
         dict_vertices_to_place[vertex]["neighbors_weight"]
@@ -238,9 +225,9 @@ def update_vertex_info_from_placed(
         )
         > dict_vertices_to_place[vertex]["neighbors_weight"]
     )
-    dict_vertices_to_place[vertex]["neighbors_id"] = dict_vertices_to_place[vertex][
-        "neighbors_id"
-    ][neighbord_cond]
+    dict_vertices_to_place[vertex]["neighbors_id"] = dict_vertices_to_place[vertex]["neighbors_id"][
+        neighbord_cond
+    ]
     dict_vertices_to_place[vertex]["neighbors_weight"] = dict_vertices_to_place[vertex][
         "neighbors_weight"
     ][neighbord_cond]
@@ -263,23 +250,19 @@ def positive_vertices_update(
                 global_solution[key] = 0
             for vertex in dict_vertices_to_place:
                 cond_not_key = dict_vertices_to_place[vertex]["neighbors_id"] != key
-                dict_vertices_to_place[vertex]["neighbors_id"] = dict_vertices_to_place[
-                    vertex
-                ]["neighbors_id"][cond_not_key]
-                dict_vertices_to_place[vertex]["neighbors_weight"] = (
-                    dict_vertices_to_place[vertex]["neighbors_weight"][cond_not_key]
-                )
+                dict_vertices_to_place[vertex]["neighbors_id"] = dict_vertices_to_place[vertex][
+                    "neighbors_id"
+                ][cond_not_key]
+                dict_vertices_to_place[vertex]["neighbors_weight"] = dict_vertices_to_place[vertex][
+                    "neighbors_weight"
+                ][cond_not_key]
 
-                dict_vertices_to_place[vertex][
-                    "blocking_vertices"
-                ] = dict_vertices_to_place[vertex]["blocking_vertices"][
-                    dict_vertices_to_place[vertex]["blocking_vertices"] != key
-                ]
-                dict_vertices_to_place[vertex][
-                    "separated_vertices"
-                ] = dict_vertices_to_place[vertex]["separated_vertices"][
-                    dict_vertices_to_place[vertex]["separated_vertices"] != key
-                ]
+                dict_vertices_to_place[vertex]["blocking_vertices"] = dict_vertices_to_place[
+                    vertex
+                ]["blocking_vertices"][dict_vertices_to_place[vertex]["blocking_vertices"] != key]
+                dict_vertices_to_place[vertex]["separated_vertices"] = dict_vertices_to_place[
+                    vertex
+                ]["separated_vertices"][dict_vertices_to_place[vertex]["separated_vertices"] != key]
 
     for key in positive_vertices:
         dict_vertices_to_place.pop(key, None)
@@ -319,9 +302,7 @@ def transfer_edge_values(
     placed_vertices_tensor = torch.tensor(list(placed_vertices.keys()))
     # update neighbors, separated and blocked vertices from vertices still to place
     for vertex in dict_vertices_to_place:
-        update_vertex_info_from_placed(
-            vertex, dict_vertices_to_place, placed_vertices_tensor
-        )
+        update_vertex_info_from_placed(vertex, dict_vertices_to_place, placed_vertices_tensor)
 
     # remove from neighbors, blocking and separated vertices whose weight became positive.
     positive_vertices_update(dict_vertices_to_place, global_solution)
@@ -376,9 +357,7 @@ def separated_zone_intersection(
         free_zone = current_intersection_result.difference(
             placed_vertices[vertex.item()].circle_end_blocking
         )
-        current_intersection_result = current_intersection_result.intersection(
-            free_zone
-        )
+        current_intersection_result = current_intersection_result.intersection(free_zone)
     return current_intersection_result
 
 
@@ -462,9 +441,7 @@ def cost_interaction_point_continuous(
         diff = Q_target[i] - interaction
 
         if i in blocked_indices:
-            penalty = max(
-                0.0, Q_target[i] - interaction
-            )  # penalize only if interaction < Q
+            penalty = max(0.0, Q_target[i] - interaction)  # penalize only if interaction < Q
             cost += penalty**2
         else:
             cost += diff**2
@@ -533,9 +510,7 @@ def check_limit_zone(final_point: Point, device: pulser.devices.Device) -> bool:
     return bool(limit_zone.contains(final_point))
 
 
-def check_prohibited_zones(
-    placed_vertices: dict[int, WeightedZone], final_point: Point
-) -> bool:
+def check_prohibited_zones(placed_vertices: dict[int, WeightedZone], final_point: Point) -> bool:
     """Verify if new embedded vertex is not within the forbidden zone of placed vertices.
 
     Args:
@@ -550,9 +525,7 @@ def check_prohibited_zones(
         if placed_vertices[key].forbidden_zone.contains(final_point):
             return False
 
-        if final_point.buffer(5.1).contains(
-            Point(placed_vertices[key].x, placed_vertices[key].y)
-        ):
+        if final_point.buffer(5.1).contains(Point(placed_vertices[key].x, placed_vertices[key].y)):
             return False
     return checker
 
@@ -581,19 +554,13 @@ def test_placing_vertex(
     """
     places_vertices_tensor = torch.tensor(list(placed_vertices.keys()))
     neighbors = dict_vertices_to_place[vertex]["neighbors_id"][
-        torch.isin(
-            dict_vertices_to_place[vertex]["neighbors_id"], places_vertices_tensor
-        )
+        torch.isin(dict_vertices_to_place[vertex]["neighbors_id"], places_vertices_tensor)
     ]
     blockings = dict_vertices_to_place[vertex]["blocking_vertices"][
-        torch.isin(
-            dict_vertices_to_place[vertex]["blocking_vertices"], places_vertices_tensor
-        )
+        torch.isin(dict_vertices_to_place[vertex]["blocking_vertices"], places_vertices_tensor)
     ]
     separated = dict_vertices_to_place[vertex]["separated_vertices"][
-        torch.isin(
-            dict_vertices_to_place[vertex]["separated_vertices"], places_vertices_tensor
-        )
+        torch.isin(dict_vertices_to_place[vertex]["separated_vertices"], places_vertices_tensor)
     ]
 
     center_poly = Point(0, 0)
@@ -605,12 +572,8 @@ def test_placing_vertex(
     final_intersection = zone_intersection(
         final_intersection, neighbors, placed_vertices, "range_zone"
     )
-    final_intersection = separated_zone_intersection(
-        final_intersection, separated, placed_vertices
-    )
-    final_intersection = forbidden_zone_intersection(
-        final_intersection, placed_vertices
-    )
+    final_intersection = separated_zone_intersection(final_intersection, separated, placed_vertices)
+    final_intersection = forbidden_zone_intersection(final_intersection, placed_vertices)
 
     if not final_intersection.is_empty:
         # find new point to place
@@ -642,19 +605,11 @@ def test_placing_vertex(
             # update queue
             for j in dict_vertices_to_place[vertex]["blocking_vertices"]:
                 j = j.item()
-                if (
-                    j not in placed_vertices
-                    and j not in tested_vertices
-                    and j not in queue
-                ):
+                if j not in placed_vertices and j not in tested_vertices and j not in queue:
                     queue.append(j)
             for j in dict_vertices_to_place[vertex]["neighbors_id"]:
                 j = j.item()
-                if (
-                    j not in placed_vertices
-                    and j not in tested_vertices
-                    and j not in queue
-                ):
+                if j not in placed_vertices and j not in tested_vertices and j not in queue:
 
                     queue.append(j)
 
@@ -688,8 +643,7 @@ def obtain_vertice_to_test(
             neighbor
             if neighbor.item() in placed_vertices:
                 current_score = (
-                    current_score
-                    + dict_vertices_to_place[vertex]["neighbors_weight"][i]
+                    current_score + dict_vertices_to_place[vertex]["neighbors_weight"][i]
                 )
 
         if current_score > best_score:
@@ -831,8 +785,8 @@ def interaction_matrix_from_placed(
                     value2.x,
                     value2.y,
                 )
-                mat[map_index_vertices[key]][map_index_vertices[key2]] = (
-                    device.rabi_from_blockade(dist)
+                mat[map_index_vertices[key]][map_index_vertices[key2]] = device.rabi_from_blockade(
+                    dist
                 )
             else:
                 mat[map_index_vertices[key]][map_index_vertices[key]] = value.weight

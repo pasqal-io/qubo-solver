@@ -25,7 +25,8 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance) -> None:
     size = decomposable_qubo.size
     qubo_mat = decomposable_qubo.coefficients.clone()
 
-    config = SolverConfig(use_quantum=False, decompose=DecompositionConfig())
+    decompose_config = DecompositionConfig()
+    config = SolverConfig(use_quantum=False, decompose=decompose_config)
     solver = QuboSolver(decomposable_qubo, config)
 
     ## Check the distance interaction matrix matches the qubo matrix
@@ -52,11 +53,12 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance) -> None:
     # try one iteration, check placed_vertices length
     config_subproblems = config.model_copy(update={"decompose": False})
     first_vertex = 0
+
     placed_vertices = geometric_search(
         qubo_mat,
         current_vertices_dict,
         first_vertex,
-        solver._solver.config.decompose.decompose_threshold,
+        decompose_config.decompose_threshold,
         solver._solver.device,
     )
     assert len(placed_vertices) <= size
@@ -67,7 +69,9 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance) -> None:
     )
     assert len(map_index_vertices) == len(placed_vertices) == matrix_to_solve.shape[0]
     subproblem = QUBOInstance(matrix_to_solve)
-    subsolver = solver._solver._solver_factory(subproblem, config_subproblems)
+    subsolver = solver._solver._solver_factory(  # type:ignore[attr-defined]
+        subproblem, config_subproblems
+    )
     sub_solution = subsolver.solve().bitstrings[0]
 
     # test update_global_solution remove -1 values
@@ -90,6 +94,7 @@ def test_decomp_solver(decomposable_qubo: torch.Tensor) -> None:
     solution = solver.solve()
 
     # check that only one solution is returned
+    assert solution.counts is not None
     assert solution.counts.sum() == 1
     assert len(solution.bitstrings) == 1
     assert (solution.bitstrings[0] == -1).sum() == 0
@@ -113,6 +118,7 @@ def test_small_qubo_solver(simple_qubo_instance: QUBOInstance) -> None:
         SolverConfig(use_quantum=False, decompose=DecompositionConfig()),
     )
     solutions2 = decompose_solver.solve()
+    assert isinstance(decompose_solver._solver, DecomposeQuboSolver)
     assert decompose_solver._solver.number_iterations == 0
 
     assert torch.allclose(solutions2.costs.min(), solutions1.costs.min())
