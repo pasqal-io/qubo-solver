@@ -69,7 +69,6 @@ class ClassicalConfig(Config):
     max_iter: int = 100
     max_bitstrings: int = 1
 
-    sa_top_k: int = 5
     sa_initial_temp: float = 10.0
     sa_final_temp: float = 0.1
     sa_cooling_rate: float | None = None
@@ -107,9 +106,13 @@ class ClassicalConfig(Config):
             serialization.update(
                 {
                     "max_iter": self.max_iter,
+                    "max_bitstrings": self.max_bitstrings,
                     "sa_initial_temp": self.sa_initial_temp,
                     "sa_final_temp": self.sa_final_temp,
-                    "sa_alpha": self.sa_alpha,
+                    "sa_cooling_rate": self.sa_cooling_rate,
+                    "sa_seed": self.sa_seed,
+                    "sa_start": self.sa_start,
+                    "sa_energy_tol": self.sa_energy_tol,
                 }
             )
         if self.classical_solver_type == ClassicalSolverType.TABU_SEARCH:

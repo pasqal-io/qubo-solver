@@ -14,11 +14,11 @@ from qubosolver.classical_solver.classical_solver import (
 )
 
 
-@pytest.mark.parametrize("sa_top_k", [1, 3])
-def test_qubo_solver_sa(simple_qubo_instance: QUBOInstance, sa_top_k: int) -> None:
+@pytest.mark.parametrize("max_bitstrings", [1, 3])
+def test_qubo_solver_sa(simple_qubo_instance: QUBOInstance, max_bitstrings: int) -> None:
     # Create a SolverConfig object with classical solver options.
     classical_config = ClassicalConfig(
-        classical_solver_type="simulated_annealing", sa_top_k=sa_top_k
+        classical_solver_type="simulated_annealing", max_bitstrings=max_bitstrings
     )
     config = SolverConfig(
         use_quantum=False, classical=classical_config, activate_trivial_solutions=False
@@ -41,7 +41,7 @@ def test_qubo_solver_sa(simple_qubo_instance: QUBOInstance, sa_top_k: int) -> No
     # The optimal value for binary variables is achieved when both are 0,
     # so expect a cost of 0.
     # Also, check that the bitstring has the expected shape, e.g., [1,2].
-    assert solution.bitstrings.shape[0] == sa_top_k  # one solution returned
+    assert solution.bitstrings.shape[0] == max_bitstrings  # max_bitstrings solution returned
     assert solution.bitstrings.shape[1] == 3  # three variables
 
 
