@@ -26,6 +26,7 @@ def test_empty_config(empty_config: SolverConfig) -> None:
     assert empty_config.embedding.embedding_method == EmbedderType.GREEDY
     assert empty_config.embedding.draw_steps is False
     assert empty_config.embedding.greedy_layout == LayoutType.TRIANGULAR
+    assert empty_config.decompose is None
 
 
 def test_classical_part() -> None:

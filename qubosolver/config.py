@@ -488,6 +488,10 @@ class SolverConfig(Config):
             and k not in ("embedding", "drive_shaping", "classical", "decompose")
         }
 
+        decompose = kwargs["decompose"] if "decompose" in kwargs else None
+        if decompose_fields:
+            decompose = DecompositionConfig(**decompose_fields)
+
         return cls(
             embedding=(
                 EmbeddingConfig(**embedding_fields)
@@ -504,10 +508,6 @@ class SolverConfig(Config):
                 if "classical" not in kwargs
                 else kwargs["classical"]
             ),
-            decompose=(
-                DecompositionConfig(**decompose_fields)
-                if "decompose" not in kwargs
-                else kwargs["decompose"]
-            ),
+            decompose=decompose,
             **solver_fields,
         )
