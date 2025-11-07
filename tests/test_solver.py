@@ -1,16 +1,9 @@
 from __future__ import annotations
 
 import pytest
-import torch
 from qubosolver.config import EmbeddingConfig, SolverConfig, LocalEmulator
 from qubosolver.qubo_types import EmbedderType
 from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical
-
-
-@pytest.fixture
-def simple_qubo_instance() -> QUBOInstance:
-    coefficients = torch.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
-    return QUBOInstance(coefficients=coefficients)
 
 
 @pytest.fixture
