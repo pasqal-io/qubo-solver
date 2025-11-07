@@ -5,6 +5,10 @@ import torch
 
 from qubosolver.data import QUBOSolution
 from qubosolver.qubo_analyzer import QUBOAnalyzer
+from qubosolver.qubo_instance import QUBOInstance
+from qubosolver.solver import QuboSolver
+from qubosolver.config import SolverConfig, ClassicalConfig
+from qubosolver.qubo_types import ClassicalSolverType
 
 
 # @VV: I didn't get, should I define it as a fixture?
@@ -97,3 +101,45 @@ def test_add_probs(analyzer: QUBOAnalyzer) -> None:
 def test_calculate_gaps(analyzer: QUBOAnalyzer) -> None:
     df = analyzer.calculate_gaps(opt_cost=1.0)
     assert "gaps" in df.columns
+
+
+@pytest.mark.parametrize("classical_method", [c.value for c in ClassicalSolverType])
+def test_analyzer_classical(simple_qubo_instance: QUBOInstance, classical_method: str) -> None:
+    config = SolverConfig(
+        use_quantum=False, classical=ClassicalConfig(classical_solver_type=classical_method)
+    )
+    solver = QuboSolver(simple_qubo_instance, config)
+    solution = solver.solve()
+    analyzer = QUBOAnalyzer([solution], labels=["sol1"])
+
+    assert len(analyzer.df) == len(solution.bitstrings)
+    assert "counts" not in analyzer.df.columns
+    assert "probs" not in analyzer.df.columns
+
+
+def test_analyzer_quantum(simple_qubo_instance: QUBOInstance) -> None:
+    config = SolverConfig(use_quantum=True)
+    solver = QuboSolver(simple_qubo_instance, config)
+    solution = solver.solve()
+    analyzer = QUBOAnalyzer([solution], labels=["sol1"])
+
+    assert len(analyzer.df) == len(solution.bitstrings)
+    assert "probs" in analyzer.df.columns
+    assert "counts" in analyzer.df.columns
+
+
+@pytest.mark.parametrize("classical_method", [c.value for c in ClassicalSolverType])
+def test_analyzer_quantum_and_classical(
+    simple_qubo_instance: QUBOInstance, classical_method: str
+) -> None:
+    config = SolverConfig(
+        use_quantum=False, classical=ClassicalConfig(classical_solver_type=classical_method)
+    )
+    solver = QuboSolver(simple_qubo_instance, config)
+    solution = solver.solve()
+
+    quantumsolver = QuboSolver(simple_qubo_instance, SolverConfig(use_quantum=True))
+    quantumsolution = quantumsolver.solve()
+    analyzer = QUBOAnalyzer([solution, quantumsolution], labels=["sol1", "sol2"])
+
+    assert len(analyzer.df) == len(solution.bitstrings) + len(quantumsolution.bitstrings)
