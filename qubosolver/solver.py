@@ -198,6 +198,7 @@ class QuboSolverQuantum(BaseSolver):
         if self.config.do_postprocessing:
             solution = self.fixtures.postprocess(solution)
 
+        solution.bitstrings = solution.bitstrings.int()
         return solution
 
 
@@ -251,6 +252,7 @@ class QuboSolverClassical(BaseSolver):
             # Apply postprocessing to the raw solution
             solution = self.fixtures.postprocess(solution)
 
+        solution.bitstrings = solution.bitstrings.int()
         return solution
 
 
@@ -445,4 +447,5 @@ class DecomposeQuboSolver(BaseSolver):
                 probabilities=None,
             )
             qubosol.costs = qubosol.compute_costs(self.instance)
+            qubosol.bitstrings = qubosol.bitstrings.int()
             return qubosol
