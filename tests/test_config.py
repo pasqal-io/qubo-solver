@@ -9,6 +9,7 @@ from qubosolver.config import (
     ClassicalConfig,
     EmbeddingConfig,
     DriveShapingConfig,
+    DecompositionConfig,
     SolverConfig,
 )
 from qubosolver.qubo_types import (
@@ -26,6 +27,7 @@ def test_empty_config(empty_config: SolverConfig) -> None:
     assert empty_config.embedding.embedding_method == EmbedderType.GREEDY
     assert empty_config.embedding.draw_steps is False
     assert empty_config.embedding.greedy_layout == LayoutType.TRIANGULAR
+    assert empty_config.decompose is None
 
 
 def test_classical_part() -> None:
@@ -109,3 +111,11 @@ def test_initialization_device() -> None:
     solver = SolverConfig.from_kwargs(**{"device": deviceanalog})
     assert solver.embedding.greedy_traps == deviceanalog._device.min_layout_traps
     assert solver.embedding.greedy_spacing == float(deviceanalog._device.min_atom_distance)
+
+
+def test_decomposition_config() -> None:
+    config = SolverConfig(decompose=DecompositionConfig())
+    assert config.decompose is not None
+
+    config_kwargs = SolverConfig.from_kwargs(**config.decompose.model_dump())
+    assert config_kwargs.decompose is not None

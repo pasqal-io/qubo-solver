@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from typing import Callable
 from collections import Counter
 
 import torch
+import random
 
 # Import the classical solver factory from our classical_solver module.
 from qoolqit import Register, Drive
@@ -10,7 +12,7 @@ from qoolqit import Register, Drive
 from qubosolver.qubo_instance import QUBOInstance
 from qubosolver.data import QUBOSolution
 from qubosolver.classical_solver import get_classical_solver
-from qubosolver.config import SolverConfig
+from qubosolver.config import SolverConfig, DecompositionConfig
 from qubosolver.pipeline import (
     BaseSolver,
     Fixtures,
@@ -36,7 +38,14 @@ class QuboSolver(BaseSolver):
         if config is None:
             self._solver = QuboSolverClassical(instance, self.config)
         else:
-            if config.use_quantum:
+            if config.decompose:
+                if self.config.use_quantum:
+                    solver_factory: type[BaseSolver] = QuboSolverQuantum
+                else:
+                    solver_factory = QuboSolverClassical
+                self._solver = DecomposeQuboSolver(instance, self.config, solver_factory)
+
+            elif config.use_quantum:
                 self._solver = QuboSolverQuantum(instance, config)
             else:
                 self._solver = QuboSolverClassical(instance, config)
@@ -243,3 +252,197 @@ class QuboSolverClassical(BaseSolver):
             solution = self.fixtures.postprocess(solution)
 
         return solution
+
+
+class DecomposeQuboSolver(BaseSolver):
+    """
+    Solver that leverages qubo decomposition techniques to solve
+    subproblems and merge subsolutions to propose solutions of
+    the original instance. Note, the QUBO instance is seen as a graph where variables
+    are vertices, and coefficients represents weighted edges.
+
+    Scope: the decomposition only accepts qubo with positive coefficients off-diagonal coefficients.
+
+    Algorithm:
+        1. Initialize global solution and vertices to place.
+        2. While we can apply decomposition:
+            - Select a random vertex to place using device layout.
+            - Apply a geometric search to obtain a set of vertices
+                that can be placed on a device to form a subproblem.
+            - Solve the subproblem with a solver.
+            - Update the global solution and the vertices left to place.
+        3. For remaining variables, we solve classically.
+
+    Note, only one bitstring solution is returned.
+    """
+
+    def __init__(
+        self,
+        instance: QUBOInstance,
+        config: SolverConfig | None,
+        solver_factory: Callable[[QUBOInstance, SolverConfig], BaseSolver],
+    ):
+        """
+        Initialize the DecomposeQuboSolver with the given problem and configuration.
+
+        Args:
+            instance (QUBOInstance): The QUBO problem to solve.
+            config (SolverConfig): Solver settings including backend and device.
+            solver_factory (Callable[[QUBOInstance, SolverConfig], BaseSolver]): solver class
+                for subproblems.
+        """
+        if (
+            instance.coefficients[~torch.eye(*instance.coefficients.shape, dtype=torch.bool)] < 0
+        ).any():
+            raise ValueError("Decomposition does not handle off-diagonal negative coefficients")
+
+        # default is a quantum solver as we apply device-dependent decomposition
+        super().__init__(
+            QUBOInstance(instance.coefficients),
+            config or SolverConfig(use_quantum=True),
+        )
+        self._solver_factory = solver_factory
+
+        self.fixtures = Fixtures(self.instance, self.config)
+        self.backend = self.config.backend
+        self.device = self.config.device._device
+
+        self.decomposition_config: DecompositionConfig = (
+            self.config.decompose or DecompositionConfig()
+        )
+
+        # A cached version of `config` that we're going
+        # to use for problems we do not wish to decompose.
+        self._config_subproblems = SolverConfig.from_kwargs(
+            **self.config.model_dump(exclude={"decompose"})
+        )
+
+    def embedding(self) -> Register:
+        # This solver doesn't generate an embedding.
+        raise NotImplementedError()
+
+    def drive(self, embedding: Register) -> tuple:
+        # This solver doesn't generate a drive.
+        raise NotImplementedError()
+
+    def solve(self) -> QUBOSolution:
+        """
+        Execute a solver by decomposing the instance.
+        Note, the QUBO instance is seen as a graph where variables
+        are vertices, and coefficients represents weighted edges.
+
+        Algorithm:
+            1. Initialize global solution and vertices to place.
+            2. While we can apply decomposition:
+                - Select a random vertex to place using device layout.
+                - Apply a geometric search to obtain a set of vertices
+                  that can be placed on a device to form a subproblem.
+                - Solve the subproblem with a solver.
+                - Update the global solution and the vertices left to place.
+            3. For remaining variables, we solve classically.
+
+        Returns:
+            QUBOSolution: Final result after execution and postprocessing.
+                Note, only one bitstring solution is returned.
+        """
+
+        self.number_iterations = 0
+        assert self.instance.size
+        if self.instance.size <= self.decomposition_config.decompose_stop_number:
+            solver = QuboSolverClassical(
+                self.instance,
+                SolverConfig(use_quantum=False, decompose=None),
+            )
+            return solver.solve()
+
+        else:
+            from qubosolver.algorithms.decompose import (
+                compute_distance_interaction_matrix,
+                geometric_search,
+                interaction_matrix_from_placed,
+                last_target_matrix,
+                transfer_edge_values,
+                update_global_solution,
+                vertices_to_place,
+            )
+
+            global_solution = torch.full((self.instance.size,), -1)
+            qubo_mat = self.instance.coefficients.clone()
+            dist_matrix = compute_distance_interaction_matrix(
+                self.device,
+                qubo_mat,
+                neglecting_inter_distance=self.decomposition_config.neglecting_inter_distance,
+                neglecting_max_coefficient=self.decomposition_config.neglecting_max_coefficient,
+            )
+
+            # The following dictionary contain vertices to apply the decomposition search
+            # where each vertex key maps to other blocking, separated and neighbors vertices
+            # and gets updated as we iterate in the decomposition
+            dict_vertices_to_place = vertices_to_place(
+                dist_matrix,
+                qubo_mat,
+                separation_threshold=self.decomposition_config.neglecting_inter_distance,
+            )
+
+            transfer_edge_values(dict_vertices_to_place, dict(), global_solution, qubo_mat)
+            while len(dict_vertices_to_place) > self.decomposition_config.decompose_stop_number:
+                # find a first vertex to start the geometric search
+                # random works better according to some performed numerics
+                first_vertex_search = random.choice(list(dict_vertices_to_place.keys()))
+                placed_vertices = geometric_search(
+                    qubo_mat,
+                    dict_vertices_to_place,
+                    first_vertex_search,
+                    self.decomposition_config.decompose_threshold,
+                    self.device,
+                )
+                if len(placed_vertices) <= self.decomposition_config.decompose_break_placement:
+                    break
+                self.number_iterations += 1
+
+                matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(
+                    placed_vertices, self.device
+                )
+                qubo = QUBOInstance(matrix_to_solve)
+                subsolver = self._solver_factory(qubo, self._config_subproblems)
+
+                # only one bitstring is kept as per design choice of the
+                # decomposition algorithm
+                sub_solution = subsolver.solve().bitstrings[0]
+                update_global_solution(
+                    global_solution=global_solution,
+                    sub_solution=sub_solution,
+                    mapping=map_index_vertices,
+                )
+
+                transfer_edge_values(
+                    dict_vertices_to_place,
+                    placed_vertices,
+                    global_solution,
+                    qubo_mat,
+                )
+
+            # classical resolution of last matrix
+            matrix_to_solve, mapping_target_vertices = last_target_matrix(
+                list(dict_vertices_to_place.keys()), qubo_mat
+            )
+            qubo = QUBOInstance(matrix_to_solve)
+            lastsolver = QuboSolverClassical(
+                qubo,
+                SolverConfig(use_quantum=False, decompose=None),
+            )
+            sub_solution = lastsolver.solve().bitstrings[0]
+            update_global_solution(
+                global_solution=global_solution,
+                sub_solution=sub_solution,
+                mapping=mapping_target_vertices,
+            )
+            # Probabilities and counts are ignored as we return one solution
+            qubosol = QUBOSolution(
+                bitstrings=global_solution.unsqueeze(0).to(dtype=torch.float32),
+                counts=torch.tensor([1], dtype=torch.int),
+                costs=torch.Tensor(),
+                probabilities=None,
+            )
+            qubosol.costs = qubosol.compute_costs(self.instance)
+            return qubosol

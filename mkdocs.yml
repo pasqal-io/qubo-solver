@@ -38,6 +38,7 @@ nav:
     - Drive shaping methods: tutorial/06-drive-shaping-methods.ipynb
     - Classical heuristics: tutorial/07-classical-heuristics.ipynb
     - Qubo Analyzer: tutorial/08-qubo_analyzer.ipynb
+    - Solving with decomposition: tutorial/09-decomposition.ipynb
 
   - API:
     - QUBOInstance: api/qubo_instance.md

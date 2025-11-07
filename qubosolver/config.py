@@ -33,6 +33,7 @@ __all__: list[str] = [
     "ClassicalConfig",
     "EmbeddingConfig",
     "DriveShapingConfig",
+    "DecompositionConfig",
     "SolverConfig",
 ]
 
@@ -356,6 +357,30 @@ class DriveShapingConfig(Config):
             )
 
 
+class DecompositionConfig(Config):
+    """The configuration parameters when using a decomposition method
+        for solving large QUBO instances.
+
+    Attributes:
+        decompose_threshold (float, optional): Threshold value for cost function used
+            when searching to place a node/variable during decomposition.
+        decompose_stop_number (int, optional): Maximal number of nodes/variables left
+            after the decomposition loop.
+        decompose_break_placement (int, optional): If a search iteration ends with very
+            few nodes to place/variables on device, we stop iterating.
+        neglecting_inter_distance (float, optional): Value
+            for neglecting interactions in the distance interaction matrix.
+        neglecting_max_coefficient (float, optional): Qubo coefficient from which
+            we consider an interaction is neglecting.
+    """
+
+    decompose_threshold: float = 25.0
+    decompose_stop_number: int = 15
+    decompose_break_placement: int = 3
+    neglecting_inter_distance: float = 15.0
+    neglecting_max_coefficient: float = 1.0
+
+
 class SolverConfig(Config):
     """
     A `SolverConfig` instance defines how a QUBO problem should be solved.
@@ -384,6 +409,8 @@ class SolverConfig(Config):
             Defaults to True.
         activate_trivial_solutions (bool, optional): Whether calculate trivial solutions (`True`)
             or not (`False`). Defaults to True.
+        decompose (DecompositionConfig | None, optional): which decomposition configuration to use
+            when solving large QUBOs. Defaults to None, i.e. no decomposition is applied.
     """
 
     config_name: str = ""
@@ -396,6 +423,7 @@ class SolverConfig(Config):
     do_postprocessing: bool = False
     do_preprocessing: bool = False
     activate_trivial_solutions: bool = True
+    decompose: DecompositionConfig | None = None
 
     def __repr__(self) -> str:
         return self.config_name
@@ -449,12 +477,20 @@ class SolverConfig(Config):
             k: v for k, v in kwargs.items() if k in DriveShapingConfig.model_fields
         }
         classical_fields = {k: v for k, v in kwargs.items() if k in ClassicalConfig.model_fields}
+        decompose_fields = {
+            k: v for k, v in kwargs.items() if k in DecompositionConfig.model_fields
+        }
 
         solver_fields = {
             k: v
             for k, v in kwargs.items()
-            if k in cls.model_fields and k not in ("embedding", "drive_shaping", "classical")
+            if k in cls.model_fields
+            and k not in ("embedding", "drive_shaping", "classical", "decompose")
         }
+
+        decompose = kwargs["decompose"] if "decompose" in kwargs else None
+        if decompose_fields:
+            decompose = DecompositionConfig(**decompose_fields)
 
         return cls(
             embedding=(
@@ -472,5 +508,6 @@ class SolverConfig(Config):
                 if "classical" not in kwargs
                 else kwargs["classical"]
             ),
+            decompose=decompose,
             **solver_fields,
         )
