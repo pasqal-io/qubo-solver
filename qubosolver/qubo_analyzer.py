@@ -143,8 +143,9 @@ class QUBOAnalyzer:
         if solution.probabilities is not None:
             data[_PROBS] = solution.probabilities.tolist()
         else:
-            tot = sum(data[_COUNTS])
-            data[_PROBS] = [x / tot for x in data[_COUNTS]]
+            if solution.counts is not None:
+                tot = sum(data[_COUNTS])
+                data[_PROBS] = [x / tot for x in data[_COUNTS]]
 
         return pd.DataFrame(data)
 
