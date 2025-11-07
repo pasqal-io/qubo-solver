@@ -19,21 +19,6 @@ def test_valid_qubo_passes_without_error() -> None:
     assert qi.coefficients.shape == (5, 5)
 
 
-def test_negative_off_diagonal_triggers_system_exit() -> None:
-    # A 3×3 QUBO with a negative off-diagonal coefficient at (0,1)
-    coeffs = np.zeros((3, 3))
-    coeffs[0, 1] = -1.0
-
-    qi = QUBOInstance()
-    # Expect SystemExit to be raised with the correct error message
-    msg = "Error: Negative off-diagonal coefficient detected."
-    with pytest.raises(
-        ValueError,
-        match=msg,
-    ):
-        qi.coefficients = coeffs
-
-
 def test_size_exceeds_limit_triggers_system_exit() -> None:
     from qubosolver.solver import QuboSolverClassical, QuboSolverQuantum
 

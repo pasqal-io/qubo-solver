@@ -66,6 +66,8 @@ class QuboSolverQuantum(BaseSolver):
     """
     Quantum solver that orchestrates the solving of a QUBO problem using
     embedding, drive shaping, and quantum execution pipelines.
+
+    Note: Negative off-diagonal coefficients are not supported.
     """
 
     def __init__(self, instance: QUBOInstance, config: SolverConfig | None = None):
@@ -77,6 +79,12 @@ class QuboSolverQuantum(BaseSolver):
             config (SolverConfig): Solver settings including backend and device.
         """
         super().__init__(instance, config or SolverConfig(use_quantum=True))
+
+        if (
+            instance.coefficients[~torch.eye(*instance.coefficients.shape, dtype=torch.bool)] < 0
+        ).any():
+            raise ValueError("Quantum solver does not handle off-diagonal negative coefficients")
+
         self._check_size_limit()
 
         self.fixtures = Fixtures(self.instance, self.config)
