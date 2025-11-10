@@ -167,8 +167,14 @@ class RandomSolver(BaseClassicalSolver):
         bitstrings = torch.randint(0, 2, size=(self.config.max_bitstrings, self.instance.size)).to(
             torch.float32
         )
-        costs = qubo_cost(bitstrings, self.instance.coefficients)
-        return QUBOSolution(bitstrings=bitstrings, costs=costs)
+        unique_bits, counts = torch.unique(bitstrings, dim=0, return_counts=True)
+        costs = qubo_cost(unique_bits, self.instance.coefficients)
+        return QUBOSolution(
+            bitstrings=unique_bits,
+            costs=costs,
+            counts=counts,
+            probabilities=counts.float() / self.config.max_bitstrings,
+        )
 
 
 def get_classical_solver(instance: QUBOInstance, config: ClassicalConfig) -> BaseClassicalSolver:

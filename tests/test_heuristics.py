@@ -108,9 +108,13 @@ def test_random() -> None:
 
     # Assert that the solution is an instance of QUBOSolution.
     assert isinstance(solution, QUBOSolution)
-    assert solution.bitstrings.shape[0] == classical_config.max_bitstrings
-    assert len(solution.costs) == classical_config.max_bitstrings
     assert solution.bitstrings.shape[1] == 2  # two variables
+    assert len(solution.bitstrings) <= classical_config.max_bitstrings
+    assert len(solution.costs) == len(solution.bitstrings)
+    assert solution.counts is not None
+    assert solution.probabilities is not None
+    assert solution.counts.sum().item() == classical_config.max_bitstrings
+    assert torch.allclose(solution.probabilities.sum(), torch.ones(1))
 
 
 if __name__ == "__main__":

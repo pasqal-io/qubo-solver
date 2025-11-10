@@ -113,8 +113,12 @@ def test_analyzer_classical(simple_qubo_instance: QUBOInstance, classical_method
     analyzer = QUBOAnalyzer([solution], labels=["sol1"])
 
     assert len(analyzer.df) == len(solution.bitstrings)
-    assert "counts" not in analyzer.df.columns
-    assert "probs" not in analyzer.df.columns
+    if classical_method not in (
+        ClassicalSolverType.SIMULATED_ANNEALING,
+        ClassicalSolverType.RANDOM,
+    ):
+        assert "counts" not in analyzer.df.columns
+        assert "probs" not in analyzer.df.columns
 
 
 def test_analyzer_quantum(simple_qubo_instance: QUBOInstance) -> None:
