@@ -5,6 +5,7 @@ import torch
 
 from qubosolver import QUBODataset
 
+
 @pytest.mark.parametrize("negative_offdiag_rate", [None, 0.2])
 def test_dataset_generation(negative_offdiag_rate: float | None) -> None:
     """Test dataset is generated correctly in terms of element properties asked"""
@@ -27,7 +28,7 @@ def test_dataset_generation(negative_offdiag_rate: float | None) -> None:
 
     off_diag = ~torch.eye(size, dtype=torch.bool)
 
-    for (qubo, _) in dataset:
+    for qubo, _ in dataset:
         assert qubo.shape[0] == size
         assert torch.all(qubo >= coefficient_bounds[0])
         assert torch.all(qubo <= coefficient_bounds[1])
