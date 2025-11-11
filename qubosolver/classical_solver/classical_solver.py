@@ -147,7 +147,6 @@ class TabuSearchSolver(BaseClassicalSolver):
             x0 = torch.randint(0, 2, size=(self.instance.size,))
         else:
             x0 = self.config.tabu_x0
-
         tabu_search_solution = qubo_tabu_search(
             qubo=self.instance,
             x0=x0,

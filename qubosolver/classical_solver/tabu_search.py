@@ -42,7 +42,12 @@ def qubo_tabu_search(
         >>> print(solution)
     """
     best_solutions, costs, counts = tabu_search(
-        qubo=qubo, x0=x0, max_iter=max_iter, tabu_tenure=tabu_tenure, max_no_improve=max_no_improve
+        qubo=qubo,
+        x0=x0,
+        max_iter=max_iter,
+        tabu_tenure=tabu_tenure,
+        max_no_improve=max_no_improve,
+        max_bitstrings=max_bitstrings,
     )
     return QUBOSolution(
         bitstrings=best_solutions,
@@ -103,7 +108,6 @@ def tabu_search(
     # Tabu list per run and bit
     tabu_list = torch.zeros((max_bitstrings, n), dtype=torch.int64, device=device)
     iter_since_last_improve = torch.zeros(max_bitstrings, dtype=torch.int64, device=device)
-
     for iteration in range(max_iter):
         # Generate all neighbor candidates for each bit flip
         flips = torch.eye(n, dtype=torch.int64, device=device).unsqueeze(0)
