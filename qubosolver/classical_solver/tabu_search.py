@@ -12,6 +12,7 @@ def qubo_tabu_search(
     max_iter: int = 100,
     tabu_tenure: int = 7,
     max_no_improve: int = 20,
+    max_bitstrings: int = 1,
 ) -> QUBOSolution:
     """
     Solve a QUBO problem using a simple Tabu Search heuristic.
@@ -34,15 +35,21 @@ def qubo_tabu_search(
             - `bitstrings`: The best solution found as a tensor.
             - `costs`: The corresponding objective value tensor.
             - `counts`: The frequencies of each bitstring.
+            - `probabilities`: Frequencies divided by max_bitstrings.
 
     Example:
         >>> solution = qubo_tabu_search(qubo, x0=torch.randint(0, 2, (10,)))
-        >>> print(solution.costs)
+        >>> print(solution)
     """
     best_solutions, costs, counts = tabu_search(
         qubo=qubo, x0=x0, max_iter=max_iter, tabu_tenure=tabu_tenure, max_no_improve=max_no_improve
     )
-    return QUBOSolution(bitstrings=best_solutions, costs=costs, counts=counts)
+    return QUBOSolution(
+        bitstrings=best_solutions,
+        costs=costs,
+        counts=counts,
+        probabilities=counts.float() / max_bitstrings,
+    )
 
 
 def tabu_search(

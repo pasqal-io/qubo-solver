@@ -154,6 +154,7 @@ class TabuSearchSolver(BaseClassicalSolver):
             max_iter=self.config.max_iter,
             tabu_tenure=self.config.tabu_tenure,
             max_no_improve=self.config.tabu_max_no_improve,
+            max_bitstrings=self.config.max_bitstrings,
         )
         return tabu_search_solution
 
