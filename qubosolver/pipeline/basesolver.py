@@ -10,6 +10,7 @@ from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig
 from qubosolver.data import QUBOSolution
 from qubosolver.qubo_types import SolutionStatusType
+from qubosolver.pipeline.fixtures import Fixtures
 
 
 class BaseSolver(ABC):
@@ -44,6 +45,9 @@ class BaseSolver(ABC):
 
         self.backend = self.config.backend
         self.device = self.config.device
+
+        self.fixtures = Fixtures(self.instance, self.config)
+        self.n_fixed_variables_preprocessing = 0
 
     @abstractmethod
     def solve(self) -> QUBOSolution:
@@ -201,3 +205,44 @@ class BaseSolver(ABC):
                 solution_status=SolutionStatusType.TRIVIALDIAGONAL,
             )
         return None
+
+    def preprocess(self) -> None:
+        """Apply preprocessing on instance to reduce its size."""
+        if self.config.do_preprocessing:
+            # Apply preprocessing and change the solved QUBO by the reduced one
+            self.fixtures.preprocess()
+            if (
+                self.fixtures.reduced_qubo.coefficients is not None
+                and len(self.fixtures.reduced_qubo.coefficients) > 0
+            ):
+
+                self.instance = self.fixtures.reduced_qubo
+                self.n_fixed_variables_preprocessing = self.fixtures.n_fixed_variables
+
+    def post_process_fixation(self, solution: QUBOSolution) -> QUBOSolution:
+        """Post-process fixations of the preprocessing and restore the original QUBO.
+
+        Args:
+            solution (QUBOSolution): Solution after preprocessing.
+
+        Returns:
+            QUBOSolution: New restored solution if preprocessing was applied.
+        """
+        if self.config.do_preprocessing:
+            solution = self.fixtures.post_process_fixation(solution)
+            self.instance = self.fixtures.instance
+        return solution
+
+    def post_process(self, solution: QUBOSolution) -> QUBOSolution:
+        """Apply post-processing.
+
+         Args:
+            solution (QUBOSolution): Solution after preprocessing.
+
+        Returns:
+            QUBOSolution: New postprocessed solution.
+        """
+
+        if self.config.do_postprocessing:
+            solution = self.fixtures.postprocess(solution)
+        return solution
