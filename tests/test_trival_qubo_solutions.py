@@ -36,14 +36,19 @@ def test_quantum_all_negative_trivial(local_backend: LocalEmulator) -> None:
     should return a batch of one all-one bitstring
     with solution_status 'trivial-one'.
     """
+
+    config = SolverConfig(use_quantum=True, backend=local_backend)
+
     coeffs = [[-1.0, -0.2], [-0.2, -3.0]]
+    instance = QUBOInstance(coefficients=coeffs)
     # check if value error is raised.
-    with pytest.raises(ValueError, match="Negative off-diagonal coefficient"):
-        QUBOInstance(coefficients=coeffs)
+    with pytest.raises(
+        ValueError, match="Quantum solver does not handle off-diagonal negative coefficients"
+    ):
+        solver = QuboSolverQuantum(instance, config)
 
     coeffs = [[-1.0, 0.0], [0.0, -3.0]]
     instance = QUBOInstance(coefficients=coeffs)
-    config = SolverConfig(use_quantum=True, backend=local_backend)
 
     solver = QuboSolverQuantum(instance, config)
     sol = solver.solve()

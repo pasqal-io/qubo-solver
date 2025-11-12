@@ -135,5 +135,7 @@ def test_scope(decomposable_qubo: QUBOInstance) -> None:
     coeffs = decomposable_qubo.coefficients
     coeffs[0][1] = -1.0
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Decomposition does not handle off-diagonal negative coefficients"
+    ):
         QuboSolver(QUBOInstance(coeffs), config)
