@@ -41,8 +41,14 @@ def test_qubo_solver_sa(simple_qubo_instance: QUBOInstance, max_bitstrings: int)
     # The optimal value for binary variables is achieved when both are 0,
     # so expect a cost of 0.
     # Also, check that the bitstring has the expected shape, e.g., [1,2].
-    assert solution.bitstrings.shape[0] == max_bitstrings  # max_bitstrings solution returned
+    assert (
+        solution.bitstrings.shape[0] <= max_bitstrings
+    )  # at most max_bitstrings solution returned
     assert solution.bitstrings.shape[1] == 3  # three variables
+    assert solution.counts is not None
+    assert solution.probabilities is not None
+    assert solution.counts.sum().item() == max_bitstrings
+    assert torch.allclose(solution.probabilities.sum(), torch.ones(1))
 
 
 def test_qubo_solver_tabu() -> None:
@@ -102,9 +108,13 @@ def test_random() -> None:
 
     # Assert that the solution is an instance of QUBOSolution.
     assert isinstance(solution, QUBOSolution)
-    assert solution.bitstrings.shape[0] == classical_config.max_bitstrings
-    assert len(solution.costs) == classical_config.max_bitstrings
     assert solution.bitstrings.shape[1] == 2  # two variables
+    assert len(solution.bitstrings) <= classical_config.max_bitstrings
+    assert len(solution.costs) == len(solution.bitstrings)
+    assert solution.counts is not None
+    assert solution.probabilities is not None
+    assert solution.counts.sum().item() == classical_config.max_bitstrings
+    assert torch.allclose(solution.probabilities.sum(), torch.ones(1))
 
 
 if __name__ == "__main__":
