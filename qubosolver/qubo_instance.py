@@ -82,22 +82,11 @@ class QUBOInstance:
         """
         Setter for the QUBO coefficient matrix, with validation checks.
 
-        Checks:
-            All off-diagonal coefficients must be non-negative.
-
         Exits the program with an error message if a check fails.
         """
         # Convert input to tensor
         tensor = convert_to_tensor(coeffs, device=self.device, dtype=self.dtype)
         size = tensor.shape[0]
-
-        # Off-diagonal negativity check
-        off_diag = tensor.triu(diagonal=1)
-        if (off_diag < 0).any():
-            raise ValueError(
-                "Error: Negative off-diagonal coefficient detected. "
-                "All off-diagonal coefficients must be >= 0."
-            )
 
         # All checks passed, assign the tensor and update metrics
         self._coefficients = tensor
