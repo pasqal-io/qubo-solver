@@ -12,6 +12,7 @@ def qubo_tabu_search(
     max_iter: int = 100,
     tabu_tenure: int = 7,
     max_no_improve: int = 20,
+    max_bitstrings: int = 1,
 ) -> QUBOSolution:
     """
     Solve a QUBO problem using a simple Tabu Search heuristic.
@@ -33,17 +34,27 @@ def qubo_tabu_search(
         A `QUBOSolution` object containing:
             - `bitstrings`: The best solution found as a tensor.
             - `costs`: The corresponding objective value tensor.
+            - `counts`: The frequencies of each bitstring.
+            - `probabilities`: Frequencies divided by max_bitstrings.
 
     Example:
         >>> solution = qubo_tabu_search(qubo, x0=torch.randint(0, 2, (10,)))
-        >>> print(solution.costs)
+        >>> print(solution)
     """
-    best_solution, _ = tabu_search(
-        qubo=qubo, x0=x0, max_iter=max_iter, tabu_tenure=tabu_tenure, max_no_improve=max_no_improve
+    best_solutions, costs, counts = tabu_search(
+        qubo=qubo,
+        x0=x0,
+        max_iter=max_iter,
+        tabu_tenure=tabu_tenure,
+        max_no_improve=max_no_improve,
+        max_bitstrings=max_bitstrings,
     )
-    bitstrings = best_solution.unsqueeze(0).to(torch.float32)
-    costs = torch.tensor([qubo.evaluate_solution(best_solution.tolist())], dtype=torch.float32)
-    return QUBOSolution(bitstrings=bitstrings, costs=costs)
+    return QUBOSolution(
+        bitstrings=best_solutions,
+        costs=costs,
+        counts=counts,
+        probabilities=counts.float() / max_bitstrings,
+    )
 
 
 def tabu_search(
@@ -52,9 +63,10 @@ def tabu_search(
     max_iter: int = 100,
     tabu_tenure: int = 7,
     max_no_improve: int = 20,
-) -> tuple[torch.Tensor, float]:
+    max_bitstrings: int = 1,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
-    Perform Tabu Search on a QUBO instance to find a low-cost bitstring.
+    Perform Tabu Search on a QUBO instance to find low-cost bitstrings.
 
     The algorithm iteratively flips bits in the current solution to
     explore neighboring solutions, while maintaining a tabu list to
@@ -63,69 +75,75 @@ def tabu_search(
     iterations.
 
     Args:
-        qubo: The QUBO instance providing the cost matrix.
-        x0: The initial binary solution tensor of shape (n,).
-        max_iter: Maximum number of search iterations.
-        tabu_tenure: Number of iterations a move (bit flip) remains tabu.
-        max_no_improve: Maximum number of consecutive iterations
-            without improvement before termination.
+        qubo (QUBOInstance): The QUBO instance providing the cost matrix.
+        x0 (torch.Tensor): The initial binary solution tensor of shape (n,).
+        max_iter (int, optional): Maximum number of search iterations.
+        tabu_tenure (int, optional): Number of iterations a move (bit flip)
+            remains tabu. Defaults to 7.
+        max_no_improve (int, optional): Maximum number of consecutive iterations
+            without improvement before termination. Defaults to 20.
+        max_bitstrings (int, optional): Maximum number of bitstring solutions returned.
+            Defaults to 1.
 
     Returns:
-        A tuple `(x_best, f_best)` where:
-            - `x_best`: Tensor representing the best bitstring found.
-            - `f_best`: Corresponding objective value as a float.
+        A tuple `(bistrings, costs, counts)` where:
+            - `bistrings`: Tensor representing the best bitstrings found.
+            - `costs`: Corresponding objective values.
+            - `counts`: Frequencies each bitstring was found.
 
     Example:
-        >>> best_x, best_cost = tabu_search(qubo, torch.randint(0, 2, (10,)))
-        >>> print(best_x, best_cost)
+        >>> x, costs, counts = tabu_search(qubo, torch.randint(0, 2, (10,)))
+        >>> print(x, costs, counts)
     """
     Q = qubo.coefficients
-    n: int = x0.numel()
+    device = Q.device
+    n = x0.numel()
 
-    x_best = x0.clone().to(torch.int64)
-    f_best: float = qubo_cost(x_best, Q).item()
+    # Repeat x0 for each parallel run
+    x_current = x0.clone().to(torch.int64).unsqueeze(0).repeat(max_bitstrings, 1)
+    f_current = qubo_cost(x_current, Q)
+    x_best = x_current.clone()
+    f_best = f_current.clone()
 
-    x_current = x0.clone()
-    f_current: float = f_best
-
-    # Tabu list: store iteration number until which each move is tabu
-    tabu_list = torch.zeros(n)
-    iter_since_last_improve: int = 0
-
+    # Tabu list per run and bit
+    tabu_list = torch.zeros((max_bitstrings, n), dtype=torch.int64, device=device)
+    iter_since_last_improve = torch.zeros(max_bitstrings, dtype=torch.int64, device=device)
     for iteration in range(max_iter):
-        best_candidate = None
-        best_candidate_cost = torch.inf
-        best_move = -1
+        # Generate all neighbor candidates for each bit flip
+        flips = torch.eye(n, dtype=torch.int64, device=device).unsqueeze(0)
+        x_neighbors = x_current.unsqueeze(1).clone()
+        x_neighbors = (x_neighbors + flips) % 2  # each bit flipped
+        f_candidates = qubo_cost(x_neighbors.view(-1, n), Q).view(max_bitstrings, n)
 
-        for i in range(n):
-            x_candidate = x_current.clone()
-            x_candidate[i] = 1 - x_candidate[i]  # Bitflip
-            f_candidate: float = qubo_cost(x_candidate, Q).item()
+        # Tabu and aspiration
+        tabu_mask = tabu_list > iteration
+        aspiration_mask = f_candidates < f_best.unsqueeze(1)
+        allowed = (~tabu_mask) | aspiration_mask
 
-            # Check if move is tabu OR aspiration criterion (better than best)
-            if tabu_list[i] <= iteration or f_candidate < f_best:
-                if f_candidate < best_candidate_cost:
-                    best_candidate = x_candidate
-                    best_candidate_cost = f_candidate
-                    best_move = i
+        # Mask out disallowed moves
+        f_masked = torch.where(allowed, f_candidates, torch.inf)
 
-        if best_candidate is None:
-            break  # No valid move found
+        # Pick best move per run
+        best_costs, best_moves = torch.min(f_masked, dim=1)
+        move_mask = torch.arange(n, device=device).unsqueeze(0) == best_moves.unsqueeze(1)
 
-        # Apply best move
-        x_current = best_candidate.clone()
-        f_current = best_candidate_cost
-        tabu_list[best_move] = iteration + tabu_tenure
+        # Apply the best move
+        x_current = (x_current + move_mask.to(torch.int64)) % 2
+        f_current = best_costs
+        tabu_list = torch.where(move_mask, iteration + tabu_tenure, tabu_list)
 
-        # Update best solution if improved
-        if f_current < f_best:
-            x_best = x_current.clone()
-            f_best = f_current
-            iter_since_last_improve = 0
-        else:
-            iter_since_last_improve += 1
+        # Update best solutions
+        improved = f_current < f_best
+        x_best = torch.where(improved.unsqueeze(1), x_current, x_best)
+        f_best = torch.where(improved, f_current, f_best)
+        iter_since_last_improve = torch.where(improved, 0, iter_since_last_improve + 1)
 
-        if iter_since_last_improve >= max_no_improve:
-            break  # Stop if no improvement for a while
+        # Early stop if all stagnated
+        if torch.all(iter_since_last_improve >= max_no_improve):
+            break
 
-    return x_best, f_best
+    # Get unique final solutions
+    uniq, counts = torch.unique(x_best, dim=0, return_counts=True)
+    costs = qubo_cost(uniq, Q)
+
+    return uniq, costs, counts
