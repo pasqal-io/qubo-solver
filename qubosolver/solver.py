@@ -50,8 +50,6 @@ class QuboSolver(BaseSolver):
             else:
                 self._solver = QuboSolverClassical(instance, config)
 
-        self.n_fixed_variables_preprocessing = 0
-
     def embedding(self) -> Register:
         return self._solver.embedding()
 
@@ -79,7 +77,6 @@ class QuboSolverQuantum(BaseSolver):
         super().__init__(instance, config or SolverConfig(use_quantum=True))
         self._check_size_limit()
 
-        self.fixtures = Fixtures(self.instance, self.config)
         self.backend = self.config.backend
         self.embedder = get_embedder(self.instance, self.config, self.backend)
         self.drive_shaper = get_drive_shaper(self.instance, self.config, self.backend)
@@ -131,25 +128,15 @@ class QuboSolverQuantum(BaseSolver):
         Returns:
             QUBOSolution: Final result after execution and postprocessing.
         """
-        # 1) try trivial
+        # 1) try trivial else delegate to quantum solver
         if self.config.activate_trivial_solutions:
             trivial = self._trivial_solution()
             if trivial is not None:
                 return trivial
         self._check_size_limit()
 
-        # 2) else delegate to quantum or classical solver
-        # Delegate the solving task to the appropriate classical solver using the factory
-        if self.config.do_preprocessing:
-            # Apply preprocessing and change the solved QUBO by the reduced one
-            self.fixtures.preprocess()
-            if (
-                self.fixtures.reduced_qubo.coefficients is not None
-                and len(self.fixtures.reduced_qubo.coefficients) > 0
-            ):
-
-                self.instance = self.fixtures.reduced_qubo
-                self.n_fixed_variables_preprocessing = self.fixtures.n_fixed_variables
+        # 2) Apply preprocessing if requested
+        self.preprocess()
 
         embedding = self.embedding()
 
@@ -186,17 +173,12 @@ class QuboSolverQuantum(BaseSolver):
         )
 
         # Post-process fixations of the preprocessing and restore the original QUBO
-        if self.config.do_preprocessing:
-            solution = self.fixtures.post_process_fixation(solution)
-            self.instance = self.fixtures.instance
+        solution = self.post_process_fixation(solution)
+        solution = self.post_process(solution)
 
         solution.costs = solution.compute_costs(self.instance)
-
         solution.probabilities = solution.compute_probabilities()
         solution.sort_by_cost()
-
-        if self.config.do_postprocessing:
-            solution = self.fixtures.postprocess(solution)
 
         solution.bitstrings = solution.bitstrings.int()
         return solution
@@ -232,25 +214,15 @@ class QuboSolverClassical(BaseSolver):
             if trivial is not None:
                 return trivial
 
-        if self.config.do_preprocessing:
-            # Apply preprocessing and change the solved QUBO by the reduced one
-            self.fixtures.preprocess()
-            self.instance = self.fixtures.reduced_qubo
-            self.n_fixed_variables_preprocessing = self.fixtures.n_fixed_variables
+        self.preprocess()
 
         classical_solver = get_classical_solver(self.instance, self.config.classical)
         solution = (
             classical_solver.solve()
         )  # This is a reduced solution if pre-procesing is applied
 
-        if self.config.do_preprocessing:
-            # Post-process fixations of the preprocessing and restore the original QUBO
-            solution = self.fixtures.post_process_fixation(solution)
-            self.instance = self.fixtures.instance
-
-        if self.config.do_postprocessing:
-            # Apply postprocessing to the raw solution
-            solution = self.fixtures.postprocess(solution)
+        solution = self.post_process_fixation(solution)
+        solution = self.post_process(solution)
 
         solution.bitstrings = solution.bitstrings.int()
         return solution
@@ -305,7 +277,6 @@ class DecomposeQuboSolver(BaseSolver):
         )
         self._solver_factory = solver_factory
 
-        self.fixtures = Fixtures(self.instance, self.config)
         self.backend = self.config.backend
         self.device = self.config.device._device
 

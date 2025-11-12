@@ -174,6 +174,7 @@ class QUBODataset(Dataset):
         device: str = "cpu",
         dtype: torch.dtype = torch.float32,
         seed: int | None = None,
+        negative_offdiag_rate: float | None = None,
     ) -> QUBODataset:
         """
         Generates a QUBODataset with random QUBO coefficient matrices.
@@ -205,6 +206,8 @@ class QUBODataset(Dataset):
             dtype (torch.dtype, optional): Data type for the coefficient tensors.
                 Defaults to torch.float32.
             seed (int | None, optional): Seed for reproducibility. Defaults to None.
+            negative_offdiag_rate (float, optional): off-diagonal negative coefficients rate.
+                Defaults to None, meaning no off-diagonal coefficient will be present.
 
         Returns:
             QUBODataset: A dataset containing the generated coefficient matrices.
@@ -224,8 +227,12 @@ class QUBODataset(Dataset):
         idx = 0
         for d in densities:
             target = int(d * matrix_dim * matrix_dim)
-            for _ in range(n_matrices):
+            for idx in range(n_matrices):
+
+                # generate mask
                 mask = generate_symmetric_mask(matrix_dim, target, device, generator)
+
+                # random sampling and apply mask
                 random_vals = torch.empty(
                     matrix_dim, matrix_dim, device=device, dtype=dtype
                 ).uniform_(*coefficient_bounds, generator=generator)
@@ -238,7 +245,29 @@ class QUBODataset(Dataset):
 
                 off_diag = ~torch.eye(matrix_dim, dtype=torch.bool, device=device)
                 coeff[off_diag] = coeff[off_diag].abs()
-
+                if negative_offdiag_rate is not None and negative_offdiag_rate > 0:
+                    # make non-diagonal negative elements
+                    rate = float(max(0.0, min(1.0, negative_offdiag_rate)))
+                    upper_mask = torch.triu(mask, diagonal=1)
+                    nz_pairs = upper_mask.nonzero(as_tuple=False)
+                    M = nz_pairs.size(0)
+                    # Return K negative elements
+                    if M > 0:
+                        K = max(1, int(round(rate * M)))
+                        perm = torch.randperm(M, generator=generator, device=device)[:K]
+                        chosen = nz_pairs[perm]
+                        i_idx, j_idx = chosen[:, 0], chosen[:, 1]
+                        vals = coeff[i_idx, j_idx]
+                        neg_vals = -vals
+                        coeff[i_idx, j_idx] = neg_vals
+                        coeff[j_idx, i_idx] = neg_vals
+                    else:
+                        # Edge case to force creating one a negative element
+                        i, j = 0, 1 if matrix_dim > 1 else (0, 0)
+                        coeff[i, j] = -torch.rand(1, device=device, generator=generator) * abs(
+                            coefficient_bounds[0]
+                        )
+                        coeff[j, i] = coeff[i, j]
                 if not (coeff.diag() < 0).any():
                     diag_vals = coeff.diag()
                     non_neg = (diag_vals >= 0).nonzero(as_tuple=True)[0]
@@ -259,9 +288,9 @@ class QUBODataset(Dataset):
                             .item()
                         )
                     coeff[diag_idx, diag_idx] = neg_val
-
                 if not (coeff == coefficient_bounds[1]).any():
-                    nz = (coeff != 0).nonzero(as_tuple=False)
+                    # do not select negative coefficients
+                    nz = (coeff > 0).nonzero(as_tuple=False)
                     filtered = [
                         idx_pair
                         for idx_pair in nz.tolist()
@@ -292,7 +321,6 @@ class QUBODataset(Dataset):
                         coeff[j_ch, i_ch] = coefficient_bounds[1]
 
                 coefficients[:, :, idx] = coeff
-                idx += 1
 
         # Step 4: Return the dataset.
         return cls(coefficients=coefficients)

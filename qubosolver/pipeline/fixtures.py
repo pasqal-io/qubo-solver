@@ -324,7 +324,6 @@ class Fixtures:
         """
         fixed = fixation_rule(self.reduced_qubo)
         self.reduce_qubo(fixed)
-
         if fixed:
             self.fixed_var_dict_list.append(fixed)
 
@@ -368,9 +367,9 @@ class Fixtures:
                     bitstring.insert(position, bit_value)
             return bitstring
 
-        should_restore = not self.config.use_quantum or (
-            self.instance.size is not None and len(bitstring_list[0]) < self.instance.size
-        )
+        should_restore = not self.config.use_quantum or (self.instance.size is not None)
+        assert self.instance.size
+        should_restore = should_restore and (len(bitstring_list[0]) < self.instance.size)
 
         if should_restore:
             bitstring_list = [reinsert_fixed_variables(bitstring) for bitstring in bitstring_list]

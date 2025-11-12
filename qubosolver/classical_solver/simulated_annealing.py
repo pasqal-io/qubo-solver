@@ -30,12 +30,14 @@ def qubo_simulated_annealing(
         A `QUBOSolution` object containing:
             - `bitstrings`: The best binary solution(s) found.
             - `costs`: Corresponding objective values as tensors.
+            - `counts`: Corresponding frequencies.
+            - `probabilities`: Frequencies divided by `top_k`.
 
     Example:
         >>> solution = qubo_simulated_annealing(qubo)
         >>> print(solution.bitstrings, solution.costs)
     """
-    bitstrings, costs = simulated_annealing(
+    bitstrings, costs, counts = simulated_annealing(
         Q=qubo.coefficients,
         top_k=top_k,
         max_iter=max_iter,
@@ -46,7 +48,9 @@ def qubo_simulated_annealing(
         start=start,
         energy_tol=energy_tol,
     )
-    return QUBOSolution(bitstrings=bitstrings, costs=costs)
+    return QUBOSolution(
+        bitstrings=bitstrings, costs=costs, counts=counts, probabilities=counts.float() / top_k
+    )
 
 
 @torch.no_grad()
@@ -60,7 +64,7 @@ def simulated_annealing(
     seed: int | None = None,
     start: torch.Tensor | None = None,
     energy_tol: float = 0.0,
-) -> tuple[torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     Perform Simulated Annealing (SA) for a Quadratic Unconstrained Binary Optimization (QUBO)
     problem using PyTorch, returning the top-K unique low-energy solutions found.
@@ -100,6 +104,7 @@ def simulated_annealing(
             Returned on CPU for easy inspection and serialization.
         energies: torch.Tensor of shape (m,), dtype=torch.float64
             Corresponding energy values (xᵀ Q x) in ascending order.
+        counts: Frequencies each unique bitstring was found.
 
     Notes:
         The algorithm uses an **incremental energy update** for O(n) cost per accepted flip:
@@ -118,7 +123,7 @@ def simulated_annealing(
     ...     [-2.0, 1.0,  0.0],
     ...     [0.0,  0.0,  0.5],
     ... ])
-    >>> solutions, energies = simulated_annealing_qubo_topk_torch(
+    >>> solutions, energies, counts = simulated_annealing_qubo_topk_torch(
     ...     Q, top_k=3, max_iter=1000, seed=42
     ... )
     >>> energies
@@ -214,4 +219,9 @@ def simulated_annealing(
     top_sol.sort(key=lambda t: t[0])
     bitstrings = torch.stack([b for (_, b) in top_sol], dim=0).to(torch.uint8)
     energies = torch.tensor([e for (e, _) in top_sol], dtype=torch.float64)
-    return bitstrings, energies
+
+    unique_bits, inverse_indices, counts = torch.unique(
+        bitstrings, dim=0, return_inverse=True, return_counts=True
+    )
+    energies = energies[inverse_indices]
+    return unique_bits, energies, counts
