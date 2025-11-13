@@ -66,14 +66,14 @@ def load_qubo_instance(filepath: str | Path) -> QUBOInstance:
     return instance
 
 
-def save_qubo_dataset(dataset: QUBODataset, filepath: str) -> None:
+def save_qubo_dataset(dataset: QUBODataset, filepath: str | Path) -> None:
     """
     Saves a QUBODataset to a file.
 
     Args:
         dataset (QUBODataset):
             The QUBODataset object to save.
-        filepath (str):
+        filepath (str | Path):
             Path to the file where the QUBODataset will be saved.
 
     Notes:
@@ -95,14 +95,14 @@ def save_qubo_dataset(dataset: QUBODataset, filepath: str) -> None:
     torch.save(data, filepath)
 
 
-def load_qubo_dataset(filepath: str) -> QUBODataset:
+def load_qubo_dataset(filepath: str | Path) -> QUBODataset:
     """
     Loads a QUBODataset from a file.
     Notes:
         The file should contain data saved in the format used by `save_qubo_dataset`.
 
     Args:
-        filepath (str):
+        filepath (str | Path):
             Path to the file from which the QUBODataset will be loaded.
 
     Returns:

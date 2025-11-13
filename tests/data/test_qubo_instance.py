@@ -23,6 +23,11 @@ def test_valid_qubo_passes_without_error() -> None:
 
     qi.set_coefficients()
     assert qi.coefficients.shape == (5, 5)
+    qi.set_coefficients({(i, i): 2.0 for i in range(5)})
+    assert qi.coefficients.shape == (5, 5)
+    for i in range(5):
+        assert qi.coefficients[i, i] == 2.0
+
     qi._expand_size(10)
     assert qi.coefficients.shape == (10, 10)
 
