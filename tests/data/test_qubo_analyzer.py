@@ -11,26 +11,26 @@ from qubosolver.config import SolverConfig, ClassicalConfig
 from qubosolver.qubo_types import ClassicalSolverType
 
 
-# @VV: I didn't get, should I define it as a fixture?
-@pytest.fixture
-def basic_solution() -> QUBOSolution:
-    return QUBOSolution(
-        bitstrings=torch.tensor([[0, 1, 0], [1, 0, 1]]),
-        costs=torch.tensor([1.0, 2.0]),
-        counts=torch.tensor([15, 5]),
-        probabilities=torch.tensor([0.75, 0.25]),
-    )
-
-
-@pytest.fixture
-def analyzer(basic_solution: QUBOSolution) -> QUBOAnalyzer:
-    return QUBOAnalyzer(solutions=[basic_solution], labels=["sol1"])
-
-
 def test_init_single_solution(basic_solution: QUBOSolution) -> None:
     analyzer = QUBOAnalyzer(solutions=basic_solution)
     assert len(analyzer.solutions) == 1
     assert analyzer.labels == ["0"]
+
+    analyzer = QUBOAnalyzer(solutions=basic_solution, labels="0")
+    assert len(analyzer.solutions) == 1
+    assert analyzer.labels == ["0"]
+
+
+def test_errors(basic_solution: QUBOSolution) -> None:
+
+    with pytest.raises(TypeError):
+        QUBOAnalyzer(solutions=[basic_solution, 0])  # type:ignore[list-item]
+
+    with pytest.raises(TypeError):
+        QUBOAnalyzer(solutions=basic_solution, labels=0)  # type:ignore[arg-type]
+
+    with pytest.raises(ValueError):
+        QUBOAnalyzer(solutions=basic_solution, labels=["0", "1"])
 
 
 def test_tensor_to_bitstrings() -> None:

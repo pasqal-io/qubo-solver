@@ -173,3 +173,27 @@ def test_high_dimension_increase_after_equilibrium() -> None:
         ]
     )
     em_blade(qubo, device=device, dimensions=[2, 2, 10], steps_per_round=100)
+
+
+def test_drawing() -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    qubo_graph = nx.Graph()
+    qubo_graph.add_nodes_from([i for i in range(2)])
+    qubo_graph.add_edge(0, 1, weight=device.rabi_from_blockade(1))
+
+    plt.close("all")
+    assert len(plt.get_fignums()) == 0
+    update_positions(
+        positions=np.array([[-10, 0], [10, 0]]),
+        qubo_graph=qubo_graph,
+        device=device,
+        max_dist=1,
+        max_distance_to_walk=(0, 0, 1),
+        draw_step=True,
+    )
+    assert len(plt.get_fignums()) > 0
+    plt.close("all")

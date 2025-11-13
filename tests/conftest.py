@@ -9,7 +9,8 @@ from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
 
-from qubosolver import QUBOInstance
+from qubosolver import QUBOInstance, QUBOSolution
+from qubosolver.qubo_analyzer import QUBOAnalyzer
 from qubosolver.config import (
     EmbeddingConfig,
     DriveShapingConfig,
@@ -17,6 +18,21 @@ from qubosolver.config import (
     LocalEmulator,
 )
 from qubosolver.qubo_types import LayoutType, DriveType
+
+
+@pytest.fixture
+def basic_solution() -> QUBOSolution:
+    return QUBOSolution(
+        bitstrings=torch.tensor([[0, 1, 0], [1, 0, 1]]),
+        costs=torch.tensor([1.0, 2.0]),
+        counts=torch.tensor([15, 5]),
+        probabilities=torch.tensor([0.75, 0.25]),
+    )
+
+
+@pytest.fixture
+def analyzer(basic_solution: QUBOSolution) -> QUBOAnalyzer:
+    return QUBOAnalyzer(solutions=[basic_solution], labels=["sol1"])
 
 
 @pytest.fixture

@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import pytest
 import torch
+import os
+from pathlib import Path
 
 import numpy as np
 from qubosolver import QUBODataset
 from qubosolver.utils import calculate_density
+from qubosolver.saveload import save_qubo_dataset, load_qubo_dataset
 
 
 @pytest.mark.parametrize("negative_offdiag_rate", [None, 0.2])
@@ -27,6 +30,15 @@ def test_dataset_generation(negative_offdiag_rate: float | None) -> None:
         negative_offdiag_rate=negative_offdiag_rate,
     )
     assert len(dataset) == num_instances
+
+    # test also save and load
+    file_path = Path(__file__).parent / "qubo_dataset_test.pt"
+    save_qubo_dataset(dataset, file_path)
+    assert os.path.exists(file_path)
+    loaded_data = load_qubo_dataset(file_path)
+    assert len(loaded_data) == num_instances
+    if os.path.exists(file_path):
+        os.remove(file_path)
 
     off_diag = ~torch.eye(size, dtype=torch.bool)
 
