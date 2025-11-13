@@ -21,6 +21,11 @@ def test_valid_qubo_passes_without_error() -> None:
     # Verify that the tensor is stored correctly
     assert qi.coefficients.shape == (5, 5)
 
+    qi.set_coefficients()
+    assert qi.coefficients.shape == (5, 5)
+    qi._expand_size(10)
+    assert qi.coefficients.shape == (10, 10)
+
 
 def test_size_exceeds_limit_triggers_system_exit() -> None:
     from qubosolver.solver import QuboSolverClassical, QuboSolverQuantum
@@ -36,6 +41,7 @@ def test_size_exceeds_limit_triggers_system_exit() -> None:
     match_msg = "QUBO size 81×81 exceeds the maximum supported size of 80×80"
     with pytest.raises(ValueError, match=match_msg):
         QuboSolverQuantum(qi)
+
 
 def test_save_load(simple_qubo_instance: QUBOInstance) -> None:
 
