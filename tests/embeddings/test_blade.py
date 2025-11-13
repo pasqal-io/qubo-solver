@@ -177,6 +177,7 @@ def test_high_dimension_increase_after_equilibrium() -> None:
 
 def test_drawing() -> None:
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
