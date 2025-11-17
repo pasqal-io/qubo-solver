@@ -7,7 +7,7 @@ name = "qubo-solver"
 description = "A Quadratic Unconstrained Binary Optimization (QUBO) solver library using quantum and classical approaches."
 readme = "README.md"
 version = "0.4.0"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 license = { text = "MIT-derived" }
 keywords = ["quantum", "qubo", "solver", "optimization", "combinatorial"]
 authors = [
@@ -27,7 +27,6 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
-  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
