@@ -55,33 +55,30 @@ class BaseClassicalSolver(ABC):
         pass
 
 
-def qubo_instance_to_sparsepairs(
-    instance: QUBOInstance, tol: float = 1e-8
-) -> List[cplex.SparsePair]:
-    if instance.coefficients is None:
-        raise ValueError("The QUBO instance does not have coefficients.")
-
-    matrix = instance.coefficients.cpu().numpy()
-    size = matrix.shape[0]
-    sparsepairs: List[cplex.SparsePair] = []
-
-    for i in range(size):
-        indices: List[int] = []
-        values: List[float] = []
-        for j in range(size):
-            coeff = matrix[i, j] * 2
-            if abs(coeff) > tol:
-                indices.append(j)
-                values.append(float(coeff))  # <<< conversion ici
-        sparsepairs.append(cplex.SparsePair(ind=indices, val=values))
-
-    return sparsepairs
-
-
 class CplexSolver(BaseClassicalSolver):
     """
     QUBO solver based on CPLEX.
     """
+
+    def _qubo_instance_to_sparsepairs(self, tol: float = 1e-8) -> List[cplex.SparsePair]:
+        if self.instance.coefficients is None:
+            raise ValueError("The QUBO instance does not have coefficients.")
+
+        matrix = self.instance.coefficients.cpu().numpy()
+        size = matrix.shape[0]
+        sparsepairs: List[cplex.SparsePair] = []
+
+        for i in range(size):
+            indices: List[int] = []
+            values: List[float] = []
+            for j in range(size):
+                coeff = matrix[i, j] * 2
+                if abs(coeff) > tol:
+                    indices.append(j)
+                    values.append(float(coeff))  # <<< conversion ici
+            sparsepairs.append(cplex.SparsePair(ind=indices, val=values))
+
+        return sparsepairs
 
     def solve(self) -> QUBOSolution:
         # Extract configuration parameters using new keys.
@@ -100,7 +97,7 @@ class CplexSolver(BaseClassicalSolver):
             return QUBOSolution(bitstrings=bitstring_tensor, costs=cost_tensor)
 
         # Convert the coefficient matrix into CPLEX sparse pairs format using the conversion tool.
-        sparsepairs: List[cplex.SparsePair] = qubo_instance_to_sparsepairs(self.instance)
+        sparsepairs: List[cplex.SparsePair] = self._qubo_instance_to_sparsepairs()
 
         # Open a log file.
         log_file = open(log_path, "w")
