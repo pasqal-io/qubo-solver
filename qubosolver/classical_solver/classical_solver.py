@@ -21,9 +21,6 @@ from qubosolver.config import ClassicalConfig
 from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.classical_solver.simulated_annealing import qubo_simulated_annealing
 from qubosolver.classical_solver.tabu_search import qubo_tabu_search
-from qubosolver.classical_solver.classical_solver_conversion_tools import (
-    qubo_instance_to_sparsepairs,
-)
 from qubosolver.qubo_types import ClassicalSolverType
 from qubosolver.utils.qubo_eval import qubo_cost
 
@@ -56,6 +53,29 @@ class BaseClassicalSolver(ABC):
             costs, and optionally counts and probabilities.
         """
         pass
+
+
+def qubo_instance_to_sparsepairs(
+    instance: QUBOInstance, tol: float = 1e-8
+) -> List[cplex.SparsePair]:
+    if instance.coefficients is None:
+        raise ValueError("The QUBO instance does not have coefficients.")
+
+    matrix = instance.coefficients.cpu().numpy()
+    size = matrix.shape[0]
+    sparsepairs: List[cplex.SparsePair] = []
+
+    for i in range(size):
+        indices: List[int] = []
+        values: List[float] = []
+        for j in range(size):
+            coeff = matrix[i, j] * 2
+            if abs(coeff) > tol:
+                indices.append(j)
+                values.append(float(coeff))  # <<< conversion ici
+        sparsepairs.append(cplex.SparsePair(ind=indices, val=values))
+
+    return sparsepairs
 
 
 class CplexSolver(BaseClassicalSolver):
