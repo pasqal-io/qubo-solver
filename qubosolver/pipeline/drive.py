@@ -144,9 +144,9 @@ class AdiabaticDriveShaper(BaseDriveShaper):
             ~torch.eye(QUBO.shape[0], dtype=torch.bool)
         ]  # Selecting off-diagonal terms of the Qubo with a mask
 
+        mean_coeffs = torch.mean(off_diag).item()
         Omega = min(
-            torch.max(off_diag).item(),
-            # self._find_max_interaction_coeff_vectorized(),
+            max(mean_coeffs, rydberg_global.min_avg_amp),
             rydberg_global.max_amp - 1e-9,
         )
 
@@ -154,7 +154,9 @@ class AdiabaticDriveShaper(BaseDriveShaper):
         delta_f = -delta_0
 
         # enforces AnalogDevice max sequence duration since Digital's has no max duration
-        max_seq_duration = AnalogDevice.max_sequence_duration
+        max_seq_duration = (
+            self.device._device.max_sequence_duration or AnalogDevice.max_sequence_duration
+        )
         assert max_seq_duration is not None
 
         max_seq_duration /= TIME
