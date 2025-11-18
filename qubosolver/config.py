@@ -450,7 +450,7 @@ class SolverConfig(Config):
             if hasattr(device, "min_layout_traps"):
                 if self.embedding.greedy_traps < device.min_layout_traps:
                     self.embedding = self.embedding.model_copy(
-                        update={"greedy_traps": device.value.min_layout_traps}
+                        update={"greedy_traps": device.min_layout_traps}
                     )
             if hasattr(device, "min_atom_distance"):
                 greedy_spacing_device = float(device.min_atom_distance)
