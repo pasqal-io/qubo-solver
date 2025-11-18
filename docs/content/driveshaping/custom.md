@@ -53,8 +53,9 @@ class LimitedAdiabaticDriveShaper(BaseDriveShaper):
 
         rydberg_global = self.device._device.channels["rydberg_global"]
 
+        mean_coeffs = torch.mean(off_diag).item()
         Omega = min(
-            torch.max(off_diag).item(),
+            max(mean_coeffs, rydberg_global.min_avg_amp),
             rydberg_global.max_amp - 1e-9,
         )
 

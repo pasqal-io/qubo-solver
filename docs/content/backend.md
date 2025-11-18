@@ -109,6 +109,7 @@ if PASSWORD is not None:
 We can also target a remote QPU as follows:
 
 ```python exec="on" source="material-block"
+import qoolqit
 from qubosolver.config import SolverConfig, PasqalCloud, QPU
 from pulser_pasqal.backends import EmuFreeBackendV2, EmuMPSBackend
 
@@ -122,9 +123,11 @@ if PASSWORD is not None:
         password=PASSWORD,
         project_id=PROJECT_ID,
     )
+    # specify the QPU device
+    device = qoolqit.devices.Device(pulser_device=connection.fetch_available_devices()["FRESNEL"])
     config = SolverConfig(
         use_quantum=True,
-        backend = QPU(connection=connection, runs=500),
+        backend = QPU(connection=connection, runs=500), device=device,
     )
 
 ```
