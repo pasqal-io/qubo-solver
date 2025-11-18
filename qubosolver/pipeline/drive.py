@@ -83,6 +83,31 @@ class AdiabaticDriveShaper(BaseDriveShaper):
     A Standard Adiabatic Drive shaper.
     """
 
+    def _find_max_interaction_coeff_vectorized(self) -> float:
+        """
+        Finds the maximum q_ij such that q_ii + q_jj + q_ij + q_ji < 0,
+        using vectorized operations.
+
+        Returns:
+            float: The maximum q_ij value found, inf if no value satisfies
+                the confition.
+        """
+        Q = self.instance.coefficients
+        n = Q.shape[0]
+        i_indices, j_indices = torch.meshgrid(torch.arange(n), torch.arange(n), indexing="ij")
+        q_ii = Q[i_indices, i_indices]
+        q_jj = Q[j_indices, j_indices]
+
+        q_ij = Q[i_indices, j_indices]
+        q_ji = Q[j_indices, i_indices]
+
+        condition_mask = (q_ii + q_jj + q_ij + q_ji) < 0
+        valid_q_ij_values = Q[condition_mask]
+        if valid_q_ij_values.numel() == 0:
+            return float("inf")
+
+        return float(torch.max(valid_q_ij_values).cpu().item())
+
     def generate(
         self,
         register: Register,
@@ -113,14 +138,10 @@ class AdiabaticDriveShaper(BaseDriveShaper):
         max_node_weight = max(weights_list)
         norm_weights_list = [(1 - (w / max_node_weight)) / TIME for w in weights_list]
 
-        off_diag = QUBO[
-            ~torch.eye(QUBO.shape[0], dtype=torch.bool)
-        ]  # Selecting off-diagonal terms of the Qubo with a mask
-
         rydberg_global = self.device._device.channels["rydberg_global"]
 
         Omega = min(
-            torch.max(off_diag).item(),
+            self._find_max_interaction_coeff_vectorized(),
             rydberg_global.max_amp - 1e-9,
         )
 
