@@ -40,7 +40,7 @@ For the Adiabatic Drive, the values of the amplitude $\Omega$ (Rabi frequency) a
 
 - Amplitude: has a sine-like shape, starting from $0$ and ending in $0$, with a maximum value being the maximum value among the off-diagonal terms of the QUBO matrix:
 
-$$\Omega_{max} = max(Q_{ij}, i!=j, Q_{ii} + Q_{jj} + Q_{ij} + Q_{ji} < 0)$$
+$$\Omega_{max} = max(Q_{ij})$$
 
 If $\Omega_{max}$ reaches a value above the maximum amplitude allowed by the device, it uses the `max_amp` value taken from the device specs as $\Omega_{max}$.
 

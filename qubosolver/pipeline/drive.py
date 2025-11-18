@@ -140,8 +140,13 @@ class AdiabaticDriveShaper(BaseDriveShaper):
 
         rydberg_global = self.device._device.channels["rydberg_global"]
 
+        off_diag = QUBO[
+            ~torch.eye(QUBO.shape[0], dtype=torch.bool)
+        ]  # Selecting off-diagonal terms of the Qubo with a mask
+
         Omega = min(
-            self._find_max_interaction_coeff_vectorized(),
+            torch.max(off_diag).item(),
+            # self._find_max_interaction_coeff_vectorized(),
             rydberg_global.max_amp - 1e-9,
         )
 
