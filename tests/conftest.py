@@ -167,6 +167,16 @@ def qubo_instance_for_embedding() -> QUBOInstance:
     )
 
 
+@pytest.fixture(
+    params=[
+        "simple_qubo_instance",
+        "qubo_instance_for_embedding",
+    ],
+)
+def qubo_for_testing_many_devices(request: pytest.Fixture) -> QUBOInstance:
+    return request.getfixturevalue(request.param)  # type: ignore[no-any-return]
+
+
 def generate_qubo_matrix(
     size: int, density: float, value_range: tuple[int, int], seed: int | None = None
 ) -> torch.Tensor:

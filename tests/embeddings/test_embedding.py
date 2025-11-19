@@ -16,18 +16,18 @@ from qubosolver.solver import QuboSolver
 
 @pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
 def test_embeddings_different_devices(
-    qubo_instance_for_embedding: QUBOInstance, local_device: Device, embedding_method: str
+    qubo_for_testing_many_devices: QUBOInstance, local_device: Device, embedding_method: str
 ) -> None:
     config = SolverConfig(
         use_quantum=True,
         embedding=EmbeddingConfig(
-            embedding_method=embedding_method, greedy_traps=qubo_instance_for_embedding.size
+            embedding_method=embedding_method, greedy_traps=qubo_for_testing_many_devices.size
         ),
         do_postprocessing=False,
         do_preprocessing=False,
         device=local_device,
     )
-    solver = QuboSolver(qubo_instance_for_embedding, config)
+    solver = QuboSolver(qubo_for_testing_many_devices, config)
     assert solver.embedding()
 
 

@@ -68,7 +68,7 @@ def test_run_local_backends(
     ],
 )
 def test_solver_different_devices_drives(
-    qubo_instance_for_embedding: QUBOInstance,
+    qubo_for_testing_many_devices: QUBOInstance,
     local_device: Device,
     drive_shaping_method: str,
 ) -> None:
@@ -79,6 +79,6 @@ def test_solver_different_devices_drives(
         do_preprocessing=False,
         device=local_device,
     )
-    solver = QuboSolver(qubo_instance_for_embedding, config)
+    solver = QuboSolver(qubo_for_testing_many_devices, config)
     solution = solver.solve()
     assert solution
