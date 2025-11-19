@@ -35,12 +35,11 @@ class LimitedAdiabaticDriveShaper(BaseDriveShaper):
     def generate(
         self,
         register: Register,
-        instance: QUBOInstance,
     ) -> tuple[Drive, QUBOSolution]:
 
         TIME, _, _ = self.device.converter.factors
 
-        QUBO = instance.coefficients
+        QUBO = self.instance.coefficients
         weights_list = torch.abs(torch.diag(QUBO)).tolist()
         max_node_weight = max(weights_list)
         norm_weights_list = [(1 - (w / max_node_weight)) / TIME for w in weights_list]
@@ -54,17 +53,22 @@ class LimitedAdiabaticDriveShaper(BaseDriveShaper):
         rydberg_global = self.device._device.channels["rydberg_global"]
 
         mean_coeffs = torch.mean(off_diag).item()
-        Omega = min(
-            max(mean_coeffs, rydberg_global.min_avg_amp),
-            rydberg_global.max_amp - 1e-9,
-        )
+        Omega = mean_coeffs
+        if rydberg_global.min_avg_amp:
+            Omega = max(Omega, rydberg_global.min_avg_amp)
+        if rydberg_global.max_amp:
+            Omega = min(
+                Omega,
+                rydberg_global.max_amp - 1e-9,
+            )
 
         delta_0 = torch.min(torch.diag(QUBO)).item()
         delta_f = -delta_0
 
-        max_seq_duration = AnalogDevice.max_sequence_duration
-        assert max_seq_duration is not None
-
+        # enforces AnalogDevice max sequence duration if device has no max
+        max_seq_duration = (
+            self.device._device.max_sequence_duration or AnalogDevice.max_sequence_duration
+        )
         # dividing by 20 here
         max_seq_duration = max_seq_duration // 20
 

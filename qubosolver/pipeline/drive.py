@@ -53,23 +53,38 @@ class BaseDriveShaper(ABC):
         self.backend = backend
         self.device = self.config.device
 
+        self.qubo_coefficients = instance.coefficients
+
         # check if device allow DMM
         self.dmm = self.config.drive_shaping.dmm and (
             len(list(self.config.device._device.dmm_channels.keys())) > 0
         )
 
+    def _compute_norm_weights(self) -> list[float]:
+        """Compute normalization weights.
+
+        Returns:
+            list[float]: normalization weights.
+        """
+        TIME, _, _ = self.device.converter.factors
+        weights_list = torch.abs(torch.diag(self.qubo_coefficients)).tolist()
+        max_node_weight = max(weights_list) if weights_list else 1.0
+        norm_weights_list = [
+            (1 - (w / max_node_weight)) / TIME if max_node_weight != 0 else 0.0
+            for w in weights_list
+        ]
+        return norm_weights_list
+
     @abstractmethod
     def generate(
         self,
         register: Register,
-        instance: QUBOInstance,
     ) -> tuple[Drive, QUBOSolution]:
         """
         Generate a drive based on the problem and the provided register.
 
         Args:
             register (Register): The physical register layout.
-            instance (QUBOInstance): The QUBO instance.
 
         Returns:
             Drive: A generated Drive.
@@ -92,7 +107,7 @@ class AdiabaticDriveShaper(BaseDriveShaper):
             float: The maximum q_ij value found, inf if no value satisfies
                 the confition.
         """
-        Q = self.instance.coefficients
+        Q = self.qubo_coefficients
         n = Q.shape[0]
         i_indices, j_indices = torch.meshgrid(torch.arange(n), torch.arange(n), indexing="ij")
         q_ii = Q[i_indices, i_indices]
@@ -111,14 +126,12 @@ class AdiabaticDriveShaper(BaseDriveShaper):
     def generate(
         self,
         register: Register,
-        instance: QUBOInstance,
     ) -> tuple[Drive, QUBOSolution]:
         """
         Generate an adiabatic drive based on the QUBO instance and physical register.
 
         Args:
             register (Register): The physical register layout for the quantum system.
-            instance (QUBOInstance): The QUBO instance.
 
         Returns:
             tuple[Drive, QUBOSolution | None]:
@@ -132,11 +145,9 @@ class AdiabaticDriveShaper(BaseDriveShaper):
 
         # for conversions to qoolqit
         TIME, _, _ = self.device.converter.factors
+        QUBO = self.qubo_coefficients
 
-        QUBO = instance.coefficients
-        weights_list = torch.abs(torch.diag(QUBO)).tolist()
-        max_node_weight = max(weights_list)
-        norm_weights_list = [(1 - (w / max_node_weight)) / TIME for w in weights_list]
+        norm_weights_list = self._compute_norm_weights()
 
         rydberg_global = self.device._device.channels["rydberg_global"]
 
@@ -145,15 +156,20 @@ class AdiabaticDriveShaper(BaseDriveShaper):
         ]  # Selecting off-diagonal terms of the Qubo with a mask
 
         mean_coeffs = torch.mean(off_diag).item()
-        Omega = min(
-            max(mean_coeffs, rydberg_global.min_avg_amp),
-            rydberg_global.max_amp - 1e-9,
-        )
+
+        Omega = mean_coeffs
+        if rydberg_global.min_avg_amp:
+            Omega = max(Omega, rydberg_global.min_avg_amp)
+        if rydberg_global.max_amp:
+            Omega = min(
+                Omega,
+                rydberg_global.max_amp - 1e-9,
+            )
 
         delta_0 = torch.min(torch.diag(QUBO)).item()
         delta_f = -delta_0
 
-        # enforces AnalogDevice max sequence duration since Digital's has no max duration
+        # enforces AnalogDevice max sequence duration if device has no max
         max_seq_duration = (
             self.device._device.max_sequence_duration or AnalogDevice.max_sequence_duration
         )
@@ -248,24 +264,22 @@ class OptimizedDriveShaper(BaseDriveShaper):
     def generate(
         self,
         register: Register,
-        instance: QUBOInstance,
     ) -> tuple[Drive, QUBOSolution]:
         """
         Generate a drive via optimization.
 
         Args:
             register (Register): The physical register layout.
-            instance (QUBOInstance): The QUBO instance.
 
         Returns:
             Drive: A generated Drive.
             QUBOSolution: An instance of the qubo solution
         """
         # TODO: Harmonize the output of the pulse_shaper generate
-        QUBO = instance.coefficients
+        QUBO = self.qubo_coefficients
         self.register = register
 
-        self.norm_weights_list = self._compute_norm_weights(QUBO)
+        self.norm_weights_list = self._compute_norm_weights()
 
         n_amp = 3
         n_det = 3
@@ -350,24 +364,6 @@ class OptimizedDriveShaper(BaseDriveShaper):
         )
         assert self.drive is not None
         return self.drive, solution
-
-    def _compute_norm_weights(self, QUBO: torch.Tensor) -> list[float]:
-        """Compute normalization weights.
-
-        Args:
-            QUBO (torch.Tensor): Qubo coefficients.
-
-        Returns:
-            list[float]: normalization weights.
-        """
-        TIME, _, _ = self.device.converter.factors
-        weights_list = torch.abs(torch.diag(QUBO)).tolist()
-        max_node_weight = max(weights_list) if weights_list else 1.0
-        norm_weights_list = [
-            (1 - (w / max_node_weight)) / TIME if max_node_weight != 0 else 0.0
-            for w in weights_list
-        ]
-        return norm_weights_list
 
     def build_drive(self, params: list) -> Drive:
         """Build the drive from a list of parameters for the objective.

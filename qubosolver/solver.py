@@ -124,7 +124,7 @@ class QuboSolverQuantum(BaseSolver):
                     - QUBOSolution: Initial solution of generated from drive shaper
 
         """
-        drive, qubo_solution = self.drive_shaper.generate(embedding, self.instance)
+        drive, qubo_solution = self.drive_shaper.generate(embedding)
 
         self._drive = drive
         return drive, qubo_solution

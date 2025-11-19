@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import pytest
-from qubosolver.config import EmbeddingConfig, SolverConfig, LocalEmulator
+from qoolqit.devices import Device
+from qubosolver.config import EmbeddingConfig, DriveShapingConfig, SolverConfig, LocalEmulator
 from qubosolver.qubo_types import EmbedderType
 from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical
 
@@ -57,3 +58,28 @@ def test_run_local_backends(
     solutions = solver.solve()
     # theoretically -4.4000 can be found
     assert solutions.costs.min().item() <= -3.0
+
+
+@pytest.mark.parametrize(
+    "drive_shaping_method",
+    [
+        "adiabatic",
+    ],
+)
+def test_solver_different_devices_drives(
+    qubo_instance_for_embedding: QUBOInstance,
+    local_device: Device,
+    local_backend: LocalEmulator,
+    drive_shaping_method: str,
+) -> None:
+    config = SolverConfig(
+        use_quantum=True,
+        drive_shaping=DriveShapingConfig(drive_shaping_method=drive_shaping_method),
+        do_postprocessing=False,
+        do_preprocessing=False,
+        backend=local_backend,
+        device=local_device,
+    )
+    solver = QuboSolver(qubo_instance_for_embedding, config)
+    solution = solver.solve()
+    assert solution
