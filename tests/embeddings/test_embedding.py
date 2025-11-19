@@ -14,7 +14,21 @@ from qubosolver.pipeline.embedder import GreedyEmbedder, get_embedder
 from qubosolver.solver import QuboSolver
 
 
-devices: list[Device] = [AnalogDevice(), DigitalAnalogDevice()]
+@pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
+def test_embeddings_different_devices(
+    qubo_instance_for_embedding: QUBOInstance, local_device: Device, embedding_method: str
+) -> None:
+    config = SolverConfig(
+        use_quantum=True,
+        embedding=EmbeddingConfig(
+            embedding_method=embedding_method, greedy_traps=qubo_instance_for_embedding.size
+        ),
+        do_postprocessing=False,
+        do_preprocessing=False,
+        device=local_device,
+    )
+    solver = QuboSolver(qubo_instance_for_embedding, config)
+    assert solver.embedding()
 
 
 def test_custom_embedder(simple_qubo_instance: QUBOInstance) -> None:
@@ -31,7 +45,7 @@ def test_custom_embedder(simple_qubo_instance: QUBOInstance) -> None:
     assert isinstance(shaper, MockGreedyEmbedder)
 
 
-def test_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) -> None:
+def test_correctness_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) -> None:
     assert qubo_instance_for_embedding.size is not None
     config = SolverConfig(
         use_quantum=True,
@@ -59,12 +73,12 @@ def test_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) -> None:
         assert np.allclose(x, x_, atol=1e-3) and np.allclose(y, y_, atol=1e-3)
 
 
-def test_greedy_max_radial_distance_constraint(
+def test_error_greedy_max_radial_distance_constraint(
     qubo_instance_for_embedding: QUBOInstance,
 ) -> None:
     assert qubo_instance_for_embedding.size is not None
 
-    for device in devices:
+    for device in [AnalogDevice(), DigitalAnalogDevice()]:
         greedy_config = SolverConfig(
             use_quantum=True,
             embedding=EmbeddingConfig(
@@ -81,7 +95,7 @@ def test_greedy_max_radial_distance_constraint(
             solver.embedding()
 
 
-def test_greedy_max_radial_distance_constraint_with_extra_greedy_traps(
+def test_correctness_greedy_max_radial_distance_constraint_with_extra_greedy_traps(
     qubo_instance_for_embedding: QUBOInstance,
 ) -> None:
     assert qubo_instance_for_embedding.size is not None
@@ -107,7 +121,7 @@ def test_greedy_max_radial_distance_constraint_with_extra_greedy_traps(
         ).tolist(),
     ]
 
-    for scenario_idx, device in enumerate(devices):
+    for scenario_idx, device in enumerate([AnalogDevice(), DigitalAnalogDevice()]):
         conv = device.converter.factors[2]
         greedy_config = SolverConfig(
             use_quantum=True,
