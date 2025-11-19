@@ -37,7 +37,7 @@ class LimitedAdiabaticDriveShaper(BaseDriveShaper):
         register: Register,
     ) -> tuple[Drive, QUBOSolution]:
 
-        TIME, _, _ = self.device.converter.factors
+        TIME, ENERGY, _ = self.device.converter.factors
 
         QUBO = self.instance.coefficients
         weights_list = torch.abs(torch.diag(QUBO)).tolist()
@@ -52,15 +52,20 @@ class LimitedAdiabaticDriveShaper(BaseDriveShaper):
 
         rydberg_global = self.device._device.channels["rydberg_global"]
 
-        mean_coeffs = torch.mean(off_diag).item()
-        Omega = mean_coeffs
-        if rydberg_global.min_avg_amp:
-            Omega = max(Omega, rydberg_global.min_avg_amp)
-        if rydberg_global.max_amp:
-            Omega = min(
-                Omega,
-                rydberg_global.max_amp - 1e-9,
+        Omega = torch.mean(off_diag).item()
+        sign = 1.0 if Omega >= 0 else -1.0
+        mag = abs(Omega)
+        if min_avg_amp:
+            # to make the average values higher then the minimum
+            # use the average value of a parabola for
+            # the amplitude waveform with Omega
+            mag = max(mag, ENERGY * (3.0 * (min_avg_amp + 1e-9) / 2.0))
+        if max_amp:
+            mag = min(
+                mag,
+                max_amp - 1e-9,
             )
+        Omega = sign * mag
 
         delta_0 = torch.min(torch.diag(QUBO)).item()
         delta_f = -delta_0

@@ -42,7 +42,7 @@ For the Adiabatic Drive, the values of the amplitude $\Omega$ (Rabi frequency) a
 
 $$\Omega_{max} = mean(Q_{ij, i != j})$$
 
-If $\Omega_{max}$ reaches a value above the maximum amplitude allowed by the device, it uses the `max_amp` value taken from the device specs as $\Omega_{max}$. It it is below the `min_avg_amp` value from the specs, we use `min_avg_amp`.
+If $\Omega_{max}$ reaches a value above the maximum amplitude allowed by the device, it uses the `max_amp` value taken from the device specs as $\Omega_{max}$. It it is below the `min_avg_amp` value from the specs, we rescale to match such value.
 
 - Detuning: starts from a negative value $\delta_0$ that is the minimum value among the diagonal terms of the QUBO matrix (since diagonal terms are either negative or $0$), reaches $0$ and ends in a positive final value $\delta_f$, following a linear behavior:
 

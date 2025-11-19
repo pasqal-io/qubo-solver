@@ -123,6 +123,27 @@ class AdiabaticDriveShaper(BaseDriveShaper):
 
         return float(torch.max(valid_q_ij_values).cpu().item())
 
+    def _scale_omega_for_device_constraints(self, parameter: float) -> float:
+        """Scale the parameter given the device ``min_avg_amp and `max_amp` constraints.
+
+        Args:
+            parameter (float): Parameter to scale.
+
+        Returns:
+            float: Scaled parameter value.
+        """
+        rydberg_global = self.device._device.channels["rydberg_global"]
+        min_avg_amp = rydberg_global.min_avg_amp
+        max_amp = rydberg_global.max_amp
+        if min_avg_amp:
+            parameter = max(parameter, min_avg_amp + 1e-9)
+        if max_amp:
+            parameter = min(
+                parameter,
+                max_amp - 1e-9,
+            )
+        return parameter
+
     def generate(
         self,
         register: Register,
@@ -144,27 +165,34 @@ class AdiabaticDriveShaper(BaseDriveShaper):
         """
 
         # for conversions to qoolqit
-        TIME, _, _ = self.device.converter.factors
+        TIME, ENERGY, _ = self.device.converter.factors
         QUBO = self.qubo_coefficients
 
         norm_weights_list = self._compute_norm_weights()
-
-        rydberg_global = self.device._device.channels["rydberg_global"]
 
         off_diag = QUBO[
             ~torch.eye(QUBO.shape[0], dtype=torch.bool)
         ]  # Selecting off-diagonal terms of the Qubo with a mask
 
-        mean_coeffs = torch.mean(off_diag).item()
+        # device constraints
+        rydberg_global = self.device._device.channels["rydberg_global"]
+        min_avg_amp = rydberg_global.min_avg_amp
+        max_amp = rydberg_global.max_amp
 
-        Omega = mean_coeffs
-        if rydberg_global.min_avg_amp:
-            Omega = max(Omega, rydberg_global.min_avg_amp)
-        if rydberg_global.max_amp:
-            Omega = min(
-                Omega,
-                rydberg_global.max_amp - 1e-9,
+        Omega = torch.mean(off_diag).item()
+        sign = 1.0 if Omega >= 0 else -1.0
+        mag = abs(Omega)
+        if min_avg_amp:
+            # to make the average values higher then the minimum
+            # use the average value of a parabola for
+            # the amplitude waveform with Omega
+            mag = max(mag, ENERGY * (3.0 * (min_avg_amp + 1e-9) / 2.0))
+        if max_amp:
+            mag = min(
+                mag,
+                max_amp - 1e-9,
             )
+        Omega = sign * mag
 
         delta_0 = torch.min(torch.diag(QUBO)).item()
         delta_f = -delta_0

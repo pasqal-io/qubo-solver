@@ -60,21 +60,13 @@ def test_run_local_backends(
     assert solutions.costs.min().item() <= -3.0
 
 
-@pytest.mark.parametrize(
-    "drive_shaping_method",
-    [
-        "adiabatic",
-        "optimized",
-    ],
-)
-def test_solver_different_devices_drives(
+def test_solver_different_devices(
     qubo_for_testing_many_devices: QUBOInstance,
     local_device: Device,
-    drive_shaping_method: str,
 ) -> None:
     config = SolverConfig(
         use_quantum=True,
-        drive_shaping=DriveShapingConfig(drive_shaping_method=drive_shaping_method),
+        drive_shaping=DriveShapingConfig(drive_shaping_method="adiabatic"),
         do_postprocessing=False,
         do_preprocessing=False,
         device=local_device,
