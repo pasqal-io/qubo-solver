@@ -79,6 +79,12 @@ def local_backend(request: pytest.Fixture) -> LocalEmulator:
         MockDevice(),
         Device(pulser_device=connection.fetch_available_devices()["FRESNEL"]),
     ],
+    ids=[
+        "DigitalAnalogDevice",
+        "AnalogDevice",
+        "MockDevice",
+        "FRESNEL",
+    ],
 )
 def local_device(request: pytest.Fixture) -> Device:
     return request.param  # type: ignore[no-any-return]

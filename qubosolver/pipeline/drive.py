@@ -283,15 +283,18 @@ class OptimizedDriveShaper(BaseDriveShaper):
 
         n_amp = 3
         n_det = 3
-        max_amp = self.device._device.channels["rydberg_global"].max_amp
-        assert max_amp is not None
-        max_amp = max_amp - 1e-6
-        # added to avoid rouding errors that make the simulation fail (overcoming max_amp)
+        max_amp: float = 1e6  # large value for bounds if no max_amp
+        if self.device._device.channels["rydberg_global"].max_amp:
+            max_amp = self.device._device.channels["rydberg_global"].max_amp
+            assert max_amp is not None
+            # added to avoid rouding errors that make the simulation fail (overcoming max_amp)
+            max_amp = max_amp - 1e-6
 
-        max_det = self.device._device.channels["rydberg_global"].max_abs_detuning
-        assert max_det is not None
-        max_det -= 1e-6
-        # same
+        max_det: float = 1e6  # large value for bounds if no max_det
+        if self.device._device.channels["rydberg_global"].max_abs_detuning:
+            max_det = self.device._device.channels["rydberg_global"].max_abs_detuning
+            assert max_det is not None
+            max_det -= 1e-6  # same
 
         bounds = [(1, max_amp)] * n_amp + [(-max_det, 0)] + [(-max_det, max_det)] * (n_det - 1)
         x0 = (
