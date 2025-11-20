@@ -18,7 +18,7 @@ jobs:
             id-token: write
         steps:
         - name: Check out mis
-          uses: actions/checkout@v5
+          uses: actions/checkout@v6
           with:
             ref: ${{ github.ref }}
         - name: Set up Python
@@ -49,7 +49,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
         - name: Checkout mis
-          uses: actions/checkout@v5
+          uses: actions/checkout@v6
         - name: Install JetBrains Mono font
           run: |
             sudo apt install -y wget unzip fontconfig
