@@ -8,20 +8,19 @@ import numpy as np
 from pulser.devices._device_datacls import BaseDevice
 
 from ._force import Force
-from ._helpers import best_dist, interaction
+from ._helpers import normalized_best_dist, normalized_interaction
 
 logger = logging.getLogger(__name__)
 
 
 def compute_target_weights_by_dist_limit(
     *,
-    device: BaseDevice,
     distance_matrix: np.ndarray,
     target_weights: np.ndarray,
     max_distance_to_walk: float,
 ) -> Any:
-    target_distances = np.vectorize(best_dist, excluded=["device"], signature="(m,n)->(m,n)")(
-        device=device, weight=target_weights
+    target_distances = np.vectorize(normalized_best_dist, signature="(m,n)->(m,n)")(
+        target_weights
     )
     np.fill_diagonal(target_distances, 0)
     distances_to_walk = (distance_matrix - target_distances) / 2
@@ -43,8 +42,8 @@ def compute_target_weights_by_dist_limit(
         ),
     )
     modulated_target_weights = np.vectorize(
-        interaction, excluded=["device"], signature="(m,n)->(m,n)"
-    )(device=device, dist=rectified_modulated_target_distances)
+        normalized_interaction, signature="(m,n)->(m,n)"
+    )(rectified_modulated_target_distances)
 
     assert not np.any(np.triu(np.isinf(modulated_target_weights), k=1))
 
@@ -53,7 +52,6 @@ def compute_target_weights_by_dist_limit(
 
 def compute_target_weights_distances_by_weight_diff_limit(
     *,
-    device: BaseDevice,
     n: int,
     distance_matrix: np.ndarray,
     unitary_vectors: np.ndarray,
@@ -76,8 +74,8 @@ def compute_target_weights_distances_by_weight_diff_limit(
 
     step_target_weights = current_weights + weight_differences * (1 - weight_relative_threshold)
     logger.debug(f"{step_target_weights=}")
-    step_target_distances = np.vectorize(best_dist, excluded=["device"], signature="(m,n)->(m,n)")(
-        device=device, weight=step_target_weights
+    step_target_distances = np.vectorize(normalized_best_dist, signature="(m,n)->(m,n)")(
+        step_target_weights
     )
     logger.debug(f"{step_target_distances=}")
 
@@ -97,15 +95,14 @@ def compute_interaction_forces(
     *,
     distance_matrix: np.ndarray,
     unitary_vectors: np.ndarray,
-    device: BaseDevice,
     qubo_graph: nx.Graph,
     weight_relative_threshold: float,
     max_distance_to_walk: float,
 ) -> Force:
     n = nx.number_of_nodes(qubo_graph)
 
-    current_weights = np.vectorize(interaction, excluded=["device"], signature="(m,n)->(m,n)")(
-        device=device, dist=distance_matrix
+    current_weights = np.vectorize(normalized_interaction, signature="(m,n)->(m,n)")(
+        distance_matrix
     )
     logger.debug(f"{current_weights=}")
     target_weights = np.array(
@@ -114,14 +111,12 @@ def compute_interaction_forces(
     logger.debug(f"{target_weights=}")
 
     modulated_target_weights = compute_target_weights_by_dist_limit(
-        device=device,
         distance_matrix=distance_matrix,
         target_weights=target_weights,
         max_distance_to_walk=max_distance_to_walk,
     )
 
     weighted_vectors, distances_to_walk = compute_target_weights_distances_by_weight_diff_limit(
-        device=device,
         n=n,
         distance_matrix=distance_matrix,
         unitary_vectors=unitary_vectors,

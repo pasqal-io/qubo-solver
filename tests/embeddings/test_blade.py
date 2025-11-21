@@ -1,27 +1,20 @@
 import pytest
 
-from qubosolver.algorithms.blade.blade import update_positions, em_blade
+from qubosolver.algorithms.blade.blade import update_positions, em_blade, em_blade_for_device
+from qubosolver.algorithms.blade._helpers import normalized_best_dist, normalized_interaction
 from pulser.devices import AnalogDevice
 import numpy as np
 import networkx as nx
 import dataclasses
 
 
-device = dataclasses.replace(
-    AnalogDevice,
-    rydberg_level=70,
-    max_radial_distance=50,
-    min_atom_distance=4,
-)
-
-
 @pytest.mark.parametrize(
     "max_distance_to_walk, expected_distance",
     [
-        (np.inf, device.rydberg_blockade_radius(10)),
+        (np.inf, normalized_best_dist(1e-4)),
         (0, 1),
         (1, 3),
-        (20, device.rydberg_blockade_radius(10)),
+        (20, normalized_best_dist(1e-4)),
     ],
 )
 def test_update_positions(
@@ -29,13 +22,12 @@ def test_update_positions(
 ) -> None:
     qubo_graph = nx.Graph()
     qubo_graph.add_nodes_from([i for i in range(2)])
-    weight = 10
+    weight = 1e-4
     qubo_graph.add_edge(0, 1, weight=weight)
 
     new_positions = update_positions(
         positions=np.array([[0, 0], [1, 0]]),
         qubo_graph=qubo_graph,
-        device=device,
         max_distance_to_walk=max_distance_to_walk,
     )
 
@@ -45,12 +37,11 @@ def test_update_positions(
 def test_max_dist_constraint() -> None:
     qubo_graph = nx.Graph()
     qubo_graph.add_nodes_from([i for i in range(2)])
-    qubo_graph.add_edge(0, 1, weight=device.rabi_from_blockade(10 * np.sqrt(2)))
+    qubo_graph.add_edge(0, 1, weight=normalized_interaction(10 * np.sqrt(2)))
 
     new_positions = update_positions(
         positions=np.array([[-10, 0], [0, 10]]),
         qubo_graph=qubo_graph,
-        device=device,
         max_dist=10,
     )
 
@@ -60,12 +51,11 @@ def test_max_dist_constraint() -> None:
 def test_min_dist_constraint() -> None:
     qubo_graph = nx.Graph()
     qubo_graph.add_nodes_from([i for i in range(2)])
-    qubo_graph.add_edge(0, 1, weight=device.rabi_from_blockade(10 * np.sqrt(2)))
+    qubo_graph.add_edge(0, 1, weight=normalized_interaction(10 * np.sqrt(2)))
 
     new_positions = update_positions(
         positions=np.array([[-10, 0], [0, 10]]),
         qubo_graph=qubo_graph,
-        device=device,
         min_dist=30,
     )
 
@@ -77,12 +67,11 @@ def test_min_dist_constraint() -> None:
 def test_min_dist_constraint_limited() -> None:
     qubo_graph = nx.Graph()
     qubo_graph.add_nodes_from([i for i in range(2)])
-    qubo_graph.add_edge(0, 1, weight=device.rabi_from_blockade(1))
+    qubo_graph.add_edge(0, 1, weight=normalized_interaction(1))
 
     new_positions = update_positions(
         positions=np.array([[-1, 0], [1, 0]]),
         qubo_graph=qubo_graph,
-        device=device,
         min_dist=10,
         max_distance_to_walk=(0, 2, 0),
     )
@@ -93,12 +82,11 @@ def test_min_dist_constraint_limited() -> None:
 def test_max_dist_constraint_limited() -> None:
     qubo_graph = nx.Graph()
     qubo_graph.add_nodes_from([i for i in range(2)])
-    qubo_graph.add_edge(0, 1, weight=device.rabi_from_blockade(1))
+    qubo_graph.add_edge(0, 1, weight=normalized_interaction(1))
 
     new_positions = update_positions(
         positions=np.array([[-10, 0], [10, 0]]),
         qubo_graph=qubo_graph,
-        device=device,
         max_dist=1,
         max_distance_to_walk=(0, 0, 1),
     )
@@ -107,33 +95,27 @@ def test_max_dist_constraint_limited() -> None:
 
 
 def test_force_based_embedding() -> None:
-    local_device = dataclasses.replace(
-        device,
-        max_radial_distance=4 * device.min_atom_distance,
-        pre_calibrated_layouts=tuple(),
-    )
-    min_dist = local_device.min_atom_distance
-    max_dist = local_device.max_radial_distance
+    min_dist = 1
+    max_dist = 4
 
     factor_dist_0_1 = 1 / 1.1
     factor_dist_2_3 = 1.2
 
     qubo = np.array(
         [
-            [0, local_device.rabi_from_blockade(min_dist * factor_dist_0_1), 0, 0],
+            [0,  normalized_interaction(min_dist * factor_dist_0_1), 0, 0],
             [0, 0, 0, 0],
-            [0, 0, 0, local_device.rabi_from_blockade(min_dist * factor_dist_2_3)],
+            [0, 0, 0, normalized_interaction(min_dist * factor_dist_2_3)],
             [0, 0, 0, 0],
         ]
     )
 
     positions = em_blade(
         qubo=qubo,
-        device=local_device,
+        max_min_dist_ratio=max_dist / min_dist,
         steps_per_round=1000,
         starting_positions=np.array([[-1, 1], [1, 1], [1, -1], [-1, -1]]) * max_dist / 3,
         dimensions=[2, 2],
-        enforce_min_max_dist_ratio=True,
     )
 
     new_min_dist = np.linalg.norm(positions[0] - positions[1])
@@ -172,7 +154,7 @@ def test_high_dimension_increase_after_equilibrium() -> None:
             [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         ]
     )
-    em_blade(qubo, device=device, dimensions=[2, 2, 10], steps_per_round=100)
+    em_blade(qubo, dimensions=[2, 2, 10], steps_per_round=100)
 
 
 def test_drawing() -> None:
@@ -183,17 +165,40 @@ def test_drawing() -> None:
 
     qubo_graph = nx.Graph()
     qubo_graph.add_nodes_from([i for i in range(2)])
-    qubo_graph.add_edge(0, 1, weight=device.rabi_from_blockade(1))
+    qubo_graph.add_edge(0, 1, weight=normalized_interaction(1))
 
     plt.close("all")
     assert len(plt.get_fignums()) == 0
     update_positions(
         positions=np.array([[-10, 0], [10, 0]]),
         qubo_graph=qubo_graph,
-        device=device,
         max_dist=1,
         max_distance_to_walk=(0, 0, 1),
         draw_step=True,
     )
     assert len(plt.get_fignums()) > 0
     plt.close("all")
+
+
+def test_with_device() -> None:
+    device = dataclasses.replace(
+        AnalogDevice,
+        rydberg_level=70,
+        max_radial_distance=50,
+        min_atom_distance=4,
+    )
+
+    qubo = np.array(
+        [
+            [0, 2],
+            [0, 0],
+        ]
+    )
+    positions = em_blade_for_device(qubo, device=device, dimensions=[2, 2], steps_per_round=100)
+    distances = np.triu(np.linalg.norm(positions[np.newaxis, :, :] - positions[:, np.newaxis, :], axis=-1), k=1)
+
+    def best_dist(weight: float) -> float:
+        return device.rydberg_blockade_radius(weight)  # type: ignore
+
+    expected_distances = np.triu(np.vectorize(best_dist, signature="(m,n)->(m,n)")(qubo), k=1)
+    assert np.allclose(distances, expected_distances)

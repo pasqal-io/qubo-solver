@@ -12,12 +12,12 @@ def find_center(
     return np.mean(positions, axis=0)
 
 
-def interaction(device: BaseDevice, dist: float) -> float:
-    return device.rabi_from_blockade(dist)  # type: ignore
+def normalized_interaction(dist: float) -> float:
+    return 1 / dist**6
 
 
-def best_dist(device: BaseDevice, weight: float) -> float:
-    return device.rydberg_blockade_radius(weight)  # type: ignore
+def normalized_best_dist(weight: float) -> float:
+    return (1 / weight) ** (1 / 6)
 
 
 def distance_matrix_from_positions(positions: np.ndarray) -> np.ndarray:
@@ -28,8 +28,8 @@ def distance_matrix_from_positions(positions: np.ndarray) -> np.ndarray:
 def interaction_matrix_from_distances(
     distance_matrix: np.ndarray, *, device: BaseDevice
 ) -> np.ndarray:
-    current_weights = np.vectorize(interaction, excluded=["device"], signature="(m,n)->(m,n)")(
-        device=device, dist=distance_matrix
+    current_weights = np.vectorize(normalized_interaction, signature="(m,n)->(m,n)")(
+        dist=distance_matrix
     )
     return np.triu(current_weights, k=1)
 

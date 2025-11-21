@@ -34,7 +34,6 @@ def update_positions(
     positions: np.ndarray,
     qubo_graph: nx.Graph,
     draw_step: bool = False,
-    device: BaseDevice,
     weight_relative_threshold: float = 0.0,
     min_dist: float | None = None,
     max_dist: float | None = None,
@@ -47,7 +46,6 @@ def update_positions(
     positions: Starting positions of the nodes.
     qubo_graph: Desired QUBO.
     draw_steps: Whether to draw the nodes and the forces.
-    device: Used for its interaction coefficient.
     weight_relative_threshold: It is used to compute a weight difference
         threshold defining which weights differences are significant and should
         be considered. For this purpose, it is multiplied by the higher weight difference.
@@ -87,7 +85,6 @@ def update_positions(
     interaction_force = compute_interaction_forces(
         distance_matrix=distance_matrix,
         unitary_vectors=unitary_vectors,
-        device=device,
         qubo_graph=qubo_graph,
         weight_relative_threshold=weight_relative_threshold,
         max_distance_to_walk=max_distance_to_walk,
@@ -213,7 +210,7 @@ def update_positions(
             f"{min_dist=}, {max_dist=}, current min dist = {np.min(distance_matrix[np.triu_indices_from(distance_matrix, k=1)])}, current max dist = {np.max(distance_matrix[np.triu_indices_from(distance_matrix, k=1)])}"
         )
         draw_graph_including_actual_weights(
-            qubo_graph=qubo_graph, positions=positions, device=device
+            qubo_graph=qubo_graph, positions=positions
         )
 
     return positions
@@ -222,7 +219,6 @@ def update_positions(
 def evolve_with_forces_through_dim_change(
     *,
     qubo_graph: nx.Graph,
-    device: BaseDevice,
     draw_steps: bool = False,
     starting_dimensions: int,
     final_dimensions: int,
@@ -241,7 +237,6 @@ def evolve_with_forces_through_dim_change(
     )
     dist_constr_calc = DistancesContraintsCalculator(
         target_qubo=Qubo.from_graph(qubo_graph).as_matrix(),
-        device=device,
         starting_min=starting_min,
         starting_ratio=start_ratio,
         final_ratio=final_ratio,
@@ -270,7 +265,6 @@ def evolve_with_forces_through_dim_change(
             positions=positions,
             qubo_graph=qubo_graph,
             draw_step=draw_step,
-            device=device,
             weight_relative_threshold=compute_weight_relative_threshold_by_step(step),
             min_dist=min_dist,
             max_dist=max_dist,
@@ -288,14 +282,13 @@ def evolve_with_forces_through_dim_change(
     return positions[:, :final_dimensions], min_dist
 
 
-def generate_random_positions(qubo: np.ndarray, device: BaseDevice, dimension: int) -> np.ndarray:
+def generate_random_positions(qubo: np.ndarray, dimension: int) -> np.ndarray:
     return np.random.uniform(size=(len(qubo), dimension))
 
 
 def evolve_with_dimension_transition(
     qubo: np.ndarray,
     *,
-    device: BaseDevice,
     draw_steps: bool | list[int],
     dimensions: list[int],
     starting_min: float | None,
@@ -348,7 +341,6 @@ def evolve_with_dimension_transition(
 
     positions, starting_min = evolve_with_forces_through_dim_change(
         qubo_graph=qubo_graph,
-        device=device,
         draw_steps=(
             draw_steps
             if isinstance(draw_steps, bool)
@@ -371,13 +363,13 @@ def evolve_with_dimension_transition(
 def em_blade(
     qubo: np.ndarray,
     *,
-    device: BaseDevice,
+    # device: BaseDevice,
+    max_min_dist_ratio: Optional[float] = None,
     draw_steps: bool | list[int] = False,
     dimensions: list[int] = [5, 4, 3, 2, 2, 2],
     starting_positions: Optional[np.ndarray] = None,
     pca: bool = False,
     steps_per_round: int = 200,
-    enforce_min_max_dist_ratio: bool = False,
     compute_weight_relative_threshold: Callable[[float], float] = (lambda _: 0.1),
     compute_max_distance_to_walk: Callable[
         [float, float | None], float | tuple[float, float, float]
@@ -387,15 +379,15 @@ def em_blade(
     """
     Embed a problem using the BLaDE algorithm.
 
-    Compute positions for nodes so that their interactions according to a device
-    approach the desired values at best. The result can be used as an embedding.
+    Compute positions for nodes so that their interactions
+    approach the desired values at best. The interactions assume that the
+    interaction coefficient of the device is set to 1.
+    The result can be used as an embedding.
     Its prior target is on interaction matrices or QUBOs, but it can also be used
     for MIS with limitations if the adjacency matrix is converted into a QUBO.
     The general principle is based on the Fruchterman-Reingold algorithm.
 
     qubo: QUBO matrix
-    device: Used for its interaction coefficient, and for its minimum and
-        maximum distances if `enforce_min_max_dist_ratio` is enabled.
     draw_steps: Whether to draw the nodes and the forces.
     dimensions: List of numbers of dimensions to explore one
         after the other. A list with one value is equivalent to a list containing
@@ -449,21 +441,15 @@ def em_blade(
     qubo_graph = qubo_obj.as_graph()
 
     if starting_positions is None:
-        positions = generate_random_positions(qubo=qubo, device=device, dimension=dimensions[0])
+        positions = generate_random_positions(qubo=qubo, dimension=dimensions[0])
     else:
         positions = starting_positions
 
     for u, v in nx.non_edges(qubo_graph):
         qubo_graph.add_edge(u, v, weight=0)
 
-    if enforce_min_max_dist_ratio:
-        if device.max_radial_distance is None:
-            raise ValueError(
-                "Cannot enforce the min max distance ratio on a device that has no maximal radial distance."
-            )
-        final_ratio = device.max_radial_distance / device.min_atom_distance
-        starting_ratio = starting_ratio_factor * final_ratio
-        steps_ratios = np.linspace(starting_ratio, final_ratio, len(dimensions))
+    if max_min_dist_ratio is not None:
+        steps_ratios = np.linspace(starting_ratio_factor * max_min_dist_ratio, max_min_dist_ratio, len(dimensions))
     else:
         steps_ratios = [None] * len(dimensions)
 
@@ -479,7 +465,6 @@ def em_blade(
     ):
         positions, starting_min = evolve_with_dimension_transition(
             qubo=qubo,
-            device=device,
             draw_steps=draw_steps,
             dimensions=dimensions,
             starting_min=starting_min,
@@ -496,3 +481,44 @@ def em_blade(
         )
 
     return positions
+
+
+def em_blade_for_device(
+    qubo: np.ndarray,
+    *,
+    device: BaseDevice,
+    follow_max_min_dist_ratio: bool = True,
+    draw_steps: bool | list[int] = False,
+    dimensions: list[int] = [5, 4, 3, 2, 2, 2],
+    starting_positions: Optional[np.ndarray] = None,
+    pca: bool = False,
+    steps_per_round: int = 200,
+    compute_weight_relative_threshold: Callable[[float], float] = (lambda _: 0.1),
+    compute_max_distance_to_walk: Callable[
+        [float, float | None], float | tuple[float, float, float]
+    ] = (lambda x, max_radial_dist: np.inf),
+    starting_ratio_factor: int = 2,
+) -> np.ndarray:
+    '''
+    Calls `em_blade` and adapts to the device's constraints
+    and interaction coefficient.
+
+    device: Used for its interaction coefficient, and for its minimum and
+        maximum distances if `enforce_min_max_dist_ratio` is enabled.
+    '''
+    max_min_dist_ratio = None if device.max_radial_distance is None or not follow_max_min_dist_ratio else device.max_radial_distance / device.min_atom_distance
+
+    positions = em_blade(
+        qubo=qubo,
+        max_min_dist_ratio=max_min_dist_ratio,
+        draw_steps=draw_steps,
+        dimensions=dimensions,
+        starting_positions=starting_positions,
+        pca=pca,
+        steps_per_round=steps_per_round,
+        compute_weight_relative_threshold=compute_weight_relative_threshold,
+        compute_max_distance_to_walk=compute_max_distance_to_walk,
+        starting_ratio_factor=starting_ratio_factor,
+    )
+
+    return positions * device.interaction_coeff ** (1/6)

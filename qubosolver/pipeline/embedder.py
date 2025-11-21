@@ -10,7 +10,7 @@ from qoolqit import Register as QoolqitRegister
 from qoolqit.execution.backend import BaseBackend
 
 from qubosolver import QUBOInstance
-from qubosolver.algorithms.blade.blade import em_blade
+from qubosolver.algorithms.blade.blade import em_blade_for_device
 from qubosolver.algorithms.greedy.greedy import Greedy
 from qubosolver.config import EmbedderType, SolverConfig
 from qubosolver.utils.density import calculate_density
@@ -89,7 +89,7 @@ class BLaDEmbedder(BaseEmbedder):
     def embed(self) -> QoolqitRegister:
 
         coords = (
-            em_blade(
+            em_blade_for_device(
                 qubo=BLaDEmbedder._preprocessing_qubo(self.instance.coefficients.numpy()),
                 device=self.config.device._device,
                 draw_steps=self.config.embedding.draw_steps,
@@ -100,6 +100,7 @@ class BLaDEmbedder(BaseEmbedder):
                     else None
                 ),
                 steps_per_round=self.config.embedding.blade_steps_per_round,
+                enforce_min_max_dist_ratio=True,
             )
             / self._distance_conversion
         )
