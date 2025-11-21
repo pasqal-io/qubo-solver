@@ -60,13 +60,18 @@ def test_run_local_backends(
     assert solutions.costs.min().item() <= -3.0
 
 
+@pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
 def test_solver_different_devices(
     qubo_for_testing_many_devices: QUBOInstance,
     local_device: Device,
+    embedding_method: str,
 ) -> None:
     config = SolverConfig(
         use_quantum=True,
         drive_shaping=DriveShapingConfig(drive_shaping_method="adiabatic"),
+        embedding=EmbeddingConfig(
+            embedding_method=embedding_method, greedy_traps=qubo_for_testing_many_devices.size
+        ),
         do_postprocessing=False,
         do_preprocessing=False,
         device=local_device,
