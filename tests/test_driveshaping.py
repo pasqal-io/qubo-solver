@@ -28,7 +28,7 @@ def test_generate_returns_drive_and_solution_adiabatic(
     default_config = SolverConfig(use_quantum=True)
     backend = default_config.backend
     shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)
-    drive, solution = shaper.generate(dummy_register, simple_qubo_instance)
+    drive, solution = shaper.generate(dummy_register)
 
     assert isinstance(drive, Drive)
     assert isinstance(solution, QUBOSolution)
@@ -46,7 +46,7 @@ def test_generate_returns_drive_and_solution_optimized(
     default_config = SolverConfig(use_quantum=True, drive_shaping=optimized_drive_shaping)
     backend = default_config.backend
     shaper = AdiabaticDriveShaper(simple_qubo_instance, default_config, backend)
-    drive, solution = shaper.generate(dummy_register, simple_qubo_instance)
+    drive, solution = shaper.generate(dummy_register)
 
     assert isinstance(drive, Drive)
     assert isinstance(solution, QUBOSolution)
@@ -68,7 +68,7 @@ def test_generate_optimized_drive_shaper(
     backend = default_config.backend
     shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)
     assert isinstance(shaper, OptimizedDriveShaper)
-    drive, solution = shaper.generate(dummy_register, simple_qubo_instance)
+    drive, solution = shaper.generate(dummy_register)
 
     assert isinstance(drive, Drive)
     assert isinstance(solution, QUBOSolution)
@@ -115,7 +115,7 @@ def test_generate_optimized_drive_shaper(
     assert shaper.optimized_custom_objective_fn is not None
     assert shaper.optimized_callback_objective is not None
     assert shaper.optimized_custom_qubo_cost is not None
-    drive, solution = shaper.generate(dummy_register, simple_qubo_instance)
+    drive, solution = shaper.generate(dummy_register)
     assert len(opt_res) > 0
     assert opt_res[-1]["cost_eval"] == float(1e4)
 
@@ -131,7 +131,7 @@ def test_normalized_weights_in_drive(
     )
     backend = default_config.backend
     shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)
-    drive, _ = shaper.generate(dummy_register, simple_qubo_instance)
+    drive, _ = shaper.generate(dummy_register)
 
     wdetuning = drive.weighted_detunings
     if len(wdetuning) > 0:
@@ -150,7 +150,7 @@ def test_drive_duration_set(dummy_register: Register, simple_qubo_instance: QUBO
     default_config = SolverConfig(use_quantum=True)
     backend = default_config.backend
     shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)
-    drive, _ = shaper.generate(dummy_register, simple_qubo_instance)
+    drive, _ = shaper.generate(dummy_register)
 
     # enforces AnalogDevice maximum sequence duration because Digital's one is a really specific number
     assert (

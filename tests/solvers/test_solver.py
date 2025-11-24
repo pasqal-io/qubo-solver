@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import pytest
-from qubosolver.config import EmbeddingConfig, SolverConfig, LocalEmulator
+from qoolqit.devices import Device
+from qubosolver.config import EmbeddingConfig, DriveShapingConfig, SolverConfig, LocalEmulator
 from qubosolver.qubo_types import EmbedderType
 from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical
 
@@ -57,3 +58,22 @@ def test_run_local_backends(
     solutions = solver.solve()
     # theoretically -4.4000 can be found
     assert solutions.costs.min().item() <= -3.0
+
+
+def test_solver_different_devices(
+    qubo_for_testing_many_devices: QUBOInstance,
+    local_device: Device,
+) -> None:
+    config = SolverConfig(
+        use_quantum=True,
+        drive_shaping=DriveShapingConfig(drive_shaping_method="adiabatic"),
+        embedding=EmbeddingConfig(
+            embedding_method="greedy", greedy_traps=qubo_for_testing_many_devices.size
+        ),
+        do_postprocessing=False,
+        do_preprocessing=False,
+        device=local_device,
+    )
+    solver = QuboSolver(qubo_for_testing_many_devices, config)
+    solution = solver.solve()
+    assert solution
