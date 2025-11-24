@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
-from pulser.devices._device_datacls import BaseDevice
 
 
 def find_center(
@@ -26,18 +25,17 @@ def distance_matrix_from_positions(positions: np.ndarray) -> np.ndarray:
 
 
 def interaction_matrix_from_distances(
-    distance_matrix: np.ndarray, *, device: BaseDevice
+    distance_matrix: np.ndarray
 ) -> np.ndarray:
     current_weights = np.vectorize(normalized_interaction, signature="(m,n)->(m,n)")(
-        dist=distance_matrix
+        distance_matrix
     )
     return np.triu(current_weights, k=1)
 
 
-def interaction_matrix_from_positions(positions: np.ndarray, *, device: BaseDevice) -> np.ndarray:
+def interaction_matrix_from_positions(positions: np.ndarray) -> np.ndarray:
     return interaction_matrix_from_distances(
-        distance_matrix=distance_matrix_from_positions(positions),
-        device=device,
+        distance_matrix=distance_matrix_from_positions(positions)
     )
 
 

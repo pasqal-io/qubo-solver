@@ -363,7 +363,6 @@ def evolve_with_dimension_transition(
 def em_blade(
     qubo: np.ndarray,
     *,
-    # device: BaseDevice,
     max_min_dist_ratio: Optional[float] = None,
     draw_steps: bool | list[int] = False,
     dimensions: list[int] = [5, 4, 3, 2, 2, 2],
@@ -388,6 +387,8 @@ def em_blade(
     The general principle is based on the Fruchterman-Reingold algorithm.
 
     qubo: QUBO matrix
+    max_min_dist_ratio: If present, ratio that must not be overcome between
+        the maximum radial distance and the minimum pairwise distances.
     draw_steps: Whether to draw the nodes and the forces.
     dimensions: List of numbers of dimensions to explore one
         after the other. A list with one value is equivalent to a list containing
