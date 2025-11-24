@@ -100,7 +100,7 @@ class BLaDEmbedder(BaseEmbedder):
                     else None
                 ),
                 steps_per_round=self.config.embedding.blade_steps_per_round,
-                enforce_min_max_dist_ratio=True,
+                follow_max_min_dist_ratio=True,
             )
             / self._distance_conversion
         )

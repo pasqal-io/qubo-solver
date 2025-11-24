@@ -402,12 +402,6 @@ def em_blade(
     steps_per_round: Number of elementary steps to perform for each dimension
         transition, where at each step move vectors are computed and applied
         on the nodes.
-    enforce_min_max_dist_ratio: Whether to enforce the ratio between the
-        maximal radial distance and the minimum pairwise distance. It does not
-        directly enforces these distances but only the ratio. To meet the
-        distance, you can rescale the positions and infer how it should impact
-        the Rabi frequency. This may change in the future to directly meet
-        the distances constraints and compute the Rabi frequency for you.
     compute_weight_relative_threshold: Function that is called at each step.
         It takes a float number between 0 and 1 that represents the progress
         on the steps. It must return a float number between 0 and 1 that gives
@@ -416,12 +410,12 @@ def em_blade(
     compute_max_distance_to_walk: Function that is called at each step.
         It takes a float number between 0 and 1 that represents the progress
         on the steps, and takes another argument that is set to `None` when
-        `enforce_min_max_dist_ratio` is not enabled, otherwise, it is set to
+        `max_min_dist_ratio` is not enabled, otherwise, it is set to
         the maximum radial distance for the current step.
         It must return a float number that limits the distances
         nodes can move at one step  (see
         `update_positions` to learn more).
-    starting_ratio_factor: When `enforce_min_max_dist_ratio` is enabled,
+    starting_ratio_factor: When `max_min_dist_ratio` is enabled,
         defines a multiplying factor on the target ratio to start the evolution
         on a larger ratio, to let more flexibility in the beginning.
     """
@@ -505,7 +499,7 @@ def em_blade_for_device(
     and interaction coefficient.
 
     device: Used for its interaction coefficient, and for its minimum and
-        maximum distances if `enforce_min_max_dist_ratio` is enabled.
+        maximum distances if `follow_max_min_dist_ratio` is enabled.
     """
     max_min_dist_ratio = (
         None
