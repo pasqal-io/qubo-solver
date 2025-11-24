@@ -6,7 +6,6 @@ from typing import Any, Optional
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from pulser.devices._device_datacls import BaseDevice
 
 from ._helpers import normalized_interaction, distance_matrix_from_positions
 

@@ -5,7 +5,6 @@ from typing import Any
 
 import networkx as nx
 import numpy as np
-from pulser.devices._device_datacls import BaseDevice
 
 from ._force import Force
 from ._helpers import normalized_best_dist, normalized_interaction
@@ -19,9 +18,7 @@ def compute_target_weights_by_dist_limit(
     target_weights: np.ndarray,
     max_distance_to_walk: float,
 ) -> Any:
-    target_distances = np.vectorize(normalized_best_dist, signature="(m,n)->(m,n)")(
-        target_weights
-    )
+    target_distances = np.vectorize(normalized_best_dist, signature="(m,n)->(m,n)")(target_weights)
     np.fill_diagonal(target_distances, 0)
     distances_to_walk = (distance_matrix - target_distances) / 2
     np.fill_diagonal(distances_to_walk, 0)
@@ -41,9 +38,9 @@ def compute_target_weights_by_dist_limit(
             np.minimum(modulated_target_distances, target_distances),
         ),
     )
-    modulated_target_weights = np.vectorize(
-        normalized_interaction, signature="(m,n)->(m,n)"
-    )(rectified_modulated_target_distances)
+    modulated_target_weights = np.vectorize(normalized_interaction, signature="(m,n)->(m,n)")(
+        rectified_modulated_target_distances
+    )
 
     assert not np.any(np.triu(np.isinf(modulated_target_weights), k=1))
 

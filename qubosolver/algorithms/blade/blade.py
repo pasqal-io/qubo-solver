@@ -18,7 +18,7 @@ from ._dist_constraints_forces import (
     compute_min_dist_constraint_forces,
 )
 from ._distances_constraints_calculator import DistancesContraintsCalculator
-from ._helpers import find_center, distance_matrix_from_positions
+from ._helpers import distance_matrix_from_positions
 from ._interactions_forces import compute_interaction_forces
 from ._qubo_mapper import Qubo
 from .drawing import draw_graph_including_actual_weights
@@ -192,7 +192,7 @@ def update_positions(
         plt.gca().set_aspect("equal", "box")
 
         if max_dist is not None:
-            center = find_center(positions)
+            center = np.zeros(positions.shape[1])
             circle = plt.Circle(center, max_dist / 2, color="r", fill=False, clip_on=True)
             ax = plt.gca()
             ax.add_patch(circle)
@@ -209,9 +209,7 @@ def update_positions(
         print(
             f"{min_dist=}, {max_dist=}, current min dist = {np.min(distance_matrix[np.triu_indices_from(distance_matrix, k=1)])}, current max dist = {np.max(distance_matrix[np.triu_indices_from(distance_matrix, k=1)])}"
         )
-        draw_graph_including_actual_weights(
-            qubo_graph=qubo_graph, positions=positions
-        )
+        draw_graph_including_actual_weights(qubo_graph=qubo_graph, positions=positions)
 
     return positions
 
@@ -450,7 +448,9 @@ def em_blade(
         qubo_graph.add_edge(u, v, weight=0)
 
     if max_min_dist_ratio is not None:
-        steps_ratios = np.linspace(starting_ratio_factor * max_min_dist_ratio, max_min_dist_ratio, len(dimensions))
+        steps_ratios = np.linspace(
+            starting_ratio_factor * max_min_dist_ratio, max_min_dist_ratio, len(dimensions)
+        )
     else:
         steps_ratios = [None] * len(dimensions)
 
@@ -500,14 +500,18 @@ def em_blade_for_device(
     ] = (lambda x, max_radial_dist: np.inf),
     starting_ratio_factor: int = 2,
 ) -> np.ndarray:
-    '''
+    """
     Calls `em_blade` and adapts to the device's constraints
     and interaction coefficient.
 
     device: Used for its interaction coefficient, and for its minimum and
         maximum distances if `enforce_min_max_dist_ratio` is enabled.
-    '''
-    max_min_dist_ratio = None if device.max_radial_distance is None or not follow_max_min_dist_ratio else device.max_radial_distance / device.min_atom_distance
+    """
+    max_min_dist_ratio = (
+        None
+        if device.max_radial_distance is None or not follow_max_min_dist_ratio
+        else device.max_radial_distance / device.min_atom_distance
+    )
 
     positions = em_blade(
         qubo=qubo,
@@ -522,4 +526,4 @@ def em_blade_for_device(
         starting_ratio_factor=starting_ratio_factor,
     )
 
-    return positions * device.interaction_coeff ** (1/6)
+    return positions * device.interaction_coeff ** (1 / 6)

@@ -4,7 +4,6 @@ from __future__ import annotations
 import numpy as np
 
 from ._force import Force
-from ._helpers import find_center
 
 
 def compute_min_dist_constraint_forces(
@@ -39,9 +38,7 @@ def compute_max_dist_constraint_forces(
         else np.full_like(distances_from_center, 0)
     )
     max_weights = max_distances_to_walk
-    max_unitary_vectors = (
-        positions / np.linalg.norm(positions, axis=1)[:, np.newaxis]
-    )
+    max_unitary_vectors = positions / np.linalg.norm(positions, axis=1)[:, np.newaxis]
     max_weighted_vectors = -max_weights[:, np.newaxis] * max_unitary_vectors
     assert not np.any(np.isinf(max_weighted_vectors))
     max_force = Force(

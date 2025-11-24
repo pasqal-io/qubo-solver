@@ -114,9 +114,7 @@ def draw_set_graph_coords(
     plt.show()
 
 
-def draw_graph_including_actual_weights(
-    qubo_graph: nx.Graph, positions: np.ndarray
-) -> None:
+def draw_graph_including_actual_weights(qubo_graph: nx.Graph, positions: np.ndarray) -> None:
     from IPython.display import display
 
     new_weights_matrix = np.full((len(qubo_graph), len(qubo_graph)), fill_value="", dtype=object)

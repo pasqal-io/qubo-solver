@@ -103,7 +103,7 @@ def test_force_based_embedding() -> None:
 
     qubo = np.array(
         [
-            [0,  normalized_interaction(min_dist * factor_dist_0_1), 0, 0],
+            [0, normalized_interaction(min_dist * factor_dist_0_1), 0, 0],
             [0, 0, 0, 0],
             [0, 0, 0, normalized_interaction(min_dist * factor_dist_2_3)],
             [0, 0, 0, 0],
@@ -195,7 +195,9 @@ def test_with_device() -> None:
         ]
     )
     positions = em_blade_for_device(qubo, device=device, dimensions=[2, 2], steps_per_round=100)
-    distances = np.triu(np.linalg.norm(positions[np.newaxis, :, :] - positions[:, np.newaxis, :], axis=-1), k=1)
+    distances = np.triu(
+        np.linalg.norm(positions[np.newaxis, :, :] - positions[:, np.newaxis, :], axis=-1), k=1
+    )
 
     def best_dist(weight: float) -> float:
         return device.rydberg_blockade_radius(weight)  # type: ignore
