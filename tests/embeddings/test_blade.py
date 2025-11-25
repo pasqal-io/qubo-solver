@@ -37,15 +37,19 @@ def test_update_positions(
 def test_max_dist_constraint() -> None:
     qubo_graph = nx.Graph()
     qubo_graph.add_nodes_from([i for i in range(2)])
-    qubo_graph.add_edge(0, 1, weight=normalized_interaction(10 * np.sqrt(2)))
+    qubo_graph.add_edge(0, 1, weight=1)
+
+    max_radial_dist = 0.1
 
     new_positions = update_positions(
-        positions=np.array([[-10, 0], [0, 10]]),
+        positions=np.array([[-0.5, 0], [0.5, 0]]),
         qubo_graph=qubo_graph,
-        max_dist=10,
+        max_dist=max_radial_dist,
     )
 
-    assert np.isclose(np.linalg.norm(new_positions[0] - new_positions[1]), 10, rtol=1e-2)
+    assert np.isclose(
+        np.linalg.norm(new_positions[0] - new_positions[1]), 2 * max_radial_dist, rtol=1e-2
+    )
 
 
 def test_min_dist_constraint() -> None:
@@ -96,7 +100,7 @@ def test_max_dist_constraint_limited() -> None:
 
 def test_force_based_embedding() -> None:
     min_dist = 1
-    max_dist = 4
+    max_dist = 2
 
     factor_dist_0_1 = 1 / 1.1
     factor_dist_2_3 = 1.2
@@ -120,17 +124,32 @@ def test_force_based_embedding() -> None:
 
     new_min_dist = np.linalg.norm(positions[0] - positions[1])
     new_max_dist = new_min_dist * (max_dist / min_dist)
+    new_max_diameter_dist = 2 * new_max_dist
 
     assert np.isclose(
         np.linalg.norm(positions[0] - positions[1]), new_min_dist
     ), f"{np.linalg.norm(positions[0] - positions[1])} != {new_min_dist}"
     assert (
-        (new_max_dist - new_min_dist) < np.linalg.norm(positions[0] - positions[2]) < new_max_dist
+        (new_max_diameter_dist - new_min_dist)
+        < np.linalg.norm(positions[0] - positions[2])
+        < new_max_diameter_dist
     )
-    assert new_max_dist - new_min_dist < np.linalg.norm(positions[0] - positions[3]) < new_max_dist
+    assert (
+        new_max_diameter_dist - new_min_dist
+        < np.linalg.norm(positions[0] - positions[3])
+        < new_max_diameter_dist
+    )
 
-    assert new_max_dist - new_min_dist < np.linalg.norm(positions[1] - positions[2]) < new_max_dist
-    assert new_max_dist - new_min_dist < np.linalg.norm(positions[1] - positions[3]) < new_max_dist
+    assert (
+        new_max_diameter_dist - new_min_dist
+        < np.linalg.norm(positions[1] - positions[2])
+        < new_max_diameter_dist
+    )
+    assert (
+        new_max_diameter_dist - new_min_dist
+        < np.linalg.norm(positions[1] - positions[3])
+        < new_max_diameter_dist
+    )
 
     assert np.isclose(
         np.linalg.norm(positions[2] - positions[3]),
