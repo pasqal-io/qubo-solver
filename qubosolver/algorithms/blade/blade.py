@@ -450,7 +450,7 @@ def em_blade(
 
     total_steps = steps_per_round * (len(dimensions) - 1)
 
-    assert len(range(len(dimensions))) == len(steps_ratios)
+    assert len(dimensions) == len(steps_ratios)
     distance_matrix = distance_matrix_from_positions(positions)
     upper_diagonal_mask = np.triu(np.ones(distance_matrix.shape), k=1).astype(bool)
     starting_min = np.min(distance_matrix[upper_diagonal_mask])
