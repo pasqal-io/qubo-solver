@@ -276,7 +276,7 @@ class Greedy:
             x_, y_ = torch.abs(x), torch.abs(y)
 
             # check whether trap coordinate is within the maximal radial distance
-            if x_ >= max_radial_distance or y_ >= max_radial_distance:
+            if max_radial_distance and (x_ >= max_radial_distance or y_ >= max_radial_distance):
                 if n_extra_traps == 0:
                     raise ValueError(
                         f"no traps found to place qubit '{u}' "

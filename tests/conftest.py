@@ -9,6 +9,8 @@ from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
 
+from qoolqit.devices import DigitalAnalogDevice, AnalogDevice, MockDevice, Device
+from pulser_pasqal import PasqalCloud
 from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.qubo_analyzer import QUBOAnalyzer
 from qubosolver.config import (
@@ -18,6 +20,9 @@ from qubosolver.config import (
     LocalEmulator,
 )
 from qubosolver.qubo_types import LayoutType, DriveType
+
+connection = PasqalCloud()
+connection.fetch_available_devices()
 
 
 @pytest.fixture
@@ -64,6 +69,24 @@ locals_bkds: list[LocalEmulator] = [
     params=locals_bkds,
 )
 def local_backend(request: pytest.Fixture) -> LocalEmulator:
+    return request.param  # type: ignore[no-any-return]
+
+
+@pytest.fixture(
+    params=[
+        DigitalAnalogDevice(),
+        AnalogDevice(),
+        MockDevice(),
+        Device(pulser_device=connection.fetch_available_devices()["FRESNEL"]),
+    ],
+    ids=[
+        "DigitalAnalogDevice",
+        "AnalogDevice",
+        "MockDevice",
+        "FRESNEL",
+    ],
+)
+def local_device(request: pytest.Fixture) -> Device:
     return request.param  # type: ignore[no-any-return]
 
 
@@ -132,6 +155,12 @@ def simple_qubo_instance() -> QUBOInstance:
 
 
 @pytest.fixture
+def simple_qubo_instance2() -> QUBOInstance:
+    Q = torch.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
+    return QUBOInstance(coefficients=Q)
+
+
+@pytest.fixture
 def qubo_instance_for_embedding() -> QUBOInstance:
     """
     Small QUBO instance for embedding.
@@ -142,6 +171,146 @@ def qubo_instance_for_embedding() -> QUBOInstance:
             dtype=torch.int32,
         )
     )
+
+
+@pytest.fixture
+def qubo_instance_blade_tutorial() -> QUBOInstance:
+    return QUBOInstance(
+        torch.tensor(
+            [
+                [0.0, 3.0, 13.0, 211.0, 49.0, 5.0, 12.0, 0.0, 0.0],
+                [0.0, 0.0, 23.0, 0.0, 0.0, 4.0, 0.0, 63.0, 2.0],
+                [0.0, 0.0, 0.0, 5.0, 0.0, 1.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 37.0, 0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 34.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 35.0, 9.0, 34.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 70.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            ]
+        )
+    )
+
+
+@pytest.fixture
+def qubo_instance_adiabatic_tutorial() -> QUBOInstance:
+    return QUBOInstance(
+        torch.tensor(
+            [
+                [
+                    -63.9423,
+                    0.0000,
+                    73.6471,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    55.2853,
+                ],
+                [0.0000, -44.1916, 0.0000, 0.0000, 0.0000, 0.0000, 58.9307, 0.0000, 0.0000, 0.0000],
+                [
+                    73.6471,
+                    0.0000,
+                    -89.8861,
+                    51.0382,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                ],
+                [
+                    0.0000,
+                    0.0000,
+                    51.0382,
+                    -63.7618,
+                    0.0000,
+                    0.0000,
+                    33.9093,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                ],
+                [
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    -94.4426,
+                    18.7963,
+                    0.0000,
+                    0.0000,
+                    14.3994,
+                    0.0000,
+                ],
+                [
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    18.7963,
+                    -60.7545,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    96.9903,
+                ],
+                [
+                    0.0000,
+                    58.9307,
+                    0.0000,
+                    33.9093,
+                    0.0000,
+                    0.0000,
+                    -71.3241,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                ],
+                [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, -38.2094, 59.3175, 0.0000],
+                [
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    14.3994,
+                    0.0000,
+                    0.0000,
+                    59.3175,
+                    -94.5790,
+                    18.0653,
+                ],
+                [
+                    55.2853,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    0.0000,
+                    96.9903,
+                    0.0000,
+                    0.0000,
+                    18.0653,
+                    -97.3174,
+                ],
+            ]
+        )
+    )
+
+
+@pytest.fixture(
+    params=[
+        "simple_qubo_instance",
+        "simple_qubo_instance2",
+        "qubo_instance_for_embedding",
+        "qubo_instance_adiabatic_tutorial",
+        "qubo_instance_blade_tutorial",
+    ],
+)
+def qubo_for_testing_many_devices(request: pytest.Fixture) -> QUBOInstance:
+    return request.getfixturevalue(request.param)  # type: ignore[no-any-return]
 
 
 def generate_qubo_matrix(

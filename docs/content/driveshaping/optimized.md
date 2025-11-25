@@ -73,7 +73,7 @@ from qubosolver.solver import QuboSolver
 from qubosolver.qubo_types import DriveType
 
 
-Q = torch.tensor([[-63.9423,   0.0000], [0.0000, -44.1916]])
+Q = torch.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
 
 instance = QUBOInstance(Q)
 
