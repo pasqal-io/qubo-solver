@@ -14,7 +14,7 @@ The supported backends are available via [`Qooqit`](https://pasqal-io.github.io/
 The backends can be divided into 3 main categories:
 
 - [Local emulators](https://pasqal-io.github.io/emulators/latest/) (Qutip, Emu_mps, Emu_sv, ...),
-- [Remote emulators]((https://docs.pasqal.com/cloud/emu-tn/)), which can be accessed via [`pasqal_cloud`](https://docs.pasqal.com/cloud/),
+- [Remote emulators](https://docs.pasqal.com/cloud/emu-tn/), which can be accessed via [`pasqal_cloud`](https://docs.pasqal.com/cloud/),
 - [A remote QPU, such as Fresnel](https://docs.pasqal.com/cloud/fresnel-job/).
 
 A backend will use device specifications to perform quantum computations. The list of supported devices can be found in [`the QoolQit devices documentation`](https://pasqal-io.github.io/qoolqit/latest/api/qoolqit/devices/).
