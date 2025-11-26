@@ -11,6 +11,7 @@ import torch
 from pulser.devices._device_datacls import BaseDevice
 from sklearn.decomposition import PCA
 import scipy
+from qoolqit.devices.device import Device
 
 from ._dimension_shrinker import DimensionShrinker
 from ._dist_constraints_forces import (
@@ -460,7 +461,6 @@ def em_blade(
 
     assert len(dimensions) == len(steps_ratios)
 
-
     for dim_idx, start_ratio, final_ratio in zip(
         range(len(dimensions) - 1), steps_ratios[:-1], steps_ratios[1:]
     ):
@@ -486,7 +486,9 @@ def em_blade(
         min_atom_dist = _compute_min_pairwise_distance(positions)
         output_ratio = max_radial_dist / min_atom_dist
         if output_ratio > max_min_dist_ratio:
-            print(f'[Warning] Output ratio {output_ratio} is higher than required {max_min_dist_ratio}')
+            print(
+                f"[Warning] Output ratio {output_ratio} is higher than required {max_min_dist_ratio}"
+            )
 
     return positions
 
@@ -494,7 +496,7 @@ def em_blade(
 def em_blade_for_device(
     qubo: np.ndarray,
     *,
-    device: BaseDevice,
+    device: BaseDevice | Device,
     follow_max_min_dist_ratio: bool = True,
     draw_steps: bool | list[int] = False,
     dimensions: list[int] = [5, 4, 3, 2, 2, 2],
@@ -514,6 +516,10 @@ def em_blade_for_device(
     device: Used for its interaction coefficient, and for its minimum and
         maximum distances if `follow_max_min_dist_ratio` is enabled.
     """
+
+    if isinstance(device, Device):
+        device = device._device
+
     max_min_dist_ratio = (
         None
         if device.max_radial_distance is None or not follow_max_min_dist_ratio
