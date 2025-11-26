@@ -6,9 +6,8 @@ from typing import Any, Optional
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from pulser.devices._device_datacls import BaseDevice
 
-from ._helpers import interaction, distance_matrix_from_positions
+from ._helpers import normalized_interaction, distance_matrix_from_positions
 
 
 def compute_best_scaling_for_qubo(
@@ -74,12 +73,12 @@ def compute_best_scaling_for_qubo(
 
 
 def compute_best_scaling_for_pos(
-    target_qubo: np.ndarray, positions: np.ndarray, device: BaseDevice, plot: bool = False
+    target_qubo: np.ndarray, positions: np.ndarray, plot: bool = False
 ) -> Any:
     distance_matrix = distance_matrix_from_positions(positions)
 
-    current_weights = np.vectorize(interaction, excluded=["device"], signature="(m,n)->(m,n)")(
-        device=device, dist=distance_matrix
+    current_weights = np.vectorize(normalized_interaction, signature="(m,n)->(m,n)")(
+        dist=distance_matrix
     )
     current_weights = np.triu(current_weights, k=1)
 
@@ -91,7 +90,6 @@ def compute_best_scaling_for_pos(
 @dataclasses.dataclass
 class DistancesContraintsCalculator:
     target_qubo: np.ndarray
-    device: BaseDevice
     starting_min: float | None
     starting_ratio: float | None
     final_ratio: float | None = None
@@ -112,7 +110,7 @@ class DistancesContraintsCalculator:
         assert 0 <= step_cursor <= 1
 
         scaling_factor = compute_best_scaling_for_pos(
-            target_qubo=self.target_qubo, positions=positions, device=self.device, plot=plot
+            target_qubo=self.target_qubo, positions=positions, plot=plot
         )
 
         if self.final_ratio is None:

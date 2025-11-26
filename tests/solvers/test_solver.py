@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from qoolqit.devices import Device
+from qoolqit.devices import Device, DigitalAnalogDevice, AnalogDevice
 from qubosolver.config import EmbeddingConfig, DriveShapingConfig, SolverConfig, LocalEmulator
 from qubosolver.qubo_types import EmbedderType
 from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical
@@ -61,14 +61,27 @@ def test_run_local_backends(
 
 
 def test_solver_different_devices(
+    request: pytest.Fixture,
     qubo_for_testing_many_devices: QUBOInstance,
     local_device: Device,
+    embedding_method: EmbedderType,
 ) -> None:
+    if (
+        request.node.callspec.params["qubo_for_testing_many_devices"]
+        == "qubo_instance_adiabatic_tutorial"
+        and type(request.node.callspec.params["local_device"])
+        in (DigitalAnalogDevice, AnalogDevice)
+        and request.node.callspec.params["embedding_method"] == EmbedderType.BLADE
+    ):
+        pytest.skip(
+            "The compilation of the sequence for this combination should be addressed in a new PR."
+        )
+
     config = SolverConfig(
         use_quantum=True,
         drive_shaping=DriveShapingConfig(drive_shaping_method="adiabatic"),
         embedding=EmbeddingConfig(
-            embedding_method="greedy", greedy_traps=qubo_for_testing_many_devices.size
+            embedding_method=embedding_method, greedy_traps=qubo_for_testing_many_devices.size
         ),
         do_postprocessing=False,
         do_preprocessing=False,

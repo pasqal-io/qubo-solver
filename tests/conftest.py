@@ -19,7 +19,7 @@ from qubosolver.config import (
     SolverConfig,
     LocalEmulator,
 )
-from qubosolver.qubo_types import LayoutType, DriveType
+from qubosolver.qubo_types import EmbedderType, LayoutType, DriveType
 
 connection = PasqalCloud()
 connection.fetch_available_devices()
@@ -87,6 +87,16 @@ def local_backend(request: pytest.Fixture) -> LocalEmulator:
     ],
 )
 def local_device(request: pytest.Fixture) -> Device:
+    return request.param  # type: ignore[no-any-return]
+
+
+@pytest.fixture(
+    params=[
+        EmbedderType.GREEDY,
+        EmbedderType.BLADE,
+    ]
+)
+def embedding_method(request: pytest.Fixture) -> EmbedderType:
     return request.param  # type: ignore[no-any-return]
 
 

@@ -7,10 +7,9 @@ from matplotlib.axes import Axes
 import networkx as nx
 import numpy as np
 from numpy import format_float_scientific
-from pulser.devices._device_datacls import BaseDevice
 import pandas as pd
 
-from ._helpers import interaction
+from ._helpers import normalized_interaction
 
 
 def eformat(f: Any) -> str:
@@ -115,16 +114,14 @@ def draw_set_graph_coords(
     plt.show()
 
 
-def draw_graph_including_actual_weights(
-    qubo_graph: nx.Graph, positions: np.ndarray, device: BaseDevice
-) -> None:
+def draw_graph_including_actual_weights(qubo_graph: nx.Graph, positions: np.ndarray) -> None:
     from IPython.display import display
 
     new_weights_matrix = np.full((len(qubo_graph), len(qubo_graph)), fill_value="", dtype=object)
     new_weights = dict()
     for u, v in qubo_graph.edges:
         dist = np.linalg.norm(positions[u] - positions[v])
-        new_weights[(u, v)] = interaction(device=device, dist=float(dist))
+        new_weights[(u, v)] = normalized_interaction(dist=float(dist))
         new_weights_matrix[min(u, v), max(u, v)] = eformat(new_weights[(u, v)])
 
     df = pd.DataFrame(new_weights_matrix)
