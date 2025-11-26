@@ -358,6 +358,12 @@ def evolve_with_dimension_transition(
     return positions, starting_min
 
 
+def _compute_min_pairwise_distance(positions: np.ndarray) -> float:
+    distance_matrix = distance_matrix_from_positions(positions)
+    upper_diagonal_mask = np.triu(np.ones(distance_matrix.shape), k=1).astype(bool)
+    return np.min(distance_matrix[upper_diagonal_mask])  # type: ignore
+
+
 def em_blade(
     qubo: np.ndarray,
     *,
@@ -445,15 +451,15 @@ def em_blade(
         steps_ratios = np.linspace(
             starting_ratio_factor * max_min_dist_ratio, max_min_dist_ratio, len(dimensions)
         )
+        starting_min = _compute_min_pairwise_distance(positions)
     else:
         steps_ratios = [None] * len(dimensions)
+        starting_min = None
 
     total_steps = steps_per_round * (len(dimensions) - 1)
 
     assert len(dimensions) == len(steps_ratios)
-    distance_matrix = distance_matrix_from_positions(positions)
-    upper_diagonal_mask = np.triu(np.ones(distance_matrix.shape), k=1).astype(bool)
-    starting_min = np.min(distance_matrix[upper_diagonal_mask])
+
 
     for dim_idx, start_ratio, final_ratio in zip(
         range(len(dimensions) - 1), steps_ratios[:-1], steps_ratios[1:]
@@ -474,6 +480,13 @@ def em_blade(
             dim_idx=dim_idx,
             start_ratio=start_ratio,
         )
+
+    if max_min_dist_ratio is not None:
+        max_radial_dist = max(np.linalg.norm(positions, axis=-1))
+        min_atom_dist = _compute_min_pairwise_distance(positions)
+        output_ratio = max_radial_dist / min_atom_dist
+        if output_ratio > max_min_dist_ratio:
+            print(f'[Warning] Output ratio {output_ratio} is higher than required {max_min_dist_ratio}')
 
     return positions
 
