@@ -263,9 +263,25 @@ class Fixtures:
         new_bitstrings_tensor = torch.tensor(np.array(improved_bitstrings), dtype=torch.float32)
         new_costs_tensor = torch.tensor(improved_costs, dtype=torch.float32)
 
+        unique_bits, inverse_indices = torch.unique(
+            new_bitstrings_tensor, dim=0, return_inverse=True, return_counts=False
+        )
+        num_unique = unique_bits.size(0)
+        unique_costs = torch.zeros(num_unique, dtype=new_costs_tensor.dtype)
+        unique_costs = unique_costs.scatter_add(0, inverse_indices, new_costs_tensor)
+
         # Update the solution object.
-        solution.bitstrings = new_bitstrings_tensor
-        solution.costs = new_costs_tensor
+        solution.bitstrings = unique_bits
+        solution.costs = unique_costs
+        if solution.counts is not None:
+            unique_counts = torch.zeros(num_unique, dtype=solution.counts.dtype)
+            solution.counts = unique_counts.scatter_add(0, inverse_indices, solution.counts)
+
+        if solution.probabilities is not None:
+            unique_probs = torch.zeros(num_unique, dtype=solution.probabilities.dtype)
+            solution.probabilities = unique_probs.scatter_add(
+                0, inverse_indices, solution.probabilities
+            )
 
         if self.config.do_preprocessing and self.config.do_postprocessing:
             solution.solution_status = SolutionStatusType.PREPOSTPROCESSED
