@@ -70,7 +70,7 @@ class BaseDriveShaper(ABC):
         weights_list = torch.abs(torch.diag(self.qubo_coefficients)).tolist()
         max_node_weight = max(weights_list) if weights_list else 1.0
         norm_weights_list = [
-            (1 - (w / max_node_weight)) / ENERGY if max_node_weight != 0 else 0.0
+            (1 - (w / max_node_weight)) * ENERGY if max_node_weight != 0 else 0.0
             for w in weights_list
         ]
         return norm_weights_list
@@ -186,7 +186,7 @@ class AdiabaticDriveShaper(BaseDriveShaper):
             # to make the average values higher then the minimum
             # use the average value of a parabola for
             # the amplitude waveform with Omega
-            mag = max(mag, ENERGY * (3.0 * (min_avg_amp + 1e-9) / 2.0))
+            mag = max(mag, (3.0 * (min_avg_amp + 1e-9) / 2.0))
         if max_amp:
             mag = min(
                 mag,
@@ -204,9 +204,9 @@ class AdiabaticDriveShaper(BaseDriveShaper):
         assert max_seq_duration is not None
 
         max_seq_duration /= TIME
-        Omega /= ENERGY
-        delta_0 /= ENERGY
-        delta_f /= ENERGY
+        Omega *= ENERGY
+        delta_0 *= ENERGY
+        delta_f *= ENERGY
 
         amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9, Omega, 1e-9])
         det_wave = InterpolatedWaveform(max_seq_duration, [delta_0, 0, delta_f])
@@ -413,8 +413,8 @@ class OptimizedDriveShaper(BaseDriveShaper):
         max_seq_duration /= TIME
         amp_params = [1e-9] + list(params[:3]) + [1e-9]
         det_params = [params[3]] + list(params[4:]) + [params[3]]
-        amp_params = [p / ENERGY for p in amp_params]
-        det_params = [p / ENERGY for p in det_params]
+        amp_params = [p * ENERGY for p in amp_params]
+        det_params = [p * ENERGY for p in det_params]
 
         amp_wave = InterpolatedWaveform(max_seq_duration, amp_params)
         det_wave = InterpolatedWaveform(max_seq_duration, det_params)
