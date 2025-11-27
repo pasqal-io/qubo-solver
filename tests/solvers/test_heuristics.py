@@ -3,21 +3,28 @@ from __future__ import annotations
 import pytest
 import torch
 
-from qubosolver import QUBOInstance, QUBOSolution
+from qubosolver import QUBOInstance, QUBOSolution, ClassicalSolverType
 from qubosolver.config import ClassicalConfig, SolverConfig
 from qubosolver.solver import QuboSolver
 from qubosolver.classical_solver import get_classical_solver
 from qubosolver.classical_solver.classical_solver import (
     SimulatedAnnealingSolver,
     TabuSearchSolver,
+    HybridSATabuSolver,
     RandomSolver,
 )
 
+class_solvers = {
+    ClassicalSolverType.SIMULATED_ANNEALING: SimulatedAnnealingSolver,
+    ClassicalSolverType.TABU_SEARCH: TabuSearchSolver,
+    ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH: HybridSATabuSolver,
+}
 
-@pytest.mark.parametrize("classical_method", ["simulated_annealing", "tabu_search"])
+
+@pytest.mark.parametrize("classical_method", list(class_solvers.keys()))
 @pytest.mark.parametrize("max_bitstrings", [1, 3])
 def test_qubo_solver_sa_or_tabu(
-    simple_qubo_instance: QUBOInstance, classical_method: str, max_bitstrings: int
+    simple_qubo_instance: QUBOInstance, classical_method: ClassicalSolverType, max_bitstrings: int
 ) -> None:
     # Create a SolverConfig object with classical solver options.
     classical_config = ClassicalConfig(
@@ -30,7 +37,7 @@ def test_qubo_solver_sa_or_tabu(
     # insure get_classical_solver works properly
     assert isinstance(
         get_classical_solver(simple_qubo_instance, config.classical),
-        SimulatedAnnealingSolver if classical_method == "simulated_annealing" else TabuSearchSolver,
+        class_solvers[classical_method],
     )
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
