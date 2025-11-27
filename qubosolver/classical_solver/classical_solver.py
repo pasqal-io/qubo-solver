@@ -142,7 +142,7 @@ class TabuSearchSolver(BaseClassicalSolver):
     """
 
     def solve(self) -> QUBOSolution:
-        if not self.config.tabu_x0:
+        if self.config.tabu_x0 is None:
             assert self.instance.size
             x0 = torch.randint(0, 2, size=(self.instance.size,))
         else:
@@ -156,6 +156,33 @@ class TabuSearchSolver(BaseClassicalSolver):
             max_bitstrings=self.config.max_bitstrings,
         )
         return tabu_search_solution
+
+
+class HybridSATabuSolver(BaseClassicalSolver):
+    """
+    QUBO solver using simulated annealing first followed by tabu search solver.
+
+    Note: the starting point of tabu search is the best candidate
+        obtained with simulated annealing.
+    """
+
+    def solve(self) -> QUBOSolution:
+        config_sa = self.config.model_copy(
+            update={"classical_solver_type": ClassicalSolverType.SIMULATED_ANNEALING}
+        )
+        sa = SimulatedAnnealingSolver(self.instance, config_sa)
+        sa_solution = sa.solve()
+        sa_solution.sort_by_cost()
+        config_tabu = self.config.model_copy(
+            update={
+                "classical_solver_type": ClassicalSolverType.TABU_SEARCH,
+                "tabu_x0": sa_solution.bitstrings[0],
+            }
+        )
+        tabu = TabuSearchSolver(self.instance, config_tabu)
+        tabu_sol = tabu.solve()
+        tabu_sol.sort_by_cost()
+        return tabu_sol
 
 
 class RandomSolver(BaseClassicalSolver):
@@ -199,6 +226,8 @@ def get_classical_solver(instance: QUBOInstance, config: ClassicalConfig) -> Bas
         return CplexSolver(instance, config)
     if solver_type == ClassicalSolverType.SIMULATED_ANNEALING:
         return SimulatedAnnealingSolver(instance, config)
+    if solver_type == ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH:
+        return HybridSATabuSolver(instance, config)
     if solver_type == ClassicalSolverType.TABU_SEARCH:
         return TabuSearchSolver(instance, config)
     if solver_type == ClassicalSolverType.RANDOM:
