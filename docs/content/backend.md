@@ -137,6 +137,7 @@ if PASSWORD is not None:
 For running simulation differently, one can change the backend configuration by passing an `emulation_config` for `emu_sv` and `emu_mps`:
 
 ```python exec="on" source="material-block"
+from qubosolver.config import LocalEmulator
 from emu_sv import SVBackend, SVConfig
 from emu_mps import MPSBackend, MPSConfig
 
