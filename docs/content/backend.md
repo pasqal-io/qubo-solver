@@ -131,3 +131,15 @@ if PASSWORD is not None:
     )
 
 ```
+
+## Changing the backend configuration
+
+For running simulation differently, one can change the backend configuration by passing an `emulation_config` for `emu_sv` and `emu_mps`:
+
+```python exec="on" source="material-block"
+from emu_sv import SVBackend, SVConfig
+from emu_mps import MPSBackend, MPSConfig
+
+emu_sv_backend = LocalEmulator(backend_type=SVBackend, runs=500, emulation_config=SVConfig(dt=10))
+emu_mps_backend = LocalEmulator(backend_type=MPSBackend, runs=500, emulation_config=MPSConfig(dt=10))
+```

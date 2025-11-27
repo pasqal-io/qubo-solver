@@ -42,7 +42,7 @@ class LimitedAdiabaticDriveShaper(BaseDriveShaper):
         QUBO = self.instance.coefficients
         weights_list = torch.abs(torch.diag(QUBO)).tolist()
         max_node_weight = max(weights_list)
-        norm_weights_list = [(1 - (w / max_node_weight)) / TIME for w in weights_list]
+        norm_weights_list = [(1 - (w / max_node_weight)) / ENERGY for w in weights_list]
 
         # enforces AnalogDevice max sequence duration since Digital's one is really specific
 
@@ -78,11 +78,11 @@ class LimitedAdiabaticDriveShaper(BaseDriveShaper):
         max_seq_duration = max_seq_duration // 20
 
         max_seq_duration /= TIME
-        Omega /= TIME
-        delta_0 /= TIME
-        delta_f /= TIME
+        Omega /= ENERGY
+        delta_0 /= ENERGY
+        delta_f /= ENERGY
 
-        amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9 / TIME, Omega, 1e-9 / TIME])
+        amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9, Omega, 1e-9])
         det_wave = InterpolatedWaveform(max_seq_duration, [delta_0, 0, delta_f])
         wdetunings = weighted_detunings(
             register,
