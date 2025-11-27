@@ -86,6 +86,7 @@ class SolutionStatusType(StrEnum):
 class ClassicalSolverType(StrEnum):
     """Type of classical solver used."""
 
+    SIMULATED_ANNEALING_TABU_SEARCH = "simulated_annealing_tabu_search"
     TABU_SEARCH = "tabu_search"
     SIMULATED_ANNEALING = "simulated_annealing"
     CPLEX = "cplex"

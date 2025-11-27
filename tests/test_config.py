@@ -16,6 +16,7 @@ from qubosolver.qubo_types import (
     EmbedderType,
     LayoutType,
     DriveType,
+    ClassicalSolverType,
 )
 
 
@@ -32,9 +33,10 @@ def test_empty_config(empty_config: SolverConfig) -> None:
 
 def test_classical_part() -> None:
     default_classical = ClassicalConfig()
-    assert default_classical.classical_solver_type == "cplex"
-    assert default_classical.cplex_log_path == "solver.log"
-    assert default_classical.cplex_maxtime == 600.0
+    assert (
+        default_classical.classical_solver_type
+        == ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH
+    )
 
     with pytest.raises(ValueError):
         ClassicalConfig(classical_solver_type=1)

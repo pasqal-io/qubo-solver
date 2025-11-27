@@ -49,7 +49,8 @@ class ClassicalConfig(Config):
         part of a `SolverConfig`.
 
     Attributes:
-        classical_solver_type (str | ClassicalSolverType, optional): Classical solver type. Defaults to "cplex".
+        classical_solver_type (str | ClassicalSolverType, optional): Classical solver type. Defaults to
+            "simulated_annealing_tabu_search".
         cplex_maxtime (float, optional): CPLEX maximum runtime. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
         max_iter (int, optional): Maximum number of iterations to perform for simulated annealing or tabu search.
@@ -66,7 +67,7 @@ class ClassicalConfig(Config):
             without improvement before termination.
     """
 
-    classical_solver_type: str | ClassicalSolverType = "cplex"
+    classical_solver_type: str | ClassicalSolverType = "simulated_annealing_tabu_search"
     cplex_maxtime: float = 600.0
     cplex_log_path: str = "solver.log"
 
@@ -122,7 +123,24 @@ class ClassicalConfig(Config):
         if self.classical_solver_type == ClassicalSolverType.TABU_SEARCH:
             serialization.update(
                 {
+                    "max_bitstrings": self.max_bitstrings,
                     "max_iter": self.max_iter,
+                    "tabu_x0": self.tabu_x0,
+                    "tabu_tenure": self.tabu_tenure,
+                    "tabu_max_no_improve": self.tabu_max_no_improve,
+                }
+            )
+        if self.classical_solver_type == ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH:
+            serialization.update(
+                {
+                    "max_iter": self.max_iter,
+                    "max_bitstrings": self.max_bitstrings,
+                    "sa_initial_temp": self.sa_initial_temp,
+                    "sa_final_temp": self.sa_final_temp,
+                    "sa_cooling_rate": self.sa_cooling_rate,
+                    "sa_seed": self.sa_seed,
+                    "sa_start": self.sa_start,
+                    "sa_energy_tol": self.sa_energy_tol,
                     "tabu_x0": self.tabu_x0,
                     "tabu_tenure": self.tabu_tenure,
                     "tabu_max_no_improve": self.tabu_max_no_improve,
