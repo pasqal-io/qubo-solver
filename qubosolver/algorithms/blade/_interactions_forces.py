@@ -92,18 +92,20 @@ def compute_interaction_forces(
     *,
     distance_matrix: np.ndarray,
     unitary_vectors: np.ndarray,
-    qubo_graph: nx.Graph,
+    target_interactions_graph: nx.Graph,
     weight_relative_threshold: float,
     max_distance_to_walk: float,
 ) -> Force:
-    n = nx.number_of_nodes(qubo_graph)
+    n = nx.number_of_nodes(target_interactions_graph)
 
     current_weights = np.vectorize(normalized_interaction, signature="(m,n)->(m,n)")(
         distance_matrix
     )
     logger.debug(f"{current_weights=}")
     target_weights = np.array(
-        nx.adjacency_matrix(qubo_graph, nodelist=list(range(n)), weight="weight").toarray()
+        nx.adjacency_matrix(
+            target_interactions_graph, nodelist=list(range(n)), weight="weight"
+        ).toarray()
     )
     logger.debug(f"{target_weights=}")
 

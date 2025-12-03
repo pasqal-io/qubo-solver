@@ -33,7 +33,7 @@ warnings.filterwarnings("ignore", module="pulser")
 def update_positions(
     *,
     positions: np.ndarray,
-    qubo_graph: nx.Graph,
+    target_interactions_graph: nx.Graph,
     draw_step: bool = False,
     weight_relative_threshold: float = 0.0,
     min_dist: float | None = None,
@@ -42,10 +42,10 @@ def update_positions(
 ) -> np.ndarray:
     """
     Compute vector moves and apply them on the positions of the nodes to make
-    their interactions closer to the target QUBO.
+    their interactions closer to the target interactions.
 
     positions: Starting positions of the nodes.
-    qubo_graph: Desired QUBO.
+    target_interactions_graph: Desired interactions.
     draw_steps: Whether to draw the nodes and the forces.
     weight_relative_threshold: It is used to compute a weight difference
         threshold defining which weights differences are significant and should
@@ -62,7 +62,7 @@ def update_positions(
         in weights that can be targetting with this ceiling.
     """
 
-    n = nx.number_of_nodes(qubo_graph)
+    n = nx.number_of_nodes(target_interactions_graph)
     positions = np.array(positions, dtype=float)
     nb_positions, space_dimension = positions.shape
 
@@ -86,7 +86,7 @@ def update_positions(
     interaction_force = compute_interaction_forces(
         distance_matrix=distance_matrix,
         unitary_vectors=unitary_vectors,
-        qubo_graph=qubo_graph,
+        target_interactions_graph=target_interactions_graph,
         weight_relative_threshold=weight_relative_threshold,
         max_distance_to_walk=max_distance_to_walk,
     )
@@ -210,14 +210,16 @@ def update_positions(
         print(
             f"{min_dist=}, {max_dist=}, current min dist = {np.min(distance_matrix[np.triu_indices_from(distance_matrix, k=1)])}, current max dist = {np.max(distance_matrix[np.triu_indices_from(distance_matrix, k=1)])}"
         )
-        draw_graph_including_actual_weights(qubo_graph=qubo_graph, positions=positions)
+        draw_graph_including_actual_weights(
+            target_interactions_graph=target_interactions_graph, positions=positions
+        )
 
     return positions
 
 
 def evolve_with_forces_through_dim_change(
     *,
-    qubo_graph: nx.Graph,
+    target_interactions_graph: nx.Graph,
     draw_steps: bool = False,
     starting_dimensions: int,
     final_dimensions: int,
@@ -235,7 +237,7 @@ def evolve_with_forces_through_dim_change(
         dimensions_to_remove=starting_dimensions - final_dimensions, steps=nb_steps
     )
     dist_constr_calc = DistancesContraintsCalculator(
-        target_qubo=Qubo.from_graph(qubo_graph).as_matrix(),
+        target_interactions=Qubo.from_graph(target_interactions_graph).as_matrix(),
         starting_min=starting_min,
         starting_ratio=start_ratio,
         final_ratio=final_ratio,
@@ -262,7 +264,7 @@ def evolve_with_forces_through_dim_change(
 
         positions = update_positions(
             positions=positions,
-            qubo_graph=qubo_graph,
+            target_interactions_graph=target_interactions_graph,
             draw_step=draw_step,
             weight_relative_threshold=compute_weight_relative_threshold_by_step(step),
             min_dist=min_dist,
@@ -281,8 +283,8 @@ def evolve_with_forces_through_dim_change(
     return positions[:, :final_dimensions], min_dist
 
 
-def generate_random_positions(qubo: np.ndarray, dimension: int) -> np.ndarray:
-    return np.random.uniform(size=(len(qubo), dimension))
+def generate_random_positions(target_interactions: np.ndarray, dimension: int) -> np.ndarray:
+    return np.random.uniform(size=(len(target_interactions), dimension))
 
 
 def augment_dimensions_with_random_values(
@@ -310,7 +312,7 @@ def evolve_with_dimension_transition(
     compute_max_distance_to_walk: Callable[
         [float, float | None], float | tuple[float, float, float]
     ],
-    qubo_graph: nx.Graph,
+    target_interactions_graph: nx.Graph,
     positions: np.ndarray,
     final_ratio: float,
     total_steps: int,
@@ -346,7 +348,7 @@ def evolve_with_dimension_transition(
         starting_dimensions = final_dimensions
 
     positions, starting_min = evolve_with_forces_through_dim_change(
-        qubo_graph=qubo_graph,
+        target_interactions_graph=target_interactions_graph,
         draw_steps=(
             draw_steps
             if isinstance(draw_steps, bool)
@@ -373,7 +375,7 @@ def _compute_min_pairwise_distance(positions: np.ndarray) -> float:
 
 
 def em_blade(
-    qubo: np.ndarray,
+    target_interactions: np.ndarray,
     *,
     max_min_dist_ratio: Optional[float] = None,
     draw_steps: bool | list[int] = False,
@@ -394,11 +396,12 @@ def em_blade(
     approach the desired values at best. The interactions assume that the
     interaction coefficient of the device is set to 1.
     The result can be used as an embedding.
-    Its prior target is on interaction matrices or QUBOs, but it can also be used
+    Its typical target is on interaction matrices or QUBOs, but it can also be used
     for MIS with limitations if the adjacency matrix is converted into a QUBO.
     The general principle is based on the Fruchterman-Reingold algorithm.
 
-    qubo: QUBO matrix
+    target_interactions: Matrix of desired interactions between the nodes. It
+        must be either symmetrical or triangular.
     max_min_dist_ratio: If present, ratio that must not be overcome between
         the maximum radial distance and the minimum pairwise distances.
     draw_steps: Whether to draw the nodes and the forces.
@@ -442,16 +445,18 @@ def em_blade(
 
     assert len(dimensions) >= 2
 
-    if isinstance(qubo, np.ndarray):
-        assert not np.all(qubo == 0)
+    if isinstance(target_interactions, np.ndarray):
+        assert not np.all(target_interactions == 0)
     else:
-        assert not torch.all(qubo == 0)
+        assert not torch.all(target_interactions == 0)
 
-    qubo_obj = Qubo.from_matrix(qubo)
-    qubo_graph = qubo_obj.as_graph()
+    qubo_obj = Qubo.from_matrix(target_interactions)
+    target_interactions_graph = qubo_obj.as_graph()
 
     if starting_positions is None:
-        positions = generate_random_positions(qubo=qubo, dimension=dimensions[0])
+        positions = generate_random_positions(
+            target_interactions=target_interactions, dimension=dimensions[0]
+        )
     elif starting_positions.shape[1] <= dimensions[0]:
         positions = augment_dimensions_with_random_values(
             starting_positions, new_dimensions=dimensions[0] - starting_positions.shape[1]
@@ -461,8 +466,8 @@ def em_blade(
             f"The number of dimensions in the starting positions {starting_positions.shape[1]} is greater than the starting number of dimensions {dimensions[0]}."
         )
 
-    for u, v in nx.non_edges(qubo_graph):
-        qubo_graph.add_edge(u, v, weight=0)
+    for u, v in nx.non_edges(target_interactions_graph):
+        target_interactions_graph.add_edge(u, v, weight=0)
 
     if max_min_dist_ratio is not None:
         steps_ratios = np.linspace(
@@ -488,7 +493,7 @@ def em_blade(
             steps_per_round=steps_per_round,
             compute_weight_relative_threshold=compute_weight_relative_threshold,
             compute_max_distance_to_walk=compute_max_distance_to_walk,
-            qubo_graph=qubo_graph,
+            target_interactions_graph=target_interactions_graph,
             positions=positions,
             final_ratio=final_ratio,
             total_steps=total_steps,
@@ -509,7 +514,7 @@ def em_blade(
 
 
 def em_blade_for_device(
-    qubo: np.ndarray,
+    target_interactions: np.ndarray,
     *,
     device: BaseDevice | Device,
     follow_max_min_dist_ratio: bool = True,
@@ -542,7 +547,7 @@ def em_blade_for_device(
     )
 
     positions = em_blade(
-        qubo=qubo,
+        target_interactions=target_interactions,
         max_min_dist_ratio=max_min_dist_ratio,
         draw_steps=draw_steps,
         dimensions=dimensions,

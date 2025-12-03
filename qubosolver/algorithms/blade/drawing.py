@@ -114,12 +114,18 @@ def draw_set_graph_coords(
     plt.show()
 
 
-def draw_graph_including_actual_weights(qubo_graph: nx.Graph, positions: np.ndarray) -> None:
+def draw_graph_including_actual_weights(
+    target_interactions_graph: nx.Graph, positions: np.ndarray
+) -> None:
     from IPython.display import display
 
-    new_weights_matrix = np.full((len(qubo_graph), len(qubo_graph)), fill_value="", dtype=object)
+    new_weights_matrix = np.full(
+        (len(target_interactions_graph), len(target_interactions_graph)),
+        fill_value="",
+        dtype=object,
+    )
     new_weights = dict()
-    for u, v in qubo_graph.edges:
+    for u, v in target_interactions_graph.edges:
         dist = np.linalg.norm(positions[u] - positions[v])
         new_weights[(u, v)] = normalized_interaction(dist=float(dist))
         new_weights_matrix[min(u, v), max(u, v)] = eformat(new_weights[(u, v)])
@@ -132,6 +138,6 @@ def draw_graph_including_actual_weights(qubo_graph: nx.Graph, positions: np.ndar
         display(df)
 
     draw_set_graph_coords(
-        graph=qubo_graph,
+        graph=target_interactions_graph,
         coords=positions,
     )

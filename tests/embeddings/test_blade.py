@@ -27,7 +27,7 @@ def test_update_positions(
 
     new_positions = update_positions(
         positions=np.array([[0, 0], [1, 0]]),
-        qubo_graph=qubo_graph,
+        target_interactions_graph=qubo_graph,
         max_distance_to_walk=max_distance_to_walk,
     )
 
@@ -43,7 +43,7 @@ def test_max_dist_constraint() -> None:
 
     new_positions = update_positions(
         positions=np.array([[-0.5, 0], [0.5, 0]]),
-        qubo_graph=qubo_graph,
+        target_interactions_graph=qubo_graph,
         max_dist=max_radial_dist,
     )
 
@@ -59,7 +59,7 @@ def test_min_dist_constraint() -> None:
 
     new_positions = update_positions(
         positions=np.array([[-10, 0], [0, 10]]),
-        qubo_graph=qubo_graph,
+        target_interactions_graph=qubo_graph,
         min_dist=30,
     )
 
@@ -75,7 +75,7 @@ def test_min_dist_constraint_limited() -> None:
 
     new_positions = update_positions(
         positions=np.array([[-1, 0], [1, 0]]),
-        qubo_graph=qubo_graph,
+        target_interactions_graph=qubo_graph,
         min_dist=10,
         max_distance_to_walk=(0, 2, 0),
     )
@@ -90,7 +90,7 @@ def test_max_dist_constraint_limited() -> None:
 
     new_positions = update_positions(
         positions=np.array([[-10, 0], [10, 0]]),
-        qubo_graph=qubo_graph,
+        target_interactions_graph=qubo_graph,
         max_dist=1,
         max_distance_to_walk=(0, 0, 1),
     )
@@ -115,7 +115,7 @@ def test_force_based_embedding() -> None:
     )
 
     positions = em_blade(
-        qubo=qubo,
+        target_interactions=qubo,
         max_min_dist_ratio=max_dist / min_dist,
         steps_per_round=1000,
         starting_positions=np.array([[-1, 1], [1, 1], [1, -1], [-1, -1]]) * max_dist / 3,
@@ -190,7 +190,7 @@ def test_drawing() -> None:
     assert len(plt.get_fignums()) == 0
     update_positions(
         positions=np.array([[-10, 0], [10, 0]]),
-        qubo_graph=qubo_graph,
+        target_interactions_graph=qubo_graph,
         max_dist=1,
         max_distance_to_walk=(0, 0, 1),
         draw_step=True,

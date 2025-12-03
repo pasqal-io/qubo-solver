@@ -90,7 +90,9 @@ class BLaDEmbedder(BaseEmbedder):
 
         coords = (
             em_blade_for_device(
-                qubo=BLaDEmbedder._preprocessing_qubo(self.instance.coefficients.numpy()),
+                target_interactions=BLaDEmbedder._preprocessing_qubo(
+                    self.instance.coefficients.numpy()
+                ),
                 device=self.config.device._device,
                 draw_steps=self.config.embedding.draw_steps,
                 dimensions=self.config.embedding.blade_dimensions,
