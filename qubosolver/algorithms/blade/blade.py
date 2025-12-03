@@ -285,8 +285,21 @@ def generate_random_positions(qubo: np.ndarray, dimension: int) -> np.ndarray:
     return np.random.uniform(size=(len(qubo), dimension))
 
 
+def augment_dimensions_with_random_values(
+    positions: np.ndarray, *, new_dimensions: int
+) -> np.ndarray:
+    quantiles = np.quantile(positions, q=0.75, axis=0) - np.quantile(positions, q=0.5, axis=0)
+    volume_per_point = np.prod(quantiles) / positions.shape[0]
+    edge = volume_per_point ** (1 / positions.shape[1])
+    positions_noise = np.random.uniform(
+        low=-edge / 2,
+        high=edge / 2,
+        size=(len(positions), new_dimensions),
+    )
+    return np.concatenate((positions, positions_noise), axis=1)
+
+
 def evolve_with_dimension_transition(
-    qubo: np.ndarray,
     *,
     draw_steps: bool | list[int],
     dimensions: list[int],
@@ -326,16 +339,10 @@ def evolve_with_dimension_transition(
         pca_inst = PCA(n_components=starting_dimensions)
         positions = pca_inst.fit_transform(positions)
 
-    if final_dimensions > starting_dimensions:
-        quantiles = np.quantile(positions, q=0.75, axis=0) - np.quantile(positions, q=0.5, axis=0)
-        volume_per_point = np.prod(quantiles) / positions.shape[0]
-        edge = volume_per_point ** (1 / positions.shape[1])
-        positions_noise = np.random.uniform(
-            low=-edge / 2,
-            high=edge / 2,
-            size=(len(qubo), final_dimensions - starting_dimensions),
+    elif final_dimensions > starting_dimensions:
+        positions = augment_dimensions_with_random_values(
+            positions, new_dimensions=final_dimensions - starting_dimensions
         )
-        positions = np.concatenate((positions, positions_noise), axis=1)
         starting_dimensions = final_dimensions
 
     positions, starting_min = evolve_with_forces_through_dim_change(
@@ -401,7 +408,10 @@ def em_blade(
         Increasing the number of intermediate dimensions can help to escape
         from local minima.
     starting_positions: If provided, initial positions to start from. Otherwise,
-        random positions will be generated.
+        random positions will be generated. The number of dimensions of the
+        starting positions must be lower than or equal to the first dimension
+        to explore. If it is lower, it is added dimensions filled with
+        random values.
     pca: Whether to apply Principal Component Analysis to prioritize dimensions
         to keep when transitioning from a space to a space with fewer dimensions.
         It is disabled by default because it can raise an error when there are
@@ -442,8 +452,14 @@ def em_blade(
 
     if starting_positions is None:
         positions = generate_random_positions(qubo=qubo, dimension=dimensions[0])
+    elif starting_positions.shape[1] <= dimensions[0]:
+        positions = augment_dimensions_with_random_values(
+            starting_positions, new_dimensions=dimensions[0] - starting_positions.shape[1]
+        )
     else:
-        positions = starting_positions
+        raise ValueError(
+            f"The number of dimensions in the starting positions {starting_positions.shape[1]} is greater than the starting number of dimensions {dimensions[0]}."
+        )
 
     for u, v in nx.non_edges(qubo_graph):
         qubo_graph.add_edge(u, v, weight=0)
@@ -465,7 +481,6 @@ def em_blade(
         range(len(dimensions) - 1), steps_ratios[:-1], steps_ratios[1:]
     ):
         positions, starting_min = evolve_with_dimension_transition(
-            qubo=qubo,
             draw_steps=draw_steps,
             dimensions=dimensions,
             starting_min=starting_min,

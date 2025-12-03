@@ -199,6 +199,22 @@ def test_drawing() -> None:
     plt.close("all")
 
 
+def test_initial_positions_with_fewer_dimensions_than_starting_dimensions() -> None:
+    qubo = np.array(
+        [
+            [0, 1, 0, 1],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1],
+            [0, 0, 0, 0],
+        ]
+    )
+
+    positions = em_blade(qubo)
+    positions = em_blade(qubo, starting_positions=positions)
+
+    assert np.all(positions)
+
+
 def test_with_device() -> None:
     device = dataclasses.replace(
         AnalogDevice,
