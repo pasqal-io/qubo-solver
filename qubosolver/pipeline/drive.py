@@ -74,6 +74,19 @@ class BaseDriveShaper(ABC):
             for w in weights_list
         ]
         return norm_weights_list
+    
+    def _scale_omega_for_device_constraints(self, parameter: float) -> float:
+        """Scale the parameter given the device `min_avg_amp` and `max_amp` constraints."""
+        rydberg_global = self.device._device.channels["rydberg_global"]
+        min_avg_amp = rydberg_global.min_avg_amp
+        max_amp = rydberg_global.max_amp
+
+        if min_avg_amp is not None:
+            parameter = max(parameter, min_avg_amp + 1e-9)
+        if max_amp is not None:
+            parameter = min(parameter, max_amp - 1e-9)
+
+        return parameter
 
     @abstractmethod
     def generate(
@@ -122,27 +135,6 @@ class AdiabaticDriveShaper(BaseDriveShaper):
             return float("inf")
 
         return float(torch.max(valid_q_ij_values).cpu().item())
-
-    def _scale_omega_for_device_constraints(self, parameter: float) -> float:
-        """Scale the parameter given the device ``min_avg_amp and `max_amp` constraints.
-
-        Args:
-            parameter (float): Parameter to scale.
-
-        Returns:
-            float: Scaled parameter value.
-        """
-        rydberg_global = self.device._device.channels["rydberg_global"]
-        min_avg_amp = rydberg_global.min_avg_amp
-        max_amp = rydberg_global.max_amp
-        if min_avg_amp:
-            parameter = max(parameter, min_avg_amp + 1e-9)
-        if max_amp:
-            parameter = min(
-                parameter,
-                max_amp - 1e-9,
-            )
-        return parameter
 
     def generate(
         self,
