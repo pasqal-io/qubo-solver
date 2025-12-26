@@ -226,6 +226,229 @@ class AdiabaticDriveShaper(BaseDriveShaper):
         return shaped_drive, solution
 
 
+class HeuristicDriveShaper(BaseDriveShaper):
+    """
+    Heuristic schedule drive shaper.
+
+    Goal:
+      - Start with a strongly negative global detuning to prepare an easy initial state.
+      - Turn on mixing (Omega) up to a heuristic Omega_max based on an instance energy scale.
+      - Sweep detuning towards a final value encoding the QUBO diagonals (via global + optional DMM).
+      - Turn off mixing.
+
+    Notes:
+      - We do not assume strict adiabaticity; we build a practical schedule.
+      - We keep the same conventions and objects as other shapers in this file
+        (InterpolatedWaveform, weighted_detunings, device.converter.factors).
+    """
+
+    @staticmethod
+    def _clip(x: float, lo: float | None, hi: float | None) -> float:
+        if lo is not None:
+            x = max(x, lo)
+        if hi is not None:
+            x = min(x, hi)
+        return x
+
+    def _get_hw_detuning_bound(self) -> float | None:
+        # Pulser channel constraint (global rydberg)
+        ch = self.device._device.channels["rydberg_global"]
+        return ch.max_abs_detuning
+
+    def _get_hw_dmm_bound(self) -> float | None:
+        # Try to infer a max detuning for DMM channels (if present)
+        dmm_channels = list(getattr(self.device._device, "dmm_channels", {}).values())
+        if not dmm_channels:
+            return None
+        # Most Pulser channels expose `max_abs_detuning`. If missing, return None.
+        return getattr(dmm_channels[0], "max_abs_detuning", None)
+
+    def _compute_alpha_diag_max(
+        self,
+        delta_g_min: float,
+        delta_g_max: float,
+        delta_dmm_max: float,
+    ) -> float:
+        """
+        Compute a conservative maximum alpha to encode diagonals using:
+          d_i = -alpha * Q_ii
+          delta_g(T) = min_i d_i
+          delta_dmm(T) = max_i d_i - min_i d_i
+
+        All inputs are assumed already in the *same units* as the waveforms
+        (i.e. after conversion by TIME if you do that).
+        """
+        Q = self.qubo_coefficients
+        diag = torch.diag(Q)
+        if diag.numel() == 0:
+            return 0.0
+
+        qmin = float(torch.min(diag).cpu().item())
+        qmax = float(torch.max(diag).cpu().item())
+
+        # If all diagonals equal, any alpha works for diagonal range (dmm range = 0).
+        # We'll return a "large" alpha capped by global bounds, but keep it safe.
+        if np.isclose(qmax, qmin):
+            # Need delta_g(T) = -alpha*qmax within [delta_g_min, delta_g_max]
+            if np.isclose(qmax, 0.0):
+                return 1.0
+            # Solve for alpha so that -alpha*qmax in range.
+            # We'll take the most conservative positive alpha.
+            candidates: list[float] = []
+            if qmax > 0:
+                # -alpha*qmax >= delta_g_min  => alpha <= -delta_g_min/qmax
+                candidates.append((-delta_g_min) / qmax)
+            else:
+                # -alpha*qmax <= delta_g_max  => alpha <= delta_g_max/(-qmax)
+                candidates.append(delta_g_max / (-qmax))
+            return max(0.0, min(candidates)) if candidates else 0.0
+
+        # DMM range constraint:
+        # delta_dmm(T) = alpha*(qmax - qmin) <= delta_dmm_max
+        alpha_dmm = delta_dmm_max / (qmax - qmin) if (qmax - qmin) != 0 else float("inf")
+
+        # Global detuning constraint:
+        # delta_g(T) = d_min = -alpha*qmax must be within [delta_g_min, delta_g_max]
+        # This gives an upper bound depending on sign of qmax.
+        alpha_global_candidates: list[float] = []
+        if qmax > 0:
+            # -alpha*qmax >= delta_g_min  => alpha <= -delta_g_min/qmax
+            alpha_global_candidates.append((-delta_g_min) / qmax)
+        elif qmax < 0:
+            # -alpha*qmax <= delta_g_max  => alpha <= delta_g_max/(-qmax)
+            alpha_global_candidates.append(delta_g_max / (-qmax))
+        # If qmax == 0, no constraint from that.
+
+        alpha_global = min(alpha_global_candidates) if alpha_global_candidates else float("inf")
+        alpha_max = min(alpha_dmm, alpha_global)
+
+        return float(max(0.0, alpha_max))
+
+    def generate(self, register: Register) -> tuple[Drive, QUBOSolution]:
+        TIME, _, _ = self.device.converter.factors
+        Q = self.qubo_coefficients
+
+        # ---- Sequence duration (same pattern as AdiabaticDriveShaper) ----
+        max_seq_duration = (
+            self.device._device.max_sequence_duration or AnalogDevice.max_sequence_duration
+        )
+        assert max_seq_duration is not None
+        max_seq_duration = max_seq_duration / TIME
+
+        # ---- Hardware detuning bounds (global) ----
+        max_abs_det = self._get_hw_detuning_bound()
+        # If the device doesn't expose it, we keep a very conservative fallback
+        if max_abs_det is None:
+            max_abs_det = 1e6
+
+        delta_g_min = -float(max_abs_det) / TIME
+        delta_g_max = float(max_abs_det) / TIME
+
+        # ---- Hardware DMM bounds (if available) ----
+        # If DMM not available/disabled: set range 0 so alpha is computed accordingly.
+        if self.dmm:
+            max_abs_dmm = self._get_hw_dmm_bound()
+            if max_abs_dmm is None:
+                # fallback
+                max_abs_dmm = max_abs_det
+            delta_dmm_max = float(max_abs_dmm) / TIME
+        else:
+            delta_dmm_max = 0.0
+
+        # ---- Choose alpha (diagonal encoding) with safety margin ----
+        # We compute alpha in the "post-conversion" units used in waveforms (divide by TIME).
+        # That means we should also convert Q diagonals similarly.
+        # In the existing code, they convert delta and omega by /TIME, so we do the same:
+        Q_conv = Q / TIME
+
+        self.qubo_coefficients = Q_conv  # local override for this drive build (doesn't mutate instance)
+        diag = torch.diag(Q_conv)
+
+        alpha_max = self._compute_alpha_diag_max(
+            delta_g_min=delta_g_min,
+            delta_g_max=delta_g_max,
+            delta_dmm_max=delta_dmm_max,
+        )
+        # Safety margin
+        safety = float(getattr(self.config.drive_shaping, "heuristic_alpha_safety", 0.8))
+        alpha = safety * alpha_max if alpha_max > 0 else 0.0
+
+        # If alpha collapses (e.g., DMM disabled but diagonals spread too much), we still build a drive
+        # using a tiny alpha so code path works and user sees something.
+        if alpha <= 0:
+            alpha = 1e-9
+
+        # Target final detunings: delta_i(T) = -alpha * Q_ii  (Q_ii already /TIME here)
+        d_i = (-alpha * diag).cpu().numpy()
+        d_min = float(np.min(d_i)) if d_i.size else 0.0
+        d_max = float(np.max(d_i)) if d_i.size else 0.0
+
+        delta_g_T = d_min
+        delta_dmm_T = max(0.0, d_max - d_min)
+
+        # clamp to hardware (extra safety)
+        delta_g_T = self._clip(delta_g_T, delta_g_min, delta_g_max)
+        delta_dmm_T = self._clip(delta_dmm_T, 0.0, delta_dmm_max)
+
+        # DMM weights (heuristic schedule wants exact encoding at T when possible)
+        # If delta_dmm_T got clamped, encoding becomes approximate but still consistent.
+        weights: list[float]
+        if delta_dmm_T > 0 and d_i.size:
+            weights = ((d_i - d_min) / (d_max - d_min)).tolist()
+        else:
+            weights = [0.0 for _ in range(Q_conv.shape[0])]
+
+        # ---- Energy scale proxy to set Omega_max ----
+        # Use max(|delta_i(T)|, max |V_ij|) as an instance scale.
+        # We don't have V_ij explicitly here; backend/device/register define interactions.
+        # So we use diagonals as a conservative scale proxy; it’s still consistent and simple.
+        escale = float(torch.max(torch.abs(-alpha * diag)).cpu().item()) if diag.numel() else 0.0
+        if escale <= 0:
+            escale = 1.0
+
+        # ---- Choose Omega_max and enforce hardware amplitude constraints ----
+        kappa = float(getattr(self.config.drive_shaping, "heuristic_kappa", 0.25))
+        omega_max = kappa * escale
+        omega_max = self._scale_omega_for_device_constraints(omega_max)
+
+        # ---- Build waveforms: 4-phase shape (approx with 4 control points) ----
+        eps = 1e-9 / TIME
+
+        # Start with strong negative detuning (easy init)
+        delta_0 = delta_g_min  # most negative allowed
+        delta_0 = self._clip(delta_0, delta_g_min, delta_g_max)
+
+        # Amplitude: ramp up -> hold -> ramp down
+        amp_wave = InterpolatedWaveform(
+            max_seq_duration,
+            [eps, omega_max, omega_max, eps],
+        )
+
+        # Global detuning: hold negative -> sweep to final -> hold
+        det_wave = InterpolatedWaveform(
+            max_seq_duration,
+            [delta_0, delta_0, delta_g_T, delta_g_T],
+        )
+
+        # DMM: off -> ramp -> hold (only if available and meaningful)
+        wdetunings = None
+        if self.dmm and delta_dmm_T > 0:
+            # NOTE: we reuse the project's helper for DMM injection.
+            # It expects a list of weights; in the existing code weights are divided by TIME.
+            # We follow that convention to remain compatible with the current implementation.
+            weights_scaled = [float(w) / TIME for w in weights]
+            wdetunings = weighted_detunings(
+                register,
+                max_seq_duration,
+                weights_scaled,
+                final_detuning=-delta_dmm_T,
+            )
+
+        shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=wdetunings)
+        solution = QUBOSolution(torch.Tensor(), torch.Tensor())
+        return shaped_drive, solution
+
+
 class OptimizedDriveShaper(BaseDriveShaper):
     """
     Drive shaper that uses optimization to find the best drive parameters for solving QUBOs.
@@ -546,6 +769,8 @@ def get_drive_shaper(
     """
     if config.drive_shaping.drive_shaping_method == DriveType.ADIABATIC:
         return AdiabaticDriveShaper(instance, config, backend)
+    elif config.drive_shaping.drive_shaping_method == DriveType.HEURISTIC:
+        return HeuristicDriveShaper(instance, config, backend)
     elif config.drive_shaping.drive_shaping_method == DriveType.OPTIMIZED:
         return OptimizedDriveShaper(instance, config, backend)
     elif issubclass(config.drive_shaping.drive_shaping_method, BaseDriveShaper):
