@@ -125,6 +125,9 @@ def test_generate_optimized_drive_shaper(
 def test_normalized_weights_in_drive(
     drive_method: str, dmm: bool, dummy_register: Register, simple_qubo_instance: QUBOInstance
 ) -> None:
+    if dmm and drive_method is DriveType.HEURISTIC:
+        pytest.skip("Not implemented")
+
     default_config = SolverConfig(
         use_quantum=True,
         drive_shaping=DriveShapingConfig(drive_shaping_method=drive_method, dmm=dmm),

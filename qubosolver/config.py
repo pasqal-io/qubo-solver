@@ -341,6 +341,8 @@ class DriveShapingConfig(Config):
             u = val.upper()
             if u == DriveType.ADIABATIC.name:
                 return DriveType.ADIABATIC
+            elif u == DriveType.HEURISTIC.name:
+                return DriveType.HEURISTIC
             elif u == DriveType.OPTIMIZED.name:
                 return DriveType.OPTIMIZED
             else:
