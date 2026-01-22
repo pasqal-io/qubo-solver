@@ -214,7 +214,7 @@ class BaseSolver(ABC):
             if (
                 self.fixtures.reduced_qubo.coefficients is not None
                 and len(self.fixtures.reduced_qubo.coefficients) > 0
-                and self.fixtures.n_fixed_variables < self.instance.size
+                and self.fixtures.n_fixed_variables < self.instance.size  # type: ignore[operator]
             ):
 
                 self.instance = self.fixtures.reduced_qubo

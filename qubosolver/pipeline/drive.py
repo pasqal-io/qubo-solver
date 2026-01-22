@@ -219,6 +219,7 @@ class AdiabaticDriveShaper(BaseDriveShaper):
 
         return shaped_drive, solution
 
+
 class HeuristicDriveShaper(BaseDriveShaper):
     """
     Heuristic schedule drive shaper.
@@ -372,9 +373,9 @@ class HeuristicDriveShaper(BaseDriveShaper):
             eps = 1e-9 / TIME
             amp_wave = InterpolatedWaveform(max_seq_duration, [eps, eps])
             det_wave = InterpolatedWaveform(max_seq_duration, [0.0, 0.0])
-            return Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=None), QUBOSolution(
-                torch.Tensor(), torch.Tensor()
-            )
+            return Drive(
+                amplitude=amp_wave, detuning=det_wave, weighted_detunings=None
+            ), QUBOSolution(torch.Tensor(), torch.Tensor())
 
         qmin = float(torch.min(diag).cpu().item())
         qmax = float(torch.max(diag).cpu().item())
@@ -461,13 +462,14 @@ class HeuristicDriveShaper(BaseDriveShaper):
             wdetunings = weighted_detunings(
                 register,
                 max_seq_duration,
-                weights,                  # IMPORTANT: weights in [0,1]
+                weights,  # IMPORTANT: weights in [0,1]
                 final_detuning=delta_dmm_T_w,  # negative
             )
 
         shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=wdetunings)
         solution = QUBOSolution(torch.Tensor(), torch.Tensor())
         return shaped_drive, solution
+
 
 class OptimizedDriveShaper(BaseDriveShaper):
     """
