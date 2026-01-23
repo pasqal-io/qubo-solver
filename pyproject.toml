@@ -42,7 +42,7 @@ dependencies = [
   "PyMaxflow",
   "cplex",
   "pydantic>=2",
-  "qoolqit[solvers]==0.3.1",
+  "qoolqit[solvers]==0.3.1", # The version in .pre-commit-config.yaml must match
   "shapely",
 ]
 
@@ -196,3 +196,7 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 no_implicit_optional = false
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["qoolqit.*"]
+follow_untyped_imports = true

@@ -19,10 +19,11 @@ repos:
         args: [--fix]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.1
+    rev: v1.19.1
     hooks:
       - id: mypy
         exclude: examples|docs
+        additional_dependencies: ["qoolqit[solvers]==0.3.1"]  # The version in pyproject.toml must match
 
 # Cleanup jupyter notebooks
 -   repo: https://github.com/srstevenson/nb-clean
