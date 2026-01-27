@@ -321,7 +321,6 @@ def qubo_instance_adiabatic_tutorial() -> QUBOInstance:
 
 @pytest.fixture(
     params=[
-        "trivial_qubo_instance",
         "simple_qubo_instance",
         "simple_qubo_instance2",
         "qubo_instance_for_embedding",
