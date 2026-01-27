@@ -89,7 +89,19 @@ allow-ambiguous-features = true
 
 [tool.hatch.envs.default]
 installer = "uv"
-features = ["dev"]
+features = ["extras"]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+  "pytest-check",
+  "pytest-xdist",
+  "nbconvert",
+  "ipykernel",
+  "pre-commit",
+  "black",
+  "ruff",
+]
+
 
 [tool.hatch.envs.default.scripts]
 test = "pytest --ignore=./tests/test_examples.py --ignore=./tests/test_notebooks.py"
