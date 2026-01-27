@@ -162,6 +162,12 @@ def qubo_instance_for_preprocessing() -> QUBOInstance:
 
 
 @pytest.fixture
+def trivial_qubo_instance() -> QUBOInstance:
+    Q = torch.tensor([])
+    return QUBOInstance(coefficients=Q)
+
+
+@pytest.fixture
 def simple_qubo_instance() -> QUBOInstance:
     Q = torch.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
     return QUBOInstance(coefficients=Q)
@@ -315,6 +321,7 @@ def qubo_instance_adiabatic_tutorial() -> QUBOInstance:
 
 @pytest.fixture(
     params=[
+        "trivial_qubo_instance",
         "simple_qubo_instance",
         "simple_qubo_instance2",
         "qubo_instance_for_embedding",

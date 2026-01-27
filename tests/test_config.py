@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 from typing import Any
+import pytest_check as check
 from pulser.devices import DigitalAnalogDevice as PulserDADevice
 from pulser_simulation import QutipBackendV2
 from qoolqit.devices.device import DigitalAnalogDevice, AnalogDevice
@@ -53,6 +54,15 @@ def test_pulseshape_part() -> None:
 
     with pytest.raises(ValueError):
         DriveShapingConfig(drive_shaping_method="dummy")
+
+    check.equal(
+        DriveShapingConfig(drive_shaping_method="heuristic").drive_shaping_method,
+        DriveType.HEURISTIC,
+    )
+    check.equal(
+        DriveShapingConfig(drive_shaping_method="optimized").drive_shaping_method,
+        DriveType.OPTIMIZED,
+    )
 
 
 def test_embedder_part() -> None:
