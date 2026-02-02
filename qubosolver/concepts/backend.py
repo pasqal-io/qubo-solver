@@ -1,0 +1,11 @@
+from __future__ import annotations
+
+from typing import Protocol, Sequence, Self, runtime_checkable
+from qoolqit import QuantumProgram
+from pulser.backend import Results
+
+@runtime_checkable
+class Backend(Protocol):
+
+    def run(self: Self, program: QuantumProgram) -> Sequence[Results]:
+        ...

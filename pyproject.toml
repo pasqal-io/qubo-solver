@@ -66,13 +66,16 @@ installer = "uv"
 features = ["extras"]
 dependencies = [
   "pytest",
+  "pytest-check",
   "pytest-cov",
+  "pytest-mypy-testing",
   "pytest-xdist",
   "nbconvert",
   "ipykernel",
   "pre-commit",
   "black",
   "ruff",
+  "mypy",
 ]
 
 
@@ -184,6 +187,11 @@ exclude = '''
 python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
+warn_unused_ignores = true
 disallow_untyped_defs = true
 no_implicit_optional = false
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["qoolqit.*"]
+follow_untyped_imports = true

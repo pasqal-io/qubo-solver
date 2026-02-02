@@ -9,8 +9,8 @@ from skopt import gp_minimize
 
 from pulser.devices import AnalogDevice
 from qoolqit import Register, QuantumProgram, Drive
-from qoolqit.execution.backend import BaseBackend
 from qoolqit.waveforms import Interpolated as InterpolatedWaveform
+import concepts
 
 
 from qubosolver import QUBOInstance
