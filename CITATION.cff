@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+title: pasqal qubo-solver
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Daniele
+    family-names: Cucurachi
+    affiliation: Pasqal
+  - given-names: Monique
+    family-names: Garzillo
+    email: monique.garzillo@pasqal.com
+    affiliation: Pasqal
+  - given-names: Manu
+    family-names: Lahariya
+    affiliation: Pasqal
+  - given-names: Quentin
+    family-names: Ma
+    email: quentin.ma@pasqal.com
+    affiliation: Pasqal
+  - given-names: Charles
+    family-names: Moussa
+    affiliation: Pasqal
+  - given-names: Yassine
+    family-names: Naghmouchi
+    email: yassine.naghmouchi@pasqal.com
+    affiliation: Pasqal
+  - given-names: Clément
+    name-particle: de
+    family-names: Terrasson de Montleau
+    email: clement.de-terrasson@pasqal.com
+    affiliation: Pasqal
+
+repository-code: 'https://github.com/pasqal-io/qubo-solver'
+url: 'https://pasqal-io.github.io/qubo-solver/latest/'
+abstract: >-
+  A Quadratic Unconstrained Binary Optimization (QUBO) solver
+  library using quantum and classical approaches.
+keywords:
+  - quantum
+  - qubo
+  - solver
+  - optimization
+  - combinatorial
+version: 0.5.0
+date-released: '2025-11-27'
