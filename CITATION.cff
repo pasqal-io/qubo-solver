@@ -5,9 +5,6 @@ message: >-
   metadata from this file.
 type: software
 authors:
-  - given-names: Daniele
-    family-names: Cucurachi
-    affiliation: Pasqal
   - given-names: Monique
     family-names: Garzillo
     email: monique.garzillo@pasqal.com
