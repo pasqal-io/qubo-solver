@@ -223,5 +223,5 @@ def simulated_annealing(
     unique_bits, inverse_indices, counts = torch.unique(
         bitstrings, dim=0, return_inverse=True, return_counts=True
     )
-    unique_energies = energies.scatter_add(0, inverse_indices, energies)
-    return unique_bits, unique_energies, counts
+    energies = energies[inverse_indices]
+    return unique_bits, energies, counts
