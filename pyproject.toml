@@ -46,25 +46,10 @@ dependencies = [
   "shapely",
 ]
 
-[tool.hatch.metadata]
-allow-direct-references = true
-allow-ambiguous-features = true
-
 [project.optional-dependencies]
 extras = [
-  "jupyter",
-  "tqdm",
 ]
-
-[project.urls]
-Documentation = "https://pasqal-io.github.io/qubo-solver/latest/"
-Issues = "https://github.com/pasqal-io/qubo-solver/issues"
-Source = "https://github.com/pasqal-io/qubo-solver"
-
-[tool.hatch.envs.default]
-installer = "uv"
-features = ["extras"]
-dependencies = [
+dev = [
   "pytest",
   "pytest-cov",
   "pytest-xdist",
@@ -73,16 +58,51 @@ dependencies = [
   "pre-commit",
   "black",
   "ruff",
+  "jupyter",
+  "tqdm",
+]
+doc = [
+  "mkdocs",
+  "mkdocs-material",
+  "mkdocstrings",
+  "mkdocstrings-python",
+  "mkdocs-section-index",
+  "mkdocs-exclude",
+  "mkdocs-jupyter",
+  "markdown-exec",
+  "mike",
+  "python-markdown-math",
 ]
 
+[project.urls]
+Documentation = "https://pasqal-io.github.io/qubo-solver/latest/"
+Issues = "https://github.com/pasqal-io/qubo-solver/issues"
+Source = "https://github.com/pasqal-io/qubo-solver"
+
+
+[tool.hatch.metadata]
+allow-direct-references = true
+allow-ambiguous-features = true
+
+[tool.hatch.envs.default]
+installer = "uv"
+features = ["dev"]
 
 [tool.hatch.envs.default.scripts]
-test = "pytest -n auto -vvv --cov-report=term-missing --cov-config=pyproject.toml --cov=qubosolver --cov=tests --ignore=./tests/test_examples.py --ignore=./tests/test_notebooks.py {args}"
-test-notebooks = "pytest -n auto -vvv ./tests/test_notebooks.py {args}"
+test = "pytest --ignore=./tests/test_examples.py --ignore=./tests/test_notebooks.py"
+test-notebooks = "pytest ./tests/test_notebooks.py {args}"
 
-[tool.pytest.ini_options]
+[tool.pytest]
 testpaths = ["tests"]
-addopts = """-vvv --cov-report=xml --cov-config=pyproject.toml --cov=mis --cov=tests"""
+addopts = [
+    "-n=auto",
+    "-vvv",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-config=pyproject.toml",
+    "--cov=qubosolver",
+    "--cov=tests",
+]
 xfail_strict = true
 filterwarnings = [
   "ignore:Call to deprecated create function FieldDescriptor",
@@ -98,18 +118,7 @@ asyncio_default_fixture_loop_scope="function"
 
 [tool.hatch.envs.docs]
 installer = "uv"
-dependencies = [
-  "mkdocs",
-  "mkdocs-material",
-  "mkdocstrings",
-  "mkdocstrings-python",
-  "mkdocs-section-index",
-  "mkdocs-exclude",
-  "mkdocs-jupyter",
-  "markdown-exec",
-  "mike",
-  "python-markdown-math",
-]
+features = ["doc"]
 
 [tool.hatch.envs.docs.scripts]
 build = "mkdocs build --clean --strict {args}"
