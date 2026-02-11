@@ -60,6 +60,7 @@ def test_run_local_backends(
     assert solutions.costs.min().item() <= -3.0
 
 
+@pytest.mark.priority(30)
 def test_solver_different_devices(
     request: pytest.FixtureRequest,
     qubo_for_testing_many_devices: QUBOInstance,
