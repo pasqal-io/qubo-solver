@@ -100,7 +100,7 @@ def test_sa_cost(
     simple_qubo_instance: QUBOInstance, classical_methods: ClassicalSolverType, max_bitstrings: int
 ) -> None:
     classical_config = ClassicalConfig(
-        classical_solver_type=classical_methods, max_bitstrings=max_bitstrings
+        classical_solver_type=classical_methods, max_bitstrings=max_bitstrings, sa_seed=42
     )
 
     config = SolverConfig(
