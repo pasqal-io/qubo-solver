@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 import torch
+import itertools
 
 from qubosolver import QUBOInstance, QUBOSolution, ClassicalSolverType
 from qubosolver.config import ClassicalConfig, SolverConfig
@@ -30,6 +31,7 @@ def test_qubo_solver_sa_or_tabu(
     classical_config = ClassicalConfig(
         classical_solver_type=classical_method, max_bitstrings=max_bitstrings
     )
+
     config = SolverConfig(
         use_quantum=False, classical=classical_config, activate_trivial_solutions=False
     )
@@ -87,6 +89,59 @@ def test_random() -> None:
     assert solution.probabilities is not None
     assert solution.counts.sum().item() == classical_config.max_bitstrings
     assert torch.allclose(solution.probabilities.sum(), torch.ones(1))
+
+
+@pytest.mark.parametrize(
+    "classical_methods",
+    [ClassicalSolverType.SIMULATED_ANNEALING, ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH],
+)
+@pytest.mark.parametrize("max_bitstrings", [1])
+def test_sa_cost(
+    simple_qubo_instance: QUBOInstance, classical_methods: ClassicalSolverType, max_bitstrings: int
+) -> None:
+    classical_config = ClassicalConfig(
+        classical_solver_type=classical_methods, max_bitstrings=max_bitstrings
+    )
+
+    config = SolverConfig(
+        use_quantum=False, classical=classical_config, activate_trivial_solutions=False
+    )
+
+    assert isinstance(
+        get_classical_solver(simple_qubo_instance, config.classical),
+        class_solvers[classical_methods],
+    )
+
+    classical_solver = QuboSolver(simple_qubo_instance, config)
+    solution = classical_solver.solve()
+
+    assert isinstance(solution, QUBOSolution)
+
+    Q = simple_qubo_instance.coefficients
+    n = Q.shape[0]
+
+    bitstrings = []
+    costs = []
+
+    for bits in itertools.product([0, 1], repeat=n):
+        z = torch.tensor(bits, dtype=torch.float32)
+        cost = z @ Q @ z
+        bitstrings.append("".join(map(str, bits)))
+        costs.append(cost.item())
+
+    sorted_results = sorted(zip(bitstrings, costs), key=lambda x: x[1])
+    bests = [(b, c) for b, c in sorted_results[:max_bitstrings]]
+
+    for bitstring, cost in bests:
+        bitstring = torch.tensor(list(map(int, bitstring)), dtype=torch.int32)
+        cost = torch.tensor(float(cost), dtype=torch.float32)
+
+        bitstring_sa = solution.bitstrings[0]
+        cost_sa = solution.costs[0]
+
+        assert torch.equal(bitstring, bitstring_sa)
+        cost_sa = cost_sa.to(dtype=cost.dtype)
+        assert torch.isclose(cost, cost_sa, rtol=1e-4)
 
 
 if __name__ == "__main__":
