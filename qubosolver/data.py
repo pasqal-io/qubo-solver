@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     pass
 
 # Modules to be automatically added to the qubosolver namespace
-__all__ = ["QUBOSolution", "QUBODataset"]  # type: ignore
+__all__ = ["QUBOSolution", "QUBODataset"]
 
 
 @dataclass
@@ -272,11 +272,11 @@ class QUBODataset(Dataset):
                     diag_vals = coeff.diag()
                     non_neg = (diag_vals >= 0).nonzero(as_tuple=True)[0]
                     diag_idx = (
-                        non_neg[0].item()
+                        int(non_neg[0].item())
                         if non_neg.numel() > 0
-                        else torch.randint(
+                        else int(torch.randint(
                             0, matrix_dim, (1,), device=device, generator=generator
-                        ).item()
+                        ).item())
                     )
                     if coefficient_bounds[0] < 0:
                         neg_val = coefficient_bounds[0]
@@ -301,20 +301,19 @@ class QUBODataset(Dataset):
                     ]
                     if filtered:
                         chosen = filtered[
-                            torch.randint(
+                            int(torch.randint(
                                 0,
                                 len(filtered),
                                 (1,),
                                 device=device,
                                 generator=generator,
-                            ).item()
+                                dtype=torch.int64,
+                            ).item())
                         ]
                     else:
-                        chosen = [
-                            torch.randint(
+                        chosen = torch.randint(
                                 0, matrix_dim, (1,), device=device, generator=generator
-                            ).item()
-                        ] * 2
+                            ).repeat(2)
                     i_ch, j_ch = chosen
                     coeff[i_ch, j_ch] = coefficient_bounds[1]
                     if i_ch != j_ch:
