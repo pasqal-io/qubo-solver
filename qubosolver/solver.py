@@ -286,7 +286,7 @@ class DecomposeQuboSolver(BaseSolver):
         self._solver_factory = solver_factory
 
         self.backend = self.config.backend
-        self.device = self.config.device._device
+        self.device = self.config.device
 
         self.decomposition_config: DecompositionConfig = (
             self.config.decompose or DecompositionConfig()
@@ -350,7 +350,7 @@ class DecomposeQuboSolver(BaseSolver):
             global_solution = torch.full((self.instance.size,), -1)
             qubo_mat = self.instance.coefficients.clone()
             dist_matrix = compute_distance_interaction_matrix(
-                self.device,
+                self.device._pulser_device,
                 qubo_mat,
                 neglecting_inter_distance=self.decomposition_config.neglecting_inter_distance,
                 neglecting_max_coefficient=self.decomposition_config.neglecting_max_coefficient,
@@ -375,14 +375,14 @@ class DecomposeQuboSolver(BaseSolver):
                     dict_vertices_to_place,
                     first_vertex_search,
                     self.decomposition_config.decompose_threshold,
-                    self.device,
+                    self.device._pulser_device,
                 )
                 if len(placed_vertices) <= self.decomposition_config.decompose_break_placement:
                     break
                 self.number_iterations += 1
 
                 matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(
-                    placed_vertices, self.device
+                    placed_vertices, self.device._pulser_device
                 )
                 qubo = QUBOInstance(matrix_to_solve)
                 subsolver = self._solver_factory(qubo, self._config_subproblems)
