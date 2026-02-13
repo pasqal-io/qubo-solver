@@ -506,26 +506,10 @@ class SolverConfig(Config):
             and k not in ("embedding", "drive_shaping", "classical", "decompose")
         }
 
-        decompose = kwargs["decompose"] if "decompose" in kwargs else None
-        if decompose_fields:
-            decompose = DecompositionConfig(**decompose_fields)
+        config = cls.model_validate(solver_fields)
+        config.embedding = EmbeddingConfig.model_validate(kwargs.get("embedding", embedding_fields))
+        config.drive_shaping = DriveShapingConfig.model_validate(kwargs.get("drive_shaping", drive_shaping_fields))
+        config.classical = ClassicalConfig.model_validate(kwargs.get("classical", classical_fields))
+        config.decompose = DecompositionConfig.model_validate(decompose_fields if decompose_fields else kwargs.get("decompose"))
 
-        return cls(
-            embedding=(
-                EmbeddingConfig(**embedding_fields)
-                if "embedding" not in kwargs
-                else kwargs["embedding"]
-            ),
-            drive_shaping=(
-                DriveShapingConfig(**drive_shaping_fields)
-                if "drive_shaping" not in kwargs
-                else kwargs["drive_shaping"]
-            ),
-            classical=(
-                ClassicalConfig(**classical_fields)
-                if "classical" not in kwargs
-                else kwargs["classical"]
-            ),
-            decompose=decompose,
-            **solver_fields,
-        )
+        return config
