@@ -99,7 +99,7 @@ def generate_symmetric_mask(
         x, y = 1, 0
     else:
         x = possible_x[
-            torch.randint(0, len(possible_x), (1,), device=device, generator=generator).item()
+            int(torch.randint(0, len(possible_x), (1,), device=device, generator=generator).item())
         ]
         y = (target - x) // 2
 
