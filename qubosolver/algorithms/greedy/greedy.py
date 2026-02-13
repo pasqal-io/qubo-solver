@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import typing
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 import torch
 from pulser.register.register_layout import RegisterLayout
@@ -581,11 +581,11 @@ class Greedy:
                 if ext in (".mp4", ""):
                     # Prefer explicit FFMpegWriter for clearer errors.
                     if animation.writers.is_available("ffmpeg"):
-                        writer = FFMpegWriter(
-                            fps=fps, bitrate=1800, metadata={"artist": "qubo-solver"}
+                        ffmpeg_writer = FFMpegWriter(
+                            fps=cast(int, fps), bitrate=1800, metadata={"artist": "qubo-solver"}
                         )
                         target = save_path if ext == ".mp4" else save_path + ".mp4"
-                        anim.save(target, writer=writer, dpi=180)
+                        anim.save(target, writer=ffmpeg_writer, dpi=180)
                         print(f"[anim] MP4 saved to: {target}")
                     else:
                         raise RuntimeError(
@@ -593,17 +593,17 @@ class Greedy:
                         )
                 elif ext == ".gif":
                     # PillowWriter avoids requiring ImageMagick.
-                    writer = PillowWriter(fps=fps)
-                    anim.save(save_path, writer=writer, dpi=180)
+                    pillow_writer = PillowWriter(fps=cast(int, fps))
+                    anim.save(save_path, writer=pillow_writer, dpi=180)
                     print(f"[anim] GIF saved to: {save_path}")
                 else:
                     # Unknown extension -> default to MP4
                     if animation.writers.is_available("ffmpeg"):
-                        writer = FFMpegWriter(
-                            fps=fps, bitrate=1800, metadata={"artist": "qubo-solver"}
+                        ffmpeg_writer = FFMpegWriter(
+                            fps=cast(int, fps), bitrate=1800, metadata={"artist": "qubo-solver"}
                         )
                         target = save_path + ".mp4"
-                        anim.save(target, writer=writer, dpi=180)
+                        anim.save(target, writer=ffmpeg_writer, dpi=180)
                         print(f"[anim] MP4 (default) saved to: {target}")
                     else:
                         raise RuntimeError(
@@ -697,7 +697,7 @@ class Greedy:
             if hasattr(all_coords_t, "numpy"):
                 all_coords_np = all_coords_t.numpy()
             else:
-                all_coords_np = np.array(all_coords_t)  # type: ignore[name-defined]
+                all_coords_np = np.array(all_coords_t)
             self._render_animation(
                 frames=frames,
                 all_coords_np=all_coords_np,
