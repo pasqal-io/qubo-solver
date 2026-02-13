@@ -27,8 +27,6 @@ class QUBOInstance:
             Device where tensors are allocated (e.g., "cpu" or "cuda").
         dtype (torch.dtype):
             Data type of the tensors (e.g., torch.float32).
-        size (int | None):
-            Size of the QUBO matrix (number of variables).
         solution (QUBOSolution | None):
             Solution to the QUBO problem, if available.
         density (float | None):
@@ -56,14 +54,24 @@ class QUBOInstance:
         """
         self.device = device
         self.dtype = dtype
-        self.size: int | None
-        self._coefficients: torch.Tensor | None = None
+        self._coefficients: torch.Tensor = torch.zeros([0, 0], dtype=dtype)
         self.solution: QUBOSolution | None = None
         self.density: float | None = None
         self.density_type: DensityType | None = None
 
         if coefficients is not None:
             self.coefficients = coefficients
+
+    @property
+    def size(self) -> int:
+        """
+        Get the size of the QUBO matrix (number of variables).
+
+        Returns:
+            int:
+                Size of the QUBO matrix.
+        """
+        return self.coefficients.shape[0]
 
     @property
     def coefficients(self) -> torch.Tensor:
@@ -74,7 +82,7 @@ class QUBOInstance:
             torch.Tensor:
                 Tensor of shape (size, size) representing the QUBO coefficients.
         """
-        assert self._coefficients is not None
+        assert self._coefficients.ndim == 2 and self._coefficients.shape[0] == self._coefficients.shape[1]
         return self._coefficients
 
     @coefficients.setter
@@ -85,12 +93,10 @@ class QUBOInstance:
         Exits the program with an error message if a check fails.
         """
         # Convert input to tensor
-        tensor = convert_to_tensor(coeffs, device=self.device, dtype=self.dtype)
-        size = tensor.shape[0]
+        tensor = convert_to_tensor(coeffs, device=self.device, dtype=self.dtype)  # type: ignore[arg-type]
 
         # All checks passed, assign the tensor and update metrics
         self._coefficients = tensor
-        self.size = size
         self.update_metrics()
 
     def set_coefficients(
@@ -107,15 +113,15 @@ class QUBOInstance:
             return
 
         max_index = max(max(i, j) for i, j in new_coefficients.keys())
-        if self.size and max_index >= self.size:
+        if max_index >= self.size:
             self._expand_size(max_index + 1)
 
         indices = torch.tensor(list(new_coefficients.keys()), dtype=torch.long, device=self.device)
         values = torch.tensor(list(new_coefficients.values()), dtype=self.dtype, device=self.device)
-        self._coefficients[indices[:, 0], indices[:, 1]] = values  # type: ignore[index]
+        self._coefficients[indices[:, 0], indices[:, 1]] = values
         off_diagonal_mask = indices[:, 0] != indices[:, 1]
         symmetric_indices = indices[off_diagonal_mask]
-        self._coefficients[symmetric_indices[:, 1], symmetric_indices[:, 0]] = values[  # type: ignore[index]
+        self._coefficients[symmetric_indices[:, 1], symmetric_indices[:, 0]] = values[
             off_diagonal_mask
         ]
 
@@ -129,19 +135,17 @@ class QUBOInstance:
             new_size (int):
                 New size of the coefficient matrix.
         """
-        if self._coefficients is not None:
-            expanded_coefficients = torch.zeros(
-                (new_size, new_size), dtype=self.dtype, device=self.device
-            )
-            expanded_coefficients[: self.size, : self.size] = self._coefficients
-            self._coefficients = expanded_coefficients
-        self.size = new_size
+        expanded_coefficients = torch.zeros(
+            (new_size, new_size), dtype=self.dtype, device=self.device
+        )
+        expanded_coefficients[: self.size, : self.size] = self._coefficients
+        self._coefficients = expanded_coefficients
 
     def update_metrics(self) -> None:
         """
         Updates the density metrics of the QUBO problem.
         """
-        if self._coefficients is not None:
+        if self.size > 0:
             self.density = calculate_density(self._coefficients, self.size)
             self.density_type = classify_density(self.density)
         else:
@@ -162,8 +166,8 @@ class QUBOInstance:
         Raises:
             ValueError: If the solution size does not match the QUBO size.
         """
-        solution_tensor = convert_to_tensor(solution, device=self.device, dtype=self.dtype)
-        if self._coefficients is None or solution_tensor.size(0) != self.size:
+        solution_tensor = convert_to_tensor(solution, device=self.device, dtype=self.dtype)  # type: ignore[arg-type]
+        if solution_tensor.size(0) != self.size:
             raise ValueError("Solution size does not match the QUBO problem size.")
         cost = torch.matmul(
             solution_tensor, torch.matmul(self._coefficients, solution_tensor)
