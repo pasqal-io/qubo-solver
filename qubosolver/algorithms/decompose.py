@@ -477,7 +477,7 @@ def bfgs_placement(
     for vertex_key, vertex_value in placed_vertices.items():
 
         placed_points.append([vertex_value.x, vertex_value.y])
-        Q_target.append(matrix[vertex_key, vertex])
+        Q_target.append(matrix[vertex_key, vertex].item())
 
         if vertex_key in dict_vertices_to_place[vertex]["blocking_vertices"]:
             current_blocked_edges.append(counter)
@@ -633,28 +633,28 @@ def obtain_vertice_to_test(
         int: identifier of a vertex to test placing.
     """
 
-    best_score = 0
+    best_score = 0.0
     chosen_vertice = random.choice(vertices_list)
 
     for vertex in vertices_list:
-        current_score = 0
+        current_score = 0.0
 
         for i, neighbor in enumerate(dict_vertices_to_place[vertex]["neighbors_id"]):
             neighbor
             if neighbor.item() in placed_vertices:
                 current_score = (
-                    current_score + dict_vertices_to_place[vertex]["neighbors_weight"][i]
+                    current_score + dict_vertices_to_place[vertex]["neighbors_weight"][i].item()
                 )
 
         if current_score > best_score:
             best_score = current_score
             chosen_vertice = vertex
 
-    best_score = 0
+    best_score = 0.0
 
     for vertex in vertices_list:
 
-        current_score = 0
+        current_score = 0.0
         for blocking_vertex in dict_vertices_to_place[vertex]["blocking_vertices"]:
             if blocking_vertex.item() in placed_vertices:
                 current_score = current_score + 1
