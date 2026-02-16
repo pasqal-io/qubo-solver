@@ -499,7 +499,7 @@ class SolverConfig(Config):
             k: v for k, v in kwargs.items() if k in DecompositionConfig.model_fields
         } or kwargs.get("decompose", {})
 
-        solver_fields = {
+        solver_fields: dict[str, Any] = {
             k: v
             for k, v in kwargs.items()
             if k in cls.model_fields
