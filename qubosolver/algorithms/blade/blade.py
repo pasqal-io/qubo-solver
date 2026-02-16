@@ -453,7 +453,7 @@ def em_blade(
         )
         starting_min = _compute_min_pairwise_distance(positions)
     else:
-        steps_ratios = np.full(dimensions, None)
+        steps_ratios = np.full(len(dimensions), None)
         starting_min = None
 
     total_steps = steps_per_round * (len(dimensions) - 1)
