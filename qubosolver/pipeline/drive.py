@@ -10,7 +10,7 @@ from skopt import gp_minimize
 from pulser.devices import AnalogDevice
 from qoolqit import Register, QuantumProgram, Drive
 from qoolqit.waveforms import Interpolated as InterpolatedWaveform
-import concepts
+from qubosolver import concepts
 
 
 from qubosolver import QUBOInstance
@@ -33,19 +33,19 @@ class BaseDriveShaper(ABC):
         instance (QUBOInstance): The QUBO problem instance.
         config (SolverConfig): The solver configuration.
         drive (Drive, optional): A saved current drive obtained by `generate`.
-        backend (BaseBackend): Backend to use.
+        backend (Backend): Backend to use.
         device (Device): Device from backend.
 
     """
 
-    def __init__(self, instance: QUBOInstance, config: SolverConfig, backend: concepts.BaseBackend):
+    def __init__(self, instance: QUBOInstance, config: SolverConfig, backend: concepts.Backend):
         """
         Initialize the drive shaping module with a QUBO instance.
 
         Args:
             instance (QUBOInstance): The QUBO problem instance.
             config (SolverConfig): The solver configuration.
-            backend (BaseBackend): Backend to use.
+            backend (Backend): Backend to use.
         """
         self.instance: QUBOInstance = instance
         self.config: SolverConfig = config
@@ -265,14 +265,14 @@ class OptimizedDriveShaper(BaseDriveShaper):
         self,
         instance: QUBOInstance,
         config: SolverConfig,
-        backend: concepts.BaseBackend,
+        backend: concepts.Backend,
     ):
         """Instantiate an `OptimizedDriveShaper`.
 
         Args:
             instance (QUBOInstance): Qubo instance.
             config (SolverConfig): Configuration for solving.
-            backend (BaseBackend): Backend to use during optimization.
+            backend (Backend): Backend to use during optimization.
 
         """
         super().__init__(instance, config, backend)
@@ -529,7 +529,7 @@ class OptimizedDriveShaper(BaseDriveShaper):
 def get_drive_shaper(
     instance: QUBOInstance,
     config: SolverConfig,
-    backend: concepts.BaseBackend,
+    backend: concepts.Backend,
 ) -> BaseDriveShaper:
     """
     Method that returns the correct DriveShaper based on configuration.
@@ -539,7 +539,7 @@ def get_drive_shaper(
     Args:
         instance (QUBOInstance): The QUBO problem to embed.
         config (SolverConfig): The solver configuration used.
-        backend (BaseBackend): Backend to extract device from or to use
+        backend (Backend): Backend to extract device from or to use
             during drive shaping.
 
     Returns:

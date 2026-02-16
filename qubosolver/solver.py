@@ -93,7 +93,7 @@ class QuboSolverQuantum(BaseSolver):
         self._drive: Drive | None = None
 
     def _check_size_limit(self) -> None:
-        if (self.instance._coefficients is not None) and self.instance.size > 80:  # type: ignore[operator]
+        if (self.instance._coefficients is not None) and self.instance.size > 80:
             raise ValueError(
                 f"QUBO size {self.instance.size}×{self.instance.size}"
                 + " exceeds the maximum supported size of 80×80."
