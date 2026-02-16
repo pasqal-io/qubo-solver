@@ -53,6 +53,8 @@ dev = [
   "pytest",
   "pytest-cov",
   "pytest-xdist",
+  "pytest-asyncio",
+  "pytest-rerunfailures",
   "nbconvert",
   "ipykernel",
   "pre-commit",
