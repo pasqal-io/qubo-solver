@@ -20,7 +20,6 @@ from qubosolver.pipeline import (
     get_drive_shaper,
 )
 
-
 # Modules to be automatically added to the qubosolver namespace
 __all__: list[str] = ["QuboSolver"]
 

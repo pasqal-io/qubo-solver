@@ -11,7 +11,6 @@ from .utils.density import (
     classify_density,
 )
 
-
 # Modules to be automatically added to the qubosolver namespace
 __all__: list[str] = ["QUBOInstance"]
 

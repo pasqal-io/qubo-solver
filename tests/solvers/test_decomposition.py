@@ -73,7 +73,7 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     )
     assert len(map_index_vertices) == len(placed_vertices) == matrix_to_solve.shape[0]
     subproblem = QUBOInstance(matrix_to_solve)
-    subsolver = solver._solver._solver_factory(  # type:ignore[attr-defined]
+    subsolver = solver._solver._solver_factory(  # type: ignore[attr-defined]
         subproblem, config_subproblems
     )
     sub_solution = subsolver.solve().bitstrings[0]

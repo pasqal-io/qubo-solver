@@ -24,10 +24,10 @@ def test_init_single_solution(basic_solution: QUBOSolution) -> None:
 def test_errors(basic_solution: QUBOSolution) -> None:
 
     with pytest.raises(TypeError):
-        QUBOAnalyzer(solutions=[basic_solution, 0])  # type:ignore[list-item]
+        QUBOAnalyzer(solutions=[basic_solution, 0])  # type: ignore[list-item]
 
     with pytest.raises(TypeError):
-        QUBOAnalyzer(solutions=basic_solution, labels=0)  # type:ignore[arg-type]
+        QUBOAnalyzer(solutions=basic_solution, labels=0)  # type: ignore[arg-type]
 
     with pytest.raises(ValueError):
         QUBOAnalyzer(solutions=basic_solution, labels=["0", "1"])
