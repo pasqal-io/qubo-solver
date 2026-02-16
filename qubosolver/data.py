@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterator
 
 import torch
 from torch.utils.data import Dataset
@@ -163,6 +163,16 @@ class QUBODataset(Dataset):
         if self.solutions is not None:
             return self.coefficients[:, :, idx], self.solutions[idx]
         return self.coefficients[:, :, idx], None
+
+    def __iter__(self) -> Iterator[tuple[torch.Tensor, QUBOSolution | None]]:
+        """
+        Return an iterator to retrieve the coefficients matrices and optionnally the solutions.
+
+        Returns:
+            Iterator[tuple[torch.Tensor, QUBOSolution | None]]:
+                An iterator on the coefficients and solutions.
+        """
+        return map(self.__getitem__, range(len(self)))
 
     @classmethod
     def from_random(
