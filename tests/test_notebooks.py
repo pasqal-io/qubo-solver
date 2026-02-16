@@ -35,7 +35,7 @@ notebooks = get_ipynb_files(notebooks_dir)
 notebooks_names = [f"{example.relative_to(notebooks_dir)}" for example in notebooks]
 for example, reason in expected_fail.items():
     try:
-        notebooks[notebooks_names.index(example)] = pytest.param(  # type: ignore
+        notebooks[notebooks_names.index(example)] = pytest.param(
             example, marks=pytest.mark.xfail(reason=reason)
         )
     except ValueError:
@@ -43,7 +43,7 @@ for example, reason in expected_fail.items():
 
 for example, reason in skip.items():
     try:
-        notebooks[notebooks_names.index(example)] = pytest.param(  # type: ignore
+        notebooks[notebooks_names.index(example)] = pytest.param(
             example, marks=pytest.mark.skip(reason=reason)
         )
     except ValueError:

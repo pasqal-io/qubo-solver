@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .backend import Backend
+
 """
 CONCEPTS & STRUCTURAL TYPING IN PYTHON
 ======================================
@@ -46,8 +48,6 @@ In your test files, use:
     def test_contract() -> None:
         _: Toto = MyImplementation() # Mypy will fail if signature mismatches
 """
-
-from .backend import Backend
 
 __all__ = [
     "Backend",
