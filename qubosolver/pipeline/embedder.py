@@ -7,9 +7,8 @@ import torch
 import warnings
 
 from qoolqit import Register as QoolqitRegister
-from qoolqit.execution.backend import BaseBackend
 
-from qubosolver import QUBOInstance
+from qubosolver import QUBOInstance, concepts
 from qubosolver.algorithms.blade.blade import em_blade_for_device
 from qubosolver.algorithms.greedy.greedy import Greedy
 from qubosolver.config import EmbedderType, SolverConfig
@@ -26,7 +25,7 @@ class BaseEmbedder(ABC):
     Returns a Register compatible with Pasqal/Pulser devices.
     """
 
-    def __init__(self, instance: QUBOInstance, config: SolverConfig, backend: BaseBackend):
+    def __init__(self, instance: QUBOInstance, config: SolverConfig, backend: concepts.Backend):
         """
         Args:
             instance (QUBOInstance): The QUBO problem to embed.
@@ -172,7 +171,7 @@ class GreedyEmbedder(BaseEmbedder):
 
 
 def get_embedder(
-    instance: QUBOInstance, config: SolverConfig, backend: BaseBackend
+    instance: QUBOInstance, config: SolverConfig, backend: concepts.Backend
 ) -> BaseEmbedder:
     """
     Method that returns the correct embedder based on configuration.

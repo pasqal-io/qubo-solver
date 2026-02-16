@@ -56,14 +56,14 @@ def test_correctness_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) 
     solver = QuboSolver(qubo_instance_for_embedding, config)
     positions = solver.embedding()
 
-    expected_greedy_positions = (
+    expected_greedy_positions_tensor = (
         torch.tensor(
             [[2.0000, 3.4641], [0.0000, 0.0000], [-2.0000, 3.4641], [4.0000, 0.0000]],
             dtype=torch.float16,
         )
         / solver.device.converter.factors[2]
     )
-    expected_greedy_positions = expected_greedy_positions.tolist()
+    expected_greedy_positions = expected_greedy_positions_tensor.tolist()
 
     assert len(positions.qubits) == len(expected_greedy_positions)
 
@@ -79,6 +79,7 @@ def test_error_greedy_max_radial_distance_constraint(
     assert qubo_instance_for_embedding.size is not None
 
     for device in [AnalogDevice(), DigitalAnalogDevice()]:
+        assert device._device.max_radial_distance is not None
         greedy_config = SolverConfig(
             use_quantum=True,
             embedding=EmbeddingConfig(
@@ -123,12 +124,13 @@ def test_correctness_greedy_max_radial_distance_constraint_with_extra_greedy_tra
 
     for scenario_idx, device in enumerate([AnalogDevice(), DigitalAnalogDevice()]):
         conv = device.converter.factors[2]
+        assert device._device.max_radial_distance is not None
         greedy_config = SolverConfig(
             use_quantum=True,
             embedding=EmbeddingConfig(
                 embedding_method="greedy",
                 greedy_traps=qubo_instance_for_embedding.size * 2,
-                greedy_spacing=device._device.max_radial_distance / 2,
+                greedy_spacing=device._device.max_radial_distance / 2.0,
             ),
             device=device,
         )
