@@ -31,7 +31,7 @@ def test_apply_full_and_post_process_fixation() -> None:
 
     assert isinstance(fix_class.reduced_qubo, QUBOInstance)
 
-    sol = QUBOSolution(torch.empty(0, 0), 0)
+    sol = QUBOSolution(torch.empty(0, 0), torch.empty(0, 0))
 
     sol_reconstructed = fix_class.post_process_fixation(sol)
 
