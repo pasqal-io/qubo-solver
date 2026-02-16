@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from qubosolver import concepts
 
-from typing import Sequence, Self
+from typing import Sequence, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Self
+
 from qoolqit import QuantumProgram
 from pulser.backend import Results
 
