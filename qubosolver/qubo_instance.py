@@ -82,7 +82,10 @@ class QUBOInstance:
             torch.Tensor:
                 Tensor of shape (size, size) representing the QUBO coefficients.
         """
-        assert self._coefficients.ndim == 2 and self._coefficients.shape[0] == self._coefficients.shape[1]
+        assert (
+            self._coefficients.ndim == 2
+            and self._coefficients.shape[0] == self._coefficients.shape[1]
+        )
         return self._coefficients
 
     @coefficients.setter

@@ -40,7 +40,7 @@ def test_classical_part() -> None:
     )
 
     with pytest.raises(ValueError):
-        ClassicalConfig(classical_solver_type=1) # type: ignore[arg-type]
+        ClassicalConfig(classical_solver_type=1)  # type: ignore[arg-type]
 
 
 def test_pulseshape_part() -> None:

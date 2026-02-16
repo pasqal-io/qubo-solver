@@ -10,33 +10,38 @@ from pulser.backend import Results
 # We use # type: ignore[...] in combination with the mypy flag "--warn-unused-ignores"
 # to detect whether a class matches the concept when it's expected not to.
 
-def _test_backend(backend: concepts.Backend) -> None:
-    ...
+
+def _test_backend(backend: concepts.Backend) -> None: ...
+
 
 def test_not_backend() -> None:
 
-    class NotBackend0:
-        ...
-    _test_backend(NotBackend0()) # type: ignore[arg-type]
-    b0: concepts.Backend = NotBackend0() # type: ignore[assignment]
+    class NotBackend0: ...
+
+    _test_backend(NotBackend0())  # type: ignore[arg-type]
+    b0: concepts.Backend = NotBackend0()  # type: ignore[assignment]
 
     class NotBackend1:
         def run(self: Self, program: QuantumProgram) -> None:
             return
-    _test_backend(NotBackend1()) # type: ignore[arg-type]
-    b1: concepts.Backend = NotBackend1() # type: ignore[assignment]
+
+    _test_backend(NotBackend1())  # type: ignore[arg-type]
+    b1: concepts.Backend = NotBackend1()  # type: ignore[assignment]
 
     class NotBackend2:
         def run(self: Self, program: int) -> Sequence[Results]:
             return [Results(atom_order=(), total_duration=0)]
-    _test_backend(NotBackend2()) # type: ignore[arg-type]
-    b2: concepts.Backend = NotBackend2() # type: ignore[assignment]
+
+    _test_backend(NotBackend2())  # type: ignore[arg-type]
+    b2: concepts.Backend = NotBackend2()  # type: ignore[assignment]
 
     class NotBackend3:
         def run(self: Self, program: QuantumProgram) -> Sequence[Results] | None:
             return [Results(atom_order=(), total_duration=0)]
-    _test_backend(NotBackend3()) # type: ignore[arg-type]
-    b3: concepts.Backend = NotBackend3() # type: ignore[assignment]
+
+    _test_backend(NotBackend3())  # type: ignore[arg-type]
+    b3: concepts.Backend = NotBackend3()  # type: ignore[assignment]
+
 
 def test_backend() -> None:
 
@@ -50,5 +55,6 @@ def test_backend() -> None:
     class Backend1:
         def run(self: Self, program: QuantumProgram | None) -> Sequence[Results]:
             return [Results(atom_order=(), total_duration=0)]
+
     _test_backend(Backend1())
     b1: concepts.Backend = Backend1()

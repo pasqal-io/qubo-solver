@@ -41,9 +41,7 @@ def draw_weighted_graph(
     print(f"{thresholds=}")
     t0, t1, t2 = thresholds
     elarge = [(u, v) for (u, v, w) in graph.edges.data("weight") if t2 < w]
-    esmall = [
-        (u, v) for (u, v, w) in graph.edges.data("weight") if t1 < w <= t2 and t0 < w
-    ]
+    esmall = [(u, v) for (u, v, w) in graph.edges.data("weight") if t1 < w <= t2 and t0 < w]
     etiny = [(u, v) for (u, v, w) in graph.edges.data("weight") if t0 <= w <= t1]
 
     pos_all_dims = dict(graph.nodes.data("pos"))

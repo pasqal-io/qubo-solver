@@ -32,7 +32,9 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     solver = QuboSolver(decomposable_qubo, config)
 
     ## Check the distance interaction matrix matches the qubo matrix
-    dist_matrix = compute_distance_interaction_matrix(solver._solver.device._pulser_device, qubo_mat)
+    dist_matrix = compute_distance_interaction_matrix(
+        solver._solver.device._pulser_device, qubo_mat
+    )
     assert dist_matrix.shape == qubo_mat.shape
     assert torch.all(torch.diag(dist_matrix) == torch.diag(qubo_mat))
 

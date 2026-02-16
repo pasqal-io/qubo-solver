@@ -284,9 +284,11 @@ class QUBODataset(Dataset):
                     diag_idx = (
                         int(non_neg[0].item())
                         if non_neg.numel() > 0
-                        else int(torch.randint(
-                            0, matrix_dim, (1,), device=device, generator=generator
-                        ).item())
+                        else int(
+                            torch.randint(
+                                0, matrix_dim, (1,), device=device, generator=generator
+                            ).item()
+                        )
                     )
                     if coefficient_bounds[0] < 0:
                         neg_val = coefficient_bounds[0]
@@ -311,19 +313,21 @@ class QUBODataset(Dataset):
                     ]
                     if filtered:
                         chosen = filtered[
-                            int(torch.randint(
-                                0,
-                                len(filtered),
-                                (1,),
-                                device=device,
-                                generator=generator,
-                                dtype=torch.int64,
-                            ).item())
+                            int(
+                                torch.randint(
+                                    0,
+                                    len(filtered),
+                                    (1,),
+                                    device=device,
+                                    generator=generator,
+                                    dtype=torch.int64,
+                                ).item()
+                            )
                         ]
                     else:
                         chosen = torch.randint(
-                                0, matrix_dim, (1,), device=device, generator=generator
-                            ).repeat(2)
+                            0, matrix_dim, (1,), device=device, generator=generator
+                        ).repeat(2)
                     i_ch, j_ch = chosen
                     coeff[i_ch, j_ch] = coefficient_bounds[1]
                     if i_ch != j_ch:
