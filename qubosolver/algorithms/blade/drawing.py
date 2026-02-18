@@ -20,7 +20,7 @@ def eformat(f: Any) -> str:
     if f == 0:
         return "0"
 
-    return format_float_scientific(f, exp_digits=1, precision=0)  # type: ignore
+    return format_float_scientific(f, exp_digits=1, precision=0)
 
 
 def get_ax(ax: Axes | None) -> Axes:
@@ -40,13 +40,11 @@ def draw_weighted_graph(
 
     print(f"{thresholds=}")
     t0, t1, t2 = thresholds
-    elarge = [(u, v) for (u, v, w) in graph.edges.data("weight") if t2 < w]  # type: ignore
-    esmall = [
-        (u, v) for (u, v, w) in graph.edges.data("weight") if t1 < w <= t2 and t0 < w  # type: ignore
-    ]
-    etiny = [(u, v) for (u, v, w) in graph.edges.data("weight") if t0 <= w <= t1]  # type: ignore
+    elarge = [(u, v) for (u, v, w) in graph.edges.data("weight") if t2 < w]
+    esmall = [(u, v) for (u, v, w) in graph.edges.data("weight") if t1 < w <= t2 and t0 < w]
+    etiny = [(u, v) for (u, v, w) in graph.edges.data("weight") if t0 <= w <= t1]
 
-    pos_all_dims = dict(graph.nodes.data("pos"))  # type: ignore
+    pos_all_dims = dict(graph.nodes.data("pos"))
     pos = {k: v[0:2] for k, v in pos_all_dims.items()}
 
     ax.set_aspect("equal", adjustable="box")

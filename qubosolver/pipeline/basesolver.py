@@ -103,15 +103,15 @@ class BaseSolver(ABC):
             drive=drive,
         )
         program.compile_to(self.device)
-        execution_result = self.backend.run(program)
+        execution_results = self.backend.run(program)
 
-        if isinstance(execution_result, tuple):
+        if isinstance(execution_results, tuple):
             # local emulator result
-            execution_result = execution_result[-1]
+            execution_result = execution_results[-1]
             counter = execution_result.final_bitstrings
         else:
             # remote emulator result
-            execution_result = execution_result[-1]
+            execution_result = execution_results[-1]
             counter = execution_result.bitstring_counts
 
         bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())])
@@ -214,7 +214,7 @@ class BaseSolver(ABC):
             if (
                 self.fixtures.reduced_qubo.coefficients is not None
                 and len(self.fixtures.reduced_qubo.coefficients) > 0
-                and self.fixtures.n_fixed_variables < self.instance.size  # type:ignore[operator]
+                and self.fixtures.n_fixed_variables < self.instance.size
             ):
 
                 self.instance = self.fixtures.reduced_qubo

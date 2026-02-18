@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterator
 
 import torch
 from torch.utils.data import Dataset
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     pass
 
 # Modules to be automatically added to the qubosolver namespace
-__all__ = ["QUBOSolution", "QUBODataset"]  # type: ignore
+__all__ = ["QUBOSolution", "QUBODataset"]
 
 
 @dataclass
@@ -164,6 +164,16 @@ class QUBODataset(Dataset):
             return self.coefficients[:, :, idx], self.solutions[idx]
         return self.coefficients[:, :, idx], None
 
+    def __iter__(self) -> Iterator[tuple[torch.Tensor, QUBOSolution | None]]:
+        """
+        Return an iterator to retrieve the coefficients matrices and optionnally the solutions.
+
+        Returns:
+            Iterator[tuple[torch.Tensor, QUBOSolution | None]]:
+                An iterator on the coefficients and solutions.
+        """
+        return map(self.__getitem__, range(len(self)))
+
     @classmethod
     def from_random(
         cls,
@@ -272,11 +282,13 @@ class QUBODataset(Dataset):
                     diag_vals = coeff.diag()
                     non_neg = (diag_vals >= 0).nonzero(as_tuple=True)[0]
                     diag_idx = (
-                        non_neg[0].item()
+                        int(non_neg[0].item())
                         if non_neg.numel() > 0
-                        else torch.randint(
-                            0, matrix_dim, (1,), device=device, generator=generator
-                        ).item()
+                        else int(
+                            torch.randint(
+                                0, matrix_dim, (1,), device=device, generator=generator
+                            ).item()
+                        )
                     )
                     if coefficient_bounds[0] < 0:
                         neg_val = coefficient_bounds[0]
@@ -301,20 +313,21 @@ class QUBODataset(Dataset):
                     ]
                     if filtered:
                         chosen = filtered[
-                            torch.randint(
-                                0,
-                                len(filtered),
-                                (1,),
-                                device=device,
-                                generator=generator,
-                            ).item()
+                            int(
+                                torch.randint(
+                                    0,
+                                    len(filtered),
+                                    (1,),
+                                    device=device,
+                                    generator=generator,
+                                    dtype=torch.int64,
+                                ).item()
+                            )
                         ]
                     else:
-                        chosen = [
-                            torch.randint(
-                                0, matrix_dim, (1,), device=device, generator=generator
-                            ).item()
-                        ] * 2
+                        chosen = torch.randint(
+                            0, matrix_dim, (1,), device=device, generator=generator
+                        ).repeat(2)
                     i_ch, j_ch = chosen
                     coeff[i_ch, j_ch] = coefficient_bounds[1]
                     if i_ch != j_ch:

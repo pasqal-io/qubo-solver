@@ -9,8 +9,8 @@ from skopt import gp_minimize
 
 from pulser.devices import AnalogDevice
 from qoolqit import Register, QuantumProgram, Drive
-from qoolqit.execution.backend import BaseBackend
 from qoolqit.waveforms import Interpolated as InterpolatedWaveform
+from qubosolver import concepts
 
 
 from qubosolver import QUBOInstance
@@ -33,19 +33,19 @@ class BaseDriveShaper(ABC):
         instance (QUBOInstance): The QUBO problem instance.
         config (SolverConfig): The solver configuration.
         drive (Drive, optional): A saved current drive obtained by `generate`.
-        backend (BaseBackend): Backend to use.
+        backend (Backend): Backend to use.
         device (Device): Device from backend.
 
     """
 
-    def __init__(self, instance: QUBOInstance, config: SolverConfig, backend: BaseBackend):
+    def __init__(self, instance: QUBOInstance, config: SolverConfig, backend: concepts.Backend):
         """
         Initialize the drive shaping module with a QUBO instance.
 
         Args:
             instance (QUBOInstance): The QUBO problem instance.
             config (SolverConfig): The solver configuration.
-            backend (BaseBackend): Backend to use.
+            backend (Backend): Backend to use.
         """
         self.instance: QUBOInstance = instance
         self.config: SolverConfig = config
@@ -198,12 +198,12 @@ class AdiabaticDriveShaper(BaseDriveShaper):
         delta_f = -delta_0
 
         # enforces AnalogDevice max sequence duration if device has no max
-        max_seq_duration = (
+        max_seq_duration_ = (
             self.device._device.max_sequence_duration or AnalogDevice.max_sequence_duration
         )
-        assert max_seq_duration is not None
+        assert max_seq_duration_ is not None
 
-        max_seq_duration /= TIME
+        max_seq_duration = max_seq_duration_ / TIME
         Omega /= TIME
         delta_0 /= TIME
         delta_f /= TIME
@@ -265,14 +265,14 @@ class OptimizedDriveShaper(BaseDriveShaper):
         self,
         instance: QUBOInstance,
         config: SolverConfig,
-        backend: BaseBackend,
+        backend: concepts.Backend,
     ):
         """Instantiate an `OptimizedDriveShaper`.
 
         Args:
             instance (QUBOInstance): Qubo instance.
             config (SolverConfig): Configuration for solving.
-            backend (BaseBackend): Backend to use during optimization.
+            backend (Backend): Backend to use during optimization.
 
         """
         super().__init__(instance, config, backend)
@@ -383,8 +383,9 @@ class OptimizedDriveShaper(BaseDriveShaper):
         if self.bitstrings is None or self.counts is None:
             # TODO: what needs to be returned here?
             # the generate function should always return a drive - even if it is not good.
-            # we need to return a drive (self.srive) - which is none here.
-            return self.drive, QUBOSolution(None, None)  # type: ignore[return-value]
+            # we need to return a drive (self.drive) - which is none here.
+            # return self.drive, QUBOSolution(None, None)
+            raise RuntimeError("No solution found")
 
         assert self.costs is not None
         solution = QUBOSolution(
@@ -406,11 +407,11 @@ class OptimizedDriveShaper(BaseDriveShaper):
             Drive: Drive sequence.
         """
         # enforces AnalogDevice max sequence duration since Digital's has no max duration
-        max_seq_duration = AnalogDevice.max_sequence_duration
-        assert max_seq_duration is not None
+        max_seq_duration_ = AnalogDevice.max_sequence_duration
+        assert max_seq_duration_ is not None
 
         TIME, _, _ = self.device.converter.factors
-        max_seq_duration /= TIME
+        max_seq_duration = max_seq_duration_ / TIME
         amp_params = [1e-9] + list(params[:3]) + [1e-9]
         det_params = [params[3]] + list(params[4:]) + [params[3]]
         amp_params = [p / TIME for p in amp_params]
@@ -528,7 +529,7 @@ class OptimizedDriveShaper(BaseDriveShaper):
 def get_drive_shaper(
     instance: QUBOInstance,
     config: SolverConfig,
-    backend: BaseBackend,
+    backend: concepts.Backend,
 ) -> BaseDriveShaper:
     """
     Method that returns the correct DriveShaper based on configuration.
@@ -538,7 +539,7 @@ def get_drive_shaper(
     Args:
         instance (QUBOInstance): The QUBO problem to embed.
         config (SolverConfig): The solver configuration used.
-        backend (BaseBackend): Backend to extract device from or to use
+        backend (Backend): Backend to extract device from or to use
             during drive shaping.
 
     Returns:

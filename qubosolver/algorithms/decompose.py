@@ -5,7 +5,7 @@ import random
 from typing import TypedDict
 
 import numpy as np
-import pulser
+from pulser.devices._device_datacls import BaseDevice as PulserBaseDevice
 import torch
 from scipy.optimize import OptimizeResult, minimize
 from shapely.geometry import Point, Polygon
@@ -40,7 +40,7 @@ class WeightedZone:
         circle_end_blocking: circle delimiting end of blocking_zone.
     """
 
-    def __init__(self, id: int, x: float, y: float, weight: float, device: pulser.devices.Device):
+    def __init__(self, id: int, x: float, y: float, weight: float, device: PulserBaseDevice):
 
         self.id = id
         self.x = x
@@ -61,7 +61,7 @@ class WeightedZone:
 
 
 def compute_distance_interaction_matrix(
-    device: pulser.devices.Device,
+    device: PulserBaseDevice,
     qubo_matrix: torch.Tensor,
     neglecting_inter_distance: float = 15.0,
     neglecting_max_coefficient: float = 1.0,
@@ -70,7 +70,7 @@ def compute_distance_interaction_matrix(
         (using `device.rydberg_blockade_radius`).
 
     Args:
-        device (pulser.devices.Device): Device to calculate distance from.
+        device (PulserBaseDevice): Device to calculate distance from.
         qubo_matrix (torch.Tensor): Matrix of qubo coefficients.
         neglecting_inter_distance (float, optional): Default distance value
             for neglecting interactions.
@@ -412,7 +412,7 @@ def cost_interaction_point_continuous(
     placed_points: list[tuple[float, float]],
     Q_target: list[float],
     blocked_indices: list[int],
-    device: pulser.devices.Device,
+    device: PulserBaseDevice,
 ) -> float:
     """Cost for BFGS search.
 
@@ -421,7 +421,7 @@ def cost_interaction_point_continuous(
         placed_points (list[tuple[float, float]]): Placed points.
         Q_target (list[float]): Weights.
         blocked_edges (list): List of blocked indices.
-        device (pulser.devices.Device): Device
+        device (PulserBaseDevice): Device
 
     Returns:
         float: Cost evaluation.
@@ -455,7 +455,7 @@ def bfgs_placement(
     placed_vertices: dict[int, WeightedZone],
     matrix: torch.Tensor,
     dict_vertices_to_place: dict,
-    device: pulser.devices.Device,
+    device: PulserBaseDevice,
 ) -> OptimizeResult:
     """BFGS search for placing vertices.
 
@@ -465,7 +465,7 @@ def bfgs_placement(
         placed_vertices (dict[int, WeightedZone]): Placed vertices.
         matrix (torch.Tensor): qubo matrix.
         dict_vertices_to_place (dict): Vertices to place.
-        device (pulser.devices.Device): Device.
+        device (PulserBaseDevice): Device.
 
     Returns:
         OptimizeResult: Result of BFGS.
@@ -477,7 +477,7 @@ def bfgs_placement(
     for vertex_key, vertex_value in placed_vertices.items():
 
         placed_points.append([vertex_value.x, vertex_value.y])
-        Q_target.append(matrix[vertex_key, vertex])
+        Q_target.append(matrix[vertex_key, vertex].item())
 
         if vertex_key in dict_vertices_to_place[vertex]["blocking_vertices"]:
             current_blocked_edges.append(counter)
@@ -493,12 +493,12 @@ def bfgs_placement(
     )
 
 
-def check_limit_zone(final_point: Point, device: pulser.devices.Device) -> bool:
+def check_limit_zone(final_point: Point, device: PulserBaseDevice) -> bool:
     """Check if the new embedded vertex is within the limit zone.
 
     Args:
         final_point (Point): New embedded vertex.
-        device (pulser.devices.Device): Device to extract limit zone.
+        device (PulserBaseDevice): Device to extract limit zone.
 
     Returns:
         bool: Returns True if point is within limit zone.
@@ -534,7 +534,7 @@ def test_placing_vertex(
     vertex: int,
     dict_vertices_to_place: dict[int, VertexToPlace],
     placed_vertices: dict[int, WeightedZone],
-    device: pulser.devices.Device,
+    device: PulserBaseDevice,
     matrix: torch.Tensor,
     cost_function_thresold: float,
     tested_vertices: list[int],
@@ -546,7 +546,7 @@ def test_placing_vertex(
         vertex (int): Vertex to place.
         dict_vertices_to_place (dict[int, VertexToPlace]): Vertices to place.
         placed_vertices (dict[int, WeightedZone]): Placed vertices.
-        device (pulser.devices.Device): Device.
+        device (PulserBaseDevice): Device.
         matrix (torch.Tensor): Qubo matrix.
         cost_function_thresold (float): Threshold for cost function.
         tested_vertices (list[int]): Already tested vertices.
@@ -633,28 +633,28 @@ def obtain_vertice_to_test(
         int: identifier of a vertex to test placing.
     """
 
-    best_score = 0
+    best_score = 0.0
     chosen_vertice = random.choice(vertices_list)
 
     for vertex in vertices_list:
-        current_score = 0
+        current_score = 0.0
 
         for i, neighbor in enumerate(dict_vertices_to_place[vertex]["neighbors_id"]):
             neighbor
             if neighbor.item() in placed_vertices:
                 current_score = (
-                    current_score + dict_vertices_to_place[vertex]["neighbors_weight"][i]
+                    current_score + dict_vertices_to_place[vertex]["neighbors_weight"][i].item()
                 )
 
         if current_score > best_score:
             best_score = current_score
             chosen_vertice = vertex
 
-    best_score = 0
+    best_score = 0.0
 
     for vertex in vertices_list:
 
-        current_score = 0
+        current_score = 0.0
         for blocking_vertex in dict_vertices_to_place[vertex]["blocking_vertices"]:
             if blocking_vertex.item() in placed_vertices:
                 current_score = current_score + 1
@@ -671,7 +671,7 @@ def geometric_search(
     dict_vertices_to_place: dict[int, VertexToPlace],
     first_vertex: int,
     cost_function_thresold: float,
-    device: pulser.devices.Device,
+    device: PulserBaseDevice,
 ) -> dict[int, WeightedZone]:
     """Search an embeddable subproblem on the device
         for solving it during the decomposition.
@@ -682,7 +682,7 @@ def geometric_search(
         first_vertex (int): First vertex to start search from.
         cost_function_thresold (float): Threshold between sum of target
             interactions and sum of interactions from embedding.
-        device (pulser.devices.Device): Device used by embedding.
+        device (PulserBaseDevice): Device used by embedding.
 
     Returns:
         dict[int, WeightedZone]: placed vertices (from the matrix variables)
@@ -756,7 +756,7 @@ def distance_plan(x1: float, y1: float, x2: float, y2: float) -> float:
 
 def interaction_matrix_from_placed(
     placed_vertices: dict[int, WeightedZone],
-    device: pulser.devices.Device,
+    device: PulserBaseDevice,
 ) -> tuple[torch.Tensor, dict[int, int]]:
     """
     Compute interaction matrix corresponding to embedded subgraph.
@@ -764,7 +764,7 @@ def interaction_matrix_from_placed(
     Args:
         dict_vertices_to_place (dict[int, dict]): Vertices to place.
         placed_vertices (dict[int, WeightedZone]): Vertices already placed.
-        device (pulser.devices.Device): Device.
+        device (PulserBaseDevice): Device.
 
     Returns:
         tuple[torch.Tensor, dict]: Interacton matrix of embedded subgraph

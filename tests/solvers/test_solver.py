@@ -61,7 +61,7 @@ def test_run_local_backends(
 
 
 def test_solver_different_devices(
-    request: pytest.Fixture,
+    request: pytest.FixtureRequest,
     qubo_for_testing_many_devices: QUBOInstance,
     local_device: Device,
     embedding_method: EmbedderType,

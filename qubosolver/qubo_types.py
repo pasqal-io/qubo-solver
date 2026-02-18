@@ -15,11 +15,11 @@ class StrEnum(str, Enum):
 
     @classmethod
     def names(cls) -> list[str]:
-        return list(map(lambda c: c.name, cls))  # type: ignore
+        return list(map(lambda c: c.name, cls))
 
     @classmethod
     def list(cls) -> list[str]:
-        return list(map(lambda c: c.value, cls))  # type: ignore
+        return list(map(lambda c: c.value, cls))
 
 
 class DensityType(StrEnum):

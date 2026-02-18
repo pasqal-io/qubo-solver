@@ -32,7 +32,9 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     solver = QuboSolver(decomposable_qubo, config)
 
     ## Check the distance interaction matrix matches the qubo matrix
-    dist_matrix = compute_distance_interaction_matrix(solver._solver.device, qubo_mat)
+    dist_matrix = compute_distance_interaction_matrix(
+        solver._solver.device._pulser_device, qubo_mat
+    )
     assert dist_matrix.shape == qubo_mat.shape
     assert torch.all(torch.diag(dist_matrix) == torch.diag(qubo_mat))
 
@@ -61,17 +63,17 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
         current_vertices_dict,
         first_vertex,
         decompose_config.decompose_threshold,
-        solver._solver.device,
+        solver._solver.device._pulser_device,
     )
     assert len(placed_vertices) <= size
 
     # check matrix size correspond to placed_vertices
     matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(
-        placed_vertices, solver._solver.device
+        placed_vertices, solver._solver.device._pulser_device
     )
     assert len(map_index_vertices) == len(placed_vertices) == matrix_to_solve.shape[0]
     subproblem = QUBOInstance(matrix_to_solve)
-    subsolver = solver._solver._solver_factory(  # type:ignore[attr-defined]
+    subsolver = solver._solver._solver_factory(  # type: ignore[attr-defined]
         subproblem, config_subproblems
     )
     sub_solution = subsolver.solve().bitstrings[0]

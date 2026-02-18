@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 import torch
 
 from qubosolver.data import QUBODataset, QUBOSolution
@@ -81,7 +82,7 @@ def save_qubo_dataset(dataset: QUBODataset, filepath: str | Path) -> None:
             - Coefficients (size x size x num_instances tensor)
             - Solutions (optional, includes bitstrings, counts, probabilities, and costs)
     """
-    data = {"coefficients": dataset.coefficients, "solutions": None}
+    data: dict[str, Any] = {"coefficients": dataset.coefficients, "solutions": None}
     if dataset.solutions is not None:
         data["solutions"] = [
             {

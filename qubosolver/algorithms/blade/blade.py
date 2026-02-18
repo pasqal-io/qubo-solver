@@ -193,8 +193,7 @@ def update_positions(
         plt.gca().set_aspect("equal", "box")
 
         if max_dist is not None:
-            center = np.zeros(positions.shape[1])
-            circle = plt.Circle(center, max_dist / 2, color="r", fill=False, clip_on=True)
+            circle = plt.Circle((0.0, 0.0), max_dist / 2, color="r", fill=False, clip_on=True)
             ax = plt.gca()
             ax.add_patch(circle)
         plt.show()
@@ -454,7 +453,7 @@ def em_blade(
         )
         starting_min = _compute_min_pairwise_distance(positions)
     else:
-        steps_ratios = [None] * len(dimensions)
+        steps_ratios = np.full(len(dimensions), None)
         starting_min = None
 
     total_steps = steps_per_round * (len(dimensions) - 1)
@@ -539,4 +538,4 @@ def em_blade_for_device(
         starting_ratio_factor=starting_ratio_factor,
     )
 
-    return positions * device.interaction_coeff ** (1 / 6)
+    return np.array(positions * device.interaction_coeff ** (1.0 / 6.0))

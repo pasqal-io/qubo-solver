@@ -8,7 +8,7 @@ from ._force import Force
 
 def compute_min_dist_constraint_forces(
     *,
-    min_dist: np.float32 | None,
+    min_dist: float | None,
     distance_matrix: np.ndarray,
     unitary_vectors: np.ndarray,
 ) -> Force:
