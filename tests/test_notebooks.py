@@ -10,8 +10,8 @@ from typing import List
 
 import pytest
 
-expected_fail: dict = {}
-skip: dict = {
+expected_fail: dict[str, str] = {}
+skip: dict[str, str] = {
     "00-a-tour-of-qubo.ipynb": "Requires qubovert",
     "01-dataset-generation-and-loading.ipynb": "Must manually save data",
     "03-prepostprocessing.ipynb": "Must manually save data from notebook 01",
@@ -31,23 +31,27 @@ def get_ipynb_files(dir: Path) -> List[Path]:
 
 notebooks_dir = Path(__file__).parent.parent.joinpath("docs").joinpath("tutorial").resolve()
 assert notebooks_dir.exists()
-notebooks = get_ipynb_files(notebooks_dir)
-notebooks_names = [f"{example.relative_to(notebooks_dir)}" for example in notebooks]
-for example, reason in expected_fail.items():
-    try:
-        notebooks[notebooks_names.index(example)] = pytest.param(
-            example, marks=pytest.mark.xfail(reason=reason)
-        )
-    except ValueError:
-        pass
+notebooks_files = get_ipynb_files(notebooks_dir)
 
-for example, reason in skip.items():
-    try:
-        notebooks[notebooks_names.index(example)] = pytest.param(
-            example, marks=pytest.mark.skip(reason=reason)
-        )
-    except ValueError:
-        pass
+
+def notebook_name(notebook: Path) -> str:
+    return f"{notebook.relative_to(notebooks_dir)}"
+
+
+notebooks_names = [notebook_name(example) for example in notebooks_files]
+
+notebooks = []
+for file in notebooks_files:
+    filename = notebook_name(file)
+    reason = expected_fail.get(filename)
+    if reason is not None:
+        notebooks.append(pytest.param(file, marks=pytest.mark.xfail(reason=reason)))
+        continue
+    reason = skip.get(filename)
+    if reason is not None:
+        notebooks.append(pytest.param(file, marks=pytest.mark.skip(reason=reason)))
+        continue
+    notebooks.append(pytest.param(file))
 
 
 @pytest.mark.parametrize("notebook", notebooks, ids=notebooks_names)
