@@ -344,18 +344,19 @@ class HeuristicDriveShaper(BaseDriveShaper):
         Q = self.qubo_coefficients
 
         # Sequence duration
-        max_seq_duration = (
+        max_seq_duration_ = (
             self.device._device.max_sequence_duration or AnalogDevice.max_sequence_duration
         )
-        assert max_seq_duration is not None
-        max_seq_duration = max_seq_duration / TIME  # waveform time units
+        assert max_seq_duration_ is not None
+        max_seq_duration = max_seq_duration_ / TIME  # waveform time units
 
         # Hardware detuning bounds (global)
         max_abs_det = self._get_hw_detuning_bound()
         if max_abs_det is None:
             max_abs_det = 1e6  # fallback
-        delta_g_min = -float(max_abs_det)
-        delta_g_max = float(max_abs_det)
+
+        delta_g_min = -float(max_abs_det) / ENERGY
+        delta_g_max = float(max_abs_det) / ENERGY
 
         # Hardware DMM bounds (magnitude). If no DMM -> 0
         if self.dmm:
@@ -370,7 +371,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
         diag = torch.diag(Q)
         if diag.numel() == 0:
             # trivial
-            eps = 1e-9 / TIME
+            eps = 1e-9
             amp_wave = InterpolatedWaveform(max_seq_duration, [eps, eps])
             det_wave = InterpolatedWaveform(max_seq_duration, [0.0, 0.0])
             return Drive(
@@ -426,22 +427,22 @@ class HeuristicDriveShaper(BaseDriveShaper):
         omega_max_energy = kappa * escale
 
         # Convert to waveform amplitude units
-        omega_max_wave = omega_max_energy / TIME
+        omega_max_wave = omega_max_energy / ENERGY
 
         # Respect hardware amplitude constraints
         omega_max_wave = self._scale_omega_for_device_constraints(omega_max_wave)
 
         # Build waveforms (waveform units)
-        eps = 1e-9 / TIME
+        eps = 1e-9
 
         # Initial strong negative detuning (easy init)
         delta_0 = delta_g_min
         delta_0 = self._clip(delta_0, delta_g_min, delta_g_max)
 
         # Convert detunings to waveform units (/TIME)
-        delta_0_w = delta_0 / TIME
-        delta_g_T_w = delta_g_T / TIME
-        delta_dmm_T_w = delta_dmm_T / TIME  # negative or 0
+        delta_0_w = delta_0 / ENERGY
+        delta_g_T_w = delta_g_T / ENERGY
+        delta_dmm_T_w = delta_dmm_T / ENERGY  # negative or 0
 
         # Simple 3-phase / 4-point schedule:
         # Amp: 0 -> plateau -> 0
