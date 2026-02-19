@@ -367,17 +367,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
         else:
             delta_dmm_max = 0.0
 
-        # Diagonal stats (NO /TIME here)
         diag = torch.diag(Q)
-        if diag.numel() == 0:
-            # trivial
-            eps = 1e-9
-            amp_wave = InterpolatedWaveform(max_seq_duration, [eps, eps])
-            det_wave = InterpolatedWaveform(max_seq_duration, [0.0, 0.0])
-            return Drive(
-                amplitude=amp_wave, detuning=det_wave, weighted_detunings=None
-            ), QUBOSolution(torch.Tensor(), torch.Tensor())
-
         qmin = float(torch.min(diag).cpu().item())
         qmax = float(torch.max(diag).cpu().item())
 
