@@ -15,9 +15,6 @@ Two deterministic rules are applied iteratively until no further variables can b
 - **Hansen Fixing Rule**
   A rule based on the diagonal and off-diagonal entries of the QUBO matrix. It fixes variables whose contribution to the objective function can be bounded independently of the rest of the problem.
 
-- **Roof Duality**
-  A technique based on duality theory that provides provably optimal variable fixations.
-
 These rules are applied in sequence until convergence, reducing the QUBO instance before it is passed to the solver.
 
 ---
