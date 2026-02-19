@@ -195,7 +195,7 @@ class QuboSolverClassical(BaseSolver):
     """
     Classical solver for QUBO problems.
     This implementation delegates the classical solving task to the external
-    classical solver module (e.g., CPLEX, D-Wave SA, or D-Wave Tabu),
+    classical solver module (e.g., CPLEX, Simulated Annealing, or Tabu Search),
     as selected via the SolverConfig.
 
     After obtaining the raw solution, postprocessing (e.g., bit-flip local search)
