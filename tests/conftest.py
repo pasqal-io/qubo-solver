@@ -372,6 +372,6 @@ def restore_rng_state() -> Generator:
 
     yield  # run the test
 
-    random.setstate(py_state)
-    np.random.set_state(np_state)
     torch.random.set_rng_state(torch_state)
+    np.random.set_state(np_state)
+    random.setstate(py_state)
