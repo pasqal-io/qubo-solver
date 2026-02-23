@@ -6,7 +6,6 @@ from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.config import SolverConfig
 from qubosolver.pipeline.fixtures import (
     Fixtures,
-    roof_duality_fixing,
     hansen_fixing,
 )
 from qubosolver.qubo_types import SolutionStatusType
@@ -48,26 +47,6 @@ def test_hansen_fixing() -> None:
     qubo_reducible = QUBOInstance(matrix_reducible)
 
     fixed_var = hansen_fixing(qubo_reducible)
-
-    assert isinstance(fixed_var, dict)
-
-    assert fixed_var == {0: 1, 1: 1}
-
-    matrix_not_reducible = torch.tensor([[-1, 10], [10, -1]], dtype=torch.int32)
-
-    qubo_reducible = QUBOInstance(matrix_not_reducible)
-
-    empty_fixed_var = hansen_fixing(qubo_reducible)
-
-    assert empty_fixed_var == {}
-
-
-def test_roof_duality_fixing() -> None:
-    matrix_reducible = torch.tensor([[-10, 1], [1, -10]], dtype=torch.int32)
-
-    qubo_reducible = QUBOInstance(matrix_reducible)
-
-    fixed_var = roof_duality_fixing(qubo_reducible)
 
     assert isinstance(fixed_var, dict)
 

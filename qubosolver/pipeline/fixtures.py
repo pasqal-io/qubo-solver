@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Callable, Dict, List, cast, Any
+from typing import Callable, Dict, List, cast
 
 import numpy as np
 import torch
@@ -9,7 +9,6 @@ import torch
 from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.config import SolverConfig
 from qubosolver.qubo_types import SolutionStatusType
-import maxflow
 
 
 def bit_flip_local_search(
@@ -86,87 +85,6 @@ def hansen_fixing(qubo: QUBOInstance) -> Dict[int, int]:
     return fixed_dict
 
 
-def roof_duality_fixing(qubo_inst: QUBOInstance) -> Dict[int, int]:
-    """
-    Applies roof duality method to identify and fix variables in a QUBO instance.
-
-    Roof duality provides a way to determine certain variable values with certainty
-    without solving the entire optimization problem.
-
-    Args:
-        qubo_inst (QUBOInstance): The QUBO instance to be processed.
-
-    Returns:
-        Dict[int, int]: A dictionary mapping fixed variable indices to their values.
-    """
-    if qubo_inst.coefficients is None:
-        raise ValueError("QUBO coefficients are not initialized.")
-
-    # Create graph: two non-terminal nodes per variable -> 2*n nodes
-    n = qubo_inst.coefficients.shape[0]
-    g = maxflow.Graph[float]()
-    node_ids = g.add_nodes(2 * n)
-
-    def p_idx(i: int) -> Any:
-        return node_ids[2 * i]
-
-    def q_idx(i: int) -> Any:
-        return node_ids[2 * i + 1]
-
-    # Linear terms: diagonal entries Q[i,i]
-    diag = qubo_inst.coefficients.diagonal()
-    pos_mask = diag >= 0
-    neg_mask = ~pos_mask
-    pos_idx = torch.nonzero(pos_mask, as_tuple=False).flatten()
-    neg_idx = torch.nonzero(neg_mask, as_tuple=False).flatten()
-
-    for i in pos_idx.tolist():
-        ui = float(diag[i])
-        g.add_tedge(p_idx(i), ui, 0.0)
-        g.add_tedge(q_idx(i), 0.0, ui)
-    for i in neg_idx.tolist():
-        ui = float(-diag[i])
-        g.add_tedge(q_idx(i), ui, 0.0)
-        g.add_tedge(p_idx(i), 0.0, ui)
-
-    # Quadratic terms: off-diagonal Q[i,j], i < j
-    # Get upper triangle indices
-    i_idx, j_idx = torch.triu_indices(n, n, offset=1)
-    coeffs = qubo_inst.coefficients[i_idx, j_idx]
-    pos_mask = coeffs >= 0
-    neg_mask = ~pos_mask
-
-    # positive edges (submodular)
-    pos_i = i_idx[pos_mask].tolist()
-    pos_j = j_idx[pos_mask].tolist()
-    pos_w = coeffs[pos_mask].tolist()
-    for i, j, w in zip(pos_i, pos_j, pos_w):
-        g.add_edge(p_idx(i), p_idx(j), w, w)
-        g.add_edge(q_idx(i), q_idx(j), w, w)
-
-    # negative edges (non-submodular)
-    neg_i = i_idx[neg_mask].tolist()
-    neg_j = j_idx[neg_mask].tolist()
-    neg_w = (-coeffs[neg_mask]).tolist()
-    for i, j, w in zip(neg_i, neg_j, neg_w):
-        g.add_edge(p_idx(i), q_idx(j), w, w)
-        g.add_edge(p_idx(j), q_idx(i), w, w)
-
-    # Compute maxflow / mincut
-    g.maxflow()
-    fixed_variables = dict()
-    for i in range(n):
-        rp = g.get_segment(p_idx(i)) == 0
-        rq = g.get_segment(q_idx(i)) == 0
-        if rp and (not rq):
-            fixed_variables[i] = 0
-        elif rq and (not rp):
-            fixed_variables[i] = 1
-        else:
-            fixed_variables[i] = 0
-    return fixed_variables
-
-
 class Fixtures:
     """
     Handles all preprocessing and postprocessing logic for QUBO problems.
@@ -190,7 +108,6 @@ class Fixtures:
         self.reduced_qubo: QUBOInstance = deepcopy(instance)
         self.fixation_rule_list: List[Callable[[QUBOInstance], Dict[int, int]]] = [
             hansen_fixing,
-            roof_duality_fixing,
         ]
         self.fixed_var_dict_list: List[Dict[int, int]] = []
 

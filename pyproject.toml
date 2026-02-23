@@ -39,7 +39,6 @@ dependencies = [
   "pandas",
   "seaborn",
   "scikit-optimize",
-  "PyMaxflow",
   "cplex",
   "pydantic>=2",
   "qoolqit[solvers]==0.3.1", # The version in .pre-commit-config.yaml must match
