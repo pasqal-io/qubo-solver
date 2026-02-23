@@ -1,14 +1,23 @@
 from __future__ import annotations
 
+import numpy as np
+import pytest
+import pytest_check as check
 import torch
 
 from qubosolver import QUBOInstance, QUBOSolution
-from qubosolver.config import SolverConfig
+from qubosolver.qubo_analyzer import QUBOAnalyzer
+from qubosolver.config import (
+    EmbeddingConfig,
+    DriveShapingConfig,
+    SolverConfig,
+    LocalEmulator,
+)
 from qubosolver.pipeline.fixtures import (
     Fixtures,
     hansen_fixing,
 )
-from qubosolver.qubo_types import SolutionStatusType
+from qubosolver.qubo_types import SolutionStatusType, EmbedderType, DriveType
 from qubosolver.solver import QuboSolver
 
 
@@ -216,3 +225,95 @@ def test_classical_prepostprocessing(
     solution = solver.solve()
     assert solution.solution_status == SolutionStatusType.PREPOSTPROCESSED
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
+
+
+def test_reduce_qubo_2() -> None:
+
+    print()
+    matrix = torch.tensor(
+        [
+            [0.0, 19.7365809, 19.7365809, 5.42015853, 5.42015853],
+            [19.7365809, -10.0, 20.67626392, 0.17675796, 0.85604541],
+            [19.7365809, 20.67626392, -10.0, 0.85604541, 0.17675796],
+            [5.42015853, 0.17675796, 0.85604541, -10.0, 0.32306662],
+            [5.42015853, 0.85604541, 0.17675796, 0.32306662, -10.0],
+        ],
+        dtype=torch.float32,
+    )
+
+    qubo = QUBOInstance(matrix)
+    config = SolverConfig(do_preprocessing=True)
+    fix_class = Fixtures(qubo, config)
+    fix_class.preprocess()
+    check.equal(fix_class.fixed_var_dict_list, [{0: 0}, {2: 1, 3: 1}])
+
+    # Hardcode solution
+    reduced_solution = QUBOSolution(
+        bitstrings=torch.tensor([[0, 1]]),
+        costs=torch.tensor([0.0]),
+    )
+
+    solution = fix_class.post_process_fixation(reduced_solution)
+    check.equal(solution.bitstrings.shape[0], 1)
+    check.equal(solution.bitstrings.shape[1], 5)
+
+    bitstring = QUBOAnalyzer.tensor_to_bitstrings(solution.bitstrings.to(torch.int64))[0]
+    check.equal(bitstring, "00111")
+    check.almost_equal(solution.costs[0], -27.288260)
+
+
+@pytest.mark.usefixtures("restore_rng_state")
+@pytest.mark.parametrize("drive_method", list(DriveType))
+@pytest.mark.parametrize("embedding_method", list(EmbedderType))
+@pytest.mark.parametrize("preprocessing", [True, False])
+@pytest.mark.parametrize("dmm", [True, False])
+def test_quantum_prepostprocessing_2(
+    drive_method: str,
+    embedding_method: str,
+    preprocessing: bool,
+    dmm: bool,
+) -> None:
+    if embedding_method is EmbedderType.BLADE:
+        pytest.skip(reason="Blade embedding still has bugs")
+    if drive_method == DriveType.OPTIMIZED:
+        pytest.skip(reason="Does not work with the optimized drive shaping method")
+
+    np.random.seed(7979)
+
+    Q = np.array(
+        [
+            [0.0, 19.7365809, 19.7365809, 5.42015853, 5.42015853],
+            [19.7365809, -10.0, 20.67626392, 0.17675796, 0.85604541],
+            [19.7365809, 20.67626392, -10.0, 0.85604541, 0.17675796],
+            [5.42015853, 0.17675796, 0.85604541, -10.0, 0.32306662],
+            [5.42015853, 0.85604541, 0.17675796, 0.32306662, -10.0],
+        ]
+    )
+
+    instance = QUBOInstance(Q)
+
+    config = SolverConfig(use_quantum=True, do_preprocessing=preprocessing)
+    config.embedding = EmbeddingConfig(
+        embedding_method=embedding_method, greedy_spacing=7.0, greedy_traps=100
+    )
+    config.drive_shaping = DriveShapingConfig(drive_shaping_method=drive_method, dmm=dmm)
+    config.backend = LocalEmulator(runs=50)
+    solver = QuboSolver(instance, config)
+
+    solutions = solver.solve()
+
+    analyzer = QUBOAnalyzer([solutions])
+    df = analyzer.df
+    print(f"\n{df}")
+
+    check.is_true(df["bitstrings"].is_unique)
+
+    expected_solutions = ["00111", "01011"]
+
+    probabilities = [df.set_index("bitstrings")["probs"].get(b, 0.0) for b in expected_solutions]
+    check.greater(max(probabilities), 0.4)
+
+    for b in expected_solutions:
+        if b in df["bitstrings"].values:
+            cost = df.set_index("bitstrings")["costs"].get(b)
+            np.testing.assert_allclose(cost, -27.288260)

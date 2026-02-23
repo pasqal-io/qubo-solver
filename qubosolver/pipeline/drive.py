@@ -53,12 +53,14 @@ class BaseDriveShaper(ABC):
         self.backend = backend
         self.device = self.config.device
 
-        self.qubo_coefficients = instance.coefficients
-
         # check if device allow DMM
         self.dmm = self.config.drive_shaping.dmm and (
             len(list(self.config.device._device.dmm_channels.keys())) > 0
         )
+
+    @property
+    def qubo_coefficients(self) -> torch.Tensor:
+        return self.instance.coefficients
 
     def _compute_norm_weights(self) -> list[float]:
         """Compute normalization weights.
