@@ -38,6 +38,68 @@ def qubo_solution() -> tuple[torch.Tensor, float]:
     return torch.tensor([0, 1, 0, 0, 0, 1, 1, 1], dtype=torch.int32), -62.0
 
 
+@pytest.mark.priority(30)
+@pytest.mark.parametrize(
+    "classical_method", [c.value for c in ClassicalSolverType if c.value != "random"]
+)
+def test_compare_classical_to_qubovert(classical_method: str) -> None:
+    torch.set_printoptions(profile="full")
+
+    Q = qubo_matrix()
+    instance = QUBOInstance(Q)
+
+    config = SolverConfig(classical=ClassicalConfig(classical_solver_type=classical_method))
+    config.classical.sa_seed = 48
+    solver = QuboSolver(instance, config)
+    solutions = solver.solve()
+
+    assert len(solutions.bitstrings) == 1
+
+    print()
+    for i, (solution, cost) in enumerate(iterable=zip(solutions.bitstrings, solutions.costs)):
+        print(f"Solution {i}: {solution}, cost: {cost}")
+
+    b, c = qubo_solution()
+    assert_equivalent_bitstrings(solutions.bitstrings[0], b)
+    assert solutions.costs[0] == c
+
+    compare_to_qubovert(solutions, Q, [0])
+
+
+@pytest.mark.priority(60)
+@pytest.mark.parametrize("drive_method", list(DriveType))
+@pytest.mark.parametrize("embedding_method", list(EmbedderType))
+def test_compare_quantum_to_qubovert(drive_method: str, embedding_method: str) -> None:
+
+    Q = qubo_matrix()
+    instance = QUBOInstance(Q)
+
+    config = SolverConfig(use_quantum=True)
+    config.drive_shaping = DriveShapingConfig(
+        drive_shaping_method=drive_method,
+        optimized_n_calls=11,
+    )
+    config.embedding = EmbeddingConfig(embedding_method=embedding_method)
+    solver = QuboSolver(instance, config)
+    solutions = solver.solve()
+
+    assert len(solutions.bitstrings) >= 1
+    assert solutions.probabilities is not None
+
+    print()
+    for i, (bitstring, cost, probability) in enumerate(
+        iterable=zip(solutions.bitstrings, solutions.costs, solutions.probabilities)
+    ):
+        print(f"Solution {i} (p = {probability:.4f}): {bitstring.tolist()}, cost = {cost}")
+
+    # TODO: find a relevent test
+    # b, c = qubo_solution()
+    # assert_equivalent_bitstrings(solutions.bitstrings[0], b)
+    # assert solutions.costs[0] == c
+
+    compare_to_qubovert(solutions, Q, [])
+
+
 def assert_equivalent_bitstrings(actual: torch.Tensor, expected: torch.Tensor) -> None:
     msg = f"Bitstrings are not equal (up to a flip): actual {actual.tolist()}, expected {expected.tolist()}"
     if actual[0] != expected[0]:
@@ -117,65 +179,3 @@ def compare_to_qubovert(
         if i in valid_solutions:
             assert pb.is_solution_valid(readable_solution(bitstring))
             assert_equivalent_bitstrings(bitstring, qubovert_bitstring)
-
-
-@pytest.mark.priority(30)
-@pytest.mark.parametrize(
-    "classical_method", [c.value for c in ClassicalSolverType if c.value != "random"]
-)
-def test_compare_classical_to_qubovert(classical_method: str) -> None:
-    torch.set_printoptions(profile="full")
-
-    Q = qubo_matrix()
-    instance = QUBOInstance(Q)
-
-    config = SolverConfig(classical=ClassicalConfig(classical_solver_type=classical_method))
-    config.classical.sa_seed = 48
-    solver = QuboSolver(instance, config)
-    solutions = solver.solve()
-
-    assert len(solutions.bitstrings) == 1
-
-    print()
-    for i, (solution, cost) in enumerate(iterable=zip(solutions.bitstrings, solutions.costs)):
-        print(f"Solution {i}: {solution}, cost: {cost}")
-
-    b, c = qubo_solution()
-    assert_equivalent_bitstrings(solutions.bitstrings[0], b)
-    assert solutions.costs[0] == c
-
-    compare_to_qubovert(solutions, Q, [0])
-
-
-@pytest.mark.priority(60)
-@pytest.mark.parametrize("drive_method", list(DriveType))
-@pytest.mark.parametrize("embedding_method", list(EmbedderType))
-def test_compare_quantum_to_qubovert(drive_method: str, embedding_method: str) -> None:
-
-    Q = qubo_matrix()
-    instance = QUBOInstance(Q)
-
-    config = SolverConfig(use_quantum=True)
-    config.drive_shaping = DriveShapingConfig(
-        drive_shaping_method=drive_method,
-        optimized_n_calls=11,
-    )
-    config.embedding = EmbeddingConfig(embedding_method=embedding_method)
-    solver = QuboSolver(instance, config)
-    solutions = solver.solve()
-
-    assert len(solutions.bitstrings) >= 1
-    assert solutions.probabilities is not None
-
-    print()
-    for i, (bitstring, cost, probability) in enumerate(
-        iterable=zip(solutions.bitstrings, solutions.costs, solutions.probabilities)
-    ):
-        print(f"Solution {i} (p = {probability:.4f}): {bitstring.tolist()}, cost = {cost}")
-
-    # TODO: find a relevent test
-    # b, c = qubo_solution()
-    # assert_equivalent_bitstrings(solutions.bitstrings[0], b)
-    # assert solutions.costs[0] == c
-
-    compare_to_qubovert(solutions, Q, [])
