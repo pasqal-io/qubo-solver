@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Sequence
 
 import torch
 from qoolqit import Register, Drive, QuantumProgram
@@ -11,6 +11,10 @@ from qubosolver.config import SolverConfig
 from qubosolver.data import QUBOSolution
 from qubosolver.qubo_types import SolutionStatusType
 from qubosolver.pipeline.fixtures import Fixtures
+
+from pulser.backend import Results
+from pulser.backend.remote import RemoteResults
+from qoolqit.execution.backends import PulserRemoteBackend
 
 
 class BaseSolver(ABC):
@@ -49,6 +53,23 @@ class BaseSolver(ABC):
         self.fixtures = Fixtures(self.instance, self.config)
         self.n_fixed_variables_preprocessing = 0
 
+    def __getstate__(self) -> dict:
+        """Control what gets pickled"""
+        other = self
+        other.device = None # type: ignore[assignment]
+        other.config.device = None # type: ignore[assignment]
+        other.config.backend = None # type: ignore[assignment]
+        other.backend = None # type: ignore[assignment]
+        other.fixtures.config.device = None # type: ignore[assignment]
+        other.fixtures.config.backend = None # type: ignore[assignment]
+        other.embedder = None # type: ignore[attr-defined]
+        other.drive_shaper = None # type: ignore[attr-defined]
+        return other.__dict__
+
+    def __setstate__(self, state: dict) -> None:
+        """Control what gets restored"""
+        self.__dict__.update(state)
+
     @abstractmethod
     def solve(self) -> QUBOSolution:
         """
@@ -84,7 +105,36 @@ class BaseSolver(ABC):
         """
         pass
 
-    def execute(self, drive: Drive, embedding: Register) -> tuple:
+    def submit(self, drive: Drive, embedding: Register) -> RemoteResults | Sequence[Results]:
+        program = QuantumProgram(
+            register=embedding,
+            drive=drive,
+        )
+        program.compile_to(self.device)
+        if isinstance(self.backend, PulserRemoteBackend):
+            return self.backend.submit(program)
+        else:
+            return self.backend.run(program)
+
+    @staticmethod
+    def parse_results(results: RemoteResults | Sequence[Results]) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Parse the remote results from the backend.
+
+        Returns:
+            tuple: A tuple of (bitstrings, counts) from the execution.
+        """
+        if isinstance(results, tuple):
+            # local emulator result
+            counter = results[-1].final_bitstrings
+        else:
+            # remote emulator result
+            counter = results[-1].bitstring_counts
+        bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())])
+        counts = torch.tensor(list(counter.values()))
+        return bitstrings, counts
+
+    def execute(self, drive: Drive, embedding: Register) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Execute the drive schedule on the backend and retrieve the solution.
         # TODO: We do not currently execute using the async run.
@@ -104,18 +154,7 @@ class BaseSolver(ABC):
         )
         program.compile_to(self.device)
         execution_results = self.backend.run(program)
-
-        if isinstance(execution_results, tuple):
-            # local emulator result
-            execution_result = execution_results[-1]
-            counter = execution_result.final_bitstrings
-        else:
-            # remote emulator result
-            execution_result = execution_results[-1]
-            counter = execution_result.bitstring_counts
-
-        bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())])
-        counts = torch.tensor(list(counter.values()))
+        bitstrings, counts = self.parse_results(execution_results)
 
         if self.config.drive_shaping.optimized_re_execute_opt_drive and (
             bitstrings.numel() == 0 or counts.numel() == 0
@@ -125,17 +164,8 @@ class BaseSolver(ABC):
                 drive=drive,
             )
             program.compile_to(self.device)
-            execution_result = self.backend.run(program)
-            if isinstance(execution_result, tuple):
-                # local emulator result
-                execution_result = execution_result[-1]
-                counter = execution_result.final_bitstrings
-            else:
-                # remote emulator result
-                execution_result = execution_result[-1]
-                counter = execution_result.bitstring_counts
-            bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())])
-            counts = torch.tensor(list(counter.values()))
+            execution_results = self.backend.run(program)
+            bitstrings, counts = self.parse_results(execution_results)
 
         return bitstrings, counts
 
