@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import pytest
+import random
 import torch
+import numpy as np
+from typing import Generator
 
 from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
@@ -359,3 +362,16 @@ def generate_qubo_matrix(
 @pytest.fixture
 def decomposable_qubo() -> QUBOInstance:
     return QUBOInstance(generate_qubo_matrix(50, 0.30, (0, 20), 1))
+
+
+@pytest.fixture
+def restore_rng_state() -> Generator:
+    py_state = random.getstate()
+    np_state = np.random.get_state()
+    torch_state = torch.random.get_rng_state()
+
+    yield  # run the test
+
+    torch.random.set_rng_state(torch_state)
+    np.random.set_state(np_state)
+    random.setstate(py_state)

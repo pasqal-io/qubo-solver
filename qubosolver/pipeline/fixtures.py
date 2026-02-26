@@ -128,8 +128,8 @@ class Fixtures:
             QUBOInstance: The processed or annotated instance.
         """
 
-        # Check if postprocessing is enabled via the configuration.
-        if not hasattr(self.config, "do_postprocessing") or not self.config.do_postprocessing:
+        # Check if preprocessing is enabled via the configuration.
+        if not hasattr(self.config, "do_preprocessing") or not self.config.do_preprocessing:
             return self.instance
 
         # Apply every rules until exhaustion

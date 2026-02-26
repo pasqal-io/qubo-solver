@@ -50,6 +50,7 @@ extras = [
 ]
 dev = [
   "pytest",
+  "pytest-check",
   "pytest-cov",
   "pytest-xdist",
   "pytest-asyncio",

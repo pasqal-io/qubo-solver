@@ -69,8 +69,11 @@ def test_solver_different_devices(
     if (
         request.node.callspec.params["qubo_for_testing_many_devices"]
         == "qubo_instance_adiabatic_tutorial"
-        and type(request.node.callspec.params["local_device"])
-        in (DigitalAnalogDevice, AnalogDevice)
+        and (
+            type(request.node.callspec.params["local_device"])
+            in (DigitalAnalogDevice, AnalogDevice)
+            or request.node.callspec.params["local_device"].name == "FRESNEL"
+        )
         and request.node.callspec.params["embedding_method"] == EmbedderType.BLADE
     ):
         pytest.skip(
