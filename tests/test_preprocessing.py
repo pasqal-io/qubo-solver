@@ -254,8 +254,7 @@ def test_reduce_qubo_2() -> None:
     )
 
     solution = fix_class.post_process_fixation(reduced_solution)
-    check.equal(solution.bitstrings.shape[0], 1)
-    check.equal(solution.bitstrings.shape[1], 5)
+    check.equal(solution.bitstrings.shape, (1, 5))
 
     bitstring = QUBOAnalyzer.tensor_to_bitstrings(solution.bitstrings.to(torch.int64))[0]
     check.equal(bitstring, "00111")
@@ -263,8 +262,8 @@ def test_reduce_qubo_2() -> None:
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("drive_method", list(DriveType))
-@pytest.mark.parametrize("embedding_method", list(EmbedderType))
+@pytest.mark.parametrize("drive_method", [DriveType.ADIABATIC])
+@pytest.mark.parametrize("embedding_method", [EmbedderType.GREEDY])
 @pytest.mark.parametrize("preprocessing", [True, False])
 @pytest.mark.parametrize("dmm", [True, False])
 def test_quantum_prepostprocessing_2(
@@ -273,10 +272,6 @@ def test_quantum_prepostprocessing_2(
     preprocessing: bool,
     dmm: bool,
 ) -> None:
-    if embedding_method is EmbedderType.BLADE:
-        pytest.skip(reason="Blade embedding still has bugs")
-    if drive_method == DriveType.OPTIMIZED:
-        pytest.skip(reason="Does not work with the optimized drive shaping method")
 
     np.random.seed(7979)
 
