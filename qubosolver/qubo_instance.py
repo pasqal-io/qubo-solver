@@ -51,14 +51,14 @@ class QUBOInstance:
             dtype (torch.dtype):
                 Data type of the tensors (default: torch.float32).
         """
-        self.device = device
-        self.dtype = dtype
-        self._coefficients: torch.Tensor = torch.zeros([0, 0], dtype=dtype)
+        self._coefficients: torch.Tensor = torch.zeros([0, 0], dtype=dtype, device=device)
         self.solution: QUBOSolution | None = None
         self.density: float | None = None
         self.density_type: DensityType | None = None
 
-        if coefficients is not None:
+        if coefficients is None:
+            self.coefficients = self._coefficients
+        else:
             self.coefficients = coefficients
 
     @property
@@ -71,6 +71,14 @@ class QUBOInstance:
                 Size of the QUBO matrix.
         """
         return self.coefficients.shape[0]
+
+    @property
+    def device(self) -> torch.device:
+        return self.coefficients.device
+
+    @property
+    def dtype(self) -> torch.dtype:
+        return self.coefficients.dtype
 
     @property
     def coefficients(self) -> torch.Tensor:
