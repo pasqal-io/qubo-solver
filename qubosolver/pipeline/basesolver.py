@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Callable, Any
+from typing_extensions import Self
 
 import torch
+import json
+import inspect
+
 from qoolqit import Register, Drive, QuantumProgram
 
 from qubosolver import QUBOInstance
@@ -11,6 +15,8 @@ from qubosolver.config import SolverConfig
 from qubosolver.data import QUBOSolution
 from qubosolver.qubo_types import SolutionStatusType
 from qubosolver.pipeline.fixtures import Fixtures
+import qubosolver.io.utils as io_utils
+from qubosolver.config import PasqalCloud
 
 from pulser.backend import Results
 from pulser.backend.remote import RemoteResults
@@ -53,23 +59,6 @@ class BaseSolver(ABC):
         self.fixtures = Fixtures(self.instance, self.config)
         self.n_fixed_variables_preprocessing = 0
 
-    def __getstate__(self) -> dict:
-        """Control what gets pickled"""
-        other = self
-        other.device = None # type: ignore[assignment]
-        other.config.device = None # type: ignore[assignment]
-        other.config.backend = None # type: ignore[assignment]
-        other.backend = None # type: ignore[assignment]
-        other.fixtures.config.device = None # type: ignore[assignment]
-        other.fixtures.config.backend = None # type: ignore[assignment]
-        other.embedder = None # type: ignore[attr-defined]
-        other.drive_shaper = None # type: ignore[attr-defined]
-        return other.__dict__
-
-    def __setstate__(self, state: dict) -> None:
-        """Control what gets restored"""
-        self.__dict__.update(state)
-
     @abstractmethod
     def solve(self) -> QUBOSolution:
         """
@@ -105,19 +94,25 @@ class BaseSolver(ABC):
         """
         pass
 
-    def submit(self, drive: Drive, embedding: Register) -> RemoteResults | Sequence[Results]:
+    def submit(
+        self, drive: Drive, embedding: Register, wait: bool = True
+    ) -> RemoteResults | Sequence[Results]:
         program = QuantumProgram(
             register=embedding,
             drive=drive,
         )
         program.compile_to(self.device)
         if isinstance(self.backend, PulserRemoteBackend):
-            return self.backend.submit(program)
+            return self.backend.submit(program, wait)
         else:
+            if not wait:
+                raise RuntimeError("Async execution is not supported on Local Backends")
             return self.backend.run(program)
 
     @staticmethod
-    def parse_results(results: RemoteResults | Sequence[Results]) -> tuple[torch.Tensor, torch.Tensor]:
+    def parse_results(
+        results: RemoteResults | Sequence[Results],
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Parse the remote results from the backend.
 
@@ -148,23 +143,13 @@ class BaseSolver(ABC):
         Returns:
             tuple: A tuple of (bitstrings, counts) from the execution.
         """
-        program = QuantumProgram(
-            register=embedding,
-            drive=drive,
-        )
-        program.compile_to(self.device)
-        execution_results = self.backend.run(program)
+        execution_results = self.submit(drive, embedding, wait=True)
         bitstrings, counts = self.parse_results(execution_results)
 
         if self.config.drive_shaping.optimized_re_execute_opt_drive and (
             bitstrings.numel() == 0 or counts.numel() == 0
         ):
-            program = QuantumProgram(
-                register=embedding,
-                drive=drive,
-            )
-            program.compile_to(self.device)
-            execution_results = self.backend.run(program)
+            execution_results = self.submit(drive, embedding, wait=True)
             bitstrings, counts = self.parse_results(execution_results)
 
         return bitstrings, counts
@@ -277,3 +262,72 @@ class BaseSolver(ABC):
         if self.config.do_postprocessing:
             solution = self.fixtures.postprocess(solution)
         return solution
+
+    @classmethod
+    def save(cls, file_like: io_utils.FileLike[bytes], solver: Self) -> None:
+        with io_utils.open(file_like, "wb") as f:
+            if solver.config.do_preprocessing:
+                QUBOInstance.save(f, solver.fixtures.instance)
+            else:
+                QUBOInstance.save(f, solver.instance)
+            io_utils.save(f, "?", solver.config.do_preprocessing)
+            io_utils.save(f, "?", solver.config.do_postprocessing)
+
+            fixed_var_json = json.dumps(solver.fixtures.fixed_var_dict_list)
+            io_utils.save_string(f, fixed_var_json)
+
+    @classmethod
+    def load(cls, file_like: io_utils.FileLike[bytes]) -> Self:
+        with io_utils.open(file_like, "rb") as f:
+            instance = QUBOInstance.load(f)
+            do_preprocessing: bool = io_utils.load(f, "?")
+            do_postprocessing: bool = io_utils.load(f, "?")
+            fixed_var_json = io_utils.load_string(f)
+
+        config = SolverConfig(
+            do_preprocessing=do_preprocessing, do_postprocessing=do_postprocessing
+        )
+        solver = cls(instance, config)
+
+        def decode_int_keys(obj: dict) -> dict:
+            return {int(k): v for k, v in obj.items()}
+
+        solver.fixtures.fixed_var_dict_list = json.loads(
+            fixed_var_json, object_hook=decode_int_keys
+        )
+
+        # Solver is incompletely loaded, most functions are unvailable
+        for name, _ in inspect.getmembers(solver, predicate=inspect.ismethod):
+            if not name.startswith("__") and name not in (
+                "post_process_fixation",
+                "post_process",
+                "_disabled_method",
+            ):
+                setattr(solver, name, solver._disabled_method(name))
+
+        return solver
+
+    def _disabled_method(self, name: str) -> Callable[..., None]:
+        def disabled(*args: Any, **kwargs: Any) -> None:
+            raise AttributeError(
+                f"'{name}' is disabled: this method is not supported for QuboSolverQuantum loaded from a file."
+            )
+
+        return disabled
+
+    @staticmethod
+    def get_results(
+        batch_id: str, connection: PasqalCloud, check: bool = True
+    ) -> RemoteResults | None:
+        results = RemoteResults(batch_id, connection)
+        if not check:
+            return results
+
+        status = results.get_batch_status().name
+
+        if status == "DONE":
+            return results
+        if status in ["RUNNING", "PENDING"]:
+            return None
+
+        raise RuntimeError(f"Batch failed with status {status}")
