@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import torch
+import io
+import qubosolver.io.utils as io_utils
 from numpy.typing import ArrayLike
 
 from .data import QUBOSolution
@@ -196,3 +198,20 @@ class QUBOInstance:
             f"QUBOInstance of size = {self.size},"
             f"density = {round(self.density, 2) if self.density else None},"
         )
+
+    @staticmethod
+    def save(file_like: io_utils.FileLike[bytes], instance: QUBOInstance) -> None:
+        with io_utils.open(file_like, "wb") as f:
+            buffer = io.BytesIO()
+            torch.save(instance.coefficients, buffer)
+            io_utils.save_sized_buffer(f, buffer.getbuffer())
+
+    @staticmethod
+    def load(file_like: io_utils.FileLike[bytes]) -> QUBOInstance:
+        with io_utils.open(file_like, "rb") as f:
+            # torch.load might consume too much of the src buffer.
+            #  Use a dedicated limited buffer
+            buffer = io.BytesIO(io_utils.load_sized_buffer(f))
+            Q = torch.load(buffer, weights_only=True)
+
+        return QUBOInstance(Q)

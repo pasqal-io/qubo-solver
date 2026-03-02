@@ -29,7 +29,6 @@ print(f"Density: {density}, Classified as: {density_type}")
 - **Load a QUBODataset**: Load a `QUBODataset` from a file.
 
 ```python
-from qubosolver.utils import save_qubo_instance, load_qubo_instance
 from qubosolver import QUBOInstance
 
 # Define a QUBO coefficient matrix
@@ -37,8 +36,8 @@ coefficients = [[0, 1, -2], [1, 0, 3], [-2, 3, 0]]
 instance = QUBOInstance(coefficients=coefficients)
 
 # Save and load a QUBOInstance
-save_qubo_instance(instance, "qubo_instance.pt")
-loaded_instance = load_qubo_instance("qubo_instance.pt")
+QUBOInstance.save("qubo_instance.pt", instance)
+loaded_instance = QUBOInstance.load("qubo_instance.pt")
 print(loaded_instance)
 ```
 ```python

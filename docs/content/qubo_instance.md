@@ -37,10 +37,9 @@ cost = instance.evaluate_solution(solution)
 print(f"\nSolution Cost: {cost}")
 
 # Save load
-from qubosolver.saveload import save_qubo_instance, load_qubo_instance
 
-save_qubo_instance(instance, "/tmp/qubo_instance.pt")
-loaded_instance = load_qubo_instance("/tmp/qubo_instance.pt")
+QUBOInstance.save("/tmp/qubo_instance.pt", instance)
+loaded_instance = QUBOInstance.load("/tmp/qubo_instance.pt")
 print(f"Loaded QUBOInstance: {loaded_instance}")
 ```
 

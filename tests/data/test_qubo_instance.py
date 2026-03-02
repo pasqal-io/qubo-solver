@@ -8,7 +8,6 @@ import pytest
 import torch
 
 from qubosolver.qubo_instance import QUBOInstance
-from qubosolver.saveload import save_qubo_instance, load_qubo_instance
 
 
 def test_valid_qubo_passes_without_error() -> None:
@@ -51,9 +50,9 @@ def test_size_exceeds_limit_triggers_system_exit() -> None:
 def test_save_load(simple_qubo_instance: QUBOInstance) -> None:
 
     file_path = Path(__file__).parent / "qubo_instance_test.pt"
-    save_qubo_instance(simple_qubo_instance, file_path)
+    QUBOInstance.save(file_path, simple_qubo_instance)
     assert os.path.exists(file_path)
-    loaded_instance = load_qubo_instance(file_path)
+    loaded_instance = QUBOInstance.load(file_path)
     assert torch.allclose(loaded_instance.coefficients, simple_qubo_instance.coefficients)
     if os.path.exists(file_path):
         os.remove(file_path)
