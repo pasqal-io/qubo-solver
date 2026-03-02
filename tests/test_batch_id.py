@@ -4,8 +4,8 @@ import pytest
 import pytest_check as check
 import numpy as np
 import torch
-import typing
-import pickle
+from typing import Any, Dict, Sequence, Mapping
+import io
 
 from pulser.backend.remote import (
     BatchStatus,
@@ -13,7 +13,8 @@ from pulser.backend.remote import (
     RemoteConnection,
     RemoteResults,
 )
-from pulser.result import Result
+from pulser.result import Result, Results
+from pulser_pasqal import PasqalCloud
 
 from qubosolver.qubo_analyzer import QUBOAnalyzer
 from qubosolver.config import (
@@ -25,26 +26,27 @@ from qubosolver.config import (
 )
 from qubosolver.qubo_types import EmbedderType, DriveType
 from qubosolver.solver import QUBOInstance, QuboSolverQuantum, QUBOSolution
+import qubosolver.io.utils as io_utils
 
 
-class _MockConnection(RemoteConnection):
-    def __init__(self, local_result):
+class _MockConnection(PasqalCloud):
+    def __init__(self, local_result: Result) -> None:
         self.result = local_result
-        self.result.bitstring_counts = self.result.final_bitstrings
-        self.results = dict()
+        self.result.bitstring_counts = self.result.final_bitstrings  # type: ignore[attr-defined]
+        self.results: Dict[str, Result] = dict()
 
         self._status_calls = 0
         self._support_open_batch = True
         self._got_closed = ""
         self._progress_calls = 0
 
-    def submit(
+    def submit(  # type: ignore[override]
         self,
-        sequence,
+        sequence: Sequence[Any],
         wait: bool = False,
         open: bool = False,
         batch_id: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> RemoteResults:
         if not batch_id:
             batch_id = "abcd"
@@ -52,14 +54,10 @@ class _MockConnection(RemoteConnection):
 
         return RemoteResults(batch_id, self)
 
-    def _fetch_result(
-        self, batch_id: str, job_ids: list[str] | None = None
-    ) -> typing.Sequence[Result]:
+    def _fetch_result(self, batch_id: str, job_ids: list[str] | None = None) -> tuple[Results, ...]:
         return (self.results[batch_id],)
 
-    def _query_job_progress(
-        self, batch_id: str
-    ) -> typing.Mapping[str, tuple[JobStatus, Result | None]]:
+    def _query_job_progress(self, batch_id: str) -> Mapping[str, tuple[JobStatus, Result | None]]:
         if batch_id not in self.results.keys():
             return {batch_id: (JobStatus.ERROR, None)}
         return {batch_id: (JobStatus.DONE, self.results[batch_id])}
@@ -106,7 +104,9 @@ def test_quantum_batch_id(
         ]
     )
 
-    def pre(connection: RemoteConnection | None = None):
+    def pre(
+        connection: RemoteConnection | None = None,
+    ) -> tuple[RemoteResults | Sequence[Results], QuboSolverQuantum]:
         instance = QUBOInstance(Q)
 
         config = SolverConfig(use_quantum=True, do_preprocessing=preprocessing)
@@ -134,7 +134,7 @@ def test_quantum_batch_id(
 
         return results, solver
 
-    def post(results, solver):
+    def post(results: RemoteResults | Sequence[Results], solver: QuboSolverQuantum) -> QUBOSolution:
         bitstrings, counts = QuboSolverQuantum.parse_results(results)
 
         solution = QUBOSolution(
@@ -161,16 +161,26 @@ def test_quantum_batch_id(
 
     connection = _MockConnection(local_results[0])
     remote_results, remote_solver = pre(connection)
-    print(f"Batch ID: {remote_results.batch_id}")
+    assert isinstance(remote_results, RemoteResults)
 
-    solver_data = pickle.dumps(remote_solver)
+    mock_file = io.BytesIO()
+    QuboSolverQuantum.save(mock_file, remote_solver)
+    io_utils.save_string(mock_file, remote_results.batch_id)
 
-    remote_results_invalid = RemoteResults("invalid_batch_id", connection)
-    check.equal(remote_results_invalid.get_batch_status(), BatchStatus.ERROR)
+    with pytest.raises(RuntimeError):
+        _ = QuboSolverQuantum.get_results("invalid_batch_id", connection)
+    remote_results_invalid = QuboSolverQuantum.get_results(
+        "invalid_batch_id", connection, check=False
+    )
+    assert remote_results_invalid is not None
+    check.equal(remote_results_invalid.get_batch_status().name, "ERROR")
 
-    remote_results_2 = RemoteResults(remote_results.batch_id, connection)
-    check.equal(remote_results_2.get_batch_status(), BatchStatus.DONE)
-    remote_solver_2 = pickle.loads(solver_data)
+    mock_file.seek(0)
+    remote_solver_2 = QuboSolverQuantum.load(mock_file)
+    batch_id_2 = io_utils.load_string(mock_file)
+    remote_results_2 = QuboSolverQuantum.get_results(batch_id_2, connection)
+    assert remote_results_2 is not None
+    check.equal(remote_results_2.get_batch_status().name, "DONE")
     remote_solution = post(remote_results_2, remote_solver_2)
 
     torch.testing.assert_close(remote_solution.bitstrings, local_solution.bitstrings)
