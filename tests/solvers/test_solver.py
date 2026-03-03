@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+import io
 import pytest_check as check
 import torch
 from typing import TYPE_CHECKING
@@ -352,3 +353,55 @@ def test_get_results_with_check(make_mock_connection: Callable[[], PasqalCloud])
         with pytest.raises(RuntimeError) as e:
             BaseSolver.get_results(f"batch_{status}", connection, check = True)
         check.is_in(status, str(e.value))
+
+@pytest.mark.parametrize("preprocessing", [True, False])
+@pytest.mark.parametrize("postprocessing", [True, False])
+def test_save_load_qubo_solver_quantum(
+    preprocessing: bool,
+    postprocessing: bool,
+) -> None:
+
+    Q = torch.tensor(
+            [
+                [0.0, 6.0, 6.0],
+                [6.0, -10.0, 6.0],
+                [6.0, 6.0, -10.0],
+            ]
+        )
+    expected_preprocessed_Q = torch.tensor(
+            [
+                [-10.0, 6.0],
+                [ 6.0, -10.0],
+            ]
+        )
+    qubo = QUBOInstance(Q)
+    config = SolverConfig(do_preprocessing=preprocessing, do_postprocessing=postprocessing)
+    solver = QuboSolverQuantum(qubo, config)
+    solver._check_size_limit()
+    solver.preprocess()
+
+    if preprocessing:
+        torch.testing.assert_close(solver.instance.coefficients, expected_preprocessed_Q)
+    else:
+        torch.testing.assert_close(solver.instance.coefficients, Q)
+    torch.testing.assert_close(solver.fixtures.instance.coefficients, Q)
+
+    # Save the solver
+    file = io.BytesIO()
+    QuboSolverQuantum.save(file, solver)
+
+    # Load the solver
+    file.seek(0)
+    loaded_solver = QuboSolverQuantum.load(file)
+
+    # Verify the loaded solver has the same properties
+    # No need to have saved the preprocessed Q
+    torch.testing.assert_close(loaded_solver.instance.coefficients, Q)
+    torch.testing.assert_close(loaded_solver.fixtures.instance.coefficients, Q)
+    check.equal(loaded_solver.config.do_preprocessing, solver.config.do_preprocessing)
+    check.equal(loaded_solver.config.do_postprocessing, solver.config.do_postprocessing)
+    check.equal(loaded_solver.fixtures.fixed_var_dict_list, solver.fixtures.fixed_var_dict_list)
+
+    for method in ["solve", "embedding", "drive", "submit", "execute", "draw_sequence", "preprocess", "_trivial_solution"]:
+        with pytest.raises(AttributeError, match=f"'{method}' is disabled: this method is not supported for QuboSolverQuantum loaded from a file."):
+            getattr(loaded_solver, method)()
