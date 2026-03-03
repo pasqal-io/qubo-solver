@@ -125,8 +125,10 @@ class BaseSolver(ABC):
         else:
             # remote emulator result
             counter = results[-1].bitstring_counts
-        bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())])
-        counts = torch.tensor(list(counter.values()))
+        bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())], dtype=torch.int64)
+        if bitstrings.numel() == 0:
+            bitstrings = torch.empty((0,0), dtype=torch.int64)
+        counts = torch.tensor(list(map(int, list(counter.values()))), dtype=torch.int64)
         return bitstrings, counts
 
     def execute(self, drive: Drive, embedding: Register) -> tuple[torch.Tensor, torch.Tensor]:
