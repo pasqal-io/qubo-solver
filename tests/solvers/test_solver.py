@@ -1,15 +1,25 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 import pytest_check as check
 import torch
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 from qoolqit.devices import Device, DigitalAnalogDevice, AnalogDevice
-from qubosolver.config import EmbeddingConfig, DriveShapingConfig, SolverConfig, LocalEmulator
+from qoolqit.embedding.algorithms.interaction_embedding import interaction_embedding
+from qoolqit.register import Register
+from qubosolver.config import EmbeddingConfig, DriveShapingConfig, SolverConfig, LocalEmulator, RemoteEmulator
 from qubosolver.qubo_types import EmbedderType
-from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical
+from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical, QuboSolverQuantum, QUBOSolution
+from qubosolver.qubo_analyzer import QUBOAnalyzer
 from qubosolver.pipeline.basesolver import BaseSolver
+from qubosolver.pipeline.embedder import BaseEmbedder
+
+if TYPE_CHECKING:
+    from pulser_pasqal import PasqalCloud
+    from typing import Optional, Callable
 
 
 @pytest.fixture
@@ -202,3 +212,99 @@ def test_parse_results_string_counts_to_integer_tensor() -> None:
 
     torch.testing.assert_close(bitstrings, expected_bitstrings)
     torch.testing.assert_close(counts, expected_counts)
+
+
+def trivial_triangular_qubo(connection: Optional[PasqalCloud] = None) -> QuboSolverQuantum:
+    Q = 10.0*np.array(
+        [
+            [-10.0, 6.0, 6.0],
+            [6.0, -10.0, 6.0],
+            [6.0, 6.0, -10.0],
+        ]
+    )
+    qubo = QUBOInstance(Q)
+
+    config = SolverConfig(use_quantum=True, do_preprocessing=False)
+
+    class InteractionEmbedder(BaseEmbedder):
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def embed(self) -> Register:
+            method: str = "Nelder-Mead"
+            maxiter: int = 200000
+            tol: float = 1e-8
+            graph = interaction_embedding(Q, method=method, maxiter=maxiter, tol=tol)
+            return Register.from_graph(graph)
+
+    config.embedding = EmbeddingConfig(embedding_method=InteractionEmbedder)
+    runs = 100
+
+    if connection is None:
+        config.backend = LocalEmulator(runs=runs)
+    else:
+        config.backend = RemoteEmulator(connection=connection, runs=runs)
+
+    solver = QuboSolverQuantum(qubo, config)
+    solver._check_size_limit()
+
+    return solver
+
+@pytest.mark.usefixtures("restore_rng_state")
+@pytest.mark.parametrize("wait", [True, False])
+def test_submit_integration(make_mock_connection: Callable[[], PasqalCloud], wait: bool) -> None:
+    seed = 16844214
+    np.random.seed(seed)
+
+    solver = trivial_triangular_qubo()
+
+    embedding = solver.embedding()
+    # Qoolqit's embedding has an hardcoded seed. Set the seed ourselves.
+    np.random.seed(seed)
+    drive, _ = solver.drive(embedding)
+    if not wait:
+        with pytest.raises(RuntimeError):
+            solver.submit(drive, embedding, wait=wait)
+
+    results = solver.submit(drive, embedding, wait=True)
+
+    bitstrings_local, counts_local = QuboSolverQuantum.parse_results(results)
+
+    solution = QUBOSolution(
+        bitstrings=bitstrings_local.float(),
+        counts=counts_local,
+        costs=torch.Tensor(),
+        probabilities=None,
+    )
+
+    solution.costs = solution.compute_costs(solver.instance)
+    solution.probabilities = solution.compute_probabilities()
+
+    # Take the top 3 solutions with the highest probabilities
+    sorted_indices = torch.argsort(solution.probabilities, descending=True)
+    bitstrings = solution.bitstrings[sorted_indices].long()[0:3,:]
+    # Sort them by lexicographic order
+    np_sorted_indices = np.lexsort(bitstrings.numpy().T[::-1])
+    bitstrings = bitstrings[np_sorted_indices,:]
+
+    torch.testing.assert_close(bitstrings, torch.tensor([[0, 0, 1], [0, 1, 0], [1, 0, 0]]))
+
+    solution.bitstrings = solution.bitstrings.int()
+    analyzer = QUBOAnalyzer([solution])
+    print(f"\n{analyzer.df}")
+
+    # Remote solutions should be identical to local ones
+    np.random.seed(seed)
+
+    solver_remote = trivial_triangular_qubo(make_mock_connection(results[0]))
+
+    embedding = solver_remote.embedding()
+    # Qoolqit's embedding has an hardcoded seed. Set the seed ourselves.
+    np.random.seed(seed)
+    drive, _ = solver_remote.drive(embedding)
+    results_remote = solver_remote.submit(drive, embedding, wait=False)
+    check.equal(results_remote.get_batch_status().name, "DONE")
+
+    bitstrings_remote, counts_remote = QuboSolverQuantum.parse_results(results_remote)
+    torch.testing.assert_close(bitstrings_remote, bitstrings_local)
+    torch.testing.assert_close(counts_remote, counts_local)
