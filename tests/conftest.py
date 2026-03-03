@@ -14,6 +14,7 @@ from emu_mps import MPSBackend
 
 from qoolqit.devices import DigitalAnalogDevice, AnalogDevice, MockDevice, Device
 from pulser_pasqal import PasqalCloud
+from pulser.result import Result
 from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.qubo_analyzer import QUBOAnalyzer
 from qubosolver.config import (
@@ -23,6 +24,7 @@ from qubosolver.config import (
     LocalEmulator,
 )
 from qubosolver.qubo_types import EmbedderType, LayoutType, DriveType
+from mock.connection import MockConnection
 
 connection = PasqalCloud()
 connection.fetch_available_devices()
@@ -375,3 +377,13 @@ def restore_rng_state() -> Generator:
     torch.random.set_rng_state(torch_state)
     np.random.set_state(np_state)
     random.setstate(py_state)
+
+@pytest.fixture
+def mock_connection():
+    return MockConnection()
+
+@pytest.fixture
+def make_mock_connection():
+    def _make(result: Result):
+        return MockConnection(result)
+    return _make
