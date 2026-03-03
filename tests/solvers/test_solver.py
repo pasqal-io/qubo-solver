@@ -5,7 +5,7 @@ import pytest
 import pytest_check as check
 import torch
 from typing import TYPE_CHECKING
-from unittest.mock import Mock
+from unittest.mock import Mock, create_autospec
 
 from qoolqit.devices import Device, DigitalAnalogDevice, AnalogDevice
 from qoolqit.embedding.algorithms.interaction_embedding import interaction_embedding
@@ -16,6 +16,7 @@ from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical, Qub
 from qubosolver.qubo_analyzer import QUBOAnalyzer
 from qubosolver.pipeline.basesolver import BaseSolver
 from qubosolver.pipeline.embedder import BaseEmbedder
+from pulser.result import Result
 
 if TYPE_CHECKING:
     from pulser_pasqal import PasqalCloud
@@ -308,3 +309,46 @@ def test_submit_integration(make_mock_connection: Callable[[], PasqalCloud], wai
     bitstrings_remote, counts_remote = QuboSolverQuantum.parse_results(results_remote)
     torch.testing.assert_close(bitstrings_remote, bitstrings_local)
     torch.testing.assert_close(counts_remote, counts_local)
+
+def test_get_results_without_check(make_mock_connection: Callable[[], PasqalCloud]) -> None:
+    mock_result = create_autospec(Result, instance=True)
+    connection = make_mock_connection(mock_result)
+    connection.submit([], batch_id="my_batch_id")
+
+    results = BaseSolver.get_results("my_batch_id", connection, check = False)
+    check.equal(results.get_batch_status().name, "DONE")
+    check.equal(results[-1], mock_result)
+
+    results = BaseSolver.get_results("invalid_batch_id", connection, check = False)
+    check.equal(results.get_batch_status().name, "ERROR")
+    with pytest.raises(KeyError):
+        results[-1]
+
+    for status in ["PENDING", "RUNNING", "CANCELED", "TIMED_OUT", "ERROR", "PAUSED"]:
+        results = BaseSolver.get_results(f"batch_{status}", connection, check = False)
+        check.equal(results.get_batch_status().name, status)
+        with pytest.raises(KeyError):
+            results[-1]
+
+
+def test_get_results_with_check(make_mock_connection: Callable[[], PasqalCloud]) -> None:
+    mock_result = create_autospec(Result, instance=True)
+    connection = make_mock_connection(mock_result)
+    connection.submit([], batch_id="my_batch_id")
+
+    results = BaseSolver.get_results("my_batch_id", connection, check = True)
+    check.equal(results.get_batch_status().name, "DONE")
+    check.equal(results[-1], mock_result)
+
+    with pytest.raises(RuntimeError) as e:
+        BaseSolver.get_results("invalid_batch_id", connection, check = True)
+    check.is_in("ERROR", str(e.value))
+
+    for status in ["PENDING", "RUNNING"]:
+        results = BaseSolver.get_results(f"batch_{status}", connection, check = True)
+        check.is_(results, None)
+
+    for status in ["CANCELED", "TIMED_OUT", "ERROR", "PAUSED"]:
+        with pytest.raises(RuntimeError) as e:
+            BaseSolver.get_results(f"batch_{status}", connection, check = True)
+        check.is_in(status, str(e.value))

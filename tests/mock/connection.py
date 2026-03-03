@@ -49,6 +49,10 @@ class MockConnection(PasqalCloud):
         return {batch_id: (JobStatus.DONE, self.results[batch_id])}
 
     def _get_batch_status(self, batch_id: str) -> BatchStatus:
+        # Allow special batch-ids for testing
+        for status in BatchStatus:
+            if status.name in batch_id:
+                return status
         if batch_id not in self.results.keys():
             return BatchStatus.ERROR
         return BatchStatus.DONE
