@@ -15,6 +15,8 @@ FileLike = Union[str, os.PathLike[str], IO[_T]]
 
 
 def read_exact(src: IO[bytes], length: int) -> bytes:
+    if length < 0:
+        raise ValueError("Length must be non-negative")
     data = src.read(length)
     actual_length = len(data)
     if actual_length != length:
@@ -53,9 +55,11 @@ def load_string(src: IO[bytes], encoding: str = "utf-8") -> str:
 @overload
 def open(
     file_like: FileLike[bytes], mode: Literal["rb", "wb"]
-) -> AbstractContextManager[IO[bytes]]: ...
+) -> AbstractContextManager[IO[bytes]]:
+    ... # pragma: no cover
 @overload
-def open(file_like: FileLike[str], mode: Literal["r", "w"]) -> AbstractContextManager[IO[str]]: ...
+def open(file_like: FileLike[str], mode: Literal["r", "w"]) -> AbstractContextManager[IO[str]]:
+    ... # pragma: no cover
 
 def open(
     file_like: Union[FileLike[bytes], FileLike[str]],
