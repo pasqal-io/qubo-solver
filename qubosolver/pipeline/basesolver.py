@@ -102,6 +102,30 @@ class BaseSolver(ABC):
     def submit(
         self, drive: Drive, embedding: Register, wait: bool = True
     ) -> RemoteResults | Sequence[Results]:
+        """
+        Submit a quantum program for execution on the configured backend.
+
+        Creates a QuantumProgram from the provided drive and embedding, compiles it
+        to the target device, and submits it for execution. Handles both remote and
+        local backends with appropriate execution methods.
+
+        Args:
+            drive (Drive): The drive schedule containing the quantum operations to execute.
+            embedding (Register): The register configuration defining the qubit layout
+                and connectivity for the quantum program.
+            wait (bool, optional): Whether to wait for execution completion. If True,
+                blocks until results are available. If False, returns immediately for
+                remote backends (async execution). Defaults to True.
+
+        Returns:
+            RemoteResults | Sequence[Results]: Execution results from the backend.
+                Returns RemoteResults for remote backends or a sequence of Results
+                for local backends.
+
+        Raises:
+            RuntimeError: If wait=False is specified for local backends, as async
+                execution is not supported on local backends.
+        """
         program = QuantumProgram(
             register=embedding,
             drive=drive,
@@ -119,10 +143,24 @@ class BaseSolver(ABC):
         results: RemoteResults | Sequence[Results],
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Parse the remote results from the backend.
+        Parse execution results from quantum backends into standardized tensor format.
+
+        Extracts bitstring measurements and their corresponding counts from either
+        remote or local backend execution results. Handles different result formats
+        and converts them into PyTorch tensors for further processing.
+
+        Args:
+            results (RemoteResults | Sequence[Results]): Execution results from the
+                quantum backend. Can be either RemoteResults from a remote backend
+                or a sequence of Results from a local emulator.
 
         Returns:
-            tuple: A tuple of (bitstrings, counts) from the execution.
+            tuple[torch.Tensor, torch.Tensor]: A tuple containing:
+                - bitstrings (torch.Tensor): Tensor of shape (n_samples, n_qubits)
+                  containing the measured bitstrings as integers (0 or 1). Returns
+                  empty tensor (0, 0) if no measurements were obtained.
+                - counts (torch.Tensor): Tensor of shape (n_samples,) containing
+                  the number of times each corresponding bitstring was measured.
         """
         if isinstance(results, tuple):
             # local emulator result
@@ -274,19 +312,63 @@ class BaseSolver(ABC):
 
     @classmethod
     def save(cls, file_like: io_utils.FileLike[bytes], solver: Self) -> None:
+        """
+        Save a solver instance to a file-like object.
+
+        Note:
+            This is currently a partial serialization. Only the QUBO instance,
+            preprocessing/postprocessing flags, and fixed variable information
+            are saved. The complete solver configuration and state are not
+            fully serialized.
+
+        Args:
+            file_like (io_utils.FileLike[bytes]): A file-like object opened in binary
+                write mode where the solver data will be saved. This can be a file path
+                string, Path object, or any file-like object that supports binary writing.
+            solver (Self): The solver instance to be saved. Must be an instance of the
+                same class that this classmethod is called on.
+
+        Returns:
+            None: This method does not return a value. The solver data is written
+                directly to the provided file-like object.
+        """
         with io_utils.open(file_like, "wb") as f:
             if solver.config.do_preprocessing:
                 QUBOInstance.save(f, solver.fixtures.instance)
             else:
                 QUBOInstance.save(f, solver.instance)
-            io_utils.save(f, "?", solver.config.do_preprocessing)
-            io_utils.save(f, "?", solver.config.do_postprocessing)
+            io_utils.save(f, "bool", solver.config.do_preprocessing)
+            io_utils.save(f, "bool", solver.config.do_postprocessing)
 
             fixed_var_json = json.dumps(solver.fixtures.fixed_var_dict_list)
             io_utils.save_string(f, fixed_var_json)
 
     @classmethod
     def load(cls, file_like: io_utils.FileLike[bytes]) -> Self:
+        """
+        Load a solver instance from a file-like object.
+
+        This method deserializes a solver that was previously saved using the save()
+        method. The loaded solver is in a limited state where most methods are disabled
+        except for post-processing operations. This is because the complete solver
+        configuration and state cannot be fully restored from the saved data.
+
+        Args:
+            file_like (io_utils.FileLike[bytes]): A file-like object opened in binary
+                read mode containing the serialized solver data. This can be a file path
+                string, Path object, or any file-like object that supports binary reading.
+
+        Returns:
+            Self: A new solver instance of the same class with restored QUBO instance,
+                preprocessing/postprocessing configuration, and fixed variable information.
+                Note that most solver methods will be disabled and raise AttributeError
+                when called, except for post_process_fixation and post_process methods.
+
+        Note:
+            The returned solver is in a limited state suitable only for post-processing
+            operations. Most functionality including solving, embedding, and execution
+            methods are disabled to prevent incorrect usage of an incompletely loaded solver.
+        """
         with io_utils.open(file_like, "rb") as f:
             instance = QUBOInstance.load(f)
             do_preprocessing: bool = io_utils.load(f, "?")
@@ -328,6 +410,22 @@ class BaseSolver(ABC):
     def get_results(
         batch_id: str, connection: PasqalCloud, check: bool = True
     ) -> RemoteResults | None:
+        """
+        Retrieve execution results for a submitted batch job from Pasqal Cloud.
+
+        Args:
+            batch_id (str): The unique identifier of the batch job.
+            connection (PasqalCloud): The connection object to the Pasqal Cloud service.
+            check (bool, optional): Whether to check the batch status. If False,
+                it is up to the user to check the status. Defaults to True.
+
+        Returns:
+            RemoteResults | None: The execution results if the batch is complete,
+                None if still running/pending, or RemoteResults object if check=False.
+
+        Raises:
+            RuntimeError: If the batch has failed and check=True.
+        """
         results = RemoteResults(batch_id, connection)
         if not check:
             return results
