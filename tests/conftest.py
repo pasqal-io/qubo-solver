@@ -35,6 +35,38 @@ connection = PasqalCloud()
 connection.fetch_available_devices()
 
 
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """
+        Reorder collected pytest items so higher-priority tests run first.
+
+        This hook is called by pytest after test collection and before execution.
+        It sorts the collected `items` list in-place by the numeric value of the
+        closest `priority` marker attached to each test.
+
+        Marker convention:
+                @pytest.mark.priority(<int>)
+
+        Behavior:
+        - Tests with a larger priority value are executed earlier (descending order).
+        - Tests without a `priority` marker are treated as priority 0.
+
+    Example (prioritizing long tests using estimated duration in seconds):
+                Use the test's expected runtime (in seconds) as the `priority` value so
+                long-running tests start earlier and overall wall-clock time is reduced.
+
+    Args:
+        items (list[pytest.Item]):
+            The list of collected test items to be executed. This list is
+            mutated in-place.
+    """
+
+    def priority(item: pytest.Item) -> int:
+        marker = item.get_closest_marker("priority")
+        return int(marker.args[0]) if marker else 0
+
+    items.sort(key=priority, reverse=True)
+
+
 @pytest.fixture
 def basic_solution() -> QUBOSolution:
     return QUBOSolution(
