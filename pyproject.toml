@@ -157,7 +157,7 @@ parallel = true
 #]
 
 [tool.coverage.report]
-exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
+exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:", "pass"]
 
 [tool.ruff]
 line-length = 100

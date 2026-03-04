@@ -56,15 +56,20 @@ def load_string(src: IO[bytes], encoding: str = "utf-8") -> str:
 
 
 @overload
-def open(file_like: FileLike[bytes]) -> AbstractContextManager[IO[bytes]]: ...  # pragma: no cover
+def open(file_like: FileLike[bytes]) -> AbstractContextManager[IO[bytes]]:
+    ...  # pragma: no cover # fmt: skip
+
+
 @overload
 def open(
     file_like: FileLike[bytes], mode: Literal["rb", "wb"]
-) -> AbstractContextManager[IO[bytes]]: ...  # pragma: no cover
+) -> AbstractContextManager[IO[bytes]]:
+    ...  # pragma: no cover # fmt: skip
+
+
 @overload
-def open(
-    file_like: FileLike[str], mode: Literal["r", "w"]
-) -> AbstractContextManager[IO[str]]: ...  # pragma: no cover
+def open(file_like: FileLike[str], mode: Literal["r", "w"]) -> AbstractContextManager[IO[str]]:
+    ...  # pragma: no cover # fmt: skip
 
 
 def open(
