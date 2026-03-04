@@ -56,6 +56,7 @@ def test_generate_returns_drive_and_solution_optimized(
     assert solution.counts is None
 
 
+@pytest.mark.priority(35)
 def test_generate_optimized_drive_shaper(
     dummy_register: Register,
     simple_qubo_instance: QUBOInstance,
@@ -120,6 +121,7 @@ def test_generate_optimized_drive_shaper(
     assert opt_res[-1]["cost_eval"] == float(1e4)
 
 
+@pytest.mark.priority(25)
 @pytest.mark.parametrize("drive_method", list(DriveType))
 @pytest.mark.parametrize("dmm", [True, False])
 def test_normalized_weights_in_drive(

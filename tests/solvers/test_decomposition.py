@@ -89,6 +89,7 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     assert len(current_vertices_dict) < size
 
 
+@pytest.mark.priority(40)
 @pytest.mark.parametrize("use_quantum", [True, False])
 def test_decomp_solver(decomposable_qubo: QUBOInstance, use_quantum: bool) -> None:
     config = SolverConfig(use_quantum=use_quantum, decompose=DecompositionConfig())

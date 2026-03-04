@@ -14,6 +14,7 @@ from qubosolver.pipeline.embedder import GreedyEmbedder, get_embedder
 from qubosolver.solver import QuboSolver
 
 
+@pytest.mark.priority(40)
 @pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
 def test_embeddings_different_devices(
     qubo_for_testing_many_devices: QUBOInstance, local_device: Device, embedding_method: str

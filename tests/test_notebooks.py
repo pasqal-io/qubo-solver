@@ -54,7 +54,7 @@ for file in notebooks_files:
     notebooks.append(pytest.param(file))
 
 
-@pytest.mark.priority(20)
+@pytest.mark.priority(160)
 @pytest.mark.parametrize("notebook", notebooks, ids=notebooks_names)
 def test_notebooks(notebook: Path) -> None:
     """Execute docs notebooks as a test, passes if it returns 0."""

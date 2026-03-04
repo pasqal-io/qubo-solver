@@ -75,6 +75,7 @@ def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
     assert solutions.counts.sum() == 100  # type: ignore[union-attr]
 
 
+@pytest.mark.priority(40)
 @pytest.mark.flaky(reruns=5)
 def test_run_local_backends(
     simple_qubo_instance: QUBOInstance, local_backend: LocalEmulator
@@ -92,7 +93,7 @@ def test_run_local_backends(
     assert solutions.costs.min().item() <= -3.0
 
 
-@pytest.mark.priority(30)
+@pytest.mark.priority(150)
 def test_solver_different_devices(
     request: pytest.FixtureRequest,
     qubo_for_testing_many_devices: QUBOInstance,
