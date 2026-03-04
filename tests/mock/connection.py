@@ -1,25 +1,26 @@
 from __future__ import annotations
 
 
-
 from pulser_pasqal import PasqalCloud
-from pulser import Sequence
-from pulser.result import Result
 from pulser.backend.remote import (
     BatchStatus,
     JobStatus,
     RemoteResults,
 )
-from pulser.result import Result
-from pulser.backend.results import ResultsSequence
-from typing import Any, Dict, Sequence, Mapping
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pulser import Sequence as PulserSequence
+    from pulser.backend.results import Results
+    from typing import Any, Dict, Mapping
 
 
 class MockConnection(PasqalCloud):
-    def __init__(self, result: Result) -> None:
-        self.result = result
+    def __init__(self, result: Results) -> None:
+        self.result: Results = result
         self.result.bitstring_counts = self.result.final_bitstrings  # type: ignore[attr-defined]
-        self.results: Dict[str, Result] = dict()
+        self.results: Dict[str, Results] = dict()
 
         self._status_calls = 0
         self._support_open_batch = True
@@ -28,7 +29,7 @@ class MockConnection(PasqalCloud):
 
     def submit(  # type: ignore[override]
         self,
-        sequence: Sequence[Any],
+        sequence: PulserSequence,
         wait: bool = False,
         open: bool = False,
         batch_id: str | None = None,
@@ -40,10 +41,10 @@ class MockConnection(PasqalCloud):
 
         return RemoteResults(batch_id, self)
 
-    def _fetch_result(self, batch_id: str, job_ids: list[str] | None = None) -> tuple[ResultsSequence, ...]:
+    def _fetch_result(self, batch_id: str, job_ids: list[str] | None = None) -> tuple[Results, ...]:
         return (self.results[batch_id],)
 
-    def _query_job_progress(self, batch_id: str) -> Mapping[str, tuple[JobStatus, Result | None]]:
+    def _query_job_progress(self, batch_id: str) -> Mapping[str, tuple[JobStatus, Results | None]]:
         if batch_id not in self.results.keys():
             return {batch_id: (JobStatus.ERROR, None)}
         return {batch_id: (JobStatus.DONE, self.results[batch_id])}

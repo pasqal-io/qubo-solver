@@ -4,14 +4,17 @@ import builtins
 import io
 import os
 import struct
+from contextlib import nullcontext
 
-from typing import Any, Union, IO, Literal, overload, TypeVar, Sized
-from typing_extensions import Buffer
+from typing import TYPE_CHECKING, overload, Sized
 
-from contextlib import nullcontext, AbstractContextManager
+if TYPE_CHECKING:
+    from typing import Any, Union, IO, Literal, TypeVar
+    from typing_extensions import Buffer
+    from contextlib import AbstractContextManager
 
-_T = TypeVar("_T", bytes, str)
-FileLike = Union[str, os.PathLike[str], IO[_T]]
+    _T = TypeVar("_T", bytes, str)
+    FileLike = Union[str, os.PathLike[str], IO[_T]]
 
 
 def read_exact(src: IO[bytes], length: int) -> bytes:
@@ -53,13 +56,16 @@ def load_string(src: IO[bytes], encoding: str = "utf-8") -> str:
 
 
 @overload
+def open(file_like: FileLike[bytes]) -> AbstractContextManager[IO[bytes]]: ...  # pragma: no cover
+@overload
 def open(
     file_like: FileLike[bytes], mode: Literal["rb", "wb"]
-) -> AbstractContextManager[IO[bytes]]:
-    ... # pragma: no cover
+) -> AbstractContextManager[IO[bytes]]: ...  # pragma: no cover
 @overload
-def open(file_like: FileLike[str], mode: Literal["r", "w"]) -> AbstractContextManager[IO[str]]:
-    ... # pragma: no cover
+def open(
+    file_like: FileLike[str], mode: Literal["r", "w"]
+) -> AbstractContextManager[IO[str]]: ...  # pragma: no cover
+
 
 def open(
     file_like: Union[FileLike[bytes], FileLike[str]],

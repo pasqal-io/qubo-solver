@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence, Callable, Any
-from typing_extensions import Self
-
-import torch
-import json
 import inspect
+import json
+import torch
 
-from qoolqit import Register, Drive, QuantumProgram
+from qoolqit import QuantumProgram
+from qoolqit.execution.backends import PulserRemoteBackend
 
 from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig
@@ -16,11 +14,18 @@ from qubosolver.data import QUBOSolution
 from qubosolver.qubo_types import SolutionStatusType
 from qubosolver.pipeline.fixtures import Fixtures
 import qubosolver.io.utils as io_utils
-from qubosolver.config import PasqalCloud
 
-from pulser.backend import Results
 from pulser.backend.remote import RemoteResults
-from qoolqit.execution.backends import PulserRemoteBackend
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Optional, Sequence, Callable, Any
+    from typing_extensions import Self
+
+    from qoolqit import Register, Drive
+    from qubosolver.config import PasqalCloud
+    from pulser.backend import Results
 
 
 class BaseSolver(ABC):
@@ -125,9 +130,11 @@ class BaseSolver(ABC):
         else:
             # remote emulator result
             counter = results[-1].bitstring_counts
-        bitstrings = torch.tensor([list(map(int, list(b))) for b in list(counter.keys())], dtype=torch.int64)
+        bitstrings = torch.tensor(
+            [list(map(int, list(b))) for b in list(counter.keys())], dtype=torch.int64
+        )
         if bitstrings.numel() == 0:
-            bitstrings = torch.empty((0,0), dtype=torch.int64)
+            bitstrings = torch.empty((0, 0), dtype=torch.int64)
         counts = torch.tensor(list(map(int, list(counter.values()))), dtype=torch.int64)
         return bitstrings, counts
 

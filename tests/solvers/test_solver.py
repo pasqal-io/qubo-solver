@@ -5,23 +5,38 @@ import pytest
 import io
 import pytest_check as check
 import torch
-from typing import TYPE_CHECKING
 from unittest.mock import Mock, create_autospec
 
 from qoolqit.devices import Device, DigitalAnalogDevice, AnalogDevice
 from qoolqit.embedding.algorithms.interaction_embedding import interaction_embedding
 from qoolqit.register import Register
-from qubosolver.config import EmbeddingConfig, DriveShapingConfig, SolverConfig, LocalEmulator, RemoteEmulator
+from qubosolver.config import (
+    EmbeddingConfig,
+    DriveShapingConfig,
+    SolverConfig,
+    LocalEmulator,
+    RemoteEmulator,
+)
 from qubosolver.qubo_types import EmbedderType
-from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical, QuboSolverQuantum, QUBOSolution
+from qubosolver.solver import (
+    QUBOInstance,
+    QuboSolver,
+    QuboSolverClassical,
+    QuboSolverQuantum,
+    QUBOSolution,
+)
 from qubosolver.qubo_analyzer import QUBOAnalyzer
 from qubosolver.pipeline.basesolver import BaseSolver
 from qubosolver.pipeline.embedder import BaseEmbedder
-from pulser.result import Result
+from pulser.backend.remote import RemoteResults
+from pulser.backend.results import Results
+
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pulser_pasqal import PasqalCloud
-    from typing import Optional, Callable
+    from typing import Optional, Callable, Any
 
 
 @pytest.fixture
@@ -132,7 +147,7 @@ def test_parse_results_local_emulator() -> None:
     # Mock local emulator results (tuple format)
     mock_result = Mock()
     mock_result.final_bitstrings = {"001": 10, "110": 5, "101": 3}
-    results = (None, mock_result)
+    results = (Mock(), mock_result)
 
     bitstrings, counts = BaseSolver.parse_results(results)
 
@@ -161,7 +176,7 @@ def test_parse_results_empty_local_final_bitstrings() -> None:
     # Mock local emulator results with empty final_bitstrings
     mock_result = Mock()
     mock_result.final_bitstrings = {}
-    results = (None, mock_result)
+    results = (Mock(), mock_result)
 
     bitstrings, counts = BaseSolver.parse_results(results)
 
@@ -217,7 +232,7 @@ def test_parse_results_string_counts_to_integer_tensor() -> None:
 
 
 def trivial_triangular_qubo(connection: Optional[PasqalCloud] = None) -> QuboSolverQuantum:
-    Q = 10.0*np.array(
+    Q = 10.0 * np.array(
         [
             [-10.0, 6.0, 6.0],
             [6.0, -10.0, 6.0],
@@ -229,7 +244,7 @@ def trivial_triangular_qubo(connection: Optional[PasqalCloud] = None) -> QuboSol
     config = SolverConfig(use_quantum=True, do_preprocessing=False)
 
     class InteractionEmbedder(BaseEmbedder):
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
             pass
 
         def embed(self) -> Register:
@@ -237,7 +252,8 @@ def trivial_triangular_qubo(connection: Optional[PasqalCloud] = None) -> QuboSol
             maxiter: int = 200000
             tol: float = 1e-8
             graph = interaction_embedding(Q, method=method, maxiter=maxiter, tol=tol)
-            return Register.from_graph(graph)
+            # Qoolqit's typing is wrong. See https://github.com/pasqal-io/qoolqit/issues/191
+            return Register.from_graph(graph)  # type: ignore[arg-type]
 
     config.embedding = EmbeddingConfig(embedding_method=InteractionEmbedder)
     runs = 100
@@ -252,9 +268,12 @@ def trivial_triangular_qubo(connection: Optional[PasqalCloud] = None) -> QuboSol
 
     return solver
 
+
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("wait", [True, False])
-def test_submit_integration(make_mock_connection: Callable[[], PasqalCloud], wait: bool) -> None:
+def test_submit_integration(
+    make_mock_connection: Callable[[Results], PasqalCloud], wait: bool
+) -> None:
     seed = 16844214
     np.random.seed(seed)
 
@@ -284,10 +303,10 @@ def test_submit_integration(make_mock_connection: Callable[[], PasqalCloud], wai
 
     # Take the top 3 solutions with the highest probabilities
     sorted_indices = torch.argsort(solution.probabilities, descending=True)
-    bitstrings = solution.bitstrings[sorted_indices].long()[0:3,:]
+    bitstrings = solution.bitstrings[sorted_indices].long()[0:3, :]
     # Sort them by lexicographic order
     np_sorted_indices = np.lexsort(bitstrings.numpy().T[::-1])
-    bitstrings = bitstrings[np_sorted_indices,:]
+    bitstrings = bitstrings[np_sorted_indices, :]
 
     torch.testing.assert_close(bitstrings, torch.tensor([[0, 0, 1], [0, 1, 0], [1, 0, 0]]))
 
@@ -298,6 +317,7 @@ def test_submit_integration(make_mock_connection: Callable[[], PasqalCloud], wai
     # Remote solutions should be identical to local ones
     np.random.seed(seed)
 
+    assert isinstance(results[0], Results)
     solver_remote = trivial_triangular_qubo(make_mock_connection(results[0]))
 
     embedding = solver_remote.embedding()
@@ -305,54 +325,61 @@ def test_submit_integration(make_mock_connection: Callable[[], PasqalCloud], wai
     np.random.seed(seed)
     drive, _ = solver_remote.drive(embedding)
     results_remote = solver_remote.submit(drive, embedding, wait=False)
+    assert isinstance(results_remote, RemoteResults)
     check.equal(results_remote.get_batch_status().name, "DONE")
 
     bitstrings_remote, counts_remote = QuboSolverQuantum.parse_results(results_remote)
     torch.testing.assert_close(bitstrings_remote, bitstrings_local)
     torch.testing.assert_close(counts_remote, counts_local)
 
-def test_get_results_without_check(make_mock_connection: Callable[[], PasqalCloud]) -> None:
-    mock_result = create_autospec(Result, instance=True)
-    connection = make_mock_connection(mock_result)
-    connection.submit([], batch_id="my_batch_id")
 
-    results = BaseSolver.get_results("my_batch_id", connection, check = False)
+def test_get_results_without_check(make_mock_connection: Callable[[Results], PasqalCloud]) -> None:
+    mock_result = create_autospec(Results, instance=True)
+    connection = make_mock_connection(mock_result)
+    connection.submit(sequence=Mock(), batch_id="my_batch_id")
+
+    results = BaseSolver.get_results("my_batch_id", connection, check=False)
+    assert isinstance(results, RemoteResults)
     check.equal(results.get_batch_status().name, "DONE")
     check.equal(results[-1], mock_result)
 
-    results = BaseSolver.get_results("invalid_batch_id", connection, check = False)
+    results = BaseSolver.get_results("invalid_batch_id", connection, check=False)
+    assert isinstance(results, RemoteResults)
     check.equal(results.get_batch_status().name, "ERROR")
     with pytest.raises(KeyError):
         results[-1]
 
     for status in ["PENDING", "RUNNING", "CANCELED", "TIMED_OUT", "ERROR", "PAUSED"]:
-        results = BaseSolver.get_results(f"batch_{status}", connection, check = False)
+        results = BaseSolver.get_results(f"batch_{status}", connection, check=False)
+        assert isinstance(results, RemoteResults)
         check.equal(results.get_batch_status().name, status)
         with pytest.raises(KeyError):
             results[-1]
 
 
-def test_get_results_with_check(make_mock_connection: Callable[[], PasqalCloud]) -> None:
-    mock_result = create_autospec(Result, instance=True)
+def test_get_results_with_check(make_mock_connection: Callable[[Results], PasqalCloud]) -> None:
+    mock_result = create_autospec(Results, instance=True)
     connection = make_mock_connection(mock_result)
-    connection.submit([], batch_id="my_batch_id")
+    connection.submit(sequence=Mock(), batch_id="my_batch_id")
 
-    results = BaseSolver.get_results("my_batch_id", connection, check = True)
+    results = BaseSolver.get_results("my_batch_id", connection, check=True)
+    assert isinstance(results, RemoteResults)
     check.equal(results.get_batch_status().name, "DONE")
     check.equal(results[-1], mock_result)
 
     with pytest.raises(RuntimeError) as e:
-        BaseSolver.get_results("invalid_batch_id", connection, check = True)
+        BaseSolver.get_results("invalid_batch_id", connection, check=True)
     check.is_in("ERROR", str(e.value))
 
     for status in ["PENDING", "RUNNING"]:
-        results = BaseSolver.get_results(f"batch_{status}", connection, check = True)
+        results = BaseSolver.get_results(f"batch_{status}", connection, check=True)
         check.is_(results, None)
 
     for status in ["CANCELED", "TIMED_OUT", "ERROR", "PAUSED"]:
         with pytest.raises(RuntimeError) as e:
-            BaseSolver.get_results(f"batch_{status}", connection, check = True)
+            BaseSolver.get_results(f"batch_{status}", connection, check=True)
         check.is_in(status, str(e.value))
+
 
 @pytest.mark.parametrize("preprocessing", [True, False])
 @pytest.mark.parametrize("postprocessing", [True, False])
@@ -362,18 +389,18 @@ def test_save_load_qubo_solver_quantum(
 ) -> None:
 
     Q = torch.tensor(
-            [
-                [0.0, 6.0, 6.0],
-                [6.0, -10.0, 6.0],
-                [6.0, 6.0, -10.0],
-            ]
-        )
+        [
+            [0.0, 6.0, 6.0],
+            [6.0, -10.0, 6.0],
+            [6.0, 6.0, -10.0],
+        ]
+    )
     expected_preprocessed_Q = torch.tensor(
-            [
-                [-10.0, 6.0],
-                [ 6.0, -10.0],
-            ]
-        )
+        [
+            [-10.0, 6.0],
+            [6.0, -10.0],
+        ]
+    )
     qubo = QUBOInstance(Q)
     config = SolverConfig(do_preprocessing=preprocessing, do_postprocessing=postprocessing)
     solver = QuboSolverQuantum(qubo, config)
@@ -402,6 +429,18 @@ def test_save_load_qubo_solver_quantum(
     check.equal(loaded_solver.config.do_postprocessing, solver.config.do_postprocessing)
     check.equal(loaded_solver.fixtures.fixed_var_dict_list, solver.fixtures.fixed_var_dict_list)
 
-    for method in ["solve", "embedding", "drive", "submit", "execute", "draw_sequence", "preprocess", "_trivial_solution"]:
-        with pytest.raises(AttributeError, match=f"'{method}' is disabled: this method is not supported for QuboSolverQuantum loaded from a file."):
+    for method in [
+        "solve",
+        "embedding",
+        "drive",
+        "submit",
+        "execute",
+        "draw_sequence",
+        "preprocess",
+        "_trivial_solution",
+    ]:
+        with pytest.raises(
+            AttributeError,
+            match=f"'{method}' is disabled: this method is not supported for QuboSolverQuantum loaded from a file.",
+        ):
             getattr(loaded_solver, method)()

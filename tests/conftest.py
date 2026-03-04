@@ -6,7 +6,7 @@ import pytest
 import random
 import torch
 import numpy as np
-from typing import Generator
+from typing import Generator, Callable
 
 from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
@@ -14,7 +14,6 @@ from emu_mps import MPSBackend
 
 from qoolqit.devices import DigitalAnalogDevice, AnalogDevice, MockDevice, Device
 from pulser_pasqal import PasqalCloud
-from pulser.result import Result
 from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.qubo_analyzer import QUBOAnalyzer
 from qubosolver.config import (
@@ -25,6 +24,12 @@ from qubosolver.config import (
 )
 from qubosolver.qubo_types import EmbedderType, LayoutType, DriveType
 from mock.connection import MockConnection
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Generator, Callable
+    from pulser.backend.results import Results
 
 connection = PasqalCloud()
 connection.fetch_available_devices()
@@ -378,12 +383,10 @@ def restore_rng_state() -> Generator:
     np.random.set_state(np_state)
     random.setstate(py_state)
 
-@pytest.fixture
-def mock_connection():
-    return MockConnection()
 
 @pytest.fixture
-def make_mock_connection():
-    def _make(result: Result):
-        return MockConnection(result)
+def make_mock_connection() -> Callable[[Results], MockConnection]:
+    def _make(results: Results) -> MockConnection:
+        return MockConnection(results)
+
     return _make

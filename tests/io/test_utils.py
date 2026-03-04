@@ -1,11 +1,7 @@
 from __future__ import annotations
 
 import io
-import os
-import struct
-import tempfile
 from pathlib import Path
-from typing import IO
 
 import pytest
 import pytest_check as check
@@ -18,10 +14,9 @@ from qubosolver.io.utils import (
     load_sized_buffer,
     save_string,
     load_string,
-    open,
 )
-
 from qubosolver.io.utils import open as io_utils_open
+
 
 class TestReadExact:
     def test_read_exact_success(self) -> None:
@@ -189,7 +184,6 @@ class TestOpen:
             data = f.read()
             check.equal(data, b"test data")
 
-
     def test_open_text_file_path(self, tmp_path: Path) -> None:
         file = str(tmp_path / "test.txt")
 
@@ -230,16 +224,16 @@ class TestOpen:
 
     def test_open_invalid_binary_io_type(self) -> None:
         text_stream = io.StringIO("text")
-
+        # Type-checking also catches this error
         with pytest.raises(TypeError, match="Expected a binary file-like object"):
-            with io_utils_open(text_stream, "rb"):
+            with io_utils_open(text_stream, "rb"):  # type: ignore[call-overload]
                 pass
 
     def test_open_invalid_text_io_type(self) -> None:
         binary_stream = io.BytesIO(b"binary")
-
+        # Type-checking also catches this error
         with pytest.raises(TypeError, match="Expected a text file-like object"):
-            with io_utils_open(binary_stream, "r"):
+            with io_utils_open(binary_stream, "r"):  # type: ignore[call-overload]
                 pass
 
     def test_open_default_mode(self, tmp_path: Path) -> None:
@@ -293,4 +287,3 @@ class TestIntegration:
 
         check.equal(text, "File test")
         check.equal(number, 9876543210)
-
