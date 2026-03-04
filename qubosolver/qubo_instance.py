@@ -201,6 +201,18 @@ class QUBOInstance:
 
     @staticmethod
     def save(file_like: io_utils.FileLike[bytes], instance: QUBOInstance) -> None:
+        """
+        Saves a QUBOInstance to a file-like object.
+
+        Args:
+            file_like (io_utils.FileLike[bytes]):
+                File-like object opened in binary write mode where the instance will be saved.
+            instance (QUBOInstance):
+                The QUBOInstance object to be saved.
+
+        Returns:
+            None
+        """
         with io_utils.open(file_like, "wb") as f:
             buffer = io.BytesIO()
             torch.save(instance.coefficients, buffer)
@@ -208,9 +220,20 @@ class QUBOInstance:
 
     @staticmethod
     def load(file_like: io_utils.FileLike[bytes]) -> QUBOInstance:
+        """
+        Loads a QUBOInstance from a file-like object.
+
+        Args:
+            file_like (io_utils.FileLike[bytes]):
+                File-like object opened in binary read mode containing the saved QUBOInstance data.
+
+        Returns:
+            QUBOInstance:
+                A new QUBOInstance object reconstructed from the saved data.
+        """
         with io_utils.open(file_like, "rb") as f:
             # torch.load might consume too much of the src buffer.
-            #  Use a dedicated limited buffer
+            #  Use a dedicated limited buffer
             buffer = io.BytesIO(io_utils.load_sized_buffer(f))
             Q = torch.load(buffer, weights_only=True)
 
