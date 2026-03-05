@@ -133,3 +133,45 @@ def test_square_qubo(traps: int, layout: LayoutType | str) -> None:
 
     U = C6 * interaction_matrix_from_vertices(vertices)
     torch.testing.assert_close(U, expected_U)
+
+@pytest.mark.xfail(strict=False, reason="bug not fixed yet")
+def test_triangular_qubo_not_enough_traps() -> None:
+
+    spacing = 7.0
+
+    device = DigitalAnalogDevice()._device
+    C6 = device.interaction_coeff
+
+    parameters = {
+        "layout": LayoutType.TRIANGULAR,
+        "traps": 2,
+        "spacing": spacing,
+        "device": device,
+    }
+
+    # Equilateral triangle
+    expected_vertices = spacing * torch.tensor(
+        [
+            [0.0, 0.0],
+            [0.5, 0.5 * np.sqrt(3)],
+            [1.0, 0.0],
+        ]
+    )
+    #  Matrix Q should match the spacing of the triangular layout so that the embedding returns
+    # an equilateral triangle, hence the scale alpha.
+    expected_U = C6 * interaction_matrix_from_vertices(expected_vertices)
+    # All off-diagonal coefficients are equal to alpha
+    alpha = expected_U[0, 1]
+    Q = alpha * triangular_qubo()
+    torch.testing.assert_close(Q, expected_U)
+
+    result = Greedy().launch_greedy(Q=Q, params=parameters)
+    vertices = result[0][1]["coords"]
+    # Vertices form an equilateral triangle of side = spacing
+    for i in range(3):
+        for j in range(i + 1, 3):
+            d = torch.dist(vertices[i, :], vertices[j, :])
+            check.almost_equal(d, spacing)
+
+    U = C6 * interaction_matrix_from_vertices(vertices)
+    torch.testing.assert_close(U, expected_U)
