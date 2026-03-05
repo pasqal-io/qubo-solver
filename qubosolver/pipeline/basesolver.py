@@ -337,8 +337,8 @@ class BaseSolver(ABC):
                 QUBOInstance.save(f, solver.fixtures.instance)
             else:
                 QUBOInstance.save(f, solver.instance)
-            io_utils.save(f, "bool", solver.config.do_preprocessing)
-            io_utils.save(f, "bool", solver.config.do_postprocessing)
+            io_utils.save(f, "?", solver.config.do_preprocessing)
+            io_utils.save(f, "?", solver.config.do_postprocessing)
 
             fixed_var_json = json.dumps(solver.fixtures.fixed_var_dict_list)
             io_utils.save_string(f, fixed_var_json)
