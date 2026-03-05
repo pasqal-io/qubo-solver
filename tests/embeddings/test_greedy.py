@@ -9,7 +9,7 @@ from qoolqit.devices.device import DigitalAnalogDevice
 
 from qubosolver.algorithms.greedy.greedy import Greedy
 from qubosolver.qubo_types import LayoutType
-import json
+import pytest
 import pytest_check as check
 
 
@@ -19,6 +19,18 @@ def triangular_qubo() -> torch.Tensor:
             [0.0, 1.0, 1.0],
             [1.0, 0.0, 1.0],
             [1.0, 1.0, 0.0],
+        ],
+        dtype=torch.float32,
+    )
+
+
+def square_qubo() -> torch.Tensor:
+    return torch.tensor(
+        [
+            [0.0, 1.0, 1.0/8.0, 1.0],
+            [1.0, 0.0, 1.0, 1.0/8.0],
+            [1.0/8.0, 1.0, 0.0, 1.0],
+            [1.0, 1.0/8.0, 1.0, 0.0],
         ],
         dtype=torch.float32,
     )
@@ -34,16 +46,8 @@ def interaction_matrix_from_vertices(vertices: torch.Tensor) -> torch.Tensor:
     return U
 
 
-class TensorEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, torch.Tensor):
-            return obj.tolist()
-        return super().default(obj)
-
-
-def test_triangular_qubo() -> None:
-
-    print()
+@pytest.mark.parametrize("traps", [3, 6])
+def test_triangular_qubo(traps: int) -> None:
 
     spacing = 7.0
 
@@ -52,7 +56,7 @@ def test_triangular_qubo() -> None:
 
     parameters = {
         "layout": LayoutType.TRIANGULAR,
-        "traps": 6.0,
+        "traps": traps,
         "spacing": spacing,
         "device": device,
     }
@@ -80,6 +84,52 @@ def test_triangular_qubo() -> None:
         for j in range(i + 1, 3):
             d = torch.dist(vertices[i, :], vertices[j, :])
             check.almost_equal(d, spacing)
+
+    U = C6 * interaction_matrix_from_vertices(vertices)
+    torch.testing.assert_close(U, expected_U)
+
+@pytest.mark.parametrize("traps", [4, 9])
+@pytest.mark.parametrize("layout", [LayoutType.SQUARE, "square"])
+def test_square_qubo(traps: int, layout: LayoutType | str) -> None:
+
+    spacing = 7.0
+
+    device = DigitalAnalogDevice()._device
+    C6 = device.interaction_coeff
+
+    parameters = {
+        "layout": layout,
+        "traps": traps,
+        "spacing": spacing,
+        "device": device,
+    }
+
+    # Equilateral triangle
+    expected_vertices = spacing * torch.tensor(
+        [
+            [0.0, 0.0],
+            [0.0, 1.0],
+            [1.0, 1.0],
+            [1.0, 0.0],
+        ]
+    )
+    #  Matrix Q should match the spacing of the square layout so that the embedding returns
+    # a square, hence the scale alpha.
+    expected_U = C6 * interaction_matrix_from_vertices(expected_vertices)
+    # All off-diagonal coefficients are equal to alpha
+    alpha = expected_U[0, 1]
+    Q = alpha * square_qubo()
+    torch.testing.assert_close(Q, expected_U)
+
+    result = Greedy().launch_greedy(Q=Q, params=parameters)
+    vertices = result[0][1]["coords"]
+
+    def sorted(vertices: torch.Tensor) -> torch.Tensor:
+        indices = np.lexsort(vertices.abs().numpy().T)
+        return vertices[indices,:].abs()
+
+    # Vertices form square of side = spacing
+    torch.testing.assert_close(sorted(vertices), sorted(expected_vertices))
 
     U = C6 * interaction_matrix_from_vertices(vertices)
     torch.testing.assert_close(U, expected_U)
