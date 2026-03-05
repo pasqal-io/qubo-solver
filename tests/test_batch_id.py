@@ -90,8 +90,6 @@ def test_quantum_batch_id(
     if drive_method == DriveType.OPTIMIZED:
         pytest.skip(reason="Does not work with the optimized drive shaping method")
 
-    print()
-
     np.random.seed(7979)
 
     Q = np.array(
@@ -118,8 +116,10 @@ def test_quantum_batch_id(
 
         if connection is None:
             config.backend = LocalEmulator(runs=runs)
+            wait = True
         else:
             config.backend = RemoteEmulator(connection=connection, runs=runs)
+            wait = False
 
         solver = QuboSolverQuantum(instance, config)
 
@@ -130,7 +130,7 @@ def test_quantum_batch_id(
 
         embedding = solver.embedding()
         drive, _ = solver.drive(embedding)
-        results = solver.submit(drive, embedding)
+        results = solver.submit(drive, embedding, wait)
 
         return results, solver
 

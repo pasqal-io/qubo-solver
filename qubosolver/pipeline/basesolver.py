@@ -162,11 +162,9 @@ class BaseSolver(ABC):
                 - counts (torch.Tensor): Tensor of shape (n_samples,) containing
                   the number of times each corresponding bitstring was measured.
         """
-        if isinstance(results, tuple):
-            # local emulator result
+        try:
             counter = results[-1].final_bitstrings
-        else:
-            # remote emulator result
+        except AttributeError:
             counter = results[-1].bitstring_counts
         bitstrings = torch.tensor(
             [list(map(int, list(b))) for b in list(counter.keys())], dtype=torch.int64
