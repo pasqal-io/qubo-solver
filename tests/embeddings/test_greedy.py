@@ -73,7 +73,8 @@ def interaction_matrix_from_vertices(vertices: torch.Tensor) -> torch.Tensor:
 
 
 @pytest.mark.parametrize("traps", [1, 2, 3, 6])
-def test_triangular_qubo(traps: int) -> None:
+@pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
+def test_triangular_qubo(traps: int, relative_noise: float) -> None:
     if traps <= 2:
         # Raises "RuntimeError: Could not infer dtype of NoneType"
         # Should either augment the number of traps automatically,
@@ -106,8 +107,11 @@ def test_triangular_qubo(traps: int) -> None:
     expected_U = C6 * interaction_matrix_from_vertices(expected_vertices)
     # All off-diagonal coefficients are equal to alpha
     alpha = expected_U[0, 1]
-    Q = alpha * triangular_qubo()
-    torch.testing.assert_close(Q, expected_U)
+    Q = alpha * triangular_qubo() * (1.0 + relative_noise)
+    # Tolerances from https://docs.pytorch.org/docs/stable/testing.html
+    atol = 1e-5
+    rtol = 1.3e-6 + abs(relative_noise)
+    torch.testing.assert_close(Q, expected_U, atol=atol, rtol=rtol)
 
     result = Greedy().launch_greedy(Q=Q, params=parameters)
     vertices = result[0][1]["coords"]
@@ -130,7 +134,8 @@ def test_triangular_qubo(traps: int) -> None:
 
 @pytest.mark.parametrize("traps", [1, 2, 4, 9])
 @pytest.mark.parametrize("layout", [LayoutType.SQUARE, "square"])
-def test_square_qubo(traps: int, layout: LayoutType | str) -> None:
+@pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
+def test_square_qubo(traps: int, layout: LayoutType | str, relative_noise: float) -> None:
     # With 2 traps, greedy increases the number of traps automatically, but not with 1
     # Is it desired ? Or should it raise a meaningful error ?
     if traps == 1:
@@ -165,12 +170,14 @@ def test_square_qubo(traps: int, layout: LayoutType | str) -> None:
     expected_U = C6 * interaction_matrix_from_vertices(expected_vertices)
     # All off-diagonal coefficients are equal to alpha
     alpha = expected_U[0, 1]
-    Q = alpha * square_qubo()
-    torch.testing.assert_close(Q, expected_U)
+    Q = alpha * square_qubo() * (1.0 + relative_noise)
+    # Tolerances from https://docs.pytorch.org/docs/stable/testing.html
+    atol = 1e-5
+    rtol = 1.3e-6 + abs(relative_noise)
+    torch.testing.assert_close(Q, expected_U, atol=atol, rtol=rtol)
 
     result = Greedy().launch_greedy(Q=Q, params=parameters)
     vertices = result[0][1]["coords"]
-    print(f"\nvertices:\n{vertices}")
 
     assert_close_up_to_isometry(vertices, expected_vertices, torch.pi / 2.0)
     # fmt: off
@@ -189,7 +196,8 @@ def test_square_qubo(traps: int, layout: LayoutType | str) -> None:
 
 
 @pytest.mark.parametrize("too_large", ["no", "barely", "extremely"])
-def test_too_large_spacing(too_large: str) -> None:
+@pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
+def test_too_large_spacing(too_large: str, relative_noise: float) -> None:
 
     device = DigitalAnalogDevice()._device
     C6 = device.interaction_coeff
@@ -199,6 +207,7 @@ def test_too_large_spacing(too_large: str) -> None:
     layout = LayoutType.SQUARE
     traps = 25
 
+    assert isinstance(device.max_radial_distance, int)
     # Only the origin is within the device's maximum radial distance
     if too_large == "extremely":
         spacing = device.max_radial_distance * 3.0
@@ -216,7 +225,7 @@ def test_too_large_spacing(too_large: str) -> None:
         "device": device,
     }
 
-    # Tailored QUBO to match the below vertices
+    # Tailored QUBO to match the vertices below
     Q = torch.tensor(
         [
             [0.0, 1.0, 1.0 / 64.0],
@@ -224,7 +233,7 @@ def test_too_large_spacing(too_large: str) -> None:
             [1.0 / 64.0, 1.0 / 125.0, 0.0],
         ],
         dtype=torch.float32,
-    )
+    ) * (1.0 + relative_noise)
 
     # Tailored right triangle. With a correct spacing (e.g. 7.0):
     #   - Vertex 0 is at the origin
@@ -244,7 +253,10 @@ def test_too_large_spacing(too_large: str) -> None:
     alpha = expected_U[0, 1]
 
     Q = alpha * Q
-    torch.testing.assert_close(Q, expected_U)
+    # Tolerances from https://docs.pytorch.org/docs/stable/testing.html
+    atol = 1e-5
+    rtol = 1.3e-6 + abs(relative_noise)
+    torch.testing.assert_close(Q, expected_U, atol=atol, rtol=rtol)
 
     greedy = Greedy()
 
