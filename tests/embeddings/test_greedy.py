@@ -282,7 +282,7 @@ def test_too_large_spacing(too_large: str, relative_noise: float) -> None:
         torch.testing.assert_close(U, expected_U)
         assert_close_up_to_isometry(vertices, expected_vertices, torch.pi / 2.0)
 
-    elif too_large == "barely":
+    if too_large == "barely":
         # expected_U is the interaction matrix if Q was perfectly embeddable
         # in the square layout, with the given parameters, which is not the case here
         expected_imperfect_U = expected_U
