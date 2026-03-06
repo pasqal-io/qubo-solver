@@ -235,10 +235,6 @@ class Greedy:
                 pass  # never let viz crash the solver
 
         while len(positioned) < len(nodes):
-            # NOTE: kept as in source, although it's likely meant to compare counts
-            # It's comparing a set() and an int, which doesn't make sense.
-            if used_traps == n_traps:
-                break
 
             u = self.get_best(Q, positioned, copy.deepcopy(vertices))
 
@@ -646,11 +642,17 @@ class Greedy:
         Returns:
           (best_result_item, None, coords, r_cut, omega)
         """
+        n_traps = params["traps"]
+        n_nodes = Q.shape[0]
+
+        if n_traps < n_nodes:
+            raise ValueError(f"Not enough traps ({n_traps}) to position {n_nodes} nodes.")
+
         layout, coordinates = self.get_predefined_coordinates(params)
         predefined_coordinates = coordinates.clone().detach()
 
         Z = self.precompute_coefficients(Q, predefined_coordinates, params)
-        nodes = list(range(Q.shape[0]))
+        nodes = list(range(n_nodes))
 
         results: dict = {}
 

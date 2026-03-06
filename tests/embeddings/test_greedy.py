@@ -73,11 +73,6 @@ def interaction_matrix_from_vertices(vertices: torch.Tensor) -> torch.Tensor:
 @pytest.mark.parametrize("traps", [1, 2, 3, 6])
 @pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
 def test_triangular_qubo(traps: int, relative_noise: float) -> None:
-    if traps <= 2:
-        # Raises "RuntimeError: Could not infer dtype of NoneType"
-        # Should either augment the number of traps automatically,
-        # or raise a meaningful error
-        pytest.xfail(reason="Bug to be fixed")
 
     spacing = 7.0
 
@@ -111,6 +106,11 @@ def test_triangular_qubo(traps: int, relative_noise: float) -> None:
     rtol = 1.3e-6 + abs(relative_noise)
     torch.testing.assert_close(Q, expected_U, atol=atol, rtol=rtol)
 
+    if traps < 3:
+        with pytest.raises(ValueError):
+            Greedy().launch_greedy(Q=Q, params=parameters)
+        return
+
     result = Greedy().launch_greedy(Q=Q, params=parameters)
     vertices = result[0][1]["coords"]
 
@@ -134,13 +134,6 @@ def test_triangular_qubo(traps: int, relative_noise: float) -> None:
 @pytest.mark.parametrize("layout", [LayoutType.SQUARE, "square"])
 @pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
 def test_square_qubo(traps: int, layout: LayoutType | str, relative_noise: float) -> None:
-    # With 2 traps, greedy increases the number of traps automatically, but not with 1
-    # Is it desired ? Or should it raise a meaningful error ?
-    if traps == 1:
-        # Raises "RuntimeError: Could not infer dtype of NoneType"
-        # Should either augment the number of traps automatically,
-        # or raise a meaningful error
-        pytest.xfail(reason="Bug to be fixed")
 
     spacing = 7.0
 
@@ -173,6 +166,11 @@ def test_square_qubo(traps: int, layout: LayoutType | str, relative_noise: float
     atol = 1e-5
     rtol = 1.3e-6 + abs(relative_noise)
     torch.testing.assert_close(Q, expected_U, atol=atol, rtol=rtol)
+
+    if traps < 4:
+        with pytest.raises(ValueError):
+            Greedy().launch_greedy(Q=Q, params=parameters)
+        return
 
     result = Greedy().launch_greedy(Q=Q, params=parameters)
     vertices = result[0][1]["coords"]
