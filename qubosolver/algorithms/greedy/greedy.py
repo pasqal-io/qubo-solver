@@ -236,6 +236,7 @@ class Greedy:
 
         while len(positioned) < len(nodes):
             # NOTE: kept as in source, although it's likely meant to compare counts
+            # It's comparing a set() and an int, which doesn't make sense.
             if used_traps == n_traps:
                 break
 
