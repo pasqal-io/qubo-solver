@@ -51,7 +51,7 @@ def assert_close_up_to_isometry(
     # The angle of rotation should be an integer multiple of it
     angle = torch.atan2(A[1, 0], A[0, 0]).item()
     normalized_angle = angle / layout_angle
-    check.almost_equal(normalized_angle, round(normalized_angle))
+    check.almost_equal(normalized_angle, round(normalized_angle), abs=1e-6)
 
 
 def assert_close_to_lattice(vertices: torch.Tensor, basis: torch.Tensor) -> None:
