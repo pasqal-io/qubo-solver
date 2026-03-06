@@ -1,5 +1,3 @@
-# tests/test_greedy_annimation.py
-
 from __future__ import annotations
 
 
