@@ -108,3 +108,20 @@ def test_random_qubos(postprocessing: bool, density: float) -> None:
             else:
                 check.almost_equal(pp_solution.costs[0], cost)
                 torch.testing.assert_close(pp_solution.bitstrings[0,:], bitstring)
+
+def test_no_solution() -> None:
+    # fmt: off
+    Q = torch.tensor([
+        [-10.0, 1.0],
+        [1.0, -10.0]
+    ])
+    # fmt: on
+
+    instance = QUBOInstance(coefficients=Q)
+    fixture = Fixtures(instance, SolverConfig(do_postprocessing=True))
+    solution = QUBOSolution(bitstrings=torch.tensor([]), costs=torch.tensor([]))
+    check.equal(solution.bitstrings.numel(), 0)
+
+    # Post-processing doesn't find new solutions if there were none to begin with
+    pp_solution = fixture.postprocess(solution)
+    check.equal(pp_solution.bitstrings.numel(), 0)
