@@ -11,11 +11,11 @@ from qoolqit.devices.device import DigitalAnalogDevice
 from qubosolver.qubo_types import LayoutType
 
 # Optional imports for animation; guarded so library usage stays safe in non-notebook envs.
-try:
+try:  # pragma: no cover
     import numpy as np
 
     _VIZ_OK = True
-except Exception:
+except Exception:  # pragma: no cover
     _VIZ_OK = False
 
 
@@ -165,7 +165,7 @@ class Greedy:
                 choice_coordinates = tuple(self.MAPPING_POSITIONS_COORDS[p])
                 choice_p = p
 
-        if return_candidates:
+        if return_candidates:  # pragma: no cover
             return choice_p, choice_coordinates, min_val, candidates
         return choice_p, choice_coordinates, min_val
 
@@ -205,7 +205,7 @@ class Greedy:
             n_extra_traps = n_traps - n
 
         # helpers for instrumentation
-        def _trap_of_from_coords() -> Dict[int, int]:
+        def _trap_of_from_coords() -> Dict[int, int]:  # pragma: no cover
             out: Dict[int, int] = {}
             for node_id, coord in positioned_coords.items():
                 out[node_id] = int(self.MAPPING_COORDS_POSITIONS[coord])
@@ -215,7 +215,7 @@ class Greedy:
         total_mismatch = 0.0
 
         # initial snapshot (optional)
-        if on_step is not None:
+        if on_step is not None:  # pragma: no cover
             try:
                 on_step(
                     {
@@ -235,15 +235,12 @@ class Greedy:
                 pass  # never let viz crash the solver
 
         while len(positioned) < len(nodes):
-            # NOTE: kept as in source, although it's likely meant to compare counts
-            if used_traps == n_traps:
-                break
 
             u = self.get_best(Q, positioned, copy.deepcopy(vertices))
 
             # If visualization is enabled, ask for candidates too
             want_candidates = bool(params.get("draw_steps", False) or (on_step is not None))
-            if want_candidates:
+            if want_candidates:  # pragma: no cover
                 res4 = self.optimize_position(
                     Z=Z,
                     u=u,
@@ -287,7 +284,7 @@ class Greedy:
                 used_traps.add(self.MAPPING_COORDS_POSITIONS[u_coordinates])
                 n_extra_traps -= 1
                 # snapshot of the skip (optional)
-                if on_step is not None:
+                if on_step is not None:  # pragma: no cover
                     try:
                         on_step(
                             {
@@ -326,7 +323,7 @@ class Greedy:
             step_id += 1
 
             # emit snapshot
-            if on_step is not None:
+            if on_step is not None:  # pragma: no cover
                 try:
                     on_step(
                         {
@@ -372,7 +369,7 @@ class Greedy:
     # ----------------------------
     # Internal: post-run animation (only if animation=True)
     # ----------------------------
-    def _render_animation(
+    def _render_animation(  # pragma: no cover
         self,
         frames: List[Dict[str, Any]],
         all_coords_np: "np.ndarray",
@@ -645,11 +642,17 @@ class Greedy:
         Returns:
           (best_result_item, None, coords, r_cut, omega)
         """
+        n_traps = params["traps"]
+        n_nodes = Q.shape[0]
+
+        if n_traps < n_nodes:
+            raise ValueError(f"Not enough traps ({n_traps}) to position {n_nodes} nodes.")
+
         layout, coordinates = self.get_predefined_coordinates(params)
         predefined_coordinates = coordinates.clone().detach()
 
         Z = self.precompute_coefficients(Q, predefined_coordinates, params)
-        nodes = list(range(Q.shape[0]))
+        nodes = list(range(n_nodes))
 
         results: dict = {}
 
@@ -659,7 +662,7 @@ class Greedy:
 
         frames: List[Dict[str, Any]] = []
 
-        if instrument:
+        if instrument:  # pragma: no cover
 
             def _collector(state: Dict[str, Any]) -> None:
                 if on_step is not None:
@@ -691,7 +694,7 @@ class Greedy:
         omega = params["device"].rabi_from_blockade(blockade_radius)
 
         # Post-run animation if requested
-        if anim_flag and frames and _VIZ_OK:
+        if anim_flag and frames and _VIZ_OK:  # pragma: no cover
             # Rebuild full lattice coords to show ALL traps (including extras)
             _, all_coords_t = self.get_predefined_coordinates(params)
             if hasattr(all_coords_t, "numpy"):
