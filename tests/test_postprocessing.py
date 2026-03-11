@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import torch
+import numpy as np
 import pytest
 import pytest_check as check
 from qubosolver.solver import QuboSolver, QUBOSolution
 from qubosolver.config import SolverConfig
 from qubosolver.qubo_instance import QUBOInstance
 from qubosolver.qubo_analyzer import QUBOAnalyzer
-from qubosolver.pipeline.fixtures import Fixtures
+from qubosolver.pipeline.fixtures import Fixtures, bit_flip_local_search
 from qubosolver.data import QUBODataset
 
 
@@ -107,7 +108,8 @@ def test_random_qubos(postprocessing: bool, density: float) -> None:
                 check.less_equal(pp_solution.costs[0], cost)
             else:
                 check.almost_equal(pp_solution.costs[0], cost)
-                torch.testing.assert_close(pp_solution.bitstrings[0,:], bitstring)
+                torch.testing.assert_close(pp_solution.bitstrings[0, :], bitstring)
+
 
 def test_no_solution() -> None:
     # fmt: off
@@ -125,3 +127,24 @@ def test_no_solution() -> None:
     # Post-processing doesn't find new solutions if there were none to begin with
     pp_solution = fixture.postprocess(solution)
     check.equal(pp_solution.bitstrings.numel(), 0)
+
+
+@pytest.mark.usefixtures("restore_rng_state")
+@pytest.mark.parametrize("shuffle", [True, False])
+@pytest.mark.parametrize("density", [0.2, 0.5, 0.8])
+def test_bit_flip_local_search_randoms(shuffle: bool, density: float) -> None:
+
+    size = 5
+
+    for seed in [454, 85, 989751]:
+        dataset = QUBODataset.from_random(1, size, densities=[density], seed=seed)
+        s = np.zeros((size, 1))
+
+        for Q, _ in dataset:
+
+            def cost_function(bitstring: np.ndarray) -> float:
+                return bitstring.T @ Q.numpy() @ bitstring
+
+            initial_cost = cost_function(s)
+            _, best_cost = bit_flip_local_search(cost_function, s, shuffle=shuffle)
+            check.less_equal(best_cost, initial_cost)
