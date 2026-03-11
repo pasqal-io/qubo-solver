@@ -128,6 +128,7 @@ def test_no_solution() -> None:
     pp_solution = fixture.postprocess(solution)
     check.equal(pp_solution.bitstrings.numel(), 0)
 
+
 @pytest.mark.parametrize("shuffle", [True, False])
 def test_bit_flip_local_search_basic(shuffle: bool) -> None:
 
@@ -138,7 +139,7 @@ def test_bit_flip_local_search_basic(shuffle: bool) -> None:
     ])
     # fmt: on
     def cost_function(bitstring: np.ndarray) -> float:
-        return bitstring.T @ Q.numpy() @ bitstring
+        return float(bitstring.T @ Q.numpy() @ bitstring)
 
     s = np.zeros(2)
     initial_cost = cost_function(s)
@@ -164,7 +165,7 @@ def test_bit_flip_local_search_randoms(shuffle: bool, density: float) -> None:
         for Q, _ in dataset:
 
             def cost_function(bitstring: np.ndarray) -> float:
-                return bitstring.T @ Q.numpy() @ bitstring
+                return float(bitstring.T @ Q.numpy() @ bitstring)
 
             initial_cost = cost_function(s)
             _, best_cost = bit_flip_local_search(cost_function, s, shuffle=shuffle)
