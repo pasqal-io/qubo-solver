@@ -269,7 +269,8 @@ def test_errors(raise_exception: bool) -> None:
     ds_config.optimized_callback_objective = mock_callback
     ds_config.optimized_n_calls = 11
     config = SolverConfig(
-        device=DigitalAnalogDevice(), drive_shaping=ds_config,
+        device=DigitalAnalogDevice(),
+        drive_shaping=ds_config,
     )
 
     drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
@@ -277,6 +278,7 @@ def test_errors(raise_exception: bool) -> None:
 
     check.equal(mock_error.call_count, 11)
     check.equal(mock_callback.call_count, 11)
+
 
 def test_failed_simulation() -> None:
 
@@ -296,12 +298,14 @@ def test_failed_simulation() -> None:
     ds_config = DriveShapingConfig()
     ds_config.optimized_n_calls = 11
     config = SolverConfig(
-        device=DigitalAnalogDevice(), drive_shaping=ds_config,
+        device=DigitalAnalogDevice(),
+        drive_shaping=ds_config,
     )
 
     drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
     with patch("qoolqit.QuantumProgram.compile_to", side_effect=RuntimeError()):
         drive, qubo_solution = drive_shaper.generate(register)
+
 
 def test_failed_simulation_2() -> None:
 
@@ -321,13 +325,18 @@ def test_failed_simulation_2() -> None:
     ds_config = DriveShapingConfig()
     ds_config.optimized_n_calls = 11
     config = SolverConfig(
-        device=DigitalAnalogDevice(), drive_shaping=ds_config,
+        device=DigitalAnalogDevice(),
+        drive_shaping=ds_config,
     )
 
     drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
-    with patch("qubosolver.pipeline.drive.OptimizedDriveShaper.run_simulation", return_value=(None, None, None, None, None, None)):
+    with patch(
+        "qubosolver.pipeline.drive.OptimizedDriveShaper.run_simulation",
+        return_value=(None, None, None, None, None, None),
+    ):
         with pytest.raises(RuntimeError, match="No solution found"):
             drive, qubo_solution = drive_shaper.generate(register)
+
 
 def test_failed_skopt() -> None:
 
@@ -347,7 +356,8 @@ def test_failed_skopt() -> None:
     ds_config = DriveShapingConfig()
     ds_config.optimized_n_calls = 11
     config = SolverConfig(
-        device=DigitalAnalogDevice(), drive_shaping=ds_config,
+        device=DigitalAnalogDevice(),
+        drive_shaping=ds_config,
     )
 
     drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
