@@ -7,6 +7,7 @@ import numpy as np
 import math
 import pytest
 import pytest_check as check
+from typing import List, Iterable
 
 from qoolqit.devices.device import DigitalAnalogDevice
 from qoolqit.register import Register
@@ -47,9 +48,11 @@ class Solution:
 
 
 def to_solutions(
-    bitstrings, costs=itertools.repeat(float("inf")), probabilities=itertools.repeat(None)
-):
-    def to_string(b):
+    bitstrings: Iterable[str | torch.Tensor],
+    costs: Iterable[float] = itertools.repeat(float("inf")),
+    probabilities: Iterable[float] = itertools.repeat(0.0),
+) -> List[Solution]:
+    def to_string(b: str | torch.Tensor) -> str:
         if isinstance(b, torch.Tensor):
             return "".join(str(int(i)) for i in b)
         if isinstance(b, str):
@@ -59,7 +62,9 @@ def to_solutions(
     return [Solution(to_string(b), c, p) for b, c, p in zip(bitstrings, costs, probabilities)]
 
 
-def gather_optimal_solutions(data, min_cost=None):
+def gather_optimal_solutions(
+    data: Iterable[Solution], min_cost: float | None = None
+) -> List[Solution]:
     if min_cost is None:
         min_cost = min(d.cost for d in data)
     return [d for d in data if np.allclose(d.cost, min_cost)]
@@ -136,10 +141,11 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: 
     config = SolverConfig(device=DigitalAnalogDevice(), drive_shaping=ds_config)
 
     drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
-    drive, solution = drive_shaper.generate(register)
+    drive, qubo_solution = drive_shaper.generate(register)
 
+    assert isinstance(qubo_solution.probabilities, torch.Tensor)
     optimal_solutions = gather_optimal_solutions(
-        to_solutions(solution.bitstrings, solution.costs, solution.probabilities)
+        to_solutions(qubo_solution.bitstrings, qubo_solution.costs, qubo_solution.probabilities)
     )
     check.is_not(optimal_solutions, [])
 
@@ -208,13 +214,14 @@ def test_triangular_qubo(seed: int, use_probability_based_ojective: bool) -> Non
     )
 
     drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
-    drive, solution = drive_shaper.generate(register)
-    solution.sort_by_cost()
-    analyzer = QUBOAnalyzer([solution])
+    drive, qubo_solution = drive_shaper.generate(register)
+    qubo_solution.sort_by_cost()
+    analyzer = QUBOAnalyzer([qubo_solution])
     print(f"{analyzer.df}")
 
+    assert isinstance(qubo_solution.probabilities, torch.Tensor)
     optimal_solutions = gather_optimal_solutions(
-        to_solutions(solution.bitstrings, solution.costs, solution.probabilities)
+        to_solutions(qubo_solution.bitstrings, qubo_solution.costs, qubo_solution.probabilities)
     )
     check.is_not(optimal_solutions, [])
 
