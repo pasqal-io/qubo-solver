@@ -258,7 +258,7 @@ def test_errors(raise_exception: bool) -> None:
             raise RuntimeError("Error occurred")
         return float("inf")
 
-    def optimized_callback_objective(d: Dict[Any]) -> None:
+    def optimized_callback_objective(d: Dict[Any, Any]) -> None:
         check.almost_equal(d["cost_eval"], 1e4)
 
     mock_error = MagicMock(wraps=error)
