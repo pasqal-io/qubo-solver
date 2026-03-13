@@ -38,25 +38,32 @@ def interaction_matrix_from_vertices(vertices: torch.Tensor) -> torch.Tensor:
             U[j, i] = U[i, j]
     return U
 
+
 @dataclass
 class Solution:
     bitstring: str
-    cost: float = float('inf')
+    cost: float = float("inf")
     probability: float = 0.0
 
-def to_solutions(bitstrings, costs = itertools.repeat(float('inf')), probabilities = itertools.repeat(None)):
+
+def to_solutions(
+    bitstrings, costs=itertools.repeat(float("inf")), probabilities=itertools.repeat(None)
+):
     def to_string(b):
         if isinstance(b, torch.Tensor):
-            return ''.join(str(int(i)) for i in b)
+            return "".join(str(int(i)) for i in b)
         if isinstance(b, str):
             return b
         raise ValueError()
-    return [ Solution(to_string(b), c, p) for b, c, p in zip(bitstrings, costs, probabilities)]
 
-def gather_optimal_solutions(data, min_cost = None):
+    return [Solution(to_string(b), c, p) for b, c, p in zip(bitstrings, costs, probabilities)]
+
+
+def gather_optimal_solutions(data, min_cost=None):
     if min_cost is None:
         min_cost = min(d.cost for d in data)
-    return [ d for d in data if np.allclose(d.cost, min_cost) ]
+    return [d for d in data if np.allclose(d.cost, min_cost)]
+
 
 def probability_based_ojective(
     bitstrings: list,
@@ -75,13 +82,16 @@ def probability_based_ojective(
     weighted_cost = min_cost * (1.0 + w * (1.0 - total_prob))
 
     optimal_bitstrings = [s.bitstring for s in optimal_solutions]
-    print(f"Best bitstrings: {optimal_bitstrings}, cost: {min_cost}, total probability: {total_prob}, weighted cost: {weighted_cost} ")
+    print(
+        f"Best bitstrings: {optimal_bitstrings}, cost: {min_cost}, total probability: {total_prob}, weighted cost: {weighted_cost} "
+    )
 
     return weighted_cost
 
+
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("seed", [ 44445, 1217, 998 ])
-@pytest.mark.parametrize("use_probability_based_ojective", [ True, False ])
+@pytest.mark.parametrize("seed", [44445, 1217, 998])
+@pytest.mark.parametrize("use_probability_based_ojective", [True, False])
 def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: bool) -> None:
 
     np.random.seed(seed)
@@ -107,7 +117,7 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: 
     for bits in itertools.product([0, 1], repeat=3):
         z = torch.tensor(bits, dtype=torch.float32)
         cost = (z @ Q @ z).item()
-        results.append(Solution(''.join(str(int(b)) for b in z.flatten()), cost))
+        results.append(Solution("".join(str(int(b)) for b in z.flatten()), cost))
 
     # Get all bitstrings with minimum cost
     expected_optimal_solutions = gather_optimal_solutions(results)
@@ -128,7 +138,9 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: 
     drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
     drive, solution = drive_shaper.generate(register)
 
-    optimal_solutions = gather_optimal_solutions(to_solutions(solution.bitstrings, solution.costs, solution.probabilities))
+    optimal_solutions = gather_optimal_solutions(
+        to_solutions(solution.bitstrings, solution.costs, solution.probabilities)
+    )
     check.is_not(optimal_solutions, [])
 
     min_cost = optimal_solutions[0].cost
@@ -146,9 +158,10 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: 
     print(f"All optimal bitstrings: {[s.bitstring for s in optimal_solutions]}")
     print(f"Number of optimal solutions: {len(optimal_solutions)}\n")
 
+
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("seed", [ 412, 6983, 5674 ])
-@pytest.mark.parametrize("use_probability_based_ojective", [ True, False ])
+@pytest.mark.parametrize("seed", [412, 6983, 5674])
+@pytest.mark.parametrize("use_probability_based_ojective", [True, False])
 def test_triangular_qubo(seed: int, use_probability_based_ojective: bool) -> None:
 
     np.random.seed(seed)
@@ -166,13 +179,15 @@ def test_triangular_qubo(seed: int, use_probability_based_ojective: bool) -> Non
         ],
         dtype=torch.float32,
     )
-    Q = 200.0 * (interaction_matrix_from_vertices(vertices) - 0.05 * torch.eye(3, dtype=torch.float32))
+    Q = 200.0 * (
+        interaction_matrix_from_vertices(vertices) - 0.05 * torch.eye(3, dtype=torch.float32)
+    )
 
     results = []
     for bits in itertools.product([0, 1], repeat=3):
         z = torch.tensor(bits, dtype=torch.float32)
         cost = (z @ Q @ z).item()
-        results.append(Solution(''.join(str(int(b)) for b in z.flatten()), cost))
+        results.append(Solution("".join(str(int(b)) for b in z.flatten()), cost))
 
     # Get all bitstrings with minimum cost
     expected_optimal_solutions = gather_optimal_solutions(results)
@@ -188,7 +203,9 @@ def test_triangular_qubo(seed: int, use_probability_based_ojective: bool) -> Non
     if use_probability_based_ojective:
         ds_config.optimized_custom_objective = probability_based_ojective
     ds_config.optimized_n_calls = 11
-    config = SolverConfig(device=DigitalAnalogDevice(), drive_shaping=ds_config, backend=LocalEmulator(runs=500))
+    config = SolverConfig(
+        device=DigitalAnalogDevice(), drive_shaping=ds_config, backend=LocalEmulator(runs=500)
+    )
 
     drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
     drive, solution = drive_shaper.generate(register)
@@ -196,7 +213,9 @@ def test_triangular_qubo(seed: int, use_probability_based_ojective: bool) -> Non
     analyzer = QUBOAnalyzer([solution])
     print(f"{analyzer.df}")
 
-    optimal_solutions = gather_optimal_solutions(to_solutions(solution.bitstrings, solution.costs, solution.probabilities))
+    optimal_solutions = gather_optimal_solutions(
+        to_solutions(solution.bitstrings, solution.costs, solution.probabilities)
+    )
     check.is_not(optimal_solutions, [])
 
     min_cost = optimal_solutions[0].cost
