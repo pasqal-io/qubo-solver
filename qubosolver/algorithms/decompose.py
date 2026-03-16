@@ -99,8 +99,10 @@ def compute_distance_interaction_matrix(
         & (qubo_matrix < -diag_mat[:, None])
         & (qubo_matrix < -diag_mat[None, :])
     )
-    # set value to rydberg_blockade_radius
-    dist_matrix[cond] = qubo_matrix[cond].apply_(device.rydberg_blockade_radius)
+
+    if cond.any():
+        # set value to rydberg_blockade_radius
+        dist_matrix[cond] = qubo_matrix[cond].apply_(device.rydberg_blockade_radius)
     # set diagonal elements to `qubo_matrix` diagonal
     dist_matrix[range(len(dist_matrix)), range(len(dist_matrix))] = diag_mat
     return dist_matrix

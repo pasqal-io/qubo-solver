@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import pytest
 import torch
+
+from qoolqit.devices import DigitalAnalogDevice
 from qubosolver import QUBOInstance
 
 from qubosolver.config import SolverConfig, DecompositionConfig
 from qubosolver.solver import DecomposeQuboSolver, QuboSolver
+from qubosolver.algorithms.decompose import compute_distance_interaction_matrix
 
 
 @pytest.mark.parametrize("use_quantum", [True, False])
@@ -141,3 +144,26 @@ def test_scope(decomposable_qubo: QUBOInstance) -> None:
         ValueError, match="Decomposition does not handle off-diagonal negative coefficients"
     ):
         QuboSolver(QUBOInstance(coeffs), config)
+
+
+def test_compute_distance_interaction_matrix_zero_output() -> None:
+
+    neglecting_inter_distance = 15.0
+    neglecting_max_coefficient = 1.0
+    device = DigitalAnalogDevice()
+
+    Q = torch.tensor(
+        [
+            [0, 1, 2, 3],
+            [1, 0, 4, 5],
+            [2, 4, 0, 6],
+            [3, 5, 6, 0],
+        ],
+        dtype=torch.float32,
+    )
+
+    dist_matrix = compute_distance_interaction_matrix(
+        device._pulser_device, Q, neglecting_inter_distance, neglecting_max_coefficient
+    )
+
+    torch.testing.assert_close(dist_matrix, torch.zeros_like(Q))
