@@ -21,12 +21,8 @@ from qubosolver.qubo_analyzer import QUBOAnalyzer
 
 
 def interaction_matrix_from_vertices(vertices: torch.Tensor) -> torch.Tensor:
-    n = vertices.shape[0]
-    U = torch.zeros((n, n), dtype=torch.float32)
-    for i in range(n):
-        for j in range(i + 1, n):
-            U[i, j] = 1.0 / torch.norm(vertices[i] - vertices[j]) ** 6
-            U[j, i] = U[i, j]
+    U = 1.0 / torch.cdist(vertices, vertices) ** 6
+    U.fill_diagonal_(0.0)
     return U
 
 
