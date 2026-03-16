@@ -167,3 +167,28 @@ def test_compute_distance_interaction_matrix_zero_output() -> None:
     )
 
     torch.testing.assert_close(dist_matrix, torch.zeros_like(Q))
+
+
+def test_compute_distance_interaction_diagonal() -> None:
+
+    neglecting_inter_distance = 15.0
+    neglecting_max_coefficient = 1.0
+    device = DigitalAnalogDevice()
+
+    Q = torch.tensor(
+        [
+            [-10, 0, 0, 0],
+            [0, 5, 0, 0],
+            [0, 0, 0.5, 0],
+            [0, 0, 0, 0],
+        ],
+        dtype=torch.float32,
+    )
+
+    dist_matrix = compute_distance_interaction_matrix(
+        device._pulser_device, Q, neglecting_inter_distance, neglecting_max_coefficient
+    )
+    expected_dist_matrix = neglecting_inter_distance * torch.ones_like(Q)
+    expected_dist_matrix.diagonal().copy_(Q.diag())
+
+    torch.testing.assert_close(dist_matrix, expected_dist_matrix)
