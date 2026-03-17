@@ -88,8 +88,6 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: 
     np.random.seed(seed)
     torch.manual_seed(seed)
 
-    device = DigitalAnalogDevice()._device
-    C6 = device.interaction_coeff
     spacing = 7.0
 
     # Set a Register and compute the associated QUBO
@@ -102,7 +100,10 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: 
         ],
         dtype=torch.float32,
     )
-    Q = C6 * interaction_matrix_from_vertices(vertices) - 100.0 * torch.eye(3, dtype=torch.float32)
+    # Choose scaling factor so that coefficients and costs are in a human readable range (~10)
+    Q = 1e6 * interaction_matrix_from_vertices(vertices)
+    # Choose diagonal coefficients so that the solutions are 011, 101 and 110
+    Q = Q - 2.5 * torch.eye(3, dtype=torch.float32) * Q[0, 1]
 
     results = []
     for bits in itertools.product([0, 1], repeat=3):
@@ -170,9 +171,10 @@ def test_triangular_qubo(seed: int, use_probability_based_ojective: bool) -> Non
         ],
         dtype=torch.float32,
     )
-    Q = 200.0 * (
-        interaction_matrix_from_vertices(vertices) - 0.05 * torch.eye(3, dtype=torch.float32)
-    )
+    # Choose scaling factor so that coefficients and costs are in a human readable range (~10)
+    Q = 400.0 * interaction_matrix_from_vertices(vertices)
+    # Choose diagonal coefficients so that the solution is 110
+    Q = Q - 2.5 * torch.eye(3, dtype=torch.float32) * Q[0, 1]
 
     results = []
     for bits in itertools.product([0, 1], repeat=3):
