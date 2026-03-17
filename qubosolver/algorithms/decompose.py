@@ -125,7 +125,8 @@ def vertices_to_place(
         dist_matrix (torch.Tensor): interaction distances computed from
             `compute_distance_interaction_matrix`.
         qubo_matrix (torch.Tensor): Matrix of qubo coefficients.
-        separation_threshold (float): threshold we consider 2 vertices separated.
+        separation_threshold (float): threshold we consider 2 vertices separated. Should be equal
+            to the `neglecting_inter_distance` parameter from `compute_distance_interaction_matrix`.
 
     Returns:
         dict[int, VertexToPlace] : dictionary of placed vertices, with keys
@@ -138,9 +139,11 @@ def vertices_to_place(
 
         distances = dist_matrix[i, :].ravel()
         # possible to check for 0 as `compute_distance_interaction_matrix` sets to 0 some elements
+        # should be <= 0.1 ?
         blocking_vertices = torch.argwhere(torch.eq(distances, 0))
         blocking_vertices = blocking_vertices[blocking_vertices != i]
 
+        # should be >= separation_threshold
         separated_vertices = torch.argwhere(torch.eq(distances, separation_threshold))
         separated_vertices = separated_vertices[separated_vertices != i]
 
@@ -214,6 +217,8 @@ def update_vertex_info_from_placed(
         "separated_vertices"
     ][separated_cond_notplaced]
 
+    # should be <= and >= ?
+    # should be ~temp ?
     neighbord_cond = (
         dict_vertices_to_place[vertex]["neighbors_weight"]
         < -dict_vertices_to_place[vertex]["weight"]

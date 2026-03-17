@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 import pytest
+import pytest_check as check
 import torch
+import itertools
+import numpy as np
+import random
+from typing import Tuple
 
 from qoolqit.devices import DigitalAnalogDevice
 from qubosolver import QUBOInstance
 
 from qubosolver.config import SolverConfig, DecompositionConfig
 from qubosolver.solver import DecomposeQuboSolver, QuboSolver
+from qubosolver.data import QUBODataset
 from qubosolver.algorithms.decompose import compute_distance_interaction_matrix
 
 
@@ -194,36 +200,69 @@ def test_compute_distance_interaction_diagonal() -> None:
     torch.testing.assert_close(dist_matrix, expected_dist_matrix)
 
 
-def test_compute_distance_interaction() -> None:
+@pytest.mark.usefixtures("restore_rng_state")
+@pytest.mark.parametrize("dims", [(4,), (3,), (3, 3), (2, 3, 2), (4, 3, 2, 3)])
+@pytest.mark.parametrize("seed", [1935225697, 1547, 66987, 55571, 998618750])
+def test_decompose_and_solve_block_qubo(seed: int, dims: Tuple[int]) -> None:
 
-    neglecting_inter_distance = 15.0
-    neglecting_max_coefficient = 1.0
-    device = DigitalAnalogDevice()
+    random.seed(seed)
+    torch.manual_seed(seed)
+    np.random.seed(seed)
 
-    Q = torch.tensor(
-        [
-            [-10, 0.1, 2.0, 0.0, 2.0],
-            [0.1, 5.0, 1.0,-0.3, 0.0],
-            [2.0, 1.0, 0.5,-1.0, 4.0],
-            [0.0,-0.3,-1.0,-0.5,-3.0],
-            [2.0, 0.0, 4.0,-3.0,-5.0],
-        ],
-        dtype=torch.float32,
-    )
+    if len(dims) == 1:
+        # Symmetric qubo to handle the case with several solutions
+        Q1 = torch.tensor(
+            [
+                [-1, 2, 2],
+                [2, -1, 2],
+                [2, 2, -1],
+            ],
+            dtype=torch.float32,
+        )
+        Q2 = QUBODataset.from_random(n_matrices=1, matrix_dim=dims[0], densities=[1.0])[0][0]
+        blocks = [Q1, Q2]
+        N = Q1.shape[0] + dims[0]
+    else:
+        N = np.sum(dims)
+        blocks = [
+            QUBODataset.from_random(n_matrices=1, matrix_dim=n, densities=[1.0])[0][0] for n in dims
+        ]
+    Q = torch.block_diag(*blocks)
+    check.equal(Q.shape, (N, N))
+    print(f"Qubo matrix:\n{Q}")
 
-    dist_matrix = compute_distance_interaction_matrix(
-        device._pulser_device, Q, neglecting_inter_distance, neglecting_max_coefficient
-    )
+    subpb_optimal_bitstrings = []
+    for q in blocks:
+        results = dict()
+        for bits in itertools.product([0, 1], repeat=q.shape[0]):
+            z = torch.tensor(bits, dtype=torch.float32)
+            cost = (z @ q @ z).item()
+            results["".join(str(int(b)) for b in z.flatten())] = cost
+        min_cost = min(c for c in results.values())
+        subpb_optimal_bitstrings.append(
+            {b: c for b, c in results.items() if np.allclose(c, min_cost)}
+        )
+    print(f"Sub-problems optimal bitstrings: {subpb_optimal_bitstrings}")
 
-    expected_dist_matrix = torch.tensor(
-        [
-            [-10,  15, 0.0,  15, 11.80765533],
-            [ 15, 5.0, 0.0, 0.0,  15],
-            [0.0, 0.0, 0.5, 0.0, 0.0],
-            [ 15, 0.0, 0.0,-0.5, 0.0],
-            [11.80765533, 15, 0.0, 0.0,-5.0],
-        ],
-        dtype=torch.float32,
-    )
+    subpb_optimal_bitstrings_list = [list(d.items()) for d in subpb_optimal_bitstrings]
+    optimal_bitstrings = {
+        "".join(b for b, _ in sub_results): sum(c for _, c in sub_results)
+        for sub_results in itertools.product(*subpb_optimal_bitstrings_list)
+    }
 
-    torch.testing.assert_close(dist_matrix, expected_dist_matrix)
+    print(f"Global optimal bitstrings: {optimal_bitstrings}")
+
+    qubo_instance = QUBOInstance(Q)
+
+    config = SolverConfig(use_quantum=False, decompose=DecompositionConfig(decompose_stop_number=2))
+    solver = QuboSolver(qubo_instance, config)
+    assert isinstance(solver._solver, DecomposeQuboSolver)
+
+    solution = solver.solve()
+    solution.sort_by_cost()
+    print(f"Solution: {solution}")
+    best_solution = "".join(str(b) for b in solution.bitstrings[0].tolist())
+    min_cost = solution.costs[0].item()
+
+    check.is_in(best_solution, optimal_bitstrings.keys())
+    check.almost_equal(min_cost, optimal_bitstrings[best_solution])
