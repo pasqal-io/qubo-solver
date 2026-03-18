@@ -258,7 +258,10 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: Tuple[int]) -> None:
 
     qubo_instance = QUBOInstance(Q)
 
-    config = SolverConfig(use_quantum=False, decompose=DecompositionConfig(decompose_stop_number=2, decompose_break_placement=0))
+    config = SolverConfig(
+        use_quantum=False,
+        decompose=DecompositionConfig(decompose_stop_number=2, decompose_break_placement=0),
+    )
     solver = QuboSolver(qubo_instance, config)
     assert isinstance(solver._solver, DecomposeQuboSolver)
 
@@ -270,7 +273,7 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: Tuple[int]) -> None:
 
     decomposition = solver._solver._decomposition
     print(f"Decomposition: {decomposition}")
-    sorted_decomposition = sorted([sorted(l) for l in decomposition])
+    sorted_decomposition = sorted([sorted(d) for d in decomposition])
     print(f"Sorted decomposition: {sorted_decomposition}")
     block_decomposition = []
     start = 0
@@ -283,7 +286,9 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: Tuple[int]) -> None:
     indices = sorted([i for sub_decomposition in decomposition for i in sub_decomposition])
     check.equal(indices, list(range(N)))
     # Perfect decomposition is a partition of range(N)
-    block_indices = sorted([i for sub_decomposition in block_decomposition for i in sub_decomposition])
+    block_indices = sorted(
+        [i for sub_decomposition in block_decomposition for i in sub_decomposition]
+    )
     check.equal(block_indices, list(range(N)))
 
     # Assume that A and B are partitions of range(N)
@@ -292,11 +297,12 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: Tuple[int]) -> None:
             if not any(set(a).issubset(b) for b in B):
                 return False
         return True
+
     # Examples
     check.is_true(is_refinement_of([[0], [1], [2, 3]], [[0, 1], [2, 3]]))
     check.is_false(is_refinement_of([[0], [1], [2, 3]], [[0, 1, 2], [3]]))
 
-    # The QUBO is a block matrix. The decomposition should be a refinement of the block decomposition,
+    #  The QUBO is a block matrix. The decomposition should be a refinement of the block decomposition,
     # i.e. two indices from different blocks cannot belong to the same sub-decomposition.
     # Ideally, the decomposition should match the block decomposition, but the solver may decompose
     # the QUBO into smaller sub-decompositions.
@@ -304,7 +310,12 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: Tuple[int]) -> None:
 
     # The solver may decompose the QUBO into too many sub-decompositions. The reconstructed solution
     # is then not guaranteed to be optimal.
-    if (seed, dims) in [ (1935225697, (3,)), (66987, (2, 3, 2)), (1547, (4, 3, 2, 3)), (1547, (3,)), ]:
+    if (seed, dims) in [
+        (1935225697, (3,)),
+        (66987, (2, 3, 2)),
+        (1547, (4, 3, 2, 3)),
+        (1547, (3,)),
+    ]:
         check.not_equal(sorted_decomposition, block_decomposition)
         check.is_not_in(best_solution, optimal_bitstrings.keys())
         check.greater(min_cost, min(optimal_bitstrings.values()))

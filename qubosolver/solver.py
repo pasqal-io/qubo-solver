@@ -298,7 +298,7 @@ class DecomposeQuboSolver(BaseSolver):
             **self.config.model_dump(exclude={"decompose"})
         )
 
-        self._decomposition = [ list(range(instance.size)) ]
+        self._decomposition = [list(range(instance.size))]
 
     def embedding(self) -> Register:
         # This solver doesn't generate an embedding.
@@ -349,6 +349,7 @@ class DecomposeQuboSolver(BaseSolver):
                 vertices_to_place,
                 positive_vertices_update,
             )
+
             self._decomposition = []
 
             global_solution = torch.full((self.instance.size,), -1)
@@ -410,7 +411,9 @@ class DecomposeQuboSolver(BaseSolver):
                     global_solution,
                     qubo_mat,
                 )
-                positive_vertices = positive_vertices_update(dict_vertices_to_place, global_solution)
+                positive_vertices = positive_vertices_update(
+                    dict_vertices_to_place, global_solution
+                )
                 for v in positive_vertices:
                     self._decomposition.append([v])
 
