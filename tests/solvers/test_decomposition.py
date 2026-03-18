@@ -208,6 +208,30 @@ def test_compute_distance_interaction_diagonal() -> None:
 @pytest.mark.parametrize("dims", [(4,), (3,), (3, 3), (2, 3, 2), (4, 3, 2, 3)])
 @pytest.mark.parametrize("seed", [1935225697, 1547, 66987, 55571, 998618750])
 def test_decompose_and_solve_block_qubo(seed: int, dims: Tuple[int]) -> None:
+    """Test that the decomposition solver correctly identifies and solves block-diagonal QUBO matrices.
+
+    The test constructs a block-diagonal QUBO matrix from smaller sub-problems, runs the
+    decomposition solver, and verifies that:
+
+    1. The solver's decomposition is a **refinement** of the block structure, i.e. variables
+       from different blocks are never grouped into the same sub-decomposition.
+    2. The decomposition covers all variables exactly once (it is a partition of ``range(N)``).
+    3. The reconstructed global solution matches one of the known optimal bitstrings, and its
+       cost matches the known optimal cost.
+
+    When ``len(dims) == 1``, the first block is a fixed symmetric 3×3 matrix (with multiple
+    optimal solutions) and the second block is randomly generated with the given dimension.
+    Otherwise, all blocks are randomly generated according to ``dims``.
+
+    Some ``(seed, dims)`` combinations are known to produce imperfect decompositions where the
+    solver splits a block into sub-decompositions that are too small to recover the global
+    optimum. These cases are marked as ``xfail``.
+
+    Args:
+        seed (int): Random seed for reproducibility (controls ``random``, ``torch``, and ``numpy``).
+        dims (Tuple[int, ...]): Dimensions of the individual QUBO blocks that form the
+            block-diagonal matrix.
+    """
 
     random.seed(seed)
     torch.manual_seed(seed)
