@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 import random
-from typing import TypedDict
+from typing import TypedDict, List
 
 import numpy as np
 from pulser.devices._device_datacls import BaseDevice as PulserBaseDevice
@@ -241,7 +241,7 @@ def update_vertex_info_from_placed(
 
 def positive_vertices_update(
     dict_vertices_to_place: dict[int, VertexToPlace], global_solution: torch.Tensor
-) -> None:
+) -> List[int]:
     """Remove vertices whose weight became positive during decomposition.
 
     Args:
@@ -272,6 +272,7 @@ def positive_vertices_update(
 
     for key in positive_vertices:
         dict_vertices_to_place.pop(key, None)
+    return positive_vertices
 
 
 def transfer_edge_values(
@@ -309,9 +310,6 @@ def transfer_edge_values(
     # update neighbors, separated and blocked vertices from vertices still to place
     for vertex in dict_vertices_to_place:
         update_vertex_info_from_placed(vertex, dict_vertices_to_place, placed_vertices_tensor)
-
-    # remove from neighbors, blocking and separated vertices whose weight became positive.
-    positive_vertices_update(dict_vertices_to_place, global_solution)
 
 
 def zone_intersection(
