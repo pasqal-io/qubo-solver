@@ -9,6 +9,7 @@ import random
 from typing import Tuple
 
 from qoolqit.devices import DigitalAnalogDevice
+from qoolqit import Register
 from qubosolver import QUBOInstance
 
 from qubosolver.config import SolverConfig, DecompositionConfig
@@ -266,3 +267,23 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: Tuple[int]) -> None:
 
     check.is_in(best_solution, optimal_bitstrings.keys())
     check.almost_equal(min_cost, optimal_bitstrings[best_solution])
+
+
+def test_decompose_embedding() -> None:
+
+    qubo_instance = QUBOInstance(torch.eye(2))
+
+    config = SolverConfig(decompose=DecompositionConfig())
+    solver = QuboSolver(qubo_instance, config)
+    with pytest.raises(NotImplementedError):
+        solver.embedding()
+
+
+def test_decompose_drive() -> None:
+
+    qubo_instance = QUBOInstance(torch.eye(2))
+
+    config = SolverConfig(decompose=DecompositionConfig())
+    solver = QuboSolver(qubo_instance, config)
+    with pytest.raises(NotImplementedError):
+        solver.drive(Register.from_coordinates([(0, 0), (1, 1)]))
