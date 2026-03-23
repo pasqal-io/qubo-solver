@@ -32,7 +32,7 @@ jobs:
         - name: Install hatch
           run: |
             pip install --upgrade pip
-            pip install hatch
+            pip install hatch "virtualenv<21"
         - name: Perform unit tests
           run: |
             hatch -v run test
@@ -58,7 +58,7 @@ jobs:
         - name: Install hatch
           run: |
             pip install --upgrade pip
-            pip install hatch
+            pip install hatch "virtualenv<21"
         - name: Perform unit tests
           run: |
             hatch -v run test
@@ -84,7 +84,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Hatch
         run: |
-          pip install hatch
+          pip install hatch "virtualenv<21"
       - name: Run notebooks
         run: |
           hatch  -v run test-notebooks
@@ -105,7 +105,7 @@ jobs:
         - name: Install hatch
           run: |
             pip install --upgrade pip
-            pip install hatch
+            pip install hatch "virtualenv<21"
         - name: Install main dependencies
           run: |
             hatch -v -e docs

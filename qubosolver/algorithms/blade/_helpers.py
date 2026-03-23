@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -13,9 +13,9 @@ def normalized_best_dist(weight: float) -> float:
     return (1 / weight) ** (1 / 6)  # type: ignore[no-any-return]
 
 
-def distance_matrix_from_positions(positions: np.ndarray) -> np.ndarray:
+def distance_matrix_from_positions(positions: np.ndarray) -> np.typing.NDArray[np.float64]:
     position_differences = positions[np.newaxis, :] - positions[:, np.newaxis]
-    return np.linalg.norm(position_differences, axis=2)
+    return cast(np.typing.NDArray[np.float64], np.linalg.norm(position_differences, axis=2))
 
 
 def interaction_matrix_from_distances(distance_matrix: np.ndarray) -> np.ndarray:

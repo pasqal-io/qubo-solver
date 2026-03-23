@@ -125,16 +125,16 @@ def test_sa_cost(
 
     for bits in itertools.product([0, 1], repeat=n):
         z = torch.tensor(bits, dtype=torch.float32)
-        cost = z @ Q @ z
         bitstrings.append("".join(map(str, bits)))
-        costs.append(cost.item())
+        zQz = z @ Q @ z
+        costs.append(zQz.item())
 
     sorted_results = sorted(zip(bitstrings, costs), key=lambda x: x[1])
     bests = [(b, c) for b, c in sorted_results[:max_bitstrings]]
 
-    for bitstring, cost in bests:
-        bitstring = torch.tensor(list(map(int, bitstring)), dtype=torch.int32)
-        cost = torch.tensor(float(cost), dtype=torch.float32)
+    for bitstring_, cost_ in bests:
+        bitstring = torch.tensor(list(map(int, bitstring_)), dtype=torch.int32)
+        cost = torch.tensor(float(cost_), dtype=torch.float32)
 
         bitstring_sa = solution.bitstrings[0]
         cost_sa = solution.costs[0]

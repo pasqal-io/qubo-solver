@@ -219,7 +219,7 @@ def test_with_device() -> None:
     )
 
     def best_dist(weight: float) -> float:
-        return device.rydberg_blockade_radius(weight)  # type: ignore
+        return device.rydberg_blockade_radius(weight)
 
     expected_distances = np.triu(np.vectorize(best_dist, signature="(m,n)->(m,n)")(qubo), k=1)
     assert np.allclose(distances, expected_distances)

@@ -20,7 +20,6 @@ from qubosolver.pipeline import (
     get_drive_shaper,
 )
 
-
 # Modules to be automatically added to the qubosolver namespace
 __all__: list[str] = ["QuboSolver"]
 
@@ -93,7 +92,7 @@ class QuboSolverQuantum(BaseSolver):
         self._drive: Drive | None = None
 
     def _check_size_limit(self) -> None:
-        if (self.instance._coefficients is not None) and self.instance.size > 80:  # type: ignore[operator]
+        if (self.instance._coefficients is not None) and self.instance.size > 80:
             raise ValueError(
                 f"QUBO size {self.instance.size}×{self.instance.size}"
                 + " exceeds the maximum supported size of 80×80."
@@ -124,6 +123,7 @@ class QuboSolverQuantum(BaseSolver):
                     - QUBOSolution: Initial solution of generated from drive shaper
 
         """
+        self.drive_shaper.instance = self.instance
         drive, qubo_solution = self.drive_shaper.generate(embedding)
 
         self._drive = drive
@@ -196,7 +196,7 @@ class QuboSolverClassical(BaseSolver):
     """
     Classical solver for QUBO problems.
     This implementation delegates the classical solving task to the external
-    classical solver module (e.g., CPLEX, D-Wave SA, or D-Wave Tabu),
+    classical solver module (e.g., CPLEX, Simulated Annealing, or Tabu Search),
     as selected via the SolverConfig.
 
     After obtaining the raw solution, postprocessing (e.g., bit-flip local search)
@@ -286,7 +286,7 @@ class DecomposeQuboSolver(BaseSolver):
         self._solver_factory = solver_factory
 
         self.backend = self.config.backend
-        self.device = self.config.device._device
+        self.device = self.config.device
 
         self.decomposition_config: DecompositionConfig = (
             self.config.decompose or DecompositionConfig()
@@ -350,7 +350,7 @@ class DecomposeQuboSolver(BaseSolver):
             global_solution = torch.full((self.instance.size,), -1)
             qubo_mat = self.instance.coefficients.clone()
             dist_matrix = compute_distance_interaction_matrix(
-                self.device,
+                self.device._pulser_device,
                 qubo_mat,
                 neglecting_inter_distance=self.decomposition_config.neglecting_inter_distance,
                 neglecting_max_coefficient=self.decomposition_config.neglecting_max_coefficient,
@@ -375,14 +375,14 @@ class DecomposeQuboSolver(BaseSolver):
                     dict_vertices_to_place,
                     first_vertex_search,
                     self.decomposition_config.decompose_threshold,
-                    self.device,
+                    self.device._pulser_device,
                 )
                 if len(placed_vertices) <= self.decomposition_config.decompose_break_placement:
                     break
                 self.number_iterations += 1
 
                 matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(
-                    placed_vertices, self.device
+                    placed_vertices, self.device._pulser_device
                 )
                 qubo = QUBOInstance(matrix_to_solve)
                 subsolver = self._solver_factory(qubo, self._config_subproblems)

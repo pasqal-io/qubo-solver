@@ -318,10 +318,8 @@ class QUBOAnalyzer:
         """
         df = self.df
         if column not in df.columns:
-            raise ValueError(
-                f"{column} data is not available. \
-                             Please add {column} before filtering."
-            )
+            raise ValueError(f"{column} data is not available. \
+                             Please add {column} before filtering.")
 
         if not (0 < top_percent <= 1):
             raise ValueError("top_percent must be a float between 0 and 1.")
@@ -526,10 +524,8 @@ class QUBOAnalyzer:
         """
         # Check if the y_axis is available
         if y_axis not in df.columns:
-            raise ValueError(
-                f"{y_axis} data is not available.\
-                              Please add {y_axis} before plotting."
-            )
+            raise ValueError(f"{y_axis} data is not available.\
+                              Please add {y_axis} before plotting.")
         if sort_by and sort_by not in df.columns:
             raise ValueError(f"{sort_by} is not a valid column for sorting.")
 
@@ -659,10 +655,8 @@ class QUBOAnalyzer:
         df = self.df.copy()
 
         if x_axis not in df.columns:
-            raise ValueError(
-                f"{x_axis} data is not available.\
-                                Please add {x_axis} before plotting."
-            )
+            raise ValueError(f"{x_axis} data is not available.\
+                                Please add {x_axis} before plotting.")
 
         if labels:
             df = df[df[_LABELS].isin(labels)]

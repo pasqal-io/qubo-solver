@@ -24,7 +24,7 @@ def compute_best_scaling_for_qubo(
     percent = 100 - 2 / (len(target_qubo) - 1) * 10
     percentile = np.percentile(differences, percent)
 
-    difference_ceiling = max(0.0, percentile)  # type: ignore
+    difference_ceiling = max(0.0, percentile)
     limited_differences = np.minimum(differences, difference_ceiling)
 
     if plot:

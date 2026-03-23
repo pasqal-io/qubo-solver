@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import pytest
+from typing import Any
+import pytest_check as check
 from pulser.devices import DigitalAnalogDevice as PulserDADevice
 from pulser_simulation import QutipBackendV2
 from qoolqit.devices.device import DigitalAnalogDevice, AnalogDevice
@@ -39,7 +41,7 @@ def test_classical_part() -> None:
     )
 
     with pytest.raises(ValueError):
-        ClassicalConfig(classical_solver_type=1)
+        ClassicalConfig(classical_solver_type=1)  # type: ignore[arg-type]
 
 
 def test_pulseshape_part() -> None:
@@ -52,6 +54,15 @@ def test_pulseshape_part() -> None:
 
     with pytest.raises(ValueError):
         DriveShapingConfig(drive_shaping_method="dummy")
+
+    check.equal(
+        DriveShapingConfig(drive_shaping_method="heuristic").drive_shaping_method,
+        DriveType.HEURISTIC,
+    )
+    check.equal(
+        DriveShapingConfig(drive_shaping_method="optimized").drive_shaping_method,
+        DriveType.OPTIMIZED,
+    )
 
 
 def test_embedder_part() -> None:
@@ -110,7 +121,8 @@ def test_initialization_device() -> None:
     assert solver.embedding.greedy_spacing == float(device._device.min_atom_distance)
 
     deviceanalog = AnalogDevice()
-    solver = SolverConfig.from_kwargs(**{"device": deviceanalog})
+    kwargs: dict[Any, Any] = {"device": deviceanalog}
+    solver = SolverConfig.from_kwargs(**kwargs)
     assert solver.embedding.greedy_traps == deviceanalog._device.min_layout_traps
     assert solver.embedding.greedy_spacing == float(deviceanalog._device.min_atom_distance)
 

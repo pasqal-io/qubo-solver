@@ -5,8 +5,8 @@ Description:
     Implementation of multiple classical QUBO solvers.
     This module includes:
       - A solver based on CPLEX.
-      - A solver using D-Wave Simulated Annealing.
-      - A solver using D-Wave Tabu Search.
+      - A solver using Simulated Annealing.
+      - A solver using Tabu Search.
 """
 
 from __future__ import annotations
