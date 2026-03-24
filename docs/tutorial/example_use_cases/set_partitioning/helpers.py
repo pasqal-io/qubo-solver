@@ -39,9 +39,7 @@ def coverage_report(
     lines = []
     for i in range(nb_items):
         covering = [
-            subsets[p]
-            for p in range(nb_partitions)
-            if A[i, p] == 1 and int(round(vals[p])) == 1
+            subsets[p] for p in range(nb_partitions) if A[i, p] == 1 and int(round(vals[p])) == 1
         ]
         lines.append(f"  Item {items[i]} covered by: {covering if covering else '—'}")
     return "\n".join(lines)
@@ -188,10 +186,8 @@ def summarize_solution(
     print("Optimal bitstring (order: {}): {}".format(", ".join(subsets), bitstr))
     print("Selected variables            :", selected if selected else "∅")
     print(f"ILP objective (Σ w_p x_p)     : {ilp_val:g}")
-    print(
-        f"Feasibility (exact cover)     : \
-        {'Feasible ✅' if feasible else f'Infeasible ❌ (violation={viol})'}"
-    )
+    print(f"Feasibility (exact cover)     : \
+        {'Feasible ✅' if feasible else f'Infeasible ❌ (violation={viol})'}")
 
     if Q is not None:
         qobj = qubo_objective(x, Q, const_offset=const_offset)
@@ -201,9 +197,7 @@ def summarize_solution(
     if best_ilp_cost is not None:
         if feasible:
             gap = (ilp_val - best_ilp_cost) / best_ilp_cost * 100.0
-            print(
-                f"Gap to ILP optimum           : {gap:.2f}%  (opt = {best_ilp_cost:g})"
-            )
+            print(f"Gap to ILP optimum           : {gap:.2f}%  (opt = {best_ilp_cost:g})")
         else:
             print("Gap to ILP optimum           : N/A (infeasible)")
 

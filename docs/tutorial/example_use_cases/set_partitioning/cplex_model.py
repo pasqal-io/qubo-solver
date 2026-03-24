@@ -87,9 +87,7 @@ def solve_cplex(
     print("Status   :", status_str)
     print("Objective:", obj_val)
     best_ilp_cost = obj_val
-    pprint_solution(
-        x_star, subsets, items, nb_items, nb_partitions, A, w, title="Optimal"
-    )
+    pprint_solution(x_star, subsets, items, nb_items, nb_partitions, A, w, title="Optimal")
 
     print(f"\nExecution time: {solve_time:.4f} s")
     return best_ilp_cost
@@ -125,14 +123,10 @@ def populate_solution_pool(
     # Sort by objective
     sorted_solutions = sorted(unique.items(), key=lambda kv: kv[1][0])
 
-    print(
-        f"\n=== SOLUTION POOL (unique = {len(sorted_solutions)}, \
-        total CPLEX pool = {num_solutions}) ==="
-    )
+    print(f"\n=== SOLUTION POOL (unique = {len(sorted_solutions)}, \
+        total CPLEX pool = {num_solutions}) ===")
     max_show = min(10, len(sorted_solutions))
-    for rank, (bitstr, (cost_k, vals_k)) in enumerate(
-        sorted_solutions[:max_show], start=1
-    ):
+    for rank, (bitstr, (cost_k, vals_k)) in enumerate(sorted_solutions[:max_show], start=1):
         print(f"\n-- Solution #{rank} --")
         print("Objective:", cost_k)
         print("Bitstring:", bitstr, "(order:", ",".join(subsets) + ")")
