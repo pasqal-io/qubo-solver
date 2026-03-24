@@ -7,7 +7,8 @@ import numpy as np
 import torch
 from skopt import gp_minimize
 
-from pulser.devices import AnalogDevice
+from pulser.devices import AnalogDevice as PulserAnalogDevice
+from qoolqit.devices import AnalogDevice as QoolqitAnalogDevice
 from qoolqit import Register, QuantumProgram, Drive
 from qoolqit.waveforms import Interpolated as InterpolatedWaveform
 from qubosolver import concepts
@@ -72,8 +73,7 @@ class BaseDriveShaper(ABC):
         weights_list = torch.abs(torch.diag(self.qubo_coefficients)).tolist()
         max_node_weight = max(weights_list) if weights_list else 1.0
         norm_weights_list = [
-            (1 - (w / max_node_weight)) / TIME if max_node_weight != 0 else 0.0
-            for w in weights_list
+            (1 - (w / max_node_weight)) if max_node_weight != 0 else 0.0 for w in weights_list
         ]
         return norm_weights_list
 
@@ -193,7 +193,7 @@ class AdiabaticDriveShaper(BaseDriveShaper):
 
         # enforces AnalogDevice max sequence duration if device has no max
         max_seq_duration_ = (
-            self.device._device.max_sequence_duration or AnalogDevice.max_sequence_duration
+            self.device._device.max_sequence_duration or PulserAnalogDevice.max_sequence_duration
         )
         assert max_seq_duration_ is not None
 
@@ -249,7 +249,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
     def _scale_omega_for_device_constraints(self, omega_wave_units: float) -> float:
         """
         Ensure omega respects Pulser channel constraints in *waveform units*
-        (i.e., the units used inside InterpolatedWaveform samples after division by TIME).
+        (i.e., the units used inside InterpolatedWaveform samples after division by ENERGY).
         """
         rydberg_global = self.device._device.channels["rydberg_global"]
         min_avg_amp = rydberg_global.min_avg_amp
@@ -277,7 +277,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
 
     def _get_hw_detuning_bound(self) -> float | None:
         ch = self.device._device.channels["rydberg_global"]
-        return ch.max_abs_detuning
+        return cast(float | None, ch.max_abs_detuning)
 
     def _get_hw_dmm_bound(self) -> float | None:
         # DMM channels (if present) — best-effort
@@ -345,15 +345,14 @@ class HeuristicDriveShaper(BaseDriveShaper):
 
         # Sequence duration
         max_seq_duration_ = (
-            self.device._device.max_sequence_duration or AnalogDevice.max_sequence_duration
+            self.device._device.max_sequence_duration or QoolqitAnalogDevice()._max_duration
         )
         assert max_seq_duration_ is not None
-        max_seq_duration = max_seq_duration_ / TIME  # waveform time units
+        max_seq_duration = max_seq_duration_ / TIME
 
         # Hardware detuning bounds (global)
         max_abs_det = self._get_hw_detuning_bound()
-        if max_abs_det is None:
-            max_abs_det = 1e6  # fallback
+        assert max_abs_det is not None
 
         delta_g_min = -float(max_abs_det) / ENERGY
         delta_g_max = float(max_abs_det) / ENERGY
@@ -363,11 +362,21 @@ class HeuristicDriveShaper(BaseDriveShaper):
             max_abs_dmm = self._get_hw_dmm_bound()
             if max_abs_dmm is None:
                 max_abs_dmm = max_abs_det
-            delta_dmm_max = float(max_abs_dmm)
+            delta_dmm_max = float(max_abs_dmm) / ENERGY
         else:
             delta_dmm_max = 0.0
 
+        # Diagonal stats (NO /TIME here)
         diag = torch.diag(Q)
+        if diag.numel() == 0:
+            # trivial
+            eps = 1e-9
+            amp_wave = InterpolatedWaveform(max_seq_duration, [eps, eps])
+            det_wave = InterpolatedWaveform(max_seq_duration, [0.0, 0.0])
+            return Drive(
+                amplitude=amp_wave, detuning=det_wave, weighted_detunings=None
+            ), QUBOSolution(torch.Tensor(), torch.Tensor())
+
         qmin = float(torch.min(diag).cpu().item())
         qmax = float(torch.max(diag).cpu().item())
 
@@ -412,7 +421,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
         if escale <= 1e-15:
             escale = 1.0
 
-        # Choose Omega_max (energy units), then convert to waveform units (/TIME)
+        # Choose Omega_max (energy units), then convert to waveform units (/ENERGY)
         kappa = float(getattr(self.config.drive_shaping, "heuristic_kappa", 0.25))
         omega_max_energy = kappa * escale
 
@@ -429,7 +438,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
         delta_0 = delta_g_min
         delta_0 = self._clip(delta_0, delta_g_min, delta_g_max)
 
-        # Convert detunings to waveform units (/TIME)
+        # Convert detunings to waveform units (/ENERGY)
         delta_0_w = delta_0 / ENERGY
         delta_g_T_w = delta_g_T / ENERGY
         delta_dmm_T_w = delta_dmm_T / ENERGY  # negative or 0
@@ -643,15 +652,15 @@ class OptimizedDriveShaper(BaseDriveShaper):
             Drive: Drive sequence.
         """
         # enforces AnalogDevice max sequence duration since Digital's has no max duration
-        max_seq_duration_ = AnalogDevice.max_sequence_duration
-        assert max_seq_duration_ is not None
+        assert PulserAnalogDevice.max_sequence_duration is not None
+        max_seq_duration: float = float(PulserAnalogDevice.max_sequence_duration)
 
-        TIME, _, _ = self.device.converter.factors
-        max_seq_duration = max_seq_duration_ / TIME
+        TIME, ENERGY, _ = self.device.converter.factors
+        max_seq_duration = max_seq_duration / TIME
         amp_params = [1e-9] + list(params[:3]) + [1e-9]
         det_params = [params[3]] + list(params[4:]) + [params[3]]
-        amp_params = [p / TIME for p in amp_params]
-        det_params = [p / TIME for p in det_params]
+        amp_params = [p / ENERGY for p in amp_params]
+        det_params = [p / ENERGY for p in det_params]
 
         amp_wave = InterpolatedWaveform(max_seq_duration, amp_params)
         det_wave = InterpolatedWaveform(max_seq_duration, det_params)
