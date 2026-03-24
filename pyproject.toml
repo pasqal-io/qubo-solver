@@ -91,7 +91,6 @@ allow-ambiguous-features = true
 installer = "uv"
 features = ["dev"]
 
-
 [tool.hatch.envs.default.scripts]
 test = "pytest --ignore=./tests/test_examples.py --ignore=./tests/test_notebooks.py"
 test-notebooks = "pytest ./tests/test_notebooks.py {args}"
