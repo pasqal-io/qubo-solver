@@ -144,7 +144,8 @@ def test_normalized_weights_in_drive(
         norm_weights = list(wdetuning[0].weights.values())
         weights = torch.abs(torch.diag(simple_qubo_instance.coefficients)).tolist()
         max_w = max(weights)
-        expected_norm = [(1 - (w / max_w)) for w in weights]
+        TIME = default_config.device.converter.factors[0]
+        expected_norm = [(1 - (w / max_w)) / TIME for w in weights]
 
         assert pytest.approx(norm_weights, rel=1e-6) == expected_norm
         assert wdetuning[0].waveform.min() < 0
