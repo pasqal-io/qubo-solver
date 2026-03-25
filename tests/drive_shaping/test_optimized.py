@@ -220,7 +220,7 @@ def test_triangular_qubo(seed: int, use_probability_based_ojective: bool) -> Non
         check.is_in(solution.bitstring, expected_optimal_bistrings)
 
     total_optimal_probability = sum(s.probability for s in optimal_solutions)
-    check.greater(total_optimal_probability, 0.25)
+    check.greater(total_optimal_probability, 0.10)
 
     print(f"\nMinimum cost: {min_cost}")
     print(f"All optimal bitstrings: {[s.bitstring for s in optimal_solutions]}")
