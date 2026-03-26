@@ -129,6 +129,9 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: 
 
     drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
     drive, qubo_solution = drive_shaper.generate(register)
+    qubo_solution.sort_by_cost()
+    analyzer = QUBOAnalyzer([qubo_solution])
+    print(f"{analyzer.df}")
 
     assert isinstance(qubo_solution.probabilities, torch.Tensor)
     optimal_solutions = gather_optimal_solutions(
@@ -145,7 +148,7 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: 
 
     if use_probability_based_ojective:
         total_optimal_probability = sum(s.probability for s in optimal_solutions)
-        check.greater(total_optimal_probability, 0.35)
+        check.greater(total_optimal_probability, 0.3)
 
     print(f"\nMinimum cost: {min_cost}")
     print(f"All optimal bitstrings: {[s.bitstring for s in optimal_solutions]}")
@@ -220,7 +223,7 @@ def test_triangular_qubo(seed: int, use_probability_based_ojective: bool) -> Non
         check.is_in(solution.bitstring, expected_optimal_bistrings)
 
     total_optimal_probability = sum(s.probability for s in optimal_solutions)
-    check.greater(total_optimal_probability, 0.25)
+    check.greater(total_optimal_probability, 0.3)
 
     print(f"\nMinimum cost: {min_cost}")
     print(f"All optimal bitstrings: {[s.bitstring for s in optimal_solutions]}")

@@ -66,6 +66,7 @@ class DriveType(Enum):
 
     ADIABATIC = "adiabatic"
     OPTIMIZED = "optimized"
+    HEURISTIC = "heuristic"
 
 
 class SolutionStatusType(StrEnum):

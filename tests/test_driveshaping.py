@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 import torch
 from pulser.devices import AnalogDevice
+import pytest_check as check
 from qoolqit.register import Register
 from qoolqit.drive import Drive
 from qubosolver.config import DriveShapingConfig, SolverConfig
@@ -10,10 +11,11 @@ from qubosolver.data import QUBOSolution
 from qubosolver.pipeline.drive import (
     AdiabaticDriveShaper,
     OptimizedDriveShaper,
+    HeuristicDriveShaper,
     get_drive_shaper,
 )
 from qubosolver.qubo_instance import QUBOInstance
-from qubosolver.qubo_types import DriveType
+from qubosolver.qubo_types import DriveType, SolutionStatusType
 
 
 @pytest.fixture
@@ -120,11 +122,14 @@ def test_generate_optimized_drive_shaper(
     assert opt_res[-1]["cost_eval"] == float(1e4)
 
 
-@pytest.mark.parametrize("drive_method", list(DriveType))
+# skip heuristic-drive as its normalization is very specific
+@pytest.mark.parametrize("drive_method", ["adiabatic", "optimized"])
 @pytest.mark.parametrize("dmm", [True, False])
 def test_normalized_weights_in_drive(
     drive_method: str, dmm: bool, dummy_register: Register, simple_qubo_instance: QUBOInstance
 ) -> None:
+    if dmm and drive_method is DriveType.HEURISTIC:
+        pytest.skip("Not implemented")
     default_config = SolverConfig(
         use_quantum=True,
         drive_shaping=DriveShapingConfig(drive_shaping_method=drive_method, dmm=dmm),
@@ -139,8 +144,7 @@ def test_normalized_weights_in_drive(
         norm_weights = list(wdetuning[0].weights.values())
         weights = torch.abs(torch.diag(simple_qubo_instance.coefficients)).tolist()
         max_w = max(weights)
-        TIME = default_config.device.converter.factors[0]
-        expected_norm = [(1 - (w / max_w)) / TIME for w in weights]
+        expected_norm = [(1 - (w / max_w)) for w in weights]
 
         assert pytest.approx(norm_weights, rel=1e-6) == expected_norm
         assert wdetuning[0].waveform.min() < 0
@@ -171,3 +175,63 @@ def test_custom_drive_shaper(simple_qubo_instance: QUBOInstance) -> None:
     backend = config.backend
     shaper = get_drive_shaper(simple_qubo_instance, config, backend)
     assert isinstance(shaper, MockAdiabaticdriveShaper)
+
+
+@pytest.mark.parametrize("dmm", [True, False])
+def test_heuristic_drive_get_hw_dmm_bound(dmm: bool, simple_qubo_instance: QUBOInstance) -> None:
+
+    default_config = SolverConfig(
+        use_quantum=True,
+        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.HEURISTIC, dmm=dmm),
+    )
+    shaper = get_drive_shaper(simple_qubo_instance, default_config, default_config.backend)
+    assert isinstance(shaper, HeuristicDriveShaper)
+
+    check.is_none(shaper._get_hw_dmm_bound())
+
+
+def test_heuristic_drive_compute_alpha_diag_max(simple_qubo_instance: QUBOInstance) -> None:
+
+    default_config = SolverConfig(
+        use_quantum=True,
+        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.HEURISTIC),
+    )
+    shaper = get_drive_shaper(simple_qubo_instance, default_config, default_config.backend)
+    assert isinstance(shaper, HeuristicDriveShaper)
+
+    check.almost_equal(shaper._compute_alpha_diag_max(0.0, 0.0, -2.0, 5.0, 3.0), 1.0)
+    check.almost_equal(shaper._compute_alpha_diag_max(-2.0, -2.0, -2.0, 5.0, 3.0), 2.5)
+    check.almost_equal(shaper._compute_alpha_diag_max(2.0, 2.0, -2.0, 5.0, 3.0), 1.0)
+
+    check.almost_equal(shaper._compute_alpha_diag_max(0.0, 4.0, -2.0, 5.0, 3.0), 0.75)
+    check.almost_equal(shaper._compute_alpha_diag_max(-2.0, 4.0, -2.0, 5.0, 3.0), 0.5)
+    check.almost_equal(shaper._compute_alpha_diag_max(2.0, 4.0, -2.0, 5.0, 3.0), 1.0)
+
+
+def test_generate_heuristic_drive_shaper(
+    dummy_register: Register,
+    simple_qubo_instance: QUBOInstance,
+) -> None:
+    default_config = SolverConfig(
+        use_quantum=True,
+        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.HEURISTIC),
+    )
+    backend = default_config.backend
+    shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)
+    assert isinstance(shaper, HeuristicDriveShaper)
+    drive, solution = shaper.generate(dummy_register)
+
+    assert isinstance(drive, Drive)
+    assert isinstance(solution, QUBOSolution)
+    check.equal(solution.solution_status, SolutionStatusType.UNPROCESSED)
+
+    check.almost_equal(drive.duration, 94.248, abs=1.0e-3)
+    check.almost_equal(drive.phase, 0.0)
+
+    check.equal(drive.amplitude.duration, drive.duration)
+    check.almost_equal(drive.amplitude.min(), 1e-9, abs=1e-10)
+    check.almost_equal(drive.amplitude.max(), 0.1018, abs=1e-4)
+
+    check.equal(drive.detuning.duration, drive.duration)
+    check.almost_equal(drive.detuning.min(), -0.5092, abs=1e-4)
+    check.almost_equal(drive.detuning.max(), 0.4074, abs=1e-4)

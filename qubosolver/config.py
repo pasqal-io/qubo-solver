@@ -264,9 +264,9 @@ class DriveShapingConfig(Config):
         optimized_n_calls (int, optional): Number of calls for the optimization process.
             Defaults to 20. Note the optimizer accepts a minimal value of 12.
         optimized_initial_omega_parameters (List[float], optional): Default initial omega parameters
-            for the drive. Defaults to Omega = (5, 10, 5).
+            for the drive. Defaults to Omega = (1, 2, 1).
         optimized_initial_detuning_parameters (List[float], optional): Default initial detuning parameters
-            for the drive. Defaults to delta = (-10, 0, 10).
+            for the drive. Defaults to delta = (-2, 0, 2).
         optimized_custom_qubo_cost (Callable[[str, torch.Tensor], float], optional): Apply a different
             qubo cost evaluation
             than the default QUBO evaluation defined in
@@ -298,18 +298,18 @@ class DriveShapingConfig(Config):
     optimized_n_calls: int = 20
     optimized_initial_omega_parameters: list[float] = field(
         default_factory=lambda: [
-            5.0,
-            10.0,
-            5.0,
+            1.0,
+            2.0,
+            1.0,
         ]
-    )  # ---> default initial drive parameters: Omega = (5, 10, 5)
+    )  # ---> default initial drive parameters: Omega = (1, 2, 1)
     optimized_initial_detuning_parameters: list[float] = field(
         default_factory=lambda: [
-            -10.0,
+            -2.0,
             0.0,
-            10.0,
+            2.0,
         ]
-    )  # ---> default initial drive parameters: delta = (-10, 0, 10)
+    )  # ---> default initial drive parameters: delta = (-2, 0, 2)
     optimized_custom_qubo_cost: Callable[[str, torch.Tensor], float] | None = None
     optimized_custom_objective: Callable[[list, list, list, list, float, str], float] | None = None
     optimized_callback_objective: Callable[..., None] | None = None
@@ -341,6 +341,8 @@ class DriveShapingConfig(Config):
             u = val.upper()
             if u == DriveType.ADIABATIC.name:
                 return DriveType.ADIABATIC
+            elif u == DriveType.HEURISTIC.name:
+                return DriveType.HEURISTIC
             elif u == DriveType.OPTIMIZED.name:
                 return DriveType.OPTIMIZED
             else:
