@@ -255,7 +255,7 @@ class DriveShapingConfig(Config):
 
     Attributes:
         drive_shaping_method (str | DriveType | type[BaseDriveShaper], optional): Drive shaping
-            method used. Defauts to `DriveType.ADIABATIC`.
+            method used. Defaults to `DriveType.HEURISTIC`.
         dmm (bool, optional): Whether to use a detuning map when applying drive shaping or not.
             This adds WeightedDetuning with a Constant Waveform.
             Defaults to True, which applies DMM.

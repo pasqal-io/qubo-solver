@@ -12,9 +12,9 @@ It returns:
 - an instance of `qoolqit.Drive`
 - a `QUBOSolution` specyfing the solution that may be used by a solver.
 
-For concrete examples, we have the [`AdiabaticDriveShaper`](./adiabatic.md) and the [`OptimizedDriveShaper`](./optimized.md) and their current implementations lie in `qubosolver.pipeline.drive.py`.
+For concrete examples, we have the [`HeuristicDriveShaper`](./heuristic.md) and the [`OptimizedDriveShaper`](./optimized.md) and their current implementations lie in `qubosolver.pipeline.drive.py`.
 
-Let us show an example of custom Adiabatic drive shaper but with a duration divided by 20.
+Let us show an example of a custom Heuristic drive shaper but with a duration divided by 20.
 
 ```python exec="on" source="material-block" html="1"
 import typing

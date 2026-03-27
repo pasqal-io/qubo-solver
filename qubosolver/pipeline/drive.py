@@ -107,118 +107,6 @@ class BaseDriveShaper(ABC):
         pass
 
 
-class AdiabaticDriveShaper(BaseDriveShaper):
-    """
-    A Standard Adiabatic Drive shaper.
-    """
-
-    def _find_max_interaction_coeff_vectorized(self) -> float:
-        """
-        Finds the maximum q_ij such that q_ii + q_jj + q_ij + q_ji < 0,
-        using vectorized operations.
-
-        Returns:
-            float: The maximum q_ij value found, inf if no value satisfies
-                the confition.
-        """
-        Q = self.qubo_coefficients
-        n = Q.shape[0]
-        i_indices, j_indices = torch.meshgrid(torch.arange(n), torch.arange(n), indexing="ij")
-        q_ii = Q[i_indices, i_indices]
-        q_jj = Q[j_indices, j_indices]
-
-        q_ij = Q[i_indices, j_indices]
-        q_ji = Q[j_indices, i_indices]
-
-        condition_mask = (q_ii + q_jj + q_ij + q_ji) < 0
-        valid_q_ij_values = Q[condition_mask]
-        if valid_q_ij_values.numel() == 0:
-            return float("inf")
-
-        return float(torch.max(valid_q_ij_values).cpu().item())
-
-    def generate(
-        self,
-        register: Register,
-    ) -> tuple[Drive, QUBOSolution]:
-        """
-        Generate an adiabatic drive based on the QUBO instance and physical register.
-
-        Args:
-            register (Register): The physical register layout for the quantum system.
-
-        Returns:
-            tuple[Drive, QUBOSolution | None]:
-                - Drive: A generated Drive object.
-                - QUBOSolution: An instance of the qubo solution
-                    - str | None: The bitstring (solution) -> Not computed
-                    - float | None: The cost (energy value) -> Not computed
-                    - float | None: The probabilities for each bitstring -> Not computed
-                    - float | None: The counts of each bitstring -> Not computed
-        """
-
-        # for conversions to qoolqit
-        TIME, ENERGY, _ = self.device.converter.factors
-        QUBO = self.qubo_coefficients
-
-        norm_weights_list = self._compute_norm_weights()
-
-        off_diag = QUBO[
-            ~torch.eye(QUBO.shape[0], dtype=torch.bool)
-        ]  # Selecting off-diagonal terms of the Qubo with a mask
-
-        # device constraints
-        rydberg_global = self.device._device.channels["rydberg_global"]
-        min_avg_amp = rydberg_global.min_avg_amp
-        max_amp = rydberg_global.max_amp
-
-        Omega = torch.mean(off_diag).item()
-        sign = 1.0 if Omega >= 0 else -1.0
-        mag = abs(Omega)
-        if min_avg_amp:
-            # to make the average values higher then the minimum
-            # use the average value of a parabola for
-            # the amplitude waveform with Omega
-            mag = max(mag, ENERGY * (3.0 * (min_avg_amp + 1e-9) / 2.0))
-        if max_amp:
-            mag = min(
-                mag,
-                max_amp - 1e-9,
-            )
-        Omega = sign * mag
-
-        delta_0 = torch.min(torch.diag(QUBO)).item()
-        delta_f = -delta_0
-
-        # enforces AnalogDevice max sequence duration if device has no max
-        max_seq_duration_ = (
-            self.device._device.max_sequence_duration or PulserAnalogDevice.max_sequence_duration
-        )
-        assert max_seq_duration_ is not None
-
-        max_seq_duration = max_seq_duration_ / TIME
-        Omega /= TIME
-        delta_0 /= TIME
-        delta_f /= TIME
-
-        amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9 / TIME, Omega, 1e-9 / TIME])
-        det_wave = InterpolatedWaveform(max_seq_duration, [delta_0, 0, delta_f])
-
-        wdetunings = None
-        if self.dmm and delta_f > 0:
-            wdetunings = weighted_detunings(
-                register,
-                max_seq_duration,
-                norm_weights_list,
-                -delta_f,
-            )
-
-        shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=wdetunings)
-        solution = QUBOSolution(torch.Tensor(), torch.Tensor())
-
-        return shaped_drive, solution
-
-
 class HeuristicDriveShaper(BaseDriveShaper):
     """
     Heuristic schedule drive shaper.
@@ -777,9 +665,7 @@ def get_drive_shaper(
     Returns:
         (BaseDriveShaper): The representative Drive Shaper object.
     """
-    if config.drive_shaping.drive_shaping_method == DriveType.ADIABATIC:
-        return AdiabaticDriveShaper(instance, config, backend)
-    elif config.drive_shaping.drive_shaping_method == DriveType.HEURISTIC:
+    if config.drive_shaping.drive_shaping_method == DriveType.HEURISTIC:
         return HeuristicDriveShaper(instance, config, backend)
     elif config.drive_shaping.drive_shaping_method == DriveType.OPTIMIZED:
         return OptimizedDriveShaper(instance, config, backend)

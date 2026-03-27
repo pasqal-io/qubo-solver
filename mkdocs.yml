@@ -15,7 +15,7 @@ nav:
       - Utilities: content/utilities.md
     - Quantum solver components:
       - Drive Shaping:
-        - Adiabatic Drive: content/driveshaping/adiabatic.md
+        - Heuristic Drive: content/driveshaping/heuristic.md
         - Optimized Drive: content/driveshaping/optimized.md
         - Custom: content/driveshaping/custom.md
       - Embedding: content/embedding.md
