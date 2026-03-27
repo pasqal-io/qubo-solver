@@ -9,7 +9,6 @@ import torch
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator, model_serializer
 
 from pulser_simulation import QutipBackendV2
-from pulser.devices import DigitalAnalogDevice as PulserDigitalAnalogDevice
 from qoolqit.devices.device import Device, DigitalAnalogDevice
 from qoolqit.execution import LocalEmulator, RemoteEmulator, QPU
 from pulser_pasqal import PasqalCloud
@@ -160,9 +159,12 @@ class EmbeddingConfig(Config):
         greedy_layout (LayoutType | str, optional): Layout type for the
             greedy embedder method. Defaults to `LayoutType.TRIANGULAR`.
         greedy_traps (int, optional): The number of traps on the register.
-            Defaults to `pulser.DigitalAnalogDevice.min_layout_traps`.
+            Defaults to ``1000``. A higher value improves embedding quality at the cost of
+            increased computation time.
+            Setting it too high may produce a register that exceeds the capacity of the
+            selected device.
         greedy_spacing (float, optional): The minimum distance between atoms.
-            Defaults to `pulser.PulserDigitalAnalogDevice.min_atom_distance`.
+            Defaults to 7 (μm).
         greedy_density (float, optional): The estimated density of the QUBO matrix.
             Defaults to None.
         blade_steps_per_round (int, optional): The number of steps
@@ -181,8 +183,8 @@ class EmbeddingConfig(Config):
 
     embedding_method: Any = EmbedderType.GREEDY
     greedy_layout: LayoutType | str = LayoutType.TRIANGULAR
-    greedy_traps: int = PulserDigitalAnalogDevice.min_layout_traps
-    greedy_spacing: float = float(PulserDigitalAnalogDevice.min_atom_distance)
+    greedy_traps: int = 1000
+    greedy_spacing: float = 7.0
     greedy_density: float | None = None
     blade_steps_per_round: int | None = 200
     blade_starting_positions: torch.Tensor | None = None
@@ -461,15 +463,10 @@ class SolverConfig(Config):
         print(self.specs())
 
     @model_validator(mode="after")
-    def _set_greedy_traps_greedy_spacing_from_device(self) -> SolverConfig:
+    def _set_greedy_spacing_from_device(self) -> SolverConfig:
 
         if self.device:
             device = self.device._device
-            if hasattr(device, "min_layout_traps"):
-                if self.embedding.greedy_traps < device.min_layout_traps:
-                    self.embedding = self.embedding.model_copy(
-                        update={"greedy_traps": device.min_layout_traps}
-                    )
             if hasattr(device, "min_atom_distance"):
                 greedy_spacing_device = float(device.min_atom_distance)
                 if self.embedding.greedy_spacing < greedy_spacing_device:

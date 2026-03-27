@@ -130,6 +130,11 @@ class GreedyEmbedder(BaseEmbedder):
                 "Number of traps must be at least equal to the number of atoms on the register."
             )
 
+        if self.config.embedding.greedy_traps < 2 * self.instance.size:
+            warnings.warn(
+                f"GreedyEmbedder: Number of traps ({self.config.embedding.greedy_traps}) is less than twice the number of atoms ({self.instance.size}). You might want to increase the number of traps to get a better embedding."
+            )
+
         # compute density (unchanged)
         self.config.embedding.greedy_density = calculate_density(
             self.instance.coefficients, self.instance.size

@@ -20,9 +20,7 @@ def test_embeddings_different_devices(
 ) -> None:
     config = SolverConfig(
         use_quantum=True,
-        embedding=EmbeddingConfig(
-            embedding_method=embedding_method, greedy_traps=qubo_for_testing_many_devices.size
-        ),
+        embedding=EmbeddingConfig(embedding_method=embedding_method, greedy_traps=500),
         do_postprocessing=False,
         do_preprocessing=False,
         device=local_device,
@@ -50,7 +48,9 @@ def test_correctness_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) 
     config = SolverConfig(
         use_quantum=True,
         embedding=EmbeddingConfig(
-            embedding_method="greedy", greedy_traps=qubo_instance_for_embedding.size
+            embedding_method="greedy",
+            greedy_traps=qubo_instance_for_embedding.size,
+            greedy_spacing=4.0,
         ),
     )
     solver = QuboSolver(qubo_instance_for_embedding, config)
