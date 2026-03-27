@@ -50,7 +50,7 @@ The following uses the greedy embedding method on a triangular lattice layout wi
 ```python exec="on" source="material-block" html="1" session="embedding"
 from qoolqit import AnalogDevice
 
-embedconfig = EmbeddingConfig(embedding_method="greedy", greedy_traps=500), greedy_layout="triangular",)
+embedconfig = EmbeddingConfig(embedding_method="greedy", greedy_traps=500, greedy_layout="triangular")
 greedy_config = SolverConfig(
     use_quantum=True,
     embedding=embedconfig,

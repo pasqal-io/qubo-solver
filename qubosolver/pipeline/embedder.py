@@ -36,6 +36,7 @@ class BaseEmbedder(ABC):
         self.register: QoolqitRegister | None = None
         self.backend = backend
 
+        # TODO: remove when bumping to qoolqit v1
         # for converting to qoolqit
         self._distance_conversion = self.config.device.converter.factors[2]
 
