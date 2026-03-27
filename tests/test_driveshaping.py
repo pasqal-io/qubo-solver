@@ -9,7 +9,6 @@ from qoolqit.drive import Drive
 from qubosolver.config import DriveShapingConfig, SolverConfig
 from qubosolver.data import QUBOSolution
 from qubosolver.pipeline.drive import (
-    AdiabaticDriveShaper,
     OptimizedDriveShaper,
     HeuristicDriveShaper,
     get_drive_shaper,
@@ -24,7 +23,7 @@ def dummy_register() -> Register:
     return register
 
 
-def test_generate_returns_drive_and_solution_adiabatic(
+def test_generate_returns_drive_and_solution_heuristic(
     dummy_register: Register, simple_qubo_instance: QUBOInstance
 ) -> None:
     default_config = SolverConfig(use_quantum=True)
@@ -47,7 +46,7 @@ def test_generate_returns_drive_and_solution_optimized(
 ) -> None:
     default_config = SolverConfig(use_quantum=True, drive_shaping=optimized_drive_shaping)
     backend = default_config.backend
-    shaper = AdiabaticDriveShaper(simple_qubo_instance, default_config, backend)
+    shaper = HeuristicDriveShaper(simple_qubo_instance, default_config, backend)
     drive, solution = shaper.generate(dummy_register)
 
     assert isinstance(drive, Drive)
@@ -123,7 +122,7 @@ def test_generate_optimized_drive_shaper(
 
 
 # skip heuristic-drive as its normalization is very specific
-@pytest.mark.parametrize("drive_method", ["adiabatic", "optimized"])
+@pytest.mark.parametrize("drive_method", ["heuristic", "optimized"])
 @pytest.mark.parametrize("dmm", [True, False])
 def test_normalized_weights_in_drive(
     drive_method: str, dmm: bool, dummy_register: Register, simple_qubo_instance: QUBOInstance
@@ -165,16 +164,16 @@ def test_drive_duration_set(dummy_register: Register, simple_qubo_instance: QUBO
 
 def test_custom_drive_shaper(simple_qubo_instance: QUBOInstance) -> None:
 
-    class MockAdiabaticdriveShaper(AdiabaticDriveShaper):
+    class MockHeuristicDriveShaper(HeuristicDriveShaper):
         pass
 
     config = SolverConfig(
         use_quantum=True,
-        drive_shaping=DriveShapingConfig(drive_shaping_method=MockAdiabaticdriveShaper),
+        drive_shaping=DriveShapingConfig(drive_shaping_method=MockHeuristicDriveShaper),
     )
     backend = config.backend
     shaper = get_drive_shaper(simple_qubo_instance, config, backend)
-    assert isinstance(shaper, MockAdiabaticdriveShaper)
+    assert isinstance(shaper, MockHeuristicDriveShaper)
 
 
 @pytest.mark.parametrize("dmm", [True, False])

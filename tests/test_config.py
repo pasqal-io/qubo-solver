@@ -46,7 +46,7 @@ def test_classical_part() -> None:
 
 def test_pulseshape_part() -> None:
     default_pshaper = DriveShapingConfig()
-    assert default_pshaper.drive_shaping_method == DriveType.ADIABATIC
+    assert default_pshaper.drive_shaping_method == DriveType.HEURISTIC
     assert not default_pshaper.optimized_re_execute_opt_drive
 
     assert len(default_pshaper.optimized_initial_detuning_parameters) == 3

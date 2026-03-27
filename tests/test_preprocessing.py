@@ -262,7 +262,7 @@ def test_reduce_qubo_2() -> None:
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("drive_method", [DriveType.ADIABATIC])
+@pytest.mark.parametrize("drive_method", [DriveType.HEURISTIC])
 @pytest.mark.parametrize("embedding_method", [EmbedderType.GREEDY])
 @pytest.mark.parametrize("preprocessing", [True, False])
 @pytest.mark.parametrize("dmm", [True, False])
