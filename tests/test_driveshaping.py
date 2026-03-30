@@ -121,12 +121,12 @@ def test_generate_optimized_drive_shaper(
     assert opt_res[-1]["cost_eval"] == float(1e4)
 
 
-# skip heuristic-drive as its normalization is very specific
-@pytest.mark.parametrize("drive_method", ["heuristic", "optimized"])
+@pytest.mark.parametrize("drive_method", list(DriveType))
 @pytest.mark.parametrize("dmm", [True, False])
 def test_normalized_weights_in_drive(
-    drive_method: str, dmm: bool, dummy_register: Register, simple_qubo_instance: QUBOInstance
+    drive_method: DriveType, dmm: bool, dummy_register: Register, simple_qubo_instance: QUBOInstance
 ) -> None:
+    # skip heuristic-drive as its normalization is very specific
     if dmm and drive_method is DriveType.HEURISTIC:
         pytest.skip("Not implemented")
     default_config = SolverConfig(
@@ -138,6 +138,7 @@ def test_normalized_weights_in_drive(
     drive, _ = shaper.generate(dummy_register)
 
     wdetuning = drive.weighted_detunings
+
     if len(wdetuning) > 0:
         assert len(wdetuning) == 1
         norm_weights = list(wdetuning[0].weights.values())
