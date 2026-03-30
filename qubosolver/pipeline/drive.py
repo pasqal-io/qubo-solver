@@ -223,22 +223,28 @@ class HeuristicDriveShaper(BaseDriveShaper):
     """
     Heuristic schedule drive shaper.
 
-    Final target encoding:
-        d_i = -alpha * Q_ii
+    With DMM:
+        Final target encoding:
+            d_i = -alpha * Q_ii
 
-    DMM convention in this stack:
-        WeightedDetuning waveform must be <= 0
+        DMM convention in this stack:
+            WeightedDetuning waveform must be <= 0
 
-    Hence we encode the local final detuning as:
-        delta_i(T) = delta_g(T) + delta_dmm(T) * w_i
+        Hence we encode the local final detuning as:
+            delta_i(T) = delta_g(T) + delta_dmm(T) * w_i
 
-    with:
-        delta_g(T)   = d_max
-        delta_dmm(T) = -(d_max - d_min) <= 0
-        w_i          = (d_max - d_i) / (d_max - d_min) in [0, 1]
+        with:
+            delta_g(T)   = d_max
+            delta_dmm(T) = -(d_max - d_min) <= 0
+            w_i          = (d_max - d_i) / (d_max - d_min) in [0, 1]
 
-    so that:
-        delta_i(T) = d_i
+        so that:
+            delta_i(T) = d_i
+
+    Without DMM:
+        Only a global detuning is available, so the final detuning is chosen as:
+            delta_g(T) = mean(d_i)
+        and no weighted detunings are declared.
     """
 
     @staticmethod
@@ -264,7 +270,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
             return self._get_hw_detuning_bound()
 
         return abs(float(val))
-    
+
     def _get_hw_amp_bound(self) -> float:
         ch = self.device._device.channels["rydberg_global"]
         val = ch.max_amp
@@ -311,14 +317,9 @@ class HeuristicDriveShaper(BaseDriveShaper):
         upper_bounds: list[float] = []
 
         # 1) Global detuning bound:
-        #    delta_g(T) = d_max = -alpha * qmin
-        if abs(qmin) > 1e-15:
-            if qmin < 0:
-                # -alpha*qmin <= delta_g_max
-                upper_bounds.append(delta_g_max / (-qmin))
-            else:
-                # -alpha*qmin >= delta_g_min
-                upper_bounds.append((-delta_g_min) / qmin)
+        # Conservative bound based on max_i |d_i| = alpha * max_i |q_i|
+        if diag_abs_max > 1e-15:
+            upper_bounds.append(delta_g_max / diag_abs_max)
 
         # 2) DMM bound:
         #    |delta_dmm(T)| = alpha * (qmax - qmin)
@@ -377,7 +378,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
         # Heuristic coefficient for omega
         kappa = float(getattr(self.config.drive_shaping, "heuristic_kappa", 0.25))
 
-        # Alpha upper bound from all active constraints
+        # Alpha upper bound from active constraints
         alpha_max = self._compute_alpha_upper_bound(
             qmin=qmin,
             qmax=qmax,
@@ -398,18 +399,24 @@ class HeuristicDriveShaper(BaseDriveShaper):
         d_min = float(np.min(d))
         d_max = float(np.max(d))
 
-        # Final global detuning
-        delta_g_T = self._clip(d_max, delta_g_min, delta_g_max)
+        if self.dmm:
+            # Final global detuning is the top value, DMM pulls down locally
+            delta_g_T = self._clip(d_max, delta_g_min, delta_g_max)
 
-        # DMM convention required by WeightedDetuning:
-        # waveform must be <= 0
-        spread = max(0.0, d_max - d_min)
-        if self.dmm and spread > 1e-15 and delta_dmm_max > 0.0:
-            spread_eff = min(spread, delta_dmm_max)
-            delta_dmm_T = -spread_eff  # must be <= 0
-            denom = d_max - d_min
-            weights = ((d_max - d) / denom).clip(0.0, 1.0).tolist()
+            # DMM convention required by WeightedDetuning:
+            # waveform must be <= 0
+            spread = max(0.0, d_max - d_min)
+            if spread > 1e-15 and delta_dmm_max > 0.0:
+                spread_eff = min(spread, delta_dmm_max)
+                delta_dmm_T = -spread_eff  # must be <= 0
+                denom = d_max - d_min
+                weights = ((d_max - d) / denom).clip(0.0, 1.0).tolist()
+            else:
+                delta_dmm_T = 0.0
+                weights = [0.0] * n
         else:
+            # No DMM: use a single global final detuning
+            delta_g_T = self._clip(float(np.mean(d)), delta_g_min, delta_g_max)
             delta_dmm_T = 0.0
             weights = [0.0] * n
 
@@ -457,7 +464,6 @@ class HeuristicDriveShaper(BaseDriveShaper):
         )
         solution = QUBOSolution(torch.Tensor(), torch.Tensor())
         return shaped_drive, solution
-
 
 class OptimizedDriveShaper(BaseDriveShaper):
     """
