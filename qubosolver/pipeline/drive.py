@@ -219,7 +219,6 @@ class AdiabaticDriveShaper(BaseDriveShaper):
 
         return shaped_drive, solution
 
-
 class HeuristicDriveShaper(BaseDriveShaper):
     """
     Heuristic schedule drive shaper.
@@ -259,9 +258,13 @@ class HeuristicDriveShaper(BaseDriveShaper):
         dmm_channels = list(getattr(self.device._device, "dmm_channels", {}).values())
         if not dmm_channels:
             return 0.0
-        val = getattr(dmm_channels[0], "max_abs_detuning", None)
-        return float(val) if val is not None else self._get_hw_detuning_bound()
 
+        val = getattr(dmm_channels[0], "bottom_detuning", None)
+        if val is None:
+            return self._get_hw_detuning_bound()
+
+        return abs(float(val))
+    
     def _get_hw_amp_bound(self) -> float:
         ch = self.device._device.channels["rydberg_global"]
         val = ch.max_amp
@@ -273,19 +276,15 @@ class HeuristicDriveShaper(BaseDriveShaper):
         Never divide by TIME here.
         """
         ch = self.device._device.channels["rydberg_global"]
-        min_avg_amp = ch.min_avg_amp
-        max_amp = ch.max_amp
 
         # Keep a small safety margin from the hard max
         rel_margin = 0.99
 
-        if max_amp is not None:
-            omega = min(float(omega), float(max_amp) * rel_margin)
+        min_avg_amp = max(ch.min_avg_amp, 1e-12)
+        max_amp = ch.max_amp if ch.max_amp is not None else float("inf")
+        omega = np.clip(omega, min_avg_amp, rel_margin * max_amp)
 
-        if min_avg_amp is not None:
-            omega = max(float(omega), float(min_avg_amp))
-
-        return max(float(omega), 1e-12)
+        return float(omega)
 
     def _compute_alpha_upper_bound(
         self,
@@ -348,24 +347,19 @@ class HeuristicDriveShaper(BaseDriveShaper):
         diag = torch.diag(Q_eff)
         n = diag.numel()
 
-        # Trivial case
-        if n == 0:
-            max_seq_duration = (
-                self.device._device.max_sequence_duration or PulserAnalogDevice.max_sequence_duration
-            )
-            assert max_seq_duration is not None
-
-            eps = 1e-9
-            amp_wave = InterpolatedWaveform(max_seq_duration, [eps, eps])
-            det_wave = InterpolatedWaveform(max_seq_duration, [0.0, 0.0])
-            drive = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=None)
-            return drive, QUBOSolution(torch.Tensor(), torch.Tensor())
-
         # Sequence duration: no division by TIME
         max_seq_duration = (
             self.device._device.max_sequence_duration or PulserAnalogDevice.max_sequence_duration
         )
         assert max_seq_duration is not None
+
+        # Trivial case
+        if n == 0:
+            eps = 1e-9
+            amp_wave = InterpolatedWaveform(max_seq_duration, [eps, eps])
+            det_wave = InterpolatedWaveform(max_seq_duration, [0.0, 0.0])
+            drive = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=None)
+            return drive, QUBOSolution(torch.Tensor(), torch.Tensor())
 
         # Hardware bounds
         max_abs_det = self._get_hw_detuning_bound()
