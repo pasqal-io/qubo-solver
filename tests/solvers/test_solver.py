@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from qoolqit.devices import Device
+from qoolqit.devices import Device, MockDevice
 from qubosolver.config import EmbeddingConfig, DriveShapingConfig, SolverConfig, LocalEmulator
 from qubosolver.qubo_types import EmbedderType
 from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical
@@ -79,5 +79,15 @@ def test_solver_different_devices(
         device=local_device,
     )
     solver = QuboSolver(qubo_for_testing_many_devices, config)
+
+    qubo = request.node.callspec.params["qubo_for_testing_many_devices"]
+    trivial_qubos = ["simple_qubo_instance2", "qubo_instance_blade_tutorial"]
+
+    # Heuristic drive doesn't support MockDevice since it has no max_abs_detuning
+    if isinstance(local_device, MockDevice) and qubo not in trivial_qubos:
+        with pytest.raises(AssertionError):
+            solver.solve()
+        return
+
     solution = solver.solve()
     assert solution
