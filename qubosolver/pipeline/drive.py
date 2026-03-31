@@ -8,7 +8,6 @@ import torch
 from skopt import gp_minimize
 
 from pulser.devices import AnalogDevice as PulserAnalogDevice
-from qoolqit.devices import AnalogDevice as QoolqitAnalogDevice
 from qoolqit import Register, QuantumProgram, Drive
 from qoolqit.waveforms import Interpolated as InterpolatedWaveform
 from qubosolver import concepts
@@ -219,6 +218,7 @@ class AdiabaticDriveShaper(BaseDriveShaper):
 
         return shaped_drive, solution
 
+
 class HeuristicDriveShaper(BaseDriveShaper):
     """
     Heuristic schedule drive shaper.
@@ -338,7 +338,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
 
     def generate(self, register: Register) -> tuple[Drive, QUBOSolution]:
         # Never divide by TIME in this shaper
-        _, ENERGY, _ = self.device.converter.factors
+        TIME, ENERGY, _ = self.device.converter.factors
         Q = self.qubo_coefficients
 
         # Keep current behavior: normalize Q
@@ -348,19 +348,11 @@ class HeuristicDriveShaper(BaseDriveShaper):
         diag = torch.diag(Q_eff)
         n = diag.numel()
 
-        # Sequence duration: no division by TIME
-        max_seq_duration = (
+        max_seq_duration_raw = (
             self.device._device.max_sequence_duration or PulserAnalogDevice.max_sequence_duration
         )
-        assert max_seq_duration is not None
-
-        # Trivial case
-        if n == 0:
-            eps = 1e-9
-            amp_wave = InterpolatedWaveform(max_seq_duration, [eps, eps])
-            det_wave = InterpolatedWaveform(max_seq_duration, [0.0, 0.0])
-            drive = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=None)
-            return drive, QUBOSolution(torch.Tensor(), torch.Tensor())
+        assert max_seq_duration_raw is not None
+        max_seq_duration = float(max_seq_duration_raw) / TIME
 
         # Hardware bounds
         max_abs_det = self._get_hw_detuning_bound()
@@ -464,6 +456,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
         )
         solution = QUBOSolution(torch.Tensor(), torch.Tensor())
         return shaped_drive, solution
+
 
 class OptimizedDriveShaper(BaseDriveShaper):
     """
