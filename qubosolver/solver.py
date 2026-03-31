@@ -298,6 +298,8 @@ class DecomposeQuboSolver(BaseSolver):
             **self.config.model_dump(exclude={"decompose"})
         )
 
+        self._decomposition = [list(range(instance.size))]
+
     def embedding(self) -> Register:
         # This solver doesn't generate an embedding.
         raise NotImplementedError()
@@ -345,7 +347,10 @@ class DecomposeQuboSolver(BaseSolver):
                 transfer_edge_values,
                 update_global_solution,
                 vertices_to_place,
+                positive_vertices_update,
             )
+
+            self._decomposition = []
 
             global_solution = torch.full((self.instance.size,), -1)
             qubo_mat = self.instance.coefficients.clone()
@@ -366,6 +371,9 @@ class DecomposeQuboSolver(BaseSolver):
             )
 
             transfer_edge_values(dict_vertices_to_place, dict(), global_solution, qubo_mat)
+            positive_vertices = positive_vertices_update(dict_vertices_to_place, global_solution)
+            for v in positive_vertices:
+                self._decomposition.append([v])
             while len(dict_vertices_to_place) > self.decomposition_config.decompose_stop_number:
                 # find a first vertex to start the geometric search
                 # random works better according to some performed numerics
@@ -390,6 +398,7 @@ class DecomposeQuboSolver(BaseSolver):
                 # only one bitstring is kept as per design choice of the
                 # decomposition algorithm
                 sub_solution = subsolver.solve().bitstrings[0]
+                self._decomposition.append(list(map_index_vertices.keys()))
                 update_global_solution(
                     global_solution=global_solution,
                     sub_solution=sub_solution,
@@ -402,6 +411,11 @@ class DecomposeQuboSolver(BaseSolver):
                     global_solution,
                     qubo_mat,
                 )
+                positive_vertices = positive_vertices_update(
+                    dict_vertices_to_place, global_solution
+                )
+                for v in positive_vertices:
+                    self._decomposition.append([v])
 
             # classical resolution of last matrix
             matrix_to_solve, mapping_target_vertices = last_target_matrix(
@@ -413,6 +427,8 @@ class DecomposeQuboSolver(BaseSolver):
                 SolverConfig(use_quantum=False, decompose=None),
             )
             sub_solution = lastsolver.solve().bitstrings[0]
+            if mapping_target_vertices:
+                self._decomposition.append(list(mapping_target_vertices.keys()))
             update_global_solution(
                 global_solution=global_solution,
                 sub_solution=sub_solution,

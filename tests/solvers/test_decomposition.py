@@ -1,11 +1,21 @@
 from __future__ import annotations
 
 import pytest
+import pytest_check as check
 import torch
+import itertools
+import numpy as np
+import random
+from typing import Tuple, List
+
+from qoolqit.devices import DigitalAnalogDevice
+from qoolqit import Register
 from qubosolver import QUBOInstance
 
 from qubosolver.config import SolverConfig, DecompositionConfig
 from qubosolver.solver import DecomposeQuboSolver, QuboSolver
+from qubosolver.data import QUBODataset
+from qubosolver.algorithms.decompose import compute_distance_interaction_matrix
 
 
 @pytest.mark.parametrize("use_quantum", [True, False])
@@ -22,6 +32,7 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
         transfer_edge_values,
         update_global_solution,
         vertices_to_place,
+        positive_vertices_update,
     )
 
     size = decomposable_qubo.size
@@ -52,6 +63,7 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     # check that the initial transfer does not affect the length of the dictionary.
     solution = torch.full((size,), -1)
     transfer_edge_values(current_vertices_dict, dict(), solution, qubo_mat)
+    positive_vertices_update(current_vertices_dict, solution)
     assert len(current_vertices_dict) == size
 
     # try one iteration, check placed_vertices length
@@ -86,6 +98,7 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
 
     # test the transfer changes current_vertices_dict with less vertices to place
     transfer_edge_values(current_vertices_dict, placed_vertices, solution, qubo_mat)
+    positive_vertices_update(current_vertices_dict, solution)
     assert len(current_vertices_dict) < size
 
 
@@ -141,3 +154,216 @@ def test_scope(decomposable_qubo: QUBOInstance) -> None:
         ValueError, match="Decomposition does not handle off-diagonal negative coefficients"
     ):
         QuboSolver(QUBOInstance(coeffs), config)
+
+
+def test_compute_distance_interaction_matrix_zero_output() -> None:
+
+    neglecting_inter_distance = 15.0
+    neglecting_max_coefficient = 1.0
+    device = DigitalAnalogDevice()
+
+    Q = torch.tensor(
+        [
+            [0, 1, 2, 3],
+            [1, 0, 4, 5],
+            [2, 4, 0, 6],
+            [3, 5, 6, 0],
+        ],
+        dtype=torch.float32,
+    )
+
+    dist_matrix = compute_distance_interaction_matrix(
+        device._pulser_device, Q, neglecting_inter_distance, neglecting_max_coefficient
+    )
+
+    torch.testing.assert_close(dist_matrix, torch.zeros_like(Q))
+
+
+def test_compute_distance_interaction_diagonal() -> None:
+
+    neglecting_inter_distance = 15.0
+    neglecting_max_coefficient = 1.0
+    device = DigitalAnalogDevice()
+
+    Q = torch.tensor(
+        [
+            [-10, 0, 0, 0],
+            [0, 5, 0, 0],
+            [0, 0, 0.5, 0],
+            [0, 0, 0, 0],
+        ],
+        dtype=torch.float32,
+    )
+
+    dist_matrix = compute_distance_interaction_matrix(
+        device._pulser_device, Q, neglecting_inter_distance, neglecting_max_coefficient
+    )
+    expected_dist_matrix = neglecting_inter_distance * torch.ones_like(Q)
+    expected_dist_matrix.diagonal().copy_(Q.diag())
+
+    torch.testing.assert_close(dist_matrix, expected_dist_matrix)
+
+
+@pytest.mark.usefixtures("restore_rng_state")
+@pytest.mark.parametrize("dims", [(4,), (3,), (3, 3), (2, 3, 2), (4, 3, 2, 3)])
+@pytest.mark.parametrize("seed", [1935225697, 1547, 66987, 55571, 998618750])
+def test_decompose_and_solve_block_qubo(seed: int, dims: Tuple[int]) -> None:
+    """Test that the decomposition solver correctly identifies and solves block-diagonal QUBO matrices.
+
+    The test constructs a block-diagonal QUBO matrix from smaller sub-problems, runs the
+    decomposition solver, and verifies that:
+
+    1. The solver's decomposition is a **refinement** of the block structure, i.e. variables
+       from different blocks are never grouped into the same sub-decomposition.
+    2. The decomposition covers all variables exactly once (it is a partition of ``range(N)``).
+    3. The reconstructed global solution matches one of the known optimal bitstrings, and its
+       cost matches the known optimal cost.
+
+    When ``len(dims) == 1``, the first block is a fixed symmetric 3×3 matrix (with multiple
+    optimal solutions) and the second block is randomly generated with the given dimension.
+    Otherwise, all blocks are randomly generated according to ``dims``.
+
+    Some ``(seed, dims)`` combinations are known to produce imperfect decompositions where the
+    solver splits a block into sub-decompositions that are too small to recover the global
+    optimum. These cases are marked as ``xfail``.
+
+    Args:
+        seed (int): Random seed for reproducibility (controls ``random``, ``torch``, and ``numpy``).
+        dims (Tuple[int, ...]): Dimensions of the individual QUBO blocks that form the
+            block-diagonal matrix.
+    """
+
+    random.seed(seed)
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+
+    if len(dims) == 1:
+        # Symmetric qubo to handle the case with several solutions
+        Q1 = torch.tensor(
+            [
+                [-1, 2, 2],
+                [2, -1, 2],
+                [2, 2, -1],
+            ],
+            dtype=torch.float32,
+        )
+        Q2 = QUBODataset.from_random(n_matrices=1, matrix_dim=dims[0], densities=[1.0])[0][0]
+        blocks = [Q1, Q2]
+        N = Q1.shape[0] + dims[0]
+    else:
+        N = np.sum(dims)
+        blocks = [
+            QUBODataset.from_random(n_matrices=1, matrix_dim=n, densities=[1.0])[0][0] for n in dims
+        ]
+    Q = torch.block_diag(*blocks)
+    check.equal(Q.shape, (N, N))
+    print(f"Qubo matrix:\n{Q}")
+
+    subpb_optimal_bitstrings = []
+    for q in blocks:
+        results = dict()
+        for bits in itertools.product([0, 1], repeat=q.shape[0]):
+            z = torch.tensor(bits, dtype=torch.float32)
+            cost = (z @ q @ z).item()
+            results["".join(str(int(b)) for b in z.flatten())] = cost
+        min_cost = min(c for c in results.values())
+        subpb_optimal_bitstrings.append(
+            {b: c for b, c in results.items() if np.allclose(c, min_cost)}
+        )
+    print(f"Sub-problems optimal bitstrings: {subpb_optimal_bitstrings}")
+
+    subpb_optimal_bitstrings_list = [list(d.items()) for d in subpb_optimal_bitstrings]
+    optimal_bitstrings = {
+        "".join(b for b, _ in sub_results): sum(c for _, c in sub_results)
+        for sub_results in itertools.product(*subpb_optimal_bitstrings_list)
+    }
+
+    print(f"Global optimal bitstrings: {optimal_bitstrings}")
+
+    qubo_instance = QUBOInstance(Q)
+
+    config = SolverConfig(
+        use_quantum=False,
+        decompose=DecompositionConfig(decompose_stop_number=2, decompose_break_placement=0),
+    )
+    solver = QuboSolver(qubo_instance, config)
+    assert isinstance(solver._solver, DecomposeQuboSolver)
+
+    solution = solver.solve()
+    solution.sort_by_cost()
+    print(f"Solution: {solution}")
+    best_solution = "".join(str(b) for b in solution.bitstrings[0].tolist())
+    min_cost = solution.costs[0].item()
+
+    decomposition = solver._solver._decomposition
+    print(f"Decomposition: {decomposition}")
+    sorted_decomposition = sorted([sorted(d) for d in decomposition])
+    print(f"Sorted decomposition: {sorted_decomposition}")
+    block_decomposition = []
+    start = 0
+    for size in [b.shape[0] for b in blocks]:
+        block_decomposition.append(list(range(start, start + size)))
+        start += size
+    print(f"Block decomposition: {block_decomposition}")
+
+    # Decomposition a partition of range(N)
+    indices = sorted([i for sub_decomposition in decomposition for i in sub_decomposition])
+    check.equal(indices, list(range(N)))
+    # Perfect decomposition is a partition of range(N)
+    block_indices = sorted(
+        [i for sub_decomposition in block_decomposition for i in sub_decomposition]
+    )
+    check.equal(block_indices, list(range(N)))
+
+    # Assume that A and B are partitions of range(N)
+    def is_refinement_of(A: List[List[int]], B: List[List[int]]) -> bool:
+        for a in A:
+            if not any(set(a).issubset(b) for b in B):
+                return False
+        return True
+
+    # Examples
+    check.is_true(is_refinement_of([[0], [1], [2, 3]], [[0, 1], [2, 3]]))
+    check.is_false(is_refinement_of([[0], [1], [2, 3]], [[0, 1, 2], [3]]))
+
+    #  The QUBO is a block matrix. The decomposition should be a refinement of the block decomposition,
+    # i.e. two indices from different blocks cannot belong to the same sub-decomposition.
+    # Ideally, the decomposition should match the block decomposition, but the solver may decompose
+    # the QUBO into smaller sub-decompositions.
+    check.is_true(is_refinement_of(decomposition, block_decomposition))
+
+    # The solver may decompose the QUBO into too many sub-decompositions. The reconstructed solution
+    # is then not guaranteed to be optimal.
+    if (seed, dims) in [
+        (1935225697, (3,)),
+        (66987, (2, 3, 2)),
+        (1547, (4, 3, 2, 3)),
+        (1547, (3,)),
+    ]:
+        check.not_equal(sorted_decomposition, block_decomposition)
+        check.is_not_in(best_solution, optimal_bitstrings.keys())
+        check.greater(min_cost, min(optimal_bitstrings.values()))
+        pytest.xfail("The decomposition is not perfect")
+
+    check.is_in(best_solution, optimal_bitstrings.keys())
+    check.almost_equal(min_cost, optimal_bitstrings[best_solution])
+
+
+def test_decompose_embedding() -> None:
+
+    qubo_instance = QUBOInstance(torch.eye(2))
+
+    config = SolverConfig(decompose=DecompositionConfig())
+    solver = QuboSolver(qubo_instance, config)
+    with pytest.raises(NotImplementedError):
+        solver.embedding()
+
+
+def test_decompose_drive() -> None:
+
+    qubo_instance = QUBOInstance(torch.eye(2))
+
+    config = SolverConfig(decompose=DecompositionConfig())
+    solver = QuboSolver(qubo_instance, config)
+    with pytest.raises(NotImplementedError):
+        solver.drive(Register.from_coordinates([(0, 0), (1, 1)]))

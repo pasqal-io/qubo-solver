@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 import random
-from typing import TypedDict
+from typing import TypedDict, List
 
 import numpy as np
 from pulser.devices._device_datacls import BaseDevice as PulserBaseDevice
@@ -99,8 +99,10 @@ def compute_distance_interaction_matrix(
         & (qubo_matrix < -diag_mat[:, None])
         & (qubo_matrix < -diag_mat[None, :])
     )
-    # set value to rydberg_blockade_radius
-    dist_matrix[cond] = qubo_matrix[cond].apply_(device.rydberg_blockade_radius)
+
+    if cond.any():
+        # set value to rydberg_blockade_radius
+        dist_matrix[cond] = qubo_matrix[cond].apply_(device.rydberg_blockade_radius)
     # set diagonal elements to `qubo_matrix` diagonal
     dist_matrix[range(len(dist_matrix)), range(len(dist_matrix))] = diag_mat
     return dist_matrix
@@ -123,7 +125,8 @@ def vertices_to_place(
         dist_matrix (torch.Tensor): interaction distances computed from
             `compute_distance_interaction_matrix`.
         qubo_matrix (torch.Tensor): Matrix of qubo coefficients.
-        separation_threshold (float): threshold we consider 2 vertices separated.
+        separation_threshold (float): threshold we consider 2 vertices separated. Should be equal
+            to the `neglecting_inter_distance` parameter from `compute_distance_interaction_matrix`.
 
     Returns:
         dict[int, VertexToPlace] : dictionary of placed vertices, with keys
@@ -136,9 +139,11 @@ def vertices_to_place(
 
         distances = dist_matrix[i, :].ravel()
         # possible to check for 0 as `compute_distance_interaction_matrix` sets to 0 some elements
+        # should be <= 0.1 ?
         blocking_vertices = torch.argwhere(torch.eq(distances, 0))
         blocking_vertices = blocking_vertices[blocking_vertices != i]
 
+        # should be >= separation_threshold
         separated_vertices = torch.argwhere(torch.eq(distances, separation_threshold))
         separated_vertices = separated_vertices[separated_vertices != i]
 
@@ -212,6 +217,8 @@ def update_vertex_info_from_placed(
         "separated_vertices"
     ][separated_cond_notplaced]
 
+    # should be <= and >= ?
+    # should be ~temp ?
     neighbord_cond = (
         dict_vertices_to_place[vertex]["neighbors_weight"]
         < -dict_vertices_to_place[vertex]["weight"]
@@ -234,7 +241,7 @@ def update_vertex_info_from_placed(
 
 def positive_vertices_update(
     dict_vertices_to_place: dict[int, VertexToPlace], global_solution: torch.Tensor
-) -> None:
+) -> List[int]:
     """Remove vertices whose weight became positive during decomposition.
 
     Args:
@@ -265,6 +272,7 @@ def positive_vertices_update(
 
     for key in positive_vertices:
         dict_vertices_to_place.pop(key, None)
+    return positive_vertices
 
 
 def transfer_edge_values(
@@ -302,9 +310,6 @@ def transfer_edge_values(
     # update neighbors, separated and blocked vertices from vertices still to place
     for vertex in dict_vertices_to_place:
         update_vertex_info_from_placed(vertex, dict_vertices_to_place, placed_vertices_tensor)
-
-    # remove from neighbors, blocking and separated vertices whose weight became positive.
-    positive_vertices_update(dict_vertices_to_place, global_solution)
 
 
 def zone_intersection(
