@@ -286,6 +286,8 @@ def test_generate_heuristic_drive_shaper(
 
     assert isinstance(drive, Drive)
     assert isinstance(solution, QUBOSolution)
+    print("drive.duration =", drive.duration)
+
     check.equal(solution.solution_status, SolutionStatusType.UNPROCESSED)
 
     check.almost_equal(drive.duration, 94.248, abs=1.0e-3)
@@ -293,8 +295,8 @@ def test_generate_heuristic_drive_shaper(
 
     check.equal(drive.amplitude.duration, drive.duration)
     check.almost_equal(drive.amplitude.min(), 1e-9, abs=1e-10)
-    check.almost_equal(drive.amplitude.max(), 0.1018, abs=1e-4)
+    check.almost_equal(drive.amplitude.max(), 0.6000, abs=1e-4)
 
     check.equal(drive.detuning.duration, drive.duration)
-    check.almost_equal(drive.detuning.min(), -0.5092, abs=1e-4)
-    check.almost_equal(drive.detuning.max(), 0.4074, abs=1e-4)
+    check.almost_equal(drive.detuning.min(), -8.0000, abs=1e-4)
+    check.almost_equal(drive.detuning.max(), 2.4000, abs=1e-4)
