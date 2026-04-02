@@ -187,11 +187,12 @@ def test_heuristic_drive_get_hw_dmm_bound(dmm: bool, simple_qubo_instance: QUBOI
     shaper = get_drive_shaper(simple_qubo_instance, default_config, default_config.backend)
     assert isinstance(shaper, HeuristicDriveShaper)
 
-    check.is_none(shaper._get_hw_dmm_bound())
+    check.is_not_none(shaper._get_hw_dmm_bound())
 
 
-def test_heuristic_drive_compute_alpha_diag_max(simple_qubo_instance: QUBOInstance) -> None:
-
+def test_heuristic_drive_compute_alpha_upper_bound(
+    simple_qubo_instance: QUBOInstance,
+) -> None:
     default_config = SolverConfig(
         use_quantum=True,
         drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.HEURISTIC),
@@ -199,13 +200,75 @@ def test_heuristic_drive_compute_alpha_diag_max(simple_qubo_instance: QUBOInstan
     shaper = get_drive_shaper(simple_qubo_instance, default_config, default_config.backend)
     assert isinstance(shaper, HeuristicDriveShaper)
 
-    check.almost_equal(shaper._compute_alpha_diag_max(0.0, 0.0, -2.0, 5.0, 3.0), 1.0)
-    check.almost_equal(shaper._compute_alpha_diag_max(-2.0, -2.0, -2.0, 5.0, 3.0), 2.5)
-    check.almost_equal(shaper._compute_alpha_diag_max(2.0, 2.0, -2.0, 5.0, 3.0), 1.0)
+    check.almost_equal(
+        shaper._compute_alpha_upper_bound(
+            qmin=0.0,
+            qmax=0.0,
+            diag_abs_max=0.0,
+            delta_g_min=-5.0,
+            delta_g_max=5.0,
+            delta_dmm_max=0.0,
+            omega_hw_max=10.0,
+            kappa=0.25,
+        ),
+        1.0,
+    )
 
-    check.almost_equal(shaper._compute_alpha_diag_max(0.0, 4.0, -2.0, 5.0, 3.0), 0.75)
-    check.almost_equal(shaper._compute_alpha_diag_max(-2.0, 4.0, -2.0, 5.0, 3.0), 0.5)
-    check.almost_equal(shaper._compute_alpha_diag_max(2.0, 4.0, -2.0, 5.0, 3.0), 1.0)
+    check.almost_equal(
+        shaper._compute_alpha_upper_bound(
+            qmin=-2.0,
+            qmax=2.0,
+            diag_abs_max=2.0,
+            delta_g_min=-5.0,
+            delta_g_max=5.0,
+            delta_dmm_max=0.0,
+            omega_hw_max=1e9,
+            kappa=0.25,
+        ),
+        2.5,
+    )
+
+    check.almost_equal(
+        shaper._compute_alpha_upper_bound(
+            qmin=0.0,
+            qmax=4.0,
+            diag_abs_max=0.0,
+            delta_g_min=-5.0,
+            delta_g_max=1e9,
+            delta_dmm_max=3.0,
+            omega_hw_max=1e9,
+            kappa=0.25,
+        ),
+        0.75,
+    )
+
+    check.almost_equal(
+        shaper._compute_alpha_upper_bound(
+            qmin=-4.0,
+            qmax=4.0,
+            diag_abs_max=4.0,
+            delta_g_min=-5.0,
+            delta_g_max=1e9,
+            delta_dmm_max=0.0,
+            omega_hw_max=1.0,
+            kappa=0.25,
+        ),
+        1.0,
+    )
+
+    check.almost_equal(
+        shaper._compute_alpha_upper_bound(
+            qmin=-2.0,
+            qmax=4.0,
+            diag_abs_max=2.0,
+            delta_g_min=-5.0,
+            delta_g_max=5.0,
+            delta_dmm_max=3.0,
+            omega_hw_max=1.0,
+            kappa=0.25,
+        ),
+        0.5,
+    )
 
 
 def test_generate_heuristic_drive_shaper(
@@ -223,6 +286,8 @@ def test_generate_heuristic_drive_shaper(
 
     assert isinstance(drive, Drive)
     assert isinstance(solution, QUBOSolution)
+    print("drive.duration =", drive.duration)
+
     check.equal(solution.solution_status, SolutionStatusType.UNPROCESSED)
 
     check.almost_equal(drive.duration, 94.248, abs=1.0e-3)
@@ -230,8 +295,8 @@ def test_generate_heuristic_drive_shaper(
 
     check.equal(drive.amplitude.duration, drive.duration)
     check.almost_equal(drive.amplitude.min(), 1e-9, abs=1e-10)
-    check.almost_equal(drive.amplitude.max(), 0.1018, abs=1e-4)
+    check.almost_equal(drive.amplitude.max(), 0.6000, abs=1e-4)
 
     check.equal(drive.detuning.duration, drive.duration)
-    check.almost_equal(drive.detuning.min(), -0.5092, abs=1e-4)
-    check.almost_equal(drive.detuning.max(), 0.4074, abs=1e-4)
+    check.almost_equal(drive.detuning.min(), -8.0000, abs=1e-4)
+    check.almost_equal(drive.detuning.max(), 2.4000, abs=1e-4)
