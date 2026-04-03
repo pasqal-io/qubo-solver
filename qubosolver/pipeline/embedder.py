@@ -126,7 +126,7 @@ class GreedyEmbedder(BaseEmbedder):
             return device._device.max_layout_traps
 
         if device._device.max_atom_num:
-            return 2 * device._device.max_atom_num
+            return int(device._device.max_atom_num / device._device.max_layout_filling)
 
         return 200
 
