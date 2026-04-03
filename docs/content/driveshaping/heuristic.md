@@ -21,9 +21,8 @@ The shaper returns:
 
 The shaper first normalizes the QUBO matrix:
 
-$
-Q_{\mathrm{eff}} = \frac{Q}{\lVert Q \rVert}
-$
+$`Q_{\mathrm{eff}} = \frac{Q}{\lVert Q \rVert}`$
+
 
 and extracts its diagonal:
 
