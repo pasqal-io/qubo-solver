@@ -65,7 +65,7 @@ The final detuning is decomposed into:
 - a **global detuning**
   $`
   \delta_g(T) = d_{\max},
-  $`
+  `$
 - a **DMM detuning amplitude**
   $`
   \delta_{\mathrm{dmm}}(T) = -(d_{\max} - d_{\min}) \le 0,
