@@ -269,11 +269,10 @@ class Greedy:
                 _, u_coordinates, _ = typing.cast(Tuple[Any, Any, Any], res3)
                 candidates = []
 
-            x, y = torch.tensor(u_coordinates)  # might be negative
-            x_, y_ = torch.abs(x), torch.abs(y)
+            distance = torch.tensor(u_coordinates).norm().item()
 
             # check whether trap coordinate is within the maximal radial distance
-            if max_radial_distance and (x_ >= max_radial_distance or y_ >= max_radial_distance):
+            if max_radial_distance and (distance >= max_radial_distance):
                 if n_extra_traps == 0:
                     raise ValueError(
                         f"no traps found to place qubit '{u}' "

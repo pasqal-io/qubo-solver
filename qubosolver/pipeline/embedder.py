@@ -7,6 +7,7 @@ import torch
 import warnings
 
 from qoolqit import Register as QoolqitRegister
+from qoolqit.devices import Device
 
 from qubosolver import QUBOInstance, concepts
 from qubosolver.algorithms.blade.blade import em_blade_for_device
@@ -36,6 +37,7 @@ class BaseEmbedder(ABC):
         self.register: QoolqitRegister | None = None
         self.backend = backend
 
+        # TODO: remove when bumping to qoolqit v1
         # for converting to qoolqit
         self._distance_conversion = self.config.device.converter.factors[2]
 
@@ -117,6 +119,34 @@ class GreedyEmbedder(BaseEmbedder):
     interaction matrix U (approx. C / ||r_i - r_j||^6).
     """
 
+    @staticmethod
+    def _number_of_traps_from_device(device: Device) -> int:
+        """Determine the number of traps to use based on the device constraints.
+
+        Inspects the device's layout and atom number limits to derive an
+        appropriate trap count. The resolution order is:
+
+        1. ``max_layout_traps`` – if the device exposes a hard trap limit, use it directly.
+        2. ``max_atom_num`` / ``max_layout_filling`` – if only an atom-number limit is
+           available, derive the minimum number of traps needed to accommodate that
+           many atoms at the device's maximum filling ratio.
+        3. Fallback – return ``200`` when neither property is set.
+
+        Args:
+            device (Device): The quantum device whose constraints are inspected.
+
+        Returns:
+            int: The number of traps to allocate for the embedding.
+        """
+
+        if device._device.max_layout_traps:
+            return device._device.max_layout_traps
+
+        if device._device.max_atom_num:
+            return int(np.ceil(device._device.max_atom_num / device._device.max_layout_filling))
+
+        return 200
+
     @typing.no_type_check
     def embed(self) -> QoolqitRegister:
         """
@@ -125,6 +155,11 @@ class GreedyEmbedder(BaseEmbedder):
         Returns:
             Register: The register.
         """
+        if self.config.embedding.greedy_traps == -1:
+            self.config.embedding.greedy_traps = self._number_of_traps_from_device(
+                self.config.device
+            )
+
         if self.config.embedding.greedy_traps < self.instance.size:
             raise ValueError(
                 "Number of traps must be at least equal to the number of atoms on the register."

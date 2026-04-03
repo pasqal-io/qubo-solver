@@ -38,11 +38,6 @@ class BaseSolver(ABC):
         else:
             self.config = config
 
-        if instance.size:
-            self.config.embedding.greedy_traps = max(
-                self.config.embedding.greedy_traps, instance.size
-            )
-
         self.backend = self.config.backend
         self.device = self.config.device
 

@@ -7,6 +7,7 @@ from qoolqit.devices.device import DigitalAnalogDevice
 
 from qubosolver.algorithms.greedy.greedy import Greedy
 from qubosolver.qubo_types import LayoutType
+from qubosolver.data import QUBODataset
 import pytest
 import pytest_check as check
 
@@ -209,7 +210,7 @@ def test_too_large_spacing(too_large: str, relative_noise: float) -> None:
         spacing = device.max_radial_distance * 3.0
     # Only the inner square is within the device's maximum radial distance
     elif too_large == "barely":
-        spacing = device.max_radial_distance - 0.1
+        spacing = device.max_radial_distance / np.sqrt(2) - 0.1
     # All traps are within the device's maximum radial distance
     else:
         spacing = 7.0
@@ -295,3 +296,29 @@ def test_too_large_spacing(too_large: str, relative_noise: float) -> None:
             ]
         )
         assert_close_up_to_isometry(vertices, expected_imperfect_vertices, torch.pi / 2.0)
+
+
+def test_max_distance_constraint() -> None:
+
+    device = DigitalAnalogDevice()._device
+
+    # A square layout of size 9 is composed of a square of side 2*spacing, plus the origin.
+    # With a large enough spacing, the outer corners should be out of range, and thus a
+    # qubo of size 9 should not be embeddable.
+    layout = LayoutType.SQUARE
+    traps = 9
+    assert isinstance(device.max_radial_distance, int)
+    spacing = 0.99 * device.max_radial_distance
+
+    dataset = QUBODataset.from_random(1, traps)
+    Q, _ = dataset[0]
+
+    parameters = {
+        "layout": layout,
+        "traps": traps,
+        "spacing": spacing,
+        "device": device,
+    }
+
+    with pytest.raises(ValueError):
+        Greedy().launch_greedy(Q=Q, params=parameters)
