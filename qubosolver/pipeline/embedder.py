@@ -121,12 +121,29 @@ class GreedyEmbedder(BaseEmbedder):
 
     @staticmethod
     def _number_of_traps_from_device(device: Device) -> int:
+        """Determine the number of traps to use based on the device constraints.
+
+        Inspects the device's layout and atom number limits to derive an
+        appropriate trap count. The resolution order is:
+
+        1. ``max_layout_traps`` – if the device exposes a hard trap limit, use it directly.
+        2. ``max_atom_num`` / ``max_layout_filling`` – if only an atom-number limit is
+           available, derive the minimum number of traps needed to accommodate that
+           many atoms at the device's maximum filling ratio.
+        3. Fallback – return ``200`` when neither property is set.
+
+        Args:
+            device (Device): The quantum device whose constraints are inspected.
+
+        Returns:
+            int: The number of traps to allocate for the embedding.
+        """
 
         if device._device.max_layout_traps:
             return device._device.max_layout_traps
 
         if device._device.max_atom_num:
-            return int(device._device.max_atom_num / device._device.max_layout_filling)
+            return int(np.ceil(device._device.max_atom_num / device._device.max_layout_filling))
 
         return 200
 
