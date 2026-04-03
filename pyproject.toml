@@ -11,6 +11,7 @@ requires-python = ">=3.10,<3.13"
 license = { text = "MIT-derived" }
 keywords = ["quantum", "qubo", "solver", "optimization", "combinatorial"]
 authors = [
+  { name = "Antoine Bussy", email = "antoine.bussy@pasqal.com" },
   { name = "Monique Garzillo", email = "monique.garzillo@pasqal.com" },
   { name = "Manu Lahariya" },
   { name = "Quentin Ma", email = "quentin.ma@pasqal.com" },

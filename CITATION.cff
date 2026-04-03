@@ -5,6 +5,10 @@ message: >-
   metadata from this file.
 type: software
 authors:
+  - given-names: Antoine
+    family-names: Bussy
+    email: antoine.bussy@pasqal.com
+    affiliation: Pasqal
   - given-names: Monique
     family-names: Garzillo
     email: monique.garzillo@pasqal.com
