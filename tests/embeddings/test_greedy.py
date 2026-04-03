@@ -308,7 +308,7 @@ def test_max_distance_constraint() -> None:
     layout = LayoutType.SQUARE
     traps = 9
     assert isinstance(device.max_radial_distance, int)
-    spacing = device.max_radial_distance - 0.1
+    spacing = 0.99 * device.max_radial_distance
 
     dataset = QUBODataset.from_random(1, traps)
     Q, _ = dataset[0]

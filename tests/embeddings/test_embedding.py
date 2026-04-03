@@ -20,7 +20,7 @@ def test_embeddings_different_devices(
 ) -> None:
     config = SolverConfig(
         use_quantum=True,
-        embedding=EmbeddingConfig(embedding_method=embedding_method, greedy_traps=500),
+        embedding=EmbeddingConfig(embedding_method=embedding_method, greedy_traps=-1),
         do_postprocessing=False,
         do_preprocessing=False,
         device=local_device,

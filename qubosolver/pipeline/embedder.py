@@ -7,6 +7,7 @@ import torch
 import warnings
 
 from qoolqit import Register as QoolqitRegister
+from qoolqit.devices import Device
 
 from qubosolver import QUBOInstance, concepts
 from qubosolver.algorithms.blade.blade import em_blade_for_device
@@ -118,6 +119,17 @@ class GreedyEmbedder(BaseEmbedder):
     interaction matrix U (approx. C / ||r_i - r_j||^6).
     """
 
+    @staticmethod
+    def _number_of_traps_from_device(device: Device) -> int:
+
+        if device._device.max_layout_traps:
+            return device._device.max_layout_traps
+
+        if device._device.max_atom_num:
+            return 2 * device._device.max_atom_num
+
+        return 200
+
     @typing.no_type_check
     def embed(self) -> QoolqitRegister:
         """
@@ -126,14 +138,14 @@ class GreedyEmbedder(BaseEmbedder):
         Returns:
             Register: The register.
         """
+        if self.config.embedding.greedy_traps == -1:
+            self.config.embedding.greedy_traps = self._number_of_traps_from_device(
+                self.config.device
+            )
+
         if self.config.embedding.greedy_traps < self.instance.size:
             raise ValueError(
                 "Number of traps must be at least equal to the number of atoms on the register."
-            )
-
-        if self.config.embedding.greedy_traps < 2 * self.instance.size:
-            warnings.warn(
-                f"GreedyEmbedder: Number of traps ({self.config.embedding.greedy_traps}) is less than twice the number of atoms ({self.instance.size}). You might want to increase the number of traps to get a better embedding."
             )
 
         # compute density (unchanged)

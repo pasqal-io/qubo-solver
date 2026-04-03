@@ -159,10 +159,8 @@ class EmbeddingConfig(Config):
         greedy_layout (LayoutType | str, optional): Layout type for the
             greedy embedder method. Defaults to `LayoutType.TRIANGULAR`.
         greedy_traps (int, optional): The number of traps on the register.
-            Defaults to ``1000``. A higher value improves embedding quality at the cost of
-            increased computation time.
-            Setting it too high may produce a register that exceeds the capacity of the
-            selected device.
+            Defaults to ``-1``, i.e. automatically set to match the selected device capacity.
+            A too high value will impede computational efficiency.
         greedy_spacing (float, optional): The minimum distance between atoms.
             Defaults to 7 (μm).
         greedy_density (float, optional): The estimated density of the QUBO matrix.
@@ -183,7 +181,7 @@ class EmbeddingConfig(Config):
 
     embedding_method: Any = EmbedderType.GREEDY
     greedy_layout: LayoutType | str = LayoutType.TRIANGULAR
-    greedy_traps: int = 1000
+    greedy_traps: int = -1
     greedy_spacing: float = 7.0
     greedy_density: float | None = None
     blade_steps_per_round: int | None = 200

@@ -116,13 +116,13 @@ def test_greedy_embedding_config(greedy_embedding_config: SolverConfig) -> None:
 def test_initialization_device() -> None:
 
     solver = SolverConfig()
-    assert solver.embedding.greedy_traps == 1000
+    assert solver.embedding.greedy_traps == -1
     assert solver.embedding.greedy_spacing == 7.0
 
     deviceanalog = AnalogDevice()
     kwargs: dict[Any, Any] = {"device": deviceanalog}
     solver = SolverConfig.from_kwargs(**kwargs)
-    assert solver.embedding.greedy_traps == 1000
+    assert solver.embedding.greedy_traps == -1
     assert solver.embedding.greedy_spacing == 7.0
 
 
