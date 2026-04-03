@@ -94,7 +94,7 @@ cannot realize each $`d_i`$ individually, so it uses a single global final
 value:
 
 $`
-\delta_g(T) = \operatorname{mean}_i(d_i),
+\delta_g(T) = \mathrm{mean}_i(d_i),
 `$
 
 and no weighted detunings are declared.
@@ -126,9 +126,7 @@ The effective encoding must satisfy:
 The implementation therefore uses:
 
 $`
-\alpha_{\max}
-=
-\min\!\left(
+\alpha_{\max} = \min\!\left(
 \frac{\delta_{g,\max}}{q_{\mathrm{abs}}},
 \;
 \frac{\delta_{\mathrm{dmm},\max}}{q_{\max}-q_{\min}},
