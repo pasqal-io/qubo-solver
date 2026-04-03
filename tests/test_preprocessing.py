@@ -316,6 +316,10 @@ def test_quantum_prepostprocessing_2(
     config.backend = LocalEmulator(runs=50)
     solver = QuboSolver(instance, config)
 
+    from qoolqit.devices import DigitalAnalogDevice
+    # print(f"solver.device._device.max_layout_traps = {solver.device._device.max_layout_traps}")
+    print(f"solver.device._device.max_layout_traps = {DigitalAnalogDevice()._device.max_layout_traps}")
+
     solutions = solver.solve()
 
     analyzer = QUBOAnalyzer([solutions])
