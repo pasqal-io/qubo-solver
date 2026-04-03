@@ -255,7 +255,7 @@ class DriveShapingConfig(Config):
 
     Attributes:
         drive_shaping_method (str | DriveType | type[BaseDriveShaper], optional): Drive shaping
-            method used. Defauts to `DriveType.ADIABATIC`.
+            method used. Defaults to `DriveType.HEURISTIC`.
         dmm (bool, optional): Whether to use a detuning map when applying drive shaping or not.
             This adds WeightedDetuning with a Constant Waveform.
             Defaults to True, which applies DMM.
@@ -292,7 +292,7 @@ class DriveShapingConfig(Config):
             Defaults to None, which means no callback is applied.
     """
 
-    drive_shaping_method: Any = DriveType.ADIABATIC
+    drive_shaping_method: Any = DriveType.HEURISTIC
     dmm: bool = True
     optimized_re_execute_opt_drive: bool = False
     optimized_n_calls: int = 20
@@ -339,9 +339,7 @@ class DriveShapingConfig(Config):
             return val
         elif isinstance(val, str):
             u = val.upper()
-            if u == DriveType.ADIABATIC.name:
-                return DriveType.ADIABATIC
-            elif u == DriveType.HEURISTIC.name:
+            if u == DriveType.HEURISTIC.name:
                 return DriveType.HEURISTIC
             elif u == DriveType.OPTIMIZED.name:
                 return DriveType.OPTIMIZED

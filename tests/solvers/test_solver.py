@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import pytest
-from qoolqit.devices import Device, DigitalAnalogDevice, AnalogDevice
+from qoolqit.devices import Device
 from qubosolver.config import EmbeddingConfig, DriveShapingConfig, SolverConfig, LocalEmulator
 from qubosolver.qubo_types import EmbedderType
 from qubosolver.solver import QUBOInstance, QuboSolver, QuboSolverClassical
+from emu_sv import SVBackend
 
 
 @pytest.fixture
@@ -60,35 +61,24 @@ def test_run_local_backends(
     assert solutions.costs.min().item() <= -3.0
 
 
+@pytest.mark.priority(30)
 def test_solver_different_devices(
     request: pytest.FixtureRequest,
     qubo_for_testing_many_devices: QUBOInstance,
     local_device: Device,
     embedding_method: EmbedderType,
 ) -> None:
-    if (
-        request.node.callspec.params["qubo_for_testing_many_devices"]
-        == "qubo_instance_adiabatic_tutorial"
-        and (
-            type(request.node.callspec.params["local_device"])
-            in (DigitalAnalogDevice, AnalogDevice)
-            or request.node.callspec.params["local_device"].name == "FRESNEL"
-        )
-        and request.node.callspec.params["embedding_method"] == EmbedderType.BLADE
-    ):
-        pytest.skip(
-            "The compilation of the sequence for this combination should be addressed in a new PR."
-        )
 
     config = SolverConfig(
         use_quantum=True,
-        drive_shaping=DriveShapingConfig(drive_shaping_method="adiabatic"),
+        drive_shaping=DriveShapingConfig(drive_shaping_method="heuristic"),
         embedding=EmbeddingConfig(
             embedding_method=embedding_method, greedy_traps=qubo_for_testing_many_devices.size
         ),
         do_postprocessing=False,
         do_preprocessing=False,
         device=local_device,
+        backend=LocalEmulator(backend_type=SVBackend),
     )
     solver = QuboSolver(qubo_for_testing_many_devices, config)
     solution = solver.solve()

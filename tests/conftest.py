@@ -28,6 +28,38 @@ connection = PasqalCloud()
 connection.fetch_available_devices()
 
 
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """
+        Reorder collected pytest items so higher-priority tests run first.
+
+        This hook is called by pytest after test collection and before execution.
+        It sorts the collected `items` list in-place by the numeric value of the
+        closest `priority` marker attached to each test.
+
+        Marker convention:
+                @pytest.mark.priority(<int>)
+
+        Behavior:
+        - Tests with a larger priority value are executed earlier (descending order).
+        - Tests without a `priority` marker are treated as priority 0.
+
+    Example (prioritizing long tests using estimated duration in seconds):
+                Use the test's expected runtime (in seconds) as the `priority` value so
+                long-running tests start earlier and overall wall-clock time is reduced.
+
+    Args:
+        items (list[pytest.Item]):
+            The list of collected test items to be executed. This list is
+            mutated in-place.
+    """
+
+    def priority(item: pytest.Item) -> int:
+        marker = item.get_closest_marker("priority")
+        return int(marker.args[0]) if marker else 0
+
+    items.sort(key=priority, reverse=True)
+
+
 @pytest.fixture
 def basic_solution() -> QUBOSolution:
     return QUBOSolution(
@@ -205,120 +237,11 @@ def qubo_instance_blade_tutorial() -> QUBOInstance:
     )
 
 
-@pytest.fixture
-def qubo_instance_adiabatic_tutorial() -> QUBOInstance:
-    return QUBOInstance(
-        torch.tensor(
-            [
-                [
-                    -63.9423,
-                    0.0000,
-                    73.6471,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    55.2853,
-                ],
-                [0.0000, -44.1916, 0.0000, 0.0000, 0.0000, 0.0000, 58.9307, 0.0000, 0.0000, 0.0000],
-                [
-                    73.6471,
-                    0.0000,
-                    -89.8861,
-                    51.0382,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                ],
-                [
-                    0.0000,
-                    0.0000,
-                    51.0382,
-                    -63.7618,
-                    0.0000,
-                    0.0000,
-                    33.9093,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                ],
-                [
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    -94.4426,
-                    18.7963,
-                    0.0000,
-                    0.0000,
-                    14.3994,
-                    0.0000,
-                ],
-                [
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    18.7963,
-                    -60.7545,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    96.9903,
-                ],
-                [
-                    0.0000,
-                    58.9307,
-                    0.0000,
-                    33.9093,
-                    0.0000,
-                    0.0000,
-                    -71.3241,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                ],
-                [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, -38.2094, 59.3175, 0.0000],
-                [
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    14.3994,
-                    0.0000,
-                    0.0000,
-                    59.3175,
-                    -94.5790,
-                    18.0653,
-                ],
-                [
-                    55.2853,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    0.0000,
-                    96.9903,
-                    0.0000,
-                    0.0000,
-                    18.0653,
-                    -97.3174,
-                ],
-            ]
-        )
-    )
-
-
 @pytest.fixture(
     params=[
         "simple_qubo_instance",
         "simple_qubo_instance2",
         "qubo_instance_for_embedding",
-        "qubo_instance_adiabatic_tutorial",
         "qubo_instance_blade_tutorial",
     ],
 )

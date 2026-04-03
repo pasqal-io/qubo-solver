@@ -5,6 +5,7 @@ import pytest
 import pytest_check as check
 import torch
 
+from qoolqit import Drive, Ramp, Register, Constant
 from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.qubo_analyzer import QUBOAnalyzer
 from qubosolver.config import (
@@ -17,8 +18,9 @@ from qubosolver.pipeline.fixtures import (
     Fixtures,
     hansen_fixing,
 )
-from qubosolver.qubo_types import SolutionStatusType, EmbedderType, DriveType
+from qubosolver.qubo_types import SolutionStatusType, EmbedderType
 from qubosolver.solver import QuboSolver
+from qubosolver.pipeline.drive import BaseDriveShaper
 
 
 def test_apply_full_and_post_process_fixation() -> None:
@@ -261,13 +263,31 @@ def test_reduce_qubo_2() -> None:
     check.almost_equal(solution.costs[0], -27.288260)
 
 
+class SimpleShaper(BaseDriveShaper):
+    def generate(
+        self,
+        register: Register,
+    ) -> tuple[Drive, QUBOSolution]:
+
+        # Defining the drive parameters
+        omega = 0.4
+        delta_i = -2.0 * omega
+        delta_f = -delta_i
+        T = 10.0
+
+        # Defining the drive
+        wf_amp = Constant(T, omega)
+        wf_det = Ramp(T, delta_i, delta_f)
+        drive = Drive(amplitude=wf_amp, detuning=wf_det)
+
+        return drive, QUBOSolution(torch.Tensor(), torch.Tensor())
+
+
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("drive_method", [DriveType.ADIABATIC])
 @pytest.mark.parametrize("embedding_method", [EmbedderType.GREEDY])
 @pytest.mark.parametrize("preprocessing", [True, False])
 @pytest.mark.parametrize("dmm", [True, False])
 def test_quantum_prepostprocessing_2(
-    drive_method: str,
     embedding_method: str,
     preprocessing: bool,
     dmm: bool,
@@ -289,9 +309,10 @@ def test_quantum_prepostprocessing_2(
 
     config = SolverConfig(use_quantum=True, do_preprocessing=preprocessing)
     config.embedding = EmbeddingConfig(
-        embedding_method=embedding_method, greedy_spacing=7.0, greedy_traps=100
+        embedding_method=embedding_method, greedy_spacing=2.0, greedy_traps=500
     )
-    config.drive_shaping = DriveShapingConfig(drive_shaping_method=drive_method, dmm=dmm)
+
+    config.drive_shaping = DriveShapingConfig(drive_shaping_method=SimpleShaper, dmm=dmm)
     config.backend = LocalEmulator(runs=50)
     solver = QuboSolver(instance, config)
 
@@ -306,7 +327,7 @@ def test_quantum_prepostprocessing_2(
     expected_solutions = ["00111", "01011"]
 
     probabilities = [df.set_index("bitstrings")["probs"].get(b, 0.0) for b in expected_solutions]
-    check.greater(max(probabilities), 0.4)
+    check.greater(sum(probabilities), 0.6)
 
     for b in expected_solutions:
         if b in df["bitstrings"].values:

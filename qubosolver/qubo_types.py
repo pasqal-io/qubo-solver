@@ -64,7 +64,6 @@ class DriveType(Enum):
     Type of drive shaping method used for solving the QUBO
     """
 
-    ADIABATIC = "adiabatic"
     OPTIMIZED = "optimized"
     HEURISTIC = "heuristic"
 
