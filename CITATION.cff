@@ -5,6 +5,10 @@ message: >-
   metadata from this file.
 type: software
 authors:
+  - given-names: Antoine
+    family-names: Bussy
+    email: antoine.bussy@pasqal.com
+    affiliation: Pasqal
   - given-names: Monique
     family-names: Garzillo
     email: monique.garzillo@pasqal.com
@@ -45,5 +49,5 @@ keywords:
   - solver
   - optimization
   - combinatorial
-version: 0.5.0
-date-released: '2025-11-27'
+version: 0.6.0
+date-released: '2026-04-07'
