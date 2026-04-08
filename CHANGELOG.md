@@ -19,7 +19,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 - Fix SA classical solver multiplying by 2 the cost of each solution by reverting [#89](https://github.com/pasqal-io/qubo-solver/pull/89) ([#113](https://github.com/pasqal-io/qubo-solver/pull/113))
-- Fix BLaDE embedder failing to give a device-compliant embedding ([#80](https://github.com/pasqal-io/qubo-solver/issues/80), [#137](https://github.com/pasqal-io/qubo-solver/pull/137))
 - Fix wrong preprocessing implementation behavior ([#96](https://github.com/pasqal-io/qubo-solver/issues/96), [#123](https://github.com/pasqal-io/qubo-solver/pull/123))
 - Fix drive-shaping not using the reduced QUBO in pre-processing ([#123](https://github.com/pasqal-io/qubo-solver/pull/123))
 - Fix heuristic drive shaper scaling and hardware constraint handling ([#139](https://github.com/pasqal-io/qubo-solver/pull/139))
