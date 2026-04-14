@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-04-14
+
+### Fixed
+- Fix documentation rendering issues (wrong backslashes and math formulas not displaying correctly) ([#146](https://github.com/pasqal-io/qubo-solver/pull/146), [#149](https://github.com/pasqal-io/qubo-solver/pull/149))
+
 ## [0.6.0] - 2026-04-07
 
 ### Added
@@ -34,5 +39,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove references to D-Wave ([#118](https://github.com/pasqal-io/qubo-solver/pull/118))
 
 
-[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.5.0...v0.6.0
