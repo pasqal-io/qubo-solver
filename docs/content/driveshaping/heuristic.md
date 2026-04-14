@@ -122,7 +122,7 @@ where only meaningful terms are included:
 
 The final value is then:
 $$
-\alpha = \texttt{heuristic\_alpha\_safety} \times \alpha_{\max}.
+\alpha = \texttt{heuristic_alpha_safety} \times \alpha_{\max}.
 $$
 
 In the current implementation, the fallback default is:
