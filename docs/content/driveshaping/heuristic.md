@@ -20,24 +20,19 @@ The shaper returns:
 ### Principle
 
 The shaper first normalizes the QUBO matrix:
-
-$`
+$$
 Q_{\mathrm{eff}} = \frac{Q}{\lVert Q \rVert}
-`$
-
-
+$$
 and extracts its diagonal:
-
-
-$`q_i = (Q_{\mathrm{eff}})_{ii}.`$
+$$
+q_i = (Q_{\mathrm{eff}})_{ii}.
+$$
 
 It then defines target final local detunings from these diagonal terms:
-
-$`
+$$
 d_i = -\alpha q_i,
-`$
-
-where $`\alpha > 0`$ is chosen automatically so that the resulting schedule
+$$
+where $\alpha > 0$ is chosen automatically so that the resulting schedule
 remains compatible with the hardware bounds.
 
 Intuitively, the diagonal coefficients act as local biases, and the shaper
@@ -53,33 +48,22 @@ When a Detuning Map Modulator (DMM) is available, the shaper encodes the final
 local targets exactly in the intended operating regime.
 
 Let
-
-$`
+$$
 d_{\min} = \min_i d_i,
 \qquad
 d_{\max} = \max_i d_i.
-`$
+$$
 
 The final detuning is decomposed into:
 
-- a **global detuning**
-  $`
-  \delta_g(T) = d_{\max},
-  `$
-- a **DMM detuning amplitude**
-  $`
-  \delta_{\mathrm{dmm}}(T) = -(d_{\max} - d_{\min}) \le 0,
-  `$
-- and site-dependent weights
-  $`
-  w_i = \frac{d_{\max} - d_i}{d_{\max} - d_{\min}} \in [0,1].
-  `$
+- a **global detuning** $\delta_g(T) = d_{\max}$,
+- a **DMM detuning amplitude** $\delta_{\mathrm{dmm}}(T) = -(d_{\max} - d_{\min}) \le 0$,
+- and site-dependent weights $w_i = \frac{d_{\max} - d_i}{d_{\max} - d_{\min}} \in [0,1]$.
 
 This gives the final local detuning
-
-$`
+$$
 \delta_i(T) = \delta_g(T) + \delta_{\mathrm{dmm}}(T)\, w_i = d_i.
-`$
+$$
 
 This sign convention is important: in this stack, `WeightedDetuning` waveforms
 must be non-positive, so the DMM contribution is encoded as a negative quantity.
@@ -90,31 +74,28 @@ DMM contribution is omitted.
 #### Without DMM
 
 If `dmm=False`, only a global detuning can be applied. In that case the shaper
-cannot realize each $`d_i`$ individually, so it uses a single global final
+cannot realize each $d_i$ individually, so it uses a single global final
 value:
-
-$`
+$$
 \delta_g(T) = \mathrm{mean}_i(d_i),
-`$
-
+$$
 and no weighted detunings are declared.
 
 ---
 
-### How $`\alpha`$ is chosen
+### How $\alpha$ is chosen
 
-The shaper computes a conservative upper bound $`\alpha_{\max}`$ from the active
+The shaper computes a conservative upper bound $\alpha_{\max}$ from the active
 hardware constraints, then applies a safety factor.
 
 Let
-
-$`
+$$
 q_{\min} = \min_i q_i,
 \qquad
 q_{\max} = \max_i q_i,
 \qquad
 q_{\mathrm{abs}} = \max_i |q_i|.
-`$
+$$
 
 The effective encoding must satisfy:
 
@@ -124,8 +105,7 @@ The effective encoding must satisfy:
    detuning scale.
 
 The implementation therefore uses:
-
-$`
+$$
 \alpha_{\max} = \min\!\left(
 \frac{\delta_{g,\max}}{q_{\mathrm{abs}}},
 \;
@@ -133,36 +113,33 @@ $`
 \;
 \frac{\Omega_{\mathrm{hw},\max}}{\kappa\, q_{\mathrm{abs}}}
 \right),
-`$
-
+$$
 where only meaningful terms are included:
 
-- the DMM term is used only when DMM is enabled and $`q_{\max} > q_{\min}`$,
-- the amplitude term is used only when $`\kappa > 0`$,
+- the DMM term is used only when DMM is enabled and $q_{\max} > q_{\min}$,
+- the amplitude term is used only when $\kappa > 0$,
 - degenerate zero-denominator cases are ignored safely.
 
 The final value is then:
-
-$`
+$$
 \alpha = \texttt{heuristic\_alpha\_safety} \times \alpha_{\max}.
-`$
+$$
 
 In the current implementation, the fallback default is:
 
 - `heuristic_alpha_safety = 0.6`
 
 If no valid upper bound can be formed, the code falls back to a very small
-positive value for $`\alpha`$.
+positive value for $\alpha$.
 
 ---
 
-### How $`\Omega_{\max}`$ is chosen
+### How $\Omega_{\max}$ is chosen
 
 The plateau amplitude is derived from the detuning energy scale:
-
-$`
+$$
 \Omega_{\max}^{(\mathrm{raw})} = \kappa \max_i |d_i|.
-`$
+$$
 
 This value is then clamped to the hardware amplitude constraints of the global
 Rydberg channel. In particular, the implementation:
@@ -184,23 +161,20 @@ simple interpolated waveforms.
 #### Amplitude
 
 The amplitude follows a flat-top profile:
-
-$`
+$$
 \Omega(t) = [\varepsilon,\ \Omega_{\max},\ \Omega_{\max},\ \varepsilon]
-`$
-
-with a very small $`\varepsilon > 0`$ at the endpoints rather than a strict zero.
+$$
+with a very small $\varepsilon > 0$ at the endpoints rather than a strict zero.
 
 #### Global detuning
 
 The global detuning starts from the most negative hardware-allowed value and
 then ramps to the final encoded value:
-
-$`
+$$
 \delta_g(t) = [\delta_0,\ \delta_0,\ \delta_g(T),\ \delta_g(T)],
 \qquad
 \delta_0 = -|\delta_{\max}|.
-`$
+$$
 
 This creates a simple three-stage pattern:
 
@@ -212,7 +186,7 @@ This creates a simple three-stage pattern:
 
 When DMM is active and the final DMM amplitude is strictly negative, the shaper
 declares a weighted detuning map through `weighted_detunings(...)`, using the
-weights $`w_i`$ and final detuning $`\delta_{\mathrm{dmm}}(T)`$.
+weights $w_i$ and final detuning $\delta_{\mathrm{dmm}}(T)$.
 
 ---
 
@@ -237,8 +211,8 @@ bound.
 |-------|------|-------------|
 | `drive_shaping_method` | `DriveType \| str` | Must be set to `DriveType.HEURISTIC` or `"heuristic"` |
 | `dmm` | `bool` | Enables site-dependent final detuning through weighted DMM detunings |
-| `heuristic_alpha_safety` | `float` | Safety factor applied to $`\alpha_{\max}`$; current fallback default: `0.6` |
-| `heuristic_kappa` | `float` | Proportionality factor used to derive $`\Omega_{\max}`$ from the detuning scale; current fallback default: `0.25` |
+| `heuristic_alpha_safety` | `float` | Safety factor applied to $\alpha_{\max}$; current fallback default: `0.6` |
+| `heuristic_kappa` | `float` | Proportionality factor used to derive $\Omega_{\max}$ from the detuning scale; current fallback default: `0.25` |
 
 These parameters are provided through `DriveShapingConfig` and read at drive
 generation time.
@@ -288,3 +262,4 @@ solver = QuboSolver(instance, config)
 solution = solver.solve()
 
 print(solution)
+```
