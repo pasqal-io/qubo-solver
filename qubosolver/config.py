@@ -432,7 +432,7 @@ class SolverConfig(Config):
     """
 
     config_name: str = ""
-    use_quantum: bool | None = False
+    use_quantum: bool | None = True
     embedding: EmbeddingConfig = EmbeddingConfig()
     drive_shaping: DriveShapingConfig = DriveShapingConfig()
     classical: ClassicalConfig = ClassicalConfig()

@@ -24,7 +24,7 @@ from qubosolver.qubo_types import (
 
 def test_empty_config(empty_config: SolverConfig) -> None:
     assert empty_config.config_name == ""
-    assert empty_config.use_quantum is False
+    assert empty_config.use_quantum is True
     assert isinstance(empty_config.backend, LocalEmulator)
     assert empty_config.backend._backend_type == QutipBackendV2
     assert empty_config.embedding.embedding_method == EmbedderType.GREEDY
