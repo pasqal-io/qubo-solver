@@ -409,7 +409,7 @@ class SolverConfig(Config):
         config_name (str, optional): The name of the current configuration.
             Defaults to ''.
         use_quantum (bool, optional): Whether to solve using a quantum approach (`True`)
-            or a classical approach (`False`). Defaults to False.
+            or a classical approach (`False`). Defaults to True.
         embedding (EmbeddingConfig, optional): Embedding part configuration of the solver.
         drive_shaping (DriveShapingConfig, optional): Drive-shaping part configuration
             of the solver.
