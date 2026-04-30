@@ -42,7 +42,7 @@ dependencies = [
   "scikit-optimize",
   "cplex",
   "pydantic>=2",
-  "qoolqit[solvers]==0.3.1", # The version in .pre-commit-config.yaml must match
+  "qoolqit[solvers]==0.4.0", # The version in .pre-commit-config.yaml must match
   "shapely",
 ]
 
