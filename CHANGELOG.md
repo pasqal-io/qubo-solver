@@ -10,6 +10,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-05-07
+
+### Added
+- Add remote job support using the new Qoolqit Job API: send jobs to Pasqal Cloud, retrieve job IDs, and fetch results asynchronously ([#156](https://github.com/pasqal-io/qubo-solver/pull/156))
+- Add partial serialization of the solver, allowing it to be restored and continue post-processing once results are fetched from the cloud ([#156](https://github.com/pasqal-io/qubo-solver/pull/156))
+
+### Changed
+- Bump `qoolqit` dependency to `>=1.1` (from `==0.3.1`); use `qoolqit[extras]` instead of `qoolqit[solvers]` ([#156](https://github.com/pasqal-io/qubo-solver/pull/156))
+- Use Qoolqit's adimensionalization ([#156](https://github.com/pasqal-io/qubo-solver/pull/156))
+- Default solver mode is now quantum (`use_quantum=True` by default in `SolverConfig`) ([#154](https://github.com/pasqal-io/qubo-solver/pull/154))
+- Extend supported Python versions to `<=3.14` (was `<3.13`) ([#156](https://github.com/pasqal-io/qubo-solver/pull/156))
+
+### Removed
+- Remove BLaDE embedding algorithm: it has been moved to Qoolqit ([#156](https://github.com/pasqal-io/qubo-solver/pull/156))
+
 ## [0.6.1] - 2026-04-14
 
 ### Fixed
@@ -39,6 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove references to D-Wave ([#118](https://github.com/pasqal-io/qubo-solver/pull/118))
 
 
-[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.5.0...v0.6.0
