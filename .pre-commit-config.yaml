@@ -23,7 +23,8 @@ repos:
     hooks:
       - id: mypy
         exclude: examples|docs
-        additional_dependencies: ["qoolqit[solvers]==0.3.1"]  # The version in pyproject.toml must match
+        additional_dependencies:
+          - "qoolqit[extras]>=1.1" # The version in pyproject.toml must match
 
 # Cleanup jupyter notebooks
 -   repo: https://github.com/srstevenson/nb-clean

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from qoolqit.register import Register
-from qoolqit.drive import WeightedDetuning
+from qoolqit.drive import DetuningMapModulator
 from qoolqit.waveforms import Constant
 
 
@@ -10,7 +10,7 @@ def weighted_detunings(
     duration: float,
     norm_weights: list[float],
     final_detuning: float,
-) -> list[WeightedDetuning]:
+) -> DetuningMapModulator:
     """Create the list of weighted detuning for a drive.
 
     Args:
@@ -20,13 +20,11 @@ def weighted_detunings(
         final_detuning (float): Detuning final value.
 
     Returns:
-        list[WeightedDetuning]: A list of WeightedDetuning with a constant
+        DetuningMapModulator: DetuningMapModulator with a constant
             waveform for QUBO solving.
     """
     waveform = Constant(duration, final_detuning)
-    return [
-        WeightedDetuning(
-            weights={embedding.qubits_ids[i]: w for i, w in enumerate(norm_weights)},
-            waveform=waveform,
-        )
-    ]
+    return DetuningMapModulator(
+        weights={embedding.qubits_ids[i]: w for i, w in enumerate(norm_weights)},
+        waveform=waveform,
+    )

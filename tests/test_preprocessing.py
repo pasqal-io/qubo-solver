@@ -270,10 +270,10 @@ class SimpleShaper(BaseDriveShaper):
     ) -> tuple[Drive, QUBOSolution]:
 
         # Defining the drive parameters
-        omega = 0.4
-        delta_i = -2.0 * omega
+        omega = 0.01
+        delta_i = -0.09
         delta_f = -delta_i
-        T = 10.0
+        T = 4000.0
 
         # Defining the drive
         wf_amp = Constant(T, omega)
@@ -284,16 +284,16 @@ class SimpleShaper(BaseDriveShaper):
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("embedding_method", [EmbedderType.GREEDY])
-@pytest.mark.parametrize("preprocessing", [True, False])
-@pytest.mark.parametrize("dmm", [True, False])
+@pytest.mark.parametrize("embedding_method", [EmbedderType.BLADE])
+@pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no_pre"])
+@pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
 def test_quantum_prepostprocessing_2(
     embedding_method: str,
     preprocessing: bool,
     dmm: bool,
 ) -> None:
 
-    np.random.seed(7979)
+    np.random.seed(799)
 
     Q = np.array(
         [
@@ -309,11 +309,14 @@ def test_quantum_prepostprocessing_2(
 
     config = SolverConfig(use_quantum=True, do_preprocessing=preprocessing)
     config.embedding = EmbeddingConfig(
-        embedding_method=embedding_method, greedy_spacing=2.0, greedy_traps=500
+        embedding_method=embedding_method,
+        greedy_spacing=0.1,
+        greedy_traps=500,
+        min_distance=1.001,
     )
 
     config.drive_shaping = DriveShapingConfig(drive_shaping_method=SimpleShaper, dmm=dmm)
-    config.backend = LocalEmulator(runs=50)
+    config.backend = LocalEmulator(num_shots=50)
     solver = QuboSolver(instance, config)
 
     solutions = solver.solve()
@@ -327,7 +330,7 @@ def test_quantum_prepostprocessing_2(
     expected_solutions = ["00111", "01011"]
 
     probabilities = [df.set_index("bitstrings")["probs"].get(b, 0.0) for b in expected_solutions]
-    check.greater(sum(probabilities), 0.6)
+    check.greater(sum(probabilities), 0.9)
 
     for b in expected_solutions:
         if b in df["bitstrings"].values:

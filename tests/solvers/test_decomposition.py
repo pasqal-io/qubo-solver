@@ -12,19 +12,26 @@ from qoolqit.devices import DigitalAnalogDevice
 from qoolqit import Register
 from qubosolver import QUBOInstance
 
-from qubosolver.config import SolverConfig, DecompositionConfig
+from qubosolver.config import SolverConfig, DecompositionConfig, EmbeddingConfig
 from qubosolver.solver import DecomposeQuboSolver, QuboSolver
 from qubosolver.data import QUBODataset
 from qubosolver.algorithms.decompose import compute_distance_interaction_matrix
 
 
-@pytest.mark.parametrize("use_quantum", [True, False])
+@pytest.mark.priority(120)
+@pytest.mark.usefixtures("restore_rng_state")
+@pytest.mark.parametrize("use_quantum", [True, False], ids=["quantum", "classical"])
 def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool) -> None:
     """Test that the first steps of the decomposition (initialization +
     one loop iteration of a decomposition) are yielding corrent tensors
     or dictionaries of right sizes.
 
     """
+    # Select seed so that the decomposition is tractable for testing with the
+    # Qutip backend
+    seed = 79450
+    random.seed(seed)
+
     from qubosolver.algorithms.decompose import (
         compute_distance_interaction_matrix,
         geometric_search,
@@ -39,7 +46,11 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     qubo_mat = decomposable_qubo.coefficients.clone()
 
     decompose_config = DecompositionConfig()
-    config = SolverConfig(use_quantum=use_quantum, decompose=decompose_config)
+    config = SolverConfig(
+        use_quantum=use_quantum,
+        decompose=decompose_config,
+        embedding=EmbeddingConfig(min_distance=1.0),
+    )
     solver = QuboSolver(decomposable_qubo, config)
 
     ## Check the distance interaction matrix matches the qubo matrix
@@ -83,6 +94,9 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(
         placed_vertices, solver._solver.device._pulser_device
     )
+    # If too big, the test will take a long time to run.
+    if use_quantum and matrix_to_solve.shape[0] > 13:
+        raise RuntimeError(f"Test failed due to large matrix size = {matrix_to_solve.shape[0]}")
     assert len(map_index_vertices) == len(placed_vertices) == matrix_to_solve.shape[0]
     subproblem = QUBOInstance(matrix_to_solve)
     subsolver = solver._solver._solver_factory(  # type: ignore[attr-defined]
@@ -102,9 +116,21 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     assert len(current_vertices_dict) < size
 
 
-@pytest.mark.parametrize("use_quantum", [True, False])
+@pytest.mark.priority(120)
+@pytest.mark.usefixtures("restore_rng_state")
+@pytest.mark.parametrize("use_quantum", [True, False], ids=["quantum", "classical"])
 def test_decomp_solver(decomposable_qubo: QUBOInstance, use_quantum: bool) -> None:
-    config = SolverConfig(use_quantum=use_quantum, decompose=DecompositionConfig())
+
+    # Select seed so that the decomposition is tractable for testing with the
+    # Qutip backend
+    seed = 21536
+    random.seed(seed)
+
+    config = SolverConfig(
+        use_quantum=use_quantum,
+        decompose=DecompositionConfig(),
+        embedding=EmbeddingConfig(min_distance=1.0),
+    )
     solver = QuboSolver(decomposable_qubo, config)
 
     assert isinstance(solver._solver, DecomposeQuboSolver)

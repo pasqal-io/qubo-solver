@@ -377,7 +377,8 @@ class DecomposeQuboSolver(BaseSolver):
             while len(dict_vertices_to_place) > self.decomposition_config.decompose_stop_number:
                 # find a first vertex to start the geometric search
                 # random works better according to some performed numerics
-                first_vertex_search = random.choice(list(dict_vertices_to_place.keys()))
+                # sort to have reproducibility when setting the seed
+                first_vertex_search = random.choice(sorted(dict_vertices_to_place.keys()))
                 placed_vertices = geometric_search(
                     qubo_mat,
                     dict_vertices_to_place,

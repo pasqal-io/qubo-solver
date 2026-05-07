@@ -33,7 +33,7 @@ from emu_mps import MPSBackend
 from qoolqit import DigitalAnalogDevice
 
 locals_bkds = [
-    LocalEmulator(backend_type=btype, runs=500)
+    LocalEmulator(backend_type=btype, num_shots=500)
     for btype in [
         QutipBackendV2,
         SVBackend,
@@ -59,7 +59,7 @@ from emu_mps import MPSBackend
 from qoolqit import DigitalAnalogDevice
 
 locals_bkds = [
-    LocalEmulator(backend_type=btype, runs=500)
+    LocalEmulator(backend_type=btype, num_shots=500)
     for btype in [
         QutipBackendV2,
         SVBackend,
@@ -95,7 +95,7 @@ if PASSWORD is not None:
         password=PASSWORD,
         project_id=PROJECT_ID,
     )
-    remote_emulators = [RemoteEmulator(backend_type=btype, connection=connection, runs=500)
+    remote_emulators = [RemoteEmulator(backend_type=btype, connection=connection, num_shots=500)
     for btype in [
         EmuFreeBackendV2,
         EmuMPSBackend,
@@ -127,7 +127,7 @@ if PASSWORD is not None:
     device = qoolqit.devices.Device(pulser_device=connection.fetch_available_devices()["FRESNEL"])
     config = SolverConfig(
         use_quantum=True,
-        backend = QPU(connection=connection, runs=500), device=device,
+        backend = QPU(connection=connection, num_shots=500), device=device,
     )
 
 ```

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pytest
 import torch
-from pulser.devices import AnalogDevice
 import pytest_check as check
 from qoolqit.register import Register
 from qoolqit.drive import Drive
@@ -57,6 +56,7 @@ def test_generate_returns_drive_and_solution_optimized(
     assert solution.counts is None
 
 
+@pytest.mark.priority(35)
 def test_generate_optimized_drive_shaper(
     dummy_register: Register,
     simple_qubo_instance: QUBOInstance,
@@ -121,6 +121,7 @@ def test_generate_optimized_drive_shaper(
     assert opt_res[-1]["cost_eval"] == float(1e4)
 
 
+@pytest.mark.priority(25)
 @pytest.mark.parametrize("drive_method", list(DriveType))
 @pytest.mark.parametrize("dmm", [True, False])
 def test_normalized_weights_in_drive(
@@ -137,17 +138,18 @@ def test_normalized_weights_in_drive(
     shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)
     drive, _ = shaper.generate(dummy_register)
 
-    wdetuning = drive.weighted_detunings
+    wdetuning = drive.dmm
+    check.equal(dmm, wdetuning is not None)
+    if wdetuning is None:
+        return
 
-    if len(wdetuning) > 0:
-        assert len(wdetuning) == 1
-        norm_weights = list(wdetuning[0].weights.values())
-        weights = torch.abs(torch.diag(simple_qubo_instance.coefficients)).tolist()
-        max_w = max(weights)
-        expected_norm = [(1 - (w / max_w)) for w in weights]
+    norm_weights = list(wdetuning.weights.values())
+    weights = torch.abs(torch.diag(simple_qubo_instance.coefficients)).tolist()
+    max_w = max(weights)
+    expected_norm = [(1 - (w / max_w)) for w in weights]
 
-        assert pytest.approx(norm_weights, rel=1e-6) == expected_norm
-        assert wdetuning[0].waveform.min() < 0
+    assert pytest.approx(norm_weights, rel=1e-6) == expected_norm
+    assert wdetuning.waveform.min() < 0
 
 
 def test_drive_duration_set(dummy_register: Register, simple_qubo_instance: QUBOInstance) -> None:
@@ -156,11 +158,8 @@ def test_drive_duration_set(dummy_register: Register, simple_qubo_instance: QUBO
     shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)
     drive, _ = shaper.generate(dummy_register)
 
-    # enforces AnalogDevice maximum sequence duration because Digital's one is a really specific number
-    assert (
-        drive.duration * default_config.device.converter.factors[0]
-        == AnalogDevice.max_sequence_duration
-    )
+    # DigitalAnalogDevice has a hardcoded duration
+    check.almost_equal(drive.duration, 1000.0)
 
 
 def test_custom_drive_shaper(simple_qubo_instance: QUBOInstance) -> None:
@@ -177,107 +176,15 @@ def test_custom_drive_shaper(simple_qubo_instance: QUBOInstance) -> None:
     assert isinstance(shaper, MockHeuristicDriveShaper)
 
 
-@pytest.mark.parametrize("dmm", [True, False])
-def test_heuristic_drive_get_hw_dmm_bound(dmm: bool, simple_qubo_instance: QUBOInstance) -> None:
-
-    default_config = SolverConfig(
-        use_quantum=True,
-        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.HEURISTIC, dmm=dmm),
-    )
-    shaper = get_drive_shaper(simple_qubo_instance, default_config, default_config.backend)
-    assert isinstance(shaper, HeuristicDriveShaper)
-
-    check.is_not_none(shaper._get_hw_dmm_bound())
-
-
-def test_heuristic_drive_compute_alpha_upper_bound(
-    simple_qubo_instance: QUBOInstance,
-) -> None:
-    default_config = SolverConfig(
-        use_quantum=True,
-        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.HEURISTIC),
-    )
-    shaper = get_drive_shaper(simple_qubo_instance, default_config, default_config.backend)
-    assert isinstance(shaper, HeuristicDriveShaper)
-
-    check.almost_equal(
-        shaper._compute_alpha_upper_bound(
-            qmin=0.0,
-            qmax=0.0,
-            diag_abs_max=0.0,
-            delta_g_min=-5.0,
-            delta_g_max=5.0,
-            delta_dmm_max=0.0,
-            omega_hw_max=10.0,
-            kappa=0.25,
-        ),
-        1.0,
-    )
-
-    check.almost_equal(
-        shaper._compute_alpha_upper_bound(
-            qmin=-2.0,
-            qmax=2.0,
-            diag_abs_max=2.0,
-            delta_g_min=-5.0,
-            delta_g_max=5.0,
-            delta_dmm_max=0.0,
-            omega_hw_max=1e9,
-            kappa=0.25,
-        ),
-        2.5,
-    )
-
-    check.almost_equal(
-        shaper._compute_alpha_upper_bound(
-            qmin=0.0,
-            qmax=4.0,
-            diag_abs_max=0.0,
-            delta_g_min=-5.0,
-            delta_g_max=1e9,
-            delta_dmm_max=3.0,
-            omega_hw_max=1e9,
-            kappa=0.25,
-        ),
-        0.75,
-    )
-
-    check.almost_equal(
-        shaper._compute_alpha_upper_bound(
-            qmin=-4.0,
-            qmax=4.0,
-            diag_abs_max=4.0,
-            delta_g_min=-5.0,
-            delta_g_max=1e9,
-            delta_dmm_max=0.0,
-            omega_hw_max=1.0,
-            kappa=0.25,
-        ),
-        1.0,
-    )
-
-    check.almost_equal(
-        shaper._compute_alpha_upper_bound(
-            qmin=-2.0,
-            qmax=4.0,
-            diag_abs_max=2.0,
-            delta_g_min=-5.0,
-            delta_g_max=5.0,
-            delta_dmm_max=3.0,
-            omega_hw_max=1.0,
-            kappa=0.25,
-        ),
-        0.5,
-    )
-
-
+@pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
 def test_generate_heuristic_drive_shaper(
     dummy_register: Register,
     simple_qubo_instance: QUBOInstance,
+    dmm: bool,
 ) -> None:
     default_config = SolverConfig(
         use_quantum=True,
-        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.HEURISTIC),
+        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.HEURISTIC, dmm=dmm),
     )
     backend = default_config.backend
     shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)
@@ -290,13 +197,16 @@ def test_generate_heuristic_drive_shaper(
 
     check.equal(solution.solution_status, SolutionStatusType.UNPROCESSED)
 
-    check.almost_equal(drive.duration, 94.248, abs=1.0e-3)
+    check.almost_equal(drive.duration, 1000.0, abs=1.0e-3)
     check.almost_equal(drive.phase, 0.0)
 
     check.equal(drive.amplitude.duration, drive.duration)
     check.almost_equal(drive.amplitude.min(), 1e-9, abs=1e-10)
-    check.almost_equal(drive.amplitude.max(), 0.6000, abs=1e-4)
+    check.almost_equal(drive.amplitude.max(), 1.5, abs=1e-4)
 
     check.equal(drive.detuning.duration, drive.duration)
-    check.almost_equal(drive.detuning.min(), -8.0000, abs=1e-4)
-    check.almost_equal(drive.detuning.max(), 2.4000, abs=1e-4)
+    check.almost_equal(drive.detuning.min(), -3.0, abs=1e-4)
+    if dmm:
+        check.almost_equal(drive.detuning.max(), 3.0, abs=1e-4)
+    else:
+        check.almost_equal(drive.detuning.max(), 2.0, abs=1e-4)

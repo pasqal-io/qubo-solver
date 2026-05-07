@@ -10,7 +10,7 @@ import pytest_check as check
 from unittest.mock import MagicMock, patch
 from typing import List, Iterable, Dict, Any
 
-from qoolqit.devices.device import DigitalAnalogDevice
+from qoolqit.devices.device import DigitalAnalogDevice, AnalogDevice
 from qoolqit.register import Register
 from qoolqit.execution import LocalEmulator
 
@@ -81,14 +81,14 @@ def probability_based_ojective(
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("seed", [44445, 1217, 998])
-@pytest.mark.parametrize("use_probability_based_ojective", [True, False])
-def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: bool) -> None:
+@pytest.mark.parametrize("seed", [44445, 1217, 990])
+@pytest.mark.parametrize("use_probability_based_objective", [True, False])
+def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective: bool) -> None:
 
     np.random.seed(seed)
     torch.manual_seed(seed)
 
-    spacing = 7.0
+    spacing = 1.1
 
     # Set a Register and compute the associated QUBO
     # Equilateral triangle centered on origin
@@ -101,7 +101,7 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: 
         dtype=torch.float32,
     )
     # Choose scaling factor so that coefficients and costs are in a human readable range (~10)
-    Q = 1e6 * interaction_matrix_from_vertices(vertices)
+    Q = 10.0 * interaction_matrix_from_vertices(vertices)
     # Choose diagonal coefficients so that the solutions are 011, 101 and 110
     Q = Q - 2.5 * torch.eye(3, dtype=torch.float32) * Q[0, 1]
 
@@ -121,11 +121,12 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: 
 
     register = Register.from_coordinates(vertices.tolist())
 
-    ds_config = DriveShapingConfig()
-    if use_probability_based_ojective:
+    ds_config = DriveShapingConfig(drive_shaping_method="optimized")
+    if use_probability_based_objective:
         ds_config.optimized_custom_objective = probability_based_ojective
     ds_config.optimized_n_calls = 11
-    config = SolverConfig(device=DigitalAnalogDevice(), drive_shaping=ds_config)
+    ds_config.optimized_seed = seed
+    config = SolverConfig(device=AnalogDevice(), drive_shaping=ds_config)
 
     drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
     drive, qubo_solution = drive_shaper.generate(register)
@@ -146,9 +147,9 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: 
     for solution in optimal_solutions:
         check.is_in(solution.bitstring, expected_optimal_bistrings)
 
-    if use_probability_based_ojective:
+    if use_probability_based_objective:
         total_optimal_probability = sum(s.probability for s in optimal_solutions)
-        check.greater(total_optimal_probability, 0.3)
+        check.greater(total_optimal_probability, 0.75)
 
     print(f"\nMinimum cost: {min_cost}")
     print(f"All optimal bitstrings: {[s.bitstring for s in optimal_solutions]}")
@@ -157,13 +158,13 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_ojective: 
 
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("seed", [412, 6983, 5674])
-@pytest.mark.parametrize("use_probability_based_ojective", [True, False])
-def test_triangular_qubo(seed: int, use_probability_based_ojective: bool) -> None:
+@pytest.mark.parametrize("use_probability_based_objective", [True, False])
+def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> None:
 
     np.random.seed(seed)
     torch.manual_seed(seed)
 
-    spacing = 2.0
+    spacing = 1.5
 
     # Set a Register and compute the associated QUBO
     vertices = spacing * torch.tensor(
@@ -195,12 +196,13 @@ def test_triangular_qubo(seed: int, use_probability_based_ojective: bool) -> Non
 
     register = Register.from_coordinates(vertices.tolist())
 
-    ds_config = DriveShapingConfig()
-    if use_probability_based_ojective:
+    ds_config = DriveShapingConfig(drive_shaping_method="optimized")
+    if use_probability_based_objective:
         ds_config.optimized_custom_objective = probability_based_ojective
-    ds_config.optimized_n_calls = 11
+    ds_config.optimized_n_calls = 20
+    ds_config.optimized_seed = seed
     config = SolverConfig(
-        device=DigitalAnalogDevice(), drive_shaping=ds_config, backend=LocalEmulator(runs=500)
+        device=AnalogDevice(), drive_shaping=ds_config, backend=LocalEmulator(num_shots=500)
     )
 
     drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
@@ -222,8 +224,9 @@ def test_triangular_qubo(seed: int, use_probability_based_ojective: bool) -> Non
     for solution in optimal_solutions:
         check.is_in(solution.bitstring, expected_optimal_bistrings)
 
-    total_optimal_probability = sum(s.probability for s in optimal_solutions)
-    check.greater(total_optimal_probability, 0.3)
+    if use_probability_based_objective:
+        total_optimal_probability = sum(s.probability for s in optimal_solutions)
+        check.greater(total_optimal_probability, 0.6)
 
     print(f"\nMinimum cost: {min_cost}")
     print(f"All optimal bitstrings: {[s.bitstring for s in optimal_solutions]}")

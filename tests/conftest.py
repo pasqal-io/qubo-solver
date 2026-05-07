@@ -12,7 +12,7 @@ from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
 
-from qoolqit.devices import DigitalAnalogDevice, AnalogDevice, MockDevice, Device
+from qoolqit.devices import DigitalAnalogDevice, AnalogDevice, Device, MockDevice
 from pulser_pasqal import PasqalCloud
 from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.qubo_analyzer import QUBOAnalyzer
@@ -23,6 +23,12 @@ from qubosolver.config import (
     LocalEmulator,
 )
 from qubosolver.qubo_types import EmbedderType, LayoutType, DriveType
+from mock.connection import MockConnection
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Generator
 
 connection = PasqalCloud()
 connection.fetch_available_devices()
@@ -91,7 +97,7 @@ def classical_solver_config() -> SolverConfig:
 
 
 locals_bkds: list[LocalEmulator] = [
-    LocalEmulator(backend_type=btype, runs=500)
+    LocalEmulator(backend_type=btype, num_shots=500)
     for btype in [
         QutipBackendV2,
         SVBackend,
@@ -139,7 +145,7 @@ def embedding_method(request: pytest.FixtureRequest) -> EmbedderType:
 def qutip_solver_config() -> SolverConfig:
     return SolverConfig(
         use_quantum=True,
-        backend=LocalEmulator(backend_type=QutipBackendV2, runs=500),
+        backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=500),
     )
 
 
@@ -220,21 +226,21 @@ def qubo_instance_for_embedding() -> QUBOInstance:
 
 @pytest.fixture
 def qubo_instance_blade_tutorial() -> QUBOInstance:
-    return QUBOInstance(
-        torch.tensor(
-            [
-                [0.0, 3.0, 13.0, 211.0, 49.0, 5.0, 12.0, 0.0, 0.0],
-                [0.0, 0.0, 23.0, 0.0, 0.0, 4.0, 0.0, 63.0, 2.0],
-                [0.0, 0.0, 0.0, 5.0, 0.0, 1.0, 0.0, 1.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 37.0, 0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 34.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 35.0, 9.0, 34.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 70.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            ]
-        )
+    M = torch.tensor(
+        [
+            [0.0, 3.0, 13.0, 211.0, 49.0, 5.0, 12.0, 0.0, 0.0],
+            [0.0, 0.0, 23.0, 0.0, 0.0, 4.0, 0.0, 63.0, 2.0],
+            [0.0, 0.0, 0.0, 5.0, 0.0, 1.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 37.0, 0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 34.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 35.0, 9.0, 34.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 70.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        ]
     )
+    Q = M + M.T
+    return QUBOInstance(coefficients=Q)
 
 
 @pytest.fixture(
@@ -298,3 +304,8 @@ def restore_rng_state() -> Generator:
     torch.random.set_rng_state(torch_state)
     np.random.set_state(np_state)
     random.setstate(py_state)
+
+
+@pytest.fixture
+def make_mock_connection() -> type[MockConnection]:
+    return MockConnection
