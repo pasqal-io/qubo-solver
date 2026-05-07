@@ -186,7 +186,9 @@ class Greedy:
         Greedy loop starting from node v. If `on_step` is provided, emit a
         state snapshot after each placement (and an initial snapshot).
         """
-        max_radial_distance = params["device"].max_radial_distance
+        max_radial_distance = params.get(
+            "max_radial_distance", params["device"].max_radial_distance
+        )
         nodes = list(range(Q.shape[0]))
 
         vertices = set(nodes)

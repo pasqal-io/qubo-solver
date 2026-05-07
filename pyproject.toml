@@ -7,7 +7,7 @@ name = "qubo-solver"
 description = "A Quadratic Unconstrained Binary Optimization (QUBO) solver library using quantum and classical approaches."
 readme = "README.md"
 version = "0.6.1"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<=3.14"
 license = { text = "MIT-derived" }
 keywords = ["quantum", "qubo", "solver", "optimization", "combinatorial"]
 authors = [
@@ -42,7 +42,7 @@ dependencies = [
   "scikit-optimize",
   "cplex",
   "pydantic>=2",
-  "qoolqit[solvers]==0.3.1", # The version in .pre-commit-config.yaml must match
+  "qoolqit[extras]>=1.1", # The version in .pre-commit-config.yaml must match
   "shapely",
 ]
 
@@ -50,7 +50,7 @@ dependencies = [
 extras = [
 ]
 dev = [
-  "pytest",
+  "pytest>=9.0.3",
   "pytest-check",
   "pytest-cov",
   "pytest-xdist",
@@ -158,7 +158,7 @@ parallel = true
 #]
 
 [tool.coverage.report]
-exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
+exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:", "pass"]
 
 [tool.ruff]
 line-length = 100

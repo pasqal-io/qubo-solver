@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator, mo
 from pulser_simulation import QutipBackendV2
 from qoolqit.devices.device import Device, DigitalAnalogDevice
 from qoolqit.execution import LocalEmulator, RemoteEmulator, QPU
+from qoolqit.execution.compilation_functions import CompilerProfile
 from pulser_pasqal import PasqalCloud
 
 from qubosolver.qubo_types import (
@@ -189,6 +190,7 @@ class EmbeddingConfig(Config):
     blade_dimensions: list[int] = field(default_factory=lambda: [5, 4, 3, 2, 2, 2])
     draw_steps: bool = False
     animation_save_path: str | None = None
+    min_distance: float | None = None
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
@@ -196,6 +198,7 @@ class EmbeddingConfig(Config):
             "embedding_method": self.embedding_method,
             "draw_steps": self.draw_steps,
             "animation_save_path": self.animation_save_path,
+            "min_distance": self.min_distance,
         }
 
         dict_all_fields = self.__dict__
@@ -298,21 +301,25 @@ class DriveShapingConfig(Config):
     optimized_n_calls: int = 20
     optimized_initial_omega_parameters: list[float] = field(
         default_factory=lambda: [
-            1.0,
-            2.0,
-            1.0,
+            0.5,
+            0.9,
+            0.5,
         ]
     )  # ---> default initial drive parameters: Omega = (1, 2, 1)
     optimized_initial_detuning_parameters: list[float] = field(
         default_factory=lambda: [
-            -2.0,
+            -0.8,
             0.0,
-            2.0,
+            0.8,
         ]
     )  # ---> default initial drive parameters: delta = (-2, 0, 2)
     optimized_custom_qubo_cost: Callable[[str, torch.Tensor], float] | None = None
     optimized_custom_objective: Callable[[list, list, list, list, float, str], float] | None = None
     optimized_callback_objective: Callable[..., None] | None = None
+    optimized_seed: int | None = None
+
+    # Heuristic coefficient for omega
+    heuristic_kappa: float = 0.5
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
@@ -513,3 +520,15 @@ class SolverConfig(Config):
             solver_fields["decompose"] = DecompositionConfig.model_validate(decompose_fields)
 
         return cls.model_validate(solver_fields)
+
+
+def compiler_profile(config: SolverConfig) -> CompilerProfile:
+    if config.drive_shaping.drive_shaping_method == DriveType.OPTIMIZED:
+        return CompilerProfile.WORKING_POINT
+    return CompilerProfile.MAX_ENERGY
+
+
+def max_duration_ratio(config: SolverConfig) -> float | None:
+    if config.device.specs["max_duration"] is None:
+        return None
+    return 0.99

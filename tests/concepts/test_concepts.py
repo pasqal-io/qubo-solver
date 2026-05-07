@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from qubosolver import concepts
 
-from typing import Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Self
 
 from qoolqit import QuantumProgram
+from qoolqit.execution import job
 from pulser.backend import Results
 
 # This "test" is intended to be run with mypy, not mypy
@@ -33,15 +34,15 @@ def test_not_backend() -> None:
     _b1: concepts.Backend = NotBackend1()  # type: ignore[assignment]
 
     class NotBackend2:
-        def run(self: Self, program: int) -> Sequence[Results]:
-            return [Results(atom_order=(), total_duration=0)]
+        def run(self: Self, program: int) -> job.Job[Results]:
+            return job._LocalJob(Results(atom_order=(), total_duration=0))
 
     _test_backend(NotBackend2())  # type: ignore[arg-type]
     _b2: concepts.Backend = NotBackend2()  # type: ignore[assignment]
 
     class NotBackend3:
-        def run(self: Self, program: QuantumProgram) -> Sequence[Results] | None:
-            return [Results(atom_order=(), total_duration=0)]
+        def run(self: Self, program: QuantumProgram) -> job.Job[Results] | None:
+            return job._LocalJob(Results(atom_order=(), total_duration=0))
 
     _test_backend(NotBackend3())  # type: ignore[arg-type]
     _b3: concepts.Backend = NotBackend3()  # type: ignore[assignment]
@@ -50,15 +51,15 @@ def test_not_backend() -> None:
 def test_backend() -> None:
 
     class Backend0:
-        def run(self: Self, program: QuantumProgram) -> Sequence[Results]:
-            return [Results(atom_order=(), total_duration=0)]
+        def run(self: Self, program: QuantumProgram) -> job.Job[Results]:
+            return job._LocalJob(Results(atom_order=(), total_duration=0))
 
     _test_backend(Backend0())
     _b0: concepts.Backend = Backend0()
 
     class Backend1:
-        def run(self: Self, program: QuantumProgram | None) -> Sequence[Results]:
-            return [Results(atom_order=(), total_duration=0)]
+        def run(self: Self, program: QuantumProgram | None) -> job.Job[Results]:
+            return job._LocalJob(Results(atom_order=(), total_duration=0))
 
     _test_backend(Backend1())
     _b1: concepts.Backend = Backend1()

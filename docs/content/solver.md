@@ -33,7 +33,7 @@ from emu_sv import SVBackend
 from emu_mps import MPSBackend
 
 locals_bkds = [
-    LocalEmulator(backend_type=btype, runs=500)
+    LocalEmulator(backend_type=btype, num_shots=500)
     for btype in [
         QutipBackendV2,
         SVBackend,

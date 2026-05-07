@@ -6,11 +6,12 @@ import numpy as np
 import torch
 import warnings
 
-from qoolqit import Register as QoolqitRegister
+from qoolqit import Register
 from qoolqit.devices import Device
+from qoolqit.embedding.matrix_embedder import Blade, BladeConfig
+
 
 from qubosolver import QUBOInstance, concepts
-from qubosolver.algorithms.blade.blade import em_blade_for_device
 from qubosolver.algorithms.greedy.greedy import Greedy
 from qubosolver.config import EmbedderType, SolverConfig
 from qubosolver.utils.density import calculate_density
@@ -34,7 +35,7 @@ class BaseEmbedder(ABC):
         """
         self.instance: QUBOInstance = instance
         self.config: SolverConfig = config
-        self.register: QoolqitRegister | None = None
+        self.register: Register | None = None
         self.backend = backend
 
         # TODO: remove when bumping to qoolqit v1
@@ -42,72 +43,53 @@ class BaseEmbedder(ABC):
         self._distance_conversion = self.config.device.converter.factors[2]
 
     @abstractmethod
-    def embed(self) -> QoolqitRegister:
+    def embed(self) -> Register:
         """
         Creates a layout of atoms as the register.
 
         Returns:
             Register: The register.
         """
+        ...
 
 
 class BLaDEmbedder(BaseEmbedder):
-    """
-    BLaDE (Balanced Latently Dimensional Embedder)
 
-    Computes positions for nodes so that their interactions according to a device
-    approach the desired values at best. The result can be used as an embedding.
-    Its prior target is on interaction matrices or QUBOs, but it can also be used
-    for MIS with limitations if the adjacency matrix is converted into a QUBO.
-    The general principle is based on the Fruchterman-Reingold algorithm.
-    """
+    def embed(self) -> Register:
 
-    @typing.no_type_check
-    @staticmethod
-    def _preprocessing_qubo(Q: torch.Tensor) -> torch.Tensor:
-        def has_empty_positions(X: np.ndarray) -> bool:
-            return True if sum([torch.sum(~torch.any(X, dim=0))]) else False
+        embed_config = self.config.embedding
+        default = BladeConfig()
+        step_per_round = embed_config.blade_steps_per_round
+        if step_per_round is None:
+            step_per_round = default.steps_per_round
+        if embed_config.blade_starting_positions is not None:
+            starting_positions = embed_config.blade_starting_positions.numpy()
+        else:
+            starting_positions = None
 
-        def get_position_indexes(X: np.ndarray) -> int:
-            return np.where(~torch.any(X, dim=0))[-1]
+        min_distance = self.config.embedding.min_distance
+        max_radial_distance = self.config.device.specs["max_radial_distance"]
+        if min_distance is None or max_radial_distance is None:
+            device = self.config.device
+            max_min_dist_ratio = None
+        else:
+            device = None
+            max_min_dist_ratio = max_radial_distance / min_distance
 
-        Q = torch.tensor(Q)
-
-        if has_empty_positions(Q):
-            Q_ = Q.detach().clone()
-
-            non_zero_diag = Q.diagonal()[Q.diagonal() != 0]
-            min_coeff = non_zero_diag.min() if non_zero_diag.numel() else Q[Q != 0].min()
-
-            for empty_position_index in get_position_indexes(Q):
-                Q_[empty_position_index][empty_position_index] = min_coeff * 1e-05
-
-            return torch.abs(Q_ / torch.norm(Q_))
-
-        return torch.abs(Q / torch.norm(Q))
-
-    @typing.no_type_check
-    def embed(self) -> QoolqitRegister:
-
-        coords = (
-            em_blade_for_device(
-                qubo=BLaDEmbedder._preprocessing_qubo(self.instance.coefficients.numpy()),
-                device=self.config.device._device,
-                draw_steps=self.config.embedding.draw_steps,
-                dimensions=self.config.embedding.blade_dimensions,
-                starting_positions=(
-                    self.config.embedding.blade_starting_positions.numpy()
-                    if self.config.embedding.blade_starting_positions is not None
-                    else None
-                ),
-                steps_per_round=self.config.embedding.blade_steps_per_round,
-                follow_max_min_dist_ratio=True,
-            )
-            / self._distance_conversion
+        config = BladeConfig(
+            steps_per_round=step_per_round,
+            starting_positions=starting_positions,
+            dimensions=tuple(embed_config.blade_dimensions),
+            max_min_dist_ratio=max_min_dist_ratio,
+            device=device,
         )
 
-        qubits = {f"q{i}": coord for i, coord in enumerate(coords)}
-        register = QoolqitRegister(qubits)
+        _blade = Blade(config)
+        graph = _blade.embed(self.instance.coefficients.numpy())
+        if min_distance is not None:
+            graph.rescale_coords(spacing=min_distance)
+        register = Register.from_graph(graph)
+
         return register
 
 
@@ -148,7 +130,7 @@ class GreedyEmbedder(BaseEmbedder):
         return 200
 
     @typing.no_type_check
-    def embed(self) -> QoolqitRegister:
+    def embed(self) -> Register:
         """
         Creates a layout of atoms as the register.
 
@@ -197,11 +179,16 @@ class GreedyEmbedder(BaseEmbedder):
             params=params,
             # no extra kwargs; Greedy reads animation/draw/save_path from params
         )
-        coords /= self._distance_conversion
+        min_distance = self.config.embedding.min_distance
+        if min_distance is not None:
+            min_reg_distance = torch.cdist(coords, coords).fill_diagonal_(float("inf")).min()
+            coords *= min_distance / min_reg_distance
+        else:
+            coords /= self._distance_conversion
 
         # build the register (unchanged)
         qubits = {f"q{i}": coord for i, coord in enumerate(coords)}
-        register = QoolqitRegister(qubits)
+        register = Register(qubits)
         return register
 
 

@@ -15,6 +15,8 @@ skip: dict[str, str] = {
     "00-a-tour-of-qubo.ipynb": "Requires qubovert",
     "01-dataset-generation-and-loading.ipynb": "Must manually save data",
     "03-prepostprocessing.ipynb": "Must manually save data from notebook 01",
+    "05-blade.ipynb": "Blade moved to Qoolqit",
+    "09-decomposition.ipynb": "Flaky: Need a device with DMM other than DigitalAnalogDevice",
 }
 
 
@@ -54,7 +56,7 @@ for file in notebooks_files:
     notebooks.append(pytest.param(file))
 
 
-@pytest.mark.priority(20)
+@pytest.mark.priority(160)
 @pytest.mark.parametrize("notebook", notebooks, ids=notebooks_names)
 def test_notebooks(notebook: Path) -> None:
     """Execute docs notebooks as a test, passes if it returns 0."""

@@ -91,7 +91,7 @@ class LimitedAdiabaticDriveShaper(BaseDriveShaper):
             -delta_f if self.config.drive_shaping.dmm and (delta_f > 0) else None,
         )
 
-        shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, weighted_detunings=wdetunings)
+        shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, dmm=wdetunings)
         solution = QUBOSolution(torch.Tensor(), torch.Tensor())
 
         return shaped_drive, solution

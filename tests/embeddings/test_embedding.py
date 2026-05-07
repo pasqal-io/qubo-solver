@@ -14,6 +14,7 @@ from qubosolver.pipeline.embedder import GreedyEmbedder, get_embedder
 from qubosolver.solver import QuboSolver
 
 
+@pytest.mark.priority(40)
 @pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
 def test_embeddings_different_devices(
     qubo_for_testing_many_devices: QUBOInstance, local_device: Device, embedding_method: str
@@ -79,25 +80,28 @@ def test_error_greedy_max_radial_distance_constraint(
     assert qubo_instance_for_embedding.size is not None
 
     for device in [AnalogDevice(), DigitalAnalogDevice()]:
-        assert device._device.max_radial_distance is not None
+        max_radial_distance = device.specs["max_radial_distance"]
+        assert max_radial_distance is not None
         greedy_config = SolverConfig(
             use_quantum=True,
             embedding=EmbeddingConfig(
                 embedding_method="greedy",
                 greedy_traps=qubo_instance_for_embedding.size,
-                greedy_spacing=device._device.max_radial_distance,
+                greedy_spacing=max_radial_distance,
             ),
             device=device,
         )
 
         solver = QuboSolver(qubo_instance_for_embedding, greedy_config)
+        # Setting a spacing larger than the max_radial_distance is not an error,
+        # since scaling is performed
+        solver.embedding()
 
-        with pytest.raises(ValueError):
-            solver.embedding()
 
-
+@pytest.mark.parametrize("normalized", [True, False], ids=["normalized", "not_normalized"])
 def test_correctness_greedy_max_radial_distance_constraint_with_extra_greedy_traps(
     qubo_instance_for_embedding: QUBOInstance,
+    normalized: bool,
 ) -> None:
     assert qubo_instance_for_embedding.size is not None
 
@@ -109,8 +113,8 @@ def test_correctness_greedy_max_radial_distance_constraint_with_extra_greedy_tra
                 [-19.0000, 0.0000],
                 [-9.5000, 16.4531],
             ],
-            dtype=torch.float16,
-        ).tolist(),
+            dtype=torch.float64,
+        ),
         torch.tensor(
             [
                 [12.5000, -21.6562],
@@ -118,12 +122,14 @@ def test_correctness_greedy_max_radial_distance_constraint_with_extra_greedy_tra
                 [-25.0000, 0.0000],
                 [-12.5000, -21.6562],
             ],
-            dtype=torch.float16,
-        ).tolist(),
+            dtype=torch.float64,
+        ),
     ]
 
-    for scenario_idx, device in enumerate([AnalogDevice(), DigitalAnalogDevice()]):
-        conv = device.converter.factors[2]
+    for expected, device in zip(expected_greedy_positions, [AnalogDevice(), DigitalAnalogDevice()]):
+
+        min_distance = 1.0 if normalized else None
+
         assert device._device.max_radial_distance is not None
         greedy_config = SolverConfig(
             use_quantum=True,
@@ -131,6 +137,7 @@ def test_correctness_greedy_max_radial_distance_constraint_with_extra_greedy_tra
                 embedding_method="greedy",
                 greedy_traps=qubo_instance_for_embedding.size * 2,
                 greedy_spacing=device._device.max_radial_distance / 2.0,
+                min_distance=min_distance,
             ),
             device=device,
         )
@@ -138,11 +145,13 @@ def test_correctness_greedy_max_radial_distance_constraint_with_extra_greedy_tra
         solver = QuboSolver(qubo_instance_for_embedding, greedy_config)
         geometry = solver.embedding()
 
-        assert len(geometry.qubits) == len(expected_greedy_positions[scenario_idx])
+        assert len(geometry.qubits) == len(expected)
+        if normalized:
+            conv = torch.cdist(expected, expected).fill_diagonal_(float("inf")).min().item()
+        else:
+            conv = device.converter.factors[2]
 
         for qubit_id, coordinate in enumerate(geometry.qubits.values()):
-            x, y = coordinate.clone().detach().to(dtype=torch.float16).tolist()
-            x_, y_ = expected_greedy_positions[scenario_idx][qubit_id]
-            x_ /= conv
-            y_ /= conv
-            assert np.allclose(x, x_, atol=1e-3) and np.allclose(y, y_, atol=1e-3)
+            p = coordinate.clone().detach().to(dtype=torch.float64)
+            expected_p = expected[qubit_id] / conv
+            torch.testing.assert_close(p, expected_p, atol=1e-3, rtol=1e-3)

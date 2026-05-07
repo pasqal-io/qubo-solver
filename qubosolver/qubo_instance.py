@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import torch
+import io
+import qubosolver.io.utils as io_utils
 from numpy.typing import ArrayLike
 
 from .data import QUBOSolution
@@ -51,14 +53,14 @@ class QUBOInstance:
             dtype (torch.dtype):
                 Data type of the tensors (default: torch.float32).
         """
-        self.device = device
-        self.dtype = dtype
-        self._coefficients: torch.Tensor = torch.zeros([0, 0], dtype=dtype)
+        self._coefficients: torch.Tensor = torch.zeros([0, 0], dtype=dtype, device=device)
         self.solution: QUBOSolution | None = None
         self.density: float | None = None
         self.density_type: DensityType | None = None
 
-        if coefficients is not None:
+        if coefficients is None:
+            self.coefficients = self._coefficients
+        else:
             self.coefficients = coefficients
 
     @property
@@ -71,6 +73,14 @@ class QUBOInstance:
                 Size of the QUBO matrix.
         """
         return self.coefficients.shape[0]
+
+    @property
+    def device(self) -> torch.device:
+        return self.coefficients.device
+
+    @property
+    def dtype(self) -> torch.dtype:
+        return self.coefficients.dtype
 
     @property
     def coefficients(self) -> torch.Tensor:
@@ -128,6 +138,15 @@ class QUBOInstance:
         ]
 
         self.update_metrics()
+
+    @property
+    def _max_off_diag(self) -> float:
+        mask = ~torch.eye(self.size, dtype=torch.bool, device=self.device)
+        return self.coefficients[mask].max().item()
+
+    @property
+    def normalized_coefficients(self) -> torch.Tensor:
+        return self.coefficients / self._max_off_diag
 
     def _expand_size(self, new_size: int) -> None:
         """
@@ -188,3 +207,43 @@ class QUBOInstance:
             f"QUBOInstance of size = {self.size},"
             f"density = {round(self.density, 2) if self.density else None},"
         )
+
+    @staticmethod
+    def save(file_like: io_utils.FileLike[bytes], instance: QUBOInstance) -> None:
+        """
+        Saves a QUBOInstance to a file-like object.
+
+        Args:
+            file_like (io_utils.FileLike[bytes]):
+                File-like object opened in binary write mode where the instance will be saved.
+            instance (QUBOInstance):
+                The QUBOInstance object to be saved.
+
+        Returns:
+            None
+        """
+        with io_utils.open(file_like, "wb") as f:
+            buffer = io.BytesIO()
+            torch.save(instance.coefficients, buffer)
+            io_utils.save_sized_buffer(f, buffer.getbuffer())
+
+    @staticmethod
+    def load(file_like: io_utils.FileLike[bytes]) -> QUBOInstance:
+        """
+        Loads a QUBOInstance from a file-like object.
+
+        Args:
+            file_like (io_utils.FileLike[bytes]):
+                File-like object opened in binary read mode containing the saved QUBOInstance data.
+
+        Returns:
+            QUBOInstance:
+                A new QUBOInstance object reconstructed from the saved data.
+        """
+        with io_utils.open(file_like, "rb") as f:
+            # torch.load might consume too much of the src buffer.
+            #  Use a dedicated limited buffer
+            buffer = io.BytesIO(io_utils.load_sized_buffer(f))
+            Q = torch.load(buffer, weights_only=True)
+
+        return QUBOInstance(Q)
