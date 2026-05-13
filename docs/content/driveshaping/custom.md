@@ -17,7 +17,7 @@ For concrete examples, we have the [`HeuristicDriveShaper`](./heuristic.md) and 
 Let us show an example of a custom simple hard-coded drive shaper.
 
 ```python exec="on" source="material-block" html="1"
-from qoolqit import Drive, Constant, Ramp
+from qoolqit import Drive, Constant, Ramp, Register
 from qubosolver.pipeline.drive import BaseDriveShaper
 from qubosolver.data import QUBOSolution
 from qubosolver.config import (
