@@ -21,7 +21,7 @@ from qubosolver.qubo_types import (
     ClassicalSolverType,
 )
 
-# to handle torch Tensor
+# Allow torch.Tensor fields in Pydantic models.
 BaseModel.model_config["arbitrary_types_allowed"] = True
 
 # Modules to be automatically added to the qubosolver namespace
@@ -166,18 +166,15 @@ class EmbeddingConfig(Config):
             Defaults to 7 (μm).
         greedy_density (float, optional): The estimated density of the QUBO matrix.
             Defaults to None.
-        blade_steps_per_round (int, optional): The number of steps
-            for each layer of dimension for BLaDE.
-            Defaults to 200.
-        blade_starting_positions (torch.Tensor | None, optional): The starting parameters
-            according to the specified dimensions.
-            Defaults to None.
-        blade_dimensions (list[int], optional): A list of dimension degrees
-            to explore one after the other (default is `[5, 4, 3, 2, 2, 2]`).
+        blade_steps_per_round (int | None): TODO: see qoolqit
+        blade_starting_positions (torch.Tensor | None): TODO: see qoolqit
+        blade_dimensions (list[int]): TODO: see qoolqit
         draw_steps (bool, optional): Show generated graph at each step of the optimization.
             Defaults to `False`.
         animation_save_path (str | None, optional): If provided, path to save animation.
             Defaults to None.
+        min_distance (float | None): Minimum atom separation (μm).
+            If not None, the resulting register will be normalized so that the minimum atom separation is equal to this value. Should be 1.0001 when using the Heuristic Drive-Shaping, and None when using the Optimized Drive-Shaping. Defaults to None.
     """
 
     embedding_method: Any = EmbedderType.GREEDY
@@ -200,7 +197,6 @@ class EmbeddingConfig(Config):
             "animation_save_path": self.animation_save_path,
             "min_distance": self.min_distance,
         }
-
         dict_all_fields = self.__dict__
         if self.embedding_method == EmbedderType.GREEDY:
             serialization.update(
@@ -210,7 +206,6 @@ class EmbeddingConfig(Config):
                     if k.startswith(EmbedderType.GREEDY.value)
                 }
             )
-
         if self.embedding_method == EmbedderType.BLADE:
             serialization.update(
                 {k: v for k, v in dict_all_fields.items() if k.startswith(EmbedderType.BLADE.value)}
@@ -293,33 +288,25 @@ class DriveShapingConfig(Config):
             hence should be defined as:
             `def callback_fn(d: dict) -> None:`
             Defaults to None, which means no callback is applied.
+        optimized_seed (int | None): Random seed for the Bayesian optimiser.
+            Defaults to None.
+        heuristic_kappa (float): Scaling coefficient for the Omega waveform in
+            the heuristic drive shaper. Defaults to 0.25.
     """
 
     drive_shaping_method: Any = DriveType.HEURISTIC
     dmm: bool = True
     optimized_re_execute_opt_drive: bool = False
     optimized_n_calls: int = 20
-    optimized_initial_omega_parameters: list[float] = field(
-        default_factory=lambda: [
-            0.5,
-            0.9,
-            0.5,
-        ]
-    )  # ---> default initial drive parameters: Omega = (1, 2, 1)
+    optimized_initial_omega_parameters: list[float] = field(default_factory=lambda: [0.5, 0.9, 0.5])
     optimized_initial_detuning_parameters: list[float] = field(
-        default_factory=lambda: [
-            -0.8,
-            0.0,
-            0.8,
-        ]
-    )  # ---> default initial drive parameters: delta = (-2, 0, 2)
+        default_factory=lambda: [-0.8, 0.0, 0.8]
+    )
     optimized_custom_qubo_cost: Callable[[str, torch.Tensor], float] | None = None
     optimized_custom_objective: Callable[[list, list, list, list, float, str], float] | None = None
     optimized_callback_objective: Callable[..., None] | None = None
     optimized_seed: int | None = None
-
-    # Heuristic coefficient for omega
-    heuristic_kappa: float = 0.5
+    heuristic_kappa: float = 0.25
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
@@ -352,7 +339,6 @@ class DriveShapingConfig(Config):
                 return DriveType.OPTIMIZED
             else:
                 raise ValueError(f"Invalid drive shaping method '{val}'.")
-
         elif inspect.isclass(val):
             from qubosolver.pipeline.drive import BaseDriveShaper
 
@@ -523,12 +509,32 @@ class SolverConfig(Config):
 
 
 def compiler_profile(config: SolverConfig) -> CompilerProfile:
+    """Determines the appropriate compiler profile based on the drive shaping method.
+
+    Args:
+        config (SolverConfig): The solver configuration to inspect.
+
+    Returns:
+        CompilerProfile: `CompilerProfile.WORKING_POINT` for the optimized drive
+            shaper, `CompilerProfile.MAX_ENERGY` otherwise.
+    """
     if config.drive_shaping.drive_shaping_method == DriveType.OPTIMIZED:
         return CompilerProfile.WORKING_POINT
     return CompilerProfile.MAX_ENERGY
 
 
 def max_duration_ratio(config: SolverConfig) -> float | None:
+    """Computes the maximum pulse duration ratio for the configured device.
+
+    Returns 0.99 to give a small safety margin below the device's maximum
+    duration, or None if the device has no duration limit.
+
+    Args:
+        config (SolverConfig): The solver configuration to inspect.
+
+    Returns:
+        float | None: 0.99 if the device has a maximum duration, else None.
+    """
     if config.device.specs["max_duration"] is None:
         return None
     return 0.99

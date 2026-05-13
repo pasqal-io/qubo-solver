@@ -185,7 +185,7 @@ This creates a simple three-stage pattern:
 #### DMM weighted detuning
 
 When DMM is active and the final DMM amplitude is strictly negative, the shaper
-declares a weighted detuning map through `weighted_detunings(...)`, using the
+declares a weighted detuning map through `constant_weighted_dmm(...)`, using the
 weights $w_i$ and final detuning $\delta_{\mathrm{dmm}}(T)$.
 
 ---

@@ -76,10 +76,22 @@ class QUBOInstance:
 
     @property
     def device(self) -> torch.device:
+        """
+        Get the device on which the coefficient tensor is stored.
+
+        Returns:
+            torch.device: The device (e.g., device("cpu") or device("cuda:0")).
+        """
         return self.coefficients.device
 
     @property
     def dtype(self) -> torch.dtype:
+        """
+        Get the data type of the coefficient tensor.
+
+        Returns:
+            torch.dtype: The dtype (e.g., torch.float32).
+        """
         return self.coefficients.dtype
 
     @property
@@ -146,6 +158,16 @@ class QUBOInstance:
 
     @property
     def normalized_coefficients(self) -> torch.Tensor:
+        """
+        Return the coefficient matrix normalised by the maximum off-diagonal value.
+
+        All coefficients are divided by `_max_off_diag` so that the largest
+        off-diagonal entry becomes 1.0. Useful for embedding algorithms that
+        require unit-scaled interactions.
+
+        Returns:
+            torch.Tensor: Normalised coefficient matrix of shape (size, size).
+        """
         return self.coefficients / self._max_off_diag
 
     def _expand_size(self, new_size: int) -> None:
@@ -211,16 +233,21 @@ class QUBOInstance:
     @staticmethod
     def save(file_like: io_utils.FileLike[bytes], instance: QUBOInstance) -> None:
         """
-        Saves a QUBOInstance to a file-like object.
+        Serialises a QUBOInstance to a binary file-like object.
+
+        Uses `torch.save` internally to persist the coefficient tensor.
 
         Args:
-            file_like (io_utils.FileLike[bytes]):
-                File-like object opened in binary write mode where the instance will be saved.
-            instance (QUBOInstance):
-                The QUBOInstance object to be saved.
+            file_like (io_utils.FileLike[bytes]): A file-like object opened in
+                binary write mode (e.g., an open file or a BytesIO buffer).
+            instance (QUBOInstance): The QUBOInstance to serialise.
 
         Returns:
             None
+
+        Example:
+            >>> with open("instance.bin", "wb") as f:
+            ...     QUBOInstance.save(f, my_instance)
         """
         with io_utils.open(file_like, "wb") as f:
             buffer = io.BytesIO()
@@ -230,19 +257,25 @@ class QUBOInstance:
     @staticmethod
     def load(file_like: io_utils.FileLike[bytes]) -> QUBOInstance:
         """
-        Loads a QUBOInstance from a file-like object.
+        Deserialises a QUBOInstance from a binary file-like object.
+
+        Reconstructs the instance from a file previously created with
+        `QUBOInstance.save`.
 
         Args:
-            file_like (io_utils.FileLike[bytes]):
-                File-like object opened in binary read mode containing the saved QUBOInstance data.
+            file_like (io_utils.FileLike[bytes]): A file-like object opened in
+                binary read mode containing the serialised QUBOInstance data.
 
         Returns:
-            QUBOInstance:
-                A new QUBOInstance object reconstructed from the saved data.
+            QUBOInstance: A new QUBOInstance reconstructed from the file.
+
+        Example:
+            >>> with open("instance.bin", "rb") as f:
+            ...     instance = QUBOInstance.load(f)
         """
         with io_utils.open(file_like, "rb") as f:
             # torch.load might consume too much of the src buffer.
-            #  Use a dedicated limited buffer
+            # Use a dedicated limited buffer.
             buffer = io.BytesIO(io_utils.load_sized_buffer(f))
             Q = torch.load(buffer, weights_only=True)
 

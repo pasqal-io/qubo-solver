@@ -92,34 +92,19 @@ class BaseSolver(ABC):
         """
         pass
 
-    def submit(
-        self,
-        drive: Drive,
-        embedding: Register,
-    ) -> Job:
-        """
-        Submit a quantum program for execution on the configured backend.
+    def submit(self, drive: Drive, embedding: Register) -> Job:
+        """Compile and submit a quantum program to the backend.
 
-        Creates a QuantumProgram from the provided drive and embedding, compiles it
-        to the target device, and submits it for execution. Handles both remote and
-        local backends with appropriate execution methods.
+        Creates a ``QuantumProgram`` from the drive and embedding, compiles it
+        to the target device using the configured compiler profile and duration
+        ratio, then submits it via ``self.backend.run()``.
 
         Args:
-            drive (Drive): The drive schedule containing the quantum operations to execute.
-            embedding (Register): The register configuration defining the qubit layout
-                and connectivity for the quantum program.
-            wait (bool, optional): Whether to wait for execution completion. If True,
-                blocks until results are available. If False, returns immediately for
-                remote backends (async execution). Defaults to True.
+            drive (Drive): Drive schedule containing the quantum operations.
+            embedding (Register): Register defining the qubit layout.
 
         Returns:
-            RemoteResults | Sequence[Results]: Execution results from the backend.
-                Returns RemoteResults for remote backends or a sequence of Results
-                for local backends.
-
-        Raises:
-            RuntimeError: If wait=False is specified for local backends, as async
-                execution is not supported on local backends.
+            Job: A job handle for retrieving results.
         """
         program = QuantumProgram(
             register=embedding,
@@ -134,28 +119,20 @@ class BaseSolver(ABC):
         return self.backend.run(program)
 
     @staticmethod
-    def parse_results(
-        results: Results,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Parse execution results from quantum backends into standardized tensor format.
+    def parse_results(results: Results) -> tuple[torch.Tensor, torch.Tensor]:
+        """Parse quantum backend results into standardised tensors.
 
-        Extracts bitstring measurements and their corresponding counts from either
-        remote or local backend execution results. Handles different result formats
-        and converts them into PyTorch tensors for further processing.
+        Extracts bitstring measurements and their counts from a backend
+        ``Results`` object. Handles both remote and local result formats.
 
         Args:
-            results (RemoteResults | Sequence[Results]): Execution results from the
-                quantum backend. Can be either RemoteResults from a remote backend
-                or a sequence of Results from a local emulator.
+            results (Results): Execution results from the quantum backend.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: A tuple containing:
-                - bitstrings (torch.Tensor): Tensor of shape (n_samples, n_qubits)
-                  containing the measured bitstrings as integers (0 or 1). Returns
-                  empty tensor (0, 0) if no measurements were obtained.
-                - counts (torch.Tensor): Tensor of shape (n_samples,) containing
-                  the number of times each corresponding bitstring was measured.
+            tuple[torch.Tensor, torch.Tensor]:
+                - ``bitstrings``: shape (n_samples, n_qubits), dtype int64.
+                  Empty tensor of shape (0, 0) if no measurements.
+                - ``counts``: shape (n_samples,), dtype int64.
         """
         counter = results.final_bitstrings
         bitstrings = torch.tensor(

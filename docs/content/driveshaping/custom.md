@@ -23,7 +23,7 @@ from qoolqit.waveforms import Interpolated as InterpolatedWaveform
 from qubosolver.pipeline.drive import BaseDriveShaper
 from qubosolver.solver import QUBOInstance
 from qubosolver.data import QUBOSolution
-from qubosolver.pipeline.waveforms import weighted_detunings
+from qubosolver.pipeline.waveforms import constant_weighted_dmm
 from qubosolver.config import (
     DriveShapingConfig,
     SolverConfig,
@@ -84,14 +84,14 @@ class LimitedAdiabaticDriveShaper(BaseDriveShaper):
 
         amp_wave = InterpolatedWaveform(max_seq_duration, [1e-9 / TIME, Omega, 1e-9 / TIME])
         det_wave = InterpolatedWaveform(max_seq_duration, [delta_0, 0, delta_f])
-        wdetunings = weighted_detunings(
+        dmm = constant_weighted_dmm(
             register,
             max_seq_duration,
             norm_weights_list,
             -delta_f if self.config.drive_shaping.dmm and (delta_f > 0) else None,
         )
 
-        shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, dmm=wdetunings)
+        shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, dmm=dmm)
         solution = QUBOSolution(torch.Tensor(), torch.Tensor())
 
         return shaped_drive, solution

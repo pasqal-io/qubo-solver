@@ -23,15 +23,40 @@ class BaseEmbedder(ABC):
     """
     Abstract base class for all embedders.
 
-    Prepares the geometry (register) of atoms based on the QUBO instance.
-    Returns a Register compatible with Pasqal/Pulser devices.
+    Prepares the geometry (register) of atoms based on the QUBO instance
+    and returns a ``Register`` compatible with Pasqal/Pulser devices.
+
+    Attributes:
+        instance (QUBOInstance): The QUBO problem to embed.
+        config (SolverConfig): Solver configuration including embedding settings.
+        register (Register | None): The generated register (set after ``embed``).
+        backend (Backend): The execution backend (used to access device specs).
+
+    Note — ``config.embedding.min_distance``:
+        This parameter controls whether the generated register is rescaled after
+        embedding, and its correct value depends on the drive-shaping method used:
+
+        - **Set to** ``1 + margin`` **(e.g.** ``1.001``**)** when pairing with drive shapers
+          that support the ``MAX_ENERGY`` qoolqit compiler profile (e.g.
+          ``HeuristicDriveShaper``). The compiler may rescale atom coordinates at
+          compile time; providing a value just above 1 (in normalised units) ensures
+          the register satisfies the minimum-distance constraint while leaving room
+          for the compiler to adjust it freely.
+
+        - **Set to** ``None`` when pairing with drive shapers that do **not** use the
+          ``MAX_ENERGY`` profile (e.g. ``OptimizedDriveShaper``). In this case no
+          rescaling is applied and the register coordinates are kept exactly as
+          produced by the embedding algorithm, ready to be sent to the physical QPU as-is.
+
+        TODO: see qoolqit's documentation for more details on the rescaling.
     """
 
     def __init__(self, instance: QUBOInstance, config: SolverConfig, backend: concepts.Backend):
         """
         Args:
             instance (QUBOInstance): The QUBO problem to embed.
-            config (SolverConfig): The Solver Configuration.
+            config (SolverConfig): Solver configuration.
+            backend (Backend): Execution backend providing device information.
         """
         self.instance: QUBOInstance = instance
         self.config: SolverConfig = config
@@ -44,8 +69,7 @@ class BaseEmbedder(ABC):
 
     @abstractmethod
     def embed(self) -> Register:
-        """
-        Creates a layout of atoms as the register.
+        """Create a register (atom layout) for the QUBO instance.
 
         Returns:
             Register: The register.
@@ -54,9 +78,29 @@ class BaseEmbedder(ABC):
 
 
 class BLaDEmbedder(BaseEmbedder):
+    """
+    Atom-register embedder using the qoolqit BLaDe (Block-Layout and
+    Degree-based) matrix-embedding algorithm.
+
+    BLaDe jointly optimises atom positions to match the logical adjacency
+    structure of the QUBO graph with the physical Rydberg interaction matrix.
+    Configuration is taken from ``config.embedding`` (BLaDe-specific fields:
+    ``blade_steps_per_round``, ``blade_starting_positions``,
+    ``blade_dimensions``, ``min_distance``).
+    """
 
     def embed(self) -> Register:
+        """Run the BLaDe embedding algorithm and return the resulting register.
 
+        Reads embedding hyper-parameters from ``self.config.embedding``,
+        constructs a ``BladeConfig``, runs ``Blade.embed`` on the QUBO
+        coefficient matrix, optionally rescales coordinates to satisfy the
+        ``min_distance`` constraint, and wraps the result as a ``Register``.
+        #TODO: refer to qoolqit documentation for details.
+
+        Returns:
+            Register: Atom register with positions optimised by BLaDe.
+        """
         embed_config = self.config.embedding
         default = BladeConfig()
         step_per_round = embed_config.blade_steps_per_round

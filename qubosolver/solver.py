@@ -6,7 +6,6 @@ from collections import Counter
 import torch
 import random
 
-# Import the classical solver factory from our classical_solver module.
 from qoolqit import Register, Drive
 
 from qubosolver.qubo_instance import QUBOInstance
