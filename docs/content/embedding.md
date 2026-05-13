@@ -30,6 +30,7 @@ register = solver.embedding()
 
 ## BLaDE config
 The following configuration uses the BLaDE method with specific dimension layers and a number of steps per round (i.e. the number of iterations per layer). Starting positions are implicitely defined but it can be set here, as long as it matches the first dimension layer.
+TODO: refer to qoolqit documentation
 
 ```python exec="on" source="material-block" html="1" session="embedding"
 embedconfig = EmbeddingConfig(embedding_method="blade", blade_dimensions=[5, 4, 3, 2], blade_steps_per_round=300)
@@ -64,9 +65,10 @@ register = solver.embedding()
 ```
 
 ## Custom embedder config
-If one desires to develop his own embedding method, a subclass of `qubosolver.pipeline.embedder.BaseEmbedder` should be implemented with a mandatory `embed` method.
 
-The `embed` method `def embed(self) -> qoolqit.Register` specify how the problem is mapped into a register of qubits when running using a quantum device. Let us show a simple example where each variable $i$ is mapped into a qubit lying on a horizontal line (with coordinates $[i, 0]$, $i$ normalized by the device specs).
+If one desires to develop their own embedding method, a subclass of `qubosolver.pipeline.embedder.BaseEmbedder` should be implemented with a mandatory `embed` method.
+
+The `embed` method `def embed(self) -> qoolqit.Register` specifies how the problem is mapped into a register of qubits when running using a quantum device. Let us show a simple example where each variable $i$ is mapped into a qubit lying on a horizontal line (with coordinates $[i, 0]$, $i$ normalized by the device specs).
 
 ```python exec="on" source="material-block" html="1" session="embedding"
 import typing
@@ -81,8 +83,9 @@ class FixedEmbedder(BaseEmbedder):
 
     @typing.no_type_check
     def embed(self) -> Register:
-        # note `self._distance_conversion` is used to normalize coordinates to fit a device
-        qubits = {f"q{i}": (i / self._distance_conversion ,0) for i in range(self.instance.coefficients.shape[0])}
+        # The register is scaled so that the minimal distance between atoms is 1 (plus a margin). This is the recommended minimal distance.
+        scale = 1.001
+        qubits = {f"q{i}": (i * scale ,0) for i in range(self.instance.coefficients.shape[0])}
         register = Register(qubits)
         return register
 
