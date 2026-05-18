@@ -20,12 +20,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install bandit[toml]
+      - run: pip install bandit[toml,sarif]
       - name: Run Bandit
         run: bandit -r qubosolver/ -c pyproject.toml -f sarif -o bandit-results.sarif
       - name: Upload Bandit SARIF to GitHub Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: bandit-results.sarif
 
@@ -36,9 +36,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: $ secrets.GITHUB_TOKEN
+      - name: Install Gitleaks
+        run: apt-get install -y gitleaks
+      - name: Run Gitleaks
+        run: gitleaks detect --source . --config .gitleaks.toml --verbose
 
   pip-audit:
     name: SCA - pip-audit
