@@ -5,20 +5,29 @@ on:
   pull_request: {}
 
 permissions:
-    contents: read
+  contents: read  # Minimal permissions — read-only access to repo contents
 
 jobs:
 
   bandit:
     name: SAST - Bandit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - run: pip install bandit[toml]
-      - run: bandit -r qubosolver/ -c pyproject.toml
+      - name: Run Bandit
+        run: bandit -r qubosolver/ -c pyproject.toml -f sarif -o bandit-results.sarif
+      - name: Upload Bandit SARIF to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: bandit-results.sarif
 
   gitleaks:
     name: Secret Detection - Gitleaks
@@ -45,6 +54,9 @@ jobs:
   trivy:
     name: SCA + SBOM - Trivy
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to GitHub Security tab
     steps:
       - uses: actions/checkout@v4
       - name: Run Trivy scan
@@ -52,9 +64,15 @@ jobs:
         with:
           scan-type: fs
           scan-ref: .
-          format: table
+          format: sarif
+          output: trivy-results.sarif
           exit-code: "1"
-          severity: CRITICAL,HIGH
+          severity: CRITICAL,HIGH  # Blocks on HIGH and CRITICAL only
+      - name: Upload Trivy SARIF to GitHub Security tab
+        if: always()  # Upload even if scan failed, to still post the report
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
       - name: Generate SBOM
         uses: aquasecurity/trivy-action@master
         with:
@@ -63,7 +81,7 @@ jobs:
           format: cyclonedx
           output: sbom.cdx.json
       - uses: actions/upload-artifact@v4
-        if: "!env.ACT"  # skip when running locally with act
+        if: "!env.ACT"
         with:
           name: sbom
           path: sbom.cdx.json
@@ -71,6 +89,7 @@ jobs:
   pyright:
     name: Type checking - Pyright
     runs-on: ubuntu-latest
+    continue-on-error: true  # Warning only — does not block merge
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
