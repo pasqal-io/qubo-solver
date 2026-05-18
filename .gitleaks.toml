@@ -1,0 +1,8 @@
+title = "qubo-solver gitleaks config"
+
+[extend]
+useDefault = true  # keep all built-in rules
+
+[allowlist]
+# False positive: low-entropy placeholder in generated docs (v0.7.0 tutorial HTML)
+regexes = ['''AIDA0AICAAAAIDAEIAAA''']
