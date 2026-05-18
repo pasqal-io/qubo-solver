@@ -2,6 +2,10 @@ name: Security & Quality
 
 on:
   workflow_dispatch:  # Manual trigger only — run via "Run workflow" button in GitHub Actions UI
+  pull_request: {}
+
+permissions:
+    contents: read
 
 jobs:
 
