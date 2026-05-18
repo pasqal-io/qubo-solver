@@ -5,6 +5,9 @@ on:
         types:
             [published]
 
+permissions:
+    contents: read
+
 concurrency:
   group: fast-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -73,3 +76,5 @@ jobs:
             git config user.email "actions@github.com"
             git fetch origin gh-pages
             hatch -v run docs:mike deploy --push --update-aliases ${{ github.ref_name }} latest
+        permissions:
+            contents: write # TODO: wide permissions needed for deployment with mike
