@@ -30,7 +30,7 @@ register = solver.embedding()
 
 ## BLaDE config
 The following configuration uses the BLaDE method with specific dimension layers and a number of steps per round (i.e. the number of iterations per layer). Starting positions are implicitely defined but it can be set here, as long as it matches the first dimension layer.
-TODO: refer to qoolqit documentation
+See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/) for more details on the parameters.
 
 ```python exec="on" source="material-block" html="1" session="embedding"
 embedconfig = EmbeddingConfig(embedding_method="blade", blade_dimensions=[5, 4, 3, 2], blade_steps_per_round=300)

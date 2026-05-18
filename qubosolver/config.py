@@ -166,9 +166,9 @@ class EmbeddingConfig(Config):
             Defaults to 7 (μm).
         greedy_density (float, optional): The estimated density of the QUBO matrix.
             Defaults to None.
-        blade_steps_per_round (int | None): TODO: see qoolqit
-        blade_starting_positions (torch.Tensor | None): TODO: see qoolqit
-        blade_dimensions (list[int]): TODO: see qoolqit
+        blade_steps_per_round (int | None): See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/)
+        blade_starting_positions (torch.Tensor | None): See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/)
+        blade_dimensions (list[int]): See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/)
         draw_steps (bool, optional): Show generated graph at each step of the optimization.
             Defaults to `False`.
         animation_save_path (str | None, optional): If provided, path to save animation.

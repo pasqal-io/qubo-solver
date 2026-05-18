@@ -32,23 +32,27 @@ class BaseEmbedder(ABC):
         register (Register | None): The generated register (set after ``embed``).
         backend (Backend): The execution backend (used to access device specs).
 
-    Note — ``config.embedding.min_distance``:
-        This parameter controls whether the generated register is rescaled after
-        embedding, and its correct value depends on the drive-shaping method used:
+    Note:
+        **`config.embedding.min_distance`** controls whether the generated register
+        is rescaled after embedding, and its correct value depends on the
+        drive-shaping method used:
 
-        - **Set to** ``1 + margin`` **(e.g.** ``1.001``**)** when pairing with drive shapers
-          that support the ``MAX_ENERGY`` qoolqit compiler profile (e.g.
-          ``HeuristicDriveShaper``). The compiler may rescale atom coordinates at
+        - **Set to `1 + margin` (e.g. `1.001`)** when pairing with drive shapers
+          that support the `MAX_ENERGY` qoolqit compiler profile (e.g.
+          `HeuristicDriveShaper`). The compiler may rescale atom coordinates at
           compile time; providing a value just above 1 (in normalised units) ensures
           the register satisfies the minimum-distance constraint while leaving room
           for the compiler to adjust it freely.
 
-        - **Set to** ``None`` when pairing with drive shapers that do **not** use the
-          ``MAX_ENERGY`` profile (e.g. ``OptimizedDriveShaper``). In this case no
+        - **Set to `None`** when pairing with drive shapers that do **not** use the
+          `MAX_ENERGY` profile (e.g. `OptimizedDriveShaper`). In this case no
           rescaling is applied and the register coordinates are kept exactly as
           produced by the embedding algorithm, ready to be sent to the physical QPU as-is.
 
-        TODO: see qoolqit's documentation for more details on the rescaling.
+        See Qoolqit's documentation for more details on rescaling:
+
+        - [Qoolqit model](https://pasqal-io.github.io/qoolqit/latest/get_started/qoolqit_model/)
+        - [Adimensionalization](https://pasqal-io.github.io/qoolqit/latest/extended_usage/adimensionalization/)
     """
 
     def __init__(self, instance: QUBOInstance, config: SolverConfig, backend: concepts.Backend):
@@ -96,7 +100,8 @@ class BLaDEmbedder(BaseEmbedder):
         constructs a ``BladeConfig``, runs ``Blade.embed`` on the QUBO
         coefficient matrix, optionally rescales coordinates to satisfy the
         ``min_distance`` constraint, and wraps the result as a ``Register``.
-        #TODO: refer to qoolqit documentation for details.
+        See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/latest/reference/embedding/#qoolqit.embedding.BladeConfig) for details.
+
 
         Returns:
             Register: Atom register with positions optimised by BLaDe.
