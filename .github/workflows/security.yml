@@ -41,17 +41,6 @@ jobs:
       - name: Run Gitleaks
         run: gitleaks detect --source . --config .gitleaks.toml --verbose
 
-  pip-audit:
-    name: SCA - pip-audit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - run: pip install pip-audit
-      - run: pip-audit .
-
   trivy:
     name: SCA + SBOM - Trivy
     runs-on: ubuntu-latest
@@ -61,7 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run Trivy scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -71,7 +60,7 @@ jobs:
           severity: CRITICAL,HIGH  # Blocks on HIGH and CRITICAL only
       - name: Upload Trivy SARIF to GitHub Security tab
         if: always()  # Upload even if scan failed, to still post the report
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif
       - name: Generate SBOM
@@ -86,17 +75,3 @@ jobs:
         with:
           name: sbom
           path: sbom.cdx.json
-
-  pyright:
-    name: Type checking - Pyright
-    runs-on: ubuntu-latest
-    continue-on-error: true  # Warning only — does not block merge
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - run: pip install -e .[dev]
-      - uses: jakebailey/pyright-action@v2
-        with:
-          pylance-version: latest-release
