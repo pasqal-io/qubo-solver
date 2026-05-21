@@ -50,8 +50,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python virtual environment
+        run: |
+          pip install uv
+          uv venv .venv
+          echo "VIRTUAL_ENV=$ github.workspace /.venv" >> $GITHUB_ENV
+          echo "$ github.workspace /.venv/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync -U
+
       - name: Generate requirements.txt
-        run: pip install uv && uv export --format requirements-txt --no-hashes -o requirements.txt
+        run: |
+          uv export --format requirements-txt --no-hashes -o requirements.txt
+          rm uv.lock
 
       - name: Run Trivy scan
         uses: aquasecurity/trivy-action@v0.36.0
@@ -77,6 +89,8 @@ jobs:
           format: cyclonedx
           output: sbom.cdx.json
           scanners: vuln,license
+        env:
+          VIRTUAL_ENV: $ env.VIRTUAL_ENV
 
       - uses: actions/upload-artifact@v4
         with:
@@ -90,4 +104,4 @@ jobs:
           scan-ref: .
           format: github
           output: dependency-snapshot.json
-          github-pat: $ secrets.GITHUB_TOKEN
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
