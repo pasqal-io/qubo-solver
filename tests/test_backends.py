@@ -1,6 +1,7 @@
 from __future__ import annotations
 from unittest.mock import patch, MagicMock
 
+import pytest
 import pytest_check as check
 import torch
 
@@ -13,7 +14,7 @@ from emu_mps import MPSBackend
 import qoolqit
 
 from qubosolver import QUBOInstance, SolverConfig, LocalEmulator, EmbeddingConfig
-from qubosolver.backends import AutoLocalEmulatorBackend
+from qubosolver.backends import _AutoLocalEmulatorBackend
 from qubosolver.solver import QuboSolver
 
 
@@ -26,39 +27,40 @@ def make_sequence(register: pulser.Register, device: qoolqit.Device) -> pulser.S
     )
     return sequence
 
-def test_auto_local_emulator_backend() -> None:
+def dummy_pulser_register(n: int) -> pulser.Register:
+    qubits = { f"q{i}": (float(i), 0.) for i in range(n) }
+    return pulser.Register(qubits)
 
-    def dummy_pulser_register(size: int) -> pulser.Register:
-        qubits = { f"q{i}": (float(i), 0.) for i in range(size) }
-        return pulser.Register(qubits)
+@pytest.mark.parametrize("size, expected_type", [
+    (15, QutipBackendV2),
+    (25, SVBackend),
+    (35, MPSBackend),
+])
+def test_auto_local_emulator_backend(size: int, expected_type: type) -> None:
 
     device = qoolqit.MockDevice()
-
-    backend_15 = AutoLocalEmulatorBackend(make_sequence(dummy_pulser_register(15), device))
-    check.is_instance(backend_15, QutipBackendV2)
-
-    backend_25 = AutoLocalEmulatorBackend(make_sequence(dummy_pulser_register(25), device))
-    check.is_instance(backend_25, SVBackend)
-
-    backend_35 = AutoLocalEmulatorBackend(make_sequence(dummy_pulser_register(35), device))
-    check.is_instance(backend_35, MPSBackend)
+    sequence = make_sequence(dummy_pulser_register(size), device)
+    backend = _AutoLocalEmulatorBackend(sequence)
+    check.is_instance(backend, expected_type)
 
 
-def test_auto_local_emulator_backend_run() -> None:
+@pytest.mark.parametrize("size, expected_type", [
+    (2, QutipBackendV2),
+    (25, SVBackend),
+    (35, MPSBackend),
+])
+def test_auto_local_emulator_backend_run(size: int, expected_type: type) -> None:
 
-    Q = torch.Tensor([[-1, 2], [2, -1]])
+    Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
     instance = QUBOInstance(Q)
     config = SolverConfig(
         use_quantum=True,
-        backend=LocalEmulator(backend_type=AutoLocalEmulatorBackend),
+        backend=LocalEmulator(backend_type=_AutoLocalEmulatorBackend),
         activate_trivial_solutions=False,
         embedding=EmbeddingConfig(min_distance=1.001),
     )
 
     solver = QuboSolver(instance, config)
-    with patch.object(QutipBackendV2, "run", return_value=MagicMock(spec=pulser.backend.Results)) as mock_run:
+    with patch.object(expected_type, "run", return_value=MagicMock(spec=pulser.backend.Results)) as mock_run:
         solver.solve()
         mock_run.assert_called_once()
-
-
-
