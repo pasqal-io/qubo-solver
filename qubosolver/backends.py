@@ -11,6 +11,13 @@ _MPS_THRESHOLD = 30
 _SV_THRESHOLD = 20
 
 class _AutoLocalEmulatorBackend(EmulatorBackend):
+    """Factory that selects a backend based on register size.
+
+    Uses __new__ instead of a plain factory function because
+    qoolqit.LocalEmulator requires backend_type to pass an
+    issubclass(backend_type, EmulatorBackend) check.
+    """
+
     def __new__(cls, sequence: PulserSequence, *args, **kwargs):
         n_qubits = len(sequence.register.qubit_ids)
         if n_qubits >= _MPS_THRESHOLD:
