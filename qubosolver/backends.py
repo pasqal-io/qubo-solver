@@ -24,6 +24,5 @@ class _AutoLocalEmulatorBackend(EmulatorBackend):
 
 
 class LocalEmulator(_LocalEmulator):
-    def __init__(self, **kwargs):
-        kwargs.setdefault("backend_type", _AutoLocalEmulatorBackend)
-        super().__init__(**kwargs)
+    def __init__(self, backend_type=_AutoLocalEmulatorBackend, **kwargs):
+        super().__init__(backend_type=backend_type, **kwargs)

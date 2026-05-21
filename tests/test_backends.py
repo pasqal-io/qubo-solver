@@ -13,8 +13,9 @@ from emu_mps import MPSBackend
 
 import qoolqit
 
-from qubosolver import QUBOInstance, SolverConfig, LocalEmulator, EmbeddingConfig
-from qubosolver.backends import _AutoLocalEmulatorBackend
+from qubosolver import QUBOInstance, SolverConfig, EmbeddingConfig
+from qubosolver import LocalEmulator as QoolqitLocalEmulator
+from qubosolver.backends import _AutoLocalEmulatorBackend, LocalEmulator
 from qubosolver.solver import QuboSolver
 
 
@@ -55,7 +56,29 @@ def test_auto_local_emulator_backend_run(size: int, expected_type: type) -> None
     instance = QUBOInstance(Q)
     config = SolverConfig(
         use_quantum=True,
-        backend=LocalEmulator(backend_type=_AutoLocalEmulatorBackend),
+        backend=QoolqitLocalEmulator(backend_type=_AutoLocalEmulatorBackend),
+        activate_trivial_solutions=False,
+        embedding=EmbeddingConfig(min_distance=1.001),
+    )
+
+    solver = QuboSolver(instance, config)
+    with patch.object(expected_type, "run", return_value=MagicMock(spec=pulser.backend.Results)) as mock_run:
+        solver.solve()
+        mock_run.assert_called_once()
+
+
+@pytest.mark.parametrize("size, expected_type", [
+    (2, QutipBackendV2),
+    (25, SVBackend),
+    (35, MPSBackend),
+])
+def test_auto_local_emulator_run(size: int, expected_type: type) -> None:
+
+    Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
+    instance = QUBOInstance(Q)
+    config = SolverConfig(
+        use_quantum=True,
+        backend=LocalEmulator(),
         activate_trivial_solutions=False,
         embedding=EmbeddingConfig(min_distance=1.001),
     )
