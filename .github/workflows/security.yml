@@ -45,7 +45,7 @@ jobs:
     name: SCA + SBOM - Trivy
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       security-events: write  # Required for SARIF upload to GitHub Security tab
     steps:
       - uses: actions/checkout@v4
@@ -90,7 +90,7 @@ jobs:
           output: sbom.cdx.json
           scanners: vuln,license
         env:
-          VIRTUAL_ENV: $ env.VIRTUAL_ENV
+          VIRTUAL_ENV: ${{ env.VIRTUAL_ENV }}
 
       - uses: actions/upload-artifact@v4
         with:
