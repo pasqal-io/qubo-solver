@@ -5,7 +5,7 @@ from pulser.backend.abc import EmulatorBackend
 from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
-from qoolqit.execution import LocalEmulator as _LocalEmulator
+from qoolqit.execution import LocalEmulator as QoolqitLocalEmulator
 
 _MPS_THRESHOLD = 30
 _SV_THRESHOLD = 20
@@ -30,6 +30,7 @@ class _AutoLocalEmulatorBackend(EmulatorBackend):
         return backend
 
 
-class LocalEmulator(_LocalEmulator):
+class LocalEmulator(QoolqitLocalEmulator):
+
     def __init__(self, backend_type=_AutoLocalEmulatorBackend, **kwargs):
         super().__init__(backend_type=backend_type, **kwargs)
