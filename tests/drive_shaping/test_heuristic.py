@@ -112,6 +112,7 @@ def test_with_perfect_embedding(
     drive_cfg = DriveShapingConfig(
         drive_shaping_method="heuristic",
         dmm=dmm,
+        heuristic_kappa=0.5,
     )
 
     config = SolverConfig(

@@ -29,13 +29,13 @@ $\delta = [\delta_1, \delta_2, \delta_3]$
 
 These waveforms:
 
-Always start and end in zero amplitude;
-Use 3 intermediate amplitude values ($\Omega_1$ to $\Omega_3$) and 3 detuning values ($\delta_1$ to $\delta_3$), which are the parameters optimized.
+- Always start and end in zero amplitude;
+- Use 3 intermediate amplitude values ($\Omega_1$ to $\Omega_3$) and 3 detuning values ($\delta_1$ to $\delta_3$), which are the parameters that are optimized on, as ratios of the device maximal amplitude and detuning.
 
-The drive starts with an `InterpolatedWaveform` with the points (later they are normalized to fit device constraints):
+The drive starts with an `InterpolatedWaveform` with the points:
 
-- $\Omega = [0, 5, 10, 5, 0]$
-- $\delta = [-10, 0, 10]$
+- $\Omega = [0, 0.5, 0.9, 0.5, 0] \times \Omega_{\mathrm{hw,max}}$
+- $\delta = [-0.8, 0.0, 0.8] \times \delta_{\mathrm{hw,max}}$
 
 ### Methods Overview
 - `generate(self, register: Register, instance: QUBOInstance) -> tuple[Drive, QUBOSolution]`:

@@ -19,7 +19,7 @@ from qubosolver.config import SolverConfig, compiler_profile, max_duration_ratio
 from qubosolver.data import QUBOSolution
 from qubosolver.qubo_types import DriveType
 from qubosolver.utils import calculate_qubo_cost
-from qubosolver.pipeline.waveforms import weighted_detunings
+from qubosolver.pipeline.waveforms import constant_weighted_dmm
 
 
 class BaseDriveShaper(ABC):
@@ -100,6 +100,22 @@ class BaseDriveShaper(ABC):
 
 
 def _compare_specs(a: dict, b: dict) -> None:
+    """
+    Compare two device-spec dictionaries and emit warnings on any discrepancy.
+
+    Checks that both dicts share the same keys and that every common numeric
+    value satisfies ``math.isclose``. Emits a ``UserWarning`` for:
+    - Keys present in ``a`` but missing in ``b`` (and vice-versa).
+    - Keys whose values differ by more than floating-point tolerance.
+    ``None`` values on either side are silently skipped.
+
+    Args:
+        a (dict): First spec dictionary (e.g. from ``_pulser_specs``).
+        b (dict): Second spec dictionary (e.g. from ``_qoolqit_specs``).
+
+    Returns:
+        None
+    """
     keys_a = set(a.keys())
     keys_b = set(b.keys())
 
@@ -123,6 +139,40 @@ def _compare_specs(a: dict, b: dict) -> None:
 def _pulser_specs(
     device: Device, normalize: bool = False, check_against_qoolqit: bool = False
 ) -> dict[str, float | None]:
+    """
+    Extract device specs directly from the underlying Pulser device object.
+
+    Reads the ``rydberg_global`` channel and optional DMM channels to build a
+    flat dictionary of hardware limits. Optionally normalises all values to
+    dimensionless units using the minimum inter-atom distance ``r0`` and the
+    corresponding interaction strength ``J0 = C6 / r0^6``, and optionally
+    cross-checks the result against ``_qoolqit_specs``.
+
+    Normalisation conventions (when ``normalize=True``):
+        - Distances divided by ``r0``.
+        - Energies/frequencies divided by ``J0``.
+        - Durations divided by ``1000 / J0`` (converting rad/µs → ns).
+
+    Args:
+        device (Device): Qoolqit device wrapper whose ``._device`` attribute
+            is a Pulser ``Device`` object.
+        normalize (bool): If True, return values in dimensionless units.
+            Defaults to False (SI units as reported by Pulser).
+        check_against_qoolqit (bool): If True, call ``_compare_specs`` to
+            compare the result against ``_qoolqit_specs`` and warn on any
+            mismatch. Defaults to False.
+
+    Returns:
+        dict[str, float | None]: Dictionary with keys:
+            - ``max_duration``: Maximum pulse sequence duration.
+            - ``max_amplitude``: Maximum Rabi frequency.
+            - ``max_abs_detuning``: Maximum absolute detuning.
+            - ``min_distance``: Minimum inter-atom distance.
+            - ``max_radial_distance``: Maximum radial trap distance.
+            - ``min_avg_amp``: Minimum average amplitude.
+            - ``dmm_bottom_detuning``: Bottom detuning limit of the first DMM
+              channel, or ``None`` if no DMM channels are present.
+    """
     pulser_device = device._device
     channel = pulser_device.channels["rydberg_global"]
     specs: dict[str, float | None] = {}
@@ -171,6 +221,30 @@ def _pulser_specs(
 def _qoolqit_specs(
     device: Device, complete_with_pulser: bool = False, check_against_pulser: bool = False
 ) -> dict[str, float | None]:
+    """
+    Retrieve normalised device specs from the Qoolqit device abstraction.
+
+    Starts from ``device.specs`` (which are already in dimensionless Qoolqit
+    units) and fills in any keys that Qoolqit does not expose natively
+    (``min_avg_amp``, ``dmm_bottom_detuning``) either from the Pulser layer
+    or with ``None``.
+
+    Args:
+        device (Device): Qoolqit device wrapper.
+        complete_with_pulser (bool): If True, missing keys are taken from
+            ``_pulser_specs(device, normalize=True)`` instead of being set to
+            ``None``. Defaults to False.
+        check_against_pulser (bool): If True, call ``_compare_specs`` to
+            compare the result against the normalised Pulser specs and warn
+            on any mismatch. Defaults to False.
+
+    Returns:
+        dict[str, float | None]: Augmented spec dictionary in the same
+            dimensionless units as ``device.specs``, with at least the keys:
+            - ``min_avg_amp``
+            - ``dmm_bottom_detuning``
+            plus all keys already present in ``device.specs``.
+    """
     specs = device.specs
     pulser_specs = _pulser_specs(device, normalize=True)
 
@@ -198,7 +272,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
 
     With DMM:
         Final target encoding:
-            d_i = -alpha * Q_ii
+            d_i = -0.5 * Q_ii
 
         DMM convention in this stack:
             WeightedDetuning waveform must be <= 0
@@ -287,9 +361,9 @@ class HeuristicDriveShaper(BaseDriveShaper):
         )
 
         # DMM weighted detunings
-        wdetunings = None
+        dmm = None
         if use_dmm:
-            wdetunings = weighted_detunings(
+            dmm = constant_weighted_dmm(
                 register,
                 max_seq_duration,
                 weights,
@@ -299,7 +373,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
         shaped_drive = Drive(
             amplitude=amp_wave,
             detuning=det_wave,
-            dmm=wdetunings,
+            dmm=dmm,
         )
         solution = QUBOSolution(torch.Tensor(), torch.Tensor())
         return shaped_drive, solution
@@ -373,7 +447,7 @@ class OptimizedDriveShaper(BaseDriveShaper):
         register: Register,
     ) -> tuple[Drive, QUBOSolution]:
         """
-        Generate a drive via optimization.
+        Generate a drive via Bayesian optimisation.
 
         Args:
             register (Register): The physical register layout.
@@ -475,10 +549,11 @@ class OptimizedDriveShaper(BaseDriveShaper):
         return self.drive, solution
 
     def build_drive(self, params: list) -> Drive:
-        """Build the drive from a list of parameters for the objective.
+        """Build the drive waveform from a normalised parameter vector.
 
         Args:
-            params (list): List of parameters.
+            params (list): 6 values — 3 amplitude breakpoints then 3 detuning
+                breakpoints, all normalised to [0, 1] (or [-1, 1] for detuning).
 
         Returns:
             Drive: Drive sequence.
@@ -496,17 +571,17 @@ class OptimizedDriveShaper(BaseDriveShaper):
         amp_wave = InterpolatedWaveform(max_seq_duration, amp_params)
         det_wave = InterpolatedWaveform(max_seq_duration, det_params)
 
-        wdetunings = None
+        dmm = None
         final_detuning = det_params[-1]
         if self.dmm and final_detuning > 0:
-            wdetunings = weighted_detunings(
+            dmm = constant_weighted_dmm(
                 self.register,
                 max_seq_duration,
                 self.norm_weights_list,
                 final_detuning=-final_detuning,
             )
 
-        shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, dmm=wdetunings)
+        shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, dmm=dmm)
 
         return shaped_drive
 
