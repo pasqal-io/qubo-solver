@@ -8,6 +8,11 @@ most efficient for the given problem size:
 - Small problems (< 20 qubits): QutipBackendV2
 - Medium problems (20-29 qubits): SVBackend
 - Large problems (≥ 30 qubits): MPSBackend
+
+References:
+- SVBackend performance benchmarks: https://pasqal-io.github.io/emulators/latest/emu_sv/benchmarks/performance/
+- MPSBackend performance benchmarks: https://pasqal-io.github.io/emulators/latest/emu_mps/benchmarks/
+- Backend selection methodology: https://arxiv.org/pdf/2510.09813
 """
 
 from __future__ import annotations
