@@ -58,7 +58,7 @@ def test_auto_local_emulator_backend_run(size: int, expected_type: type) -> None
         use_quantum=True,
         backend=QoolqitLocalEmulator(backend_type=_AutoLocalEmulatorBackend),
         activate_trivial_solutions=False,
-        embedding=EmbeddingConfig(min_distance=1.001),
+        embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
     )
 
     solver = QuboSolver(instance, config)
@@ -80,7 +80,7 @@ def test_auto_local_emulator_run(size: int, expected_type: type) -> None:
         use_quantum=True,
         backend=LocalEmulator(),
         activate_trivial_solutions=False,
-        embedding=EmbeddingConfig(min_distance=1.001),
+        embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
     )
 
     solver = QuboSolver(instance, config)
