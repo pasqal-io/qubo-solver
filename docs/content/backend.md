@@ -14,42 +14,27 @@ The backend configuration part in `SolverConfig` is set via two fields.
 
 ## Local backends
 
-Local backends perform simulations locally. The main available backends are:
+Local backends perform simulations locally with automatic backend selection based on problem size. The `LocalEmulator` automatically chooses the most efficient backend:
 
-- `qutip` using the Qutip simulator as the default,
-- `emu_mps`: emulator based on state of the art tensor network techniques,
-- `emu_sv`: emulator based on state-vector description.
+- **QutipBackendV2**: using the Qutip simulator, for small problems (< 20 qubits),
+- **SVBackend**: emulator based on state-vector description, for medium problems (20-29 qubits),
+- **MPSBackend**: emulator based on state of the art tensor network techniques, for large problems (≥ 30 qubits).
 
-To use any, simply instantiate a `SolverConfig` with the `backend` attribute as a `LocalEmulator`.
-We can specify the number of shots via the runs attribute and configure differently the backend.
-See Qoolqit for more details.
+To use the automatic selection, simply instantiate a `SolverConfig` with a `LocalEmulator`:
 
 ```python exec="on" source="material-block"
-
 from qubosolver.config import SolverConfig, LocalEmulator
-from pulser_simulation import QutipBackendV2
-from emu_sv import SVBackend
-from emu_mps import MPSBackend
 from qoolqit import DigitalAnalogDevice
 
-locals_bkds = [
-    LocalEmulator(backend_type=btype, num_shots=500)
-    for btype in [
-        QutipBackendV2,
-        SVBackend,
-        MPSBackend,
-    ]
-]
-
-
+# Automatic backend selection based on problem size
 config = SolverConfig(
     use_quantum=True,
-    backend=locals_bkds[0],
+    backend=LocalEmulator(num_shots=500),
     device=DigitalAnalogDevice(),
 )
 ```
 
-Alternatively use the `SolverConfig.from_kwargs` method:
+You can also manually specify a particular backend type if needed:
 
 ```python exec="on" source="material-block"
 from qubosolver.config import SolverConfig, LocalEmulator
@@ -58,18 +43,16 @@ from emu_sv import SVBackend
 from emu_mps import MPSBackend
 from qoolqit import DigitalAnalogDevice
 
-locals_bkds = [
-    LocalEmulator(backend_type=btype, num_shots=500)
-    for btype in [
-        QutipBackendV2,
-        SVBackend,
-        MPSBackend,
-    ]
+# Manual backend selection
+manual_backends = [
+    LocalEmulator(backend_type=QutipBackendV2, num_shots=500),
+    LocalEmulator(backend_type=SVBackend, num_shots=500),
+    LocalEmulator(backend_type=MPSBackend, num_shots=500),
 ]
 
-config = SolverConfig.from_kwargs(
+config = SolverConfig(
     use_quantum=True,
-    backend=locals_bkds[0],
+    backend=manual_backends[0],  # Use QutipBackendV2
     device=DigitalAnalogDevice(),
 )
 ```
@@ -129,5 +112,7 @@ if PASSWORD is not None:
         use_quantum=True,
         backend = QPU(connection=connection, num_shots=500), device=device,
     )
+
+```
 
 ```
