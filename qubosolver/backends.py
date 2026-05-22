@@ -12,6 +12,8 @@ most efficient for the given problem size:
 
 from __future__ import annotations
 
+from typing import Any, Type, cast
+
 from pulser import Sequence as PulserSequence
 from pulser.backend.abc import EmulatorBackend
 from pulser_simulation import QutipBackendV2
@@ -21,7 +23,20 @@ from qoolqit.execution import LocalEmulator as QoolqitLocalEmulator
 
 # Thresholds for automatic backend selection based on number of qubits
 _MPS_THRESHOLD = 30  # Use MPS-based backends for problems with ≥30 qubits
-_SV_THRESHOLD = 20   # Use state-vector backends for problems with ≥20 qubits
+_SV_THRESHOLD = 20  # Use state-vector backends for problems with ≥20 qubits
+
+
+def _select_backend_type(n_quibts: int) -> Type[EmulatorBackend]:
+    """Select the most efficient local backend based on the number of qubits."""
+    if n_quibts >= _MPS_THRESHOLD:
+        assert issubclass(MPSBackend, EmulatorBackend)
+        return cast(Type[EmulatorBackend], MPSBackend)
+    elif n_quibts >= _SV_THRESHOLD:
+        assert issubclass(SVBackend, EmulatorBackend)
+        return cast(Type[EmulatorBackend], SVBackend)
+    else:
+        return QutipBackendV2
+
 
 class _AutoLocalEmulatorBackend(EmulatorBackend):
     """Factory that selects a local emulator backend based on register size.
@@ -44,14 +59,9 @@ class _AutoLocalEmulatorBackend(EmulatorBackend):
         EmulatorBackend: The selected backend instance.
     """
 
-    def __new__(cls, sequence: PulserSequence, *args: Any, **kwargs: Any) -> EmulatorBackend:
+    def __new__(cls, sequence: PulserSequence, *args: Any, **kwargs: Any) -> EmulatorBackend:  # type: ignore[misc]
         n_qubits = len(sequence.register.qubit_ids)
-        if n_qubits >= _MPS_THRESHOLD:
-            return MPSBackend(sequence, *args, **kwargs)
-        elif n_qubits >= _SV_THRESHOLD:
-            return SVBackend(sequence, *args, **kwargs)
-        else:
-            return QutipBackendV2(sequence, *args, **kwargs)
+        return _select_backend_type(n_qubits)(sequence, *args, **kwargs)
 
 
 class LocalEmulator(QoolqitLocalEmulator):

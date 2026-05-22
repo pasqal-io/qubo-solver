@@ -46,7 +46,7 @@ def test_auto_local_emulator_backend(size: int, expected_type: type) -> None:
 
     device = qoolqit.MockDevice()
     sequence = make_sequence(dummy_pulser_register(size), device)
-    backend = _AutoLocalEmulatorBackend(sequence)
+    backend = _AutoLocalEmulatorBackend(sequence)  # type: ignore[abstract]
     check.is_instance(backend, expected_type)
 
 
@@ -64,7 +64,7 @@ def test_auto_local_emulator_backend_run(size: int, expected_type: type) -> None
     instance = QUBOInstance(Q)
     config = SolverConfig(
         use_quantum=True,
-        backend=QoolqitLocalEmulator(backend_type=_AutoLocalEmulatorBackend),
+        backend=QoolqitLocalEmulator(backend_type=_AutoLocalEmulatorBackend),  # type: ignore[type-abstract]
         activate_trivial_solutions=False,
         embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
     )
