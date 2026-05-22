@@ -27,7 +27,14 @@ _SV_THRESHOLD = 20  # Use state-vector backends for problems with ≥20 qubits
 
 
 def _select_backend_type(n_quibts: int) -> Type[EmulatorBackend]:
-    """Select the most efficient local backend based on the number of qubits."""
+    """Select the optimal backend class based on the number of qubits.
+
+    Args:
+        n_qubits (int): Number of qubits in the quantum register.
+
+    Returns:
+        Type[EmulatorBackend]: The selected backend class optimized for the given size.
+    """
     if n_quibts >= _MPS_THRESHOLD:
         assert issubclass(MPSBackend, EmulatorBackend)
         return cast(Type[EmulatorBackend], MPSBackend)
@@ -39,24 +46,29 @@ def _select_backend_type(n_quibts: int) -> Type[EmulatorBackend]:
 
 
 class _AutoLocalEmulatorBackend(EmulatorBackend):
-    """Factory that selects a local emulator backend based on register size.
+    """Factory class that automatically selects optimal emulator backends.
 
-    This factory automatically chooses the most efficient local backend:
+    This factory uses __new__ to return instances of different backend types
+    based on quantum register size for optimal performance:
     - MPSBackend for large problems (≥30 qubits)
     - SVBackend for medium problems (20-29 qubits)
     - QutipBackendV2 for small problems (<20 qubits)
 
-    Uses __new__ instead of a plain factory function because
-    qoolqit.LocalEmulator requires backend_type to pass an
-    issubclass(backend_type, EmulatorBackend) check.
+    Note: This class acts as a factory and never instantiates itself.
+    The __new__ method directly returns instances of the selected backend type.
+    Type checking is suppressed as this factory pattern confuses static analyzers.
+
+    Required by qoolqit.LocalEmulator which expects backend_type to pass
+    issubclass(backend_type, EmulatorBackend) checks.
 
     Args:
         sequence (PulserSequence): The pulse sequence to simulate.
-        *args: Additional positional arguments passed to the backend.
-        **kwargs: Additional keyword arguments passed to the backend.
+        *args: Additional positional arguments passed to the selected backend.
+        **kwargs: Additional keyword arguments passed to the selected backend.
 
     Returns:
-        EmulatorBackend: The selected backend instance.
+        EmulatorBackend: An instance of the automatically selected backend
+        (MPSBackend, SVBackend, or QutipBackendV2).
     """
 
     def __new__(cls, sequence: PulserSequence, *args: Any, **kwargs: Any) -> EmulatorBackend:  # type: ignore[misc]
