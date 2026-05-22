@@ -44,16 +44,14 @@ class _AutoLocalEmulatorBackend(EmulatorBackend):
         EmulatorBackend: The selected backend instance.
     """
 
-    def __new__(cls, sequence: PulserSequence, *args, **kwargs):
+    def __new__(cls, sequence: PulserSequence, *args: Any, **kwargs: Any) -> EmulatorBackend:
         n_qubits = len(sequence.register.qubit_ids)
         if n_qubits >= _MPS_THRESHOLD:
-            backend = super().__new__(MPSBackend)
+            return MPSBackend(sequence, *args, **kwargs)
         elif n_qubits >= _SV_THRESHOLD:
-            backend = super().__new__(SVBackend)
+            return SVBackend(sequence, *args, **kwargs)
         else:
-            backend = super().__new__(QutipBackendV2)
-        backend.__init__(sequence, *args, **kwargs)
-        return backend
+            return QutipBackendV2(sequence, *args, **kwargs)
 
 
 class LocalEmulator(QoolqitLocalEmulator):
@@ -75,5 +73,7 @@ class LocalEmulator(QoolqitLocalEmulator):
         >>> # Backend will be automatically selected based on problem size
     """
 
-    def __init__(self, backend_type=_AutoLocalEmulatorBackend, **kwargs):
+    def __init__(
+        self, backend_type: Type[EmulatorBackend] = _AutoLocalEmulatorBackend, **kwargs: Any
+    ) -> None:
         super().__init__(backend_type=backend_type, **kwargs)
