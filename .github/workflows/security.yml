@@ -10,6 +10,9 @@ permissions:
 jobs:
 
   bandit:
+    # SAST (Static Application Security Testing) — scans Python source code for
+    # common security issues (hardcoded secrets, unsafe calls, injection risks, etc.)
+    # Results are uploaded to the GitHub Security tab as SARIF annotations.
     name: SAST - Bandit
     runs-on: ubuntu-latest
     permissions:
@@ -42,6 +45,10 @@ jobs:
         run: gitleaks detect --source . --config .gitleaks.toml --verbose
 
   trivy:
+    # SCA (Software Composition Analysis) — scans dependencies for known CVEs and license info.
+    # SBOM (Software Bill of Materials) — generates a full inventory of all dependencies
+    # in CycloneDX format, uploaded as a build artifact and submitted to the GitHub Dependency Graph.
+    # Vulnerability results are uploaded to the GitHub Security tab as SARIF annotations.
     name: SCA + SBOM - Trivy
     runs-on: ubuntu-latest
     permissions:
