@@ -40,11 +40,15 @@ def _select_backend_type(n_quibts: int) -> Type[EmulatorBackend]:
     Returns:
         Type[EmulatorBackend]: The selected backend class optimized for the given size.
     """
+    # Runtime guard: cast() is unchecked by mypy, so we verify the subclass
+    # relationship in case the third-party library changes.
+    # nosec B101: Bandit flags assert usage as it can be stripped with -O,
+    # but here it's a deliberate invariant check, not input validation.
     if n_quibts >= _MPS_THRESHOLD:
-        assert issubclass(MPSBackend, EmulatorBackend)
+        assert issubclass(MPSBackend, EmulatorBackend)  # nosec B101
         return cast(Type[EmulatorBackend], MPSBackend)
     elif n_quibts >= _SV_THRESHOLD:
-        assert issubclass(SVBackend, EmulatorBackend)
+        assert issubclass(SVBackend, EmulatorBackend)  # nosec B101
         return cast(Type[EmulatorBackend], SVBackend)
     else:
         return QutipBackendV2
