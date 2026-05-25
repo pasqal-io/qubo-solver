@@ -1,8 +1,15 @@
 name: Security & Quality
 
 on:
-  workflow_dispatch:  # Manual trigger only — run via "Run workflow" button in GitHub Actions UI
-  pull_request: {}
+  push:
+    branches:
+      - main
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: {}
 
 permissions:
   contents: read  # Minimal permissions — read-only access to repo contents
