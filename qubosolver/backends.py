@@ -31,7 +31,7 @@ _MPS_THRESHOLD = 26  # Use MPS-based backends for problems with ≥26 qubits
 _SV_THRESHOLD = 15  # Use state-vector backends for problems with ≥15 qubits
 
 
-def _select_backend_type(n_quibts: int) -> Type[EmulatorBackend]:
+def _select_backend_type(n_qubits: int) -> Type[EmulatorBackend]:
     """Select the optimal backend class based on the number of qubits.
 
     Args:
@@ -44,10 +44,10 @@ def _select_backend_type(n_quibts: int) -> Type[EmulatorBackend]:
     # relationship in case the third-party library changes.
     # nosec B101: Bandit flags assert usage as it can be stripped with -O,
     # but here it's a deliberate invariant check, not input validation.
-    if n_quibts >= _MPS_THRESHOLD:
+    if n_qubits >= _MPS_THRESHOLD:
         assert issubclass(MPSBackend, EmulatorBackend)  # nosec B101
         return cast(Type[EmulatorBackend], MPSBackend)
-    elif n_quibts >= _SV_THRESHOLD:
+    elif n_qubits >= _SV_THRESHOLD:
         assert issubclass(SVBackend, EmulatorBackend)  # nosec B101
         return cast(Type[EmulatorBackend], SVBackend)
     else:
