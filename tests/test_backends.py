@@ -37,9 +37,9 @@ def dummy_pulser_register(n: int) -> pulser.Register:
 @pytest.mark.parametrize(
     "size, expected_type",
     [
-        (15, QutipBackendV2),
-        (25, SVBackend),
-        (35, MPSBackend),
+        (10, QutipBackendV2),
+        (20, SVBackend),
+        (30, MPSBackend),
     ],
 )
 def test_auto_local_emulator_backend(size: int, expected_type: type) -> None:
@@ -54,8 +54,8 @@ def test_auto_local_emulator_backend(size: int, expected_type: type) -> None:
     "size, expected_type",
     [
         (2, QutipBackendV2),
-        (25, SVBackend),
-        (35, MPSBackend),
+        (20, SVBackend),
+        (30, MPSBackend),
     ],
 )
 def test_auto_local_emulator_backend_run(size: int, expected_type: type) -> None:
@@ -81,8 +81,8 @@ def test_auto_local_emulator_backend_run(size: int, expected_type: type) -> None
     "size, expected_type",
     [
         (2, QutipBackendV2),
-        (25, SVBackend),
-        (35, MPSBackend),
+        (20, SVBackend),
+        (30, MPSBackend),
     ],
 )
 def test_auto_local_emulator_run(size: int, expected_type: type) -> None:

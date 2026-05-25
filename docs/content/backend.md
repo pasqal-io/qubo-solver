@@ -16,9 +16,9 @@ The backend configuration part in `SolverConfig` is set via two fields.
 
 Local backends perform simulations locally with automatic backend selection based on problem size. The `LocalEmulator` automatically chooses the most efficient backend:
 
-- **QutipBackendV2**: using the Qutip simulator, for small problems (< 20 qubits),
-- **SVBackend**: emulator based on state-vector description, for medium problems (20-29 qubits),
-- **MPSBackend**: emulator based on state of the art tensor network techniques, for large problems (≥ 30 qubits).
+- **QutipBackendV2**: using the Qutip simulator, for small problems (< 15 qubits),
+- **SVBackend**: emulator based on state-vector description, for medium problems (15-25 qubits),
+- **MPSBackend**: emulator based on state of the art tensor network techniques, for large problems (≥ 26 qubits).
 
 To use the automatic selection, simply instantiate a `SolverConfig` with a `LocalEmulator`:
 

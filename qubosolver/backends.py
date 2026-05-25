@@ -5,9 +5,9 @@ selects the optimal backend implementation based on the quantum register size.
 
 The automatic selection optimizes performance by choosing backends that are
 most efficient for the given problem size:
-- Small problems (< 20 qubits): QutipBackendV2
-- Medium problems (20-29 qubits): SVBackend
-- Large problems (≥ 30 qubits): MPSBackend
+- Small problems (< 15 qubits): QutipBackendV2
+- Medium problems (15-25 qubits): SVBackend
+- Large problems (≥ 26 qubits): MPSBackend
 
 References:
 - SVBackend performance benchmarks: https://pasqal-io.github.io/emulators/latest/emu_sv/benchmarks/performance/
@@ -27,8 +27,8 @@ from emu_mps import MPSBackend
 from qoolqit.execution import LocalEmulator as QoolqitLocalEmulator
 
 # Thresholds for automatic backend selection based on number of qubits
-_MPS_THRESHOLD = 30  # Use MPS-based backends for problems with ≥30 qubits
-_SV_THRESHOLD = 20  # Use state-vector backends for problems with ≥20 qubits
+_MPS_THRESHOLD = 26  # Use MPS-based backends for problems with ≥26 qubits
+_SV_THRESHOLD = 15  # Use state-vector backends for problems with ≥15 qubits
 
 
 def _select_backend_type(n_quibts: int) -> Type[EmulatorBackend]:
@@ -55,9 +55,9 @@ class _AutoLocalEmulatorBackend(EmulatorBackend):
 
     This factory uses __new__ to return instances of different backend types
     based on quantum register size for optimal performance:
-    - MPSBackend for large problems (≥30 qubits)
-    - SVBackend for medium problems (20-29 qubits)
-    - QutipBackendV2 for small problems (<20 qubits)
+    - MPSBackend for large problems (≥26 qubits)
+    - SVBackend for medium problems (15-25 qubits)
+    - QutipBackendV2 for small problems (<15 qubits)
 
     Note: This class acts as a factory and never instantiates itself.
     The __new__ method directly returns instances of the selected backend type.
