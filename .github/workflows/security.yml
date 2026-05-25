@@ -1,0 +1,117 @@
+name: Security & Quality
+
+on:
+  workflow_dispatch:  # Manual trigger only — run via "Run workflow" button in GitHub Actions UI
+  pull_request: {}
+
+permissions:
+  contents: read  # Minimal permissions — read-only access to repo contents
+
+jobs:
+
+  bandit:
+    # SAST (Static Application Security Testing) — scans Python source code for
+    # common security issues (hardcoded secrets, unsafe calls, injection risks, etc.)
+    # Results are uploaded to the GitHub Security tab as SARIF annotations.
+    name: SAST - Bandit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install bandit[toml,sarif]
+      - name: Run Bandit
+        run: bandit -r qubosolver/ -c pyproject.toml -f sarif -o bandit-results.sarif || true  #TODO: remove 'true' once all warnings are fixed
+      - name: Upload Bandit SARIF to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: bandit-results.sarif
+
+  gitleaks:
+    name: Secret Detection - Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Gitleaks
+        run: sudo apt-get install -y gitleaks
+      - name: Run Gitleaks
+        run: gitleaks detect --source . --config .gitleaks.toml --verbose
+
+  trivy:
+    # SCA (Software Composition Analysis) — scans dependencies for known CVEs and license info.
+    # SBOM (Software Bill of Materials) — generates a full inventory of all dependencies
+    # in CycloneDX format, uploaded as a build artifact and submitted to the GitHub Dependency Graph.
+    # Vulnerability results are uploaded to the GitHub Security tab as SARIF annotations.
+    name: SCA + SBOM - Trivy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      security-events: write  # Required for SARIF upload to GitHub Security tab
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python virtual environment
+        run: |
+          pip install uv
+          uv venv .venv
+          echo "VIRTUAL_ENV=${{ github.workspace }}/.venv" >> $GITHUB_ENV
+          echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync -U
+
+      - name: Generate requirements.txt
+        run: |
+          uv export --format requirements-txt --no-hashes -o requirements.txt
+          rm uv.lock
+
+      - name: Run Trivy scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+
+      - name: Upload Trivy SARIF to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Generate SBOM (CycloneDX)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: cyclonedx
+          output: sbom.cdx.json
+          scanners: vuln,license
+        env:
+          VIRTUAL_ENV: ${{ env.VIRTUAL_ENV }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.cdx.json
+
+      - name: Submit Dependency Snapshot to GitHub Dependency Graph
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: github
+          output: dependency-snapshot.json
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
+          scanners: vuln,license
+        env:
+          VIRTUAL_ENV: ${{ env.VIRTUAL_ENV }}
