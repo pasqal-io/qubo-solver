@@ -12,11 +12,10 @@ from typing import List, Iterable, Dict, Any
 
 from qoolqit.devices.device import DigitalAnalogDevice, AnalogDevice
 from qoolqit.register import Register
-from qoolqit.execution import LocalEmulator
 
 from qubosolver.pipeline.drive import OptimizedDriveShaper
 from qubosolver.qubo_instance import QUBOInstance
-from qubosolver.config import SolverConfig, DriveShapingConfig
+from qubosolver.config import SolverConfig, DriveShapingConfig, LocalEmulator
 from qubosolver.qubo_analyzer import QUBOAnalyzer
 
 

@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator, mo
 
 from pulser_simulation import QutipBackendV2
 from qoolqit.devices.device import Device, DigitalAnalogDevice
-from qoolqit.execution import LocalEmulator, RemoteEmulator, QPU
+from qoolqit.execution import RemoteEmulator, QPU
 from qoolqit.execution.compilation_functions import CompilerProfile
 from pulser_pasqal import PasqalCloud
 
@@ -20,6 +20,7 @@ from qubosolver.qubo_types import (
     DriveType,
     ClassicalSolverType,
 )
+from qubosolver.backends import LocalEmulator
 
 # Allow torch.Tensor fields in Pydantic models.
 BaseModel.model_config["arbitrary_types_allowed"] = True
