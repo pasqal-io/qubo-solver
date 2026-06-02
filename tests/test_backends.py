@@ -106,7 +106,7 @@ def test_auto_local_emulator_run(size: int, expected_type: type) -> None:
 
 def test_default_config_backend() -> None:
     config = SolverConfig(use_quantum=True)
-    check.is_instance(config.backend._backend_type, _AutoLocalEmulatorBackend)
+    check.is_(config.backend._backend_type, _AutoLocalEmulatorBackend)
 
 
 @pytest.mark.parametrize(
