@@ -8,7 +8,6 @@ from typing import Any, Callable
 import torch
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator, model_serializer
 
-from pulser_simulation import QutipBackendV2
 from qoolqit.devices.device import Device, DigitalAnalogDevice
 from qoolqit.execution import RemoteEmulator, QPU
 from qoolqit.execution.compilation_functions import CompilerProfile
@@ -430,7 +429,7 @@ class SolverConfig(Config):
     embedding: EmbeddingConfig = EmbeddingConfig()
     drive_shaping: DriveShapingConfig = DriveShapingConfig()
     classical: ClassicalConfig = ClassicalConfig()
-    backend: LocalEmulator | RemoteEmulator | QPU = LocalEmulator(backend_type=QutipBackendV2)
+    backend: LocalEmulator | RemoteEmulator | QPU = LocalEmulator()
     device: Device = DigitalAnalogDevice()
     do_postprocessing: bool = False
     do_preprocessing: bool = False
