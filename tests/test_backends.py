@@ -102,3 +102,34 @@ def test_auto_local_emulator_run(size: int, expected_type: type) -> None:
     ) as mock_run:
         solver.solve()
         mock_run.assert_called_once()
+
+
+def test_default_config_backend() -> None:
+    config = SolverConfig(use_quantum=True)
+    check.is_instance(config.backend._backend_type, _AutoLocalEmulatorBackend)
+
+
+@pytest.mark.parametrize(
+    "size, expected_type",
+    [
+        (2, QutipBackendV2),
+        (20, SVBackend),
+        (30, MPSBackend),
+    ],
+)
+def test_auto_local_emulator_run_with_default_config(size: int, expected_type: type) -> None:
+
+    Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
+    instance = QUBOInstance(Q)
+    config = SolverConfig(
+        use_quantum=True,
+        activate_trivial_solutions=False,
+        embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
+    )
+
+    solver = QuboSolver(instance, config)
+    with patch.object(
+        expected_type, "run", return_value=MagicMock(spec=pulser.backend.Results)
+    ) as mock_run:
+        solver.solve()
+        mock_run.assert_called_once()
