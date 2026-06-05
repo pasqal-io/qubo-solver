@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-06-05
+
+### Docs
+- Remove `polyfill.io` from GitHub Pages documentation to prevent intrusive pop-up/redirect behavior for some visitors ([#175](https://github.com/pasqal-io/qubo-solver/pull/175))
+
 ## [0.7.1] - 2026-05-22
 
 ### Changed
@@ -29,6 +34,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 - Remove BLaDE embedding algorithm: it has been moved to Qoolqit ([#156](https://github.com/pasqal-io/qubo-solver/pull/156))
+
+## [0.6.2] - 2026-06-05
+
+### Docs
+- Remove `polyfill.io` from GitHub Pages documentation to prevent intrusive pop-up/redirect behavior for some visitors ([#175](https://github.com/pasqal-io/qubo-solver/pull/175))
 
 ## [0.6.1] - 2026-04-14
 
@@ -59,8 +69,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove references to D-Wave ([#118](https://github.com/pasqal-io/qubo-solver/pull/118))
 
 
-[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.6.1...v0.7.0
+[0.6.2]: https://github.com/pasqal-io/qubo-solver/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.5.0...v0.6.0
