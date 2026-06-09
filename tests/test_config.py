@@ -20,14 +20,14 @@ from qubosolver.qubo_types import (
     DriveType,
     ClassicalSolverType,
 )
-from qubosolver.backends import _AutoLocalEmulatorBackend
+from qubosolver.backends import AutoLocalEmulatorBackend
 
 
 def test_empty_config(empty_config: SolverConfig) -> None:
     assert empty_config.config_name == ""
     assert empty_config.use_quantum is True
     assert isinstance(empty_config.backend, LocalEmulator)
-    assert empty_config.backend._backend_type == _AutoLocalEmulatorBackend
+    assert empty_config.backend._backend_type == AutoLocalEmulatorBackend
     assert empty_config.embedding.embedding_method == EmbedderType.GREEDY
     assert empty_config.embedding.draw_steps is False
     assert empty_config.embedding.greedy_layout == LayoutType.TRIANGULAR

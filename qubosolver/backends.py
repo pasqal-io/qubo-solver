@@ -1,13 +1,13 @@
-"""Local quantum backend implementation with automatic backend selection.
+"""Local and remote quantum backend implementation with automatic backend selection.
 
-This module provides a wrapper class for local quantum emulators that automatically
-selects the optimal backend implementation based on the quantum register size.
+This module provides wrapper classes for quantum emulators that automatically
+select the optimal backend implementation based on the quantum register size.
 
 The automatic selection optimizes performance by choosing backends that are
 most efficient for the given problem size:
-- Small problems (< 15 qubits): QutipBackendV2
-- Medium problems (15-25 qubits): SVBackend
-- Large problems (≥ 26 qubits): MPSBackend
+- Small problems (< 15 qubits): QutipBackendV2 (local) / EmuFreeBackendV2 (remote)
+- Medium problems (15-25 qubits): SVBackend (local) / EmuSVBackend (remote)
+- Large problems (≥ 26 qubits): MPSBackend (local) / EmuMPSBackend (remote)
 
 References:
 - SVBackend performance benchmarks: https://pasqal-io.github.io/emulators/latest/emu_sv/benchmarks/performance/
@@ -17,44 +17,83 @@ References:
 
 from __future__ import annotations
 
+import warnings
 from typing import Any, Type, cast
 
 from pulser import Sequence as PulserSequence
 from pulser.backend.abc import EmulatorBackend
 from pulser_simulation import QutipBackendV2
+from pulser_pasqal.backends import (
+    RemoteEmulatorBackend,
+    EmuFreeBackendV2,
+    EmuSVBackend,
+    EmuMPSBackend,
+)
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
-from qoolqit.execution import LocalEmulator as QoolqitLocalEmulator
+import qoolqit
+from qoolqit.execution import (
+    LocalEmulator as QoolqitLocalEmulator,
+    RemoteEmulator as QoolqitRemoteEmulator,
+)
 
 # Thresholds for automatic backend selection based on number of qubits
 _MPS_THRESHOLD = 26  # Use MPS-based backends for problems with ≥26 qubits
 _SV_THRESHOLD = 15  # Use state-vector backends for problems with ≥15 qubits
 
 
-def _select_backend_type(n_qubits: int) -> Type[EmulatorBackend]:
-    """Select the optimal backend class based on the number of qubits.
-
-    Args:
-        n_qubits (int): Number of qubits in the quantum register.
-
-    Returns:
-        Type[EmulatorBackend]: The selected backend class optimized for the given size.
-    """
+def _get_backend_type(
+    backend_id: str, remote: bool
+) -> Type[EmulatorBackend] | Type[RemoteEmulatorBackend]:
     # Runtime guard: cast() is unchecked by mypy, so we verify the subclass
     # relationship in case the third-party library changes.
     # nosec B101: Bandit flags assert usage as it can be stripped with -O,
     # but here it's a deliberate invariant check, not input validation.
+    if backend_id == "qutip":
+        if remote:
+            return EmuFreeBackendV2
+        else:
+            return QutipBackendV2
+
+    if backend_id == "emu_sv":
+        if remote:
+            return EmuSVBackend
+        else:
+            assert issubclass(SVBackend, EmulatorBackend)  # nosec B101
+            return cast(Type[EmulatorBackend], SVBackend)
+
+    if backend_id == "emu_mps":
+        if remote:
+            return EmuMPSBackend
+        else:
+            assert issubclass(MPSBackend, EmulatorBackend)  # nosec B101
+            return cast(Type[EmulatorBackend], MPSBackend)
+
+    raise ValueError(f"Invalid backend ID: {backend_id}")
+
+
+def _select_backend_type(
+    n_qubits: int, remote: bool
+) -> Type[EmulatorBackend] | Type[RemoteEmulatorBackend]:
+    """Select the appropriate backend class based on the number of qubits.
+
+    Args:
+        n_qubits (int): Number of qubits in the quantum register.
+        remote (bool): Whether to select a remote or local backend.
+
+    Returns:
+        Type[EmulatorBackend] | Type[RemoteEmulatorBackend]: The selected backend class
+        appropriate for the given size (QutipBackendV2/EmuFreeBackendV2 become untractable beyond 15 qubits).
+    """
     if n_qubits >= _MPS_THRESHOLD:
-        assert issubclass(MPSBackend, EmulatorBackend)  # nosec B101
-        return cast(Type[EmulatorBackend], MPSBackend)
+        return _get_backend_type("emu_mps", remote)
     elif n_qubits >= _SV_THRESHOLD:
-        assert issubclass(SVBackend, EmulatorBackend)  # nosec B101
-        return cast(Type[EmulatorBackend], SVBackend)
+        return _get_backend_type("emu_sv", remote)
     else:
-        return QutipBackendV2
+        return _get_backend_type("qutip", remote)
 
 
-class _AutoLocalEmulatorBackend(EmulatorBackend):
+class AutoLocalEmulatorBackend(EmulatorBackend):
     """Factory class that automatically selects optimal emulator backends.
 
     This factory uses __new__ to return instances of different backend types
@@ -82,7 +121,34 @@ class _AutoLocalEmulatorBackend(EmulatorBackend):
 
     def __new__(cls, sequence: PulserSequence, *args: Any, **kwargs: Any) -> EmulatorBackend:  # type: ignore[misc]
         n_qubits = len(sequence.register.qubit_ids)
-        return _select_backend_type(n_qubits)(sequence, *args, **kwargs)
+        return _select_backend_type(n_qubits, False)(sequence, *args, **kwargs)
+
+
+class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
+    """Factory class that automatically selects optimal remote emulator backends.
+
+    This factory uses __new__ to return instances of different remote backend types
+    based on quantum register size for optimal performance:
+    - EmuMPSBackend for large problems (≥26 qubits)
+    - EmuSVBackend for medium problems (15-25 qubits)
+    - EmuFreeBackendV2 for small problems (<15 qubits)
+
+    Note: This class acts as a factory and never instantiates itself.
+    The __new__ method directly returns instances of the selected remote backend type.
+
+    Args:
+        sequence (PulserSequence): The pulse sequence to simulate.
+        *args: Additional positional arguments passed to the selected backend.
+        **kwargs: Additional keyword arguments passed to the selected backend.
+
+    Returns:
+        RemoteEmulatorBackend: An instance of the automatically selected remote backend
+        (EmuMPSBackend, EmuSVBackend, or EmuFreeBackendV2).
+    """
+
+    def __new__(cls, sequence: PulserSequence, *args: Any, **kwargs: Any) -> RemoteEmulatorBackend:  # type: ignore[misc]
+        n_qubits = len(sequence.register.qubit_ids)
+        return _select_backend_type(n_qubits, True)(sequence, *args, **kwargs)
 
 
 class LocalEmulator(QoolqitLocalEmulator):
@@ -93,9 +159,14 @@ class LocalEmulator(QoolqitLocalEmulator):
     It provides the same interface as the base LocalEmulator but with
     improved performance through intelligent backend selection.
 
+    The optimal backend selection follows these guidelines:
+    - Small problems (< 15 qubits): QutipBackendV2
+    - Medium problems (15-25 qubits): SVBackend
+    - Large problems (≥ 26 qubits): MPSBackend
+
     Args:
         backend_type (type, optional): Backend type to use. Defaults to
-            _AutoLocalEmulatorBackend for automatic selection.
+            AutoLocalEmulatorBackend for automatic selection.
         **kwargs: Additional keyword arguments passed to the base LocalEmulator.
 
     Example:
@@ -105,6 +176,91 @@ class LocalEmulator(QoolqitLocalEmulator):
     """
 
     def __init__(
-        self, backend_type: Type[EmulatorBackend] = _AutoLocalEmulatorBackend, **kwargs: Any
+        self, backend_type: Type[EmulatorBackend] = AutoLocalEmulatorBackend, **kwargs: Any
     ) -> None:
         super().__init__(backend_type=backend_type, **kwargs)
+
+    def run(self, program: qoolqit.QuantumProgram, *args: Any, **kwargs: Any) -> Any:
+        """Run the quantum sequence with backend tractability warning.
+
+        Args:
+            sequence: The quantum pulse sequence to execute
+            *args: Additional positional arguments
+            **kwargs: Additional keyword arguments
+
+        Returns:
+            The execution results from the local backend
+        """
+        n_qubits = program.register.n_qubits
+        optimal_backend = _select_backend_type(n_qubits, False)
+
+        # Only warn if not using AutoLocalEmulatorBackend (which auto-selects appropriately)
+        if self._backend_type != AutoLocalEmulatorBackend and self._backend_type != optimal_backend:
+            warnings.warn(
+                f"Using {self._backend_type.__name__} for {n_qubits} qubits. "
+                f"Consider using {optimal_backend.__name__} which is recommended "
+                f"for this problem size.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+        return super().run(program, *args, **kwargs)
+
+
+class RemoteEmulator(QoolqitRemoteEmulator):
+    """Remote quantum emulator with automatic backend selection.
+
+    This class wraps qoolqit.RemoteEmulator and provides backend selection
+    recommendations based on quantum register size and tractability constraints.
+
+    Backend selection guidelines based on computational tractability:
+    - Small problems (< 15 qubits): EmuFreeBackendV2 (default)
+    - Medium problems (15-25 qubits): EmuSVBackend
+    - Large problems (≥ 26 qubits): EmuMPSBackend
+
+    Note: EmuFreeBackendV2 becomes untractable beyond ~15 qubits, similar to its
+    local counterpart QutipBackendV2. For larger problems, EmuSVBackend and
+    EmuMPSBackend are necessary. Fees may apply for remote execution.
+
+    Args:
+        backend_type (type, optional): Backend type to use. Defaults to
+            EmuFreeBackendV2.
+        **kwargs: Additional keyword arguments passed to the base RemoteEmulator.
+
+    Example:
+        >>> from qubosolver.backends import RemoteEmulator
+        >>> from pulser_pasqal import PasqalCloud
+        >>> connection = PasqalCloud(username="user", password="pass", project_id="project")
+        >>> emulator = RemoteEmulator(connection=connection, num_shots=1000)
+        >>> # Uses EmuFreeBackendV2 by default
+    """
+
+    def __init__(
+        self, backend_type: Type[RemoteEmulatorBackend] = EmuFreeBackendV2, **kwargs: Any
+    ) -> None:
+        super().__init__(backend_type=backend_type, **kwargs)
+
+    def run(self, program: qoolqit.QuantumProgram, *args: Any, **kwargs: Any) -> Any:
+        """Run the quantum sequence with backend tractability warning.
+
+        Args:
+            sequence: The quantum pulse sequence to execute
+            *args: Additional positional arguments
+            **kwargs: Additional keyword arguments
+
+        Returns:
+            The execution results from the remote backend
+        """
+        n_qubits = program.register.n_qubits
+        optimal_backend = _select_backend_type(n_qubits, True)
+
+        if self._backend_type != optimal_backend:
+            warnings.warn(
+                f"Using {self._backend_type.__name__} for {n_qubits} qubits. "
+                f"Consider using {optimal_backend.__name__} which is recommended "
+                f"for this problem size. Note: Fees may apply for remote execution.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+        return super().run(program, *args, **kwargs)
