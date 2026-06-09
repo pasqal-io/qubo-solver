@@ -18,7 +18,7 @@ References:
 from __future__ import annotations
 
 import warnings
-from typing import Any, Type, cast
+from typing import Any, Type, cast, Literal
 
 from pulser import Sequence as PulserSequence
 from pulser.backend.abc import EmulatorBackend
@@ -43,8 +43,20 @@ _SV_THRESHOLD = 15  # Use state-vector backends for problems with ≥15 qubits
 
 
 def _get_backend_type(
-    backend_id: str, remote: bool
+    backend_id: Literal["qutip", "emu_sv", "emu_mps"], remote: bool
 ) -> Type[EmulatorBackend] | Type[RemoteEmulatorBackend]:
+    """Get the backend type for a given backend ID and execution mode.
+
+    Args:
+        backend_id (Literal["qutip", "emu_sv", "emu_mps"]): Backend identifier.
+        remote (bool): Whether to get a remote or local backend type.
+
+    Returns:
+        Type[EmulatorBackend] | Type[RemoteEmulatorBackend]: The backend class for the specified ID and execution mode.
+
+    Raises:
+        ValueError: If the backend_id is not recognized.
+    """
     # Runtime guard: cast() is unchecked by mypy, so we verify the subclass
     # relationship in case the third-party library changes.
     # nosec B101: Bandit flags assert usage as it can be stripped with -O,
@@ -71,8 +83,6 @@ def _get_backend_type(
             assert issubclass(MPSBackend, EmulatorBackend)  # nosec B101
             return cast(Type[EmulatorBackend], MPSBackend)
 
-    raise ValueError(f"Invalid backend ID: {backend_id}")
-
 
 def _select_backend_type(
     n_qubits: int, remote: bool
@@ -85,7 +95,8 @@ def _select_backend_type(
 
     Returns:
         Type[EmulatorBackend] | Type[RemoteEmulatorBackend]: The selected backend class
-        appropriate for the given size (QutipBackendV2/EmuFreeBackendV2 become untractable beyond 15 qubits).
+        appropriate for the given problem size. QutipBackendV2/EmuFreeBackendV2 become
+        intractable beyond 15 qubits.
     """
     if n_qubits >= _MPS_THRESHOLD:
         return _get_backend_type("emu_mps", remote)
@@ -185,10 +196,10 @@ class LocalEmulator(QoolqitLocalEmulator):
         super().__init__(backend_type=backend_type, **kwargs)
 
     def run(self, program: qoolqit.QuantumProgram, *args: Any, **kwargs: Any) -> Any:
-        """Run the quantum sequence with backend tractability warning.
+        """Run the quantum program with backend tractability warning.
 
         Args:
-            sequence: The quantum pulse sequence to execute
+            program: The quantum program to execute
             *args: Additional positional arguments
             **kwargs: Additional keyword arguments
 
@@ -245,10 +256,10 @@ class RemoteEmulator(QoolqitRemoteEmulator):
         super().__init__(backend_type=backend_type, **kwargs)
 
     def run(self, program: qoolqit.QuantumProgram, *args: Any, **kwargs: Any) -> Any:
-        """Run the quantum sequence with backend tractability warning.
+        """Run the quantum program with backend tractability warning.
 
         Args:
-            sequence: The quantum pulse sequence to execute
+            program: The quantum program to execute
             *args: Additional positional arguments
             **kwargs: Additional keyword arguments
 
