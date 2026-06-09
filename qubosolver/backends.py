@@ -57,6 +57,7 @@ def _get_backend_type(
 
     if backend_id == "emu_sv":
         if remote:
+            assert issubclass(EmuSVBackend, RemoteEmulatorBackend)  # nosec B101
             return EmuSVBackend
         else:
             assert issubclass(SVBackend, EmulatorBackend)  # nosec B101
@@ -64,6 +65,7 @@ def _get_backend_type(
 
     if backend_id == "emu_mps":
         if remote:
+            assert issubclass(EmuMPSBackend, RemoteEmulatorBackend)  # nosec B101
             return EmuMPSBackend
         else:
             assert issubclass(MPSBackend, EmulatorBackend)  # nosec B101
@@ -148,7 +150,9 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
 
     def __new__(cls, sequence: PulserSequence, *args: Any, **kwargs: Any) -> RemoteEmulatorBackend:  # type: ignore[misc]
         n_qubits = len(sequence.register.qubit_ids)
-        return _select_backend_type(n_qubits, True)(sequence, *args, **kwargs)
+        backend = _select_backend_type(n_qubits, True)(sequence, *args, **kwargs)
+        assert isinstance(backend, RemoteEmulatorBackend)  # nosec B101
+        return backend
 
 
 class LocalEmulator(QoolqitLocalEmulator):

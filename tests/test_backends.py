@@ -81,7 +81,9 @@ def test_auto_remote_emulator_backend(size: int, expected_type: type) -> None:
 
     device = qoolqit.MockDevice()
     sequence = make_sequence(dummy_pulser_register(size), device)
-    backend = AutoRemoteEmulatorBackend(sequence, MagicMock(spec=pulser.backend.remote.RemoteConnection))  # type: ignore[abstract]
+    backend = AutoRemoteEmulatorBackend(
+        sequence, MagicMock(spec=pulser.backend.remote.RemoteConnection)
+    )
     check.is_instance(backend, expected_type)
 
 
@@ -135,9 +137,7 @@ def test_auto_remote_emulator_backend_run(size: int, expected_type: type) -> Non
     )
 
     solver = QuboSolver(instance, config)
-    with patch.object(
-        expected_type, "run", return_value=mock_results
-    ) as mock_run:
+    with patch.object(expected_type, "run", return_value=mock_results) as mock_run:
         solver.solve()
         mock_run.assert_called_once()
 
@@ -228,9 +228,7 @@ def test_auto_remote_emulator_run_with_default_config(size: int, expected_type: 
     )
 
     solver = QuboSolver(instance, config)
-    with patch.object(
-        expected_type, "run", return_value=mock_results
-    ) as mock_run:
+    with patch.object(expected_type, "run", return_value=mock_results) as mock_run:
         solver.solve()
         mock_run.assert_called_once()
 
@@ -249,9 +247,7 @@ def test_remote_emulator_warning() -> None:
     )
     solver = QuboSolver(instance, config)
 
-    with patch.object(
-        EmuSVBackend, "run", return_value=mock_results
-    ) as mock_run:
+    with patch.object(EmuSVBackend, "run", return_value=mock_results) as mock_run:
         with pytest.warns(UserWarning, match="Consider using EmuFreeBackendV2"):
             solver.solve()
             mock_run.assert_called_once()
