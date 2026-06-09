@@ -233,7 +233,7 @@ class RemoteEmulator(QoolqitRemoteEmulator):
     - Medium problems (15-25 qubits): EmuSVBackend
     - Large problems (≥ 26 qubits): EmuMPSBackend
 
-    Note: EmuFreeBackendV2 becomes untractable beyond ~15 qubits, similar to its
+    Note: EmuFreeBackendV2 becomes intractable beyond ~15 qubits, similar to its
     local counterpart QutipBackendV2. For larger problems, EmuSVBackend and
     EmuMPSBackend are necessary. Fees may apply for remote execution.
 

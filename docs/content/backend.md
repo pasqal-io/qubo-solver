@@ -16,20 +16,32 @@ The backend configuration part in `SolverConfig` is set via two fields.
 
 Local backends perform simulations locally with automatic backend selection based on computational tractability. The `LocalEmulator` automatically chooses the appropriate backend:
 
-- **QutipBackendV2**: using the Qutip simulator, for small problems (< 15 qubits) - becomes untractable beyond this limit,
+- **QutipBackendV2**: using the Qutip simulator, for small problems (< 15 qubits) - becomes intractable beyond this limit,
 - **SVBackend**: emulator based on state-vector description, for medium problems (15-25 qubits),
 - **MPSBackend**: emulator based on state of the art tensor network techniques, for large problems (≥ 26 qubits).
+
+### Automatic Backend Factory
+
+The automatic backend selection is implemented through `AutoLocalEmulatorBackend`, a factory class that selects the most efficient backend based on the number of qubits.
 
 To use the automatic selection, simply instantiate a `SolverConfig` with a `LocalEmulator`:
 
 ```python exec="on" source="material-block"
 from qubosolver.config import SolverConfig, LocalEmulator
+from qubosolver.backends import AutoLocalEmulatorBackend
 from qoolqit import DigitalAnalogDevice
 
-# Automatic backend selection based on problem size
+# Automatic backend selection based on problem size (default behavior)
 config = SolverConfig(
     use_quantum=True,
-    backend=LocalEmulator(num_shots=500),
+    backend=LocalEmulator(num_shots=500),  # Uses AutoLocalEmulatorBackend by default
+    device=DigitalAnalogDevice(),
+)
+
+# Explicitly specify automatic backend selection
+config_explicit = SolverConfig(
+    use_quantum=True,
+    backend=LocalEmulator(backend_type=AutoLocalEmulatorBackend, num_shots=500),
     device=DigitalAnalogDevice(),
 )
 ```
@@ -61,19 +73,26 @@ config = SolverConfig(
 ## Remote backends
 
 Remote backends submit jobs to a remote server via [pasqal-cloud](https://docs.pasqal.com/cloud/).
-The `RemoteEmulator` provides automatic backend selection similar to local emulation, with the same tractability constraints:
+The `RemoteEmulator` provides backend selection recommendations with the same tractability constraints as local backends:
 
-- **EmuFreeBackendV2**: remote emulator for small problems (< 15 qubits) - becomes untractable beyond this limit,
-- **EmuSVBackend**: remote state-vector emulator for medium problems (15-25 qubits),
-- **EmuMPSBackend**: remote tensor network emulator for large problems (≥ 26 qubits).
+- **EmuFreeBackendV2**: free remote emulator for small problems (< 15 qubits) - becomes intractable beyond this limit,
+- **EmuSVBackend**: paid remote state-vector emulator for medium problems (15-25 qubits),
+- **EmuMPSBackend**: paid remote tensor network emulator for large problems (≥ 26 qubits).
 
-Note: Fees may apply for remote execution. By default, `RemoteEmulator` uses `EmuFreeBackendV2`.
+Note: EmuSVBackend and EmuMPSBackend incur fees, while EmuFreeBackendV2 is free. By default, `RemoteEmulator` uses `EmuFreeBackendV2`.
+
+### Automatic Remote Backend Factory
+
+For fully automatic remote backend selection, you can use `AutoRemoteEmulatorBackend`, which automatically selects the optimal remote backend based on the number of qubits.
+
+Unlike local emulation, remote emulation typically uses manual backend selection due to cost considerations. Automatic selection is available when needed, but **will incur fees** for problems ≥15 qubits as it automatically switches from the free EmuFreeBackendV2 to paid backends (EmuSVBackend or EmuMPSBackend) based on problem size.
 
 For this, we require specifying a `RemoteEmulator` or `QPU` and connection details.
 Using the code below, replace with your username, project id and password on the Pasqal Cloud.
 
 ```python exec="on" source="material-block"
 from qubosolver.config import SolverConfig, PasqalCloud, RemoteEmulator
+from qubosolver.backends import AutoRemoteEmulatorBackend
 from pulser_pasqal.backends import EmuFreeBackendV2, EmuSVBackend, EmuMPSBackend
 
 USERNAME="#TO_PROVIDE"
@@ -87,10 +106,17 @@ if PASSWORD is not None:
         project_id=PROJECT_ID,
     )
 
-    # Automatic backend selection (recommended)
-    config = SolverConfig(
+    # Default behavior - uses EmuFreeBackendV2 with warnings for larger problems
+    config_default = SolverConfig(
         use_quantum=True,
-        backend=RemoteEmulator(connection=connection, num_shots=500),  # Uses EmuFreeBackendV2 by default
+        backend=RemoteEmulator(connection=connection, num_shots=500),
+    )
+
+    # Fully automatic backend selection based on problem size
+    # WARNING: Will automatically use paid backends for problems ≥15 qubits
+    config_auto = SolverConfig(
+        use_quantum=True,
+        backend=RemoteEmulator(backend_type=AutoRemoteEmulatorBackend, connection=connection, num_shots=500),
     )
 
     # Manual backend selection (if needed)
