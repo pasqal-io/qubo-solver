@@ -20,6 +20,8 @@ Local backends perform simulations locally with automatic backend selection base
 - **SVBackend**: emulator based on state-vector description, for medium problems (15-25 qubits),
 - **MPSBackend**: emulator based on state of the art tensor network techniques, for large problems (≥ 26 qubits).
 
+**Note:** The number of qubits used in the quantum simulation may differ from the input QUBO size due to preprocessing steps or decomposition techniques. For example, the `DecomposeQuboSolver` may break down large QUBO problems into smaller subproblems, affecting the actual number of qubits required for the quantum backend selection.
+
 ### Automatic Backend Factory
 
 The automatic backend selection is implemented through `AutoLocalEmulatorBackend`, a factory class that selects the most efficient backend based on the number of qubits.
