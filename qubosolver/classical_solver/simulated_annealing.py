@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 import torch
 
 from qubosolver import QUBOInstance, QUBOSolution
@@ -15,6 +17,7 @@ def qubo_simulated_annealing(
     seed: int | None = None,
     start: torch.Tensor | None = None,
     energy_tol: float = 0.0,
+    time_limit: float | None = None,
 ) -> QUBOSolution:
     """
     Solve a QUBO instance using the Simulated Annealing metaheuristic.
@@ -25,6 +28,12 @@ def qubo_simulated_annealing(
     The algorithm gradually lowers the system temperature to reduce
     the probability of accepting worse solutions, balancing exploration
     and exploitation.
+
+    Args:
+        time_limit: float or None, optional, default=None
+            Maximum resolution time in seconds. If None, the execution
+            is limited only by `max_iter`. If provided, the algorithm stops
+            when either `max_iter` or `time_limit` is reached.
 
     Returns:
         A `QUBOSolution` object containing:
@@ -37,6 +46,11 @@ def qubo_simulated_annealing(
         >>> solution = qubo_simulated_annealing(qubo)
         >>> print(solution.bitstrings, solution.costs)
     """
+    if time_limit is not None and time_limit <= 0:
+        raise ValueError("time_limit must be > 0.")
+
+    deadline = None if time_limit is None else time.perf_counter() + time_limit
+
     bitstrings, costs, counts = simulated_annealing(
         Q=qubo.coefficients,
         top_k=top_k,
@@ -47,9 +61,13 @@ def qubo_simulated_annealing(
         seed=seed,
         start=start,
         energy_tol=energy_tol,
+        deadline=deadline,
     )
     return QUBOSolution(
-        bitstrings=bitstrings, costs=costs, counts=counts, probabilities=counts.float() / top_k
+        bitstrings=bitstrings,
+        costs=costs,
+        counts=counts,
+        probabilities=counts.float() / top_k,
     )
 
 
@@ -64,6 +82,7 @@ def simulated_annealing(
     seed: int | None = None,
     start: torch.Tensor | None = None,
     energy_tol: float = 0.0,
+    deadline: float | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     Perform Simulated Annealing (SA) for a Quadratic Unconstrained Binary Optimization (QUBO)
@@ -97,6 +116,9 @@ def simulated_annealing(
         energy_tol: float, optional, default=0.0
             Energy tolerance for considering two solutions as equivalent.
             If two energies differ by ≤ `energy_tol`, they are treated as equal.
+        deadline: float or None, optional, default=None
+            Absolute stopping time obtained from `time.perf_counter()`.
+            If None, the execution is limited only by `max_iter`.
 
     Returns:
         solutions: torch.Tensor of shape (m, n), dtype=torch.uint8
@@ -115,6 +137,7 @@ def simulated_annealing(
           accept flip with probability p = min(1, exp(-ΔE / T)).
         Duplicate bitstrings are filtered using Python byte hashing for compactness.
         For stochastic diversity, multiple runs with different seeds are recommended.
+        When a deadline is provided, it is checked before each Metropolis step.
 
     Examples:
     >>> import torch
@@ -123,7 +146,7 @@ def simulated_annealing(
     ...     [-2.0, 1.0,  0.0],
     ...     [0.0,  0.0,  0.5],
     ... ])
-    >>> solutions, energies, counts = simulated_annealing_qubo_topk_torch(
+    >>> solutions, energies, counts = simulated_annealing(
     ...     Q, top_k=3, max_iter=1000, seed=42
     ... )
     >>> energies
@@ -191,6 +214,9 @@ def simulated_annealing(
     maybe_insert(bits, energy)
 
     for _ in range(max_iter):
+        if deadline is not None and time.perf_counter() >= deadline:
+            break
+
         i = int(torch.randint(0, n, (1,), generator=rng).item())
         xi = int(bits[i].item())
 
@@ -200,7 +226,8 @@ def simulated_annealing(
         dE = (1 - 2 * xi) * (Qii + 2.0 * (Qx_i - Qii * xi))
 
         accept = (dE <= 0.0) or (
-            torch.rand((), generator=rng).item() < torch.exp(torch.tensor(-dE / temperature)).item()
+            torch.rand((), generator=rng).item()
+            < torch.exp(torch.tensor(-dE / temperature)).item()
         )
         if accept:
             new_xi = 1 - xi
