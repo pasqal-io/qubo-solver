@@ -64,10 +64,7 @@ def qubo_simulated_annealing(
         deadline=deadline,
     )
     return QUBOSolution(
-        bitstrings=bitstrings,
-        costs=costs,
-        counts=counts,
-        probabilities=counts.float() / top_k,
+        bitstrings=bitstrings, costs=costs, counts=counts, probabilities=counts.float() / top_k
     )
 
 
@@ -137,7 +134,6 @@ def simulated_annealing(
           accept flip with probability p = min(1, exp(-ΔE / T)).
         Duplicate bitstrings are filtered using Python byte hashing for compactness.
         For stochastic diversity, multiple runs with different seeds are recommended.
-        When a deadline is provided, it is checked before each Metropolis step.
 
     Examples:
     >>> import torch
@@ -146,7 +142,7 @@ def simulated_annealing(
     ...     [-2.0, 1.0,  0.0],
     ...     [0.0,  0.0,  0.5],
     ... ])
-    >>> solutions, energies, counts = simulated_annealing(
+    >>> solutions, energies, counts = simulated_annealing_qubo_topk_torch(
     ...     Q, top_k=3, max_iter=1000, seed=42
     ... )
     >>> energies
@@ -226,8 +222,7 @@ def simulated_annealing(
         dE = (1 - 2 * xi) * (Qii + 2.0 * (Qx_i - Qii * xi))
 
         accept = (dE <= 0.0) or (
-            torch.rand((), generator=rng).item()
-            < torch.exp(torch.tensor(-dE / temperature)).item()
+            torch.rand((), generator=rng).item() < torch.exp(torch.tensor(-dE / temperature)).item()
         )
         if accept:
             new_xi = 1 - xi
