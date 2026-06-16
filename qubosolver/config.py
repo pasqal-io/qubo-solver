@@ -61,6 +61,8 @@ class ClassicalConfig(Config):
         sa_seed (int, optional): Random seed for reproducibility.
         sa_start (torch.Tensor | None, optional): Optioanl initial bitstring of shape (n,).
         sa_energy_tol (float, optional): Energy tolerance for considering two solutions as equivalent.
+        sa_time_limit (float | None, optional): Maximum runtime in seconds for simulated annealing.
+        Defaults to None, meaning no time limit.
         tabu_x0 (torch.Tensor | None, optional): The initial binary solution tensor of shape (n,).
         tabu_tenure (int, optional): Number of iterations a move (bit flip) remains tabu.
         tabu_max_no_improve (int, optional): Maximum number of consecutive iterations
@@ -80,6 +82,7 @@ class ClassicalConfig(Config):
     sa_seed: int | None = None
     sa_start: torch.Tensor | None = None
     sa_energy_tol: float = 0.0
+    sa_time_limit: float | None = None
 
     tabu_x0: torch.Tensor | None = None
     tabu_tenure: int = 7
@@ -118,6 +121,7 @@ class ClassicalConfig(Config):
                     "sa_seed": self.sa_seed,
                     "sa_start": self.sa_start,
                     "sa_energy_tol": self.sa_energy_tol,
+                    "sa_time_limit": self.sa_time_limit,
                 }
             )
         if self.classical_solver_type == ClassicalSolverType.TABU_SEARCH:
@@ -141,6 +145,7 @@ class ClassicalConfig(Config):
                     "sa_seed": self.sa_seed,
                     "sa_start": self.sa_start,
                     "sa_energy_tol": self.sa_energy_tol,
+                    "sa_time_limit": self.sa_time_limit,
                     "tabu_x0": self.tabu_x0,
                     "tabu_tenure": self.tabu_tenure,
                     "tabu_max_no_improve": self.tabu_max_no_improve,
