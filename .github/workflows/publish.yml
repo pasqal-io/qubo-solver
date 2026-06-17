@@ -21,11 +21,11 @@ jobs:
             id-token: write
         steps:
         - name: Check out mis
-          uses: actions/checkout@v6
+          uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
           with:
             ref: ${{ github.ref }}
         - name: Set up Python
-          uses: actions/setup-python@v6
+          uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
           with:
             python-version: "3.11"
         - name: Install Python dependencies
@@ -36,7 +36,7 @@ jobs:
           run: |
             hatch build
         - name: Publish to PyPI
-          uses: pypa/gh-action-pypi-publish@release/v1
+          uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         - name: Confirm deployment
           timeout-minutes: 5
           run: |
@@ -52,7 +52,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
         - name: Checkout mis
-          uses: actions/checkout@v6
+          uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         - name: Install JetBrains Mono font
           run: |
             sudo apt install -y wget unzip fontconfig
@@ -64,7 +64,7 @@ jobs:
         - name: Install graphviz
           run: sudo apt-get install -y graphviz
         - name: Set up Python 3.11
-          uses: actions/setup-python@v6
+          uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
           with:
             python-version: '3.11'
         - name: Install Hatch

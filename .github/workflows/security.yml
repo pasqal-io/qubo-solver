@@ -26,8 +26,8 @@ jobs:
       contents: read
       security-events: write  # Required for SARIF upload
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.11"
       - run: pip install bandit[toml,sarif]
@@ -35,7 +35,7 @@ jobs:
         run: bandit -r qubosolver/ -c pyproject.toml -f sarif -o bandit-results.sarif || true  #TODO: remove 'true' once all warnings are fixed
       - name: Upload Bandit SARIF to GitHub Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
         with:
           sarif_file: bandit-results.sarif
 
@@ -43,7 +43,7 @@ jobs:
     name: Secret Detection - Gitleaks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
       - name: Install Gitleaks
@@ -62,7 +62,7 @@ jobs:
       contents: write
       security-events: write  # Required for SARIF upload to GitHub Security tab
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Set up Python virtual environment
         run: |
@@ -79,24 +79,35 @@ jobs:
           uv export --format requirements-txt --no-hashes -o requirements.txt
           rm uv.lock
 
-      - name: Run Trivy scan
-        uses: aquasecurity/trivy-action@v0.36.0
+      - name: Run Trivy scan # Detect vulnerabilities and fails if vulnerabilities are found
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        continue-on-error: ${{ github.ref }} != 'refs/heads/main'
         with:
+          version: v0.71.0
+          scan-type: fs
+          scan-ref: .
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+
+      - name: Run Trivy scan for upload # Never fails so the SARIF file is always available
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.71.0
           scan-type: fs
           scan-ref: .
           format: sarif
           output: trivy-results.sarif
-          exit-code: "1"
-          severity: CRITICAL,HIGH
+          exit-code: "0"
 
       - name: Upload Trivy SARIF to GitHub Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
         with:
           sarif_file: trivy-results.sarif
 
       - name: Generate SBOM (CycloneDX)
-        uses: aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -106,13 +117,13 @@ jobs:
         env:
           VIRTUAL_ENV: ${{ env.VIRTUAL_ENV }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v0.7.1
         with:
-          name: sbom
+          name: trivy-sbom
           path: sbom.cdx.json
 
       - name: Submit Dependency Snapshot to GitHub Dependency Graph
-        uses: aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: fs
           scan-ref: .

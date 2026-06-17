@@ -27,9 +27,9 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
         - name: Checkout main code and submodules
-          uses: actions/checkout@v6
+          uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v6
+          uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
           with:
             python-version: ${{ matrix.python-version }}
         - name: Install hatch
@@ -40,7 +40,7 @@ jobs:
           run: |
             hatch -v run test
         - name: Upload coverage reports to Codecov
-          uses: codecov/codecov-action@v5
+          uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
           with:
             token: ${{ secrets.CODECOV_TOKEN }}
             slug: pasqal-io/qubo-solver
@@ -53,9 +53,9 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
         - name: Checkout main code and submodules
-          uses: actions/checkout@v6
+          uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v6
+          uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
           with:
             python-version: ${{ matrix.python-version }}
         - name: Install hatch
@@ -66,7 +66,7 @@ jobs:
           run: |
             hatch -v run test
         - name: Upload coverage reports to Codecov
-          uses: codecov/codecov-action@v5
+          uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
           with:
             token: ${{ secrets.CODECOV_TOKEN }}
             slug: pasqal-io/qubo-solver
@@ -80,9 +80,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout mis
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install Hatch
@@ -100,9 +100,9 @@ jobs:
         python-version: ["3.11"]
     steps:
         - name: Checkout main code and submodules
-          uses: actions/checkout@v6
+          uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v6
+          uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
           with:
             python-version: ${{ matrix.python-version }}
         - name: Install hatch
