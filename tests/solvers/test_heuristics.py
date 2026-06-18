@@ -4,6 +4,8 @@ import pytest
 import torch
 import itertools
 
+import time
+
 from qubosolver import QUBOInstance, QUBOSolution, ClassicalSolverType
 from qubosolver.config import ClassicalConfig, SolverConfig
 from qubosolver.solver import QuboSolver
@@ -142,6 +144,35 @@ def test_sa_cost(
         assert torch.equal(bitstring, bitstring_sa)
         cost_sa = cost_sa.to(dtype=cost.dtype)
         assert torch.isclose(cost, cost_sa, rtol=1e-4)
+
+
+def test_sa_time_limit(simple_qubo_instance: QUBOInstance) -> None:
+    # Use a very large iteration limit so that the solver is stopped
+    # by the time limit rather than by max_iter.
+    classical_config = ClassicalConfig(
+        classical_solver_type=ClassicalSolverType.SIMULATED_ANNEALING,
+        max_bitstrings=1,
+        max_iter=100_000_000,
+        sa_time_limit=0.01,
+    )
+
+    config = SolverConfig(
+        use_quantum=False,
+        classical=classical_config,
+        activate_trivial_solutions=False,
+    )
+
+    classical_solver = QuboSolver(simple_qubo_instance, config)
+
+    # Measure the full execution time of the solver.
+    start_time = time.perf_counter()
+    solution = classical_solver.solve()
+    elapsed_time = time.perf_counter() - start_time
+
+    # Check that a valid solution is returned and that the solver
+    # stops well before reaching the large iteration limit.
+    assert isinstance(solution, QUBOSolution)
+    assert elapsed_time < 1.0
 
 
 if __name__ == "__main__":
