@@ -66,7 +66,9 @@ class ClassicalConfig(Config):
         tabu_x0 (torch.Tensor | None, optional): The initial binary solution tensor of shape (n,).
         tabu_tenure (int, optional): Number of iterations a move (bit flip) remains tabu.
         tabu_max_no_improve (int, optional): Maximum number of consecutive iterations
-            without improvement before termination.
+        without improvement before termination.
+        tabu_time_limit (float | None, optional): Maximum execution time for tabu search,
+        in seconds. Defaults to None.
     """
 
     classical_solver_type: str | ClassicalSolverType = "simulated_annealing_tabu_search"
@@ -87,6 +89,7 @@ class ClassicalConfig(Config):
     tabu_x0: torch.Tensor | None = None
     tabu_tenure: int = 7
     tabu_max_no_improve: int = 20
+    tabu_time_limit: float | None = None
 
     @field_validator("classical_solver_type")
     @classmethod
@@ -132,6 +135,7 @@ class ClassicalConfig(Config):
                     "tabu_x0": self.tabu_x0,
                     "tabu_tenure": self.tabu_tenure,
                     "tabu_max_no_improve": self.tabu_max_no_improve,
+                    "tabu_time_limit": self.tabu_time_limit,
                 }
             )
         if self.classical_solver_type == ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH:
@@ -149,6 +153,7 @@ class ClassicalConfig(Config):
                     "tabu_x0": self.tabu_x0,
                     "tabu_tenure": self.tabu_tenure,
                     "tabu_max_no_improve": self.tabu_max_no_improve,
+                    "tabu_time_limit": self.tabu_time_limit,
                 }
             )
         return serialization
