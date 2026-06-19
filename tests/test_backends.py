@@ -86,7 +86,7 @@ def solver_config_and_mock_results(
             case "default_backend":
                 emulator_ = LocalEmulator()
             case "default":
-                emulator_ = SolverConfig.backend
+                emulator_ = SolverConfig().backend
             case _:
                 raise ValueError("Invalid emulator value")
 
@@ -130,61 +130,43 @@ def test_auto_remote_emulator_backend(size: int, expected_type: type) -> None:
 
 
 @pytest.mark.parametrize(
-    "size, expected_type",
+    "size, expected_type, emulator_config, remote",
     [
-        (2, QutipBackendV2),
-        (20, SVBackend),
-        (30, MPSBackend),
+        # Auto backend tests - local
+        (2, QutipBackendV2, "auto_backend", False),
+        (20, SVBackend, "auto_backend", False),
+        (30, MPSBackend, "auto_backend", False),
+        # Auto backend tests - remote
+        (2, EmuFreeBackendV2, "auto_backend", True),
+        (20, EmuSVBackend, "auto_backend", True),
+        (30, EmuMPSBackend, "auto_backend", True),
+
+        # Default backend tests - local
+        (2, QutipBackendV2, "default_backend", False),
+        (20, SVBackend, "default_backend", False),
+        (30, MPSBackend, "default_backend", False),
+        # Default backend tests - remote (always EmuFreeBackendV2)
+        (2, EmuFreeBackendV2, "default_backend", True),
+        (20, EmuFreeBackendV2, "default_backend", True),
+        (30, EmuFreeBackendV2, "default_backend", True),
+
+        # Default config tests - local
+        (2, QutipBackendV2, "default", False),
+        (20, SVBackend, "default", False),
+        (30, MPSBackend, "default", False),
     ],
 )
-def test_auto_local_emulator_backend_run(size: int, expected_type: type) -> None:
-
+def test_emulator_backend_selection(
+    size: int,
+    expected_type: type,
+    emulator_config: Literal["auto_backend", "default_backend", "default"],
+    remote: bool
+) -> None:
+    """Test that emulators select the correct backend based on problem size and configuration."""
     Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
     instance = QUBOInstance(Q)
 
-    config, results = solver_config_and_mock_results("auto_backend", False)
-
-    solver = QuboSolver(instance, config)
-    with patch.object(expected_type, "run", return_value=results) as mock_run:
-        solver.solve()
-        mock_run.assert_called_once()
-
-
-@pytest.mark.parametrize(
-    "size, expected_type",
-    [
-        (2, EmuFreeBackendV2),
-        (20, EmuSVBackend),
-        (30, EmuMPSBackend),
-    ],
-)
-def test_auto_remote_emulator_backend_run(size: int, expected_type: type) -> None:
-
-    Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
-    instance = QUBOInstance(Q)
-
-    config, results = solver_config_and_mock_results("auto_backend", True)
-
-    solver = QuboSolver(instance, config)
-    with patch.object(expected_type, "run", return_value=results) as mock_run:
-        solver.solve()
-        mock_run.assert_called_once()
-
-
-@pytest.mark.parametrize(
-    "size, expected_type",
-    [
-        (2, QutipBackendV2),
-        (20, SVBackend),
-        (30, MPSBackend),
-    ],
-)
-def test_auto_local_emulator_run(size: int, expected_type: type) -> None:
-
-    Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
-    instance = QUBOInstance(Q)
-
-    config, results = solver_config_and_mock_results("default_backend", False)
+    config, results = solver_config_and_mock_results(emulator_config, remote)
 
     solver = QuboSolver(instance, config)
     with patch.object(expected_type, "run", return_value=results) as mock_run:
@@ -201,48 +183,6 @@ def test_default_remote_emulator_backend() -> None:
     mock_connection = MagicMock(spec=pulser.backend.remote.RemoteConnection)
     emulator = RemoteEmulator(connection=mock_connection)
     check.is_(emulator._backend_type, EmuFreeBackendV2)
-
-
-@pytest.mark.parametrize(
-    "size, expected_type",
-    [
-        (2, QutipBackendV2),
-        (20, SVBackend),
-        (30, MPSBackend),
-    ],
-)
-def test_auto_local_emulator_run_with_default_config(size: int, expected_type: type) -> None:
-
-    Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
-    instance = QUBOInstance(Q)
-
-    config, results = solver_config_and_mock_results("default", False)
-
-    solver = QuboSolver(instance, config)
-    with patch.object(expected_type, "run", return_value=results) as mock_run:
-        solver.solve()
-        mock_run.assert_called_once()
-
-
-@pytest.mark.parametrize(
-    "size, expected_type",
-    [
-        (2, EmuFreeBackendV2),
-        (20, EmuFreeBackendV2),
-        (30, EmuFreeBackendV2),
-    ],
-)
-def test_auto_remote_emulator_run_with_default_config(size: int, expected_type: type) -> None:
-
-    Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
-    instance = QUBOInstance(Q)
-
-    config, results = solver_config_and_mock_results("default_backend", True)
-
-    solver = QuboSolver(instance, config)
-    with patch.object(expected_type, "run", return_value=results) as mock_run:
-        solver.solve()
-        mock_run.assert_called_once()
 
 
 def test_remote_emulator_warning() -> None:
