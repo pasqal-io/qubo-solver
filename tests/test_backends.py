@@ -51,7 +51,7 @@ def dummy_pulser_register(n: int) -> pulser.Register:
     return pulser.Register(qubits)
 
 
-def mock_connection_and_results(size: int) -> tuple[MockConnection, pulser.backend.RemoteResults]:
+def mock_connection_and_results() -> tuple[MockConnection, pulser.backend.RemoteResults]:
 
     mock_results = MagicMock(spec=pulser.backend.Results)
     mock_connection = MockConnection(mock_results)
@@ -61,6 +61,38 @@ def mock_connection_and_results(size: int) -> tuple[MockConnection, pulser.backe
     remote_results = mock_connection.submit(sequence)
 
     return mock_connection, remote_results
+
+def solver_config_and_mock_results(
+        emulator: Literal["auto_backend", "default_backend", "default"],
+        remote: bool,
+    ) -> tuple[SolverConfig, MagicMock]:
+
+    if remote:
+        mock_connection, results = mock_connection_and_results()
+        match emulator:
+            case "auto_backend":
+                emulator_ = RemoteEmulator(backend_type=AutoRemoteEmulatorBackend, connection=mock_connection)
+            case "default_backend":
+                emulator_ = RemoteEmulator(connection=mock_connection)
+            case "default":
+                pytest.skip("Default emulator is LocalEmulator")
+            case _:
+                raise ValueError("Invalid emulator value")
+    else:
+        results = MagicMock(spec=pulser.backend.Results)
+        match emulator:
+            case "auto_backend":
+                emulator_ = LocalEmulator(backend_type=AutoLocalEmulatorBackend)
+            case "default_backend":
+                emulator_ = LocalEmulator()
+            case "default":
+                emulator_ = SolverConfig.backend
+            case _:
+                raise ValueError("Invalid emulator value")
+
+    embedding_config = EmbeddingConfig(embedding_method="blade", min_distance=1.001)
+
+    return SolverConfig(use_quantum=True, backend=emulator_, embedding=embedding_config), results
 
 
 @pytest.mark.parametrize(
