@@ -5,6 +5,7 @@ import pytest
 import pytest_check as check
 import torch
 from typing import Literal
+import warnings
 
 
 import pulser
@@ -29,6 +30,7 @@ from qubosolver.backends import (
     LocalEmulator,
     RemoteEmulator,
     _get_backend_type,
+    _warn_suboptimal_backend,
 )
 from qubosolver.solver import QuboSolver
 from mock.connection import MockConnection
@@ -309,3 +311,62 @@ def test_get_backend_type_invalid_backend_id() -> None:
     """Test that _get_backend_type raises ValueError for invalid backend_id."""
     with pytest.raises(ValueError, match="not recognized"):
         _get_backend_type("invalid", False)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "backend_type, n_qubits, remote, should_warn",
+    [
+        # Auto backends should never warn
+        (AutoLocalEmulatorBackend, 10, False, False),
+        (AutoLocalEmulatorBackend, 20, False, False),
+        (AutoRemoteEmulatorBackend, 10, True, False),
+        (AutoRemoteEmulatorBackend, 20, True, False),
+
+        # Optimal backends should not warn
+        (QutipBackendV2, 10, False, False),  # Optimal for <15 qubits local
+        (EmuFreeBackendV2, 10, True, False),  # Optimal for <15 qubits remote
+        (SVBackend, 20, False, False),  # Optimal for 15-25 qubits local
+        (EmuSVBackend, 20, True, False),  # Optimal for 15-25 qubits remote
+        (MPSBackend, 30, False, False),  # Optimal for ≥26 qubits local
+        (EmuMPSBackend, 30, True, False),  # Optimal for ≥26 qubits remote
+
+        # Suboptimal backends should warn
+        (SVBackend, 10, False, True),  # SVBackend for small problem
+        (MPSBackend, 10, False, True),  # MPSBackend for small problem
+        (QutipBackendV2, 20, False, True),  # QutipBackendV2 for medium problem
+        (EmuSVBackend, 10, True, True),  # EmuSVBackend for small problem
+        (EmuMPSBackend, 10, True, True),  # EmuMPSBackend for small problem
+        (EmuFreeBackendV2, 20, True, True),  # EmuFreeBackendV2 for medium problem
+    ],
+)
+def test_warn_suboptimal_backend(backend_type: type, n_qubits: int, remote: bool, should_warn: bool) -> None:
+    """Test that _warn_suboptimal_backend warns appropriately based on backend optimality."""
+    if should_warn:
+        with pytest.warns(UserWarning, match="Consider using"):
+            _warn_suboptimal_backend(backend_type, n_qubits, remote)
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")  # Turn warnings into errors
+            _warn_suboptimal_backend(backend_type, n_qubits, remote)  # Should not raise
+
+
+def test_warn_suboptimal_backend_remote_message() -> None:
+    """Test that remote backend warnings include fee notice."""
+    with pytest.warns(UserWarning, match="Note: Fees may apply for remote execution"):
+        _warn_suboptimal_backend(EmuSVBackend, 10, True)
+
+
+def test_warn_suboptimal_backend_local_no_fee_message() -> None:
+    """Test that local backend warnings do not include fee notice."""
+    with pytest.warns(UserWarning) as warning_list:
+        _warn_suboptimal_backend(SVBackend, 10, False)
+
+    # Check that no warning mentions fees
+    for warning in warning_list:
+        assert "Fees may apply" not in str(warning.message)
+
+
+def test_warn_suboptimal_backend_message_content() -> None:
+    """Test the specific content of warning messages."""
+    with pytest.warns(UserWarning, match=r"Using SVBackend for 10 qubits\. Consider using QutipBackendV2"):
+        _warn_suboptimal_backend(SVBackend, 10, False)

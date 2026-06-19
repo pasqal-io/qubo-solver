@@ -228,8 +228,7 @@ class LocalEmulator(QoolqitLocalEmulator):
         Returns:
             The execution results from the local backend
         """
-        n_qubits = program.register.n_qubits
-        _warn_suboptimal_backend(self._backend_type, n_qubits, False)
+        _warn_suboptimal_backend(self._backend_type, program.register.n_qubits, False)
         return super().run(program, *args, **kwargs)
 
 
@@ -277,6 +276,5 @@ class RemoteEmulator(QoolqitRemoteEmulator):
         Returns:
             The execution results from the remote backend
         """
-        n_qubits = program.register.n_qubits
-        _warn_suboptimal_backend(self._backend_type, n_qubits, True)
+        _warn_suboptimal_backend(self._backend_type, program.register.n_qubits, True)
         return super().run(program, *args, **kwargs)
