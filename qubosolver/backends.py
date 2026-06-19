@@ -156,6 +156,38 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
         return backend
 
 
+def _warn_suboptimal_backend(
+    backend_type: Type[EmulatorBackend] | Type[RemoteEmulatorBackend],
+    n_qubits: int,
+    remote: bool,
+) -> None:
+    """Warn if using a suboptimal backend for the given problem size.
+
+    Args:
+        backend_type: The currently selected backend type
+        n_qubits: Number of qubits in the quantum program
+        remote: Whether this is a remote emulator
+    """
+    if backend_type in [AutoLocalEmulatorBackend, AutoRemoteEmulatorBackend]:
+        return
+
+    optimal_backend_type = _select_backend_type(n_qubits, remote)
+
+    if backend_type is optimal_backend_type:
+        return
+
+    warning_msg = (
+        f"Using {backend_type.__name__} for {n_qubits} qubits. "
+        f"Consider using {optimal_backend_type.__name__} which is recommended "
+        f"for this problem size."
+    )
+
+    if remote:
+        warning_msg += " Note: Fees may apply for remote execution."
+
+    warnings.warn(warning_msg, UserWarning, stacklevel=2)
+
+
 class LocalEmulator(QoolqitLocalEmulator):
     """Local quantum emulator with automatic backend selection.
 
@@ -197,18 +229,7 @@ class LocalEmulator(QoolqitLocalEmulator):
             The execution results from the local backend
         """
         n_qubits = program.register.n_qubits
-        optimal_backend = _select_backend_type(n_qubits, False)
-
-        # Only warn if not using AutoLocalEmulatorBackend (which auto-selects appropriately)
-        if self._backend_type != AutoLocalEmulatorBackend and self._backend_type != optimal_backend:
-            warnings.warn(
-                f"Using {self._backend_type.__name__} for {n_qubits} qubits. "
-                f"Consider using {optimal_backend.__name__} which is recommended "
-                f"for this problem size.",
-                UserWarning,
-                stacklevel=2,
-            )
-
+        _warn_suboptimal_backend(self._backend_type, n_qubits, False)
         return super().run(program, *args, **kwargs)
 
 
@@ -257,15 +278,5 @@ class RemoteEmulator(QoolqitRemoteEmulator):
             The execution results from the remote backend
         """
         n_qubits = program.register.n_qubits
-        optimal_backend = _select_backend_type(n_qubits, True)
-
-        if self._backend_type != optimal_backend:
-            warnings.warn(
-                f"Using {self._backend_type.__name__} for {n_qubits} qubits. "
-                f"Consider using {optimal_backend.__name__} which is recommended "
-                f"for this problem size. Note: Fees may apply for remote execution.",
-                UserWarning,
-                stacklevel=2,
-            )
-
+        _warn_suboptimal_backend(self._backend_type, n_qubits, True)
         return super().run(program, *args, **kwargs)
