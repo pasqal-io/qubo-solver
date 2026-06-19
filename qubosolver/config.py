@@ -8,7 +8,7 @@ from typing import Any, Callable
 import torch
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator, model_serializer
 
-from qoolqit.devices.device import Device, DigitalAnalogDevice
+from qoolqit.devices.device import Device, AnalogDeviceWithDMM
 from qoolqit.execution import QPU
 from qoolqit.execution.compilation_functions import CompilerProfile
 from pulser_pasqal import PasqalCloud
@@ -184,7 +184,7 @@ class EmbeddingConfig(Config):
         animation_save_path (str | None, optional): If provided, path to save animation.
             Defaults to None.
         min_distance (float | None): Minimum atom separation (μm).
-            If not None, the resulting register will be normalized so that the minimum atom separation is equal to this value. Should be 1.0001 when using the Heuristic Drive-Shaping, and None when using the Optimized Drive-Shaping. Defaults to None.
+            If not None, the resulting register will be normalized so that the minimum atom separation is equal to this value. Should be 1.001 when using the Heuristic Drive-Shaping, and None when using the Optimized Drive-Shaping. Defaults to 1.001.
     """
 
     embedding_method: Any = EmbedderType.GREEDY
@@ -197,7 +197,7 @@ class EmbeddingConfig(Config):
     blade_dimensions: list[int] = field(default_factory=lambda: [5, 4, 3, 2, 2, 2])
     draw_steps: bool = False
     animation_save_path: str | None = None
-    min_distance: float | None = None
+    min_distance: float | None = 1.001
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
@@ -423,7 +423,7 @@ class SolverConfig(Config):
             hence they are deprecated compared to previous qubo-solver versions.
             Also the number of shots is set there as well.
             Defaults to a LocalEmulator using qutip.
-        device (Device, optional): The quantum device specification. Defaults to `DigitalAnalogDevice`.
+        device (Device, optional): The quantum device specification. Defaults to `AnalogDeviceWithDMM`.
         do_postprocessing (bool, optional): Whether we apply post-processing (`True`) or not (`False`).
             Defaults to True.
         do_preprocessing (bool, optional): Whether we apply pre-processing (`True`) or not (`False`).
@@ -440,7 +440,7 @@ class SolverConfig(Config):
     drive_shaping: DriveShapingConfig = DriveShapingConfig()
     classical: ClassicalConfig = ClassicalConfig()
     backend: LocalEmulator | RemoteEmulator | QPU = LocalEmulator()
-    device: Device = DigitalAnalogDevice()
+    device: Device = AnalogDeviceWithDMM()
     do_postprocessing: bool = False
     do_preprocessing: bool = False
     activate_trivial_solutions: bool = True

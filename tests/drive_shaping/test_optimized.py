@@ -10,7 +10,7 @@ import pytest_check as check
 from unittest.mock import MagicMock, patch
 from typing import List, Iterable, Dict, Any
 
-from qoolqit.devices.device import DigitalAnalogDevice, AnalogDevice
+from qoolqit.devices.device import AnalogDeviceWithDMM, AnalogDevice
 from qoolqit.register import Register
 
 from qubosolver.pipeline.drive import OptimizedDriveShaper
@@ -272,7 +272,7 @@ def test_errors(raise_exception: bool) -> None:
     ds_config.optimized_callback_objective = mock_callback
     ds_config.optimized_n_calls = 11
     config = SolverConfig(
-        device=DigitalAnalogDevice(),
+        device=AnalogDeviceWithDMM(),
         drive_shaping=ds_config,
     )
 
@@ -301,7 +301,7 @@ def test_failed_simulation() -> None:
     ds_config = DriveShapingConfig()
     ds_config.optimized_n_calls = 11
     config = SolverConfig(
-        device=DigitalAnalogDevice(),
+        device=AnalogDeviceWithDMM(),
         drive_shaping=ds_config,
     )
 
@@ -328,7 +328,7 @@ def test_failed_simulation_2() -> None:
     ds_config = DriveShapingConfig()
     ds_config.optimized_n_calls = 11
     config = SolverConfig(
-        device=DigitalAnalogDevice(),
+        device=AnalogDeviceWithDMM(),
         drive_shaping=ds_config,
     )
 
@@ -359,7 +359,7 @@ def test_failed_skopt() -> None:
     ds_config = DriveShapingConfig()
     ds_config.optimized_n_calls = 11
     config = SolverConfig(
-        device=DigitalAnalogDevice(),
+        device=AnalogDeviceWithDMM(),
         drive_shaping=ds_config,
     )
 

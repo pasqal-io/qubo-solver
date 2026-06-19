@@ -9,7 +9,7 @@ The backend configuration part in `SolverConfig` is set via two fields.
 | Field         | Type          | Description |
 |---------------|---------------|-------------|
 | `backend`     | `LocalEmulator` \| `RemoteEmulator` \| `QPU` | (optional) Which backend to use. |
-| `device`      | `Device` | (optional) The quantum device specification. Defaults to `DigitalAnalogDevice`.|
+| `device`      | `Device` | (optional) The quantum device specification. Defaults to `AnalogDeviceWithDMM`.|
 
 
 ## Local backends
@@ -31,20 +31,13 @@ To use the automatic selection, simply instantiate a `SolverConfig` with a `Loca
 ```python exec="on" source="material-block"
 from qubosolver.config import SolverConfig, LocalEmulator
 from qubosolver.backends import AutoLocalEmulatorBackend
-from qoolqit import DigitalAnalogDevice
+from qoolqit import AnalogDeviceWithDMM
 
 # Automatic backend selection based on problem size (default behavior)
 config = SolverConfig(
     use_quantum=True,
     backend=LocalEmulator(num_shots=500),  # Uses AutoLocalEmulatorBackend by default
-    device=DigitalAnalogDevice(),
-)
-
-# Explicitly specify automatic backend selection
-config_explicit = SolverConfig(
-    use_quantum=True,
-    backend=LocalEmulator(backend_type=AutoLocalEmulatorBackend, num_shots=500),
-    device=DigitalAnalogDevice(),
+    device=AnalogDeviceWithDMM(),
 )
 ```
 
@@ -55,7 +48,7 @@ from qubosolver.config import SolverConfig, LocalEmulator
 from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
-from qoolqit import DigitalAnalogDevice
+from qoolqit import AnalogDeviceWithDMM
 
 # Manual backend selection
 manual_backends = [
@@ -67,7 +60,7 @@ manual_backends = [
 config = SolverConfig(
     use_quantum=True,
     backend=manual_backends[0],  # Use QutipBackendV2
-    device=DigitalAnalogDevice(),
+    device=AnalogDeviceWithDMM(),
 )
 ```
 

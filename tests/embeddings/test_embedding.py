@@ -4,7 +4,7 @@ import pytest
 import torch
 
 import numpy as np
-from qoolqit.devices import Device, DigitalAnalogDevice, AnalogDevice
+from qoolqit.devices import Device, AnalogDeviceWithDMM, AnalogDevice, DigitalAnalogDevice
 from qubosolver import QUBOInstance
 from qubosolver.config import (
     EmbeddingConfig,
@@ -53,6 +53,7 @@ def test_correctness_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) 
             greedy_traps=qubo_instance_for_embedding.size,
             greedy_spacing=4.0,
         ),
+        device=DigitalAnalogDevice(),
     )
     solver = QuboSolver(qubo_instance_for_embedding, config)
     positions = solver.embedding()
@@ -79,7 +80,7 @@ def test_error_greedy_max_radial_distance_constraint(
 ) -> None:
     assert qubo_instance_for_embedding.size is not None
 
-    for device in [AnalogDevice(), DigitalAnalogDevice()]:
+    for device in [AnalogDevice(), AnalogDeviceWithDMM()]:
         max_radial_distance = device.specs["max_radial_distance"]
         assert max_radial_distance is not None
         greedy_config = SolverConfig(
@@ -105,28 +106,18 @@ def test_correctness_greedy_max_radial_distance_constraint_with_extra_greedy_tra
 ) -> None:
     assert qubo_instance_for_embedding.size is not None
 
-    expected_greedy_positions = [
-        torch.tensor(
-            [
-                [0.0000, 0.0000],
-                [-9.5000, -16.4531],
-                [-19.0000, 0.0000],
-                [-9.5000, 16.4531],
-            ],
-            dtype=torch.float64,
-        ),
-        torch.tensor(
-            [
-                [12.5000, -21.6562],
-                [0.0000, 0.0000],
-                [-25.0000, 0.0000],
-                [-12.5000, -21.6562],
-            ],
-            dtype=torch.float64,
-        ),
-    ]
+    expected = torch.tensor(
+        [
+            [0.0000, 0.0000],
+            [-9.5000, -16.4531],
+            [-19.0000, 0.0000],
+            [-9.5000, 16.4531],
+        ],
+        dtype=torch.float64,
+    )
 
-    for expected, device in zip(expected_greedy_positions, [AnalogDevice(), DigitalAnalogDevice()]):
+    for device in [AnalogDevice(), AnalogDeviceWithDMM()]:
+        print(f"Device = {device}")
 
         min_distance = 1.0 if normalized else None
 
