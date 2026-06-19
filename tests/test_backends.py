@@ -4,13 +4,20 @@ from unittest.mock import patch, MagicMock
 import pytest
 import pytest_check as check
 import torch
+from typing import Literal
 
 
 import pulser
 from pulser_simulation import QutipBackendV2
+from pulser.backend.abc import EmulatorBackend
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
-from pulser_pasqal.backends import EmuFreeBackendV2, EmuSVBackend, EmuMPSBackend
+from pulser_pasqal.backends import (
+    EmuFreeBackendV2,
+    EmuSVBackend,
+    EmuMPSBackend,
+    RemoteEmulatorBackend,
+)
 
 import qoolqit
 
@@ -21,6 +28,7 @@ from qubosolver.backends import (
     AutoRemoteEmulatorBackend,
     LocalEmulator,
     RemoteEmulator,
+    _get_backend_type,
 )
 from qubosolver.solver import QuboSolver
 from mock.connection import MockConnection
@@ -272,3 +280,32 @@ def test_local_emulator_warning() -> None:
         with pytest.warns(UserWarning, match="Consider using QutipBackendV2"):
             solver.solve()
             mock_run.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "backend_id, remote, expected_type",
+    [
+        ("qutip", False, QutipBackendV2),
+        ("qutip", True, EmuFreeBackendV2),
+        ("emu_sv", False, SVBackend),
+        ("emu_sv", True, EmuSVBackend),
+        ("emu_mps", False, MPSBackend),
+        ("emu_mps", True, EmuMPSBackend),
+    ],
+)
+def test_get_backend_type(
+    backend_id: Literal["qutip", "emu_sv", "emu_mps"], remote: bool, expected_type: type
+) -> None:
+    """Test that _get_backend_type returns the correct backend class."""
+    backend_type = _get_backend_type(backend_id, remote)
+    check.is_(backend_type, expected_type)
+    if remote:
+        assert issubclass(backend_type, RemoteEmulatorBackend)
+    else:
+        assert issubclass(backend_type, EmulatorBackend)
+
+
+def test_get_backend_type_invalid_backend_id() -> None:
+    """Test that _get_backend_type raises ValueError for invalid backend_id."""
+    with pytest.raises(ValueError, match="not recognized"):
+        _get_backend_type("invalid", False)  # type: ignore[arg-type]

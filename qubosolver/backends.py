@@ -57,31 +57,21 @@ def _get_backend_type(
     Raises:
         ValueError: If the backend_id is not recognized.
     """
-    # Runtime guard: cast() is unchecked by mypy, so we verify the subclass
-    # relationship in case the third-party library changes.
-    # nosec B101: Bandit flags assert usage as it can be stripped with -O,
-    # but here it's a deliberate invariant check, not input validation.
-    if backend_id == "qutip":
-        if remote:
+    match (backend_id, remote):
+        case ("qutip", True):
             return EmuFreeBackendV2
-        else:
+        case ("qutip", False):
             return QutipBackendV2
-
-    if backend_id == "emu_sv":
-        if remote:
-            assert issubclass(EmuSVBackend, RemoteEmulatorBackend)  # nosec B101
+        case ("emu_sv", True):
             return EmuSVBackend
-        else:
-            assert issubclass(SVBackend, EmulatorBackend)  # nosec B101
+        case ("emu_sv", False):
             return cast(Type[EmulatorBackend], SVBackend)
-
-    if backend_id == "emu_mps":
-        if remote:
-            assert issubclass(EmuMPSBackend, RemoteEmulatorBackend)  # nosec B101
+        case ("emu_mps", True):
             return EmuMPSBackend
-        else:
-            assert issubclass(MPSBackend, EmulatorBackend)  # nosec B101
+        case ("emu_mps", False):
             return cast(Type[EmulatorBackend], MPSBackend)
+        case _:
+            raise ValueError(f"Backend ID '{backend_id}' is not recognized")
 
 
 def _select_backend_type(
