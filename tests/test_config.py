@@ -92,10 +92,7 @@ def test_qutip_config_backend(qutip_solver_config: SolverConfig) -> None:
 
 def test_blade_config(blade_config: SolverConfig) -> None:
     assert blade_config.embedding.embedding_method == EmbedderType.BLADE
-    assert (
-        type(blade_config.device) == AnalogDeviceWithDMM
-        and blade_config.embedding.blade_dimensions == [2]
-    )
+    assert type(blade_config.device) is AnalogDeviceWithDMM
     assert blade_config.embedding.blade_dimensions == [2]
 
 
@@ -107,7 +104,7 @@ def test_blade_clear_dimensions_config(
 
 def test_greedy_embedding_config(greedy_embedding_config: SolverConfig) -> None:
     assert greedy_embedding_config.embedding.embedding_method == EmbedderType.GREEDY
-    assert type(greedy_embedding_config.device) == AnalogDeviceWithDMM
+    assert type(greedy_embedding_config.device) is AnalogDeviceWithDMM
     assert greedy_embedding_config.embedding.greedy_layout == LayoutType.SQUARE
     assert greedy_embedding_config.embedding.greedy_traps == 10
     assert greedy_embedding_config.embedding.greedy_spacing == 5.0

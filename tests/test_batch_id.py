@@ -60,7 +60,9 @@ def test_quantum_batch_id(
 
         min_distance = 1.001 if drive_method == DriveType.HEURISTIC else None
 
-        config = SolverConfig(use_quantum=True, do_preprocessing=preprocessing, device=DigitalAnalogDevice())
+        config = SolverConfig(
+            use_quantum=True, do_preprocessing=preprocessing, device=DigitalAnalogDevice()
+        )
         config.embedding = EmbeddingConfig(
             embedding_method=embedding_method,
             greedy_spacing=7.0,

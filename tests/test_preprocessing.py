@@ -307,7 +307,9 @@ def test_quantum_prepostprocessing_2(
 
     instance = QUBOInstance(Q)
 
-    config = SolverConfig(use_quantum=True, do_preprocessing=preprocessing, device=DigitalAnalogDevice())
+    config = SolverConfig(
+        use_quantum=True, do_preprocessing=preprocessing, device=DigitalAnalogDevice()
+    )
     config.embedding = EmbeddingConfig(
         embedding_method=embedding_method,
         greedy_spacing=0.1,
