@@ -92,7 +92,7 @@ def solver_config_and_mock_results(
 
     embedding_config = EmbeddingConfig(embedding_method="blade", min_distance=1.001)
 
-    return SolverConfig(use_quantum=True, backend=emulator_, embedding=embedding_config), results
+    return SolverConfig(use_quantum=True, backend=emulator_, embedding=embedding_config, activate_trivial_solutions=False), results
 
 
 @pytest.mark.parametrize(
@@ -141,17 +141,11 @@ def test_auto_local_emulator_backend_run(size: int, expected_type: type) -> None
 
     Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
     instance = QUBOInstance(Q)
-    config = SolverConfig(
-        use_quantum=True,
-        backend=QoolqitLocalEmulator(backend_type=AutoLocalEmulatorBackend),  # type: ignore[type-abstract]
-        activate_trivial_solutions=False,
-        embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
-    )
+
+    config, results = solver_config_and_mock_results("auto_backend", False)
 
     solver = QuboSolver(instance, config)
-    with patch.object(
-        expected_type, "run", return_value=MagicMock(spec=pulser.backend.Results)
-    ) as mock_run:
+    with patch.object(expected_type, "run", return_value=results) as mock_run:
         solver.solve()
         mock_run.assert_called_once()
 
@@ -169,17 +163,10 @@ def test_auto_remote_emulator_backend_run(size: int, expected_type: type) -> Non
     Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
     instance = QUBOInstance(Q)
 
-    # Mock connection for remote emulator
-    mock_connection, mock_results = mock_connection_and_results(size)
-    config = SolverConfig(
-        use_quantum=True,
-        backend=RemoteEmulator(backend_type=AutoRemoteEmulatorBackend, connection=mock_connection),
-        activate_trivial_solutions=False,
-        embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
-    )
+    config, results = solver_config_and_mock_results("auto_backend", True)
 
     solver = QuboSolver(instance, config)
-    with patch.object(expected_type, "run", return_value=mock_results) as mock_run:
+    with patch.object(expected_type, "run", return_value=results) as mock_run:
         solver.solve()
         mock_run.assert_called_once()
 
@@ -196,17 +183,11 @@ def test_auto_local_emulator_run(size: int, expected_type: type) -> None:
 
     Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
     instance = QUBOInstance(Q)
-    config = SolverConfig(
-        use_quantum=True,
-        backend=LocalEmulator(),
-        activate_trivial_solutions=False,
-        embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
-    )
+
+    config, results = solver_config_and_mock_results("default_backend", False)
 
     solver = QuboSolver(instance, config)
-    with patch.object(
-        expected_type, "run", return_value=MagicMock(spec=pulser.backend.Results)
-    ) as mock_run:
+    with patch.object(expected_type, "run", return_value=results) as mock_run:
         solver.solve()
         mock_run.assert_called_once()
 
@@ -234,16 +215,11 @@ def test_auto_local_emulator_run_with_default_config(size: int, expected_type: t
 
     Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
     instance = QUBOInstance(Q)
-    config = SolverConfig(
-        use_quantum=True,
-        activate_trivial_solutions=False,
-        embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
-    )
+
+    config, results = solver_config_and_mock_results("default", False)
 
     solver = QuboSolver(instance, config)
-    with patch.object(
-        expected_type, "run", return_value=MagicMock(spec=pulser.backend.Results)
-    ) as mock_run:
+    with patch.object(expected_type, "run", return_value=results) as mock_run:
         solver.solve()
         mock_run.assert_called_once()
 
@@ -261,16 +237,10 @@ def test_auto_remote_emulator_run_with_default_config(size: int, expected_type: 
     Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
     instance = QUBOInstance(Q)
 
-    mock_connection, mock_results = mock_connection_and_results(size)
-    config = SolverConfig(
-        use_quantum=True,
-        backend=RemoteEmulator(connection=mock_connection),  # Uses EmuFreeBackendV2 by default
-        activate_trivial_solutions=False,
-        embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
-    )
+    config, results = solver_config_and_mock_results("default_backend", True)
 
     solver = QuboSolver(instance, config)
-    with patch.object(expected_type, "run", return_value=mock_results) as mock_run:
+    with patch.object(expected_type, "run", return_value=results) as mock_run:
         solver.solve()
         mock_run.assert_called_once()
 
