@@ -99,36 +99,48 @@ def test_auto_remote_emulator_backend(size: int, expected_type: type) -> None:
 
 
 @pytest.fixture
-def backend_and_results(request):
-    return request.getfixturevalue(request.param)
+def backend_and_results(
+    request: pytest.FixtureRequest,
+) -> (
+    tuple[LocalEmulator, pulser.backend.Results]
+    | tuple[RemoteEmulator, pulser.backend.RemoteResults]
+):
+    return request.getfixturevalue(request.param)  # type: ignore[no-any-return]
 
 
 @pytest.fixture
-def local_default_backend() -> tuple:
+def local_default_backend() -> tuple[LocalEmulator, pulser.backend.Results]:
     results = MagicMock(spec=pulser.backend.Results)
     return LocalEmulator(), results
 
-@pytest.fixture
-def local_auto_backend() -> tuple:
-    results = MagicMock(spec=pulser.backend.Results)
-    return LocalEmulator(backend_type=AutoLocalEmulatorBackend), results
 
 @pytest.fixture
-def local_default_config() -> tuple:
+def local_auto_backend() -> tuple[LocalEmulator, pulser.backend.Results]:
     results = MagicMock(spec=pulser.backend.Results)
-    return SolverConfig().backend, results
+    return LocalEmulator(backend_type=AutoLocalEmulatorBackend), results  # type: ignore[type-abstract]
+
 
 @pytest.fixture
-def remote_default_backend() -> tuple:
+def local_default_config() -> tuple[LocalEmulator, pulser.backend.Results]:
+    results = MagicMock(spec=pulser.backend.Results)
+    backend = SolverConfig().backend
+    assert isinstance(backend, LocalEmulator)
+    return backend, results
+
+
+@pytest.fixture
+def remote_default_backend() -> tuple[RemoteEmulator, pulser.backend.RemoteResults]:
     mock_connection, results = mock_connection_and_results()
     return RemoteEmulator(connection=mock_connection), results
 
+
 @pytest.fixture
-def remote_auto_backend() -> tuple:
+def remote_auto_backend() -> tuple[RemoteEmulator, pulser.backend.RemoteResults]:
     mock_connection, results = mock_connection_and_results()
-    return RemoteEmulator(
-        backend_type=AutoRemoteEmulatorBackend, connection=mock_connection
-    ), results
+    return (
+        RemoteEmulator(backend_type=AutoRemoteEmulatorBackend, connection=mock_connection),
+        results,
+    )
 
 
 @pytest.mark.parametrize(
@@ -155,7 +167,7 @@ def remote_auto_backend() -> tuple:
         (20, "local_default_config", SVBackend),
         (30, "local_default_config", MPSBackend),
     ],
-    indirect=('backend_and_results',)
+    indirect=("backend_and_results",),
 )
 def test_emulator_backend_selection(
     size: int,
@@ -173,7 +185,7 @@ def test_emulator_backend_selection(
         backend=backend,
         embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
         activate_trivial_solutions=False,
-        )
+    )
 
     solver = QuboSolver(instance, solver_config)
     with patch.object(expected_type, "run", return_value=results) as mock_run:
@@ -288,7 +300,8 @@ def test_get_backend_type_invalid_backend_id() -> None:
     ],
 )
 def test_warn_suboptimal_backend(
-    backend_type: type, n_qubits: int,
+    backend_type: type,
+    n_qubits: int,
 ) -> None:
     """Test that _warn_suboptimal_backend warns for suboptimal backend choices."""
     with pytest.warns(UserWarning, match="Consider using"):
@@ -313,7 +326,8 @@ def test_warn_suboptimal_backend(
     ],
 )
 def test_dont_warn_optimal_backend(
-    backend_type: type, n_qubits: int,
+    backend_type: type,
+    n_qubits: int,
 ) -> None:
     """Test that _warn_suboptimal_backend does not warn for optimal backend choices."""
     with warnings.catch_warnings():
