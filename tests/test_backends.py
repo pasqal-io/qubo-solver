@@ -62,52 +62,6 @@ def mock_connection_and_results() -> tuple[MockConnection, pulser.backend.Remote
     return mock_connection, remote_results
 
 
-def solver_config_and_mock_results(
-    emulator: Literal["auto_backend", "default_backend", "default"],
-    remote: bool,
-) -> tuple[SolverConfig, pulser.backend.Results | pulser.backend.RemoteResults]:
-
-    # Init with correct type for mypy
-    emulator_ = SolverConfig().backend
-
-    if remote:
-        mock_connection, results = mock_connection_and_results()
-        match emulator:
-            case "auto_backend":
-                emulator_ = RemoteEmulator(
-                    backend_type=AutoRemoteEmulatorBackend, connection=mock_connection
-                )
-            case "default_backend":
-                emulator_ = RemoteEmulator(connection=mock_connection)
-            case "default":
-                pytest.skip("Default emulator is LocalEmulator")
-            case _:
-                raise ValueError("Invalid emulator value")
-    else:
-        results = MagicMock(spec=pulser.backend.Results)
-        match emulator:
-            case "auto_backend":
-                emulator_ = LocalEmulator(backend_type=AutoLocalEmulatorBackend)  # type: ignore[type-abstract]
-            case "default_backend":
-                emulator_ = LocalEmulator()
-            case "default":
-                emulator_ = SolverConfig().backend
-            case _:
-                raise ValueError("Invalid emulator value")
-
-    embedding_config = EmbeddingConfig(embedding_method="blade", min_distance=1.001)
-
-    return (
-        SolverConfig(
-            use_quantum=True,
-            backend=emulator_,
-            embedding=embedding_config,
-            activate_trivial_solutions=False,
-        ),
-        results,
-    )
-
-
 @pytest.mark.parametrize(
     "size, expected_type",
     [
@@ -142,44 +96,84 @@ def test_auto_remote_emulator_backend(size: int, expected_type: type) -> None:
     check.is_instance(backend, expected_type)
 
 
+@pytest.fixture
+def backend_and_results(request):
+    return request.getfixturevalue(request.param)
+
+
+@pytest.fixture
+def local_default_backend() -> tuple:
+    results = MagicMock(spec=pulser.backend.Results)
+    return LocalEmulator(), results
+
+@pytest.fixture
+def local_auto_backend() -> tuple:
+    results = MagicMock(spec=pulser.backend.Results)
+    return LocalEmulator(backend_type=AutoLocalEmulatorBackend), results
+
+@pytest.fixture
+def local_default_config() -> tuple:
+    results = MagicMock(spec=pulser.backend.Results)
+    return SolverConfig().backend, results
+
+@pytest.fixture
+def remote_default_backend() -> tuple:
+    mock_connection, results = mock_connection_and_results()
+    return RemoteEmulator(connection=mock_connection), results
+
+@pytest.fixture
+def remote_auto_backend() -> tuple:
+    mock_connection, results = mock_connection_and_results()
+    return RemoteEmulator(
+        backend_type=AutoRemoteEmulatorBackend, connection=mock_connection
+    ), results
+
+
 @pytest.mark.parametrize(
-    "size, expected_type, emulator_config, remote",
+    "size, backend_and_results, expected_type",
     [
         # Auto backend tests - local
-        (2, QutipBackendV2, "auto_backend", False),
-        (20, SVBackend, "auto_backend", False),
-        (30, MPSBackend, "auto_backend", False),
+        (2, "local_auto_backend", QutipBackendV2),
+        (20, "local_auto_backend", SVBackend),
+        (30, "local_auto_backend", MPSBackend),
         # Auto backend tests - remote
-        (2, EmuFreeBackendV2, "auto_backend", True),
-        (20, EmuSVBackend, "auto_backend", True),
-        (30, EmuMPSBackend, "auto_backend", True),
+        (2, "remote_auto_backend", EmuFreeBackendV2),
+        (20, "remote_auto_backend", EmuSVBackend),
+        (30, "remote_auto_backend", EmuMPSBackend),
         # Default backend tests - local
-        (2, QutipBackendV2, "default_backend", False),
-        (20, SVBackend, "default_backend", False),
-        (30, MPSBackend, "default_backend", False),
+        (2, "local_default_backend", QutipBackendV2),
+        (20, "local_default_backend", SVBackend),
+        (30, "local_default_backend", MPSBackend),
         # Default backend tests - remote (always EmuFreeBackendV2)
-        (2, EmuFreeBackendV2, "default_backend", True),
-        (20, EmuFreeBackendV2, "default_backend", True),
-        (30, EmuFreeBackendV2, "default_backend", True),
+        (2, "remote_default_backend", EmuFreeBackendV2),
+        (20, "remote_default_backend", EmuFreeBackendV2),
+        (30, "remote_default_backend", EmuFreeBackendV2),
         # Default config tests - local
-        (2, QutipBackendV2, "default", False),
-        (20, SVBackend, "default", False),
-        (30, MPSBackend, "default", False),
+        (2, "local_default_config", QutipBackendV2),
+        (20, "local_default_config", SVBackend),
+        (30, "local_default_config", MPSBackend),
     ],
+    indirect=('backend_and_results',)
 )
 def test_emulator_backend_selection(
     size: int,
+    backend_and_results: tuple,
     expected_type: type,
-    emulator_config: Literal["auto_backend", "default_backend", "default"],
-    remote: bool,
 ) -> None:
     """Test that emulators select the correct backend based on problem size and configuration."""
     Q = torch.ones(size, size) + torch.diag(torch.full((size,), -3.0))
     instance = QUBOInstance(Q)
 
-    config, results = solver_config_and_mock_results(emulator_config, remote)
+    backend, results = backend_and_results
 
-    solver = QuboSolver(instance, config)
+    solver_config = SolverConfig(
+        use_quantum=True,
+        backend=backend,
+        embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
+        activate_trivial_solutions=False,
+        )
+
+    solver = QuboSolver(instance, solver_config)
     with patch.object(expected_type, "run", return_value=results) as mock_run:
         solver.solve()
         mock_run.assert_called_once()
@@ -238,26 +232,37 @@ def test_local_emulator_warning() -> None:
 
 
 @pytest.mark.parametrize(
-    "backend_id, remote, expected_type",
+    "backend_id, expected_type",
     [
-        ("qutip", False, QutipBackendV2),
-        ("qutip", True, EmuFreeBackendV2),
-        ("emu_sv", False, SVBackend),
-        ("emu_sv", True, EmuSVBackend),
-        ("emu_mps", False, MPSBackend),
-        ("emu_mps", True, EmuMPSBackend),
+        ("qutip", QutipBackendV2),
+        ("emu_sv", SVBackend),
+        ("emu_mps", MPSBackend),
     ],
 )
-def test_get_backend_type(
-    backend_id: Literal["qutip", "emu_sv", "emu_mps"], remote: bool, expected_type: type
+def test_get_local_backend_type(
+    backend_id: Literal["qutip", "emu_sv", "emu_mps"], expected_type: type
+) -> None:
+    """Test that _get_backend_type returns the correct local backend class."""
+    backend_type = _get_backend_type(backend_id, False)
+    check.is_(backend_type, expected_type)
+    assert issubclass(backend_type, EmulatorBackend)
+
+
+@pytest.mark.parametrize(
+    "backend_id, expected_type",
+    [
+        ("qutip", EmuFreeBackendV2),
+        ("emu_sv", EmuSVBackend),
+        ("emu_mps", EmuMPSBackend),
+    ],
+)
+def test_get_remote_backend_type(
+    backend_id: Literal["qutip", "emu_sv", "emu_mps"], expected_type: type
 ) -> None:
     """Test that _get_backend_type returns the correct backend class."""
-    backend_type = _get_backend_type(backend_id, remote)
+    backend_type = _get_backend_type(backend_id, True)
     check.is_(backend_type, expected_type)
-    if remote:
-        assert issubclass(backend_type, RemoteEmulatorBackend)
-    else:
-        assert issubclass(backend_type, EmulatorBackend)
+    assert issubclass(backend_type, RemoteEmulatorBackend)
 
 
 def test_get_backend_type_invalid_backend_id() -> None:
@@ -267,52 +272,61 @@ def test_get_backend_type_invalid_backend_id() -> None:
 
 
 @pytest.mark.parametrize(
-    "backend_type, n_qubits, remote, should_warn",
+    "backend_type, n_qubits",
     [
-        # Auto backends should never warn
-        (AutoLocalEmulatorBackend, 10, False, False),
-        (AutoLocalEmulatorBackend, 20, False, False),
-        (AutoRemoteEmulatorBackend, 10, True, False),
-        (AutoRemoteEmulatorBackend, 20, True, False),
-        # Optimal backends should not warn
-        (QutipBackendV2, 10, False, False),  # Optimal for <15 qubits local
-        (EmuFreeBackendV2, 10, True, False),  # Optimal for <15 qubits remote
-        (SVBackend, 20, False, False),  # Optimal for 15-25 qubits local
-        (EmuSVBackend, 20, True, False),  # Optimal for 15-25 qubits remote
-        (MPSBackend, 30, False, False),  # Optimal for ≥26 qubits local
-        (EmuMPSBackend, 30, True, False),  # Optimal for ≥26 qubits remote
         # Suboptimal backends should warn
-        (SVBackend, 10, False, True),  # SVBackend for small problem
-        (MPSBackend, 10, False, True),  # MPSBackend for small problem
-        (QutipBackendV2, 20, False, True),  # QutipBackendV2 for medium problem
-        (EmuSVBackend, 10, True, True),  # EmuSVBackend for small problem
-        (EmuMPSBackend, 10, True, True),  # EmuMPSBackend for small problem
-        (EmuFreeBackendV2, 20, True, True),  # EmuFreeBackendV2 for medium problem
+        (SVBackend, 10),  # SVBackend for small problem
+        (MPSBackend, 10),  # MPSBackend for small problem
+        (QutipBackendV2, 20),  # QutipBackendV2 for medium problem
+        (EmuSVBackend, 10),  # EmuSVBackend for small problem
+        (EmuMPSBackend, 10),  # EmuMPSBackend for small problem
+        (EmuFreeBackendV2, 20),  # EmuFreeBackendV2 for medium problem
     ],
 )
 def test_warn_suboptimal_backend(
-    backend_type: type, n_qubits: int, remote: bool, should_warn: bool
+    backend_type: type, n_qubits: int,
 ) -> None:
     """Test that _warn_suboptimal_backend warns appropriately based on backend optimality."""
-    if should_warn:
-        with pytest.warns(UserWarning, match="Consider using"):
-            _warn_suboptimal_backend(backend_type, n_qubits, remote)
-    else:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")  # Turn warnings into errors
-            _warn_suboptimal_backend(backend_type, n_qubits, remote)  # Should not raise
+    with pytest.warns(UserWarning, match="Consider using"):
+        _warn_suboptimal_backend(backend_type, n_qubits)
+
+
+@pytest.mark.parametrize(
+    "backend_type, n_qubits",
+    [
+        # Auto backends should never warn
+        (AutoLocalEmulatorBackend, 10),
+        (AutoLocalEmulatorBackend, 20),
+        (AutoRemoteEmulatorBackend, 10),
+        (AutoRemoteEmulatorBackend, 20),
+        # Optimal backends should not warn
+        (QutipBackendV2, 10),  # Optimal for <15 qubits local
+        (EmuFreeBackendV2, 10),  # Optimal for <15 qubits remote
+        (SVBackend, 20),  # Optimal for 15-25 qubits local
+        (EmuSVBackend, 20),  # Optimal for 15-25 qubits remote
+        (MPSBackend, 30),  # Optimal for ≥26 qubits local
+        (EmuMPSBackend, 30),  # Optimal for ≥26 qubits remote
+    ],
+)
+def test_dont_warn_optimal_backend(
+    backend_type: type, n_qubits: int,
+) -> None:
+    """Test that _warn_suboptimal_backend warns appropriately based on backend optimality."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # Turn warnings into errors
+        _warn_suboptimal_backend(backend_type, n_qubits)  # Should not raise
 
 
 def test_warn_suboptimal_backend_remote_message() -> None:
     """Test that remote backend warnings include fee notice."""
     with pytest.warns(UserWarning, match="Note: Fees may apply for remote execution"):
-        _warn_suboptimal_backend(EmuSVBackend, 10, True)
+        _warn_suboptimal_backend(EmuSVBackend, 10)
 
 
 def test_warn_suboptimal_backend_local_no_fee_message() -> None:
     """Test that local backend warnings do not include fee notice."""
     with pytest.warns(UserWarning) as warning_list:
-        _warn_suboptimal_backend(SVBackend, 10, False)
+        _warn_suboptimal_backend(SVBackend, 10)
 
     # Check that no warning mentions fees
     for warning in warning_list:
@@ -324,4 +338,4 @@ def test_warn_suboptimal_backend_message_content() -> None:
     with pytest.warns(
         UserWarning, match=r"Using SVBackend for 10 qubits\. Consider using QutipBackendV2"
     ):
-        _warn_suboptimal_backend(SVBackend, 10, False)
+        _warn_suboptimal_backend(SVBackend, 10)

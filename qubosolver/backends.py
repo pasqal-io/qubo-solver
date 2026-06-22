@@ -159,17 +159,17 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
 def _warn_suboptimal_backend(
     backend_type: Type[EmulatorBackend] | Type[RemoteEmulatorBackend],
     n_qubits: int,
-    remote: bool,
 ) -> None:
     """Warn if using a suboptimal backend for the given problem size.
 
     Args:
         backend_type: The currently selected backend type
         n_qubits: Number of qubits in the quantum program
-        remote: Whether this is a remote emulator
     """
     if backend_type in [AutoLocalEmulatorBackend, AutoRemoteEmulatorBackend]:
         return
+
+    remote = issubclass(backend_type, RemoteEmulatorBackend)
 
     optimal_backend_type = _select_backend_type(n_qubits, remote)
 
@@ -228,7 +228,7 @@ class LocalEmulator(QoolqitLocalEmulator):
         Returns:
             The execution results from the local backend
         """
-        _warn_suboptimal_backend(self._backend_type, program.register.n_qubits, False)
+        _warn_suboptimal_backend(self._backend_type, program.register.n_qubits)
         return super().run(program, *args, **kwargs)
 
 
@@ -276,5 +276,5 @@ class RemoteEmulator(QoolqitRemoteEmulator):
         Returns:
             The execution results from the remote backend
         """
-        _warn_suboptimal_backend(self._backend_type, program.register.n_qubits, True)
+        _warn_suboptimal_backend(self._backend_type, program.register.n_qubits)
         return super().run(program, *args, **kwargs)
