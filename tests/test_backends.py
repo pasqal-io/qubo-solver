@@ -36,6 +36,7 @@ from mock.connection import MockConnection
 
 
 def make_sequence(register: pulser.Register, device: qoolqit.Device) -> pulser.Sequence:
+    """Create a simple pulse sequence for testing purposes."""
     sequence = pulser.Sequence(register, device._device)
     sequence.declare_channel("rydberg", "rydberg_global")
     sequence.add(
@@ -46,12 +47,13 @@ def make_sequence(register: pulser.Register, device: qoolqit.Device) -> pulser.S
 
 
 def dummy_pulser_register(n: int) -> pulser.Register:
+    """Create a dummy pulser register with n qubits arranged in a line."""
     qubits = {f"q{i}": (float(i), 0.0) for i in range(n)}
     return pulser.Register(qubits)
 
 
 def mock_connection_and_results() -> tuple[MockConnection, pulser.backend.RemoteResults]:
-
+    """Create a mock connection and results for testing remote emulators."""
     mock_results = MagicMock(spec=pulser.backend.Results)
     mock_connection = MockConnection(mock_results)
 
@@ -71,7 +73,7 @@ def mock_connection_and_results() -> tuple[MockConnection, pulser.backend.Remote
     ],
 )
 def test_auto_local_emulator_backend(size: int, expected_type: type) -> None:
-
+    """Test that AutoLocalEmulatorBackend selects the correct backend type based on problem size."""
     device = qoolqit.MockDevice()
     sequence = make_sequence(dummy_pulser_register(size), device)
     backend = AutoLocalEmulatorBackend(sequence)  # type: ignore[abstract]
@@ -87,7 +89,7 @@ def test_auto_local_emulator_backend(size: int, expected_type: type) -> None:
     ],
 )
 def test_auto_remote_emulator_backend(size: int, expected_type: type) -> None:
-
+    """Test that AutoRemoteEmulatorBackend selects the correct backend type based on problem size."""
     device = qoolqit.MockDevice()
     sequence = make_sequence(dummy_pulser_register(size), device)
     backend = AutoRemoteEmulatorBackend(
@@ -180,11 +182,13 @@ def test_emulator_backend_selection(
 
 
 def test_default_config_backend() -> None:
+    """Test that default SolverConfig uses AutoLocalEmulatorBackend."""
     config = SolverConfig(use_quantum=True)
     check.is_(config.backend._backend_type, AutoLocalEmulatorBackend)
 
 
 def test_default_remote_emulator_backend() -> None:
+    """Test that default RemoteEmulator uses EmuFreeBackendV2."""
     mock_connection = MagicMock(spec=pulser.backend.remote.RemoteConnection)
     emulator = RemoteEmulator(connection=mock_connection)
     check.is_(emulator._backend_type, EmuFreeBackendV2)
@@ -259,7 +263,7 @@ def test_get_local_backend_type(
 def test_get_remote_backend_type(
     backend_id: Literal["qutip", "emu_sv", "emu_mps"], expected_type: type
 ) -> None:
-    """Test that _get_backend_type returns the correct backend class."""
+    """Test that _get_backend_type returns the correct remote backend class."""
     backend_type = _get_backend_type(backend_id, True)
     check.is_(backend_type, expected_type)
     assert issubclass(backend_type, RemoteEmulatorBackend)
@@ -286,7 +290,7 @@ def test_get_backend_type_invalid_backend_id() -> None:
 def test_warn_suboptimal_backend(
     backend_type: type, n_qubits: int,
 ) -> None:
-    """Test that _warn_suboptimal_backend warns appropriately based on backend optimality."""
+    """Test that _warn_suboptimal_backend warns for suboptimal backend choices."""
     with pytest.warns(UserWarning, match="Consider using"):
         _warn_suboptimal_backend(backend_type, n_qubits)
 
@@ -311,7 +315,7 @@ def test_warn_suboptimal_backend(
 def test_dont_warn_optimal_backend(
     backend_type: type, n_qubits: int,
 ) -> None:
-    """Test that _warn_suboptimal_backend warns appropriately based on backend optimality."""
+    """Test that _warn_suboptimal_backend does not warn for optimal backend choices."""
     with warnings.catch_warnings():
         warnings.simplefilter("error")  # Turn warnings into errors
         _warn_suboptimal_backend(backend_type, n_qubits)  # Should not raise
