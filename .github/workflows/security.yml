@@ -118,7 +118,7 @@ jobs:
         env:
           VIRTUAL_ENV: ${{ env.VIRTUAL_ENV }}
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v0.7.1
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: trivy-sbom
           path: sbom.cdx.json
