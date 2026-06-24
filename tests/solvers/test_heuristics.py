@@ -204,5 +204,6 @@ def test_sa_time_limit(simple_qubo_instance: QUBOInstance) -> None:
     assert isinstance(solution, QUBOSolution)
     assert elapsed_time < 1.0
 
+
 if __name__ == "__main__":
     pytest.main()
