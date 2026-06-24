@@ -10,6 +10,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-29
+
+### Added
+- Automatic local emulator selection based on qubit count (QutipBackendV2 / SVBackend / MPSBackend). ([#155](https://github.com/pasqal-io/qubo-solver/pull/155), [#173](https://github.com/pasqal-io/qubo-solver/pull/173))
+- Automatic remote emulator selection (keeps `EMU_FREE` as default due to pricing considerations). ([#180](https://github.com/pasqal-io/qubo-solver/pull/180))
+- Add metadata for cloud analytics. ([#171](https://github.com/pasqal-io/qubo-solver/pull/171))
+- Add time limit support for classical Simulated Annealing (SA) (runtime budget-based stopping). ([#186](https://github.com/pasqal-io/qubo-solver/pull/186))
+- Add time limit support for Tabu Search (runtime budget-based stopping). ([#190](https://github.com/pasqal-io/qubo-solver/pull/190))
+
+### Changed
+- Change defaults: `min_distance=1.001`, `device=AnalogDeviceWithDMM` (requires `qoolqit 1.1.1`). ([#196](https://github.com/pasqal-io/qubo-solver/pull/196))
+- Update waveform imports in anticipation of upcoming `qoolqit` changes. ([#204](https://github.com/pasqal-io/qubo-solver/pull/204))
+- Bump `numpy` version requirement to `>=2`. ([#205](https://github.com/pasqal-io/qubo-solver/pull/205))
+
+### Docs
+- Fix QPU tutorial number 02. ([#209](https://github.com/pasqal-io/qubo-solver/pull/209))
+
 ## [0.7.2] - 2026-06-05
 
 ### Docs
@@ -69,7 +86,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove references to D-Wave ([#118](https://github.com/pasqal-io/qubo-solver/pull/118))
 
 
-[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.6.1...v0.7.0
