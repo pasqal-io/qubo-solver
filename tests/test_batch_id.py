@@ -21,6 +21,7 @@ from qubosolver.qubo_types import EmbedderType, DriveType
 from qubosolver.solver import QUBOInstance, QuboSolverQuantum, QUBOSolution
 import qubosolver.io.utils as io_utils
 
+from qoolqit import DigitalAnalogDevice
 from qoolqit.execution import retrieve_remote_job, get_batch_id, job, JobStatus
 from mock.connection import MockConnection
 
@@ -59,7 +60,9 @@ def test_quantum_batch_id(
 
         min_distance = 1.001 if drive_method == DriveType.HEURISTIC else None
 
-        config = SolverConfig(use_quantum=True, do_preprocessing=preprocessing)
+        config = SolverConfig(
+            use_quantum=True, do_preprocessing=preprocessing, device=DigitalAnalogDevice()
+        )
         config.embedding = EmbeddingConfig(
             embedding_method=embedding_method,
             greedy_spacing=7.0,

@@ -12,7 +12,7 @@ from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
 
-from qoolqit.devices import DigitalAnalogDevice, AnalogDevice, Device, MockDevice
+from qoolqit.devices import AnalogDeviceWithDMM, AnalogDevice, Device, MockDevice
 from pulser_pasqal import PasqalCloud
 from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.qubo_analyzer import QUBOAnalyzer
@@ -115,13 +115,13 @@ def local_backend(request: pytest.FixtureRequest) -> LocalEmulator:
 
 @pytest.fixture(
     params=[
-        DigitalAnalogDevice(),
+        AnalogDeviceWithDMM(),
         AnalogDevice(),
         MockDevice(),
         Device(pulser_device=connection.fetch_available_devices()["FRESNEL"]),
     ],
     ids=[
-        "DigitalAnalogDevice",
+        "AnalogDeviceWithDMM",
         "AnalogDevice",
         "MockDevice",
         "FRESNEL",

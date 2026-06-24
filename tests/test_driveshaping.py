@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 import torch
 import pytest_check as check
+from qoolqit import DigitalAnalogDevice
 from qoolqit.register import Register
 from qoolqit.drive import Drive
 from qubosolver.config import DriveShapingConfig, SolverConfig
@@ -153,12 +154,12 @@ def test_normalized_weights_in_drive(
 
 
 def test_drive_duration_set(dummy_register: Register, simple_qubo_instance: QUBOInstance) -> None:
-    default_config = SolverConfig(use_quantum=True)
+    default_config = SolverConfig(use_quantum=True, device=DigitalAnalogDevice())
     backend = default_config.backend
     shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)
     drive, _ = shaper.generate(dummy_register)
 
-    # DigitalAnalogDevice has a hardcoded duration
+    # AnalogDeviceWithDMM has a hardcoded duration
     check.almost_equal(drive.duration, 1000.0)
 
 
@@ -185,6 +186,7 @@ def test_generate_heuristic_drive_shaper(
     default_config = SolverConfig(
         use_quantum=True,
         drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.HEURISTIC, dmm=dmm),
+        device=DigitalAnalogDevice(),
     )
     backend = default_config.backend
     shaper = get_drive_shaper(simple_qubo_instance, default_config, backend)

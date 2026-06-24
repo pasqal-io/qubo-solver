@@ -8,7 +8,7 @@ import numpy as np
 import random
 from typing import Tuple, List
 
-from qoolqit.devices import DigitalAnalogDevice
+from qoolqit.devices import AnalogDeviceWithDMM, DigitalAnalogDevice
 from qoolqit import Register
 from qubosolver import QUBOInstance
 
@@ -50,6 +50,7 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
         use_quantum=use_quantum,
         decompose=decompose_config,
         embedding=EmbeddingConfig(min_distance=1.0),
+        device=DigitalAnalogDevice(),
     )
     solver = QuboSolver(decomposable_qubo, config)
 
@@ -130,6 +131,7 @@ def test_decomp_solver(decomposable_qubo: QUBOInstance, use_quantum: bool) -> No
         use_quantum=use_quantum,
         decompose=DecompositionConfig(),
         embedding=EmbeddingConfig(min_distance=1.0),
+        device=DigitalAnalogDevice(),
     )
     solver = QuboSolver(decomposable_qubo, config)
 
@@ -186,7 +188,7 @@ def test_compute_distance_interaction_matrix_zero_output() -> None:
 
     neglecting_inter_distance = 15.0
     neglecting_max_coefficient = 1.0
-    device = DigitalAnalogDevice()
+    device = AnalogDeviceWithDMM()
 
     Q = torch.tensor(
         [
@@ -209,7 +211,7 @@ def test_compute_distance_interaction_diagonal() -> None:
 
     neglecting_inter_distance = 15.0
     neglecting_max_coefficient = 1.0
-    device = DigitalAnalogDevice()
+    device = AnalogDeviceWithDMM()
 
     Q = torch.tensor(
         [
@@ -311,6 +313,7 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: Tuple[int]) -> None:
     config = SolverConfig(
         use_quantum=False,
         decompose=DecompositionConfig(decompose_stop_number=2, decompose_break_placement=0),
+        device=DigitalAnalogDevice(),
     )
     solver = QuboSolver(qubo_instance, config)
     assert isinstance(solver._solver, DecomposeQuboSolver)

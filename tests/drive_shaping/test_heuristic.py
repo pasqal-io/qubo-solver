@@ -13,7 +13,7 @@ from qubosolver import QUBOInstance
 from qubosolver.solver import QuboSolver
 from qubosolver.config import EmbeddingConfig, SolverConfig, DriveShapingConfig
 from qubosolver.qubo_analyzer import QUBOAnalyzer
-from qoolqit import DigitalAnalogDevice, AnalogDevice
+from qoolqit import AnalogDevice, DigitalAnalogDevice
 
 
 @dataclass

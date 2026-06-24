@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import torch
 import numpy as np
-from qoolqit.devices.device import DigitalAnalogDevice
+from qoolqit.devices.device import AnalogDeviceWithDMM
 
 from qubosolver.algorithms.greedy.greedy import Greedy
 from qubosolver.qubo_types import LayoutType
@@ -77,7 +77,7 @@ def test_triangular_qubo(traps: int, relative_noise: float) -> None:
 
     spacing = 7.0
 
-    device = DigitalAnalogDevice()._device
+    device = AnalogDeviceWithDMM()._device
     C6 = device.interaction_coeff
 
     parameters = {
@@ -138,7 +138,7 @@ def test_square_qubo(traps: int, layout: LayoutType | str, relative_noise: float
 
     spacing = 7.0
 
-    device = DigitalAnalogDevice()._device
+    device = AnalogDeviceWithDMM()._device
     C6 = device.interaction_coeff
 
     parameters = {
@@ -196,7 +196,7 @@ def test_square_qubo(traps: int, layout: LayoutType | str, relative_noise: float
 @pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
 def test_too_large_spacing(too_large: str, relative_noise: float) -> None:
 
-    device = DigitalAnalogDevice()._device
+    device = AnalogDeviceWithDMM()._device
     C6 = device.interaction_coeff
 
     # A square layout of size 25 is composed of two concentric squares of side
@@ -300,7 +300,7 @@ def test_too_large_spacing(too_large: str, relative_noise: float) -> None:
 
 def test_max_distance_constraint() -> None:
 
-    device = DigitalAnalogDevice()._device
+    device = AnalogDeviceWithDMM()._device
 
     # A square layout of size 9 is composed of a square of side 2*spacing, plus the origin.
     # With a large enough spacing, the outer corners should be out of range, and thus a

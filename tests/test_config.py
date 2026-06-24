@@ -3,9 +3,8 @@ from __future__ import annotations
 import pytest
 from typing import Any
 import pytest_check as check
-from pulser.devices import DigitalAnalogDevice as PulserDADevice
 from pulser_simulation import QutipBackendV2
-from qoolqit.devices.device import AnalogDevice
+from qoolqit.devices.device import AnalogDevice, AnalogDeviceWithDMM
 from qubosolver.config import (
     LocalEmulator,
     ClassicalConfig,
@@ -93,10 +92,7 @@ def test_qutip_config_backend(qutip_solver_config: SolverConfig) -> None:
 
 def test_blade_config(blade_config: SolverConfig) -> None:
     assert blade_config.embedding.embedding_method == EmbedderType.BLADE
-    assert (
-        blade_config.device._device == PulserDADevice
-        and blade_config.embedding.blade_dimensions == [2]
-    )
+    assert type(blade_config.device) is AnalogDeviceWithDMM
     assert blade_config.embedding.blade_dimensions == [2]
 
 
@@ -108,7 +104,7 @@ def test_blade_clear_dimensions_config(
 
 def test_greedy_embedding_config(greedy_embedding_config: SolverConfig) -> None:
     assert greedy_embedding_config.embedding.embedding_method == EmbedderType.GREEDY
-    assert greedy_embedding_config.device._device == PulserDADevice
+    assert type(greedy_embedding_config.device) is AnalogDeviceWithDMM
     assert greedy_embedding_config.embedding.greedy_layout == LayoutType.SQUARE
     assert greedy_embedding_config.embedding.greedy_traps == 10
     assert greedy_embedding_config.embedding.greedy_spacing == 5.0
