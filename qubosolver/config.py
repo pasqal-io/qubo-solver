@@ -61,8 +61,8 @@ class ClassicalConfig(Config):
         sa_seed (int, optional): Random seed for reproducibility.
         sa_start (torch.Tensor | None, optional): Optioanl initial bitstring of shape (n,).
         sa_energy_tol (float, optional): Energy tolerance for considering two solutions as equivalent.
-        sa_time_limit (float | None, optional): Maximum runtime in seconds for simulated annealing.
-        Defaults to None, meaning no time limit.
+        sa_time_limit (float): Maximum runtime in seconds for simulated annealing.
+        Defaults to float('inf'), meaning no time limit.
         tabu_x0 (torch.Tensor | None, optional): The initial binary solution tensor of shape (n,).
         tabu_tenure (int, optional): Number of iterations a move (bit flip) remains tabu.
         tabu_max_no_improve (int, optional): Maximum number of consecutive iterations
@@ -82,7 +82,7 @@ class ClassicalConfig(Config):
     sa_seed: int | None = None
     sa_start: torch.Tensor | None = None
     sa_energy_tol: float = 0.0
-    sa_time_limit: float | None = None
+    sa_time_limit: float = float("inf")
 
     tabu_x0: torch.Tensor | None = None
     tabu_tenure: int = 7
