@@ -132,6 +132,7 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
             seed=self.config.sa_seed,
             start=self.config.sa_start,
             energy_tol=self.config.sa_energy_tol,
+            time_limit=self.config.sa_time_limit,
         )
         return simulated_annealing_solution
 

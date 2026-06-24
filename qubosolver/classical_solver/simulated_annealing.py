@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 import torch
 
 from qubosolver import QUBOInstance, QUBOSolution
@@ -15,6 +17,7 @@ def qubo_simulated_annealing(
     seed: int | None = None,
     start: torch.Tensor | None = None,
     energy_tol: float = 0.0,
+    time_limit: float = float("inf"),
 ) -> QUBOSolution:
     """
     Solve a QUBO instance using the Simulated Annealing metaheuristic.
@@ -25,6 +28,12 @@ def qubo_simulated_annealing(
     The algorithm gradually lowers the system temperature to reduce
     the probability of accepting worse solutions, balancing exploration
     and exploitation.
+
+    Args:
+        time_limit: float, default=float('inf')
+            Maximum resolution time in seconds. If infinite, the execution
+            is limited only by `max_iter`. If finite, the algorithm stops
+            when either `max_iter` or `time_limit` is reached.
 
     Returns:
         A `QUBOSolution` object containing:
@@ -37,6 +46,9 @@ def qubo_simulated_annealing(
         >>> solution = qubo_simulated_annealing(qubo)
         >>> print(solution.bitstrings, solution.costs)
     """
+    if time_limit <= 0:
+        raise ValueError("time_limit must be > 0.")
+
     bitstrings, costs, counts = simulated_annealing(
         Q=qubo.coefficients,
         top_k=top_k,
@@ -47,6 +59,7 @@ def qubo_simulated_annealing(
         seed=seed,
         start=start,
         energy_tol=energy_tol,
+        time_limit=time_limit,
     )
     return QUBOSolution(
         bitstrings=bitstrings, costs=costs, counts=counts, probabilities=counts.float() / top_k
@@ -64,6 +77,7 @@ def simulated_annealing(
     seed: int | None = None,
     start: torch.Tensor | None = None,
     energy_tol: float = 0.0,
+    time_limit: float = float("inf"),
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     Perform Simulated Annealing (SA) for a Quadratic Unconstrained Binary Optimization (QUBO)
@@ -97,6 +111,10 @@ def simulated_annealing(
         energy_tol: float, optional, default=0.0
             Energy tolerance for considering two solutions as equivalent.
             If two energies differ by ≤ `energy_tol`, they are treated as equal.
+        time_limit: float, default=float('inf')
+            Maximum resolution time in seconds. If infinite, the execution
+            is limited only by `max_iter`. If finite, the algorithm stops
+            when either `max_iter` or `time_limit` is reached.
 
     Returns:
         solutions: torch.Tensor of shape (m, n), dtype=torch.uint8
@@ -190,7 +208,12 @@ def simulated_annealing(
 
     maybe_insert(bits, energy)
 
+    deadline = time.perf_counter() + time_limit
+
     for _ in range(max_iter):
+        if time.perf_counter() >= deadline:
+            break
+
         i = int(torch.randint(0, n, (1,), generator=rng).item())
         xi = int(bits[i].item())
 
