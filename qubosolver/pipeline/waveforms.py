@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qoolqit.register import Register
 from qoolqit.drive import DetuningMapModulator
-from qoolqit.waveforms import Constant
+from qoolqit import Constant as ConstantWaveform
 
 
 def constant_weighted_dmm(
@@ -26,7 +26,7 @@ def constant_weighted_dmm(
         DetuningMapModulator: DetuningMapModulator with a constant
             waveform for QUBO solving.
     """
-    waveform = Constant(duration, final_detuning)
+    waveform = ConstantWaveform(duration, final_detuning)
     return DetuningMapModulator(
         weights={embedding.qubits_ids[i]: w for i, w in enumerate(norm_weights)},
         waveform=waveform,
