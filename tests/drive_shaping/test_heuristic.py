@@ -13,7 +13,7 @@ from qubosolver import QUBOInstance
 from qubosolver.solver import QuboSolver
 from qubosolver.config import EmbeddingConfig, SolverConfig, DriveShapingConfig
 from qubosolver.qubo_analyzer import QUBOAnalyzer
-from qoolqit import AnalogDeviceWithDMM, AnalogDevice, DigitalAnalogDevice
+from qoolqit import AnalogDevice, DigitalAnalogDevice
 
 
 @dataclass
@@ -55,7 +55,7 @@ def gather_optimal_solutions(
 def test_with_perfect_embedding(
     seed: int,
     dmm: bool,
-    device_type: type[AnalogDeviceWithDMM] | type[AnalogDevice],
+    device_type: type[DigitalAnalogDevice] | type[AnalogDevice],
     constant_diagonal: bool,
     diagonal_scale: float,
 ) -> None:
