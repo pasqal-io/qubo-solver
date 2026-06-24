@@ -59,7 +59,7 @@ class ClassicalConfig(Config):
         sa_final_temp (float, optional): Minimum temperature threshold for stopping.
         sa_cooling_rate (float, optional): Cooling rate - should be slightly below 1 (e.g., 0.95–0.99).
         sa_seed (int, optional): Random seed for reproducibility.
-        sa_start (torch.Tensor | None, optional): Optioanl initial bitstring of shape (n,).
+        sa_start (torch.Tensor | None, optional): Optional initial bitstring of shape (n,).
         sa_energy_tol (float, optional): Energy tolerance for considering two solutions as equivalent.
         sa_time_limit (float): Maximum runtime in seconds for simulated annealing.
             Defaults to float('inf'), meaning no time limit.
@@ -67,6 +67,8 @@ class ClassicalConfig(Config):
         tabu_tenure (int, optional): Number of iterations a move (bit flip) remains tabu.
         tabu_max_no_improve (int, optional): Maximum number of consecutive iterations
             without improvement before termination.
+        tabu_time_limit (float): Maximum execution time for tabu search,
+            in seconds. Defaults to float("inf").
     """
 
     classical_solver_type: str | ClassicalSolverType = "simulated_annealing_tabu_search"
@@ -87,6 +89,7 @@ class ClassicalConfig(Config):
     tabu_x0: torch.Tensor | None = None
     tabu_tenure: int = 7
     tabu_max_no_improve: int = 20
+    tabu_time_limit: float = float("inf")
 
     @field_validator("classical_solver_type")
     @classmethod
@@ -132,6 +135,7 @@ class ClassicalConfig(Config):
                     "tabu_x0": self.tabu_x0,
                     "tabu_tenure": self.tabu_tenure,
                     "tabu_max_no_improve": self.tabu_max_no_improve,
+                    "tabu_time_limit": self.tabu_time_limit,
                 }
             )
         if self.classical_solver_type == ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH:
@@ -149,6 +153,7 @@ class ClassicalConfig(Config):
                     "tabu_x0": self.tabu_x0,
                     "tabu_tenure": self.tabu_tenure,
                     "tabu_max_no_improve": self.tabu_max_no_improve,
+                    "tabu_time_limit": self.tabu_time_limit,
                 }
             )
         return serialization

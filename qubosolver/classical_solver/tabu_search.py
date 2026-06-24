@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 import torch
 
 from qubosolver import QUBOInstance, QUBOSolution
@@ -13,6 +15,7 @@ def qubo_tabu_search(
     tabu_tenure: int = 7,
     max_no_improve: int = 20,
     max_bitstrings: int = 1,
+    time_limit: float = float("inf"),
 ) -> QUBOSolution:
     """
     Solve a QUBO problem using a simple Tabu Search heuristic.
@@ -29,6 +32,8 @@ def qubo_tabu_search(
         tabu_tenure: Number of iterations a flipped variable remains tabu.
         max_no_improve: Stop criterion based on consecutive iterations
             without improvement.
+        time_limit: Maximum execution time in seconds. If infinite, no time
+            limit is applied.
 
     Returns:
         A `QUBOSolution` object containing:
@@ -41,6 +46,9 @@ def qubo_tabu_search(
         >>> solution = qubo_tabu_search(qubo, x0=torch.randint(0, 2, (10,)))
         >>> print(solution)
     """
+    if time_limit <= 0:
+        raise ValueError("time_limit must be greater than 0.")
+
     best_solutions, costs, counts = tabu_search(
         qubo=qubo,
         x0=x0,
@@ -48,6 +56,7 @@ def qubo_tabu_search(
         tabu_tenure=tabu_tenure,
         max_no_improve=max_no_improve,
         max_bitstrings=max_bitstrings,
+        time_limit=time_limit,
     )
     return QUBOSolution(
         bitstrings=best_solutions,
@@ -64,6 +73,7 @@ def tabu_search(
     tabu_tenure: int = 7,
     max_no_improve: int = 20,
     max_bitstrings: int = 1,
+    time_limit: float = float("inf"),
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     Perform Tabu Search on a QUBO instance to find low-cost bitstrings.
@@ -84,6 +94,8 @@ def tabu_search(
             without improvement before termination. Defaults to 20.
         max_bitstrings (int, optional): Maximum number of bitstring solutions returned.
             Defaults to 1.
+        time_limit: Maximum execution time in seconds. If infinite, no time
+            limit is applied. Defaults to float('inf').
 
     Returns:
         A tuple `(bistrings, costs, counts)` where:
@@ -108,7 +120,13 @@ def tabu_search(
     # Tabu list per run and bit
     tabu_list = torch.zeros((max_bitstrings, n), dtype=torch.int64, device=device)
     iter_since_last_improve = torch.zeros(max_bitstrings, dtype=torch.int64, device=device)
+
+    deadline = time.perf_counter() + time_limit
+
     for iteration in range(max_iter):
+        if time.perf_counter() >= deadline:
+            break
+
         # Generate all neighbor candidates for each bit flip
         flips = torch.eye(n, dtype=torch.int64, device=device).unsqueeze(0)
         x_neighbors = x_current.unsqueeze(1).clone()
