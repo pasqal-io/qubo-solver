@@ -59,16 +59,16 @@ class ClassicalConfig(Config):
         sa_final_temp (float, optional): Minimum temperature threshold for stopping.
         sa_cooling_rate (float, optional): Cooling rate - should be slightly below 1 (e.g., 0.95–0.99).
         sa_seed (int, optional): Random seed for reproducibility.
-        sa_start (torch.Tensor | None, optional): Optioanl initial bitstring of shape (n,).
+        sa_start (torch.Tensor | None, optional): Optional initial bitstring of shape (n,).
         sa_energy_tol (float, optional): Energy tolerance for considering two solutions as equivalent.
         sa_time_limit (float): Maximum runtime in seconds for simulated annealing.
             Defaults to float('inf'), meaning no time limit.
         tabu_x0 (torch.Tensor | None, optional): The initial binary solution tensor of shape (n,).
         tabu_tenure (int, optional): Number of iterations a move (bit flip) remains tabu.
         tabu_max_no_improve (int, optional): Maximum number of consecutive iterations
-        without improvement before termination.
-        tabu_time_limit (float | None, optional): Maximum execution time for tabu search,
-        in seconds. Defaults to None.
+            without improvement before termination.
+        tabu_time_limit (float): Maximum execution time for tabu search,
+            in seconds. Defaults to float("inf").
     """
 
     classical_solver_type: str | ClassicalSolverType = "simulated_annealing_tabu_search"
@@ -89,7 +89,7 @@ class ClassicalConfig(Config):
     tabu_x0: torch.Tensor | None = None
     tabu_tenure: int = 7
     tabu_max_no_improve: int = 20
-    tabu_time_limit: float | None = None
+    tabu_time_limit: float = float("inf")
 
     @field_validator("classical_solver_type")
     @classmethod

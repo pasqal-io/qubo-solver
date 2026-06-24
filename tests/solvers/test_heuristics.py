@@ -145,6 +145,7 @@ def test_sa_cost(
         cost_sa = cost_sa.to(dtype=cost.dtype)
         assert torch.isclose(cost, cost_sa, rtol=1e-4)
 
+
 def test_tabu_time_limit(simple_qubo_instance: QUBOInstance) -> None:
     # Set max_iter and max_no_improve to very large values to ensure that
     # the solver is stopped by tabu_time_limit, not by another stop criterion.
@@ -174,6 +175,7 @@ def test_tabu_time_limit(simple_qubo_instance: QUBOInstance) -> None:
     assert isinstance(solution, QUBOSolution)
     assert elapsed_time < 1.0
 
+
 def test_sa_time_limit(simple_qubo_instance: QUBOInstance) -> None:
     # Use a very large iteration limit so that the solver is stopped
     # by the time limit rather than by max_iter.
@@ -201,7 +203,6 @@ def test_sa_time_limit(simple_qubo_instance: QUBOInstance) -> None:
     # stops well before reaching the large iteration limit.
     assert isinstance(solution, QUBOSolution)
     assert elapsed_time < 1.0
-
 
 if __name__ == "__main__":
     pytest.main()
