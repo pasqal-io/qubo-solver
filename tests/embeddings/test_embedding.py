@@ -117,7 +117,6 @@ def test_correctness_greedy_max_radial_distance_constraint_with_extra_greedy_tra
     )
 
     for device in [AnalogDevice(), AnalogDeviceWithDMM()]:
-        print(f"Device = {device}")
 
         min_distance = 1.0 if normalized else None
 

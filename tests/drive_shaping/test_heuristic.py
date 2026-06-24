@@ -13,7 +13,7 @@ from qubosolver import QUBOInstance
 from qubosolver.solver import QuboSolver
 from qubosolver.config import EmbeddingConfig, SolverConfig, DriveShapingConfig
 from qubosolver.qubo_analyzer import QUBOAnalyzer
-from qoolqit import AnalogDeviceWithDMM, AnalogDevice
+from qoolqit import AnalogDeviceWithDMM, AnalogDevice, DigitalAnalogDevice
 
 
 @dataclass
@@ -49,7 +49,7 @@ def gather_optimal_solutions(
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("seed", [4548, 33671, 195530])
 @pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
-@pytest.mark.parametrize("device_type", [AnalogDeviceWithDMM, AnalogDevice])
+@pytest.mark.parametrize("device_type", [DigitalAnalogDevice, AnalogDevice])
 @pytest.mark.parametrize("constant_diagonal", [True, False], ids=["cst_diag", "var_diag"])
 @pytest.mark.parametrize("diagonal_scale", [-0.9, -3.0, -1.5, -6.0])
 def test_with_perfect_embedding(
@@ -158,4 +158,4 @@ def test_with_perfect_embedding(
         check.is_in(solution.bitstring, expected_optimal_bistrings)
 
     cumulated_probability = sum(s.probability for s in optimal_solutions)
-    check.greater(cumulated_probability, 0.5)
+    check.greater(cumulated_probability, 0.75)

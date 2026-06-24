@@ -154,7 +154,7 @@ def test_quantum_batch_id(
         probabilities = [
             df.set_index("bitstrings")["probs"].get(b, 0.0) for b in expected_solutions
         ]
-        check.greater(max(probabilities), 0.3)
+        check.greater(max(probabilities), 0.4)
 
         for b in expected_solutions:
             if b in df["bitstrings"].values:
