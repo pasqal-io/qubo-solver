@@ -34,7 +34,7 @@ classifiers = [
 # always specify a version for each package
 # to maintain consistency
 dependencies = [
-  "numpy",
+  "numpy>=2",
   "torch",
   "scikit-learn",
   "pandas",
