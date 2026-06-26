@@ -90,7 +90,7 @@ from qubosolver.solver import QuboSolver
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
-instance = QUBOInstance(coefficients=Q)
+instance = QUBOInstance(matrix=Q)
 
 # Create a SolverConfig object to use a quantum backend
 config = SolverConfig(use_quantum=True)
@@ -119,7 +119,7 @@ from qubosolver.solver import QuboSolverClassical, QuboSolverQuantum
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
-instance = QUBOInstance(coefficients=Q)
+instance = QUBOInstance(matrix=Q)
 
 # Create a SolverConfig object with classical solver options.
 classical_config = ClassicalConfig(

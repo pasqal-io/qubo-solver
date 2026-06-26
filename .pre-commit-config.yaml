@@ -27,10 +27,18 @@ repos:
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.19.1
     hooks:
-      - id: mypy
+      - &mypy_base
+        id: mypy
+        name: mypy (float32)
         exclude: examples|docs
         additional_dependencies:
           - "qoolqit[extras]>=1.1.1" # The version in pyproject.toml must match
+          - "jaxtyping"
+        args: [--always-false=_USE_DOUBLE_PRECISION, --cache-dir=.mypy_cache_f32]
+
+      - <<: *mypy_base
+        name: mypy (float64)
+        args: [--always-true=_USE_DOUBLE_PRECISION, --cache-dir=.mypy_cache_f64]
 
 # Cleanup jupyter notebooks
 -   repo: https://github.com/srstevenson/nb-clean

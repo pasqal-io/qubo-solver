@@ -64,6 +64,8 @@ dev = [
   "jupyter",
   "tqdm",
   "mypy",
+  "jaxtyping",
+  "beartype",
 ]
 doc = [
   "mkdocs",

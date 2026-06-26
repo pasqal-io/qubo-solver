@@ -31,7 +31,7 @@ from qubosolver import QUBOInstance
 from qubosolver.solver import QuboSolver
 from qubosolver.config import SolverConfig, ClassicalConfig
 
-qubo = QUBOInstance(coefficients=[[-2.0, 1.0], [1.0, -2.0]])
+qubo = QUBOInstance(matrix=[[-2.0, 1.0], [1.0, -2.0]])
 config = SolverConfig(use_quantum = False, classical=ClassicalConfig(classical_solver_type="tabu_search", tabu_time_limit=300.0))
 
 solver = QuboSolver(qubo, config)

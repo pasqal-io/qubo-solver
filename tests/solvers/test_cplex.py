@@ -1,19 +1,16 @@
 from __future__ import annotations
 
 import pytest
-import torch
 
-from qubosolver import QUBOInstance, QUBOSolution
-from qubosolver.config import ClassicalConfig, SolverConfig
-from qubosolver.solver import QuboSolver
+from qubosolver import QUBOInstance, QUBOSolution, ClassicalConfig, SolverConfig, QuboSolver, matrix
 
 
 def test_qubo_solver_classical_cplex() -> None:
     # Create a simple 2x2 QUBO instance.
     # For example, consider a QUBO where the optimum is known.
     # Here we use an identity matrix.
-    Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
-    instance = QUBOInstance(coefficients=Q)
+    Q = matrix.tensor([[1.0, 0.0], [0.0, 1.0]])
+    instance = QUBOInstance(matrix=Q)
 
     # Create a SolverConfig object with classical solver options.
     classical_config = ClassicalConfig(

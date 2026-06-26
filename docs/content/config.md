@@ -67,7 +67,7 @@ from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig, EmbeddingConfig
 
 coefficients = [[0, 1, 2], [1, 0, 3], [2, 3, 0]]
-instance = QUBOInstance(coefficients=coefficients)
+instance = QUBOInstance(matrix=coefficients)
 
 embedding_config = EmbeddingConfig(embedding_method="greedy", greedy_traps=-1)
 
@@ -85,7 +85,7 @@ from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig
 
 coefficients = [[0, 1, 2], [1, 0, 3], [2, 3, 0]]
-instance = QUBOInstance(coefficients=coefficients)
+instance = QUBOInstance(matrix=coefficients)
 
 config = SolverConfig.from_kwargs(
     config_name="my_config",

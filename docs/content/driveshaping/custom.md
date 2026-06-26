@@ -42,7 +42,7 @@ class SimpleShaper(BaseDriveShaper):
         wf_det = Ramp(T, delta_i, delta_f)
         drive = Drive(amplitude=wf_amp, detuning=wf_det)
 
-        return drive, QUBOSolution(torch.Tensor(), torch.Tensor())
+        return drive, QUBOSolution()
 
 config = SolverConfig(
     use_quantum=True,

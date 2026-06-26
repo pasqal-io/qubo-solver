@@ -40,7 +40,7 @@ from qubosolver import QUBOInstance
 from qubosolver.solver import QuboSolver
 from qubosolver.config import SolverConfig, ClassicalConfig
 
-qubo = QUBOInstance(coefficients=[[-2.0, 1.0], [1.0, -2.0]])
+qubo = QUBOInstance(matrix=[[-2.0, 1.0], [1.0, -2.0]])
 
 # Create a SolverConfig object with classical solver options.
 config = SolverConfig(

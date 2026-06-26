@@ -85,7 +85,7 @@ class FixedEmbedder(BaseEmbedder):
     def embed(self) -> Register:
         # The register is scaled so that the minimal distance between atoms is 1 (plus a margin). This is the recommended minimal distance.
         scale = 1.001
-        qubits = {f"q{i}": (i * scale ,0) for i in range(self.instance.coefficients.shape[0])}
+        qubits = {f"q{i}": (i * scale ,0) for i in range(self.instance.matrix.shape[0])}
         register = Register(qubits)
         return register
 

@@ -29,8 +29,7 @@ The automatic backend selection is implemented through `AutoLocalEmulatorBackend
 To use the automatic selection, simply instantiate a `SolverConfig` with a `LocalEmulator`:
 
 ```python exec="on" source="material-block"
-from qubosolver.config import SolverConfig, LocalEmulator
-from qubosolver.backends import AutoLocalEmulatorBackend
+from qubosolver import SolverConfig, LocalEmulator, AutoLocalEmulatorBackend
 from qoolqit import AnalogDeviceWithDMM
 
 # Automatic backend selection based on problem size (default behavior)
@@ -86,8 +85,7 @@ For this, we require specifying a `RemoteEmulator` or `QPU` and connection detai
 Using the code below, replace with your username, project id and password on the Pasqal Cloud.
 
 ```python exec="on" source="material-block"
-from qubosolver.config import SolverConfig, PasqalCloud, RemoteEmulator
-from qubosolver.backends import AutoRemoteEmulatorBackend
+from qubosolver import SolverConfig, PasqalCloud, RemoteEmulator, AutoRemoteEmulatorBackend
 from pulser_pasqal.backends import EmuFreeBackendV2, EmuSVBackend, EmuMPSBackend
 
 USERNAME="#TO_PROVIDE"

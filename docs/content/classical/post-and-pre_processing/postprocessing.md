@@ -70,7 +70,7 @@ graphics = (graphics + graphics.T) / 2  # Ensure symmetry
 n = graphics.size(0)
 off_diag_mask = ~torch.eye(n, dtype=torch.bool)
 graphics[off_diag_mask] = graphics[off_diag_mask].abs() # Ensure Abs off-diagonal
-qubo = QUBOInstance(coefficients=graphics)
+qubo = QUBOInstance(matrix=graphics)
 
 # Configure solver to enable postprocessing
 cplex = ClassicalConfig(classical_solver_type="cplex", cplex_log_path="solver.log", cplex_maxtime=300.0,)
@@ -110,7 +110,7 @@ import emu_mps
 
 # Assume `first_qubo_coefficients` is your 2×2 QUBO matrix (e.g., identity):
 first_qubo_coefficients = torch.eye(2)
-instance = QUBOInstance(coefficients=first_qubo_coefficients)
+instance = QUBOInstance(matrix=first_qubo_coefficients)
 
 # Configure solver with postprocessing enabled
 cplex = ClassicalConfig(classical_solver_type="cplex", cplex_log_path="solver.log", cplex_maxtime=300.0,)

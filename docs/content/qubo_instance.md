@@ -29,7 +29,7 @@ from qubosolver import QUBOInstance
 
 # Define a QUBO coefficient matrix
 coefficients = [[0, 1, 2], [1, 0, 3], [2, 3, 0]]
-instance = QUBOInstance(coefficients=coefficients)
+instance = QUBOInstance(matrix=coefficients)
 print(instance)
 
 solution = [1, 0, 1]
