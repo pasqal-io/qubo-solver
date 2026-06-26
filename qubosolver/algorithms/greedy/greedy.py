@@ -6,7 +6,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 import torch
 from pulser.register.register_layout import RegisterLayout
-from qoolqit.devices.device import AnalogDeviceWithDMM
 
 from qubosolver.qubo_types import LayoutType
 
@@ -75,7 +74,7 @@ class Greedy:
     # Precompute mismatch tensor
     # ----------------------------
     def precompute_coefficients(
-        self, Q: torch.Tensor, coordinates: torch.Tensor, params: dict
+        self, Q: torch.Tensor, coordinates: torch.Tensor
     ) -> torch.Tensor:
         """
         Precompute Z[i,j,p,q] = | Q[i,j] - U[p,q] | where U[p,q] is the
@@ -89,7 +88,7 @@ class Greedy:
         for p in range(n_traps):
             for q in range(p + 1, n_traps):
                 U[p, q] = (
-                    params["device"].interaction_coeff
+                    1
                     / torch.norm(coordinates[p] - coordinates[q]) ** 6
                 )
                 U[q, p] = U[p, q]
@@ -181,14 +180,12 @@ class Greedy:
         results: dict,
         params: dict,
         on_step: Optional[Callable[[Dict[str, Any]], None]] = None,
+        max_radial_distance: float | None = None,
     ) -> dict:
         """
         Greedy loop starting from node v. If `on_step` is provided, emit a
         state snapshot after each placement (and an initial snapshot).
         """
-        max_radial_distance = params.get(
-            "max_radial_distance", params["device"].max_radial_distance
-        )
         nodes = list(range(Q.shape[0]))
 
         vertices = set(nodes)
@@ -359,7 +356,7 @@ class Greedy:
         for i in range(Q.shape[0]):
             for j in range(i + 1, Q.shape[0]):
                 uij = (
-                    params["device"].interaction_coeff
+                    1
                     / torch.norm(final_coords[i] - final_coords[j]) ** 6
                 )
                 diff += abs(Q[i, j] - uij)
@@ -628,6 +625,8 @@ class Greedy:
     def launch_greedy(
         self,
         Q: torch.Tensor,
+        *,
+        max_min_dist_ratio: float | None,
         params: dict,
         on_step: Optional[Callable[[Dict[str, Any]], None]] = None,
     ) -> Any:
@@ -652,7 +651,7 @@ class Greedy:
         layout, coordinates = self.get_predefined_coordinates(params)
         predefined_coordinates = coordinates.clone().detach()
 
-        Z = self.precompute_coefficients(Q, predefined_coordinates, params)
+        Z = self.precompute_coefficients(Q, predefined_coordinates)
         nodes = list(range(n_nodes))
 
         results: dict = {}
@@ -681,18 +680,13 @@ class Greedy:
         else:
             cb = None
 
+        max_radial_distance = max_min_dist_ratio * float(params['spacing']) if max_min_dist_ratio is not None else None
+
         for node in nodes:
-            self.greedy_algorithm(Z, Q, layout, node, results, params, on_step=cb)
+            self.greedy_algorithm(Z, Q, layout, node, results, params, on_step=cb, max_radial_distance=max_radial_distance)
 
         best_result = min(results.items(), key=lambda x: x[1]["distance"])
         coords = best_result[1]["coords"]
-
-        lb_radius = params["device"].rydberg_blockade_radius(1)
-        ub_radius = params["device"].rydberg_blockade_radius(
-            1 if isinstance(params["device"], AnalogDeviceWithDMM) else 200
-        )
-        blockade_radius = (ub_radius - lb_radius) + lb_radius
-        omega = params["device"].rabi_from_blockade(blockade_radius)
 
         # Post-run animation if requested
         if anim_flag and frames and _VIZ_OK:  # pragma: no cover
@@ -712,4 +706,4 @@ class Greedy:
                 fps=0.5,
             )
 
-        return best_result, None, coords, blockade_radius * 2.2, omega
+        return best_result, coords

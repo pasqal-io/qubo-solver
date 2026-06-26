@@ -17,6 +17,7 @@ from qubosolver import concepts
 from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig, compiler_profile, max_duration_ratio
 from qubosolver.data import QUBOSolution
+from qubosolver.pipeline.program import create_compiled_program
 from qubosolver.qubo_types import DriveType
 from qubosolver.utils import calculate_qubo_cost
 from qubosolver.pipeline.waveforms import constant_weighted_dmm
@@ -313,7 +314,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
                 f"heuristic_kappa is too small ({kappa}), you're likely to get a qoolqit CompilationError. Set it above {det_amp_ratio}."
             )
 
-        Q = self.qubo_normalized_coefficients
+        Q = self.qubo_coefficients
         n = self.instance.size
 
         # Target local final detunings
@@ -621,12 +622,7 @@ class OptimizedDriveShaper(BaseDriveShaper):
             tuple: tuple of (bitstrings, counts, probabilities, costs, best cost, best bitstring)
         """
         try:
-            program = QuantumProgram(register=register, drive=drive)
-            program.compile_to(
-                self.device,
-                profile=compiler_profile(self.config),
-                device_max_duration_ratio=max_duration_ratio(self.config),
-            )
+            program = create_compiled_program(device=self.device, config=self.config, drive=drive, embedding=register)
             job = self.backend.run(program)
             bitstring_counts = job.results().final_bitstrings
 

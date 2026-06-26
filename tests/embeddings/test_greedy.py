@@ -3,13 +3,15 @@ from __future__ import annotations
 
 import torch
 import numpy as np
-from qoolqit.devices.device import AnalogDeviceWithDMM
+from qoolqit.devices.device import BaseDevice, AnalogDeviceWithDMM
 
 from qubosolver.algorithms.greedy.greedy import Greedy
 from qubosolver.qubo_types import LayoutType
 from qubosolver.data import QUBODataset
 import pytest
 import pytest_check as check
+
+
 
 
 def triangular_qubo() -> torch.Tensor:
@@ -73,18 +75,14 @@ def interaction_matrix_from_vertices(vertices: torch.Tensor) -> torch.Tensor:
 
 @pytest.mark.parametrize("traps", [1, 2, 3, 6])
 @pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
-def test_triangular_qubo(traps: int, relative_noise: float) -> None:
+def test_triangular_qubo(traps: int, relative_noise: float, max_min_dist_ratio: float) -> None:
 
     spacing = 7.0
-
-    device = AnalogDeviceWithDMM()._device
-    C6 = device.interaction_coeff
 
     parameters = {
         "layout": LayoutType.TRIANGULAR,
         "traps": traps,
         "spacing": spacing,
-        "device": device,
     }
 
     # Equilateral triangle
@@ -98,7 +96,7 @@ def test_triangular_qubo(traps: int, relative_noise: float) -> None:
     )
     #  Matrix Q should match the spacing of the triangular layout so that the embedding returns
     # an equilateral triangle, hence the scale alpha.
-    expected_U = C6 * interaction_matrix_from_vertices(expected_vertices)
+    expected_U = interaction_matrix_from_vertices(expected_vertices)
     # All off-diagonal coefficients are equal to alpha
     alpha = expected_U[0, 1]
     Q = alpha * triangular_qubo() * (1.0 + relative_noise)
@@ -109,10 +107,10 @@ def test_triangular_qubo(traps: int, relative_noise: float) -> None:
 
     if traps < 3:
         with pytest.raises(ValueError):
-            Greedy().launch_greedy(Q=Q, params=parameters)
+            Greedy().launch_greedy(Q=Q, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
         return
 
-    result = Greedy().launch_greedy(Q=Q, params=parameters)
+    result = Greedy().launch_greedy(Q=Q, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
     vertices = result[0][1]["coords"]
 
     assert_close_up_to_isometry(vertices, expected_vertices, torch.pi / 3.0)
@@ -127,25 +125,21 @@ def test_triangular_qubo(traps: int, relative_noise: float) -> None:
     # fmt: on
     assert_close_to_lattice(vertices, basis)
 
-    U = C6 * interaction_matrix_from_vertices(vertices)
+    U = interaction_matrix_from_vertices(vertices)
     torch.testing.assert_close(U, expected_U)
 
 
 @pytest.mark.parametrize("traps", [1, 2, 4, 9])
 @pytest.mark.parametrize("layout", [LayoutType.SQUARE, "square"])
 @pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
-def test_square_qubo(traps: int, layout: LayoutType | str, relative_noise: float) -> None:
+def test_square_qubo(traps: int, layout: LayoutType | str, relative_noise: float, max_min_dist_ratio: float) -> None:
 
     spacing = 7.0
-
-    device = AnalogDeviceWithDMM()._device
-    C6 = device.interaction_coeff
 
     parameters = {
         "layout": layout,
         "traps": traps,
         "spacing": spacing,
-        "device": device,
     }
 
     # Square
@@ -159,7 +153,7 @@ def test_square_qubo(traps: int, layout: LayoutType | str, relative_noise: float
     )
     #  Matrix Q should match the spacing of the square layout so that the embedding returns
     # a square, hence the scale alpha.
-    expected_U = C6 * interaction_matrix_from_vertices(expected_vertices)
+    expected_U = interaction_matrix_from_vertices(expected_vertices)
     # All off-diagonal coefficients are equal to alpha
     alpha = expected_U[0, 1]
     Q = alpha * square_qubo() * (1.0 + relative_noise)
@@ -170,10 +164,10 @@ def test_square_qubo(traps: int, layout: LayoutType | str, relative_noise: float
 
     if traps < 4:
         with pytest.raises(ValueError):
-            Greedy().launch_greedy(Q=Q, params=parameters)
+            Greedy().launch_greedy(Q=Q, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
         return
 
-    result = Greedy().launch_greedy(Q=Q, params=parameters)
+    result = Greedy().launch_greedy(Q=Q, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
     vertices = result[0][1]["coords"]
 
     assert_close_up_to_isometry(vertices, expected_vertices, torch.pi / 2.0)
@@ -188,17 +182,14 @@ def test_square_qubo(traps: int, layout: LayoutType | str, relative_noise: float
     # fmt: on
     assert_close_to_lattice(vertices, basis)
 
-    U = C6 * interaction_matrix_from_vertices(vertices)
+    U = interaction_matrix_from_vertices(vertices)
     torch.testing.assert_close(U, expected_U)
 
 
 @pytest.mark.parametrize("too_large", ["no", "barely", "extremely"])
 @pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
-def test_too_large_spacing(too_large: str, relative_noise: float) -> None:
 
-    device = AnalogDeviceWithDMM()._device
-    C6 = device.interaction_coeff
-
+def test_too_large_spacing(too_large: str, relative_noise: float, device: BaseDevice, max_min_dist_ratio: float) -> None:
     # A square layout of size 25 is composed of two concentric squares of side
     # 2*spacing and 4*spacing, plus the origin.
     layout = LayoutType.SQUARE
@@ -208,18 +199,21 @@ def test_too_large_spacing(too_large: str, relative_noise: float) -> None:
     # Only the origin is within the device's maximum radial distance
     if too_large == "extremely":
         spacing = device.max_radial_distance * 3.0
+        # max_min_dist_ratio = 1/3
     # Only the inner square is within the device's maximum radial distance
     elif too_large == "barely":
+        # max_min_dist_ratio = np.sqrt(2)
         spacing = device.max_radial_distance / np.sqrt(2) - 0.1
     # All traps are within the device's maximum radial distance
     else:
         spacing = 7.0
 
+    max_min_dist_ratio = max_min_dist_ratio * device.min_atom_distance / spacing
+
     parameters = {
         "layout": layout,
         "traps": traps,
         "spacing": spacing,
-        "device": device,
     }
 
     # Tailored QUBO to match the vertices below
@@ -230,7 +224,7 @@ def test_too_large_spacing(too_large: str, relative_noise: float) -> None:
             [1.0 / 64.0, 1.0 / 125.0, 0.0],
         ],
         dtype=torch.float32,
-    ) * (1.0 + relative_noise)
+    ) * (1.0 + relative_noise) #* (1 / spacing**6)
 
     # Tailored right triangle. With a correct spacing (e.g. 7.0):
     #   - Vertex 0 is at the origin
@@ -245,7 +239,7 @@ def test_too_large_spacing(too_large: str, relative_noise: float) -> None:
     )
     #  Matrix Q should match the spacing of the square layout so that the embedding returns
     # an the expected right triangle, hence the scale alpha.
-    expected_U = C6 * interaction_matrix_from_vertices(expected_vertices)
+    expected_U = interaction_matrix_from_vertices(expected_vertices)
     # The spacing corresponds to the distance between vertices 0 and 1
     alpha = expected_U[0, 1]
 
@@ -259,12 +253,12 @@ def test_too_large_spacing(too_large: str, relative_noise: float) -> None:
 
     if too_large == "extremely":
         with pytest.raises(ValueError):
-            greedy.launch_greedy(Q=Q, params=parameters)
+            greedy.launch_greedy(Q=Q, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
         return
 
-    result = greedy.launch_greedy(Q=Q, params=parameters)
+    result = greedy.launch_greedy(Q=Q, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
     vertices = result[0][1]["coords"]
-    U = C6 * interaction_matrix_from_vertices(vertices)
+    U = interaction_matrix_from_vertices(vertices)
 
     # fmt: off
     basis = spacing * torch.tensor(
@@ -309,6 +303,7 @@ def test_max_distance_constraint() -> None:
     traps = 9
     assert isinstance(device.max_radial_distance, int)
     spacing = 0.99 * device.max_radial_distance
+    max_min_dist_ratio = device.max_radial_distance / spacing
 
     dataset = QUBODataset.from_random(1, traps)
     Q, _ = dataset[0]
@@ -317,8 +312,7 @@ def test_max_distance_constraint() -> None:
         "layout": layout,
         "traps": traps,
         "spacing": spacing,
-        "device": device,
     }
 
     with pytest.raises(ValueError):
-        Greedy().launch_greedy(Q=Q, params=parameters)
+        Greedy().launch_greedy(Q=Q, params=parameters, max_min_dist_ratio=max_min_dist_ratio)

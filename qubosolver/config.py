@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 from abc import ABC
 from dataclasses import field
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 import torch
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator, model_serializer
@@ -172,8 +172,12 @@ class EmbeddingConfig(Config):
         greedy_traps (int, optional): The number of traps on the register.
             Defaults to ``-1``, i.e. automatically set to match the selected device capacity.
             A too high value will impede computational efficiency.
-        greedy_spacing (float, optional): The minimum distance between atoms.
-            Defaults to 7 (μm).
+        greedy_max_possible_term (float | tuple[Literal['factor'], float]):
+            If a float, it corresponds to the maximum representable quadratic
+            term. If a tuple, the first element should be 'factor', and the
+            second element is a multiplier on the QUBO's maximum quadratic term
+            to define the maximum representable quadratic term.
+            Defaults to ('factor', 1.0).
         greedy_density (float, optional): The estimated density of the QUBO matrix.
             Defaults to None.
         blade_steps_per_round (int | None): See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/)
@@ -185,19 +189,24 @@ class EmbeddingConfig(Config):
             Defaults to None.
         min_distance (float | None): Minimum atom separation (μm).
             If not None, the resulting register will be normalized so that the minimum atom separation is equal to this value. Should be 1.001 when using the Heuristic Drive-Shaping, and None when using the Optimized Drive-Shaping. Defaults to 1.001.
+        max_min_dist_ratio: (float | None): Maximum ratio between the
+            maximum radial distance and the minimum pairwise distance. None
+            means that it will take the value from the device if it exists.
+            Defaults to None.
     """
 
     embedding_method: Any = EmbedderType.GREEDY
     greedy_layout: LayoutType | str = LayoutType.TRIANGULAR
     greedy_traps: int = -1
-    greedy_spacing: float = 7.0
+    greedy_max_possible_term: float | tuple[Literal['factor'], float] = ('factor', 1.0)
     greedy_density: float | None = None
     blade_steps_per_round: int | None = 200
     blade_starting_positions: torch.Tensor | None = None
     blade_dimensions: list[int] = field(default_factory=lambda: [5, 4, 3, 2, 2, 2])
     draw_steps: bool = False
     animation_save_path: str | None = None
-    min_distance: float | None = 1.001
+    max_min_dist_ratio: float | None = None
+    min_distance: float | None = None # TODO removal in progress
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
@@ -317,6 +326,7 @@ class DriveShapingConfig(Config):
     optimized_callback_objective: Callable[..., None] | None = None
     optimized_seed: int | None = None
     heuristic_kappa: float = 0.25
+    default_sequence_duration: int = 20000
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
@@ -448,6 +458,13 @@ class SolverConfig(Config):
 
     def __repr__(self) -> str:
         return self.config_name
+    
+    @property
+    def max_min_dist_ratio(self) -> float | None:
+        specs = self.device.specs
+        if specs['min_distance'] > 0 and specs['max_radial_distance'] is not None:
+            return specs['max_radial_distance'] / specs['min_distance']
+        return self.embedding.max_min_dist_ratio
 
     def specs(self) -> str:
         """Return the specs of the `SolverConfig`, that is all attributes.
@@ -462,19 +479,6 @@ class SolverConfig(Config):
     def print_specs(self) -> None:
         """Print specs."""
         print(self.specs())
-
-    @model_validator(mode="after")
-    def _set_greedy_spacing_from_device(self) -> SolverConfig:
-
-        if self.device:
-            device = self.device._device
-            if hasattr(device, "min_atom_distance"):
-                greedy_spacing_device = float(device.min_atom_distance)
-                if self.embedding.greedy_spacing < greedy_spacing_device:
-                    self.embedding = self.embedding.model_copy(
-                        update={"greedy_spacing": greedy_spacing_device}
-                    )
-        return self
 
     @classmethod
     def from_kwargs(cls, **kwargs: dict) -> SolverConfig:
@@ -528,23 +532,21 @@ def compiler_profile(config: SolverConfig) -> CompilerProfile:
         CompilerProfile: `CompilerProfile.WORKING_POINT` for the optimized drive
             shaper, `CompilerProfile.MAX_ENERGY` otherwise.
     """
-    if config.drive_shaping.drive_shaping_method == DriveType.OPTIMIZED:
-        return CompilerProfile.WORKING_POINT
     return CompilerProfile.MAX_ENERGY
 
 
-def max_duration_ratio(config: SolverConfig) -> float | None:
+def max_duration_ratio(device: Device) -> float | None:
     """Computes the maximum pulse duration ratio for the configured device.
 
     Returns 0.99 to give a small safety margin below the device's maximum
     duration, or None if the device has no duration limit.
 
     Args:
-        config (SolverConfig): The solver configuration to inspect.
+        device (Device): The device to inspect.
 
     Returns:
         float | None: 0.99 if the device has a maximum duration, else None.
     """
-    if config.device.specs["max_duration"] is None:
+    if device.specs["max_duration"] is None:
         return None
     return 0.99

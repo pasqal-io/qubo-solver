@@ -174,7 +174,6 @@ def greedy_embedding_config() -> SolverConfig:
         embedding_method="greedy",
         greedy_layout=LayoutType.SQUARE,
         greedy_traps=10,
-        greedy_spacing=5.0,
     )
     return SolverConfig(
         embedding=embed_method,

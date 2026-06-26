@@ -110,7 +110,6 @@ def test_solver_different_devices(
         embedding=EmbeddingConfig(
             embedding_method=embedding_method,
             greedy_traps=qubo_for_testing_many_devices.size,
-            min_distance=1.001,
         ),
         do_postprocessing=False,
         do_preprocessing=False,

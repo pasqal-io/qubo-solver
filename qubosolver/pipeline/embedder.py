@@ -67,10 +67,6 @@ class BaseEmbedder(ABC):
         self.register: Register | None = None
         self.backend = backend
 
-        # TODO: remove when bumping to qoolqit v1
-        # for converting to qoolqit
-        self._distance_conversion = self.config.device.converter.factors[2]
-
     @abstractmethod
     def embed(self) -> Register:
         """Create a register (atom layout) for the QUBO instance.
@@ -135,8 +131,6 @@ class BLaDEmbedder(BaseEmbedder):
 
         _blade = Blade(config)
         graph = _blade.embed(self.instance.coefficients.numpy())
-        if min_distance is not None:
-            graph.rescale_coords(spacing=min_distance)
         register = Register.from_graph(graph)
 
         return register
@@ -201,12 +195,20 @@ class GreedyEmbedder(BaseEmbedder):
             self.instance.coefficients, self.instance.size
         )
 
+        if isinstance(self.config.embedding.greedy_max_possible_term, float):
+            max_possible_term = self.config.embedding.greedy_max_possible_term
+        else:
+            kind, max_possible_term_factor = self.config.embedding.greedy_max_possible_term
+            assert kind == 'factor'
+            max_possible_term = self.instance._max_off_diag * max_possible_term_factor
+
+        spacing = max_possible_term ** (-1/6)
+
         # build params for the Greedy algorithm
         params = {
-            "device": self.config.device._device,
             "layout": self.config.embedding.greedy_layout,
             "traps": int(self.config.embedding.greedy_traps),
-            "spacing": float(self.config.embedding.greedy_spacing),
+            "spacing": spacing,
             # animation controls (all read by Greedy)
             "draw_steps": bool(self.config.embedding.draw_steps),  # collect per-step data
             "animation": bool(self.config.embedding.draw_steps),  # render animation after run
@@ -214,26 +216,14 @@ class GreedyEmbedder(BaseEmbedder):
         }
 
         # --- DEBUG / INFO: show where Greedy comes from + the params we’ll pass
-        dev = params["device"]
-        dev_str = (
-            getattr(dev, "name", None)
-            or getattr(dev, "device_name", None)
-            or dev.__class__.__name__
-        )
         printable = dict(params)
-        printable["device"] = dev_str  # avoid dumping the whole object
         # --- Call Greedy (unchanged public signature)
-        best, _, coords, _, _ = Greedy().launch_greedy(
+        best, coords = Greedy().launch_greedy(
             Q=self.instance.coefficients,
+            max_min_dist_ratio=self.config.max_min_dist_ratio,
             params=params,
             # no extra kwargs; Greedy reads animation/draw/save_path from params
         )
-        min_distance = self.config.embedding.min_distance
-        if min_distance is not None:
-            min_reg_distance = torch.cdist(coords, coords).fill_diagonal_(float("inf")).min()
-            coords *= min_distance / min_reg_distance
-        else:
-            coords /= self._distance_conversion
 
         # build the register (unchanged)
         qubits = {f"q{i}": coord for i, coord in enumerate(coords)}

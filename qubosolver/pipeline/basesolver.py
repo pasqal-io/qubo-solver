@@ -5,14 +5,14 @@ import inspect
 import json
 import torch
 
-from qoolqit import QuantumProgram
 from qoolqit.execution.job import Job
 
 from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, compiler_profile, max_duration_ratio
+from qubosolver.config import SolverConfig
 from qubosolver.data import QUBOSolution
 from qubosolver.qubo_types import SolutionStatusType
 from qubosolver.pipeline.fixtures import Fixtures
+from qubosolver.pipeline.program import create_compiled_program
 import qubosolver.io.utils as io_utils
 
 
@@ -92,6 +92,7 @@ class BaseSolver(ABC):
         """
         pass
 
+
     def submit(self, drive: Drive, embedding: Register) -> Job:
         """Compile and submit a quantum program to the backend.
 
@@ -106,15 +107,7 @@ class BaseSolver(ABC):
         Returns:
             Job: A job handle for retrieving results.
         """
-        program = QuantumProgram(
-            register=embedding,
-            drive=drive,
-        )
-        program.compile_to(
-            self.device,
-            profile=compiler_profile(self.config),
-            device_max_duration_ratio=max_duration_ratio(self.config),
-        )
+        program = create_compiled_program(device=self.device, config=self.config, drive=drive, embedding=embedding)
 
         return self.backend.run(program)
 
@@ -176,15 +169,7 @@ class BaseSolver(ABC):
             embedding (Register): embedding program is defined over.
         """
         if self.config.use_quantum:
-            program = QuantumProgram(
-                register=embedding,
-                drive=drive,
-            )
-            program.compile_to(
-                self.device,
-                profile=compiler_profile(self.config),
-                device_max_duration_ratio=max_duration_ratio(self.config),
-            )
+            program = create_compiled_program(device=self.device, config=self.config, drive=drive, embedding=embedding)
             program.draw(compiled=True)
 
     def _trivial_solution(self) -> Optional[QUBOSolution]:

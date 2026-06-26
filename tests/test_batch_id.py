@@ -65,7 +65,6 @@ def test_quantum_batch_id(
         )
         config.embedding = EmbeddingConfig(
             embedding_method=embedding_method,
-            greedy_spacing=7.0,
             greedy_traps=100,
             min_distance=min_distance,
         )

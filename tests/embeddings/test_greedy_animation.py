@@ -31,7 +31,7 @@ def _base_params(n: int) -> Dict[str, Any]:
         "layout": LayoutType.TRIANGULAR,
         "traps": n + 4,
         "spacing": 5.0,
-        "device": AnalogDeviceWithDMM()._device,
+        "max_min_dist_ratio": 12.5, # TODO use test device's one?
     }
 
 
@@ -42,7 +42,7 @@ def test_greedy_coords_shape_no_animation() -> None:
     params["draw_steps"] = False
     params["animation"] = False
 
-    _, _, coords, _, _ = Greedy().launch_greedy(Q=Q, params=params)
+    _, coords = Greedy().launch_greedy(Q=Q, params=params, max_min_dist_ratio=params["max_min_dist_ratio"])
 
     assert isinstance(coords, torch.Tensor)
     assert tuple(coords.shape) == (n, 2)
@@ -86,6 +86,6 @@ def test_greedy_animation_calls_renderer(monkeypatch: Any) -> None:
     # 2) Remplacer le renderer par un stub inoffensif
     monkeypatch.setattr(Greedy, "_render_animation", _fake_render, raising=True)
 
-    Greedy().launch_greedy(Q=Q, params=params)
+    Greedy().launch_greedy(Q=Q, params=params, max_min_dist_ratio=params['max_min_dist_ratio'])
 
     assert called["count"] >= 1
