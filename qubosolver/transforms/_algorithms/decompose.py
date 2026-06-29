@@ -10,6 +10,7 @@ import torch
 from scipy.optimize import OptimizeResult, minimize
 from shapely.geometry import Point, Polygon, MultiPolygon
 from qubosolver import matrix, Matrix, Bitstring, Vector, vector
+from qubosolver.types._checks import no_runtime_typecheck
 
 VertexToPlace = TypedDict(
     "VertexToPlace",
@@ -418,7 +419,7 @@ def random_point_in_geometry(
 
     return p
 
-
+@no_runtime_typecheck
 def cost_interaction_point_continuous(
     pos_new: npt.NDArray[np.float64],
     placed_points: list[list[float]],

@@ -18,3 +18,11 @@ def debug_runtime_typecheck(target: _T) -> _T:
 
         return beartype(target)  # type: ignore[no-any-return]
     return target
+
+def no_runtime_typecheck(target: _T) -> _T:
+    """Applies @beartype if QUBO_SOLVER_RUNTIME_CHECKS is enabled, otherwise a no-op."""
+    if _RUNTIME_TYPE_CHECKING:
+        from beartype import beartype, BeartypeConf, BeartypeStrategy
+
+        return beartype(target, conf=BeartypeConf(strategy=BeartypeStrategy.O0))  # type: ignore[no-any-return]
+    return target
