@@ -282,7 +282,9 @@ def unapply(reduced_solution: QUBOSolution, reduced_qubo: QUBOInstance) -> QUBOS
         return bitstring
 
     bits_to_reinsert = sum(len(fixation_dict) for fixation_dict in reduced_qubo._fixed_indices)
-    assert (bits_to_reinsert + len(bitstrings_list[0])) == reduced_qubo._parent_instance.size  # nosec B101
+    assert (
+        bits_to_reinsert + len(bitstrings_list[0])
+    ) == reduced_qubo._parent_instance.size  # nosec B101
 
     if bits_to_reinsert == 0:
         return copy.deepcopy(reduced_solution)

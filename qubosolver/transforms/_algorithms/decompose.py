@@ -419,6 +419,7 @@ def random_point_in_geometry(
 
     return p
 
+
 @no_runtime_typecheck
 def cost_interaction_point_continuous(
     pos_new: npt.NDArray[np.float64],

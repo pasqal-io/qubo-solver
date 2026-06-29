@@ -224,7 +224,9 @@ class BaseSolver(ABC):
             io_utils.save(f, "?", solver.config.do_preprocessing)
             io_utils.save(f, "?", solver.config.do_postprocessing)
             if solver.config.do_preprocessing:
-                assert isinstance(solver.instance, transforms.variable_fixing.QUBOInstance)  # nosec B101
+                assert isinstance(
+                    solver.instance, transforms.variable_fixing.QUBOInstance
+                )  # nosec B101
                 transforms.variable_fixing.QUBOInstance.save(f, solver.instance)
             else:
                 QUBOInstance.save(f, solver.instance)

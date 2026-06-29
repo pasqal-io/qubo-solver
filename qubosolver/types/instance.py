@@ -65,7 +65,9 @@ class QUBOInstance:
             torch.Tensor:
                 Tensor of shape (size, size) representing the QUBO coefficients.
         """
-        assert self._matrix.ndim == 2 and self._matrix.shape[0] == self._matrix.shape[1]  # nosec B101
+        assert (
+            self._matrix.ndim == 2 and self._matrix.shape[0] == self._matrix.shape[1]
+        )  # nosec B101
         return self._matrix
 
     @property
