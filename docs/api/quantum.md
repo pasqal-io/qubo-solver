@@ -3,8 +3,8 @@
 
 ## Drive Shapping
 
-::: qubosolver.pipeline.drive
+::: qubosolver.drive_shaping
 
 ## Embedding
 
-::: qubosolver.pipeline.embedder
+::: qubosolver.embedding

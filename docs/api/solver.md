@@ -1,1 +1,1 @@
-::: qubosolver.solver
+::: qubosolver.solvers

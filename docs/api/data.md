@@ -1,7 +1,3 @@
-::: qubosolver.data
+::: qubosolver.QUBODataset
 
-# Utility functions
-
-::: qubosolver.data_utils
-
-::: qubosolver.saveload
+::: qubosolver.QUBOSolution

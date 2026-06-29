@@ -1,1 +1,1 @@
-::: qubosolver.qubo_instance
+::: qubosolver.QUBOInstance
