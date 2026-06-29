@@ -301,7 +301,7 @@ class _DecomposeQuboSolver(BaseSolver):
         # Create a local Generator that inherits whatever seeding you did via torch.manual_seed(...) (copies the current global RNG state).
         rng = random.torch_rng().set_state(torch.get_rng_state())
         self.number_iterations = 0
-        assert self.instance.size
+        assert self.instance.size  # nosec B101
         if self.instance.size <= self.decomposition_config.decompose_stop_number:
             solver = _QuboSolverClassical(
                 self.instance,

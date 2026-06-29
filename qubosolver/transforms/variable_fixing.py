@@ -106,7 +106,7 @@ class QUBOInstance(QUBOInstanceBase):
             None
         """
         _check_QUBOInstance(instance)
-        assert isinstance(instance, QUBOInstance)
+        assert isinstance(instance, QUBOInstance)  # nosec B101
 
         with io_utils.open(file_like, "wb") as f:
             QUBOInstanceBase.save(f, instance)
@@ -173,7 +173,7 @@ def _reduce_qubo(
         qubo = QUBOInstance(qubo)
 
     _check_QUBOInstance(qubo)
-    assert isinstance(qubo, QUBOInstance)
+    assert isinstance(qubo, QUBOInstance)  # nosec B101
 
     if not fixed_indices:
         return qubo
@@ -223,7 +223,7 @@ def apply(
         qubo = QUBOInstance(qubo)
 
     _check_QUBOInstance(qubo)
-    assert isinstance(qubo, QUBOInstance)
+    assert isinstance(qubo, QUBOInstance)  # nosec B101
 
     for rule in fixation_rules:
         fixed = rule(qubo)
@@ -248,13 +248,13 @@ def apply_recursively(
         qubo = QUBOInstance(qubo)
 
     _check_QUBOInstance(qubo)
-    assert isinstance(qubo, QUBOInstance)
+    assert isinstance(qubo, QUBOInstance)  # nosec B101
 
     while True:
         prev_n_fixations = len(qubo._fixed_indices)
         apply(qubo, fixation_rules, inplace=True)
         n_fixations = len(qubo._fixed_indices)
-        assert n_fixations >= prev_n_fixations
+        assert n_fixations >= prev_n_fixations  # nosec B101
         if n_fixations == prev_n_fixations:
             return qubo
 
@@ -282,7 +282,7 @@ def unapply(reduced_solution: QUBOSolution, reduced_qubo: QUBOInstance) -> QUBOS
         return bitstring
 
     bits_to_reinsert = sum(len(fixation_dict) for fixation_dict in reduced_qubo._fixed_indices)
-    assert (bits_to_reinsert + len(bitstrings_list[0])) == reduced_qubo._parent_instance.size
+    assert (bits_to_reinsert + len(bitstrings_list[0])) == reduced_qubo._parent_instance.size  # nosec B101
 
     if bits_to_reinsert == 0:
         return copy.deepcopy(reduced_solution)

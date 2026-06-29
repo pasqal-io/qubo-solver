@@ -76,7 +76,7 @@ def pulser_specs(
             specs[name] /= scale  # type: ignore[operator]
 
     r0 = specs["min_distance"]
-    assert r0 is not None
+    assert r0 is not None  # nosec B101
     _normalize("min_distance", r0)
     _normalize("max_radial_distance", r0)
 

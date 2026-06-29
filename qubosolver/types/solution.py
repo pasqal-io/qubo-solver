@@ -62,10 +62,10 @@ class QUBOSolution:
         r = len(self) == 0
         if not r:
             return False
-        assert self.bitstrings.numel() == 0
-        assert self.costs.numel() == 0
-        assert self.counts.numel() == 0
-        assert self.probabilities.numel() == 0
+        assert self.bitstrings.numel() == 0  # nosec B101
+        assert self.costs.numel() == 0  # nosec B101
+        assert self.counts.numel() == 0  # nosec B101
+        assert self.probabilities.numel() == 0  # nosec B101
 
         return True
 

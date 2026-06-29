@@ -65,7 +65,7 @@ class QUBOInstance:
             torch.Tensor:
                 Tensor of shape (size, size) representing the QUBO coefficients.
         """
-        assert self._matrix.ndim == 2 and self._matrix.shape[0] == self._matrix.shape[1]
+        assert self._matrix.ndim == 2 and self._matrix.shape[0] == self._matrix.shape[1]  # nosec B101
         return self._matrix
 
     @property
@@ -91,7 +91,7 @@ class QUBOInstance:
                 The cost of the given solution.
         """
         cost = costs.quadratic_cost(solution, self.matrix)
-        assert type(cost) is float
+        assert type(cost) is float  # nosec B101
         return cost
 
     def __repr__(self) -> str:

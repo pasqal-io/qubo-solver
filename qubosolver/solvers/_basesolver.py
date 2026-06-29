@@ -157,7 +157,7 @@ class BaseSolver(ABC):
         # Update _solver's as well
         _solver = getattr(self, "_solver", None)
         if _solver is not None:
-            assert isinstance(_solver, BaseSolver)
+            assert isinstance(_solver, BaseSolver)  # nosec B101
             _solver.instance = self.instance
 
     def preprocess(self) -> None:
@@ -178,7 +178,7 @@ class BaseSolver(ABC):
         if not self.config.do_preprocessing:
             return solution
 
-        assert isinstance(self.instance, transforms.variable_fixing.QUBOInstance)
+        assert isinstance(self.instance, transforms.variable_fixing.QUBOInstance)  # nosec B101
         new_solution = transforms.variable_fixing.unapply(solution, self.instance)
         self._update_instance(self.instance._parent_instance)
 
