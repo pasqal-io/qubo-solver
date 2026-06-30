@@ -83,9 +83,7 @@ of cplex.
 
 ```python
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig
-from qubosolver.solver import QuboSolver
+from qubosolver import QUBOInstance, SolverConfig, QuboSolver
 
 
 # define QUBO
@@ -113,9 +111,7 @@ with their respective QUBO costs. If sampling was performed, we would also obtai
 
 ```python
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.config import ClassicalConfig, SolverConfig
-from qubosolver.solver import QuboSolverClassical, QuboSolverQuantum
+from qubosolver import QUBOInstance, ClassicalConfig, SolverConfig
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])

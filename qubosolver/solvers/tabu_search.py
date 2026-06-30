@@ -41,8 +41,8 @@ def tabu_search(
             limit is applied. Defaults to float('inf').
 
     Returns:
-        A tuple `(bistrings, costs, counts)` where:
-            - `bistrings`: Tensor representing the best bitstrings found.
+        A tuple `(bitstrings, costs, counts)` where:
+            - `bitstrings`: Tensor representing the best bitstrings found.
             - `costs`: Corresponding objective values.
             - `counts`: Frequencies each bitstring was found.
 

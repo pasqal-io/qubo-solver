@@ -85,9 +85,7 @@ Solves the QUBO problem via CPLEX and returns a `QUBOSolution` containing bitstr
 
 ```python exec="on" source="material-block" html="1"
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, ClassicalConfig
-from qubosolver.solver import QuboSolver
+from qubosolver import QUBOInstance, SolverConfig, ClassicalConfig, QuboSolver
 
 # Define a simple 2×2 QUBO matrix (identity)
 matrix = torch.eye(2)

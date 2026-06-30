@@ -25,9 +25,7 @@ We can perform quantum simulations locally via an emulator (here, we choose the 
 
 ```python exec="on" source="material-block" html="1"
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, LocalEmulator
-from qubosolver.solver import QuboSolver
+from qubosolver import QUBOInstance, SolverConfig, LocalEmulator, QuboSolver
 from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
@@ -66,9 +64,8 @@ The code above can be modified to solve the QUBO instance using our real QPU rem
 
 ```python
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, QPU
-from qubosolver.solver import QuboSolver
+import qoolqit
+from qubosolver import QUBOInstance, SolverConfig, QuboSolver
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
@@ -89,7 +86,7 @@ if PASSWORD is not None:
 
 
     # define a remote backend
-    backendconf = QPU(connection=connection)
+    backendconf = qoolqit.exection.QPU(connection=connection)
 
     # Instantiate the quantum solver.
     solver = QuboSolver(instance, backend=backendconf)
@@ -104,9 +101,7 @@ Emulators are also available remotely:
 
 ```python
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, RemoteEmulator, PasqalCloud
-from qubosolver.solver import QuboSolver
+from qubosolver import QUBOInstance, SolverConfig, RemoteEmulator, PasqalCloud, QuboSolver
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
@@ -143,10 +138,7 @@ More information on classical approaches can be found in the `Classical solvers`
 
 ```python exec="on" source="material-block" html="1"
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.solver import QuboSolver
-from qubosolver.config import ClassicalConfig, SolverConfig
-from qubosolver.solver import QuboSolverClassical, QuboSolverQuantum
+from qubosolver import QUBOInstance, QuboSolver, ClassicalConfig, SolverConfig
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])

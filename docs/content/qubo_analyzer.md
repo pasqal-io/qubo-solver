@@ -6,8 +6,7 @@ To analyze the solutions from one or many QUBO solvers, we can instantiate a `QU
 
 ```python exec="on" source="material-block" html="1" session="analyzer"
 import torch
-from qubosolver.data import QUBOSolution
-from qubosolver.qubo_analyzer import QUBOAnalyzer
+from qubosolver import QUBOSolution, QUBOAnalyzer
 
 num_bitstrings=100
 bit_length=3

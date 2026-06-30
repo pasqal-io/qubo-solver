@@ -139,9 +139,9 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
     min_cost = optimal_solutions[0].cost
     check.almost_equal(min_cost, expected_optimal_solutions[0].cost)
 
-    expected_optimal_bistrings = [s.bitstring for s in expected_optimal_solutions]
+    expected_optimal_bitstrings = [s.bitstring for s in expected_optimal_solutions]
     for solution in optimal_solutions:
-        check.is_in(solution.bitstring, expected_optimal_bistrings)
+        check.is_in(solution.bitstring, expected_optimal_bitstrings)
 
     if use_probability_based_objective:
         total_optimal_probability = sum(s.probability for s in optimal_solutions)
@@ -213,9 +213,9 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
     min_cost = optimal_solutions[0].cost
     check.almost_equal(min_cost, expected_optimal_solutions[0].cost)
 
-    expected_optimal_bistrings = [s.bitstring for s in expected_optimal_solutions]
+    expected_optimal_bitstrings = [s.bitstring for s in expected_optimal_solutions]
     for solution in optimal_solutions:
-        check.is_in(solution.bitstring, expected_optimal_bistrings)
+        check.is_in(solution.bitstring, expected_optimal_bitstrings)
 
     if use_probability_based_objective:
         total_optimal_probability = sum(s.probability for s in optimal_solutions)

@@ -197,10 +197,13 @@ class _QuboSolverClassical(BaseSolver):
 
         self.preprocess()
 
-        classical_solver = get_classical_solver(self.instance, self.config.classical)
-        solution = (
-            classical_solver.solve()
-        )  # This is a reduced solution if pre-procesing is applied
+        solution = QUBOSolution()
+
+        if self.instance.size != 0:
+            classical_solver = get_classical_solver(self.instance, self.config.classical)
+            solution = (
+                classical_solver.solve()
+            )  # This is a reduced solution if pre-procesing is applied
 
         solution = self.post_process_fixation(solution)
         solution = self.post_process(solution)

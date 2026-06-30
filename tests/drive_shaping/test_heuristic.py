@@ -159,9 +159,9 @@ def test_with_perfect_embedding(
         )
 
     check.almost_equal(min_cost, expected_optimal_solutions[0].cost)
-    expected_optimal_bistrings = [s.bitstring for s in expected_optimal_solutions]
+    expected_optimal_bitstrings = [s.bitstring for s in expected_optimal_solutions]
     for solution in optimal_solutions:
-        check.is_in(solution.bitstring, expected_optimal_bistrings)
+        check.is_in(solution.bitstring, expected_optimal_bitstrings)
 
     cumulated_probability = sum(s.probability for s in optimal_solutions)
     check.greater(cumulated_probability, 0.75)

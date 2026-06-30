@@ -5,6 +5,8 @@ import torch
 import pytest_check as check
 import itertools
 import time
+import random
+import numpy as np
 
 from qubosolver import (
     QUBOInstance,
@@ -15,6 +17,7 @@ from qubosolver import (
     QuboSolver,
     matrix,
     bitstring,
+    torch_rng,
 )
 from qubosolver.solvers._classical_solver import (
     get_classical_solver,
@@ -30,6 +33,12 @@ class_solvers = {
     ClassicalSolverType.TABU_SEARCH: TabuSearchSolver,
     ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH: HybridSATabuSolver,
 }
+
+def manual_seed(seed: int) -> torch.Generator:
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    random.seed(seed)
+    return torch_rng(seed)
 
 
 @pytest.mark.parametrize("classical_method", list(class_solvers.keys()))
@@ -110,6 +119,7 @@ def test_random() -> None:
 @pytest.mark.parametrize("max_bitstrings", [1])
 def test_sa_cost(
     simple_qubo_instance: QUBOInstance, classical_methods: ClassicalSolverType, max_bitstrings: int
+
 ) -> None:
     classical_config = ClassicalConfig(
         classical_solver_type=classical_methods, max_bitstrings=max_bitstrings, sa_seed=42
@@ -209,6 +219,40 @@ def test_sa_time_limit(simple_qubo_instance: QUBOInstance) -> None:
     # stops well before reaching the large iteration limit.
     assert isinstance(solution, QUBOSolution)
     assert elapsed_time < 1.0
+
+
+
+@pytest.mark.usefixtures("restore_rng_state")
+@pytest.mark.parametrize(
+    "classical_method",
+    [ClassicalSolverType.SIMULATED_ANNEALING, ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH, ClassicalSolverType.CPLEX, ClassicalSolverType.TABU_SEARCH],
+)
+def test_empty_qubo_after_preprocessing(classical_method: ClassicalSolverType) -> None:
+
+    seed = 1846
+    manual_seed(seed)
+
+    # Use a very large iteration limit so that the solver is stopped
+    # by the time limit rather than by max_iter.
+    classical_config = ClassicalConfig(
+        classical_solver_type=classical_method,
+        sa_seed=seed,
+    )
+    config = SolverConfig(
+        use_quantum=False,
+        classical=classical_config,
+        do_preprocessing=True,
+        activate_trivial_solutions=False,
+    )
+
+    instance = QUBOInstance(matrix=matrix.zeros(2))
+    classical_solver = QuboSolver(instance, config)
+
+    solution = classical_solver.solve()
+    solution.sort_by_cost()
+
+    best_bitstring = bitstring.to_string(solution.bitstrings[0])
+    check.equal(best_bitstring, "00")
 
 
 if __name__ == "__main__":

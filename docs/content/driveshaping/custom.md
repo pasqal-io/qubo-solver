@@ -17,35 +17,36 @@ For concrete examples, we have the [`HeuristicDriveShaper`](./heuristic.md) and 
 Let us show an example of a custom simple hard-coded drive shaper.
 
 ```python exec="on" source="material-block" html="1"
-from qoolqit import Drive, Constant, Ramp, Register
-from qubosolver.pipeline.drive import BaseDriveShaper
-from qubosolver.data import QUBOSolution
-from qubosolver.config import (
-    DriveShapingConfig,
-    SolverConfig,
-)
-
-class SimpleShaper(BaseDriveShaper):
-    def generate(
-        self,
-        register: Register,
-    ) -> tuple[Drive, QUBOSolution]:
-
-        # Defining the drive parameters
-        omega = 2.0
-        delta_i = -4.0 * omega
-        delta_f = -delta_i
-        T = 200.0
-
-        # Defining the drive
-        wf_amp = Constant(T, omega)
-        wf_det = Ramp(T, delta_i, delta_f)
-        drive = Drive(amplitude=wf_amp, detuning=wf_det)
-
-        return drive, QUBOSolution()
-
-config = SolverConfig(
-    use_quantum=True,
-    drive_shaping=DriveShapingConfig(drive_shaping_method=SimpleShaper),
-)
+# TODO: revamp with functional
+# from qoolqit import Drive, Constant, Ramp, Register
+# from qubosolver.pipeline.drive import BaseDriveShaper
+# from qubosolver.data import QUBOSolution
+# from qubosolver.config import (
+#     DriveShapingConfig,
+#     SolverConfig,
+# )
+#
+# class SimpleShaper(BaseDriveShaper):
+#     def generate(
+#         self,
+#         register: Register,
+#     ) -> tuple[Drive, QUBOSolution]:
+#
+#         # Defining the drive parameters
+#         omega = 2.0
+#         delta_i = -4.0 * omega
+#         delta_f = -delta_i
+#         T = 200.0
+#
+#         # Defining the drive
+#         wf_amp = Constant(T, omega)
+#         wf_det = Ramp(T, delta_i, delta_f)
+#         drive = Drive(amplitude=wf_amp, detuning=wf_det)
+#
+#         return drive, QUBOSolution()
+#
+# config = SolverConfig(
+#     use_quantum=True,
+#     drive_shaping=DriveShapingConfig(drive_shaping_method=SimpleShaper),
+# )
 ```

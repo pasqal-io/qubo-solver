@@ -55,18 +55,16 @@ The `SolverConfig` is designed in such way that all parameters have a default va
 
 All the parameters are optional which allows for running `SolverConfig` without specifying any parameter:
 ```python exec="on" source="material-block"
-from qubosolver.config import SolverConfig
-from qubosolver.qubo_types import EmbedderType
+from qubosolver import SolverConfig, EmbedderType
 
 config = SolverConfig()
 print(config.specs())
 ```
 Although the default configuration is straightforward, all parameters can be modified by the user to better suit the specific QUBO instance. Below is an example of a configuration that uses a different embedder with customized parameters on a specific device:
 ```python exec="on" source="material-block"
-from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, EmbeddingConfig
+from qubosolver import QUBOInstance, SolverConfig, EmbeddingConfig, matrix
 
-coefficients = [[0, 1, 2], [1, 0, 3], [2, 3, 0]]
+coefficients = matrix.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
 instance = QUBOInstance(matrix=coefficients)
 
 embedding_config = EmbeddingConfig(embedding_method="greedy", greedy_traps=-1)
@@ -81,10 +79,9 @@ config = SolverConfig(
 Equivalently, one can instantiate a `SolverConfig` simply using the keyword arguments of the other configs via the `SolverConfig.from_kwargs` method:
 
 ```python exec="on" source="material-block"
-from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig
+from qubosolver import QUBOInstance, SolverConfig, matrix
 
-coefficients = [[0, 1, 2], [1, 0, 3], [2, 3, 0]]
+coefficients = matrix.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
 instance = QUBOInstance(matrix=coefficients)
 
 config = SolverConfig.from_kwargs(

@@ -1,3 +1,0 @@
-::: qubosolver.QUBODataset
-
-::: qubosolver.QUBOSolution

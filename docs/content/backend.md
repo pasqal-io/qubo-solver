@@ -43,7 +43,7 @@ config = SolverConfig(
 You can also manually specify a particular backend type if needed:
 
 ```python exec="on" source="material-block"
-from qubosolver.config import SolverConfig, LocalEmulator
+from qubosolver import SolverConfig, LocalEmulator
 from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
@@ -85,7 +85,8 @@ For this, we require specifying a `RemoteEmulator` or `QPU` and connection detai
 Using the code below, replace with your username, project id and password on the Pasqal Cloud.
 
 ```python exec="on" source="material-block"
-from qubosolver import SolverConfig, PasqalCloud, RemoteEmulator, AutoRemoteEmulatorBackend
+from qubosolver import SolverConfig, RemoteEmulator, AutoRemoteEmulatorBackend
+from pulser_pasqal import PasqalCloud
 from pulser_pasqal.backends import EmuFreeBackendV2, EmuSVBackend, EmuMPSBackend
 
 USERNAME="#TO_PROVIDE"
@@ -129,7 +130,8 @@ We can also target a remote QPU as follows:
 
 ```python exec="on" source="material-block"
 import qoolqit
-from qubosolver.config import SolverConfig, PasqalCloud, QPU
+from qubosolver import SolverConfig
+from pulser_pasqal import PasqalCloud
 from pulser_pasqal.backends import EmuFreeBackendV2, EmuMPSBackend
 
 USERNAME="#TO_PROVIDE"
@@ -146,7 +148,7 @@ if PASSWORD is not None:
     device = qoolqit.devices.Device(pulser_device=connection.fetch_available_devices()["FRESNEL"])
     config = SolverConfig(
         use_quantum=True,
-        backend = QPU(connection=connection, num_shots=500), device=device,
+        backend = qoolqit.execution.QPU(connection=connection, num_shots=500), device=device,
     )
 
 ```
