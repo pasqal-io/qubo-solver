@@ -111,18 +111,19 @@ class AutoLocalEmulatorBackend(EmulatorBackend):
 
     Required by qoolqit.LocalEmulator which expects backend_type to pass
     issubclass(backend_type, EmulatorBackend) checks.
-
-    Args:
-        sequence (PulserSequence): The pulse sequence to simulate.
-        *args: Additional positional arguments passed to the selected backend.
-        **kwargs: Additional keyword arguments passed to the selected backend.
-
-    Returns:
-        EmulatorBackend: An instance of the automatically selected backend
-        (MPSBackend, SVBackend, or QutipBackendV2).
     """
-
     def __new__(cls, sequence: PulserSequence, *args: Any, **kwargs: Any) -> EmulatorBackend:  # type: ignore[misc]
+        """Create a local emulator backend selected from the sequence size.
+
+        Args:
+            sequence (PulserSequence): The pulse sequence to simulate.
+            *args: Additional positional arguments passed to the selected backend.
+            **kwargs: Additional keyword arguments passed to the selected backend.
+
+        Returns:
+            EmulatorBackend: An instance of the automatically selected backend
+            (MPSBackend, SVBackend, or QutipBackendV2).
+        """
         n_qubits = len(sequence.register.qubit_ids)
         return _select_backend_type(n_qubits, False)(sequence, *args, **kwargs)
 
@@ -138,18 +139,20 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
 
     Note: This class acts as a factory and never instantiates itself.
     The __new__ method directly returns instances of the selected remote backend type.
-
-    Args:
-        sequence (PulserSequence): The pulse sequence to simulate.
-        *args: Additional positional arguments passed to the selected backend.
-        **kwargs: Additional keyword arguments passed to the selected backend.
-
-    Returns:
-        RemoteEmulatorBackend: An instance of the automatically selected remote backend
-        (EmuMPSBackend, EmuSVBackend, or EmuFreeBackendV2).
     """
 
     def __new__(cls, sequence: PulserSequence, *args: Any, **kwargs: Any) -> RemoteEmulatorBackend:  # type: ignore[misc]
+        """Create a remote emulator backend selected from the sequence size.
+
+        Args:
+            sequence (PulserSequence): The pulse sequence to simulate.
+            *args: Additional positional arguments passed to the selected backend.
+            **kwargs: Additional keyword arguments passed to the selected backend.
+
+        Returns:
+            RemoteEmulatorBackend: An instance of the automatically selected remote backend
+            (EmuMPSBackend, EmuSVBackend, or EmuFreeBackendV2).
+        """
         n_qubits = len(sequence.register.qubit_ids)
         backend = _select_backend_type(n_qubits, True)(sequence, *args, **kwargs)
         assert isinstance(backend, RemoteEmulatorBackend)  # nosec B101

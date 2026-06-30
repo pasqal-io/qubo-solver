@@ -39,7 +39,7 @@ class QUBOInstance:
         Initializes a QUBOInstance.
 
         Args:
-            coefficients (Matrix):
+            matrix (Matrix):
                 Square coefficient matrix of the QUBO problem.
                 Defaults to an empty ``(0, 0)`` matrix.
         """

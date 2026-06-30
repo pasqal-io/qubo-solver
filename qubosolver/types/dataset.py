@@ -120,10 +120,8 @@ class QUBODataset(Dataset):
                 Defaults to [0.5].
             coefficient_bounds (tuple[float, float], optional): Range (min, max) of
                 random values for the coefficients. Defaults to (-10.0, 10.0).
-            device (str): Device for the tensors. Defaults to "cpu".
             dtype (torch.dtype, optional): Data type for the coefficient tensors.
                 Defaults to torch.float32.
-            seed (int | None, optional): Seed for reproducibility. Defaults to None.
             negative_offdiag_rate (float, optional): off-diagonal negative coefficients rate.
                 Defaults to None, meaning no off-diagonal coefficient will be present.
 
