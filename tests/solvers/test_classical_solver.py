@@ -34,6 +34,7 @@ class_solvers = {
     ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH: HybridSATabuSolver,
 }
 
+
 def manual_seed(seed: int) -> torch.Generator:
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -119,7 +120,6 @@ def test_random() -> None:
 @pytest.mark.parametrize("max_bitstrings", [1])
 def test_sa_cost(
     simple_qubo_instance: QUBOInstance, classical_methods: ClassicalSolverType, max_bitstrings: int
-
 ) -> None:
     classical_config = ClassicalConfig(
         classical_solver_type=classical_methods, max_bitstrings=max_bitstrings, sa_seed=42
@@ -221,11 +221,15 @@ def test_sa_time_limit(simple_qubo_instance: QUBOInstance) -> None:
     assert elapsed_time < 1.0
 
 
-
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize(
     "classical_method",
-    [ClassicalSolverType.SIMULATED_ANNEALING, ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH, ClassicalSolverType.CPLEX, ClassicalSolverType.TABU_SEARCH],
+    [
+        ClassicalSolverType.SIMULATED_ANNEALING,
+        ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH,
+        ClassicalSolverType.CPLEX,
+        ClassicalSolverType.TABU_SEARCH,
+    ],
 )
 def test_empty_qubo_after_preprocessing(classical_method: ClassicalSolverType) -> None:
 

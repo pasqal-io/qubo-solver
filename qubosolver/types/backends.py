@@ -112,6 +112,7 @@ class AutoLocalEmulatorBackend(EmulatorBackend):
     Required by qoolqit.LocalEmulator which expects backend_type to pass
     issubclass(backend_type, EmulatorBackend) checks.
     """
+
     def __new__(cls, sequence: PulserSequence, *args: Any, **kwargs: Any) -> EmulatorBackend:  # type: ignore[misc]
         """Create a local emulator backend selected from the sequence size.
 
