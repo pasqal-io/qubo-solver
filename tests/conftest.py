@@ -11,27 +11,27 @@ from typing import Generator
 from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
+import qoolqit
 
-from qoolqit.devices import AnalogDeviceWithDMM, AnalogDevice, Device, MockDevice
-from pulser_pasqal import PasqalCloud
-from qubosolver import QUBOInstance, QUBOSolution
-from qubosolver.qubo_analyzer import QUBOAnalyzer
-from qubosolver.config import (
-    EmbeddingConfig,
-    DriveShapingConfig,
-    SolverConfig,
-    LocalEmulator,
-)
-from qubosolver.qubo_types import EmbedderType, LayoutType, DriveType
 from mock.connection import MockConnection
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Generator
-
-connection = PasqalCloud()
-connection.fetch_available_devices()
+from qubosolver import (
+    QUBOInstance,
+    QUBOSolution,
+    QUBOAnalyzer,
+    EmbedderType,
+    LayoutType,
+    DriveType,
+    bitstrings,
+    vector,
+    vectori,
+    matrix,
+    Matrix,
+    SolverConfig,
+    EmbeddingConfig,
+    DriveShapingConfig,
+    LocalEmulator,
+)
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
@@ -69,10 +69,10 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 @pytest.fixture
 def basic_solution() -> QUBOSolution:
     return QUBOSolution(
-        bitstrings=torch.tensor([[0, 1, 0], [1, 0, 1]]),
-        costs=torch.tensor([1.0, 2.0]),
-        counts=torch.tensor([15, 5]),
-        probabilities=torch.tensor([0.75, 0.25]),
+        bitstrings=bitstrings.tensor([[0, 1, 0], [1, 0, 1]]),
+        costs=vector.tensor([1.0, 2.0]),
+        counts=vectori.tensor([15, 5]),
+        probabilities=vector.tensor([0.75, 0.25]),
     )
 
 
@@ -115,19 +115,17 @@ def local_backend(request: pytest.FixtureRequest) -> LocalEmulator:
 
 @pytest.fixture(
     params=[
-        AnalogDeviceWithDMM(),
-        AnalogDevice(),
-        MockDevice(),
-        Device(pulser_device=connection.fetch_available_devices()["FRESNEL"]),
+        qoolqit.AnalogDeviceWithDMM(),
+        qoolqit.AnalogDevice(),
+        qoolqit.MockDevice(),
     ],
     ids=[
         "AnalogDeviceWithDMM",
         "AnalogDevice",
         "MockDevice",
-        "FRESNEL",
     ],
 )
-def local_device(request: pytest.FixtureRequest) -> Device:
+def local_device(request: pytest.FixtureRequest) -> qoolqit.Device:
     return request.param  # type: ignore[no-any-return]
 
 
@@ -187,7 +185,7 @@ def qubo_instance_for_preprocessing() -> QUBOInstance:
     Generate small instance for pre/postprocessing.
     """
     return QUBOInstance(
-        torch.tensor(
+        matrix.tensor(
             [
                 [-10.0, 19.7365809, 19.7365809, 5.42015853, 5.42015853],
                 [19.7365809, -10.0, 20.67626392, 0.17675796, 0.85604541],
@@ -201,14 +199,14 @@ def qubo_instance_for_preprocessing() -> QUBOInstance:
 
 @pytest.fixture
 def simple_qubo_instance() -> QUBOInstance:
-    Q = torch.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
-    return QUBOInstance(coefficients=Q)
+    Q = matrix.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
+    return QUBOInstance(matrix=Q)
 
 
 @pytest.fixture
 def simple_qubo_instance2() -> QUBOInstance:
-    Q = torch.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
-    return QUBOInstance(coefficients=Q)
+    Q = matrix.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
+    return QUBOInstance(matrix=Q)
 
 
 @pytest.fixture
@@ -217,16 +215,15 @@ def qubo_instance_for_embedding() -> QUBOInstance:
     Small QUBO instance for embedding.
     """
     return QUBOInstance(
-        torch.tensor(
+        matrix.tensor(
             [[-98, 2, 13, 1], [2, -12, 20, 15], [13, 20, -34, 7], [1, 15, 7, -57]],
-            dtype=torch.int32,
         )
     )
 
 
 @pytest.fixture
 def qubo_instance_blade_tutorial() -> QUBOInstance:
-    M = torch.tensor(
+    M = matrix.tensor(
         [
             [0.0, 3.0, 13.0, 211.0, 49.0, 5.0, 12.0, 0.0, 0.0],
             [0.0, 0.0, 23.0, 0.0, 0.0, 4.0, 0.0, 63.0, 2.0],
@@ -240,7 +237,7 @@ def qubo_instance_blade_tutorial() -> QUBOInstance:
         ]
     )
     Q = M + M.T
-    return QUBOInstance(coefficients=Q)
+    return QUBOInstance(matrix=Q)
 
 
 @pytest.fixture(
@@ -257,7 +254,7 @@ def qubo_for_testing_many_devices(request: pytest.FixtureRequest) -> QUBOInstanc
 
 def generate_qubo_matrix(
     size: int, density: float, value_range: tuple[int, int], seed: int | None = None
-) -> torch.Tensor:
+) -> Matrix:
     """Generate a random symmetric qubo matrix with negative diagonal coefficients
        and positive off-diagonal elements.
 
@@ -275,17 +272,17 @@ def generate_qubo_matrix(
 
     if seed is not None:
         np.random.seed(seed)
-    matrix = np.zeros((size, size))
+    matrix_ = np.zeros((size, size))
     for i in range(size):
-        matrix[i, i] = -np.abs(np.random.uniform(0, 100))  # Negative diagonal
+        matrix_[i, i] = -np.abs(np.random.uniform(0, 100))  # Negative diagonal
         for j in range(i + 1, size):
             if np.random.rand() < density:
                 value = np.abs(
                     np.random.uniform(value_range[0], value_range[1])
                 )  # Positive off-diagonal
-                matrix[i, j] = value
-                matrix[j, i] = value
-    return torch.tensor(matrix)
+                matrix_[i, j] = value
+                matrix_[j, i] = value
+    return matrix.tensor(matrix_)
 
 
 @pytest.fixture

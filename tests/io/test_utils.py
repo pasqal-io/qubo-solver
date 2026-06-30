@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import pytest_check as check
 
-from qubosolver.io.utils import (
+from qubosolver._io.utils import (
     read_exact,
     save,
     load,
@@ -15,7 +15,7 @@ from qubosolver.io.utils import (
     save_string,
     load_string,
 )
-from qubosolver.io.utils import open as io_utils_open
+from qubosolver._io.utils import open as io_utils_open
 
 
 class TestReadExact:
@@ -144,9 +144,9 @@ class TestString:
         text = "Hello, world!"
         encoding = "ascii"
 
-        save_string(stream, text, encoding)
+        save_string(stream, text, encoding=encoding)
         stream.seek(0)
-        result = load_string(stream, encoding)
+        result = load_string(stream, encoding=encoding)
 
         check.equal(result, text)
 

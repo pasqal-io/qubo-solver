@@ -28,11 +28,9 @@ This solver uses a Simulated Annealing to probabilistically explore the solution
 ### Usage
 
 ```python exec="on" source="material-block" html="1"
-from qubosolver import QUBOInstance
-from qubosolver.solver import QuboSolver
-from qubosolver.config import SolverConfig, ClassicalConfig
+from qubosolver import QUBOInstance, QuboSolver, SolverConfig, ClassicalConfig, matrix
 
-qubo = QUBOInstance(coefficients=[[-2.0, 1.0], [1.0, -2.0]])
+qubo = QUBOInstance(matrix=matrix.tensor([[-2.0, 1.0], [1.0, -2.0]]))
 config = SolverConfig(
     use_quantum=False,
     classical=ClassicalConfig(

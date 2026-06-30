@@ -59,10 +59,7 @@ def postprocess(self, solution: QUBOSolution) -> QUBOSolution
 
 ```python exec="on" source="material-block" html="1"
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, ClassicalConfig
-from qubosolver.pipeline import Fixtures
-from qubosolver.solver import QuboSolver
+from qubosolver import QUBOInstance, SolverConfig, ClassicalConfig, QuboSolver, solvers
 
 # Create a random 4-variable QUBO instance
 graphics = torch.randn(4, 4)
@@ -70,7 +67,7 @@ graphics = (graphics + graphics.T) / 2  # Ensure symmetry
 n = graphics.size(0)
 off_diag_mask = ~torch.eye(n, dtype=torch.bool)
 graphics[off_diag_mask] = graphics[off_diag_mask].abs() # Ensure Abs off-diagonal
-qubo = QUBOInstance(coefficients=graphics)
+qubo = QUBOInstance(matrix=graphics)
 
 # Configure solver to enable postprocessing
 cplex = ClassicalConfig(classical_solver_type="cplex", cplex_log_path="solver.log", cplex_maxtime=300.0,)
@@ -84,13 +81,11 @@ config = SolverConfig(
 classical_solver = QuboSolver(qubo, config)
 raw_solution = classical_solver.solve()
 
-# Apply postprocessing
-fixture = Fixtures(qubo, config)
-final_solution = fixture.postprocess(raw_solution)
+# Apply local bitflip postprocessing
+final_solution = solvers.iterative_bitflip_local_search(qubo, raw_solution)
 
 print("Optimized bitstrings:", final_solution.bitstrings)
 print("Optimized costs:", final_solution.costs)
-print("Status:", final_solution.solution_status)
 ```
 
 ---
@@ -103,14 +98,12 @@ Instead of manually instantiating `Fixtures`, you can enable postprocessing dire
 
 ```python exec="on" source="material-block" html="1"
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, ClassicalConfig
-from qubosolver.solver import QuboSolver
+from qubosolver import QUBOInstance, SolverConfig, ClassicalConfig, QuboSolver
 import emu_mps
 
 # Assume `first_qubo_coefficients` is your 2×2 QUBO matrix (e.g., identity):
 first_qubo_coefficients = torch.eye(2)
-instance = QUBOInstance(coefficients=first_qubo_coefficients)
+instance = QUBOInstance(matrix=first_qubo_coefficients)
 
 # Configure solver with postprocessing enabled
 cplex = ClassicalConfig(classical_solver_type="cplex", cplex_log_path="solver.log", cplex_maxtime=300.0,)
@@ -126,7 +119,6 @@ solution = classical_solver.solve()
 
 print("Final bitstrings:", solution.bitstrings)
 print("Final costs:", solution.costs)
-print("Status:", solution.solution_status)
 ```
 
 ---

@@ -11,13 +11,13 @@ class CplexSolver(BaseClassicalSolver):
     def __init__(
         self,
         instance: QUBOInstance,
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[dict[str, Any]] = None
     )
 ```
 
 - **Parameters**:
   - `instance` (`QUBOInstance`): QUBO problem containing a square coefficient matrix (`torch.Tensor`).
-  - `config` (`Optional[Dict[str, Any]]`): Dictionary supporting:
+  - `config` (`Optional[dict[str, Any]]`): Dictionary supporting:
     - `cplex_maxtime` (`float`, default `600.0`): Maximum solve time in seconds.
     - `cplex_log_path` (`str`, default `"solver.log"`): Path for CPLEX log output.
 
@@ -49,7 +49,7 @@ Solves the QUBO problem via CPLEX and returns a `QUBOSolution` containing bitstr
 ### Behavior
 
 1. **Validate Input**
-   Raises `ValueError` if `instance.coefficients` is `None`.
+   Raises `ValueError` if `instance.matrix` is `None`.
 
 2. **Handle Empty Problem**
    If the coefficient matrix has size zero, returns an empty `QUBOSolution`.
@@ -85,13 +85,11 @@ Solves the QUBO problem via CPLEX and returns a `QUBOSolution` containing bitstr
 
 ```python exec="on" source="material-block" html="1"
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, ClassicalConfig
-from qubosolver.solver import QuboSolver
+from qubosolver import QUBOInstance, SolverConfig, ClassicalConfig, QuboSolver
 
 # Define a simple 2×2 QUBO matrix (identity)
 matrix = torch.eye(2)
-instance = QUBOInstance(coefficients=matrix)
+instance = QUBOInstance(matrix=matrix)
 
 # Prepare solver configuration
 cplex = ClassicalConfig(

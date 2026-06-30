@@ -4,29 +4,27 @@ import pytest
 from typing import Any
 import pytest_check as check
 from pulser_simulation import QutipBackendV2
-from qoolqit.devices.device import AnalogDevice, AnalogDeviceWithDMM
-from qubosolver.config import (
-    LocalEmulator,
+from qoolqit import AnalogDevice, AnalogDeviceWithDMM
+from qubosolver import (
     ClassicalConfig,
     EmbeddingConfig,
     DriveShapingConfig,
     DecompositionConfig,
     SolverConfig,
-)
-from qubosolver.qubo_types import (
     EmbedderType,
     LayoutType,
     DriveType,
     ClassicalSolverType,
+    LocalEmulator,
+    AutoLocalEmulatorBackend,
 )
-from qubosolver.backends import AutoLocalEmulatorBackend
 
 
 def test_empty_config(empty_config: SolverConfig) -> None:
     assert empty_config.config_name == ""
     assert empty_config.use_quantum is True
     assert isinstance(empty_config.backend, LocalEmulator)
-    assert empty_config.backend._backend_type == AutoLocalEmulatorBackend
+    assert empty_config.backend._backend_type is AutoLocalEmulatorBackend
     assert empty_config.embedding.embedding_method == EmbedderType.GREEDY
     assert empty_config.embedding.draw_steps is False
     assert empty_config.embedding.greedy_layout == LayoutType.TRIANGULAR
@@ -87,7 +85,7 @@ def test_classical_config_flag(classical_solver_config: SolverConfig) -> None:
 
 
 def test_qutip_config_backend(qutip_solver_config: SolverConfig) -> None:
-    assert qutip_solver_config.backend._backend_type == QutipBackendV2
+    assert qutip_solver_config.backend._backend_type is QutipBackendV2
 
 
 def test_blade_config(blade_config: SolverConfig) -> None:

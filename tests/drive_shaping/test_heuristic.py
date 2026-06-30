@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Iterable
+from typing import Iterable
 import torch
 import itertools
 import numpy as np
@@ -9,11 +9,17 @@ import pytest
 import pytest_check as check
 import random
 
-from qubosolver import QUBOInstance
-from qubosolver.solver import QuboSolver
-from qubosolver.config import EmbeddingConfig, SolverConfig, DriveShapingConfig
-from qubosolver.qubo_analyzer import QUBOAnalyzer
-from qoolqit import AnalogDevice, DigitalAnalogDevice
+from qubosolver import (
+    QUBOInstance,
+    QuboSolver,
+    EmbeddingConfig,
+    SolverConfig,
+    DriveShapingConfig,
+    QUBOAnalyzer,
+    tensor,
+    vector,
+)
+from qoolqit import DigitalAnalogDevice, AnalogDevice
 
 
 @dataclass
@@ -27,7 +33,7 @@ def to_solutions(
     bitstrings: Iterable[str | torch.Tensor],
     costs: Iterable[float] = itertools.repeat(float("inf")),
     probabilities: Iterable[float] = itertools.repeat(0.0),
-) -> List[Solution]:
+) -> list[Solution]:
     def to_string(b: str | torch.Tensor) -> str:
         if isinstance(b, torch.Tensor):
             return "".join(str(int(i)) for i in b)
@@ -40,7 +46,7 @@ def to_solutions(
 
 def gather_optimal_solutions(
     data: Iterable[Solution], min_cost: float | None = None
-) -> List[Solution]:
+) -> list[Solution]:
     if min_cost is None:
         min_cost = min(d.cost for d in data)
     return [d for d in data if np.allclose(d.cost, min_cost)]
@@ -70,7 +76,7 @@ def test_with_perfect_embedding(
         return U
 
     sqrt3 = np.sqrt(3.0)
-    vertices = torch.tensor(
+    vertices = tensor.tensor(
         [
             [0.0, 0.0],
             [-1.0, 0.0],
@@ -79,16 +85,16 @@ def test_with_perfect_embedding(
         ]
     )
     diagonal = (
-        torch.ones(4, dtype=torch.float64)
+        torch.ones(4, dtype=vector.dtype())
         if constant_diagonal
-        else torch.tensor([1.0, 1.25, 0.2, 1.167])
+        else vector.tensor([1.0, 1.25, 0.2, 1.167])
     )
     Q = interaction_matrix_from_vertices(vertices) + diagonal_scale * torch.diag(diagonal)
     Q /= Q.max()
 
     results = []
     for bits in itertools.product([0, 1], repeat=4):
-        z = torch.tensor(bits, dtype=torch.float64)
+        z = tensor.tensor(bits)
         cost = (z @ Q @ z).item()
         results.append(Solution("".join(str(int(b)) for b in z.flatten()), cost))
 
@@ -100,7 +106,7 @@ def test_with_perfect_embedding(
     print(f"All expected optimal bitstrings: {[s.bitstring for s in expected_optimal_solutions]}")
     print(f"Number of expected optimal solutions: {len(expected_optimal_solutions)}\n")
 
-    instance = QUBOInstance(coefficients=Q)
+    instance = QUBOInstance(matrix=Q)
 
     embed_cfg = EmbeddingConfig(
         embedding_method="greedy",
@@ -153,9 +159,9 @@ def test_with_perfect_embedding(
         )
 
     check.almost_equal(min_cost, expected_optimal_solutions[0].cost)
-    expected_optimal_bistrings = [s.bitstring for s in expected_optimal_solutions]
+    expected_optimal_bitstrings = [s.bitstring for s in expected_optimal_solutions]
     for solution in optimal_solutions:
-        check.is_in(solution.bitstring, expected_optimal_bistrings)
+        check.is_in(solution.bitstring, expected_optimal_bitstrings)
 
     cumulated_probability = sum(s.probability for s in optimal_solutions)
     check.greater(cumulated_probability, 0.75)

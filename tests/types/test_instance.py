@@ -1,0 +1,44 @@
+# tests/test_qubo_instance.py
+from __future__ import annotations
+
+import os
+from pathlib import Path
+import numpy as np
+import pytest
+import torch
+
+from qubosolver import QUBOInstance, QuboSolver, SolverConfig, matrix
+
+
+def test_valid_qubo_passes_without_error() -> None:
+    # A 5×5 QUBO with all coefficients >= 0 (identity matrix)
+    coeffs = matrix.from_torch(torch.eye(5))
+    qi = QUBOInstance(coeffs)
+    assert qi.size == 5
+    # Verify that the tensor is stored correctly
+    assert qi.matrix.shape == (5, 5)
+
+
+def test_size_exceeds_limit_triggers_system_exit() -> None:
+
+    # An 81×81 QUBO exceeds the maximum supported size of 80×80
+    coeffs = np.zeros((81, 81))
+
+    qi = QUBOInstance(matrix.tensor(coeffs))
+    # Expect SystemExit to be raised when setting oversized coefficients
+    solver = QuboSolver(qi, SolverConfig(use_quantum=False))
+    assert solver.instance.size == 81
+    match_msg = "QUBO size 81×81 exceeds the maximum supported size of 80×80"
+    with pytest.raises(ValueError, match=match_msg):
+        QuboSolver(qi, SolverConfig(use_quantum=True))
+
+
+def test_save_load(simple_qubo_instance: QUBOInstance) -> None:
+
+    file_path = Path(__file__).parent / "qubo_instance_test.pt"
+    QUBOInstance.save(file_path, simple_qubo_instance)
+    assert os.path.exists(file_path)
+    loaded_instance = QUBOInstance.load(file_path)
+    assert torch.allclose(loaded_instance.matrix, simple_qubo_instance.matrix)
+    if os.path.exists(file_path):
+        os.remove(file_path)

@@ -2,49 +2,41 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC
+from collections.abc import Callable
 from dataclasses import field
-from typing import Any, Callable
+from typing import Any
 
 import torch
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator, model_serializer
 
-from qoolqit.devices.device import Device, AnalogDeviceWithDMM
+from qoolqit import Device, AnalogDeviceWithDMM
 from qoolqit.execution import QPU
 from qoolqit.execution.compilation_functions import CompilerProfile
-from pulser_pasqal import PasqalCloud
 
-from qubosolver.qubo_types import (
+
+from .types import (
     EmbedderType,
     LayoutType,
     DriveType,
     ClassicalSolverType,
+    Bitstring,
+    Matrix,
+    QUBOSolution,
+    LocalEmulator,
+    RemoteEmulator,
 )
-from qubosolver.backends import LocalEmulator, RemoteEmulator
 
 # Allow torch.Tensor fields in Pydantic models.
 BaseModel.model_config["arbitrary_types_allowed"] = True
 
-# Modules to be automatically added to the qubosolver namespace
-__all__: list[str] = [
-    "LocalEmulator",
-    "RemoteEmulator",
-    "QPU",
-    "PasqalCloud",
-    "ClassicalConfig",
-    "EmbeddingConfig",
-    "DriveShapingConfig",
-    "DecompositionConfig",
-    "SolverConfig",
-]
 
-
-class Config(BaseModel, ABC):
+class _Config(BaseModel, ABC):
     """Pydantic class for configs."""
 
     model_config = ConfigDict(extra="forbid")
 
 
-class ClassicalConfig(Config):
+class ClassicalConfig(_Config):
     """A `ClassicalConfig` instance defines the classical
         part of a `SolverConfig`.
 
@@ -159,7 +151,7 @@ class ClassicalConfig(Config):
         return serialization
 
 
-class EmbeddingConfig(Config):
+class EmbeddingConfig(_Config):
     """A `EmbeddingConfig` instance defines the embedding
         part of a `SolverConfig`.
 
@@ -234,10 +226,10 @@ class EmbeddingConfig(Config):
             except KeyError:
                 raise ValueError(f"Invalid str embedding method '{val}'.")
         elif inspect.isclass(val):
-            from qubosolver.pipeline.embedder import BaseEmbedder
+            from qubosolver.embedding._embedder import _BaseEmbedder
 
-            if not issubclass(val, BaseEmbedder):
-                raise TypeError(f"Class must be a subclass of {BaseEmbedder.__name__}")
+            if not issubclass(val, _BaseEmbedder):
+                raise TypeError(f"Class must be a subclass of {_BaseEmbedder.__name__}")
             else:
                 return val
         else:
@@ -258,7 +250,7 @@ class EmbeddingConfig(Config):
             raise ValueError(f"Invalid layout '{val}'.")
 
 
-class DriveShapingConfig(Config):
+class DriveShapingConfig(_Config):
     """A `DriveShapingConfig` instance defines the drive shaping part of a `SolverConfig`.
 
     Attributes:
@@ -271,9 +263,9 @@ class DriveShapingConfig(Config):
             after optimization. Defaults to False.
         optimized_n_calls (int, optional): Number of calls for the optimization process.
             Defaults to 20. Note the optimizer accepts a minimal value of 12.
-        optimized_initial_omega_parameters (List[float], optional): Default initial omega parameters
+        optimized_initial_omega_parameters (list[float], optional): Default initial omega parameters
             for the drive. Defaults to Omega = (1, 2, 1).
-        optimized_initial_detuning_parameters (List[float], optional): Default initial detuning parameters
+        optimized_initial_detuning_parameters (list[float], optional): Default initial detuning parameters
             for the drive. Defaults to delta = (-2, 0, 2).
         optimized_custom_qubo_cost (Callable[[str, torch.Tensor], float], optional): Apply a different
             qubo cost evaluation
@@ -282,13 +274,13 @@ class DriveShapingConfig(Config):
             Must be defined as:
             `def optimized_custom_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float`.
             Defaults to None, meaning we use the default QUBO evaluation.
-        optimized_custom_objective_fn (Callable[[list, list, list, list, float, str], float], optional):
+        optimized_custom_objective (Callable[[list, list, list, list, float, str], float], optional):
             For bayesian optimization, one can change the output of
             `qubosolver/pipeline/drive.py:OptimizedDriveShaper.run_simulation`
             to optimize differently. Instead of using the best cost
             out of the samples, one can change the objective for an average,
             or any function out of the form
-            `cost_eval = optimized_custom_objective_fn(bitstrings,
+            `cost_eval = optimized_custom_objective(bitstrings,
                 counts, probabilities, costs, best_cost, best_bitstring)`
             Defaults to None, which means we optimize using the best cost
             out of the samples.
@@ -306,16 +298,22 @@ class DriveShapingConfig(Config):
 
     drive_shaping_method: Any = DriveType.HEURISTIC
     dmm: bool = True
-    optimized_re_execute_opt_drive: bool = False
     optimized_n_calls: int = 20
     optimized_initial_omega_parameters: list[float] = field(default_factory=lambda: [0.5, 0.9, 0.5])
     optimized_initial_detuning_parameters: list[float] = field(
-        default_factory=lambda: [-0.8, 0.0, 0.8]
-    )
-    optimized_custom_qubo_cost: Callable[[str, torch.Tensor], float] | None = None
-    optimized_custom_objective: Callable[[list, list, list, list, float, str], float] | None = None
+        default_factory=lambda: [
+            -0.8,
+            0.0,
+            0.8,
+        ]
+    )  # ---> default initial drive parameters: delta = (-2, 0, 2)
+    optimized_custom_qubo_cost: Callable[[Bitstring, Matrix], float] | None = None
+    optimized_custom_objective: Callable[[QUBOSolution], float] | None = None
     optimized_callback_objective: Callable[..., None] | None = None
     optimized_seed: int | None = None
+    optimized_re_execute_opt_drive: bool = False
+
+    # Heuristic coefficient for omega
     heuristic_kappa: float = 0.25
 
     @model_serializer(mode="plain")
@@ -350,10 +348,10 @@ class DriveShapingConfig(Config):
             else:
                 raise ValueError(f"Invalid drive shaping method '{val}'.")
         elif inspect.isclass(val):
-            from qubosolver.pipeline.drive import BaseDriveShaper
+            from qubosolver.drive_shaping._drive_shaper import _BaseDriveShaper
 
-            if not issubclass(val, BaseDriveShaper):
-                raise TypeError(f"Class must be a subclass of {BaseDriveShaper.__name__}")
+            if not issubclass(val, _BaseDriveShaper):
+                raise TypeError(f"Class must be a subclass of {_BaseDriveShaper.__name__}")
             else:
                 return val
         else:
@@ -378,7 +376,7 @@ class DriveShapingConfig(Config):
             )
 
 
-class DecompositionConfig(Config):
+class DecompositionConfig(_Config):
     """The configuration parameters when using a decomposition method
         for solving large QUBO instances.
 
@@ -402,7 +400,7 @@ class DecompositionConfig(Config):
     neglecting_max_coefficient: float = 1.0
 
 
-class SolverConfig(Config):
+class SolverConfig(_Config):
     """
     A `SolverConfig` instance defines how a QUBO problem should be solved.
     We specify whether to use a quantum or classical approach,
@@ -435,7 +433,7 @@ class SolverConfig(Config):
     """
 
     config_name: str = ""
-    use_quantum: bool | None = True
+    use_quantum: bool = True
     embedding: EmbeddingConfig = EmbeddingConfig()
     drive_shaping: DriveShapingConfig = DriveShapingConfig()
     classical: ClassicalConfig = ClassicalConfig()
@@ -518,7 +516,7 @@ class SolverConfig(Config):
         return cls.model_validate(solver_fields)
 
 
-def compiler_profile(config: SolverConfig) -> CompilerProfile:
+def _compiler_profile(config: SolverConfig) -> CompilerProfile:
     """Determines the appropriate compiler profile based on the drive shaping method.
 
     Args:

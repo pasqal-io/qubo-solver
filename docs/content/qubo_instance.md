@@ -25,14 +25,14 @@ $$\min_{x \in \{0,1\}^n} \sum_{i=1}^{n} Q_{ii} x_i + \sum_{i=1}^{n} \sum_{j=i+1}
 
 ### Code Example:
 ```python exec="on" source="material-block" html="1"
-from qubosolver import QUBOInstance
+from qubosolver import QUBOInstance, matrix, bitstring
 
 # Define a QUBO coefficient matrix
-coefficients = [[0, 1, 2], [1, 0, 3], [2, 3, 0]]
-instance = QUBOInstance(coefficients=coefficients)
+coefficients = matrix.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
+instance = QUBOInstance(matrix=coefficients)
 print(instance)
 
-solution = [1, 0, 1]
+solution = bitstring.from_string("101")
 cost = instance.evaluate_solution(solution)
 print(f"\nSolution Cost: {cost}")
 
@@ -60,11 +60,11 @@ print(f"Loaded QUBOInstance: {loaded_instance}")
 
 ### Code Example:
 ```python exec="on" source="material-block" html="1"
-from qubosolver.data import QUBODataset
+from qubosolver import QUBODataset
 
 # Generate a random dataset
 dataset = QUBODataset.from_random(
-    n_matrices=5, matrix_dim=4, densities=[0.3, 0.7], coefficient_bounds=(-10, 10), device="cpu"
+    n_matrices=5, matrix_dim=4, densities=[0.3, 0.7], coefficient_bounds=(-10, 10),
 )
 
 # Access the first instance
@@ -73,11 +73,9 @@ print(f"Coefficients: {coeffs}")
 # Get the dataset size
 print(f"\nDataset size: {len(dataset)}")
 
-from qubosolver.saveload import save_qubo_dataset, load_qubo_dataset
-
 # Save load
-save_qubo_dataset(dataset, "/tmp/qubo_dataset.pt")
-loaded_dataset = load_qubo_dataset("/tmp/qubo_dataset.pt")
+QUBODataset.save(dataset, "/tmp/qubo_dataset.pt")
+loaded_dataset = QUBODataset.load("/tmp/qubo_dataset.pt")
 print(f"\nLoaded QUBODataset size: {len(loaded_dataset)}")
 ```
 

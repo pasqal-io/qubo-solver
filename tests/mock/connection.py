@@ -13,13 +13,13 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pulser import Sequence as PulserSequence
     from pulser.backend.results import Results
-    from typing import Any, Dict, Mapping
+    from typing import Any, Mapping
 
 
 class MockConnection(RemoteConnection):
     def __init__(self, result: Results, running_iterations: int = 0) -> None:
         self.result: Results = result
-        self.results: Dict[str, Results] = dict()
+        self.results: dict[str, Results] = dict()
 
         self._status_calls = 0
         self._support_open_batch = True
