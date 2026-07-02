@@ -1,3 +1,16 @@
+"""Analysis utilities for QUBO solutions.
+
+Provides :class:`QUBOAnalyzer`, which aggregates one or more
+:class:`~qubosolver.types.solution.QUBOSolution` objects into a unified
+:class:`~pandas.DataFrame` and exposes filtering, statistical, and plotting
+helpers for comparing solver outputs.
+
+Typical usage::
+
+    analyzer = QUBOAnalyzer([sol_a, sol_b], labels=["classical", "quantum"])
+    analyzer.calculate_gaps(opt_cost=-42.0)
+    analyzer.plot(x_axis="bitstrings", y_axis="costs", top_percent=0.1)
+"""
 from __future__ import annotations
 
 import pandas as pd
@@ -17,30 +30,41 @@ _GAPS = "gaps"
 
 
 class QUBOAnalyzer:
+    """Aggregates and analyses one or more QUBO solutions.
+
+    Converts :class:`~qubosolver.types.solution.QUBOSolution` objects into a
+    unified :class:`~pandas.DataFrame` (``self.df``) with columns for
+    bitstrings, costs, and optionally counts, probabilities, and gaps.
+    Multiple solutions can be labelled and compared side-by-side through the
+    filtering and plotting helpers.
+
+    Attributes:
+        solutions (list[QUBOSolution]): The solutions being analysed.
+        labels (list[str]): One label per solution, used to identify each
+            group in the DataFrame and plots.
+        df (pd.DataFrame): Consolidated DataFrame built from all solutions.
+            Columns always present: ``bitstrings``, ``labels``, ``costs``.
+            Optional columns (populated on demand): ``counts``, ``probs``,
+            ``gaps``.
+    """
+
     def __init__(
         self,
         solutions: QUBOSolution | list[QUBOSolution],
         labels: str | list[str] | None = None,
     ):
         """
-        Analyzer for solutions to a Quadratic Unconstrained Binary Optimization (QUBO) problem.
-
-        Initializes the analyzer with one or a list of QUBOSolutions.
-
-        If a single QUBOSolution is provided, it is automatically wrapped into a list.
-        Optionally, you can provide a list of labels corresponding to each QUBOSolution.
-        If labels are not provided, they are assigned automatically as '0', '1', etc.
-
         Args:
-            solutions (QUBOSolution | list[QUBOSolution]):
-                A single QUBOSolution or a list of QUBOSolution instances.
-            labels (str | list[str] | None):
-                A list of labels for the QUBOSolutions. Must match the number of solutions.
+            solutions: A single :class:`~qubosolver.types.solution.QUBOSolution`
+                or a list of them.  A bare instance is automatically wrapped in a list.
+            labels: One label per solution used to identify each group in the
+                DataFrame and plots.  Defaults to ``"0"``, ``"1"``, … when *None*.
 
         Raises:
-            ValueError: If no solutions are provided or if the number of labels
-                        does not match the number of solutions.
-            TypeError: If any solution or label is not of the expected type.
+            ValueError: If the number of labels does not match the number of solutions.
+            TypeError: If any element of *solutions* is not a
+                :class:`~qubosolver.types.solution.QUBOSolution`, or if any label
+                is not a :class:`str`.
         """
         # Recast solutions into a list if a single solution is provided.
         if not isinstance(solutions, list):
@@ -121,13 +145,31 @@ class QUBOAnalyzer:
         self,
         target_labels: list[str],
     ) -> None:
-        """
-        Compare two `QUBOSolution` objects and provide a statistical analysis of the differences,
-        including degenerate solution matching and mismatch statistics.
+        """Compare the bitstring sets of exactly two labelled solutions.
+
+        Prints a human-readable summary to *stdout* reporting:
+
+        * The total and unique bitstring counts for each solution.
+        * Bitstrings present in the first solution but absent from the second,
+          and vice-versa.
+        * The ratio of differing bitstrings over the total unique set.
+
+        .. note::
+            Duplicate bitstrings within a single solution are deduplicated
+            before comparison.  This is a temporary workaround until the
+            upstream duplicate-bitstring issue in
+            :class:`~qubosolver.types.solution.QUBOSolution` is resolved.
 
         Args:
-            target_labels (list[str]): The labels of the solutions to compare. If None, compares
-                all solutions.
+            target_labels: Exactly two labels identifying the solutions to
+                compare.  Both must be present in :attr:`labels`.
+
+        Returns:
+            None — all output is written to *stdout*.
+
+        Raises:
+            ValueError: If ``len(target_labels) != 2``, or if any label is not
+                present in :attr:`labels`.
         """
 
         def print_diff(
@@ -537,14 +579,22 @@ class QUBOAnalyzer:
         Plots a bar chart of probabilities or counts as a function of cost.
 
         Args:
-            df (pd.DataFrame): The DataFrame to plot. Defaults to None,
-                                that means uses self.df.
-            x_axis (str): The column name to be plotted on the x-axis.
-            y_axis (str): The column name to be plotted on the y-axis.
-            sort_by (str | None): Defines the column by which to sort the costs.
-                                     If None, no sorting is done.
-            sort_order (str): Defines the sorting order. Accepts 'ascending' or 'descending'.
-                              Default is 'ascending'. Ignored if `sort_by` is None.
+            df: The DataFrame to plot.
+            x_axis: Column name for the x-axis (e.g. ``"costs"``, ``"gaps"``).
+            y_axis: Column name for the y-axis (e.g. ``"probs"``, ``"counts"``).
+            sort_by: Column by which to order the x-axis values before plotting.
+                Must be one of *x_axis* or *y_axis*.  No sorting when *None*.
+            sort_order: ``"ascending"`` or ``"descending"``.  Default is
+                ``"ascending"``.  Ignored when *sort_by* is *None*.
+            context: Seaborn plotting context (e.g. ``"notebook"``, ``"talk"``).
+
+        Returns:
+            sns.axisgrid.FacetGrid: The resulting grouped bar chart, one bar
+            group per unique x-axis value with hue mapped to solution labels.
+
+        Raises:
+            ValueError: If *x_axis* or *y_axis* is not a column in *df*, or if
+                *sort_by* is not one of *x_axis* or *y_axis*.
         """
         if x_axis not in df.columns:
             raise ValueError(

@@ -31,7 +31,12 @@ BaseModel.model_config["arbitrary_types_allowed"] = True
 
 
 class _Config(BaseModel, ABC):
-    """Pydantic class for configs."""
+    """Abstract base class for all solver configuration models.
+
+    Enforces strict field validation by forbidding any extra fields not
+    declared on the subclass. All concrete config classes (``ClassicalConfig``,
+    ``EmbeddingConfig``, etc.) inherit from this class.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -100,6 +105,17 @@ class ClassicalConfig(_Config):
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
+        """Serialize only the fields relevant to the active solver type.
+
+        Returns a dict containing ``classical_solver_type`` plus the subset of
+        fields that are meaningful for the chosen solver
+        (``CPLEX``, ``SIMULATED_ANNEALING``, ``TABU_SEARCH``, or
+        ``SIMULATED_ANNEALING_TABU_SEARCH``). Fields belonging to inactive
+        solvers are omitted to keep serialized output minimal.
+
+        Returns:
+            dict[str, Any]: Serialized representation of this config.
+        """
         serialization: dict = {"classical_solver_type": self.classical_solver_type}
         if self.classical_solver_type == ClassicalSolverType.CPLEX:
             serialization.update(
@@ -193,6 +209,16 @@ class EmbeddingConfig(_Config):
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
+        """Serialize only the fields relevant to the active embedder type.
+
+        Always includes ``embedding_method``, ``draw_steps``,
+        ``animation_save_path``, and ``min_distance``. Additionally includes
+        ``greedy_*`` fields when ``embedding_method`` is ``GREEDY``, or
+        ``blade_*`` fields when it is ``BLADE``.
+
+        Returns:
+            dict[str, Any]: Serialized representation of this config.
+        """
         serialization: dict = {
             "embedding_method": self.embedding_method,
             "draw_steps": self.draw_steps,
@@ -318,6 +344,16 @@ class DriveShapingConfig(_Config):
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
+        """Serialize only the fields relevant to the active drive shaping method.
+
+        Always includes ``drive_shaping_method`` and ``dmm``. When
+        ``drive_shaping_method`` is ``OPTIMIZED``, all ``optimized_*`` fields
+        are also included. Heuristic-only fields are omitted for the optimized
+        path and vice-versa.
+
+        Returns:
+            dict[str, Any]: Serialized representation of this config.
+        """
         serialization: dict = {
             "drive_shaping_method": self.drive_shaping_method,
             "dmm": self.dmm,
@@ -448,21 +484,38 @@ class SolverConfig(_Config):
         return self.config_name
 
     def specs(self) -> str:
-        """Return the specs of the `SolverConfig`, that is all attributes.
+        """Return a human-readable summary of all configuration attributes.
+
+        Each attribute is formatted as ``key: value``, one per line.
+        Empty-string values are rendered as ``key: ''``.
 
         Returns:
-            dict: Dictionary of specs key-values.
+            str: Newline-separated ``key: value`` pairs for all config fields.
         """
         return "\n".join(
             f"{k}: ''" if v == "" else f"{k}: {v}" for k, v in self.model_dump().items()
         )
 
     def print_specs(self) -> None:
-        """Print specs."""
+        """Print all configuration attributes to stdout.
+
+        Convenience wrapper around :meth:`specs` for interactive use.
+        """
         print(self.specs())
 
     @model_validator(mode="after")
     def _set_greedy_spacing_from_device(self) -> SolverConfig:
+        """Enforce device minimum atom distance on the greedy embedder spacing.
+
+        If the configured ``device`` exposes a ``min_atom_distance`` constraint
+        and the current ``embedding.greedy_spacing`` is smaller than that
+        constraint, ``greedy_spacing`` is silently raised to match the device
+        limit. This prevents the embedder from generating registers that would
+        be rejected during compilation.
+
+        Returns:
+            SolverConfig: The (potentially updated) config instance.
+        """
 
         if self.device:
             device = self.device._device
@@ -476,14 +529,24 @@ class SolverConfig(_Config):
 
     @classmethod
     def from_kwargs(cls, **kwargs: dict) -> SolverConfig:
-        """Create an instance based on entries of other configs.
+        """Create a ``SolverConfig`` from a flat or mixed keyword dictionary.
 
-        Note that if any of the keywords
-        ("embedding", "drive_shaping", "classical")
-        are present in kwargs, the values are taken directly.
+        Keyword arguments are automatically routed to the appropriate
+        sub-config (``EmbeddingConfig``, ``DriveShapingConfig``,
+        ``ClassicalConfig``, or ``DecompositionConfig``) based on their field
+        names. Top-level ``SolverConfig`` fields are handled directly.
+
+        If any of the sub-config keys (``"embedding"``, ``"drive_shaping"``,
+        ``"classical"``, ``"decompose"``) appear in ``kwargs``, their values
+        are forwarded as-is and take precedence over individually routed fields.
+
+        Args:
+            **kwargs: Any combination of fields from ``SolverConfig``,
+                ``EmbeddingConfig``, ``DriveShapingConfig``,
+                ``ClassicalConfig``, or ``DecompositionConfig``.
 
         Returns:
-            SolverConfig: An instance from values.
+            SolverConfig: A fully validated ``SolverConfig`` instance.
         """
         # Extract fields from pydantic BaseModel
         embedding_fields = {k: v for k, v in kwargs.items() if k in EmbeddingConfig.model_fields}

@@ -16,17 +16,24 @@ Rule: TypeAlias = Callable[[QUBOInstanceBase], dict[int, int]]
 
 
 def hansen_fixing(qubo: QUBOInstanceBase) -> dict[int, int]:
-    """
-    Identifies and fixes variables in a QUBO instance based on threshold conditions.
+    """Identify variables that can be fixed using Hansen's bounding criterion.
 
-    This method determines whether a variable should be fixed to 0 or 1 by computing
-    lower and upper bounds from the diagonal and off-diagonal elements of the QUBO matrix.
+    For each variable *i*, computes a lower bound
+    ``c_i + 2 * sum(min(0, Q_ij))`` and an upper bound
+    ``c_i + 2 * sum(max(0, Q_ij))`` from the diagonal and off-diagonal
+    elements of the QUBO matrix.  A variable is fixed to 0 when its lower
+    bound is non-negative (it cannot improve the objective by being 1) and
+    to 1 when its upper bound is non-positive (it can only improve it).
 
     Args:
-        qubo (QUBOInstance): The QUBO instance containing the coefficients matrix.
+        qubo: The QUBO instance to analyse.
 
     Returns:
-        dict[int, int]: A dictionary mapping variable indices to fixed values (0 or 1).
+        Mapping of variable index to fixed value (``0`` or ``1``).
+        Variables that cannot be fixed are omitted.
+
+    Raises:
+        ValueError: If the QUBO matrix is not initialised.
     """
     if qubo.matrix is None:
         raise ValueError("QUBO coefficients are not initialized.")
@@ -73,37 +80,24 @@ class QUBOInstance(QUBOInstanceBase):
 
     @property
     def fixed_indices(self) -> list[dict[int, int]]:
-        """Returns the history of variable-fixing.
-
-        Returns:
-            list[dict[int, int]]:
-                List of dictionaries, where each dictionary represents a fixed variable
-                and its value.
-        """
+        """Fixation history: one dict per :func:`apply` call, mapping index → fixed value."""
         return self._fixed_indices
 
     @property
     def n_fixed_indices(self) -> int:
-        """Returns the number of fixed variables.
-
-        Returns:
-            int: The number of fixed variables.
-        """
+        """Total number of variables fixed across all fixation rounds."""
         return sum([len(fixed) for fixed in self.fixed_indices])
 
     @staticmethod
     def save(file_like: io_utils.FileLike[bytes], instance: QUBOInstanceBase) -> None:
-        """
-        Saves a QUBOInstance to a file-like object.
+        """Serialise a :class:`QUBOInstance` (including fixation history) to *file_like*.
 
         Args:
-            file_like (io_utils.FileLike[bytes]):
-                File-like object opened in binary write mode where the instance will be saved.
-            instance (QUBOInstance):
-                The QUBOInstance object to be saved.
+            file_like: Binary-writable file-like object or path.
+            instance: The :class:`QUBOInstance` to save.
 
-        Returns:
-            None
+        Raises:
+            TypeError: If *instance* is not a variable-fixing :class:`QUBOInstance`.
         """
         _check_QUBOInstance(instance)
         assert isinstance(instance, QUBOInstance)  # nosec B101
@@ -116,16 +110,13 @@ class QUBOInstance(QUBOInstanceBase):
 
     @staticmethod
     def load(file_like: io_utils.FileLike[bytes]) -> QUBOInstance:
-        """
-        Loads a QUBOInstance from a file-like object.
+        """Deserialise a :class:`QUBOInstance` (including fixation history) from *file_like*.
 
         Args:
-            file_like (io_utils.FileLike[bytes]):
-                File-like object opened in binary read mode containing the saved QUBOInstance data.
+            file_like: Binary-readable file-like object or path produced by :meth:`save`.
 
         Returns:
-            QUBOInstance:
-                A new QUBOInstance object reconstructed from the saved data.
+            The reconstructed :class:`QUBOInstance`.
         """
 
         def decode_int_keys(obj: dict) -> dict:
@@ -154,20 +145,21 @@ def _default_rules() -> tuple[Rule]:
 def _reduce_qubo(
     qubo: QUBOInstanceBase, fixed_indices: dict[int, int], *, inplace: bool = False
 ) -> QUBOInstance:
-    """
-    Applies variable fixation to reduce the size of the QUBO problem.
+    """Reduce the QUBO matrix by fixing a set of variables.
 
-    This function modifies the QUBO coefficient matrix by:
-    - Removing rows and columns corresponding to fixed variables.
-    - Adjusting diagonal elements to account for fixed variables.
+    For each variable fixed to 1, its interaction terms are folded into the
+    diagonal of the remaining variables before its row and column are removed.
+    Variables fixed to 0 are removed without any adjustment.
 
     Args:
-        fixed_dict (dict[int, int]): A dictionary of fixed variable assignments.
-            - Keys are variable indices.
-            - Values are fixed binary values (0 or 1).
+        qubo: The QUBO instance to reduce.
+        fixed_indices: Mapping of variable index to fixed value (``0`` or ``1``).
+        inplace: If ``False`` (default), wraps *qubo* in a new
+            :class:`QUBOInstance` before modifying it.
 
     Returns:
-        None: Modifies `self.reduced_qubo` in place.
+        The (possibly new) :class:`QUBOInstance` with the reduced matrix and
+        *fixed_indices* appended to its fixation history.
     """
     if not inplace:
         qubo = QUBOInstance(qubo)
@@ -208,16 +200,20 @@ def apply(
     *,
     inplace: bool = False,
 ) -> QUBOInstance:
-    """
-    Applies a sequence of variable fixation rules to the QUBO instance.
+    """Apply each fixation rule once and reduce the QUBO matrix accordingly.
+
+    Each rule in *fixation_rules* is called in order; variables it identifies
+    are immediately fixed and the matrix is reduced before the next rule runs.
 
     Args:
-        qubo (QUBOInstance): The QUBO instance to apply rules to.
-        fixation_rules (Sequence[FixationRule]): A sequence of functions that
-            return dictionaries mapping variable indices to fixed values.
+        qubo: The QUBO instance to reduce.
+        fixation_rules: Ordered sequence of :data:`Rule` callables.
+            Defaults to ``(hansen_fixing,)``.
+        inplace: If ``False`` (default), wraps *qubo* in a new
+            :class:`QUBOInstance` before modifying it.
 
     Returns:
-        list[dict[int, int]]: A list of fixation dictionaries, one per rule that fixed variables.
+        The reduced :class:`QUBOInstance` with updated fixation history.
     """
     if not inplace:
         qubo = QUBOInstance(qubo)
@@ -238,11 +234,20 @@ def apply_recursively(
     *,
     inplace: bool = False,
 ) -> QUBOInstance:
-    """
-    Iteratively applies all fixation rules until no more variables can be fixed.
+    """Apply fixation rules repeatedly until no further variables can be fixed.
 
-    This function repeatedly applies all rules in `self.fixation_rule_list`
-    until no further reduction is possible.
+    Calls :func:`apply` in a loop; stops when a full pass over all rules
+    fixes no additional variables.
+
+    Args:
+        qubo: The QUBO instance to reduce.
+        fixation_rules: Ordered sequence of :data:`Rule` callables.
+            Defaults to ``(hansen_fixing,)``.
+        inplace: If ``False`` (default), wraps *qubo* in a new
+            :class:`QUBOInstance` before modifying it.
+
+    Returns:
+        The fully reduced :class:`QUBOInstance`.
     """
     if not inplace:
         qubo = QUBOInstance(qubo)
@@ -260,19 +265,25 @@ def apply_recursively(
 
 
 def unapply(reduced_solution: QUBOSolution, reduced_qubo: QUBOInstance) -> QUBOSolution:
-    """
-    Restores fixed variables in the solution bitstrings after QUBO reduction.
+    """Reconstruct the full solution by reinserting fixed variables.
 
-    This method reconstructs the full-length bitstrings by reinserting the fixed
-    variables at their original positions.
+    Reverses the fixation history stored in *reduced_qubo*: fixed variables
+    are reinserted at their original positions in each bitstring, and costs
+    are recomputed against the original (unreduced) QUBO matrix.
+
+    If no variables were fixed, returns a deep copy of *reduced_solution*
+    unchanged.
 
     Args:
-        solution (QUBOSolution): The solution object from the reduced QUBO problem.
+        reduced_solution: Solution obtained from solving the reduced QUBO.
+        reduced_qubo: The reduced :class:`QUBOInstance` carrying the fixation
+            history and a reference to the original instance.
 
     Returns:
-        QUBOSolution: A solution object with bitstrings restored to their original size.
+        A new :class:`~qubosolver.types.QUBOSolution` with full-length
+        bitstrings and costs evaluated against the original QUBO matrix.
+        Counts and probabilities are carried over from *reduced_solution*.
     """
-    # FIXME: raise if empty solution ?
     bitstrings_list = reduced_solution.bitstrings.tolist() or [[]]
 
     def reinsert_fixed_variables(bitstring: list[int]) -> list[int]:

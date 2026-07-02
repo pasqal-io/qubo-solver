@@ -1,3 +1,18 @@
+"""Internal building blocks for the QUBO decomposition algorithm.
+
+The decomposition algorithm iteratively extracts small sub-problems from a
+large QUBO instance, solves each on the quantum device, and stitches the
+partial results back into a global solution.  This module provides the
+stateful data structures and the three core steps of that loop:
+
+1. :func:`extract_subqubo` — select the next cluster of variables via
+   geometric search and build the corresponding sub-matrix.
+2. *Solve* — performed externally (quantum or classical).
+3. :func:`update` — merge the sub-solution into the global solution, propagate
+   edge values to the remaining variables, and return a complete
+   :class:`~qubosolver.types.QUBOSolution` once all variables are assigned.
+"""
+
 from __future__ import annotations
 
 import copy
@@ -115,6 +130,14 @@ class SubQUBOInstance(QUBOInstanceBase):
         coefficients: Matrix = matrix.zeros(0),
         map_index_vertices: dict[int, int] = {},
     ):
+        """
+        Args:
+            coefficients: Square coefficient matrix for the sub-problem.
+                Defaults to an empty matrix (used as a sentinel for "no
+                sub-problem extracted").
+            map_index_vertices: Mapping from original global variable indices
+                to local (sub-problem) column/row indices.
+        """
         super().__init__(coefficients)
         self._map_index_vertices = map_index_vertices
 
@@ -177,6 +200,30 @@ def extract_subqubo(
 
 
 def update(qubo: QUBOInstance, subqubo: SubQUBOInstance, subsolution: QUBOSolution) -> QUBOSolution:
+    """Merge a sub-solution into the global state and return the full solution if complete.
+
+    Records the solved sub-problem in the decomposition log, writes the
+    best bitstring from *subsolution* into the corresponding positions of the
+    global solution vector, propagates updated edge values to the remaining
+    unplaced vertices, and greedily fixes any variable whose local field turns
+    positive.
+
+    Args:
+        qubo: The decomposition-aware QUBO instance holding the mutable global
+            state (global solution vector, working matrix, vertex dictionaries).
+        subqubo: The sub-problem that was just solved.  An empty instance
+            (no index mapping) is accepted and simply skips the merge step;
+            this is used for the initial call that bootstraps the state.
+        subsolution: The solution returned by the solver for *subqubo*.
+            Only the best bitstring (index 0) is used.  An empty solution
+            skips the write-back.
+
+    Returns:
+        A :class:`~qubosolver.types.QUBOSolution` containing the single
+        complete global bitstring (with costs and probabilities computed) once
+        all variables have been assigned, or an empty
+        :class:`~qubosolver.types.QUBOSolution` if unassigned variables remain.
+    """
     if subqubo._map_index_vertices:
         qubo._decomposition.append(list(subqubo._map_index_vertices.keys()))
     if subsolution:
