@@ -1,3 +1,21 @@
+"""Concrete QUBO solver implementations built on top of :class:`BaseSolver`.
+
+This module provides three internal solver classes and the public
+:class:`QuboSolver` dispatcher:
+
+* :class:`QuboSolver` — public entry point.  Inspects
+  :class:`~qubosolver.config.SolverConfig` and instantiates one of the three
+  solvers below.
+* :class:`_QuboSolverQuantum` — runs the full quantum pipeline: embedding →
+  drive shaping → analog quantum sampling → postprocessing.
+* :class:`_QuboSolverClassical` — delegates to a classical optimiser
+  (CPLEX, Simulated Annealing, Tabu Search, …) via
+  :func:`~qubosolver.solvers.get_classical_solver`.
+* :class:`_DecomposeQuboSolver` — recursively decomposes a large QUBO into
+  device-sized subproblems, solves each with a sub-solver, and merges the
+  partial solutions.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -15,12 +33,28 @@ from qubosolver.drive_shaping._drive_shaper import _get_drive_shaper
 
 
 class QuboSolver(BaseSolver):
-    """
-    Dispatcher that selects the appropriate solver (quantum or classical)
-    based on the SolverConfig and delegates execution to it.
+    """Public QUBO solver dispatcher.
+
+    Inspects :class:`~qubosolver.config.SolverConfig` at construction time
+    and selects the appropriate inner solver:
+
+    * ``config.decompose`` set → :class:`_DecomposeQuboSolver` (with
+      :class:`_QuboSolverQuantum` or :class:`_QuboSolverClassical` as the
+      sub-solver factory, depending on ``config.use_quantum``).
+    * ``config.use_quantum=True`` → :class:`_QuboSolverQuantum`.
+    * ``config.use_quantum=False`` → :class:`_QuboSolverClassical`.
+
+    All public methods delegate directly to the selected inner solver.
     """
 
     def __init__(self, instance: QUBOInstance, config: SolverConfig = SolverConfig()):
+        """Initialise and select the appropriate inner solver.
+
+        Args:
+            instance: The QUBO problem to solve.
+            config: Solver configuration controlling which inner solver is
+                selected and how it behaves.
+        """
         super().__init__(instance, config)
         self._solver: BaseSolver
 
@@ -40,38 +74,61 @@ class QuboSolver(BaseSolver):
                 self._solver = _QuboSolverClassical(instance, config)
 
     def embedding(self) -> qoolqit.Register:
-        """Delegate embedding generation to the inner solver."""
+        """Delegate embedding generation to the inner solver.
+
+        Returns:
+            The :class:`~qoolqit.Register` produced by the inner solver.
+        """
         return self._solver.embedding()
 
-    def drive(self, embedding: qoolqit.Register) -> tuple:
-        """Delegate drive generation to the inner solver."""
+    def drive(self, embedding: qoolqit.Register) -> tuple[qoolqit.Drive, QUBOSolution]:
+        """Delegate drive generation to the inner solver.
+
+        Args:
+            embedding: The register layout produced by :meth:`embedding`.
+
+        Returns:
+            A ``(Drive, QUBOSolution)`` tuple from the inner solver.
+        """
         return self._solver.drive(embedding)
 
     def solve(self) -> QUBOSolution:
         """Solve the QUBO instance by delegating to the selected inner solver.
 
         Returns:
-            The :class:`QUBOSolution` produced by the inner solver.
+            The :class:`~qubosolver.types.QUBOSolution` produced by the inner solver.
         """
         return self._solver.solve()
 
 
 class _QuboSolverQuantum(BaseSolver):
-    """
-    Quantum solver that orchestrates the solving of a QUBO problem using
-    embedding, drive shaping, and quantum execution pipelines.
+    """Quantum QUBO solver using embedding, drive shaping, and analog sampling.
 
-    Note: Negative off-diagonal coefficients are not supported.
+    Orchestrates the full quantum pipeline:
+    embedding → drive shaping → analog quantum execution → postprocessing.
+
+    Constraints:
+
+    * All off-diagonal QUBO coefficients must be non-negative (Rydberg
+      blockade physics cannot encode attractive interactions).
+    * Problem size is capped at 80 variables (device atom-number limit).
     """
 
     def __init__(self, instance: QUBOInstance, config: SolverConfig | None = None):
-        """
-        Initialize the QuboSolver with the given problem and configuration.
+        """Initialise the quantum solver.
 
         Args:
-            instance (QUBOInstance): The QUBO problem to solve.
-            config (SolverConfig | None): Solver settings including backend and device.
-                Defaults to ``SolverConfig(use_quantum=True)`` if ``None``.
+            instance: The QUBO problem to solve.  Raises immediately if any
+                off-diagonal coefficient is negative or the problem exceeds
+                80 variables.
+            config: Solver settings (backend, device, embedding, drive
+                shaping, etc.).  Defaults to
+                ``SolverConfig(use_quantum=True)`` when ``None``.
+
+        Raises:
+            ValueError: If any off-diagonal coefficient in ``instance.matrix``
+                is negative.
+            ValueError: If ``instance.size > 80``.
         """
         super().__init__(instance, config or SolverConfig(use_quantum=True))
 
@@ -88,6 +145,11 @@ class _QuboSolverQuantum(BaseSolver):
         self._drive: qoolqit.Drive | None = None
 
     def _check_size_limit(self) -> None:
+        """Raise if the QUBO instance exceeds the 80-variable device limit.
+
+        Raises:
+            ValueError: If ``self.instance.size > 80``.
+        """
         if self.instance.size > 80:
             raise ValueError(
                 f"QUBO size {self.instance.size}×{self.instance.size}"
@@ -95,29 +157,36 @@ class _QuboSolverQuantum(BaseSolver):
             )
 
     def embedding(self) -> qoolqit.Register:
-        """
-        Generate a physical embedding (register) for the QUBO variables.
+        """Embed QUBO variables onto physical atom positions.
+
+        Calls the configured embedder (BLaDE or Greedy) and caches the
+        result in ``self._register``.
 
         Returns:
-            qoolqit.Register: Atom layout suitable for quantum hardware.
+            The atom :class:`~qoolqit.Register` layout for the current
+            instance.
         """
         self.embedder.instance = self.instance
         self._register = self.embedder.embed()
         return self._register
 
-    def drive(self, embedding: qoolqit.Register) -> tuple:
-        """
-        Generate the drive sequence based on the given embedding.
+    def drive(self, embedding: qoolqit.Register) -> tuple[qoolqit.Drive, QUBOSolution]:
+        """Generate the pulse drive schedule for the given embedding.
+
+        Calls the configured drive shaper (heuristic or optimised) and
+        caches the drive in ``self._drive``.
 
         Args:
-            embedding (qoolqit.Register): The embedded register layout.
+            embedding: The atom register layout produced by :meth:`embedding`.
 
         Returns:
-            tuple:
-                A tuple of
-                    - qoolqit.Drive: qoolqit.Drive schedule for quantum execution.
-                    - QUBOSolution: Initial solution of generated from drive shaper
+            A 2-tuple of:
 
+            * :class:`~qoolqit.Drive` — the pulse schedule for quantum
+              execution.
+            * :class:`~qubosolver.types.QUBOSolution` — an initial solution
+              produced as a by-product of drive shaping (may be empty for the
+              heuristic shaper).
         """
         self.drive_shaper.instance = self.instance
         drive, qubo_solution = self.drive_shaper.generate(embedding)
@@ -126,11 +195,11 @@ class _QuboSolverQuantum(BaseSolver):
         return drive, qubo_solution
 
     def solve(self) -> QUBOSolution:
-        """
-        Execute the full quantum pipeline: preprocess, embed, drive, execute, postprocess.
+        """Execute the full quantum pipeline and return the best solution.
 
         Returns:
-            QUBOSolution: Final result after execution and postprocessing.
+            The final :class:`~qubosolver.types.QUBOSolution`, sorted by
+            ascending cost with probabilities computed.
         """
         # 1) try trivial else delegate to quantum solver
         if self.config.activate_trivial_solutions:
@@ -159,35 +228,40 @@ class _QuboSolverQuantum(BaseSolver):
 
 
 class _QuboSolverClassical(BaseSolver):
-    """
-    Classical solver for QUBO problems.
-    This implementation delegates the classical solving task to the external
-    classical solver module (e.g., CPLEX, Simulated Annealing, or Tabu Search),
-    as selected via the SolverConfig.
+    """Classical QUBO solver.
 
-    After obtaining the raw solution, postprocessing (e.g., bit-flip local search)
-    is applied.
+    Delegates solving to the classical optimiser selected by
+    :func:`~qubosolver.solvers.get_classical_solver` (CPLEX, Simulated
+    Annealing, Tabu Search, or Random).
+
+    Embedding and drive generation are not meaningful for classical solvers;
+    both methods are no-ops that return ``None``.
     """
 
     def __init__(self, instance: QUBOInstance, config: SolverConfig = SolverConfig()):
         super().__init__(instance, config)
 
     def embedding(self) -> qoolqit.Register:
-        """Not applicable for classical solvers (returns ``None``)."""
+        """No-op — classical solvers do not require an atom register.
+
+        Returns:
+            ``None``.
+        """
         return  # type: ignore[return-value]
 
     def drive(self, embedding: qoolqit.Register) -> tuple:
-        """Not applicable for classical solvers (returns ``None``)."""
+        """No-op — classical solvers do not use a pulse drive.
+
+        Returns:
+            ``None``.
+        """
         return  # type: ignore[return-value]
 
     def solve(self) -> QUBOSolution:
         """Solve the QUBO using the configured classical solver.
 
-        Checks for trivial solutions first, then applies preprocessing,
-        classical solving, and postprocessing.
-
         Returns:
-            The :class:`QUBOSolution` produced by the classical solver pipeline.
+            The final :class:`~qubosolver.types.QUBOSolution`.
         """
         # 1) try trivial
         if self.config.activate_trivial_solutions:
@@ -212,25 +286,22 @@ class _QuboSolverClassical(BaseSolver):
 
 
 class _DecomposeQuboSolver(BaseSolver):
-    """
-    Solver that leverages qubo decomposition techniques to solve
-    subproblems and merge subsolutions to propose solutions of
-    the original instance. Note, the QUBO instance is seen as a graph where variables
-    are vertices, and coefficients represents weighted edges.
+    """Device-aware QUBO decomposition solver.
 
-    Scope: the decomposition only accepts qubo with positive coefficients off-diagonal coefficients.
+    Treats the QUBO as a graph (variables = vertices, coefficients =
+    weighted edges), iteratively extracts device-sized subgraphs using
+    geometric search, solves each subproblem with a configurable
+    ``solver_factory``, and merges the partial solutions back into a
+    global solution.  The final tail of variables (those that fall below
+    :attr:`~qubosolver.config.DecompositionConfig.decompose_stop_number`)
+    is always solved classically.
 
-    Algorithm:
-        1. Initialize global solution and vertices to place.
-        2. While we can apply decomposition:
-            - Select a random vertex to place using device layout.
-            - Apply a geometric search to obtain a set of vertices
-                that can be placed on a device to form a subproblem.
-            - Solve the subproblem with a solver.
-            - Update the global solution and the vertices left to place.
-        3. For remaining variables, we solve classically.
+    Constraints:
 
-    Note, only one bitstring solution is returned.
+    * All off-diagonal QUBO coefficients must be non-negative (same
+      physical constraint as :class:`_QuboSolverQuantum`).
+    * Exactly **one** bitstring is returned (design choice of the
+      decomposition algorithm).
     """
 
     def __init__(
@@ -239,14 +310,22 @@ class _DecomposeQuboSolver(BaseSolver):
         config: SolverConfig | None,
         solver_factory: Callable[[QUBOInstance, SolverConfig], BaseSolver],
     ):
-        """
-        Initialize the DecomposeQuboSolver with the given problem and configuration.
+        """Initialise the decomposition solver.
 
         Args:
-            instance (QUBOInstance): The QUBO problem to solve.
-            config (SolverConfig): Solver settings including backend and device.
-            solver_factory (Callable[[QUBOInstance, SolverConfig], BaseSolver]): solver class
-                for subproblems.
+            instance: The QUBO problem to decompose and solve.  All
+                off-diagonal coefficients must be non-negative.
+            config: Solver settings (backend, device, decomposition
+                parameters, etc.).  Defaults to
+                ``SolverConfig(use_quantum=True)`` when ``None``.
+            solver_factory: A callable (typically
+                :class:`_QuboSolverQuantum` or
+                :class:`_QuboSolverClassical`) that constructs the
+                sub-solver used to solve each extracted subproblem.
+
+        Raises:
+            ValueError: If any off-diagonal coefficient in
+                ``instance.matrix`` is negative.
         """
         if (instance.matrix[~torch.eye(*instance.matrix.shape, dtype=torch.bool)] < 0).any():
             raise ValueError("Decomposition does not handle off-diagonal negative coefficients")
@@ -274,32 +353,27 @@ class _DecomposeQuboSolver(BaseSolver):
         self._decomposition = [list(range(instance.size))]
 
     def embedding(self) -> qoolqit.Register:
-        # This solver doesn't generate an embedding.
+        """Not supported — decomposition manages embeddings per subproblem.
+
+        Raises:
+            NotImplementedError: Always.
+        """
         raise NotImplementedError()
 
     def drive(self, embedding: qoolqit.Register) -> tuple:
-        # This solver doesn't generate a drive.
+        """Not supported — decomposition manages drives per subproblem.
+
+        Raises:
+            NotImplementedError: Always.
+        """
         raise NotImplementedError()
 
     def solve(self) -> QUBOSolution:
-        """
-        Execute a solver by decomposing the instance.
-        Note, the QUBO instance is seen as a graph where variables
-        are vertices, and coefficients represents weighted edges.
-
-        Algorithm:
-            1. Initialize global solution and vertices to place.
-            2. While we can apply decomposition:
-                - Select a random vertex to place using device layout.
-                - Apply a geometric search to obtain a set of vertices
-                  that can be placed on a device to form a subproblem.
-                - Solve the subproblem with a solver.
-                - Update the global solution and the vertices left to place.
-            3. For remaining variables, we solve classically.
+        """Solve the QUBO by iterative decomposition into device-sized subproblems.
 
         Returns:
-            QUBOSolution: Final result after execution and postprocessing.
-                Note, only one bitstring solution is returned.
+            A :class:`~qubosolver.types.QUBOSolution` containing exactly one
+            bitstring — the merged result of all subproblem solutions.
         """
         # Create a local Generator that inherits whatever seeding you did via torch.manual_seed(...) (copies the current global RNG state).
         rng = random.torch_rng().set_state(torch.get_rng_state())
