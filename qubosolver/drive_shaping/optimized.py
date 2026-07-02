@@ -18,8 +18,7 @@ from qubosolver.types import (
     _protocols,
     tensor,
 )
-from qubosolver.config import DriveShapingConfig
-from qubosolver import solvers, _utils
+from qubosolver import solvers, _utils, DriveShapingConfig
 from ._waveforms import constant_weighted_dmm
 
 
@@ -92,10 +91,22 @@ class Config:
 
 
 def _compute_norm_weights(Q: QUBOInstance) -> list[float]:
-    """Compute normalization weights.
+    """Compute per-qubit normalised weights from the diagonal of the QUBO matrix.
+
+    Each weight is defined as ``1 - |Q_ii| / max_j(|Q_jj|)``, so a qubit
+    whose diagonal coefficient equals the maximum gets weight 0 (fully
+    penalised) and a qubit with a zero diagonal coefficient gets weight 1
+    (unrestricted).  These weights are passed to the
+    :class:`~qoolqit.drive.DetuningMapModulator` to modulate the local
+    detuning per qubit.
+
+    Args:
+        Q: The QUBO instance whose diagonal entries are used.
 
     Returns:
-        list[float]: normalization weights.
+        A list of floats in ``[0, 1]``, one per qubit, representing the
+        normalised DMM weights.  Returns all-zeros when every diagonal
+        entry is zero.
     """
     weights_list = torch.abs(torch.diag(Q.matrix)).tolist()
     max_node_weight = max(weights_list) if weights_list else 1.0
@@ -112,13 +123,36 @@ def _build_drive(
     dmm: bool,
     device_specs: dict[str, float | None],
 ) -> qoolqit.Drive:
-    """Build the drive from a list of parameters for the objective.
+    """Build a :class:`~qoolqit.Drive` from a flat parameter vector.
+
+    The first three values in *params* control the amplitude waveform and the
+    remaining three control the detuning waveform.  Both are represented as
+    :class:`~qoolqit.Interpolated` waveforms over the full sequence duration.
+    Raw parameters are normalised in ``[0, 1]`` or ``[-1, 1]`` and are scaled
+    to physical units using the device limits before constructing the waveform.
+
+    When *dmm* is enabled **and** the final detuning value is positive, a
+    :class:`~qoolqit.drive.DetuningMapModulator` is added with
+    per-qubit weights derived from the diagonal of the QUBO matrix (see
+    :func:`_compute_norm_weights`).
 
     Args:
-        params (list): List of parameters.
+        Q: The QUBO instance, used to compute DMM weights when *dmm* is
+            ``True``.
+        params: Flat sequence of 6 normalised parameters —
+            ``params[:3]`` are the three interior amplitude knots and
+            ``params[3:]`` are the three detuning knots.  Both ends of the
+            amplitude waveform are pinned to zero.
+        dmm: If ``True``, attach a constant weighted
+            :class:`~qoolqit.drive.DetuningMapModulator` when the final
+            detuning is positive.
+        device_specs: Mapping of device capability keys to their physical
+            limits.  Expected keys: ``"max_duration"``, ``"max_amplitude"``,
+            ``"max_abs_detuning"``.  ``None`` values fall back to large
+            defaults (``1e3`` for duration, ``1e4`` for amplitude/detuning).
 
     Returns:
-        Drive: Drive sequence.
+        A fully configured :class:`~qoolqit.Drive` ready for simulation.
     """
     max_seq_duration: float = device_specs["max_duration"] or 1e3
     max_amplitude: float = device_specs["max_amplitude"] or 1e4
@@ -155,18 +189,31 @@ def _run_simulation(
     backend: _protocols.Backend,
     config: Config,
 ) -> QUBOSolution:
-    """Run a quantum program using backend and returns
-        a tuple of (bitstrings, counts, probabilities, costs, best cost, best bitstring).
+    """Execute one quantum simulation and return a costed, sorted solution.
+
+    Submits an analog quantum sampling job via
+    :func:`~qubosolver.solvers.analog_quantum_sample` using the
+    ``WORKING_POINT`` compiler profile, evaluates the QUBO cost for every
+    returned bitstring with ``config.qubo_cost``, then sorts results by cost
+    and computes sampling probabilities in-place.
+
+    If the simulation or post-processing raises any exception the error is
+    printed and an empty :class:`QUBOSolution` is returned, so callers must
+    treat an empty solution as a failure signal.
 
     Args:
-        register (Register): register of quantum program.
-        drive (Drive): drive to run on backend.
-        QUBO (torch.Tensor): Qubo coefficients.
-        convert_to_tensor (bool, optional): Convert tuple components to tensors.
-            Defaults to True.
+        Q: The raw QUBO coefficient matrix (``torch.Tensor``).
+        register: Physical atom register describing qubit positions.
+        drive: The drive sequence to apply during the simulation.
+        device: Target quantum device that defines hardware constraints.
+        backend: Execution backend used to run the quantum program.
+        config: Optimisation configuration supplying the ``qubo_cost``
+            callable used to evaluate each returned bitstring.
 
     Returns:
-        tuple: tuple of (bitstrings, counts, probabilities, costs, best cost, best bitstring)
+        A :class:`QUBOSolution` with ``costs``, ``bitstrings``,
+        ``probabilities``, and ``counts`` populated and sorted by ascending
+        cost.  Returns an empty :class:`QUBOSolution` on any failure.
     """
     try:
         job = solvers.analog_quantum_sample(
@@ -198,11 +245,11 @@ def build_drive(
     QUBO cost.
 
     Args:
-        register: The physical atom register.
         Q: The QUBO instance to solve.
+        register: The physical atom register.
+        backend: Execution backend for running simulations during optimisation.
         device: Target quantum device.
         dmm: Whether to use the Detuning Map Modulator.
-        backend: Execution backend for running simulations during optimisation.
         config: Optimisation parameters (initial guess, number of calls, etc.).
 
     Returns:
