@@ -18,7 +18,6 @@ from qubosolver.types import (
     Tensor,
     Vector,
     Vectori,
-    Labelling,
     # Classes
     QUBOSolution,
     QUBOSingleSolution,
@@ -72,7 +71,6 @@ __all__ = [
     "Tensor",
     "Vector",
     "Vectori",
-    "Labelling",
     # Classes
     "QUBOSolution",
     "QUBOAnalyzer",

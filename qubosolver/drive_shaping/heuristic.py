@@ -5,7 +5,7 @@ import torch
 import warnings
 
 import qoolqit
-from qubosolver import QUBOInstance, Labelling
+from qubosolver import QUBOInstance
 
 from ._device_specs import pulser_specs as _pulser_specs
 from ._waveforms import constant_weighted_dmm
@@ -17,7 +17,6 @@ def build_drive(
     *,
     dmm: bool = False,
     kappa: float = 0.25,
-    labelling: Labelling = str,
 ) -> qoolqit.Drive:
     """Generate a heuristic drive schedule for QUBO solving.
 
@@ -104,7 +103,6 @@ def build_drive(
             weights,
             max_seq_duration,
             final_detuning=delta_dmm_T,
-            labelling=labelling,
         )
 
     return qoolqit.Drive(

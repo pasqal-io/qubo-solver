@@ -9,7 +9,6 @@ import qoolqit
 
 from ._algorithms import greedy
 from qubosolver import QUBOInstance, LayoutType, EmbeddingConfig
-from qubosolver.types.label import Labelling, _to_callable
 
 
 @dataclass
@@ -99,7 +98,6 @@ def embed(
     *,
     config: Config = Config(),
     normalize: bool = True,
-    labelling: Labelling = str,
 ) -> qoolqit.Register:
     """Embed a QUBO instance using the greedy algorithm.
 
@@ -151,8 +149,7 @@ def embed(
         distance_conversion = device.converter.factors[2]
         coords /= distance_conversion
 
-    labelling = _to_callable(labelling)
     # build the register (unchanged)
-    qubits = {labelling(i): coord for i, coord in enumerate(coords)}
+    qubits = {str(i): coord for i, coord in enumerate(coords)}
     register = qoolqit.Register(qubits)
     return register

@@ -17,7 +17,6 @@ from qubosolver.types import (
     Matrix,
     _protocols,
     tensor,
-    Labelling,
 )
 from qubosolver.config import DriveShapingConfig
 from qubosolver import solvers, _utils
@@ -112,7 +111,6 @@ def _build_drive(
     *,
     dmm: bool,
     device_specs: dict[str, float | None],
-    labelling: Labelling,
 ) -> qoolqit.Drive:
     """Build the drive from a list of parameters for the objective.
 
@@ -142,7 +140,6 @@ def _build_drive(
             _compute_norm_weights(Q),
             max_seq_duration,
             final_detuning=-final_detuning,
-            labelling=labelling,
         )
 
     shaped_drive = qoolqit.Drive(amplitude=amp_wave, detuning=det_wave, dmm=wdetunings)
@@ -193,7 +190,6 @@ def build_drive(
     *,
     dmm: bool = False,
     config: Config = Config(),
-    labelling: Labelling = str,
 ) -> tuple[qoolqit.Drive, QUBOSolution]:
     """Generate an optimised drive schedule via Bayesian optimisation.
 
@@ -230,7 +226,6 @@ def build_drive(
             x,
             dmm=dmm,
             device_specs=device.specs,
-            labelling=labelling,
         )
 
         try:

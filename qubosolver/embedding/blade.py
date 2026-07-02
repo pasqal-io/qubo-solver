@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TypeAlias
 
 from qubosolver import QUBOInstance
-from qubosolver.types.label import Labelling, _to_callable
 from qoolqit import Register
 from qoolqit.embedding import Blade, BladeConfig
 
@@ -16,7 +15,6 @@ def embed(
     *,
     config: Config = Config(),
     normalize: bool = True,
-    labelling: Labelling = str,
 ) -> Register:
     """Embed a QUBO instance using the BLaDE algorithm.
 
@@ -34,7 +32,6 @@ def embed(
     if normalize:
         graph.rescale_coords(spacing=1.0001)
 
-    labelling = _to_callable(labelling)
-    register = Register({labelling(i): coord for (i, coord) in enumerate(graph.coords.values())})
+    register = Register({str(i): coord for (i, coord) in enumerate(graph.coords.values())})
 
     return register

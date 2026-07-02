@@ -20,7 +20,6 @@ from qubosolver.types.backends import (
     AutoRemoteEmulatorBackend,
 )
 from qubosolver.types.random import torch_rng
-from qubosolver.types.label import Labelling
 
 __all__ = [
     # Submodules
@@ -38,7 +37,6 @@ __all__ = [
     "Tensor",
     "Vector",
     "Vectori",
-    "Labelling",
     # Classes
     "QUBOSolution",
     "QUBOSingleSolution",

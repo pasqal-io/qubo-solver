@@ -122,9 +122,7 @@ class HeuristicDriveShaper(_BaseDriveShaper):
         # Heuristic coefficient for omega
         kappa = self.config.drive_shaping.heuristic_kappa
         return (
-            heuristic.build_drive(
-                self.instance, device, dmm=dmm, kappa=kappa, labelling=register.qubits_ids
-            ),
+            heuristic.build_drive(self.instance, device, dmm=dmm, kappa=kappa),
             QUBOSolution(),
         )
 
@@ -179,7 +177,6 @@ class OptimizedDriveShaper(_BaseDriveShaper):
             self.device,
             dmm=self.dmm,
             config=config,
-            labelling=register.qubits_ids,
         )
 
 
