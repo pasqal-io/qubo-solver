@@ -22,23 +22,35 @@ if TYPE_CHECKING:
 
 
 class BaseSolver(ABC):
-    """
-    Abstract base class for all solvers (quantum or classical).
+    """Abstract base class for all solvers (quantum or classical).
 
-    Provides the interface for solving, embedding, drive shaping,
-    and execution of QUBO problems.
+    Concrete subclasses must implement the three abstract methods that form the
+    standard QUBO-solving pipeline:
 
-    The BaseSolver also provides a method to execute the QuantumProgram.
+    1. :meth:`embedding` — map QUBO variables onto physical atom positions.
+    2. :meth:`drive` — generate the pulse schedule that encodes the problem.
+    3. :meth:`solve` — run the full pipeline and return a :class:`~qubosolver.types.QUBOSolution`.
+
+    ``BaseSolver`` also provides shared infrastructure used by all concrete
+    solvers:
+
+    * :meth:`submit` / :meth:`execute` — compile and run a quantum program.
+    * :meth:`preprocess` / :meth:`post_process_fixation` — variable-fixing
+      pre- and post-processing to reduce problem size.
+    * :meth:`post_process` — iterative bit-flip local search to improve solutions.
+    * :meth:`draw_sequence` — visualise the compiled pulse sequence.
+    * :meth:`save` / :meth:`load` — partial serialisation for deferred
+      post-processing.
     """
 
     def __init__(self, instance: QUBOInstance, config: SolverConfig = SolverConfig()):
-        """
-        Initialize the solver with the QUBO instance and configuration.
+        """Initialise the solver with a QUBO instance and configuration.
 
         Args:
-            instance (QUBOInstance): The QUBO problem to solve.
-            config (SolverConfig | None): Configuration settings for the solver.
-                Defaults to a fresh :class:`SolverConfig` if ``None``.
+            instance: The QUBO problem to solve.
+            config: Configuration settings for the solver (backend, device,
+                embedding, drive-shaping, pre/post-processing flags, etc.).
+                Defaults to a default-constructed :class:`SolverConfig`.
         """
         self.instance: QUBOInstance = instance
         self.config = config
@@ -79,17 +91,18 @@ class BaseSolver(ABC):
         pass
 
     @abstractmethod
-    def drive(self, embedding: Register) -> tuple:
-        """
-        Generate a drive for the quantum device based on the embedding.
+    def drive(self, embedding: Register) -> tuple[Drive, QUBOSolution]:
+        """Generate a pulse drive for the quantum device based on the embedding.
 
         Args:
-            embedding (Register): The atom register layout.
+            embedding: The atom register layout produced by :meth:`embedding`.
 
         Returns:
-            tuple:
-                - Drive: The drive schedule.
-                - QUBOSolution: Initial solution from drive shaping.
+            A 2-tuple of:
+
+            * **Drive** — the pulse schedule that encodes the QUBO problem.
+            * **QUBOSolution** — an initial solution produced as a by-product
+              of drive shaping (may be empty if drive shaping does not sample).
         """
         pass
 
@@ -135,11 +148,18 @@ class BaseSolver(ABC):
         return QUBOSolution.from_results(job.results())
 
     def draw_sequence(self, drive: Drive, embedding: Register) -> None:
-        """Draw sequence of the `QuantumProgram` submitted.
+        """Draw the compiled pulse sequence of the quantum program.
+
+        Builds the same :class:`~qoolqit.QuantumProgram` that would be
+        submitted by :meth:`submit`, compiles it, and renders the compiled
+        sequence inline.
+
+        This method is a no-op when ``config.use_quantum`` is ``False``
+        (i.e. classical solver mode), since no quantum program is created.
 
         Args:
-            drive (Drive): Drive used in program.
-            embedding (Register): embedding program is defined over.
+            drive: The pulse drive schedule to visualise.
+            embedding: The atom register the program is defined over.
         """
         if self.config.use_quantum:
             program = solvers.quantum._quantum_program(
@@ -148,11 +168,26 @@ class BaseSolver(ABC):
             program.draw(compiled=True)
 
     def _trivial_solution(self) -> Optional[QUBOSolution]:
-        """Check for trivial solutions (all-zero, all-one, or diagonal)."""
+        """Search for a trivial solution (all-zeros, all-ones, or pure-diagonal).
+
+        Delegates to :func:`~qubosolver.solvers.trivial_solution_search`.
+
+        Returns:
+            A :class:`QUBOSolution` if a trivial optimum is found, or ``None``
+            if the problem has no such degenerate structure.
+        """
         return solvers.trivial_solution_search(self.instance)
 
     def _update_instance(self, instance: QUBOInstance) -> None:
-        """Replace the current QUBO instance and propagate to any inner solver."""
+        """Replace the active QUBO instance on this solver and any inner solver.
+
+        If the concrete subclass exposes a ``_solver`` attribute (e.g. a
+        wrapped classical or decomposition solver), its ``instance`` is also
+        updated so both stay in sync.
+
+        Args:
+            instance: The new :class:`~qubosolver.types.QUBOInstance` to use.
+        """
         self.instance = instance
         # Update _solver's as well
         _solver = getattr(self, "_solver", None)
@@ -161,18 +196,29 @@ class BaseSolver(ABC):
             _solver.instance = self.instance
 
     def preprocess(self) -> None:
-        """Apply preprocessing on instance to reduce its size."""
+        """Apply variable-fixing preprocessing to reduce the problem size.
+
+        This method is a no-op when ``config.do_preprocessing`` is ``False``.
+        """
         if self.config.do_preprocessing:
             self._update_instance(transforms.variable_fixing.apply_recursively(self.instance))
 
     def post_process_fixation(self, solution: QUBOSolution) -> QUBOSolution:
-        """Post-process fixations of the preprocessing and restore the original QUBO.
+        """Restore fixed variables and recover a solution over the original QUBO.
+
+        Reverses the variable-fixing applied by :meth:`preprocess`: re-inserts
+        the fixed variable values into *solution*.
+
+        Returns *solution* unchanged when ``config.do_preprocessing`` is
+        ``False``.
 
         Args:
-            solution (QUBOSolution): Solution after preprocessing.
+            solution: The solution obtained after solving the reduced instance.
 
         Returns:
-            QUBOSolution: New restored solution if preprocessing was applied.
+            A new :class:`~qubosolver.types.QUBOSolution` defined over the
+            full, original QUBO variables.  Returns *solution* as-is when
+            preprocessing was not applied.
         """
         # Means that preprocessing was not applied
         if not self.config.do_preprocessing:
@@ -185,13 +231,23 @@ class BaseSolver(ABC):
         return new_solution
 
     def post_process(self, solution: QUBOSolution) -> QUBOSolution:
-        """Apply post-processing.
+        """Improve a solution with iterative bit-flip local search.
 
-         Args:
-            solution (QUBOSolution): Solution after preprocessing.
+        When ``config.do_postprocessing`` is ``True``, applies
+        :func:`~qubosolver.solvers.iterative_bitflip_local_search` to *solution*,
+        which flips individual bits one at a time and accepts changes that
+        reduce the QUBO cost.
+
+        Returns *solution* unchanged when ``config.do_postprocessing`` is
+        ``False``.
+
+        Args:
+            solution: The raw solution to improve, typically the output of
+                :meth:`execute` or :meth:`drive`.
 
         Returns:
-            QUBOSolution: New postprocessed solution.
+            The improved :class:`~qubosolver.types.QUBOSolution`, or the
+            original *solution* if postprocessing is disabled.
         """
         if not self.config.do_postprocessing:
             return solution
@@ -200,25 +256,27 @@ class BaseSolver(ABC):
 
     @classmethod
     def save(cls, file_like: io_utils.FileLike[bytes], solver: Self) -> None:
-        """
-        Save a solver instance to a file-like object.
+        """Save a solver instance to a file-like object.
 
-        Note:
-            This is currently a partial serialization. Only the QUBO instance,
-            preprocessing/postprocessing flags, and fixed variable information
-            are saved. The complete solver configuration and state are not
-            fully serialized.
+        Serialises only the data required for deferred post-processing:
+
+        * ``do_preprocessing`` and ``do_postprocessing`` flags.
+        * The QUBO instance — either the reduced
+          :class:`~qubosolver.transforms.variable_fixing.QUBOInstance` (when
+          preprocessing was applied) or the original
+          :class:`~qubosolver.types.QUBOInstance`.
+
+        .. note::
+            This is a **partial** serialisation.  The full solver configuration
+            (backend, device, drive-shaping parameters, etc.) is **not** saved.
+            A solver loaded with :meth:`load` supports only
+            :meth:`post_process_fixation` and :meth:`post_process`.
 
         Args:
-            file_like (io_utils.FileLike[bytes]): A file-like object opened in binary
-                write mode where the solver data will be saved. This can be a file path
-                string, Path object, or any file-like object that supports binary writing.
-            solver (Self): The solver instance to be saved. Must be an instance of the
-                same class that this classmethod is called on.
-
-        Returns:
-            None: This method does not return a value. The solver data is written
-                directly to the provided file-like object.
+            file_like: Destination for the serialised data.  Accepts a file
+                path string, a :class:`pathlib.Path`, or any binary-writable
+                file-like object.
+            solver: The solver instance to serialise.
         """
         with io_utils.open(file_like, mode="wb") as f:
             io_utils.save(f, "?", solver.config.do_preprocessing)
@@ -233,29 +291,24 @@ class BaseSolver(ABC):
 
     @classmethod
     def load(cls, file_like: io_utils.FileLike[bytes]) -> Self:
-        """
-        Load a solver instance from a file-like object.
+        """Load a solver instance from a file-like object.
 
-        This method deserializes a solver that was previously saved using the save()
-        method. The loaded solver is in a limited state where most methods are disabled
-        except for post-processing operations. This is because the complete solver
-        configuration and state cannot be fully restored from the saved data.
+        Deserialises a solver previously saved with :meth:`save` and returns it
+        in a **restricted** state: all methods except
+        :meth:`post_process_fixation`, :meth:`post_process`, and
+        :meth:`_update_instance` are replaced with a stub that raises
+        :exc:`AttributeError` on call.  This prevents accidental use of methods
+        that require a fully initialised backend or device configuration.
 
         Args:
-            file_like (io_utils.FileLike[bytes]): A file-like object opened in binary
-                read mode containing the serialized solver data. This can be a file path
-                string, Path object, or any file-like object that supports binary reading.
+            file_like: Source of the serialised data.  Accepts a file path
+                string, a :class:`pathlib.Path`, or any binary-readable
+                file-like object.
 
         Returns:
-            Self: A new solver instance of the same class with restored QUBO instance,
-                preprocessing/postprocessing configuration, and fixed variable information.
-                Note that most solver methods will be disabled and raise AttributeError
-                when called, except for post_process_fixation and post_process methods.
-
-        Note:
-            The returned solver is in a limited state suitable only for post-processing
-            operations. Most functionality including solving, embedding, and execution
-            methods are disabled to prevent incorrect usage of an incompletely loaded solver.
+            A new solver of the same concrete class with the QUBO instance and
+            pre/post-processing flags restored, ready for deferred
+            post-processing only.
         """
         with io_utils.open(file_like, mode="rb") as f:
             do_preprocessing: bool = io_utils.load(f, "?")
@@ -284,6 +337,19 @@ class BaseSolver(ABC):
         return solver
 
     def _disabled_method(self, name: str) -> Callable[..., None]:
+        """Return a stub callable that raises :exc:`AttributeError` when invoked.
+
+        Used by :meth:`load` to disable all methods that cannot be correctly
+        executed on an incompletely deserialised solver.
+
+        Args:
+            name: The original method name, embedded in the error message to
+                aid debugging.
+
+        Returns:
+            A zero-argument-agnostic callable that always raises
+            :exc:`AttributeError`.
+        """
         def disabled(*args: Any, **kwargs: Any) -> None:
             raise AttributeError(
                 f"'{name}' is disabled: this method is not supported for QuboSolverQuantum loaded from a file."
