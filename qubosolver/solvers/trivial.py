@@ -1,3 +1,9 @@
+"""Trivial QUBO solution detection.
+
+Provides :func:`trivial_solution_search`, which recognises coefficient
+patterns whose optimal solution can be read off analytically without any
+search.
+"""
 from __future__ import annotations
 
 import torch
@@ -6,14 +12,22 @@ from qubosolver import QUBOInstance, QUBOSolution, bitstring, vector, vectori
 
 
 def trivial_solution_search(Q: QUBOInstance) -> QUBOSolution:
-    """
-    Check for the two trivial QUBO cases:
-        1) all coefficients >= 0  → solution = 0^n
-        2) all coefficients <= 0  → solution = 1^n
-        3) diagonal qubo,  negative coeffs gets 1, positive gets 0
+    """Analytically solve a QUBO when the coefficient structure is trivial.
+
+    Three patterns are recognised:
+
+    1. **All coefficients ≥ 0** — the all-zeros bitstring ``0^n`` is optimal.
+    2. **All coefficients ≤ 0** — the all-ones bitstring ``1^n`` is optimal.
+    3. **Diagonal matrix** — each variable is independent; bits with a
+       negative diagonal entry are set to 1, the rest to 0.
+
+    Args:
+        Q (QUBOInstance): The QUBO problem whose matrix is inspected.
 
     Returns:
-        QUBOSolution if a trivial case applies, else None.
+        QUBOSolution: A single-bitstring solution when a trivial case is
+            detected, or an empty :class:`~qubosolver.types.QUBOSolution`
+            (no bitstrings) when none of the three patterns apply.
     """
     coeffs = Q.matrix
     n = Q.size
