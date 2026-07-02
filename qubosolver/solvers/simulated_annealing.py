@@ -1,3 +1,13 @@
+"""Simulated Annealing solver for QUBO problems.
+
+Implements a single-run Metropolis–Hastings bit-flip annealer that minimises
+the quadratic objective E(x) = xᵀ Q x over binary vectors x ∈ {0,1}ⁿ.
+
+The public entry point is :func:`simulated_annealing`.  It is called by
+:class:`~qubosolver.solvers.SimulatedAnnealingSolver` and used as the first
+phase of :class:`~qubosolver.solvers.HybridSATabuSolver`.
+"""
+
 from __future__ import annotations
 
 import time
@@ -21,77 +31,62 @@ def simulated_annealing(
     time_limit: float = float("inf"),
     rng: torch.Generator = torch_rng(),
 ) -> QUBOSolution:
-    """
-    Perform Simulated Annealing (SA) for a Quadratic Unconstrained Binary Optimization (QUBO)
-    problem using PyTorch, returning the top-K unique low-energy solutions found.
+    """Run Simulated Annealing on a QUBO instance and return the best solutions found.
 
-    The algorithm minimizes the quadratic form:
-        E(x) = xᵀ Q x
-    where x ∈ {0,1}ⁿ.
+    Minimises E(x) = xᵀ Q x over x ∈ {0,1}ⁿ using the Metropolis–Hastings
+    acceptance rule with a geometric cooling schedule.  The QUBO matrix is
+    symmetrised internally as ``(Q + Qᵀ) / 2`` before solving.
+
+    At each of *max_iter* steps a random bit is proposed for flipping.  The
+    flip is always accepted when it reduces the energy; otherwise it is
+    accepted with probability ``exp(-ΔE / T)``.  Energy updates are computed
+    incrementally in O(n) per step using the cached matrix-vector product ``Qx``.
+
+    Up to *top_k* unique lowest-energy bitstrings encountered during the run
+    are retained and returned, deduplicated by byte-hashing.
 
     Args:
-        Q: torch.Tensor of shape (n, n)
-            The QUBO matrix defining the objective. It is symmetrized internally
-            as (Q + Qᵀ) / 2 to ensure a well-defined energy landscape.
-        top_k: int, optional, default=5
-            The maximum number of unique best solutions to keep, ordered by ascending energy.
-        max_iter: int, optional, default=100_000
-            The number of Metropolis steps (bit-flip proposals) performed during annealing.
-        initial_temp: float, optional, default=5.0
-            The starting temperature for the annealing schedule.
-        final_temp: float, optional, default=1e-3
-            The final temperature at the end of the annealing schedule.
-        cooling_rate: float or None, default=None
-            Geometric cooling factor α in (0, 1). If provided, temperature updates as
-            T ← α·T each iteration and `final_temp` is ignored.
-            If None, α is computed so that T transitions from T₀ to T_f in `max_iter`.
-        seed: int or None, optional
-            Random seed for reproducibility. If None, a random seed is used.
-        start: torch.Tensor or None, optional
-            Optional initial bitstring of shape (n,), with values in {0,1}.
-            If None, the initial configuration is sampled uniformly at random.
-        energy_tol: float, optional, default=0.0
-            Energy tolerance for considering two solutions as equivalent.
-            If two energies differ by ≤ `energy_tol`, they are treated as equal.
-        time_limit: float, default=float('inf')
-            Maximum resolution time in seconds. If infinite, the execution
-            is limited only by `max_iter`. If finite, the algorithm stops
-            when either `max_iter` or `time_limit` is reached.
+        qubo: The QUBO instance to solve.  Its coefficient matrix is
+            symmetrised internally as ``(Q + Qᵀ) / 2``.
+        start: Initial binary solution tensor of shape ``(n,)`` with values
+            in ``{0, 1}``.  The search begins from this configuration.
+        top_k: Maximum number of unique best solutions to keep, ordered by
+            ascending energy.  Defaults to ``5``.
+        max_iter: Number of Metropolis bit-flip proposals to perform.
+            Defaults to ``1000``.
+        initial_temp: Starting temperature T₀.  Higher values increase the
+            probability of accepting uphill moves early in the search.
+            Defaults to ``5.0``.
+        final_temp: Target temperature T_f at the end of the schedule, used
+            to derive the cooling rate when *cooling_rate* is ``None``.
+            Ignored when *cooling_rate* is provided explicitly.
+            Defaults to ``1e-3``.
+        cooling_rate: Geometric cooling factor α ∈ (0, 1) such that
+            T ← α·T at each step.  When ``None`` (default), α is derived
+            automatically from *initial_temp*, *final_temp*, and *max_iter*
+            so that the temperature reaches *final_temp* after *max_iter* steps.
+        energy_tol: Two solutions with energies differing by at most this
+            value are treated as equivalent when maintaining the top-k list.
+            Defaults to ``0.0`` (strict equality).
+        time_limit: Wall-clock budget in seconds.  The algorithm stops early
+            when either *max_iter* steps or the time limit is reached,
+            whichever comes first.  Defaults to ``float("inf")`` (no limit).
+        rng: PyTorch random number generator used for bit selection and
+            Metropolis acceptance sampling.  Defaults to a module-level
+            generator created once at import time; pass an explicit generator
+            for reproducibility across calls.
 
     Returns:
-        solutions: torch.Tensor of shape (m, n), dtype=torch.uint8
-            Up to `top_k` unique bitstrings found (m ≤ top_k), sorted by increasing energy.
-            Returned on CPU for easy inspection and serialization.
-        energies: torch.Tensor of shape (m,), dtype=torch.float64
-            Corresponding energy values (xᵀ Q x) in ascending order.
-        counts: Frequencies each unique bitstring was found.
+        A :class:`~qubosolver.types.QUBOSolution` containing up to *top_k*
+        unique bitstrings sorted by ascending energy, with their costs,
+        counts (how many times each was visited during the run), and
+        normalised probabilities.
 
-    Notes:
-        The algorithm uses an **incremental energy update** for O(n) cost per accepted flip:
-          Qx ← Qx + Δxᵢ * Q[:, i], where Δxᵢ ∈ {+1, -1}.
-        The **temperature schedule** follows a geometric decay:
-          Tₜ = T₀ * (T_f / T₀)^(t / (max_iter - 1)).
-        The **Metropolis acceptance rule** is applied:
-          accept flip with probability p = min(1, exp(-ΔE / T)).
-        Duplicate bitstrings are filtered using Python byte hashing for compactness.
-        For stochastic diversity, multiple runs with different seeds are recommended.
-
-    Examples:
-    >>> import torch
-    >>> Q = torch.tensor([
-    ...     [1.0, -2.0,  0.0],
-    ...     [-2.0, 1.0,  0.0],
-    ...     [0.0,  0.0,  0.5],
-    ... ])
-    >>> solutions, energies, counts = simulated_annealing_qubo_topk_torch(
-    ...     Q, top_k=3, max_iter=1000, seed=42
-    ... )
-    >>> energies
-    tensor([-3.0, -2.0, -1.5], dtype=torch.float64)
-    >>> solutions
-    tensor([[1, 1, 0],
-            [1, 0, 0],
-            [0, 1, 0]], dtype=torch.uint8)
+    Raises:
+        ValueError: If ``top_k < 1``.
+        ValueError: If ``initial_temp <= 0``.
+        ValueError: If ``cooling_rate`` is ``None`` and ``final_temp <= 0``.
+        ValueError: If ``cooling_rate`` is provided but not in ``(0, 1)``.
     """
     if top_k <= 0:
         raise ValueError("top_k must be >= 1.")

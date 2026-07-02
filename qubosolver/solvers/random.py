@@ -1,3 +1,19 @@
+"""Uniform random bitstring sampler for QUBO instances.
+
+This module provides :func:`random_solutions`, which samples uniformly random
+binary vectors, evaluates their QUBO cost, and returns a deduplicated
+:class:`~qubosolver.types.QUBOSolution` sorted by ascending cost.
+
+It serves two roles in the broader solver stack:
+
+* **Baseline solver** — used by :class:`~qubosolver.solvers.RandomSolver` as
+  a standalone classical solver.
+* **Warm-start initialiser** — used by
+  :class:`~qubosolver.solvers.SimulatedAnnealingSolver` and
+  :class:`~qubosolver.solvers.TabuSearchSolver` to generate a random starting
+  point when no initial bitstring is provided.
+"""
+
 from __future__ import annotations
 
 import torch
@@ -12,18 +28,37 @@ def random_solutions(
     max_bitstrings: int = 1,
     rng: torch.Generator = torch_rng(),
 ) -> QUBOSolution:
-    """Generate random bitstring solutions for a QUBO instance.
+    """Sample uniformly random bitstring solutions for a QUBO instance.
 
-    Samples ``max_bitstrings`` uniformly random binary vectors, deduplicates them,
-    evaluates their costs, and returns the result sorted by ascending cost.
+    Draws *max_bitstrings* independent binary vectors uniformly at random,
+    deduplicates them (identical samples are merged and their draw count is
+    accumulated in ``counts``), evaluates the QUBO cost of each unique
+    bitstring, and returns the result sorted by ascending cost with
+    probabilities computed from the counts.
+
+    .. note::
+        The *rng* default is a :class:`torch.Generator` created **once** at
+        module import time.  Pass an explicit generator when reproducibility
+        across calls is required (e.g. ``torch_rng(seed=42)``).
+
+    .. note::
+        Because of deduplication, the returned solution may contain fewer than
+        *max_bitstrings* bitstrings when the same random vector is drawn more
+        than once.
 
     Args:
-        Q: The :class:`QUBOInstance` to evaluate against.
-        rng: Random number generator for reproducibility.
-        max_bitstrings: Number of random bitstrings to sample.
+        Q: The QUBO instance whose coefficient matrix is used to evaluate
+            bitstring costs.
+        max_bitstrings: Number of random bitstrings to draw before
+            deduplication.  The returned solution may contain fewer unique
+            bitstrings.  Defaults to ``1``.
+        rng: PyTorch random number generator controlling the sampling.
+            Defaults to a module-level generator (see note above).
 
     Returns:
-        A :class:`QUBOSolution` with unique bitstrings, costs, counts, and probabilities.
+        A :class:`~qubosolver.types.QUBOSolution` with unique bitstrings,
+        their QUBO costs, draw counts, and normalised probabilities, sorted
+        by ascending cost.
     """
     bitstrings_ = bitstring.from_torch(
         torch.randint(0, 2, size=(max_bitstrings, Q.size), generator=rng)
