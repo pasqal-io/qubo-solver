@@ -40,7 +40,13 @@ nav:
     - Qubo Analyzer: tutorial/08-qubo_analyzer.ipynb
     - Solving with decomposition: tutorial/09-decomposition.ipynb
 
-  - API: api/api.md
+  - API:
+    - types: api/types.md
+    - transforms: api/transforms.md
+    - solvers: api/solvers.md
+    - embedding: api/embedding.md
+    - Drive-Shaping: api/drive_shaping.md
+    - config: api/config.md
 
   - Open-source:
     - Licence (MIT-Derived): LICENSE.md

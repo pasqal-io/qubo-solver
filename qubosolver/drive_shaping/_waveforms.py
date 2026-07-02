@@ -22,10 +22,13 @@ def constant_weighted_dmm(
     values must be ≤ 0 (i.e., ``final_detuning`` should be negative).
 
     Args:
-        embedding (Register): embedding targeted.
+        norm_weights (Sequence[float]): Per-qubit normalized weights for the
+            DMM, each value in [0, 1].
         duration (float): Waveform duration.
-        norm_weights (list[float]): Normalized weights for DMM.
-        final_detuning (float): Detuning final value.
+        final_detuning (float): Detuning final value (should be ≤ 0).
+        labelling (Labelling): Callable used to map qubit indices to qubit
+            labels. Defaults to ``str``. Can be inferred from a register via
+            ``register.qubits_ids``.
 
     Returns:
         DetuningMapModulator: DetuningMapModulator with a constant
