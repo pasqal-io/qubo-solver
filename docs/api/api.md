@@ -2,8 +2,6 @@
 
 ::: qubosolver
 
-## todo
-
 ::: qubosolver.drive_shaping
 
 ::: qubosolver.embedding

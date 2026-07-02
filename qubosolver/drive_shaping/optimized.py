@@ -1,3 +1,6 @@
+"""Bayesian-optimised drive schedule generation for QUBO solving.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

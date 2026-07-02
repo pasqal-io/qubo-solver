@@ -1,7 +1,7 @@
 """Solvers for QUBO problems.
 
-This package provides quantum and classical solvers, as well as
-post-processing utilities such as bit-flip local search.
+This package provides quantum and classical solvers. Some of them can also be
+used as post-processing steps to refine an existing solution.
 """
 
 from __future__ import annotations

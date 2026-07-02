@@ -1,4 +1,4 @@
-"""Bit-flip local search post-processing for QUBO solutions.
+"""Bit-flip local search for QUBO solutions.
 
 This module provides a greedy single-bit-flip local search that improves an
 existing :class:`~qubosolver.types.QUBOSolution` by iteratively flipping the

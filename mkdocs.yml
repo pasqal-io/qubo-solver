@@ -45,7 +45,7 @@ nav:
     - transforms: api/transforms.md
     - solvers: api/solvers.md
     - embedding: api/embedding.md
-    - Drive-Shaping: api/drive_shaping.md
+    - drive_shaping: api/drive_shaping.md
     - config: api/config.md
 
   - Open-source:
@@ -103,21 +103,42 @@ plugins:
 - search
 - section-index
 - markdown-exec
+- autorefs
+- mkdocs-jupyter:
+    include: ["*.ipynb"]
+    include_requirejs: true
+    custom_mathjax_url: "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS_CHTML-full,Safe"
 - mkdocstrings:
-    default_handler: python
     handlers:
       python:
-        selection:
-          filters:
-            - "!^_"  # exlude all members starting with _
-            - "^__init__$"  # but always include __init__ modules and methods
+        paths: [qubosolver]
         options:
-          show_root_toc_entry: false
-          heading_level: 3
+          docstring_options:
+            ignore_init_summary: true
+          docstring_section_style: list
+          filters: public
+          heading_level: 2
+          inherited_members: true
           merge_init_into_class: true
-          docstring_section_style: spacy
-- mkdocs-jupyter:
-    theme: light
+          parameter_headings: true
+          type_parameter_headings: true
+          preload_modules: [qubosolver]
+          relative_crossrefs: true
+          scoped_crossrefs: true
+          show_bases: false
+          show_inheritance_diagram: false
+          show_root_heading: true
+          show_root_full_path: false
+          show_signature_annotations: true
+          show_signature_type_parameters: true
+          show_source: true
+          show_symbol_type_heading: true
+          show_symbol_type_toc: true
+          signature_crossrefs: true
+          summary: true
+          unwrap_annotated: true
+          separate_signature: true
+          line_length: 80
 
 
 watch:

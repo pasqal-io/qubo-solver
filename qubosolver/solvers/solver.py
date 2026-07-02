@@ -35,14 +35,8 @@ from qubosolver.drive_shaping._drive_shaper import _get_drive_shaper
 class QuboSolver(BaseSolver):
     """Public QUBO solver dispatcher.
 
-    Inspects :class:`~qubosolver.config.SolverConfig` at construction time
-    and selects the appropriate inner solver:
-
-    * ``config.decompose`` set → :class:`_DecomposeQuboSolver` (with
-      :class:`_QuboSolverQuantum` or :class:`_QuboSolverClassical` as the
-      sub-solver factory, depending on ``config.use_quantum``).
-    * ``config.use_quantum=True`` → :class:`_QuboSolverQuantum`.
-    * ``config.use_quantum=False`` → :class:`_QuboSolverClassical`.
+    Inspects [`qubosolver.SolverConfig`][] at construction time
+    and selects the appropriate inner solver.
 
     All public methods delegate directly to the selected inner solver.
     """
@@ -58,20 +52,17 @@ class QuboSolver(BaseSolver):
         super().__init__(instance, config)
         self._solver: BaseSolver
 
-        if config is None:
-            self._solver = _QuboSolverClassical(instance, self.config)
-        else:
-            if config.decompose:
-                if self.config.use_quantum:
-                    solver_factory: type[BaseSolver] = _QuboSolverQuantum
-                else:
-                    solver_factory = _QuboSolverClassical
-                self._solver = _DecomposeQuboSolver(instance, self.config, solver_factory)
-
-            elif config.use_quantum:
-                self._solver = _QuboSolverQuantum(instance, config)
+        if config.decompose:
+            if self.config.use_quantum:
+                solver_factory: type[BaseSolver] = _QuboSolverQuantum
             else:
-                self._solver = _QuboSolverClassical(instance, config)
+                solver_factory = _QuboSolverClassical
+            self._solver = _DecomposeQuboSolver(instance, self.config, solver_factory)
+
+        elif config.use_quantum:
+            self._solver = _QuboSolverQuantum(instance, config)
+        else:
+            self._solver = _QuboSolverClassical(instance, config)
 
     def embedding(self) -> qoolqit.Register:
         """Delegate embedding generation to the inner solver.

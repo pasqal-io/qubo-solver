@@ -1,3 +1,7 @@
+"""Heuristic drive schedule generation for QUBO solving.
+
+"""
+
 from __future__ import annotations
 
 import numpy as np
@@ -12,9 +16,9 @@ from ._waveforms import constant_weighted_dmm
 
 
 def build_drive(
-    Q: QUBOInstance,
-    device: qoolqit.Device,
+    instance: QUBOInstance,
     *,
+    device: qoolqit.Device,
     dmm: bool = False,
     kappa: float = 0.25,
 ) -> qoolqit.Drive:
@@ -25,15 +29,14 @@ def build_drive(
     computed so that the final local detuning encodes the QUBO diagonal.
 
     Args:
-        register: The physical atom register.
-        Q: The QUBO instance whose diagonal encodes target detunings.
+        instance: The QUBO instance whose diagonal encodes target detunings.
         device: Target quantum device (provides hardware limits).
         dmm: Whether to use the Detuning Map Modulator for local control.
         kappa: Ratio between peak Rabi frequency and peak detuning.
             Defaults to 0.25.
 
     Returns:
-        A :class:`~qoolqit.Drive` ready for compilation and execution.
+        A `qoolqit.Drive` ready for compilation and execution.
     """
     # Hardware bounds
     specs = device.specs
@@ -50,10 +53,10 @@ def build_drive(
             f"heuristic_kappa is too small ({kappa}), you're likely to get a qoolqit CompilationError. Set it above {det_amp_ratio}."
         )
 
-    n = Q.size
+    n = instance.size
 
     # Target local final detunings
-    d = (-0.5 * torch.diag(Q._normalized_matrix)).cpu().numpy()
+    d = (-0.5 * torch.diag(instance._normalized_matrix)).cpu().numpy()
     d_min = np.min(d)
     d_max = np.max(d)
 
