@@ -5,9 +5,9 @@ select the optimal backend implementation based on the quantum register size.
 
 The automatic selection optimizes performance by choosing backends that are
 most efficient for the given problem size:
-- Small problems (< 15 qubits): QutipBackendV2 (local) / EmuFreeBackendV2 (remote)
-- Medium problems (15-25 qubits): SVBackend (local) / EmuSVBackend (remote)
-- Large problems (≥ 26 qubits): MPSBackend (local) / EmuMPSBackend (remote)
+- Small problems (< 15 qubits): QutipBackendV2 (local) / RemoteEmuFreeBackend (remote)
+- Medium problems (15-25 qubits): SVBackend (local) / RemoteSVBackend (remote)
+- Large problems (≥ 26 qubits): MPSBackend (local) / RemoteMPSBackend (remote)
 
 References:
 - SVBackend performance benchmarks: https://pasqal-io.github.io/emulators/latest/emu_sv/benchmarks/performance/
@@ -23,11 +23,11 @@ from typing import Any, Type, cast, Literal
 from pulser import Sequence as PulserSequence
 from pulser.backend.abc import EmulatorBackend
 from pulser_simulation import QutipBackendV2
-from pulser_pasqal.backends import (
+from pasqal_cloud.backends import (
     RemoteEmulatorBackend,
-    EmuFreeBackendV2,
-    EmuSVBackend,
-    EmuMPSBackend,
+    RemoteEmuFreeBackend,
+    RemoteSVBackend,
+    RemoteMPSBackend,
 )
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
@@ -59,15 +59,15 @@ def _get_backend_type(
     """
     match (backend_id, remote):
         case ("qutip", True):
-            return EmuFreeBackendV2
+            return RemoteEmuFreeBackend
         case ("qutip", False):
             return QutipBackendV2
         case ("emu_sv", True):
-            return EmuSVBackend
+            return RemoteSVBackend
         case ("emu_sv", False):
             return cast(Type[EmulatorBackend], SVBackend)
         case ("emu_mps", True):
-            return EmuMPSBackend
+            return RemoteMPSBackend
         case ("emu_mps", False):
             return cast(Type[EmulatorBackend], MPSBackend)
         case _:
@@ -85,7 +85,7 @@ def _select_backend_type(
 
     Returns:
         Type[EmulatorBackend] | Type[RemoteEmulatorBackend]: The selected backend class
-        appropriate for the given problem size. QutipBackendV2/EmuFreeBackendV2 become
+        appropriate for the given problem size. QutipBackendV2/RemoteEmuFreeBackend become
         intractable beyond 15 qubits.
     """
     if n_qubits >= _MPS_THRESHOLD:
@@ -132,9 +132,9 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
 
     This factory uses __new__ to return instances of different remote backend types
     based on quantum register size for optimal performance:
-    - EmuMPSBackend for large problems (≥26 qubits)
-    - EmuSVBackend for medium problems (15-25 qubits)
-    - EmuFreeBackendV2 for small problems (<15 qubits)
+    - RemoteMPSBackend for large problems (≥26 qubits)
+    - RemoteSVBackend for medium problems (15-25 qubits)
+    - RemoteEmuFreeBackend for small problems (<15 qubits)
 
     Note: This class acts as a factory and never instantiates itself.
     The __new__ method directly returns instances of the selected remote backend type.
@@ -146,7 +146,7 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
 
     Returns:
         RemoteEmulatorBackend: An instance of the automatically selected remote backend
-        (EmuMPSBackend, EmuSVBackend, or EmuFreeBackendV2).
+        (RemoteMPSBackend, RemoteSVBackend, or RemoteEmuFreeBackend).
     """
 
     def __new__(cls, sequence: PulserSequence, *args: Any, **kwargs: Any) -> RemoteEmulatorBackend:  # type: ignore[misc]
@@ -239,29 +239,29 @@ class RemoteEmulator(QoolqitRemoteEmulator):
     recommendations based on quantum register size and tractability constraints.
 
     Backend selection guidelines based on computational tractability:
-    - Small problems (< 15 qubits): EmuFreeBackendV2 (default)
-    - Medium problems (15-25 qubits): EmuSVBackend
-    - Large problems (≥ 26 qubits): EmuMPSBackend
+    - Small problems (< 15 qubits): RemoteEmuFreeBackend (default)
+    - Medium problems (15-25 qubits): RemoteSVBackend
+    - Large problems (≥ 26 qubits): RemoteMPSBackend
 
-    Note: EmuFreeBackendV2 becomes intractable beyond ~15 qubits, similar to its
-    local counterpart QutipBackendV2. For larger problems, EmuSVBackend and
-    EmuMPSBackend are necessary. Fees may apply for remote execution.
+    Note: RemoteEmuFreeBackend becomes intractable beyond ~15 qubits, similar to its
+    local counterpart QutipBackendV2. For larger problems, RemoteSVBackend and
+    RemoteMPSBackend are necessary. Fees may apply for remote execution.
 
     Args:
         backend_type (type, optional): Backend type to use. Defaults to
-            EmuFreeBackendV2.
+            RemoteEmuFreeBackend.
         **kwargs: Additional keyword arguments passed to the base RemoteEmulator.
 
     Example:
         >>> from qubosolver.backends import RemoteEmulator
-        >>> from pulser_pasqal import PasqalCloud
-        >>> connection = PasqalCloud(username="user", password="pass", project_id="project")
+        >>> from pasqal_cloud import PasqalCloudConnection
+        >>> connection = PasqalCloudConnection(username="user", password="pass", project_id="project")
         >>> emulator = RemoteEmulator(connection=connection, num_shots=1000)
-        >>> # Uses EmuFreeBackendV2 by default
+        >>> # Uses RemoteEmuFreeBackend by default
     """
 
     def __init__(
-        self, backend_type: Type[RemoteEmulatorBackend] = EmuFreeBackendV2, **kwargs: Any
+        self, backend_type: Type[RemoteEmulatorBackend] = RemoteEmuFreeBackend, **kwargs: Any
     ) -> None:
         super().__init__(backend_type=backend_type, **kwargs)
 

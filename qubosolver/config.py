@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator, mo
 from qoolqit.devices.device import Device, AnalogDeviceWithDMM
 from qoolqit.execution import QPU
 from qoolqit.execution.compilation_functions import CompilerProfile
-from pulser_pasqal import PasqalCloud
+from pasqal_cloud import PasqalCloudConnection
 
 from qubosolver.qubo_types import (
     EmbedderType,
@@ -29,7 +29,7 @@ __all__: list[str] = [
     "LocalEmulator",
     "RemoteEmulator",
     "QPU",
-    "PasqalCloud",
+    "PasqalCloudConnection",
     "ClassicalConfig",
     "EmbeddingConfig",
     "DriveShapingConfig",

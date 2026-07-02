@@ -81,7 +81,7 @@ PASSWORD= None
 
 
 if PASSWORD is not None:
-    connection = PasqalCloud(
+    connection = PasqalCloudConnection(
         username=USERNAME,
         password=PASSWORD,
         project_id=PROJECT_ID,
@@ -105,7 +105,7 @@ Emulators are also available remotely:
 ```python
 import torch
 from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, RemoteEmulator, PasqalCloud
+from qubosolver.config import SolverConfig, RemoteEmulator, PasqalCloudConnection
 from qubosolver.solver import QuboSolver
 
 # define QUBO
@@ -118,7 +118,7 @@ PROJECT_ID='#TO_PROVIDE'
 PASSWORD= None
 
 if PASSWORD is not None:
-    connection = PasqalCloud(
+    connection = PasqalCloudConnection(
         username=USERNAME,
         password=PASSWORD,
         project_id=PROJECT_ID,

@@ -13,7 +13,7 @@ from emu_sv import SVBackend
 from emu_mps import MPSBackend
 
 from qoolqit.devices import AnalogDeviceWithDMM, AnalogDevice, Device, MockDevice
-from pulser_pasqal import PasqalCloud
+from pasqal_cloud import PasqalCloudConnection
 from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.qubo_analyzer import QUBOAnalyzer
 from qubosolver.config import (
@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Generator
 
-connection = PasqalCloud()
+connection = PasqalCloudConnection()
 connection.fetch_available_devices()
 
 
