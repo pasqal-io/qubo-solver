@@ -1,3 +1,22 @@
+"""1-D integer vector utilities for QUBO solvers.
+
+A [`Vectori`][qubosolver.Vectori] is a 1-D ``torch.int64`` tensor of shape ``(n,)`` used to
+represent integer-valued quantities such as indices or counts.
+Unlike [`qubosolver.vector`][qubosolver.vector], the dtype is fixed to ``int64``
+and is not affected by the global float precision setting.
+
+This module provides factory functions for creating and converting integer
+vectors on the globally configured torch device.
+
+Typical usage:
+
+    v = vectori.zeros(4)                     # 1-D zero int64 vector of length 4
+    v = vectori.tensor([0, 1, 2, 3])         # from a list of integers
+    v = vectori.from_torch(some_tensor)      # cast existing tensor to int64
+
+See also [`qubosolver.vector`][qubosolver.vector] for float vectors.
+"""
+
 from __future__ import annotations
 
 from typing import Any

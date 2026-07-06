@@ -1,6 +1,6 @@
 """Bitstring utilities for QUBO solvers.
 
-A *bitstring* is a 1-D ``torch.int8`` tensor whose elements are 0 or 1.
+A [`Bitstring`][qubosolver.Bitstring] is a 1-D ``torch.int8`` tensor whose elements are 0 or 1.
 This module provides factory functions and converters for creating and
 manipulating bitstrings on the globally configured torch device.
 

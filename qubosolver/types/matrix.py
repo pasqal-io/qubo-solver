@@ -1,3 +1,17 @@
+"""Square matrix utilities for QUBO solvers.
+
+A [`Matrix`][qubosolver.Matrix] is a 2-D tensor of shape ``(n, n)`` using the globally configured
+float dtype (float32 by default, float64 when double precision is enabled).
+This module provides factory functions for creating and converting such matrices
+on the globally configured torch device.
+
+Typical usage:
+
+    Q = matrix.zeros(4)                          # 4×4 zero matrix
+    Q = matrix.tensor([[0, 1], [1, 0]])          # from nested list
+    Q = matrix.from_torch(some_tensor)           # cast existing tensor
+"""
+
 from __future__ import annotations
 
 from typing import Any

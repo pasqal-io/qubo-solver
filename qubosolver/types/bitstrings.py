@@ -1,6 +1,6 @@
 """Batch bitstring utilities for QUBO solvers.
 
-A *bitstrings* collection is a 2-D ``torch.int8`` tensor of shape
+A [`Bitstrings`][qubosolver.Bitstrings] collection is a 2-D ``torch.int8`` tensor of shape
 ``(count, n_bits)``, where each row is an individual bitstring.
 This module provides factory functions and converters for creating and
 manipulating batches of bitstrings on the globally configured torch device.
@@ -11,7 +11,7 @@ Typical usage:
     ss = bitstrings.to_strings(bs)          # ["1010", "0110", "1100"]
     z  = bitstrings.zeros(4, 8)             # 4 zero bitstrings of length 8
 
-See also qubosolver.types.bitstring for single-bitstring operations.
+See also [`qubosolver.bitstring`][qubosolver.bitstring] for single-bitstring operations.
 """
 
 from __future__ import annotations
@@ -81,8 +81,7 @@ def from_strings(strings: Sequence[str], *, device: torch.device = device()) -> 
         device: Torch device for the tensor.
 
     Returns:
-        A 2-D ``int8`` tensor of shape ``(len(strings), len(strings[0]))``,
-        or shape ``(0, 0)`` if *strings* is empty.
+        A 2-D ``int8`` tensor of shape ``(len(strings), len(strings[0]))``, possibly empty.
 
     Raises:
         ValueError: If the strings have differing lengths.

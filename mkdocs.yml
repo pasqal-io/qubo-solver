@@ -42,16 +42,17 @@ nav:
 
   - API:
     - qubosolver: api/qubosolver.md
-    - qubosolver.bitstring: api/bitstring.md
-    - qubosolver.bitstrings: api/bitstrings.md
     - qubosolver.drive_shaping: api/drive_shaping.md
     - qubosolver.embedding: api/embedding.md
-    - qubosolver.matrix: api/matrix.md
     - qubosolver.solvers: api/solvers.md
-    - qubosolver.tensor: api/tensor.md
     - qubosolver.transforms: api/transforms.md
-    - qubosolver.vector: api/vector.md
-    - qubosolver.vectori: api/vectori.md
+    - Tensors:
+      - qubosolver.bitstring: api/bitstring.md
+      - qubosolver.bitstrings: api/bitstrings.md
+      - qubosolver.matrix: api/matrix.md
+      - qubosolver.tensor: api/tensor.md
+      - qubosolver.vector: api/vector.md
+      - qubosolver.vectori: api/vectori.md
 
   - Open-source:
     - Licence (MIT-Derived): LICENSE.md

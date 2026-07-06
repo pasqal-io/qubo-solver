@@ -1,3 +1,20 @@
+"""Arbitrary-rank tensor utilities for QUBO solvers.
+
+A [`Tensor`][qubosolver.Tensor] here is an arbitrary-rank float tensor using the globally configured
+dtype (float32 by default, float64 when double precision is enabled).
+This module provides factory functions for creating and converting such tensors
+on the globally configured torch device.
+
+Typical usage:
+
+    t = tensor.zeros(2, 3)                   # 2×3 zero tensor
+    t = tensor.tensor([[1.0, 0.0], [0.0, 1.0]])  # from nested list
+    t = tensor.from_torch(some_tensor)       # cast existing tensor
+
+For rank-specific aliases see [`qubosolver.vector`][qubosolver.vector] (1-D) and
+[`qubosolver.matrix`][qubosolver.matrix] (2-D square).
+"""
+
 from __future__ import annotations
 
 from typing import Any

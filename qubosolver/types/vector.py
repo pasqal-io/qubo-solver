@@ -1,3 +1,20 @@
+"""1-D vector utilities for QUBO solvers.
+
+A [`Vector`][qubosolver.Vector] is a 1-D float tensor of shape ``(n,)`` using the globally configured
+dtype (float32 by default, float64 when double precision is enabled).
+This module provides factory functions for creating and converting such vectors
+on the globally configured torch device.
+
+Typical usage:
+
+    v = vector.zeros(4)                      # 1-D zero vector of length 4
+    v = vector.tensor([1.0, 0.5, -1.0])     # from a list
+    v = vector.from_torch(some_tensor)       # cast existing tensor
+
+For higher-rank variants see [`qubosolver.matrix`][qubosolver.matrix] (2-D square) and
+[`qubosolver.tensor`][qubosolver.tensor] (arbitrary rank).
+"""
+
 from __future__ import annotations
 
 from typing import Any
