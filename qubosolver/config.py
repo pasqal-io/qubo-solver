@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 from abc import ABC
 from dataclasses import field
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 import torch
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator, model_serializer
@@ -34,6 +34,7 @@ __all__: list[str] = [
     "EmbeddingConfig",
     "DriveShapingConfig",
     "DecompositionConfig",
+    "BitFlipPreprocessingConfig",
     "SolverConfig",
 ]
 
@@ -401,6 +402,13 @@ class DecompositionConfig(Config):
     neglecting_inter_distance: float = 15.0
     neglecting_max_coefficient: float = 1.0
 
+class BitFlipPreprocessingConfig(Config):
+    """Configuration for GLPK-based bit-flip preprocessing."""
+
+    enabled: bool = False
+    time_limit_s: float = 10.0
+    eps: float = 0.0    
+
 
 class SolverConfig(Config):
     """
@@ -443,6 +451,7 @@ class SolverConfig(Config):
     device: Device = AnalogDeviceWithDMM()
     do_postprocessing: bool = False
     do_preprocessing: bool = False
+    bitflip_preprocessing: BitFlipPreprocessingConfig = BitFlipPreprocessingConfig()
     activate_trivial_solutions: bool = True
     decompose: DecompositionConfig | None = None
 
@@ -493,6 +502,10 @@ class SolverConfig(Config):
             k: v for k, v in kwargs.items() if k in DriveShapingConfig.model_fields
         }
         classical_fields = {k: v for k, v in kwargs.items() if k in ClassicalConfig.model_fields}
+        bitflip_preprocessing_fields = {
+            k: v for k, v in kwargs.items()
+            if k in BitFlipPreprocessingConfig.model_fields
+        }
         decompose_fields = {
             k: v for k, v in kwargs.items() if k in DecompositionConfig.model_fields
         } or kwargs.get("decompose", {})
@@ -501,7 +514,7 @@ class SolverConfig(Config):
             k: v
             for k, v in kwargs.items()
             if k in cls.model_fields
-            and k not in ("embedding", "drive_shaping", "classical", "decompose")
+            and k not in ("embedding", "drive_shaping", "classical", "decompose", "bitflip_preprocessing")
         }
         solver_fields["embedding"] = EmbeddingConfig.model_validate(
             kwargs.get("embedding", embedding_fields)
@@ -511,6 +524,9 @@ class SolverConfig(Config):
         )
         solver_fields["classical"] = ClassicalConfig.model_validate(
             kwargs.get("classical", classical_fields)
+        )
+        solver_fields["bitflip_preprocessing"] = BitFlipPreprocessingConfig.model_validate(
+            kwargs.get("bitflip_preprocessing", bitflip_preprocessing_fields)
         )
         if decompose_fields:
             solver_fields["decompose"] = DecompositionConfig.model_validate(decompose_fields)
