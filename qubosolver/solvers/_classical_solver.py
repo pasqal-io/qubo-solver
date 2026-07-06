@@ -2,7 +2,7 @@
 
 This module provides a family of classical optimisation solvers for QUBO
 problems, all sharing the :class:`BaseClassicalSolver` interface.  The
-correct solver is selected at runtime by :func:`get_classical_solver` based
+correct solver is selected at runtime by `get_classical_solver` based
 on :attr:`~qubosolver.config.ClassicalConfig.classical_solver_type`.
 
 Available solvers:
@@ -30,7 +30,7 @@ class BaseClassicalSolver(ABC):
     """Abstract base class for all classical QUBO solvers.
 
     Each concrete subclass implements a single optimisation strategy.
-    Use :func:`get_classical_solver` to obtain the right subclass from a
+    Use `get_classical_solver` to obtain the right subclass from a
     :class:`~qubosolver.config.ClassicalConfig` rather than instantiating
     subclasses directly.
     """

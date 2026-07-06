@@ -5,7 +5,7 @@ Provides :class:`QUBOAnalyzer`, which aggregates one or more
 :class:`~pandas.DataFrame` and exposes filtering, statistical, and plotting
 helpers for comparing solver outputs.
 
-Typical usage::
+Typical usage:
 
     analyzer = QUBOAnalyzer([sol_a, sol_b], labels=["classical", "quantum"])
     analyzer.calculate_gaps(opt_cost=-42.0)

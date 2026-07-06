@@ -1,6 +1,6 @@
 """Trivial QUBO solution detection.
 
-Provides :func:`trivial_solution_search`, which recognises coefficient
+Provides `trivial_solution_search`, which recognises coefficient
 patterns whose optimal solution can be read off analytically without any
 search.
 """

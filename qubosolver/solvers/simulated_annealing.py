@@ -3,7 +3,7 @@
 Implements a single-run Metropolis–Hastings bit-flip annealer that minimises
 the quadratic objective E(x) = xᵀ Q x over binary vectors x ∈ {0,1}ⁿ.
 
-The public entry point is :func:`simulated_annealing`.  It is called by
+The public entry point is `simulated_annealing`.  It is called by
 :class:`~qubosolver.solvers.SimulatedAnnealingSolver` and used as the first
 phase of :class:`~qubosolver.solvers.HybridSATabuSolver`.
 """

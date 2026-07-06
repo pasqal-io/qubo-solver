@@ -31,7 +31,7 @@ def debug_runtime_typecheck(target: _T) -> _T:
     """Decorator that enables full beartype runtime type-checking on *target*.
 
     When ``QUBO_SOLVER_RUNTIME_CHECKS=1`` is set, wraps *target* with
-    :func:`beartype.beartype` using its default (strictest) strategy so that
+    `beartype.beartype` using its default (strictest) strategy so that
     every argument and return value is validated on each call.
 
     When runtime checks are disabled this is a transparent no-op: *target* is

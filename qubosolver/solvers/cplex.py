@@ -12,7 +12,7 @@ solution within the given time limit.
 
 Typical usage goes through :class:`~qubosolver.solvers.CplexSolver`, which
 reads :class:`~qubosolver.config.ClassicalConfig` parameters and calls
-:func:`cplex` directly.
+`cplex` directly.
 """
 
 from __future__ import annotations

@@ -137,7 +137,7 @@ def _build_drive(
     When *dmm* is enabled **and** the final detuning value is positive, a
     :class:`~qoolqit.drive.DetuningMapModulator` is added with
     per-qubit weights derived from the diagonal of the QUBO matrix (see
-    :func:`_compute_norm_weights`).
+    `_compute_norm_weights`).
 
     Args:
         Q: The QUBO instance, used to compute DMM weights when *dmm* is
@@ -195,7 +195,7 @@ def _run_simulation(
     """Execute one quantum simulation and return a costed, sorted solution.
 
     Submits an analog quantum sampling job via
-    :func:`~qubosolver.solvers.analog_quantum_sample` using the
+    `~qubosolver.solvers.analog_quantum_sample` using the
     ``WORKING_POINT`` compiler profile, evaluates the QUBO cost for every
     returned bitstring with ``config.qubo_cost``, then sorts results by cost
     and computes sampling probabilities in-place.

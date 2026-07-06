@@ -62,7 +62,7 @@ class QUBOInstance(QUBOInstanceBase):
 
     Wraps a parent :class:`~qubosolver.types.instance.QUBOInstance` and
     tracks which variables were fixed (and to which value) so the original
-    solution can be reconstructed via :func:`unapply`.
+    solution can be reconstructed via `unapply`.
     """
 
     def __init__(self, parent_instance: QUBOInstanceBase):
@@ -80,7 +80,7 @@ class QUBOInstance(QUBOInstanceBase):
 
     @property
     def fixed_indices(self) -> list[dict[int, int]]:
-        """Fixation history: one dict per :func:`apply` call, mapping index → fixed value."""
+        """Fixation history: one dict per `apply` call, mapping index → fixed value."""
         return self._fixed_indices
 
     @property
@@ -236,7 +236,7 @@ def apply_recursively(
 ) -> QUBOInstance:
     """Apply fixation rules repeatedly until no further variables can be fixed.
 
-    Calls :func:`apply` in a loop; stops when a full pass over all rules
+    Calls `apply` in a loop; stops when a full pass over all rules
     fixes no additional variables.
 
     Args:

@@ -1,7 +1,7 @@
 """Greedy embedding algorithm adapter for QUBO instances.
 
 This module wraps the internal :class:`~._algorithms.greedy.greedy.Greedy`
-algorithm and exposes a single :func:`embed` entry point that accepts a
+algorithm and exposes a single `embed` entry point that accepts a
 :class:`~qubosolver.types.QUBOInstance` and returns a
 :class:`~qoolqit.Register` ready for use in a quantum program.
 
@@ -12,7 +12,7 @@ coefficient matrix and the physical interaction matrix (∝ C/‖rᵢ − rⱼ�
 
 Typical usage goes through :class:`~qubosolver.embedding.GreedyEmbedder`,
 which reads :class:`~qubosolver.config.EmbeddingConfig` parameters and calls
-:func:`embed` directly.
+`embed` directly.
 """
 
 from __future__ import annotations
@@ -51,7 +51,7 @@ class Config:
         """Update trap count and spacing in-place from device constraints.
 
         When ``traps`` is ``-1`` (auto), resolves the trap count via
-        :func:`_number_of_traps_from_device`.  Also raises ``spacing`` to the
+        `_number_of_traps_from_device`.  Also raises ``spacing`` to the
         device's ``min_atom_distance`` when that property is available, so the
         resulting layout always satisfies hardware constraints.
 

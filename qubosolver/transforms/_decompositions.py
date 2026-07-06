@@ -5,10 +5,10 @@ large QUBO instance, solves each on the quantum device, and stitches the
 partial results back into a global solution.  This module provides the
 stateful data structures and the three core steps of that loop:
 
-1. :func:`extract_subqubo` — select the next cluster of variables via
+1. `extract_subqubo` — select the next cluster of variables via
    geometric search and build the corresponding sub-matrix.
 2. *Solve* — performed externally (quantum or classical).
-3. :func:`update` — merge the sub-solution into the global solution, propagate
+3. `update` — merge the sub-solution into the global solution, propagate
    edge values to the remaining variables, and return a complete
    :class:`~qubosolver.types.QUBOSolution` once all variables are assigned.
 """

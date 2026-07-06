@@ -46,7 +46,6 @@ nav:
     - qubosolver.bitstrings: api/bitstrings.md
     - qubosolver.drive_shaping: api/drive_shaping.md
     - qubosolver.embedding: api/embedding.md
-    - qubosolver.linalg: api/linalg.md
     - qubosolver.matrix: api/matrix.md
     - qubosolver.solvers: api/solvers.md
     - qubosolver.tensor: api/tensor.md
@@ -144,6 +143,7 @@ plugins:
           summary: true
           unwrap_annotated: true
           separate_signature: true
+          annotations_path: source
           line_length: 80
 
 

@@ -1,6 +1,6 @@
 """Analog quantum sampling solver.
 
-The public entry point of this module is :func:`analog_quantum_sample` — the
+The public entry point of this module is `analog_quantum_sample` — the
 primary quantum solving primitive that compiles a pulse program and runs it on
 a backend to sample bitstrings from the quantum state.  It is exported via
 :mod:`qubosolver.solvers` and called by
@@ -81,7 +81,7 @@ def analog_quantum_sample(
         backend: Execution backend.
         device: Target quantum device used for compilation constraints.
         compiler_profile: Compilation strategy forwarded to
-            :func:`_quantum_program`.  Defaults to ``MAX_ENERGY``; use
+            `_quantum_program`.  Defaults to ``MAX_ENERGY``; use
             ``WORKING_POINT`` for the optimised drive-shaping path.
 
     Returns:

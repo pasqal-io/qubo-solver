@@ -18,7 +18,7 @@ def quadratic_cost(x: torch.Tensor, Q: Matrix) -> float:
 
     Raises:
         ValueError: If ``x`` is not 1-dimensional. Use
-            :func:`batched_quadratic_cost` for batched inputs.
+            `batched_quadratic_cost` for batched inputs.
 
     Example:
         >>> Q = torch.tensor([[1., -1.], [-1., 2.]])

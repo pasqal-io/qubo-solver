@@ -20,7 +20,7 @@ class QUBOInstance:
 
         cost(x) = x^T Q x,   x ∈ {0, 1}^n
 
-    The class is decorated with :func:`~._checks.debug_runtime_typecheck`, so all
+    The class is decorated with `~._checks.debug_runtime_typecheck`, so all
     argument and return types are validated at runtime when the environment variable
     ``QUBO_SOLVER_RUNTIME_CHECKS=1`` is set.
 
@@ -115,7 +115,7 @@ class QUBOInstance:
             where *d* is rounded to two decimal places.
 
         Note:
-            The outer :func:`repr` call intentionally wraps the f-string in
+            The outer `repr` call intentionally wraps the f-string in
             quotes, so the return value includes surrounding single quotes.
         """
         density = _calculate_density(self.matrix)
@@ -123,7 +123,7 @@ class QUBOInstance:
 
     @staticmethod
     def save(file_like: io_utils.FileLike[bytes], instance: QUBOInstance) -> None:
-        """Serialise *instance* to *file_like* using :func:`torch.save`.
+        """Serialise *instance* to *file_like* using `torch.save`.
 
         The coefficient matrix is written into an internal
         :class:`~io.BytesIO` buffer and then flushed to *file_like* using
@@ -149,7 +149,7 @@ class QUBOInstance:
         """Deserialise a :class:`QUBOInstance` previously saved with :meth:`save`.
 
         Reads a length-prefixed byte block from *file_like* into a dedicated
-        :class:`~io.BytesIO` buffer before calling :func:`torch.load`.  The
+        :class:`~io.BytesIO` buffer before calling `torch.load`.  The
         isolated buffer prevents ``torch.load`` from over-consuming the source
         stream when multiple objects are packed together.
 
@@ -201,7 +201,7 @@ def _classify_density(density: float) -> DensityType:
 
     Args:
         density (float): Non-zero ratio in ``[0.0, 1.0]`` as returned by
-            :func:`_calculate_density`.
+            `_calculate_density`.
 
     Returns:
         DensityType: Corresponding :class:`~.DensityType` member.

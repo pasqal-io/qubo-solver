@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 import torch
 from . import linalg, vector
+from .linalg import Vectori
 
 
 def dtype() -> torch.dtype:
@@ -15,7 +16,7 @@ def device() -> torch.device:
     return linalg.device()
 
 
-def zeros(n: int, *, device: torch.device = device()) -> linalg.Vectori:
+def zeros(n: int, *, device: torch.device = device()) -> Vectori:
     """Creates a zero-filled integer vector of length *n*.
 
     Args:
@@ -28,13 +29,13 @@ def zeros(n: int, *, device: torch.device = device()) -> linalg.Vectori:
     return vector.zeros(n, dtype=dtype(), device=device)
 
 
-def tensor(data: Any, *, device: torch.device = device(), **kwargs: Any) -> linalg.Vectori:
+def tensor(data: Any, *, device: torch.device = device(), **kwargs: Any) -> Vectori:
     """Creates an integer vector tensor from the given data.
 
     Args:
         data: Input data (list, tuple, or array-like of integers).
         device: Torch device for the tensor.
-        **kwargs: Extra keyword arguments forwarded to :func:`torch.tensor`.
+        **kwargs: Extra keyword arguments forwarded to `torch.tensor`.
 
     Returns:
         A 1-D ``int64`` tensor.
@@ -42,7 +43,7 @@ def tensor(data: Any, *, device: torch.device = device(), **kwargs: Any) -> lina
     return vector.tensor(data, dtype=dtype(), device=device, **kwargs)
 
 
-def from_torch(tensor: torch.Tensor) -> linalg.Vectori:
+def from_torch(tensor: torch.Tensor) -> Vectori:
     """Converts an existing torch tensor to an integer vector (``int64``, on the global device).
 
     Args:

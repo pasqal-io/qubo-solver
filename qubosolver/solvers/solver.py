@@ -10,7 +10,7 @@ This module provides three internal solver classes and the public
   drive shaping → analog quantum sampling → postprocessing.
 * :class:`_QuboSolverClassical` — delegates to a classical optimiser
   (CPLEX, Simulated Annealing, Tabu Search, …) via
-  :func:`~qubosolver.solvers.get_classical_solver`.
+  `~qubosolver.solvers.get_classical_solver`.
 * :class:`_DecomposeQuboSolver` — recursively decomposes a large QUBO into
   device-sized subproblems, solves each with a sub-solver, and merges the
   partial solutions.
@@ -222,7 +222,7 @@ class _QuboSolverClassical(BaseSolver):
     """Classical QUBO solver.
 
     Delegates solving to the classical optimiser selected by
-    :func:`~qubosolver.solvers.get_classical_solver` (CPLEX, Simulated
+    `~qubosolver.solvers.get_classical_solver` (CPLEX, Simulated
     Annealing, Tabu Search, or Random).
 
     Embedding and drive generation are not meaningful for classical solvers;

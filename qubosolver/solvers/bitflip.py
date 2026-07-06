@@ -5,7 +5,7 @@ existing :class:`~qubosolver.types.QUBOSolution` by iteratively flipping the
 bit that yields the greatest cost reduction, stopping when no single flip
 improves the objective.
 
-The main public entry point is :func:`iterative_bitflip_local_search`, which
+The main public entry point is `iterative_bitflip_local_search`, which
 applies this search independently to every bitstring in a solution and is used
 as the post-processing step in :class:`~qubosolver.solvers.BaseSolver`.
 """
@@ -79,7 +79,7 @@ def _bit_flip_local_search(
 def iterative_bitflip_local_search(Q: QUBOInstance, solution: QUBOSolution) -> QUBOSolution:
     """Improve every bitstring in *solution* via greedy single-bit-flip local search.
 
-    Applies :func:`_bit_flip_local_search` independently to each bitstring in
+    Applies `_bit_flip_local_search` independently to each bitstring in
     *solution*, using :meth:`~qubosolver.types.QUBOInstance.evaluate_solution`
     as the cost function.  After refinement, duplicate bitstrings that were
     driven to the same local minimum are merged: their counts are summed and

@@ -1,6 +1,6 @@
 """Tabu Search solver for QUBO problems.
 
-Provides :func:`tabu_search`, a single-neighbourhood tabu search that
+Provides `tabu_search`, a single-neighbourhood tabu search that
 explores bit-flip moves in parallel across multiple starting points.
 """
 from __future__ import annotations

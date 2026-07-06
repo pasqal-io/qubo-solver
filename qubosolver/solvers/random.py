@@ -1,6 +1,6 @@
 """Uniform random bitstring sampler for QUBO instances.
 
-This module provides :func:`random_solutions`, which samples uniformly random
+This module provides `random_solutions`, which samples uniformly random
 binary vectors, evaluates their QUBO cost, and returns a deduplicated
 :class:`~qubosolver.types.QUBOSolution` sorted by ascending cost.
 

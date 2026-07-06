@@ -164,7 +164,7 @@ class BaseSolver(ABC):
     def _trivial_solution(self) -> QUBOSolution:
         """Search for a trivial solution (all-zeros, all-ones, or pure-diagonal).
 
-        Delegates to :func:`~qubosolver.solvers.trivial_solution_search`.
+        Delegates to `~qubosolver.solvers.trivial_solution_search`.
 
         Returns:
             A :class:`QUBOSolution`. The solution is empty if no trivial optimum is found.
@@ -227,7 +227,7 @@ class BaseSolver(ABC):
         """Improve a solution with iterative bit-flip local search.
 
         When ``config.do_postprocessing`` is ``True``, applies
-        :func:`~qubosolver.solvers.iterative_bitflip_local_search` to *solution*,
+        `~qubosolver.solvers.iterative_bitflip_local_search` to *solution*,
         which flips individual bits one at a time and accepts changes that
         reduce the QUBO cost.
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 import torch
 from . import linalg
+from .linalg import Tensor
 
 
 def dtype() -> torch.dtype:
@@ -20,14 +21,14 @@ def zeros(
     dtype: torch.dtype = dtype(),
     device: torch.device = device(),
     **kwargs: Any,
-) -> linalg.Tensor:
+) -> Tensor:
     """Creates a zero-filled tensor with the given shape.
 
     Args:
         *args: Shape dimensions (e.g. ``zeros(2, 3)`` or ``zeros((2, 3))``).
         dtype: Data type of the tensor.
         device: Torch device for the tensor.
-        **kwargs: Extra keyword arguments forwarded to :func:`torch.zeros`.
+        **kwargs: Extra keyword arguments forwarded to `torch.zeros`.
 
     Returns:
         A tensor of zeros with the specified shape.
@@ -41,14 +42,14 @@ def tensor(
     dtype: torch.dtype = dtype(),
     device: torch.device = device(),
     **kwargs: Any,
-) -> linalg.Tensor:
+) -> Tensor:
     """Creates a tensor from the given data.
 
     Args:
         data: Input data (list, tuple, or array-like).
         dtype: Data type of the tensor.
         device: Torch device for the tensor.
-        **kwargs: Extra keyword arguments forwarded to :func:`torch.tensor`.
+        **kwargs: Extra keyword arguments forwarded to `torch.tensor`.
 
     Returns:
         A tensor with the specified dtype and device.
@@ -56,7 +57,7 @@ def tensor(
     return torch.tensor(data, dtype=dtype, device=device, **kwargs)
 
 
-def from_torch(tensor: torch.Tensor) -> linalg.Tensor:
+def from_torch(tensor: torch.Tensor) -> Tensor:
     """Converts an existing torch tensor to the global float dtype and device.
 
     Args:

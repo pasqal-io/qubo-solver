@@ -1,7 +1,7 @@
 """BLaDE (Balanced Layout and Distance Embedding) adapter for QUBO instances.
 
 This module is a thin wrapper around :class:`qoolqit.embedding.Blade` that
-exposes a single :func:`embed` entry point accepting a
+exposes a single `embed` entry point accepting a
 :class:`~qubosolver.types.QUBOInstance` and returning a
 :class:`~qoolqit.Register` ready for use in a quantum program.
 
@@ -13,7 +13,7 @@ reduction rounds.
 
 Typical usage goes through :class:`~qubosolver.embedding.BLaDEmbedder`, which
 reads :class:`~qubosolver.config.EmbeddingConfig` parameters and calls
-:func:`embed` directly.
+`embed` directly.
 """
 
 from __future__ import annotations

@@ -233,7 +233,7 @@ class QUBODataset(Dataset):
 
     @staticmethod
     def save(dataset: QUBODataset, filepath: Path) -> None:
-        """Persist a dataset to disk using :func:`torch.save`.
+        """Persist a dataset to disk using `torch.save`.
 
         Args:
             dataset (QUBODataset): The dataset to serialise.
@@ -257,7 +257,7 @@ class QUBODataset(Dataset):
 
 
 def _save_qubo_dataset(dataset: QUBODataset, filepath: Path) -> None:
-    """Serialise *dataset* to *filepath* via :func:`torch.save`.
+    """Serialise *dataset* to *filepath* via `torch.save`.
 
     The file stores a dict with two keys:
 
@@ -288,7 +288,7 @@ def _save_qubo_dataset(dataset: QUBODataset, filepath: Path) -> None:
 def _load_qubo_dataset(filepath: Path) -> QUBODataset:
     """Deserialise a :class:`QUBODataset` from *filepath*.
 
-    The file must have been produced by :func:`_save_qubo_dataset`.
+    The file must have been produced by `_save_qubo_dataset`.
 
     Args:
         filepath (Path): Path to the serialised dataset file.

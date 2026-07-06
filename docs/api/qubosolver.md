@@ -3,3 +3,4 @@
       filters:
         - "!^config$"
         - "!^types$"
+        - "!^linalg$"

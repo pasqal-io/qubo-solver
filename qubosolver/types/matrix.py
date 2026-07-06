@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 import torch
 from . import linalg
+from .linalg import Matrix
 
 
 def dtype() -> torch.dtype:
@@ -17,7 +18,7 @@ def device() -> torch.device:
 
 def zeros(
     n: int, *, dtype: torch.dtype = dtype(), device: torch.device = device()
-) -> linalg.Matrix:
+) -> Matrix:
     """Creates a zero-filled square matrix of shape ``(n, n)``.
 
     Args:
@@ -37,14 +38,14 @@ def tensor(
     dtype: torch.dtype = dtype(),
     device: torch.device = device(),
     **kwargs: Any,
-) -> linalg.Matrix:
+) -> Matrix:
     """Creates a matrix tensor from the given data.
 
     Args:
         data: Input data (nested list or 2-D array-like).
         dtype: Data type of the tensor.
         device: Torch device for the tensor.
-        **kwargs: Extra keyword arguments forwarded to :func:`torch.tensor`.
+        **kwargs: Extra keyword arguments forwarded to `torch.tensor`.
 
     Returns:
         A 2-D tensor.
@@ -52,7 +53,7 @@ def tensor(
     return torch.tensor(data, dtype=dtype, device=device, **kwargs)
 
 
-def from_torch(tensor: torch.Tensor) -> linalg.Matrix:
+def from_torch(tensor: torch.Tensor) -> Matrix:
     """Converts an existing torch tensor to a matrix with the global dtype and device.
 
     Args:
