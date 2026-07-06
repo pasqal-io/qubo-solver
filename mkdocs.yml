@@ -41,12 +41,18 @@ nav:
     - Solving with decomposition: tutorial/09-decomposition.ipynb
 
   - API:
-    - types: api/types.md
-    - transforms: api/transforms.md
-    - solvers: api/solvers.md
-    - embedding: api/embedding.md
-    - drive_shaping: api/drive_shaping.md
-    - config: api/config.md
+    - qubosolver: api/qubosolver.md
+    - qubosolver.bitstring: api/bitstring.md
+    - qubosolver.bitstrings: api/bitstrings.md
+    - qubosolver.drive_shaping: api/drive_shaping.md
+    - qubosolver.embedding: api/embedding.md
+    - qubosolver.linalg: api/linalg.md
+    - qubosolver.matrix: api/matrix.md
+    - qubosolver.solvers: api/solvers.md
+    - qubosolver.tensor: api/tensor.md
+    - qubosolver.transforms: api/transforms.md
+    - qubosolver.vector: api/vector.md
+    - qubosolver.vectori: api/vectori.md
 
   - Open-source:
     - Licence (MIT-Derived): LICENSE.md
@@ -128,7 +134,7 @@ plugins:
           show_bases: false
           show_inheritance_diagram: false
           show_root_heading: true
-          show_root_full_path: false
+          show_root_full_path: true
           show_signature_annotations: true
           show_signature_type_parameters: true
           show_source: true

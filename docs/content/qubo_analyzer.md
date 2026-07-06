@@ -31,4 +31,4 @@ described below. More examples are demonstrated in the [`QUBOAnalyzer` tutorial]
 
 ## QUBOAnalyzer API description
 
-::: qubosolver.QUBOAnalyzer
+TODO: link to api
