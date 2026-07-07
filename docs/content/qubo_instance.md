@@ -12,9 +12,9 @@ Expanding the formulation:
 $$\min_{x \in \{0,1\}^n} \sum_{i=1}^{n} Q_{ii} x_i + \sum_{i=1}^{n} \sum_{j=i+1}^{n} Q_{ij} x_i x_j$$
 
 
-## QUBOInstance
+## Instance
 
-`QUBOInstance` represents a single Quadratic Unconstrained Binary Optimization (QUBO) problem. It encapsulates the QUBO matrix, solution, and relevant metrics of interest.
+`Instance` represents a single Quadratic Unconstrained Binary Optimization (QUBO) problem. It encapsulates the QUBO matrix, solution, and relevant metrics of interest.
 
 ### Features:
 - Store the QUBO coefficient matrix (`coefficients`).
@@ -25,11 +25,11 @@ $$\min_{x \in \{0,1\}^n} \sum_{i=1}^{n} Q_{ii} x_i + \sum_{i=1}^{n} \sum_{j=i+1}
 
 ### Code Example:
 ```python exec="on" source="material-block" html="1"
-from qubosolver import QUBOInstance, matrix, bitstring
+from qubosolver import Instance, matrix, bitstring
 
 # Define a QUBO coefficient matrix
 coefficients = matrix.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
-instance = QUBOInstance(matrix=coefficients)
+instance = Instance(matrix=coefficients)
 print(instance)
 
 solution = bitstring.from_string("101")
@@ -38,16 +38,16 @@ print(f"\nSolution Cost: {cost}")
 
 # Save load
 
-QUBOInstance.save("/tmp/qubo_instance.pt", instance)
-loaded_instance = QUBOInstance.load("/tmp/qubo_instance.pt")
-print(f"Loaded QUBOInstance: {loaded_instance}")
+Instance.save("/tmp/qubo_instance.pt", instance)
+loaded_instance = Instance.load("/tmp/qubo_instance.pt")
+print(f"Loaded Instance: {loaded_instance}")
 ```
 
 
 
-## QUBODataset
+## Dataset
 
-`QUBODataset` represents a collection of QUBO problems. It is designed to store coefficients in a matrix, and solutions for multiple qubo problems, allowing for efficient batch operations and random dataset generation.
+`Dataset` represents a collection of QUBO problems. It is designed to store coefficients in a matrix, and solutions for multiple qubo problems, allowing for efficient batch operations and random dataset generation.
 
 ### Features:
 - Store a batch of QUBO coefficient matrices (`coefficients`).
@@ -60,10 +60,10 @@ print(f"Loaded QUBOInstance: {loaded_instance}")
 
 ### Code Example:
 ```python exec="on" source="material-block" html="1"
-from qubosolver import QUBODataset
+from qubosolver import Dataset
 
 # Generate a random dataset
-dataset = QUBODataset.from_random(
+dataset = Dataset.from_random(
     n_matrices=5, matrix_dim=4, densities=[0.3, 0.7], coefficient_bounds=(-10, 10),
 )
 
@@ -74,9 +74,9 @@ print(f"Coefficients: {coeffs}")
 print(f"\nDataset size: {len(dataset)}")
 
 # Save load
-QUBODataset.save(dataset, "/tmp/qubo_dataset.pt")
-loaded_dataset = QUBODataset.load("/tmp/qubo_dataset.pt")
-print(f"\nLoaded QUBODataset size: {len(loaded_dataset)}")
+Dataset.save(dataset, "/tmp/qubo_dataset.pt")
+loaded_dataset = Dataset.load("/tmp/qubo_dataset.pt")
+print(f"\nLoaded Dataset size: {len(loaded_dataset)}")
 ```
 
 ---

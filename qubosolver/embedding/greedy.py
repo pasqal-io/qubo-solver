@@ -2,7 +2,7 @@
 
 This module wraps the internal :class:`~._algorithms.greedy.greedy.Greedy`
 algorithm and exposes a single `embed` entry point that accepts a
-:class:`~qubosolver.types.QUBOInstance` and returns a
+:class:`~qubosolver.types.Instance` and returns a
 :class:`~qoolqit.Register` ready for use in a quantum program.
 
 The greedy algorithm places logical QUBO nodes one at a time onto trap sites
@@ -25,7 +25,7 @@ import torch
 import qoolqit
 
 from ._algorithms import greedy
-from qubosolver import QUBOInstance, LayoutType, EmbeddingConfig
+from qubosolver import Instance, LayoutType, EmbeddingConfig
 
 
 @dataclass
@@ -122,7 +122,7 @@ def _number_of_traps_from_device(device: qoolqit.Device) -> int:
 
 
 def embed(
-    instance: QUBOInstance,
+    instance: Instance,
     device: qoolqit.Device,
     *,
     config: Config = Config(),

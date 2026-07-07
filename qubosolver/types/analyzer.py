@@ -1,13 +1,13 @@
 """Analysis utilities for QUBO solutions.
 
-Provides :class:`QUBOAnalyzer`, which aggregates one or more
-:class:`~qubosolver.types.solution.QUBOSolution` objects into a unified
+Provides :class:`Analyzer`, which aggregates one or more
+:class:`~qubosolver.types.solution.Solution` objects into a unified
 :class:`~pandas.DataFrame` and exposes filtering, statistical, and plotting
 helpers for comparing solver outputs.
 
 Typical usage:
 
-    analyzer = QUBOAnalyzer([sol_a, sol_b], labels=["classical", "quantum"])
+    analyzer = Analyzer([sol_a, sol_b], labels=["classical", "quantum"])
     analyzer.calculate_gaps(opt_cost=-42.0)
     analyzer.plot(x_axis="bitstrings", y_axis="costs", top_percent=0.1)
 """
@@ -16,8 +16,8 @@ from __future__ import annotations
 import pandas as pd
 import seaborn as sns
 
-from .solution import QUBOSolution
-from .instance import QUBOInstance
+from .solution import Solution
+from .instance import Instance
 from . import bitstrings
 from .linalg import Vectori, Vector
 
@@ -29,17 +29,17 @@ _PROBS = "probs"
 _GAPS = "gaps"
 
 
-class QUBOAnalyzer:
+class Analyzer:
     """Aggregates and analyses one or more QUBO solutions.
 
-    Converts :class:`~qubosolver.types.solution.QUBOSolution` objects into a
+    Converts :class:`~qubosolver.types.solution.Solution` objects into a
     unified :class:`~pandas.DataFrame` (``self.df``) with columns for
     bitstrings, costs, and optionally counts, probabilities, and gaps.
     Multiple solutions can be labelled and compared side-by-side through the
     filtering and plotting helpers.
 
     Attributes:
-        solutions (list[QUBOSolution]): The solutions being analysed.
+        solutions (list[Solution]): The solutions being analysed.
         labels (list[str]): One label per solution, used to identify each
             group in the DataFrame and plots.
         df (pd.DataFrame): Consolidated DataFrame built from all solutions.
@@ -50,12 +50,12 @@ class QUBOAnalyzer:
 
     def __init__(
         self,
-        solutions: QUBOSolution | list[QUBOSolution],
+        solutions: Solution | list[Solution],
         labels: str | list[str] | None = None,
     ):
         """
         Args:
-            solutions: A single :class:`~qubosolver.types.solution.QUBOSolution`
+            solutions: A single :class:`~qubosolver.types.solution.Solution`
                 or a list of them.  A bare instance is automatically wrapped in a list.
             labels: One label per solution used to identify each group in the
                 DataFrame and plots.  Defaults to ``"0"``, ``"1"``, … when *None*.
@@ -63,7 +63,7 @@ class QUBOAnalyzer:
         Raises:
             ValueError: If the number of labels does not match the number of solutions.
             TypeError: If any element of *solutions* is not a
-                :class:`~qubosolver.types.solution.QUBOSolution`, or if any label
+                :class:`~qubosolver.types.solution.Solution`, or if any label
                 is not a :class:`str`.
         """
         # Recast solutions into a list if a single solution is provided.
@@ -71,8 +71,8 @@ class QUBOAnalyzer:
             solutions = [solutions]
 
         for sol in solutions:
-            if not isinstance(sol, QUBOSolution):
-                raise TypeError("Each solution must be a QUBOSolution instance.")
+            if not isinstance(sol, Solution):
+                raise TypeError("Each solution must be a Solution instance.")
 
         self.solutions = solutions
 
@@ -95,13 +95,13 @@ class QUBOAnalyzer:
 
         self.df = self._to_dataframe()
 
-    def _solution_to_dataframe(self, solution: QUBOSolution, solution_label: str) -> pd.DataFrame:
+    def _solution_to_dataframe(self, solution: Solution, solution_label: str) -> pd.DataFrame:
         """
-        Converts a single QUBOSolution into a pandas DataFrame.
+        Converts a single Solution into a pandas DataFrame.
         For better readability, each bitstring is converted to a string representation.
 
         Args:
-            solution (QUBOSolution): The QUBOSolution to convert.
+            solution (Solution): The Solution to convert.
             solution_label (str): The label associated with this solution.
 
         Returns:
@@ -158,7 +158,7 @@ class QUBOAnalyzer:
             Duplicate bitstrings within a single solution are deduplicated
             before comparison.  This is a temporary workaround until the
             upstream duplicate-bitstring issue in
-            :class:`~qubosolver.types.solution.QUBOSolution` is resolved.
+            :class:`~qubosolver.types.solution.Solution` is resolved.
 
         Args:
             target_labels: Exactly two labels identifying the solutions to
@@ -200,13 +200,13 @@ class QUBOAnalyzer:
         if len(target_labels) != 2:
             raise ValueError("Exactly two target labels must be provided for comparison.")
         if not all(label in self.labels for label in target_labels):
-            raise ValueError("All target labels must be present in the QUBOAnalyzer's labels.")
+            raise ValueError("All target labels must be present in the Analyzer's labels.")
 
         # Extract bitstrings for each target label
         bs_list1 = self.df[self.df["labels"] == target_labels[0]]["bitstrings"].tolist()
         bs_list2 = self.df[self.df["labels"] == target_labels[1]]["bitstrings"].tolist()
 
-        # TODO: Once issue about duplicate bitstrings in QUBOSolution is fixed, this can be removed
+        # TODO: Once issue about duplicate bitstrings in Solution is fixed, this can be removed
         bs_set1 = set(bs_list1)
         bs_set2 = set(bs_list2)
 
@@ -386,16 +386,16 @@ class QUBOAnalyzer:
         best_rows = pd.concat(best_list, ignore_index=True)
         return best_rows
 
-    def calculate_costs(self, Q: QUBOInstance) -> pd.DataFrame:
+    def calculate_costs(self, Q: Instance) -> pd.DataFrame:
         """
-        Calculates the cost for each bitstring using the provided Q QUBOInstance.
+        Calculates the cost for each bitstring using the provided Q Instance.
 
             cost = x^T Q x
 
         The computed cost is added as the columns _COSTS in the DataFrame.
 
         Args:
-            Q: QUBOInstance
+            Q: Instance
 
         Returns:
             pd.DataFrame: The updated DataFrame including the _COSTS column.
@@ -407,7 +407,7 @@ class QUBOAnalyzer:
         self.df[_COSTS] = self.df[_BITSTRINGS].apply(Q.evaluate_solution)
         return self.df
 
-    def calculate_gaps(self, opt_cost: float, Q: QUBOInstance | None = None) -> pd.DataFrame:
+    def calculate_gaps(self, opt_cost: float, Q: Instance | None = None) -> pd.DataFrame:
         """
         Calculates the gaps for each bitstring using the provided optimal cost.
         If costs are not present, calculates costs as ``x^T Q x`` first.
@@ -417,7 +417,7 @@ class QUBOAnalyzer:
         Args:
             opt_cost (float): The known optimal cost used to compute
                 ``|cost - opt_cost| / |opt_cost|``.
-            Q (QUBOInstance | None): Optional QUBO instance used to compute
+            Q (Instance | None): Optional QUBO instance used to compute
                 costs if they are not already present in the DataFrame.
 
         Returns:

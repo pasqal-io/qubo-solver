@@ -9,14 +9,14 @@ import torch
 import warnings
 
 import qoolqit
-from qubosolver import QUBOInstance
+from qubosolver import Instance
 
 from ._device_specs import pulser_specs as _pulser_specs
 from ._waveforms import constant_weighted_dmm
 
 
 def build_drive(
-    instance: QUBOInstance,
+    instance: Instance,
     *,
     device: qoolqit.Device,
     dmm: bool = False,

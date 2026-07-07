@@ -12,7 +12,7 @@ from qubosolver._utils import costs
 
 
 @debug_runtime_typecheck
-class QUBOInstance:
+class Instance:
     """A single QUBO (Quadratic Unconstrained Binary Optimization) problem instance.
 
     Wraps a symmetric square coefficient matrix ``Q`` and exposes helpers for
@@ -111,7 +111,7 @@ class QUBOInstance:
 
         Returns:
             str: A quoted string of the form
-            ``"QUBOInstance of size = <n>,density = <d>,"``
+            ``"Instance of size = <n>,density = <d>,"``
             where *d* is rounded to two decimal places.
 
         Note:
@@ -119,10 +119,10 @@ class QUBOInstance:
             quotes, so the return value includes surrounding single quotes.
         """
         density = _calculate_density(self.matrix)
-        return repr(f"QUBOInstance of size = {self.size}," f"density = {round(density, 2)},")
+        return repr(f"Instance of size = {self.size}," f"density = {round(density, 2)},")
 
     @staticmethod
-    def save(file_like: io_utils.FileLike[bytes], instance: QUBOInstance) -> None:
+    def save(file_like: io_utils.FileLike[bytes], instance: Instance) -> None:
         """Serialise *instance* to *file_like* using `torch.save`.
 
         The coefficient matrix is written into an internal
@@ -135,7 +135,7 @@ class QUBOInstance:
             file_like (io_utils.FileLike[bytes]):
                 Destination — a file path (``str`` or :class:`~os.PathLike`),
                 or a binary-writable :class:`~typing.IO` stream.
-            instance (QUBOInstance):
+            instance (Instance):
                 The instance to serialise.  Only :attr:`matrix` is persisted;
                 any derived state is recomputed on load.
         """
@@ -145,8 +145,8 @@ class QUBOInstance:
             io_utils.save_sized_buffer(f, buffer.getbuffer())
 
     @staticmethod
-    def load(file_like: io_utils.FileLike[bytes]) -> QUBOInstance:
-        """Deserialise a :class:`QUBOInstance` previously saved with :meth:`save`.
+    def load(file_like: io_utils.FileLike[bytes]) -> Instance:
+        """Deserialise a :class:`Instance` previously saved with :meth:`save`.
 
         Reads a length-prefixed byte block from *file_like* into a dedicated
         :class:`~io.BytesIO` buffer before calling `torch.load`.  The
@@ -160,7 +160,7 @@ class QUBOInstance:
                 data written by :meth:`save`.
 
         Returns:
-            QUBOInstance: A new instance whose :attr:`matrix` is the
+            Instance: A new instance whose :attr:`matrix` is the
             deserialised coefficient tensor.
 
         Note:
@@ -173,7 +173,7 @@ class QUBOInstance:
             buffer = io.BytesIO(io_utils.load_sized_buffer(f))
             Q = torch.load(buffer, weights_only=True)
 
-        return QUBOInstance(Q)
+        return Instance(Q)
 
 
 # Density classification thresholds — half-open intervals [lo, hi).

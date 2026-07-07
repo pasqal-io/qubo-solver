@@ -2,7 +2,7 @@
 
 The `SolverConfig` class defines how a QUBO problem should be solved — specifying whether to use a quantum or classical approach, which backend to run on, and additional execution parameters.
 
-This configuration is passed into any solver (e.g., `QUBOSolver`) and guides its behavior.
+This configuration is passed into any solver (e.g., `Solver`) and guides its behavior.
 Note that `SolverConfig` uses three other configuration objects: `EmbeddingConfig`, `ClassicalConfig` and `DriveShapingConfig`.
 Besides `ClassicalConfig`, the other configurations represents different parts of the solver when using a quantum approach:
 
@@ -62,10 +62,10 @@ print(config.specs())
 ```
 Although the default configuration is straightforward, all parameters can be modified by the user to better suit the specific QUBO instance. Below is an example of a configuration that uses a different embedder with customized parameters on a specific device:
 ```python exec="on" source="material-block"
-from qubosolver import QUBOInstance, SolverConfig, EmbeddingConfig, matrix
+from qubosolver import Instance, SolverConfig, EmbeddingConfig, matrix
 
 coefficients = matrix.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
-instance = QUBOInstance(matrix=coefficients)
+instance = Instance(matrix=coefficients)
 
 embedding_config = EmbeddingConfig(embedding_method="greedy", greedy_traps=-1)
 
@@ -79,10 +79,10 @@ config = SolverConfig(
 Equivalently, one can instantiate a `SolverConfig` simply using the keyword arguments of the other configs via the `SolverConfig.from_kwargs` method:
 
 ```python exec="on" source="material-block"
-from qubosolver import QUBOInstance, SolverConfig, matrix
+from qubosolver import Instance, SolverConfig, matrix
 
 coefficients = matrix.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
-instance = QUBOInstance(matrix=coefficients)
+instance = Instance(matrix=coefficients)
 
 config = SolverConfig.from_kwargs(
     config_name="my_config",

@@ -9,7 +9,7 @@ import qoolqit
 
 
 from . import heuristic, optimized
-from qubosolver.types import QUBOInstance, QUBOSolution, DriveType, _protocols
+from qubosolver.types import Instance, Solution, DriveType, _protocols
 from qubosolver.config import SolverConfig
 
 
@@ -17,28 +17,28 @@ class _BaseDriveShaper(ABC):
     """
     Abstract base class for generating Qoolqit drives based on a QUBO problem.
 
-    This class transforms the structure of a QUBOInstance into a quantum
+    This class transforms the structure of a Instance into a quantum
     waveform sequence or drive that can be applied to a physical register. The register
     is passed at the time of drive generation, not during initialization.
 
     Attributes:
-        instance (QUBOInstance): The QUBO problem instance.
+        instance (Instance): The QUBO problem instance.
         config (SolverConfig): The solver configuration.
         backend (Backend): Backend to use.
         device (Device): Device from backend.
 
     """
 
-    def __init__(self, instance: QUBOInstance, config: SolverConfig, backend: _protocols.Backend):
+    def __init__(self, instance: Instance, config: SolverConfig, backend: _protocols.Backend):
         """
         Initialize the drive shaping module with a QUBO instance.
 
         Args:
-            instance (QUBOInstance): The QUBO problem instance.
+            instance (Instance): The QUBO problem instance.
             config (SolverConfig): The solver configuration.
             backend (Backend): Backend to use.
         """
-        self.instance: QUBOInstance = instance
+        self.instance: Instance = instance
         self.config: SolverConfig = config
         self.backend = backend
         self.device = self.config.device
@@ -62,14 +62,14 @@ class _BaseDriveShaper(ABC):
     def generate(
         self,
         register: qoolqit.Register,
-    ) -> tuple[qoolqit.Drive, QUBOSolution]:
+    ) -> tuple[qoolqit.Drive, Solution]:
         """Generate a drive based on the problem and the provided register.
 
         Args:
             register (qoolqit.Register): The physical register layout.
 
         Returns:
-            tuple[qoolqit.Drive, QUBOSolution]: The generated drive and the
+            tuple[qoolqit.Drive, Solution]: The generated drive and the
             associated QUBO solution.
         """
         pass
@@ -103,7 +103,7 @@ class HeuristicDriveShaper(_BaseDriveShaper):
         and no weighted detunings are declared.
     """
 
-    def generate(self, register: qoolqit.Register) -> tuple[qoolqit.Drive, QUBOSolution]:
+    def generate(self, register: qoolqit.Register) -> tuple[qoolqit.Drive, Solution]:
         """Generate a drive using the heuristic schedule.
 
         Builds amplitude and detuning waveforms from the QUBO coefficients.
@@ -114,7 +114,7 @@ class HeuristicDriveShaper(_BaseDriveShaper):
             register (qoolqit.Register): The physical register layout.
 
         Returns:
-            tuple[qoolqit.Drive, QUBOSolution]: The heuristic drive and an
+            tuple[qoolqit.Drive, Solution]: The heuristic drive and an
             empty QUBO solution (no optimization is performed).
         """
         device = self.config.device
@@ -123,7 +123,7 @@ class HeuristicDriveShaper(_BaseDriveShaper):
         kappa = self.config.drive_shaping.heuristic_kappa
         return (
             heuristic.build_drive(self.instance, device, dmm=dmm, kappa=kappa),
-            QUBOSolution(),
+            Solution(),
         )
 
 
@@ -135,14 +135,14 @@ class OptimizedDriveShaper(_BaseDriveShaper):
 
     def __init__(
         self,
-        instance: QUBOInstance,
+        instance: Instance,
         config: SolverConfig,
         backend: _protocols.Backend,
     ):
         """Instantiate an `OptimizedDriveShaper`.
 
         Args:
-            instance (QUBOInstance): Qubo instance.
+            instance (Instance): Qubo instance.
             config (SolverConfig): Configuration for solving.
             backend (Backend): Backend to use during optimization.
 
@@ -152,7 +152,7 @@ class OptimizedDriveShaper(_BaseDriveShaper):
     def generate(
         self,
         register: qoolqit.Register,
-    ) -> tuple[qoolqit.Drive, QUBOSolution]:
+    ) -> tuple[qoolqit.Drive, Solution]:
         """Generate a drive via optimization.
 
         Builds drive parameters by running a Bayesian optimization loop
@@ -163,7 +163,7 @@ class OptimizedDriveShaper(_BaseDriveShaper):
             register (qoolqit.Register): The physical register layout.
 
         Returns:
-            tuple[qoolqit.Drive, QUBOSolution]: The optimized drive and the
+            tuple[qoolqit.Drive, Solution]: The optimized drive and the
             associated QUBO solution containing bitstrings, costs, and
             probabilities from the final simulation run.
         """
@@ -181,7 +181,7 @@ class OptimizedDriveShaper(_BaseDriveShaper):
 
 
 def _get_drive_shaper(
-    instance: QUBOInstance,
+    instance: Instance,
     config: SolverConfig,
     backend: _protocols.Backend,
 ) -> _BaseDriveShaper:
@@ -194,7 +194,7 @@ def _get_drive_shaper(
     the config.
 
     Args:
-        instance (QUBOInstance): The QUBO problem to solve.
+        instance (Instance): The QUBO problem to solve.
         config (SolverConfig): The solver configuration used.
         backend (Backend): Backend to extract device from or to use
             during drive shaping.

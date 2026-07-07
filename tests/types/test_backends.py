@@ -23,14 +23,14 @@ from pulser_pasqal.backends import (
 import qoolqit
 
 from qubosolver import (
-    QUBOInstance,
+    Instance,
     SolverConfig,
     EmbeddingConfig,
     AutoLocalEmulatorBackend,
     AutoRemoteEmulatorBackend,
     LocalEmulator,
     RemoteEmulator,
-    QUBOSolver,
+    Solver,
     matrix,
 )
 from qubosolver.types.backends import (
@@ -193,7 +193,7 @@ def test_emulator_backend_selection(
 ) -> None:
     """Test that emulators select the correct backend based on problem size and configuration."""
     Q = matrix.from_torch(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
-    instance = QUBOInstance(Q)
+    instance = Instance(Q)
 
     backend, results = backend_and_results
     attach_bitstring(results, size)
@@ -205,7 +205,7 @@ def test_emulator_backend_selection(
         activate_trivial_solutions=False,
     )
 
-    solver = QUBOSolver(instance, solver_config)
+    solver = Solver(instance, solver_config)
     with patch.object(expected_type, "run", return_value=results) as mock_run:
         solver.solve()
         mock_run.assert_called_once()
@@ -228,7 +228,7 @@ def test_remote_emulator_warning() -> None:
     """Test that RemoteEmulator warns when using suboptimal backend."""
     size = 2
     Q = matrix.from_torch(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
-    instance = QUBOInstance(Q)
+    instance = Instance(Q)
     mock_connection, mock_results = mock_connection_and_results()
     attach_bitstring(mock_results, size)
     config = SolverConfig(
@@ -237,7 +237,7 @@ def test_remote_emulator_warning() -> None:
         activate_trivial_solutions=False,
         embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
     )
-    solver = QUBOSolver(instance, config)
+    solver = Solver(instance, config)
 
     with patch.object(EmuSVBackend, "run", return_value=mock_results) as mock_run:
         with pytest.warns(UserWarning, match="Consider using EmuFreeBackendV2"):
@@ -249,7 +249,7 @@ def test_local_emulator_warning() -> None:
     """Test that LocalEmulator warns when using suboptimal backend."""
     size = 2
     Q = matrix.from_torch(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
-    instance = QUBOInstance(Q)
+    instance = Instance(Q)
     config = SolverConfig(
         use_quantum=True,
         backend=LocalEmulator(backend_type=SVBackend),
@@ -257,7 +257,7 @@ def test_local_emulator_warning() -> None:
         embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
     )
 
-    solver = QUBOSolver(instance, config)
+    solver = Solver(instance, config)
     results = MagicMock(spec=pulser.backend.Results)
     attach_bitstring(results, size)
     with patch.object(SVBackend, "run", return_value=results) as mock_run:

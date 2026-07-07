@@ -1,7 +1,7 @@
 """Bit-flip local search for QUBO solutions.
 
 This module provides a greedy single-bit-flip local search that improves an
-existing :class:`~qubosolver.types.QUBOSolution` by iteratively flipping the
+existing :class:`~qubosolver.types.Solution` by iteratively flipping the
 bit that yields the greatest cost reduction, stopping when no single flip
 improves the objective.
 
@@ -16,7 +16,7 @@ import torch
 from collections.abc import Callable
 
 
-from qubosolver import QUBOInstance, QUBOSolution, bitstrings, vector, vectori, Bitstring
+from qubosolver import Instance, Solution, bitstrings, vector, vectori, Bitstring
 
 
 def _bit_flip_local_search(
@@ -76,11 +76,11 @@ def _bit_flip_local_search(
     return s_current, current_objective
 
 
-def iterative_bitflip_local_search(Q: QUBOInstance, solution: QUBOSolution) -> QUBOSolution:
+def iterative_bitflip_local_search(Q: Instance, solution: Solution) -> Solution:
     """Improve every bitstring in *solution* via greedy single-bit-flip local search.
 
     Applies `_bit_flip_local_search` independently to each bitstring in
-    *solution*, using :meth:`~qubosolver.types.QUBOInstance.evaluate_solution`
+    *solution*, using :meth:`~qubosolver.types.Instance.evaluate_solution`
     as the cost function.  After refinement, duplicate bitstrings that were
     driven to the same local minimum are merged: their counts are summed and
     the minimum cost is retained (via ``scatter_reduce``).  Sampling
@@ -92,9 +92,9 @@ def iterative_bitflip_local_search(Q: QUBOInstance, solution: QUBOSolution) -> Q
         for convenience.  An unmodified copy of *solution* is not kept.
 
     Args:
-        Q: The :class:`~qubosolver.types.QUBOInstance` used to evaluate
+        Q: The :class:`~qubosolver.types.Instance` used to evaluate
             bitstring costs.
-        solution: The :class:`~qubosolver.types.QUBOSolution` to refine.
+        solution: The :class:`~qubosolver.types.Solution` to refine.
             Returned immediately unchanged if it contains no bitstrings.
 
     Returns:

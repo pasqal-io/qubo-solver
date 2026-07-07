@@ -21,7 +21,7 @@ from .types import (
     ClassicalSolverType,
     Bitstring,
     Matrix,
-    QUBOSolution,
+    Solution,
     LocalEmulator,
     RemoteEmulator,
 )
@@ -333,7 +333,7 @@ class DriveShapingConfig(_Config):
         ]
     )  # ---> default initial drive parameters: delta = (-2, 0, 2)
     optimized_custom_qubo_cost: Callable[[Bitstring, Matrix], float] | None = None
-    optimized_custom_objective: Callable[[QUBOSolution], float] | None = None
+    optimized_custom_objective: Callable[[Solution], float] | None = None
     optimized_callback_objective: Callable[..., None] | None = None
     optimized_seed: int | None = None
     optimized_re_execute_opt_drive: bool = False

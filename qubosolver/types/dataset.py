@@ -6,12 +6,12 @@ import torch
 from torch.utils.data import Dataset
 from pathlib import Path
 
-from .solution import QUBOSolution
+from .solution import Solution
 from . import matrix
 from .random import torch_rng
 
 
-class QUBODataset(Dataset):
+class Dataset(Dataset):
     """A PyTorch ``Dataset`` of QUBO (Quadratic Unconstrained Binary Optimization) instances.
 
     Each instance is represented by a square coefficient matrix ``Q`` such that the
@@ -22,18 +22,18 @@ class QUBODataset(Dataset):
             Coefficient matrices stored as a 3-D tensor of shape
             ``(size, size, num_instances)``.  The third axis indexes individual
             problem instances.
-        solutions (list[QUBOSolution]):
+        solutions (list[Solution]):
             Known solutions for each instance.  Empty when the dataset was
             created without ground-truth solutions (e.g. via :meth:`from_random`).
     """
 
-    def __init__(self, coefficients: torch.Tensor, solutions: list[QUBOSolution] = []):
+    def __init__(self, coefficients: torch.Tensor, solutions: list[Solution] = []):
         """
         Args:
             coefficients (torch.Tensor):
                 Coefficient matrices of shape ``(size, size, num_instances)``.
                 ``coefficients[:, :, i]`` is the ``i``-th QUBO matrix.
-            solutions (list[QUBOSolution]):
+            solutions (list[Solution]):
                 Ground-truth solutions, one per instance.  Pass an empty list
                 (default) when solutions are unknown.
 
@@ -48,27 +48,27 @@ class QUBODataset(Dataset):
         """Return the number of QUBO instances in the dataset (``num_instances``)."""
         return int(self.matrix.shape[2])
 
-    def __getitem__(self, idx: int) -> tuple[torch.Tensor, QUBOSolution]:
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, Solution]:
         """Return the coefficient matrix and solution for instance *idx*.
 
         Args:
             idx (int): Zero-based index of the instance.
 
         Returns:
-            tuple[torch.Tensor, QUBOSolution]:
+            tuple[torch.Tensor, Solution]:
                 ``(Q, solution)`` where ``Q`` has shape ``(size, size)``.
                 When no solutions were provided, ``solution`` is an empty
-                :class:`~.QUBOSolution`.
+                :class:`~.Solution`.
         """
         if self.solutions:
             return self.matrix[:, :, idx], self.solutions[idx]
-        return self.matrix[:, :, idx], QUBOSolution()
+        return self.matrix[:, :, idx], Solution()
 
-    def __iter__(self) -> Iterator[tuple[torch.Tensor, QUBOSolution]]:
+    def __iter__(self) -> Iterator[tuple[torch.Tensor, Solution]]:
         """Iterate over all ``(coefficient_matrix, solution)`` pairs in order.
 
         Yields:
-            tuple[torch.Tensor, QUBOSolution]:
+            tuple[torch.Tensor, Solution]:
                 Same as :meth:`__getitem__` for each index ``0 … len(self)-1``.
         """
         return map(self.__getitem__, range(len(self)))
@@ -84,9 +84,9 @@ class QUBODataset(Dataset):
         dtype: torch.dtype = matrix.dtype(),
         rng: torch.Generator = torch_rng(),
         negative_offdiag_rate: float = 0.0,
-    ) -> QUBODataset:
+    ) -> Dataset:
         """
-        Generates a QUBODataset with random QUBO coefficient matrices.
+        Generates a Dataset with random QUBO coefficient matrices.
 
         Generation Steps:
         1. Initialize a reproducible random generator.
@@ -102,7 +102,7 @@ class QUBODataset(Dataset):
                 vi. Ensure that at least one diagonal element is negative.
                 vii. Ensure at least one coefficient equals the upper bound, excluding
                 any diagonal already at the lower bound.
-        4. Return a QUBODataset instance containing the generated matrices.
+        4. Return a Dataset instance containing the generated matrices.
 
         Args:
             n_matrices (int): Number of QUBO matrices to generate for each density.
@@ -117,7 +117,7 @@ class QUBODataset(Dataset):
                 Defaults to None, meaning no off-diagonal coefficient will be present.
 
         Returns:
-            QUBODataset: A dataset containing the generated coefficient matrices.
+            Dataset: A dataset containing the generated coefficient matrices.
         """
         # Step 1: Initialize a reproducible random generator.
         device = rng.device.type
@@ -232,31 +232,31 @@ class QUBODataset(Dataset):
         return cls(coefficients=coefficients)
 
     @staticmethod
-    def save(dataset: QUBODataset, filepath: Path) -> None:
+    def save(dataset: Dataset, filepath: Path) -> None:
         """Persist a dataset to disk using `torch.save`.
 
         Args:
-            dataset (QUBODataset): The dataset to serialise.
+            dataset (Dataset): The dataset to serialise.
             filepath (Path): Destination file path.  The file is created or
                 overwritten.  Use a ``.pt`` or ``.pth`` extension by convention.
         """
         return _save_qubo_dataset(dataset, filepath)
 
     @staticmethod
-    def load(filepath: Path) -> QUBODataset:
+    def load(filepath: Path) -> Dataset:
         """Load a dataset previously saved with :meth:`save`.
 
         Args:
             filepath (Path): Path to the file produced by :meth:`save`.
 
         Returns:
-            QUBODataset: The deserialised dataset, including solutions if they
+            Dataset: The deserialised dataset, including solutions if they
             were present when the file was saved.
         """
         return _load_qubo_dataset(filepath)
 
 
-def _save_qubo_dataset(dataset: QUBODataset, filepath: Path) -> None:
+def _save_qubo_dataset(dataset: Dataset, filepath: Path) -> None:
     """Serialise *dataset* to *filepath* via `torch.save`.
 
     The file stores a dict with two keys:
@@ -264,11 +264,11 @@ def _save_qubo_dataset(dataset: QUBODataset, filepath: Path) -> None:
     * ``"coefficients"`` — the raw ``(size, size, num_instances)`` tensor.
     * ``"solutions"`` — ``None`` when no solutions exist, otherwise a list of
       dicts each containing ``bitstrings``, ``counts``, ``probabilities``, and
-      ``costs`` as returned by the corresponding :class:`~.QUBOSolution`
+      ``costs`` as returned by the corresponding :class:`~.Solution`
       attributes.
 
     Args:
-        dataset (QUBODataset): Dataset to serialise.
+        dataset (Dataset): Dataset to serialise.
         filepath (Path): Destination file path (created or overwritten).
     """
     data: dict[str, Any] = {"coefficients": dataset.matrix, "solutions": None}
@@ -285,8 +285,8 @@ def _save_qubo_dataset(dataset: QUBODataset, filepath: Path) -> None:
     torch.save(data, filepath)
 
 
-def _load_qubo_dataset(filepath: Path) -> QUBODataset:
-    """Deserialise a :class:`QUBODataset` from *filepath*.
+def _load_qubo_dataset(filepath: Path) -> Dataset:
+    """Deserialise a :class:`Dataset` from *filepath*.
 
     The file must have been produced by `_save_qubo_dataset`.
 
@@ -294,14 +294,14 @@ def _load_qubo_dataset(filepath: Path) -> QUBODataset:
         filepath (Path): Path to the serialised dataset file.
 
     Returns:
-        QUBODataset: Restored dataset, with solutions populated when they were
+        Dataset: Restored dataset, with solutions populated when they were
         present in the file.
     """
     data = torch.load(filepath)
     solutions = []
     if data["solutions"] is not None:
         solutions = [
-            QUBOSolution(
+            Solution(
                 bitstrings=solution["bitstrings"],
                 counts=solution["counts"],
                 probabilities=solution["probabilities"],
@@ -309,7 +309,7 @@ def _load_qubo_dataset(filepath: Path) -> QUBODataset:
             )
             for solution in data["solutions"]
         ]
-    return QUBODataset(coefficients=data["coefficients"], solutions=solutions)
+    return Dataset(coefficients=data["coefficients"], solutions=solutions)
 
 
 def _generate_symmetric_mask(
@@ -317,7 +317,7 @@ def _generate_symmetric_mask(
 ) -> torch.Tensor:
     """Generate a symmetric boolean mask with exactly *target* ``True`` entries.
 
-    The mask is used by :meth:`QUBODataset.from_random` to enforce an exact
+    The mask is used by :meth:`Dataset.from_random` to enforce an exact
     sparsity level.  Symmetry is maintained by setting both ``mask[i, j]`` and
     ``mask[j, i]`` whenever an off-diagonal position is selected, so the
     effective number of *unique* off-diagonal pairs is ``(target - x) // 2``

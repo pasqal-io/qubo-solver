@@ -14,7 +14,7 @@ It outputs both the optimized drive and a solution object containing bitstrings,
 
 | Field         | Type          | Description |
 |---------------|---------------|-------------|
-| `instance`   | `QUBOInstance` | Qubo instance. |
+| `instance`   | `Instance` | Qubo instance. |
 | `config` | `SolverConfig` | Configuration for solving. |
 
 
@@ -38,7 +38,7 @@ The drive starts with an `InterpolatedWaveform` with the points:
 - $\delta = [-0.8, 0.0, 0.8] \times \delta_{\mathrm{hw,max}}$
 
 ### Methods Overview
-- `generate(self, register: Register, instance: QUBOInstance) -> tuple[Drive, QUBOSolution]`:
+- `generate(self, register: Register, instance: Instance) -> tuple[Drive, Solution]`:
 Runs the Bayesian optimization loop and returns the optimized drive and corresponding solution. Handles fallback cases if simulation fails.
 
 - `build_drive(self, params: list) -> Drive`:
@@ -67,22 +67,22 @@ After the final round of optimization, the following attributes are populated:
 ```python exec="on" source="material-block" html="1"
 import torch
 
-from qubosolver import QUBOInstance, SolverConfig, DriveShapingConfig, QUBOSolver, DriveType
+from qubosolver import Instance, SolverConfig, DriveShapingConfig, Solver, DriveType
 
 
 Q = torch.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
 
-instance = QUBOInstance(Q)
+instance = Instance(Q)
 
 default_config = SolverConfig(
     use_quantum = True, drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.OPTIMIZED, optimized_n_calls = 25),
 )
-solver = QUBOSolver(instance, default_config)
+solver = Solver(instance, default_config)
 
 solution = solver.solve()
 print(solution)
 
 ```
-This will return a `QUBOSolution` instance, which comprehends the solution bitstrings, the counts of each bitstring, their probabilities and costs.
+This will return a `Solution` instance, which comprehends the solution bitstrings, the counts of each bitstring, their probabilities and costs.
 
 ---

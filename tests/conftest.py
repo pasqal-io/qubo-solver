@@ -16,9 +16,9 @@ import qoolqit
 from mock.connection import MockConnection
 
 from qubosolver import (
-    QUBOInstance,
-    QUBOSolution,
-    QUBOAnalyzer,
+    Instance,
+    Solution,
+    Analyzer,
     EmbedderType,
     LayoutType,
     DriveType,
@@ -67,8 +67,8 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 
 
 @pytest.fixture
-def basic_solution() -> QUBOSolution:
-    return QUBOSolution(
+def basic_solution() -> Solution:
+    return Solution(
         bitstrings=bitstrings.tensor([[0, 1, 0], [1, 0, 1]]),
         costs=vector.tensor([1.0, 2.0]),
         counts=vectori.tensor([15, 5]),
@@ -77,8 +77,8 @@ def basic_solution() -> QUBOSolution:
 
 
 @pytest.fixture
-def analyzer(basic_solution: QUBOSolution) -> QUBOAnalyzer:
-    return QUBOAnalyzer(solutions=[basic_solution], labels=["sol1"])
+def analyzer(basic_solution: Solution) -> Analyzer:
+    return Analyzer(solutions=[basic_solution], labels=["sol1"])
 
 
 @pytest.fixture
@@ -180,11 +180,11 @@ def greedy_embedding_config() -> SolverConfig:
 
 
 @pytest.fixture
-def qubo_instance_for_preprocessing() -> QUBOInstance:
+def qubo_instance_for_preprocessing() -> Instance:
     """
     Generate small instance for pre/postprocessing.
     """
-    return QUBOInstance(
+    return Instance(
         matrix.tensor(
             [
                 [-10.0, 19.7365809, 19.7365809, 5.42015853, 5.42015853],
@@ -198,23 +198,23 @@ def qubo_instance_for_preprocessing() -> QUBOInstance:
 
 
 @pytest.fixture
-def simple_qubo_instance() -> QUBOInstance:
+def simple_qubo_instance() -> Instance:
     Q = matrix.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
-    return QUBOInstance(matrix=Q)
+    return Instance(matrix=Q)
 
 
 @pytest.fixture
-def simple_qubo_instance2() -> QUBOInstance:
+def simple_qubo_instance2() -> Instance:
     Q = matrix.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
-    return QUBOInstance(matrix=Q)
+    return Instance(matrix=Q)
 
 
 @pytest.fixture
-def qubo_instance_for_embedding() -> QUBOInstance:
+def qubo_instance_for_embedding() -> Instance:
     """
     Small QUBO instance for embedding.
     """
-    return QUBOInstance(
+    return Instance(
         matrix.tensor(
             [[-98, 2, 13, 1], [2, -12, 20, 15], [13, 20, -34, 7], [1, 15, 7, -57]],
         )
@@ -222,7 +222,7 @@ def qubo_instance_for_embedding() -> QUBOInstance:
 
 
 @pytest.fixture
-def qubo_instance_blade_tutorial() -> QUBOInstance:
+def qubo_instance_blade_tutorial() -> Instance:
     M = matrix.tensor(
         [
             [0.0, 3.0, 13.0, 211.0, 49.0, 5.0, 12.0, 0.0, 0.0],
@@ -237,7 +237,7 @@ def qubo_instance_blade_tutorial() -> QUBOInstance:
         ]
     )
     Q = M + M.T
-    return QUBOInstance(matrix=Q)
+    return Instance(matrix=Q)
 
 
 @pytest.fixture(
@@ -248,7 +248,7 @@ def qubo_instance_blade_tutorial() -> QUBOInstance:
         "qubo_instance_blade_tutorial",
     ],
 )
-def qubo_for_testing_many_devices(request: pytest.FixtureRequest) -> QUBOInstance:
+def qubo_for_testing_many_devices(request: pytest.FixtureRequest) -> Instance:
     return request.getfixturevalue(request.param)  # type: ignore[no-any-return]
 
 
@@ -286,8 +286,8 @@ def generate_qubo_matrix(
 
 
 @pytest.fixture
-def decomposable_qubo() -> QUBOInstance:
-    return QUBOInstance(generate_qubo_matrix(50, 0.30, (0, 20), 1))
+def decomposable_qubo() -> Instance:
+    return Instance(generate_qubo_matrix(50, 0.30, (0, 20), 1))
 
 
 @pytest.fixture

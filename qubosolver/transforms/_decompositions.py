@@ -10,7 +10,7 @@ stateful data structures and the three core steps of that loop:
 2. *Solve* — performed externally (quantum or classical).
 3. `update` — merge the sub-solution into the global solution, propagate
    edge values to the remaining variables, and return a complete
-   :class:`~qubosolver.types.QUBOSolution` once all variables are assigned.
+   :class:`~qubosolver.types.Solution` once all variables are assigned.
 """
 
 from __future__ import annotations
@@ -22,8 +22,8 @@ import torch
 import qoolqit
 
 from qubosolver.config import DecompositionConfig
-from qubosolver import QUBOSolution, Matrix, matrix, Bitstring, bitstring, vectori, torch_rng
-from qubosolver import QUBOInstance as QUBOInstanceBase
+from qubosolver import Solution, Matrix, matrix, Bitstring, bitstring, vectori, torch_rng
+from qubosolver import Instance as QUBOInstanceBase
 from ._algorithms.decompose import (
     compute_distance_interaction_matrix,
     geometric_search,
@@ -68,7 +68,7 @@ class Config:
         )
 
 
-class QUBOInstance(QUBOInstanceBase):
+class Instance(QUBOInstanceBase):
     """A QUBO instance augmented with decomposition state.
 
     Maintains the global solution, the working QUBO matrix, and the
@@ -115,7 +115,7 @@ class QUBOInstance(QUBOInstanceBase):
             separation_threshold=config.neglecting_inter_distance,
         )
 
-        update(self, SubQUBOInstance(), QUBOSolution())
+        update(self, SubQUBOInstance(), Solution())
 
 
 class SubQUBOInstance(QUBOInstanceBase):
@@ -143,7 +143,7 @@ class SubQUBOInstance(QUBOInstanceBase):
 
 
 def extract_subqubo(
-    qubo: QUBOInstance,
+    qubo: Instance,
     device: qoolqit.Device,
     config: Config,
     *,
@@ -199,7 +199,7 @@ def extract_subqubo(
     return SubQUBOInstance(matrix_to_solve, map_index_vertices)
 
 
-def update(qubo: QUBOInstance, subqubo: SubQUBOInstance, subsolution: QUBOSolution) -> QUBOSolution:
+def update(qubo: Instance, subqubo: SubQUBOInstance, subsolution: Solution) -> Solution:
     """Merge a sub-solution into the global state and return the full solution if complete.
 
     Records the solved sub-problem in the decomposition log, writes the
@@ -219,10 +219,10 @@ def update(qubo: QUBOInstance, subqubo: SubQUBOInstance, subsolution: QUBOSoluti
             skips the write-back.
 
     Returns:
-        A :class:`~qubosolver.types.QUBOSolution` containing the single
+        A :class:`~qubosolver.types.Solution` containing the single
         complete global bitstring (with costs and probabilities computed) once
         all variables have been assigned, or an empty
-        :class:`~qubosolver.types.QUBOSolution` if unassigned variables remain.
+        :class:`~qubosolver.types.Solution` if unassigned variables remain.
     """
     if subqubo._map_index_vertices:
         qubo._decomposition.append(list(subqubo._map_index_vertices.keys()))
@@ -246,11 +246,11 @@ def update(qubo: QUBOInstance, subqubo: SubQUBOInstance, subsolution: QUBOSoluti
         qubo._decomposition.append([v])
 
     if (qubo._global_solution == -1).any():
-        return QUBOSolution()
+        return Solution()
 
     # Probabilities and counts are ignored as we return one solution
     solution = (
-        QUBOSolution(
+        Solution(
             bitstrings=qubo._global_solution.unsqueeze(0),
             counts=vectori.tensor([1]),
         )

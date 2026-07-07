@@ -10,17 +10,17 @@ The `SolverConfig()` without argument has a default behavior (e.g. Solver Config
 ```python exec="on" source="material-block" html="1" session="embedding"
 import torch
 
-from qubosolver import SolverConfig, EmbeddingConfig, QUBOInstance, QUBOSolver
+from qubosolver import SolverConfig, EmbeddingConfig, Instance, Solver
 
 # define qubo matrix
 coefficients = torch.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
 
-# Instantiate a QUBOInstance with coefficients
-instance = QUBOInstance(coefficients)
+# Instantiate a Instance with coefficients
+instance = Instance(coefficients)
 
 # define the solver with default configuration
 default_config = SolverConfig()
-solver = QUBOSolver(instance, default_config)
+solver = Solver(instance, default_config)
 register = solver.embedding()
 
 # draw the register
@@ -38,7 +38,7 @@ blade_config = SolverConfig(
     embedding=embedconfig,
 )
 
-solver = QUBOSolver(instance, blade_config)
+solver = Solver(instance, blade_config)
 register = solver.embedding()
 
 # register.draw()
@@ -57,7 +57,7 @@ greedy_config = SolverConfig(
     device = AnalogDevice(),
 )
 
-solver = QUBOSolver(instance, greedy_config)
+solver = Solver(instance, greedy_config)
 register = solver.embedding()
 
 # register.draw()
@@ -95,7 +95,7 @@ The `embed` method `def embed(self) -> qoolqit.Register` specifies how the probl
 #     embedding=EmbeddingConfig(embedding_method=FixedEmbedder),
 # )
 #
-# solver = QUBOSolver(instance, config)
+# solver = Solver(instance, config)
 # register = solver.embedding()
 
 # register.draw()

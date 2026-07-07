@@ -5,8 +5,8 @@ import torch
 
 from qoolqit import Device, DigitalAnalogDevice, AnalogDevice, AnalogDeviceWithDMM
 from qubosolver import (
-    QUBOSolver,
-    QUBOInstance,
+    Solver,
+    Instance,
     EmbeddingConfig,
     SolverConfig,
     tensor,
@@ -19,7 +19,7 @@ from qubosolver.embedding._embedder import GreedyEmbedder, _get_embedder
 @pytest.mark.priority(40)
 @pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
 def test_embeddings_different_devices(
-    qubo_for_testing_many_devices: QUBOInstance, local_device: Device, embedding_method: str
+    qubo_for_testing_many_devices: Instance, local_device: Device, embedding_method: str
 ) -> None:
     config = SolverConfig(
         use_quantum=True,
@@ -28,11 +28,11 @@ def test_embeddings_different_devices(
         do_preprocessing=False,
         device=local_device,
     )
-    solver = QUBOSolver(qubo_for_testing_many_devices, config)
+    solver = Solver(qubo_for_testing_many_devices, config)
     assert solver.embedding()
 
 
-def test_custom_embedder(simple_qubo_instance: QUBOInstance) -> None:
+def test_custom_embedder(simple_qubo_instance: Instance) -> None:
 
     class MockGreedyEmbedder(GreedyEmbedder):
         pass
@@ -46,7 +46,7 @@ def test_custom_embedder(simple_qubo_instance: QUBOInstance) -> None:
     assert isinstance(shaper, MockGreedyEmbedder)
 
 
-def test_correctness_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) -> None:
+def test_correctness_greedy_embedder(qubo_instance_for_embedding: Instance) -> None:
     assert qubo_instance_for_embedding.size is not None
     config = SolverConfig(
         use_quantum=True,
@@ -57,7 +57,7 @@ def test_correctness_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) 
         ),
         device=DigitalAnalogDevice(),
     )
-    solver = QUBOSolver(qubo_instance_for_embedding, config)
+    solver = Solver(qubo_instance_for_embedding, config)
     positions = solver.embedding()
 
     expected_greedy_positions = (
@@ -79,7 +79,7 @@ def test_correctness_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) 
 
 
 def test_error_greedy_max_radial_distance_constraint(
-    qubo_instance_for_embedding: QUBOInstance,
+    qubo_instance_for_embedding: Instance,
 ) -> None:
     assert qubo_instance_for_embedding.size is not None
 
@@ -96,7 +96,7 @@ def test_error_greedy_max_radial_distance_constraint(
             device=device,
         )
 
-        solver = QUBOSolver(qubo_instance_for_embedding, greedy_config)
+        solver = Solver(qubo_instance_for_embedding, greedy_config)
         # Setting a spacing larger than the max_radial_distance is not an error,
         # since scaling is performed
         solver.embedding()
@@ -104,7 +104,7 @@ def test_error_greedy_max_radial_distance_constraint(
 
 @pytest.mark.parametrize("normalized", [True, False], ids=["normalized", "not_normalized"])
 def test_correctness_greedy_max_radial_distance_constraint_with_extra_greedy_traps(
-    qubo_instance_for_embedding: QUBOInstance,
+    qubo_instance_for_embedding: Instance,
     normalized: bool,
 ) -> None:
     assert qubo_instance_for_embedding.size is not None
@@ -141,7 +141,7 @@ def test_correctness_greedy_max_radial_distance_constraint_with_extra_greedy_tra
             device=device,
         )
 
-        solver = QUBOSolver(qubo_instance_for_embedding, greedy_config)
+        solver = Solver(qubo_instance_for_embedding, greedy_config)
         geometry = solver.embedding()
 
         assert len(geometry.qubits) == len(expected)

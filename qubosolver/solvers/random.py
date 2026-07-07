@@ -2,7 +2,7 @@
 
 This module provides `random_solutions`, which samples uniformly random
 binary vectors, evaluates their QUBO cost, and returns a deduplicated
-:class:`~qubosolver.types.QUBOSolution` sorted by ascending cost.
+:class:`~qubosolver.types.Solution` sorted by ascending cost.
 
 It serves two roles in the broader solver stack:
 
@@ -18,16 +18,16 @@ from __future__ import annotations
 
 import torch
 
-from qubosolver.types import QUBOInstance, QUBOSolution, bitstring, torch_rng
+from qubosolver.types import Instance, Solution, bitstring, torch_rng
 from qubosolver._utils import costs
 
 
 def random_solutions(
-    Q: QUBOInstance,
+    Q: Instance,
     *,
     max_bitstrings: int = 1,
     rng: torch.Generator = torch_rng(),
-) -> QUBOSolution:
+) -> Solution:
     """Sample uniformly random bitstring solutions for a QUBO instance.
 
     Draws *max_bitstrings* independent binary vectors uniformly at random,
@@ -56,7 +56,7 @@ def random_solutions(
             Defaults to a module-level generator (see note above).
 
     Returns:
-        A :class:`~qubosolver.types.QUBOSolution` with unique bitstrings,
+        A :class:`~qubosolver.types.Solution` with unique bitstrings,
         their QUBO costs, draw counts, and normalised probabilities, sorted
         by ascending cost.
     """
@@ -66,7 +66,7 @@ def random_solutions(
     unique_bits, counts = torch.unique(bitstrings_, dim=0, return_counts=True)
     costs_ = costs.batched_quadratic_cost(unique_bits.to(Q.matrix), Q.matrix)
     solution = (
-        QUBOSolution(
+        Solution(
             bitstrings=unique_bits,
             costs=costs_,
             counts=counts,

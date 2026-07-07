@@ -2,7 +2,7 @@
 
 This module is a thin wrapper around :class:`qoolqit.embedding.Blade` that
 exposes a single `embed` entry point accepting a
-:class:`~qubosolver.types.QUBOInstance` and returning a
+:class:`~qubosolver.types.Instance` and returning a
 :class:`~qoolqit.Register` ready for use in a quantum program.
 
 BLaDE maps the QUBO coefficient matrix onto a 2-D (or higher-dimensional)
@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from typing import TypeAlias
 
-from qubosolver import QUBOInstance
+from qubosolver import Instance
 from qoolqit import Register
 from qoolqit.embedding import Blade, BladeConfig
 
@@ -31,7 +31,7 @@ Config: TypeAlias = BladeConfig
 
 
 def embed(
-    instance: QUBOInstance,
+    instance: Instance,
     *,
     config: Config = Config(),
     normalize: bool = True,

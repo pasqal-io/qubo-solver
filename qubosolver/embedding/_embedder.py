@@ -7,7 +7,7 @@ import warnings
 from qoolqit import Register
 
 from . import blade, greedy
-from qubosolver.types import QUBOInstance, EmbedderType, _protocols
+from qubosolver.types import Instance, EmbedderType, _protocols
 from qubosolver.config import SolverConfig
 
 warnings.filterwarnings("ignore", module="pulser")
@@ -16,13 +16,13 @@ warnings.filterwarnings("ignore", module="pulser")
 class _BaseEmbedder(ABC):
     """Abstract base class for all embedders.
 
-    Subclasses translate a :class:`~qubosolver.types.QUBOInstance` into a
+    Subclasses translate a :class:`~qubosolver.types.Instance` into a
     physical :class:`~qoolqit.Register` — a set of atom positions compatible
     with Pasqal/Pulser devices — by mapping the QUBO graph structure onto a
     2-D trap layout.
     """
 
-    def __init__(self, instance: QUBOInstance, config: SolverConfig, backend: _protocols.Backend):
+    def __init__(self, instance: Instance, config: SolverConfig, backend: _protocols.Backend):
         """
         Args:
             instance: The QUBO problem to embed.
@@ -32,7 +32,7 @@ class _BaseEmbedder(ABC):
             backend: Execution backend, passed through for embedders that
                 need backend-specific information during placement.
         """
-        self.instance: QUBOInstance = instance
+        self.instance: Instance = instance
         self.config: SolverConfig = config
         self.register: Register | None = None
         self.backend = backend
@@ -134,7 +134,7 @@ class GreedyEmbedder(_BaseEmbedder):
 
 
 def _get_embedder(
-    instance: QUBOInstance, config: SolverConfig, backend: _protocols.Backend
+    instance: Instance, config: SolverConfig, backend: _protocols.Backend
 ) -> _BaseEmbedder:
     """Return the appropriate embedder instance for the given configuration.
 

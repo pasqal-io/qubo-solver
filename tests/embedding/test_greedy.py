@@ -6,7 +6,7 @@ import numpy as np
 from qoolqit.devices.device import AnalogDeviceWithDMM
 
 from qubosolver.embedding._algorithms.greedy import Greedy
-from qubosolver import LayoutType, QUBODataset
+from qubosolver import LayoutType, Dataset
 import pytest
 import pytest_check as check
 
@@ -309,7 +309,7 @@ def test_max_distance_constraint() -> None:
     assert isinstance(device.max_radial_distance, int)
     spacing = 0.99 * device.max_radial_distance
 
-    dataset = QUBODataset.from_random(1, traps)
+    dataset = Dataset.from_random(1, traps)
     Q, _ = dataset[0]
 
     parameters = {

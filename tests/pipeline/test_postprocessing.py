@@ -5,12 +5,12 @@ import numpy as np
 import pytest
 import pytest_check as check
 from qubosolver import (
-    QUBOSolver,
-    QUBOSolution,
+    Solver,
+    Solution,
     SolverConfig,
-    QUBODataset,
-    QUBOAnalyzer,
-    QUBOInstance,
+    Dataset,
+    Analyzer,
+    Instance,
     solvers,
     Bitstring,
     bitstring,
@@ -34,9 +34,9 @@ def test_basic_qubo_2d_integration(postprocessing: bool) -> None:
     ])
     # fmt: on
 
-    instance = QUBOInstance(matrix=Q)
-    solver = QUBOSolver(instance, SolverConfig(do_postprocessing=postprocessing))
-    solution = QUBOSolution(
+    instance = Instance(matrix=Q)
+    solver = Solver(instance, SolverConfig(do_postprocessing=postprocessing))
+    solution = Solution(
         bitstrings=bitstrings.tensor([[0, 0]]),
         costs=vector.tensor([0.0]),
         counts=vectori.tensor([1]),
@@ -53,7 +53,7 @@ def test_basic_qubo_2d_integration(postprocessing: bool) -> None:
         torch.testing.assert_close(pp_solution.bitstrings[0, :], bitstring.tensor([0, 0]))
         torch.testing.assert_close(pp_solution.costs, vector.tensor([0.0]))
 
-    analyzer = QUBOAnalyzer(pp_solution)
+    analyzer = Analyzer(pp_solution)
     df = analyzer.df
     print(f"\n{df}")
 
@@ -67,8 +67,8 @@ def test_basic_qubo_2d() -> None:
     ])
     # fmt: on
 
-    instance = QUBOInstance(matrix=Q)
-    solution = QUBOSolution(
+    instance = Instance(matrix=Q)
+    solution = Solution(
         bitstrings=bitstrings.zeros(1, 2),
         costs=vector.zeros(1),
         counts=vectori.tensor([1]),
@@ -81,7 +81,7 @@ def test_basic_qubo_2d() -> None:
     torch.testing.assert_close(pp_solution.bitstrings[0, :], bitstring.tensor([1, 1]))
     torch.testing.assert_close(pp_solution.costs, vector.tensor([-18.0]))
 
-    analyzer = QUBOAnalyzer(pp_solution)
+    analyzer = Analyzer(pp_solution)
     df = analyzer.df
     print(f"\n{df}")
 
@@ -93,13 +93,13 @@ def test_random_qubos(density: float) -> None:
     size = 5
 
     for seed in [545, 87, 89993]:
-        dataset = QUBODataset.from_random(1, size, densities=[density], rng=torch_rng(seed))
+        dataset = Dataset.from_random(1, size, densities=[density], rng=torch_rng(seed))
         torch.manual_seed(seed)
         for Q, _ in dataset:
-            instance = QUBOInstance(matrix=Q)
+            instance = Instance(matrix=Q)
             bitstring_ = (torch.rand(size) > 0.5).to(bitstring.dtype())
             cost = instance.evaluate_solution(bitstring_)
-            solution = QUBOSolution(
+            solution = Solution(
                 bitstrings=bitstring_.unsqueeze(0),
                 costs=vector.tensor([cost]),
                 counts=vectori.tensor([1]),
@@ -108,7 +108,7 @@ def test_random_qubos(density: float) -> None:
             pp_solution = solvers.iterative_bitflip_local_search(instance, solution)
             pp_solution.sort_by_cost()
 
-            analyzer = QUBOAnalyzer(pp_solution)
+            analyzer = Analyzer(pp_solution)
             df = analyzer.df
             print(f"\n{df}")
 
@@ -123,8 +123,8 @@ def test_no_solution() -> None:
     ])
     # fmt: on
 
-    instance = QUBOInstance(matrix=Q)
-    solution = QUBOSolution()
+    instance = Instance(matrix=Q)
+    solution = Solution()
     check.equal(solution.bitstrings.numel(), 0)
 
     # Bitflip doesn't find new solutions if there were none to begin with
@@ -163,7 +163,7 @@ def test_bit_flip_local_search_randoms(shuffle: bool, density: float) -> None:
 
     for seed in [454, 85, 989751]:
         rng = torch_rng(seed)
-        dataset = QUBODataset.from_random(1, size, densities=[density], rng=rng)
+        dataset = Dataset.from_random(1, size, densities=[density], rng=rng)
         s = bitstring.zeros(size)
 
         for Q, _ in dataset:

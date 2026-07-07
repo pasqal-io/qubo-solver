@@ -14,12 +14,12 @@ import time
 
 import torch
 
-from qubosolver import QUBOInstance, QUBOSolution, bitstrings, vector, Bitstring, torch_rng
+from qubosolver import Instance, Solution, bitstrings, vector, Bitstring, torch_rng
 
 
 @torch.no_grad()
 def simulated_annealing(
-    qubo: QUBOInstance,
+    qubo: Instance,
     start: Bitstring,
     *,
     top_k: int = 5,
@@ -30,7 +30,7 @@ def simulated_annealing(
     energy_tol: float = 0.0,
     time_limit: float = float("inf"),
     rng: torch.Generator = torch_rng(),
-) -> QUBOSolution:
+) -> Solution:
     """Run Simulated Annealing on a QUBO instance and return the best solutions found.
 
     Minimises E(x) = xᵀ Q x over x ∈ {0,1}ⁿ using the Metropolis–Hastings
@@ -77,7 +77,7 @@ def simulated_annealing(
             for reproducibility across calls.
 
     Returns:
-        A :class:`~qubosolver.types.QUBOSolution` containing up to *top_k*
+        A :class:`~qubosolver.types.Solution` containing up to *top_k*
         unique bitstrings sorted by ascending energy, with their costs,
         counts (how many times each was visited during the run), and
         normalised probabilities.
@@ -179,7 +179,7 @@ def simulated_annealing(
     )
     energies = energies[inverse_indices]
 
-    solution = QUBOSolution(
+    solution = Solution(
         bitstrings=unique_bits, counts=counts, costs=energies
     ).compute_probabilities()
     return solution

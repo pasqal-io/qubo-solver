@@ -9,12 +9,12 @@ import time
 
 import torch
 
-from qubosolver.types import QUBOInstance, QUBOSolution, Bitstring, bitstrings
+from qubosolver.types import Instance, Solution, Bitstring, bitstrings
 from qubosolver._utils import costs as _costs
 
 
 def tabu_search(
-    qubo: QUBOInstance,
+    qubo: Instance,
     start: Bitstring,
     *,
     max_iter: int = 100,
@@ -22,7 +22,7 @@ def tabu_search(
     max_no_improve: int = 20,
     max_bitstrings: int = 1,
     time_limit: float = float("inf"),
-) -> QUBOSolution:
+) -> Solution:
     """Perform Tabu Search on a QUBO instance to find low-cost bitstrings.
 
     Runs ``max_bitstrings`` parallel searches that each start from ``start``
@@ -32,7 +32,7 @@ def tabu_search(
     criteria and are deduplicated before being returned.
 
     Args:
-        qubo (QUBOInstance): The QUBO instance providing the cost matrix.
+        qubo (Instance): The QUBO instance providing the cost matrix.
         start (Bitstring): Initial binary solution of length ``n``.  Replicated
             across all ``max_bitstrings`` parallel runs.
         max_iter (int): Maximum number of search iterations. Defaults to 100.
@@ -47,7 +47,7 @@ def tabu_search(
             ``float('inf')`` (no limit).
 
     Returns:
-        QUBOSolution: Deduplicated best bitstrings found across all runs,
+        Solution: Deduplicated best bitstrings found across all runs,
             together with their objective values and occurrence counts.
     """
     Q = qubo.matrix
@@ -109,7 +109,7 @@ def tabu_search(
     uniq, counts = torch.unique(x_best, dim=0, return_counts=True)
     costs = _costs.batched_quadratic_cost(uniq.to(Q), Q)
 
-    solution = QUBOSolution(
+    solution = Solution(
         bitstrings=bitstrings.from_torch(uniq),
         costs=costs,
         counts=counts,

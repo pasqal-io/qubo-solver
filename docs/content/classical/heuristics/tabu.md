@@ -6,12 +6,12 @@ Classical solver using Tabu Search. Designed to integrate with the solver factor
 
 ```python
 class TabuSearchSolver(BaseClassicalSolver):
-    def solve(self) -> QUBOSolution
+    def solve(self) -> Solution
 ```
 
 ### Description
 
-This solver applies a Tabu Search metaheuristic to escape local minima and explore the solution space. It is suitable for solving QUBO instances classically without relying on quantum hardware. The implementation is based on `TabuSearchSolver` from the Ocean SDK, and returns solutions compatible with the `QUBOSolution` interface used across the `qubo-solver` package.
+This solver applies a Tabu Search metaheuristic to escape local minima and explore the solution space. It is suitable for solving QUBO instances classically without relying on quantum hardware. The implementation is based on `TabuSearchSolver` from the Ocean SDK, and returns solutions compatible with the `Solution` interface used across the `qubo-solver` package.
 
 ## Fields
 
@@ -27,12 +27,12 @@ This solver applies a Tabu Search metaheuristic to escape local minima and explo
 ### Usage
 
 ```python exec="on" source="material-block" html="1"
-from qubosolver import QUBOInstance, QUBOSolver, SolverConfig, ClassicalConfig, matrix
+from qubosolver import Instance, Solver, SolverConfig, ClassicalConfig, matrix
 
-qubo = QUBOInstance(matrix=matrix.tensor([[-2.0, 1.0], [1.0, -2.0]]))
+qubo = Instance(matrix=matrix.tensor([[-2.0, 1.0], [1.0, -2.0]]))
 config = SolverConfig(use_quantum = False, classical=ClassicalConfig(classical_solver_type="tabu_search", tabu_time_limit=300.0))
 
-solver = QUBOSolver(qubo, config)
+solver = Solver(qubo, config)
 
 solution = solver.solve()
 print(solution)

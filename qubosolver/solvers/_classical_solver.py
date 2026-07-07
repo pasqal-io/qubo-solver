@@ -22,7 +22,7 @@ from abc import ABC, abstractmethod
 import torch
 
 from qubosolver.config import ClassicalConfig
-from qubosolver.types import QUBOInstance, QUBOSolution, ClassicalSolverType, torch_rng
+from qubosolver.types import Instance, Solution, ClassicalSolverType, torch_rng
 from qubosolver import solvers
 
 
@@ -35,7 +35,7 @@ class BaseClassicalSolver(ABC):
     subclasses directly.
     """
 
-    def __init__(self, instance: QUBOInstance, config: ClassicalConfig):
+    def __init__(self, instance: Instance, config: ClassicalConfig):
         """Initialise the solver with a QUBO instance and configuration.
 
         Args:
@@ -49,11 +49,11 @@ class BaseClassicalSolver(ABC):
         self.config = config
 
     @abstractmethod
-    def solve(self) -> QUBOSolution:
+    def solve(self) -> Solution:
         """Solve the QUBO problem and return a solution.
 
         Returns:
-            A :class:`~qubosolver.types.QUBOSolution` containing the
+            A :class:`~qubosolver.types.Solution` containing the
             discovered bitstrings and their associated costs.
         """
         pass
@@ -71,14 +71,14 @@ class CplexSolver(BaseClassicalSolver):
     ``cplex_maxtime``, ``cplex_log_path``.
     """
 
-    def solve(self) -> QUBOSolution:
+    def solve(self) -> Solution:
         """Solve via CPLEX.
 
         Lazily imports :mod:`qubosolver.solvers.cplex` to avoid a hard
         dependency on the ``cplex`` package at module import time.
 
         Returns:
-            A :class:`~qubosolver.types.QUBOSolution` with the optimal (or
+            A :class:`~qubosolver.types.Solution` with the optimal (or
             best feasible) bitstring found within ``config.cplex_maxtime``
             seconds.
         """
@@ -103,7 +103,7 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
     ``max_iter``, ``max_bitstrings``.
     """
 
-    def solve(self) -> QUBOSolution:
+    def solve(self) -> Solution:
         """Solve via Simulated Annealing.
 
         When ``config.sa_start`` is ``None``, a single uniformly random
@@ -112,7 +112,7 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
         used directly.
 
         Returns:
-            A :class:`~qubosolver.types.QUBOSolution` containing up to
+            A :class:`~qubosolver.types.Solution` containing up to
             ``config.max_bitstrings`` best bitstrings found during the search.
         """
         rng = torch_rng(self.config.sa_seed)
@@ -149,7 +149,7 @@ class TabuSearchSolver(BaseClassicalSolver):
     ``tabu_time_limit``, ``max_iter``, ``max_bitstrings``.
     """
 
-    def solve(self) -> QUBOSolution:
+    def solve(self) -> Solution:
         """Solve via Tabu Search.
 
         When ``config.tabu_x0`` is ``None``, a uniformly random bitstring is
@@ -157,7 +157,7 @@ class TabuSearchSolver(BaseClassicalSolver):
         starting point.  Otherwise ``config.tabu_x0`` is used directly.
 
         Returns:
-            A :class:`~qubosolver.types.QUBOSolution` containing up to
+            A :class:`~qubosolver.types.Solution` containing up to
             ``config.max_bitstrings`` best bitstrings found during the search.
         """
         if self.config.tabu_x0 is None:
@@ -192,7 +192,7 @@ class HybridSATabuSolver(BaseClassicalSolver):
     phases; ``max_iter`` and ``max_bitstrings`` are shared.
     """
 
-    def solve(self) -> QUBOSolution:
+    def solve(self) -> Solution:
         """Solve via SA warm-started Tabu Search.
 
         Internally creates a :class:`SimulatedAnnealingSolver` and a
@@ -202,7 +202,7 @@ class HybridSATabuSolver(BaseClassicalSolver):
         the Tabu phase.
 
         Returns:
-            A :class:`~qubosolver.types.QUBOSolution` containing up to
+            A :class:`~qubosolver.types.Solution` containing up to
             ``config.max_bitstrings`` best bitstrings found by Tabu Search,
             sorted by ascending cost.
         """
@@ -232,11 +232,11 @@ class RandomSolver(BaseClassicalSolver):
     ``max_bitstrings``.
     """
 
-    def solve(self) -> QUBOSolution:
+    def solve(self) -> Solution:
         """Sample random bitstrings from the current global PyTorch RNG state.
 
         Returns:
-            A :class:`~qubosolver.types.QUBOSolution` with
+            A :class:`~qubosolver.types.Solution` with
             ``config.max_bitstrings`` uniformly sampled binary vectors and
             their corresponding QUBO costs.
         """
@@ -246,7 +246,7 @@ class RandomSolver(BaseClassicalSolver):
         )
 
 
-def get_classical_solver(instance: QUBOInstance, config: ClassicalConfig) -> BaseClassicalSolver:
+def get_classical_solver(instance: Instance, config: ClassicalConfig) -> BaseClassicalSolver:
     """Return the appropriate classical solver for the given configuration.
 
     Dispatches on ``config.classical_solver_type`` (case-insensitive) to one

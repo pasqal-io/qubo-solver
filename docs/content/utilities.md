@@ -24,31 +24,31 @@ Utilities provide helper functions to calculate and classify key metrics, as wel
 
 
 ### Save and Load
-- **Save a QUBOInstance**: Save a `QUBOInstance` to a file.
-- **Load a QUBOInstance**: Load a `QUBOInstance` from a file.
-- **Save a QUBODataset**: Save a `QUBODataset` to a file.
-- **Load a QUBODataset**: Load a `QUBODataset` from a file.
+- **Save a Instance**: Save a `Instance` to a file.
+- **Load a Instance**: Load a `Instance` from a file.
+- **Save a Dataset**: Save a `Dataset` to a file.
+- **Load a Dataset**: Load a `Dataset` from a file.
 
 ```python
-from qubosolver import QUBOInstance, matrix
+from qubosolver import Instance, matrix
 
 # Define a QUBO coefficient matrix
 coefficients = matrix.tensor[[0, 1, -2], [1, 0, 3], [-2, 3, 0]]
-instance = QUBOInstance(matrix=coefficients)
+instance = Instance(matrix=coefficients)
 
-# Save and load a QUBOInstance
-QUBOInstance.save("qubo_instance.pt", instance)
-loaded_instance = QUBOInstance.load("qubo_instance.pt")
+# Save and load a Instance
+Instance.save("qubo_instance.pt", instance)
+loaded_instance = Instance.load("qubo_instance.pt")
 print(loaded_instance)
 ```
 ```python
-from qubosolver import QUBODataset
+from qubosolver import Dataset
 
-dataset = QUBODataset.from_random(n=5, size=4, densities=[0.3, 0.7], coefficient_bounds=(-10,10))
+dataset = Dataset.from_random(n=5, size=4, densities=[0.3, 0.7], coefficient_bounds=(-10,10))
 
-# Save and load a QUBODataset
-QUBODataset.save(dataset, "qubo_dataset.pt")
-loaded_dataset = QUBODataset.load("qubo_dataset.pt")
+# Save and load a Dataset
+Dataset.save(dataset, "qubo_dataset.pt")
+loaded_dataset = Dataset.load("qubo_dataset.pt")
 print(f"Loaded dataset size: {len(loaded_dataset)}")
 ```
 ---

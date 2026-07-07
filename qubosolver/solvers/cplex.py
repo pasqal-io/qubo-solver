@@ -19,13 +19,13 @@ from __future__ import annotations
 
 import cplex as CPLEX
 
-from qubosolver import QUBOInstance, QUBOSolution, bitstrings, vector, vectori
+from qubosolver import Instance, Solution, bitstrings, vector, vectori
 
 
 def _qubo_instance_to_sparsepairs(
-    instance: QUBOInstance, *, tol: float = 1e-8
+    instance: Instance, *, tol: float = 1e-8
 ) -> list[CPLEX.SparsePair]:
-    """Convert a :class:`QUBOInstance` coefficient matrix to CPLEX sparse-pair format.
+    """Convert a :class:`Instance` coefficient matrix to CPLEX sparse-pair format.
 
     CPLEX evaluates quadratic objectives as ``½ · xᵀ Q_cplex x``, so each
     coefficient must be pre-multiplied by 2 to recover the standard QUBO
@@ -63,7 +63,7 @@ def _qubo_instance_to_sparsepairs(
     return sparsepairs
 
 
-def cplex(Q: QUBOInstance, *, maxtime: float = 600.0, log_path: str = "") -> QUBOSolution:
+def cplex(Q: Instance, *, maxtime: float = 600.0, log_path: str = "") -> Solution:
     """Solve a QUBO instance to optimality (or time limit) using IBM CPLEX.
 
     Builds a Binary Quadratic Program from *Q*, sets a time limit, and runs
@@ -71,11 +71,11 @@ def cplex(Q: QUBOInstance, *, maxtime: float = 600.0, log_path: str = "") -> QUB
     warnings, errors) is redirected to *log_path*, which is opened in write
     mode (overwriting any existing file) and closed after solving.
 
-    Returns an empty :class:`~qubosolver.types.QUBOSolution` immediately when
+    Returns an empty :class:`~qubosolver.types.Solution` immediately when
     ``Q.size == 0`` without invoking CPLEX.
 
     Args:
-        Q: The :class:`~qubosolver.types.QUBOInstance` to solve.
+        Q: The :class:`~qubosolver.types.Instance` to solve.
         maxtime: Wall-clock time limit for CPLEX in seconds.  CPLEX returns
             the best feasible solution found so far when the limit is reached.
             Defaults to ``600.0``.
@@ -85,10 +85,10 @@ def cplex(Q: QUBOInstance, *, maxtime: float = 600.0, log_path: str = "") -> QUB
             is suppressed and no file is created.
 
     Returns:
-        A :class:`~qubosolver.types.QUBOSolution` containing exactly one
+        A :class:`~qubosolver.types.Solution` containing exactly one
         bitstring — the best (or optimal) solution found by CPLEX — with
         ``count=1`` and ``probability=1.0``.  Returns an empty
-        :class:`~qubosolver.types.QUBOSolution` if ``Q.size == 0``.
+        :class:`~qubosolver.types.Solution` if ``Q.size == 0``.
 
     Raises:
         cplex.exceptions.CplexError: If CPLEX encounters an internal solver
@@ -98,7 +98,7 @@ def cplex(Q: QUBOInstance, *, maxtime: float = 600.0, log_path: str = "") -> QUB
     N: int = Q.size
     # If there are no variables, return an empty solution.
     if N == 0:
-        return QUBOSolution()
+        return Solution()
 
     # Convert the coefficient matrix into CPLEX sparse pairs format using the conversion tool.
     sparsepairs: list[CPLEX.SparsePair] = _qubo_instance_to_sparsepairs(Q)
@@ -135,12 +135,12 @@ def cplex(Q: QUBOInstance, *, maxtime: float = 600.0, log_path: str = "") -> QUB
     if log_file:
         log_file.close()
 
-    # Convert the solution into a QUBOSolution.
+    # Convert the solution into a Solution.
     bitstring_tensor = bitstrings.tensor([[int(b) for b in solution_values]])
     counts = vectori.tensor([1])
     cost_tensor = vector.tensor([solution_cost])
 
-    solution = QUBOSolution(
+    solution = Solution(
         bitstrings=bitstring_tensor, counts=counts, costs=cost_tensor
     ).compute_probabilities()
     return solution

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import torch
 from collections.abc import Iterator
-from typing_extensions import Self
+from typing_extensions import Self, deprecated, TypeAlias
 
 from ._checks import debug_runtime_typecheck
 from . import vector, vectori
@@ -17,10 +17,10 @@ from pulser.backend.results import Results
 
 @debug_runtime_typecheck
 @dataclass
-class QUBOSingleSolution:
-    """A single candidate solution extracted from a [QUBOSolution][].
+class SingleSolution:
+    """A single candidate solution extracted from a [Solution][].
 
-    Instances are normally obtained via [`QUBOSolution.__getitem__`][] rather
+    Instances are normally obtained via [`Solution.__getitem__`][] rather
     than constructed directly.
 
     Attributes:
@@ -44,7 +44,7 @@ class QUBOSingleSolution:
 
 @debug_runtime_typecheck
 @dataclass
-class QUBOSolution:
+class Solution:
     """A collection of candidate solutions for a QUBO problem.
 
     Stores all bitstrings returned by a solver together with their associated
@@ -102,20 +102,20 @@ class QUBOSolution:
         """Return ``True`` if the solution is non-empty (contains at least one bitstring)."""
         return not self.empty()
 
-    def __getitem__(self, idx: int) -> QUBOSingleSolution:
-        """Return the candidate at position *idx* as a :class:`QUBOSingleSolution`.
+    def __getitem__(self, idx: int) -> SingleSolution:
+        """Return the candidate at position *idx* as a :class:`SingleSolution`.
 
         Cost and probability are copied only when their respective tensors are
-        non-empty; otherwise the :class:`QUBOSingleSolution` defaults
+        non-empty; otherwise the :class:`SingleSolution` defaults
         (``cost=inf``, ``probability=0.0``) are kept.
 
         Args:
             idx (int): Zero-based index into the ``num_solutions`` axis.
 
         Returns:
-            QUBOSingleSolution: Snapshot of the candidate at *idx*.
+            SingleSolution: Snapshot of the candidate at *idx*.
         """
-        solution = QUBOSingleSolution(self.bitstrings[idx])
+        solution = SingleSolution(self.bitstrings[idx])
         if self.costs.numel() > 0:
             solution.cost = self.costs[idx].item()
         if self.probabilities.numel() > 0:
@@ -127,8 +127,8 @@ class QUBOSolution:
         """Return the number of candidate solutions (``num_solutions``)."""
         return self.bitstrings.shape[0]
 
-    def __iter__(self) -> Iterator[QUBOSingleSolution]:
-        """Iterate over all candidates in index order, yielding :class:`QUBOSingleSolution` objects."""
+    def __iter__(self) -> Iterator[SingleSolution]:
+        """Iterate over all candidates in index order, yielding :class:`SingleSolution` objects."""
         for i in range(len(self)):
             yield self[i]
 
@@ -143,7 +143,7 @@ class QUBOSolution:
             matrix (Matrix): QUBO coefficient matrix ``Q`` of shape ``(n, n)``.
 
         Returns:
-            Self: The same :class:`QUBOSolution` instance, allowing method chaining.
+            Self: The same :class:`Solution` instance, allowing method chaining.
         """
         dtype = matrix.dtype
         self.costs = _utils.costs.batched_quadratic_cost(self.bitstrings.to(dtype), matrix)
@@ -158,7 +158,7 @@ class QUBOSolution:
         :attr:`probabilities` in-place.
 
         Returns:
-            Self: The same :class:`QUBOSolution` instance, allowing method chaining.
+            Self: The same :class:`Solution` instance, allowing method chaining.
 
         Note:
             :attr:`counts` must be populated before calling this method;
@@ -180,7 +180,7 @@ class QUBOSolution:
         candidate appears first.
 
         Returns:
-            Self: The same :class:`QUBOSolution` instance, allowing method chaining.
+            Self: The same :class:`Solution` instance, allowing method chaining.
 
         Note:
             :attr:`costs` must be populated (via :meth:`compute_costs`) before
@@ -196,12 +196,12 @@ class QUBOSolution:
         return self
 
     @staticmethod
-    def from_results(results: Results) -> QUBOSolution:
-        """Build a :class:`QUBOSolution` from Pulser quantum-simulation results.
+    def from_results(results: Results) -> Solution:
+        """Build a :class:`Solution` from Pulser quantum-simulation results.
 
         Parses ``results.final_bitstrings`` — a ``dict[str, int]`` mapping
         each observed bitstring (e.g. ``"0101"``) to its sample count — and
-        converts it into the tensor representation used by :class:`QUBOSolution`.
+        converts it into the tensor representation used by :class:`Solution`.
 
         Only :attr:`bitstrings` and :attr:`counts` are populated; call
         :meth:`compute_costs` and :meth:`compute_probabilities` afterwards to
@@ -212,7 +212,7 @@ class QUBOSolution:
                 whose ``final_bitstrings`` attribute is a ``dict[str, int]``.
 
         Returns:
-            QUBOSolution: A new solution with:
+            Solution: A new solution with:
 
             * ``bitstrings`` — ``int8`` tensor of shape ``(num_solutions, n)``.
             * ``counts``     — ``int64`` tensor of shape ``(num_solutions,)``.
@@ -231,7 +231,7 @@ class QUBOSolution:
             bitstrings = torch.empty((0, 0), dtype=torch.int8)
         counts = torch.tensor(list(map(int, list(counter.values()))), dtype=torch.int64)
 
-        return QUBOSolution(
+        return Solution(
             bitstrings=bitstrings,
             counts=counts,
         )

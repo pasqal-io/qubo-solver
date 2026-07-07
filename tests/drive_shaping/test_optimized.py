@@ -15,11 +15,11 @@ from qoolqit.register import Register
 
 from qubosolver.drive_shaping._drive_shaper import OptimizedDriveShaper
 from qubosolver import (
-    QUBOInstance,
-    QUBOSolution,
+    Instance,
+    Solution,
     SolverConfig,
     DriveShapingConfig,
-    QUBOAnalyzer,
+    Analyzer,
     matrix,
     tensor,
     bitstring,
@@ -44,7 +44,7 @@ class Solution:
 
 
 def to_solutions(
-    solution: QUBOSolution,
+    solution: Solution,
 ) -> list[Solution]:
     return [
         Solution(bitstring.to_string(b), c.item(), p.item())
@@ -61,7 +61,7 @@ def gather_optimal_solutions(
 
 
 def probability_based_ojective(
-    solution: QUBOSolution,
+    solution: Solution,
 ) -> float:
     optimal_solutions = gather_optimal_solutions(to_solutions(solution))
     check.is_not(optimal_solutions, [])
@@ -126,10 +126,10 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
     ds_config.optimized_seed = seed
     config = SolverConfig(device=AnalogDevice(), drive_shaping=ds_config)
 
-    drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
+    drive_shaper = OptimizedDriveShaper(Instance(Q), config, config.backend)
     drive, qubo_solution = drive_shaper.generate(register)
     qubo_solution.sort_by_cost()
-    analyzer = QUBOAnalyzer([qubo_solution])
+    analyzer = Analyzer([qubo_solution])
     print(f"{analyzer.df}")
 
     assert isinstance(qubo_solution.probabilities, torch.Tensor)
@@ -200,10 +200,10 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
         device=AnalogDevice(), drive_shaping=ds_config, backend=LocalEmulator(num_shots=500)
     )
 
-    drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
+    drive_shaper = OptimizedDriveShaper(Instance(Q), config, config.backend)
     drive, qubo_solution = drive_shaper.generate(register)
     qubo_solution.sort_by_cost()
-    analyzer = QUBOAnalyzer([qubo_solution])
+    analyzer = Analyzer([qubo_solution])
     print(f"{analyzer.df}")
 
     assert isinstance(qubo_solution.probabilities, torch.Tensor)
@@ -241,7 +241,7 @@ def test_errors(raise_exception: bool) -> None:
 
     register = Register.from_coordinates(vertices.tolist())
 
-    def error(solution: QUBOSolution) -> float:
+    def error(solution: Solution) -> float:
         if raise_exception:
             raise RuntimeError("Error occurred")
         return float("inf")
@@ -261,7 +261,7 @@ def test_errors(raise_exception: bool) -> None:
         drive_shaping=ds_config,
     )
 
-    drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
+    drive_shaper = OptimizedDriveShaper(Instance(Q), config, config.backend)
     drive, qubo_solution = drive_shaper.generate(register)
 
     check.equal(mock_error.call_count, 11)
@@ -289,7 +289,7 @@ def test_failed_simulation() -> None:
         drive_shaping=ds_config,
     )
 
-    drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
+    drive_shaper = OptimizedDriveShaper(Instance(Q), config, config.backend)
     with patch("qoolqit.QuantumProgram.compile_to", side_effect=RuntimeError()):
         drive, qubo_solution = drive_shaper.generate(register)
 
@@ -315,10 +315,10 @@ def test_failed_simulation_2() -> None:
         drive_shaping=ds_config,
     )
 
-    drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
+    drive_shaper = OptimizedDriveShaper(Instance(Q), config, config.backend)
     with patch(
         "qubosolver.drive_shaping.optimized._run_simulation",
-        return_value=QUBOSolution(),
+        return_value=Solution(),
     ):
         drive, qubo_solution = drive_shaper.generate(register)
         check.is_true(qubo_solution.empty())
@@ -345,7 +345,7 @@ def test_failed_skopt() -> None:
         drive_shaping=ds_config,
     )
 
-    drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
+    drive_shaper = OptimizedDriveShaper(Instance(Q), config, config.backend)
 
     with patch("qubosolver.drive_shaping.optimized.gp_minimize", return_value=None):
         drive, qubo_solution = drive_shaper.generate(register)

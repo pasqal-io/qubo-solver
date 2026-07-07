@@ -7,8 +7,8 @@ import copy
 import json
 import torch
 
-from qubosolver.types import QUBOSolution, bitstrings, vector
-from qubosolver.types import QUBOInstance as QUBOInstanceBase
+from qubosolver.types import Solution, bitstrings, vector
+from qubosolver.types import Instance as QUBOInstanceBase
 from qubosolver._io import utils as io_utils
 
 #  TODO: Using `type` statement when Python >= 3.12
@@ -57,10 +57,10 @@ def hansen_fixing(qubo: QUBOInstanceBase) -> dict[int, int]:
     return fixed_dict
 
 
-class QUBOInstance(QUBOInstanceBase):
+class Instance(QUBOInstanceBase):
     """A QUBO instance with variable-fixing history.
 
-    Wraps a parent :class:`~qubosolver.types.instance.QUBOInstance` and
+    Wraps a parent :class:`~qubosolver.types.instance.Instance` and
     tracks which variables were fixed (and to which value) so the original
     solution can be reconstructed via `unapply`.
     """
@@ -90,17 +90,17 @@ class QUBOInstance(QUBOInstanceBase):
 
     @staticmethod
     def save(file_like: io_utils.FileLike[bytes], instance: QUBOInstanceBase) -> None:
-        """Serialise a :class:`QUBOInstance` (including fixation history) to *file_like*.
+        """Serialise a :class:`Instance` (including fixation history) to *file_like*.
 
         Args:
             file_like: Binary-writable file-like object or path.
-            instance: The :class:`QUBOInstance` to save.
+            instance: The :class:`Instance` to save.
 
         Raises:
-            TypeError: If *instance* is not a variable-fixing :class:`QUBOInstance`.
+            TypeError: If *instance* is not a variable-fixing :class:`Instance`.
         """
         _check_QUBOInstance(instance)
-        assert isinstance(instance, QUBOInstance)  # nosec B101
+        assert isinstance(instance, Instance)  # nosec B101
 
         with io_utils.open(file_like, "wb") as f:
             QUBOInstanceBase.save(f, instance)
@@ -109,21 +109,21 @@ class QUBOInstance(QUBOInstanceBase):
             io_utils.save_string(f, fixed_var_json)
 
     @staticmethod
-    def load(file_like: io_utils.FileLike[bytes]) -> QUBOInstance:
-        """Deserialise a :class:`QUBOInstance` (including fixation history) from *file_like*.
+    def load(file_like: io_utils.FileLike[bytes]) -> Instance:
+        """Deserialise a :class:`Instance` (including fixation history) from *file_like*.
 
         Args:
             file_like: Binary-readable file-like object or path produced by :meth:`save`.
 
         Returns:
-            The reconstructed :class:`QUBOInstance`.
+            The reconstructed :class:`Instance`.
         """
 
         def decode_int_keys(obj: dict) -> dict:
             return {int(k): v for k, v in obj.items()}
 
         with io_utils.open(file_like, "rb") as f:
-            instance = QUBOInstance(QUBOInstanceBase.load(f))
+            instance = Instance(QUBOInstanceBase.load(f))
             instance._parent_instance = QUBOInstanceBase.load(f)
             fixed_var_json = io_utils.load_string(f)
             instance._fixed_indices = json.loads(fixed_var_json, object_hook=decode_int_keys)
@@ -132,8 +132,8 @@ class QUBOInstance(QUBOInstanceBase):
 
 
 def _check_QUBOInstance(qubo: QUBOInstanceBase) -> None:
-    """Raise :class:`TypeError` if *qubo* is not a variable-fixing :class:`QUBOInstance`."""
-    if not isinstance(qubo, QUBOInstance):
+    """Raise :class:`TypeError` if *qubo* is not a variable-fixing :class:`Instance`."""
+    if not isinstance(qubo, Instance):
         raise TypeError("Input must be an instance of _QUBOInstance.")
 
 
@@ -144,7 +144,7 @@ def _default_rules() -> tuple[Rule]:
 
 def _reduce_qubo(
     qubo: QUBOInstanceBase, fixed_indices: dict[int, int], *, inplace: bool = False
-) -> QUBOInstance:
+) -> Instance:
     """Reduce the QUBO matrix by fixing a set of variables.
 
     For each variable fixed to 1, its interaction terms are folded into the
@@ -155,17 +155,17 @@ def _reduce_qubo(
         qubo: The QUBO instance to reduce.
         fixed_indices: Mapping of variable index to fixed value (``0`` or ``1``).
         inplace: If ``False`` (default), wraps *qubo* in a new
-            :class:`QUBOInstance` before modifying it.
+            :class:`Instance` before modifying it.
 
     Returns:
-        The (possibly new) :class:`QUBOInstance` with the reduced matrix and
+        The (possibly new) :class:`Instance` with the reduced matrix and
         *fixed_indices* appended to its fixation history.
     """
     if not inplace:
-        qubo = QUBOInstance(qubo)
+        qubo = Instance(qubo)
 
     _check_QUBOInstance(qubo)
-    assert isinstance(qubo, QUBOInstance)  # nosec B101
+    assert isinstance(qubo, Instance)  # nosec B101
 
     if not fixed_indices:
         return qubo
@@ -199,7 +199,7 @@ def apply(
     fixation_rules: Sequence[Rule] = _default_rules(),
     *,
     inplace: bool = False,
-) -> QUBOInstance:
+) -> Instance:
     """Apply each fixation rule once and reduce the QUBO matrix accordingly.
 
     Each rule in *fixation_rules* is called in order; variables it identifies
@@ -210,16 +210,16 @@ def apply(
         fixation_rules: Ordered sequence of :data:`Rule` callables.
             Defaults to ``(hansen_fixing,)``.
         inplace: If ``False`` (default), wraps *qubo* in a new
-            :class:`QUBOInstance` before modifying it.
+            :class:`Instance` before modifying it.
 
     Returns:
-        The reduced :class:`QUBOInstance` with updated fixation history.
+        The reduced :class:`Instance` with updated fixation history.
     """
     if not inplace:
-        qubo = QUBOInstance(qubo)
+        qubo = Instance(qubo)
 
     _check_QUBOInstance(qubo)
-    assert isinstance(qubo, QUBOInstance)  # nosec B101
+    assert isinstance(qubo, Instance)  # nosec B101
 
     for rule in fixation_rules:
         fixed = rule(qubo)
@@ -233,7 +233,7 @@ def apply_recursively(
     fixation_rules: Sequence[Rule] = _default_rules(),
     *,
     inplace: bool = False,
-) -> QUBOInstance:
+) -> Instance:
     """Apply fixation rules repeatedly until no further variables can be fixed.
 
     Calls `apply` in a loop; stops when a full pass over all rules
@@ -244,16 +244,16 @@ def apply_recursively(
         fixation_rules: Ordered sequence of :data:`Rule` callables.
             Defaults to ``(hansen_fixing,)``.
         inplace: If ``False`` (default), wraps *qubo* in a new
-            :class:`QUBOInstance` before modifying it.
+            :class:`Instance` before modifying it.
 
     Returns:
-        The fully reduced :class:`QUBOInstance`.
+        The fully reduced :class:`Instance`.
     """
     if not inplace:
-        qubo = QUBOInstance(qubo)
+        qubo = Instance(qubo)
 
     _check_QUBOInstance(qubo)
-    assert isinstance(qubo, QUBOInstance)  # nosec B101
+    assert isinstance(qubo, Instance)  # nosec B101
 
     while True:
         prev_n_fixations = len(qubo._fixed_indices)
@@ -264,7 +264,7 @@ def apply_recursively(
             return qubo
 
 
-def unapply(reduced_solution: QUBOSolution, reduced_qubo: QUBOInstance) -> QUBOSolution:
+def unapply(reduced_solution: Solution, reduced_qubo: Instance) -> Solution:
     """Reconstruct the full solution by reinserting fixed variables.
 
     Reverses the fixation history stored in *reduced_qubo*: fixed variables
@@ -276,11 +276,11 @@ def unapply(reduced_solution: QUBOSolution, reduced_qubo: QUBOInstance) -> QUBOS
 
     Args:
         reduced_solution: Solution obtained from solving the reduced QUBO.
-        reduced_qubo: The reduced :class:`QUBOInstance` carrying the fixation
+        reduced_qubo: The reduced :class:`Instance` carrying the fixation
             history and a reference to the original instance.
 
     Returns:
-        A new :class:`~qubosolver.types.QUBOSolution` with full-length
+        A new :class:`~qubosolver.types.Solution` with full-length
         bitstrings and costs evaluated against the original QUBO matrix.
         Counts and probabilities are carried over from *reduced_solution*.
     """
@@ -300,7 +300,7 @@ def unapply(reduced_solution: QUBOSolution, reduced_qubo: QUBOInstance) -> QUBOS
     if bits_to_reinsert == 0:
         return copy.deepcopy(reduced_solution)
 
-    solution = QUBOSolution()
+    solution = Solution()
 
     solution.bitstrings = bitstrings.tensor(
         [reinsert_fixed_variables(bitstring) for bitstring in bitstrings_list]

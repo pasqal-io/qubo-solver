@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from qubosolver.types import bitstring, bitstrings, matrix, tensor, vector, vectori, linalg
 from qubosolver.types.linalg import Bitstring, Bitstrings, Matrix, Tensor, Vector, Vectori
-from qubosolver.types.solution import QUBOSolution, QUBOSingleSolution
-from qubosolver.types.analyzer import QUBOAnalyzer
-from qubosolver.types.instance import QUBOInstance
-from qubosolver.types.dataset import QUBODataset
+from qubosolver.types.solution import Solution, SingleSolution
+from qubosolver.types.analyzer import Analyzer
+from qubosolver.types.instance import Instance
+from qubosolver.types.dataset import Dataset
 from qubosolver.types.enums import (
     EmbedderType,
     LayoutType,
@@ -20,6 +20,20 @@ from qubosolver.types.backends import (
     AutoRemoteEmulatorBackend,
 )
 from qubosolver.types.random import torch_rng
+from qubosolver.types.aliases import (
+    # Deprecated QUBO* classes
+    QUBOSolution,
+    QUBOAnalyzer,
+    QUBOInstance,
+    QUBODataset,
+    # Qubo* TypeAliases
+    QuboSolution,
+    QuboSingleSolution,
+    QuboAnalyzer,
+    QuboInstance,
+    QuboDataset,
+    QuboSolver,
+)
 
 __all__ = [
     # Submodules
@@ -38,11 +52,11 @@ __all__ = [
     "Vector",
     "Vectori",
     # Classes
-    "QUBOSolution",
-    "QUBOSingleSolution",
-    "QUBOAnalyzer",
-    "QUBOInstance",
-    "QUBODataset",
+    "Solution",
+    "SingleSolution",
+    "Analyzer",
+    "Instance",
+    "Dataset",
     "LocalEmulator",
     "RemoteEmulator",
     "AutoLocalEmulatorBackend",
@@ -55,4 +69,16 @@ __all__ = [
     "ClassicalSolverType",
     # Functions
     "torch_rng",
+    # Qubo* TypeAliases
+    "QuboSolution",
+    "QuboSingleSolution",
+    "QuboAnalyzer",
+    "QuboInstance",
+    "QuboDataset",
+    "QuboSolver",
+    # Deprecated QUBO* classes
+    "QUBOSolution",
+    "QUBOAnalyzer",
+    "QUBOInstance",
+    "QUBODataset",
 ]

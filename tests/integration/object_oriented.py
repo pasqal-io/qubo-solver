@@ -10,9 +10,9 @@ import torch
 import qoolqit
 
 from qubosolver import (
-    QUBOInstance,
-    QUBOAnalyzer,
-    QUBOSolver,
+    Instance,
+    Analyzer,
+    Solver,
     SolverConfig,
     EmbeddingConfig,
     DriveShapingConfig,
@@ -20,15 +20,15 @@ from qubosolver import (
     ClassicalSolverType,
     EmbedderType,
     DriveType,
-    QUBOSingleSolution,
-    QUBOSolution,
+    SingleSolution,
+    Solution,
     bitstrings,
     vectori,
     torch_rng,
 )
 
 
-def gather_optimal_solutions(solutions: QUBOSolution) -> list[QUBOSingleSolution]:
+def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
     min_cost = solutions[0].cost
     return [d for d in solutions if np.allclose(d.cost, min_cost)]
 
@@ -39,7 +39,7 @@ def interaction_matrix_from_vertices(vertices: torch.Tensor) -> torch.Tensor:
     return U
 
 
-def simple_qubo() -> tuple[QUBOInstance, list[QUBOSingleSolution]]:
+def simple_qubo() -> tuple[Instance, list[SingleSolution]]:
 
     sqrt3 = np.sqrt(3.0)
     vertices = torch.tensor(
@@ -58,7 +58,7 @@ def simple_qubo() -> tuple[QUBOInstance, list[QUBOSingleSolution]]:
     Q = interaction_matrix_from_vertices(vertices) + diagonal_scale * torch.diag(diagonal)
     Q /= Q.max()
 
-    solutions = QUBOSolution()
+    solutions = Solution()
     solutions.bitstrings = bitstrings.tensor(list(itertools.product([0, 1], repeat=n_qubits)))
     solutions.counts = vectori.zeros(solutions.bitstrings.shape[0]).fill_(1)
     solutions.compute_costs(Q).sort_by_cost().compute_probabilities()
@@ -71,7 +71,7 @@ def simple_qubo() -> tuple[QUBOInstance, list[QUBOSingleSolution]]:
     print(f"All expected optimal bitstrings: {[s.string for s in expected_optimal_solutions]}")
     print(f"Number of expected optimal solutions: {len(expected_optimal_solutions)}\n")
 
-    return QUBOInstance(matrix=Q), expected_optimal_solutions
+    return Instance(matrix=Q), expected_optimal_solutions
 
 
 def manual_seed(seed: int) -> torch.Generator:
@@ -82,15 +82,15 @@ def manual_seed(seed: int) -> torch.Generator:
 
 
 def check_solution(
-    solutions: QUBOSolution,
-    expected_optimal_solutions: list[QUBOSingleSolution],
+    solutions: Solution,
+    expected_optimal_solutions: list[SingleSolution],
     expect_optimality: bool = True,
 ) -> None:
 
     # Solutions are not duplicated
     check.equal(solutions.bitstrings.unique(dim=0).shape[0], solutions.bitstrings.shape[0])
 
-    analyzer = QUBOAnalyzer([solutions])
+    analyzer = Analyzer([solutions])
     print(f"{analyzer.df}")
 
     assert isinstance(solutions.probabilities, torch.Tensor)
@@ -166,7 +166,7 @@ def test_quantum_solve(
         device=qoolqit.AnalogDevice(),
     )
 
-    solver = QUBOSolver(qubo, config)
+    solver = Solver(qubo, config)
     solution = solver.solve()
     solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
 
@@ -212,7 +212,7 @@ def test_classical_solve(
         classical=classical_config,
     )
 
-    solver = QUBOSolver(qubo, config)
+    solver = Solver(qubo, config)
     solution = solver.solve()
     solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
 

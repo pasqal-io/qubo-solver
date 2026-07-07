@@ -9,15 +9,15 @@ from copy import deepcopy
 
 from qoolqit import Drive, Ramp, Register, Constant, DigitalAnalogDevice
 from qubosolver import (
-    QUBOInstance,
-    QUBOSolution,
+    Instance,
+    Solution,
     transforms,
     EmbeddingConfig,
-    QUBOAnalyzer,
+    Analyzer,
     DriveShapingConfig,
     SolverConfig,
     EmbedderType,
-    QUBOSolver,
+    Solver,
     matrix,
     bitstring,
     bitstrings,
@@ -33,17 +33,17 @@ def test_apply_full_and_post_process_fixation() -> None:
         [[-98, 2, 13, 1], [2, -12, 20, 15], [13, 20, -34, 7], [1, 15, 7, -57]],
     )
 
-    full_qubo = QUBOInstance(Q)
+    full_qubo = Instance(Q)
     reduced_qubo = transforms.variable_fixing.apply_recursively(full_qubo)
 
     assert reduced_qubo._fixed_indices == [{0: 1, 3: 1}, {0: 0, 1: 0}]
     assert reduced_qubo.n_fixed_indices == 4
 
-    reduced_solution = QUBOSolution(bitstrings.zeros(0, 0), vector.zeros(0))
+    reduced_solution = Solution(bitstrings.zeros(0, 0), vector.zeros(0))
 
     sol_reconstructed = transforms.variable_fixing.unapply(reduced_solution, reduced_qubo)
 
-    assert isinstance(sol_reconstructed, QUBOSolution)
+    assert isinstance(sol_reconstructed, Solution)
 
     val_red = int(sol_reconstructed.costs[0])
 
@@ -53,7 +53,7 @@ def test_apply_full_and_post_process_fixation() -> None:
 def test_hansen_fixing() -> None:
     matrix_reducible = matrix.tensor([[-10, 1], [1, -10]])
 
-    qubo_reducible = QUBOInstance(matrix_reducible)
+    qubo_reducible = Instance(matrix_reducible)
 
     fixed_var = transforms.variable_fixing.hansen_fixing(qubo_reducible)
 
@@ -63,7 +63,7 @@ def test_hansen_fixing() -> None:
 
     matrix_not_reducible = matrix.tensor([[-1, 10], [10, -1]])
 
-    qubo_reducible = QUBOInstance(matrix_not_reducible)
+    qubo_reducible = Instance(matrix_not_reducible)
 
     empty_fixed_var = transforms.variable_fixing.hansen_fixing(qubo_reducible)
 
@@ -75,7 +75,7 @@ def test_reduce_qubo() -> None:
     Q = matrix.tensor(
         [[-98, 2, 13, 1], [2, -12, 20, 15], [13, 20, -34, 7], [1, 15, 7, -57]],
     )
-    qubo = QUBOInstance(Q)
+    qubo = Instance(Q)
     reduced_qubo = deepcopy(qubo)
 
     reduced_qubo = transforms.variable_fixing._reduce_qubo(qubo, {0: 1, 3: 1})
@@ -92,7 +92,7 @@ def test_apply_rule() -> None:
     Q = matrix.tensor(
         [[-98, 2, 13, 1], [2, -12, 20, 15], [13, 20, -34, 7], [1, 15, 7, -57]],
     )
-    qubo = QUBOInstance(Q)
+    qubo = Instance(Q)
     reduced_qubo = transforms.variable_fixing.apply(
         qubo, [transforms.variable_fixing.hansen_fixing]
     )
@@ -101,32 +101,32 @@ def test_apply_rule() -> None:
     torch.testing.assert_close(reduced_qubo.matrix, expected_coefficients)
 
 
-def test_quantum_preprocessing(qubo_instance_for_preprocessing: QUBOInstance) -> None:
+def test_quantum_preprocessing(qubo_instance_for_preprocessing: Instance) -> None:
     """
     Test instance using quantum with preprocessing.
     """
     quantum_preprocessing_config = SolverConfig(
         use_quantum=True, do_preprocessing=True, do_postprocessing=False
     )
-    solver = QUBOSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
+    solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
 
-def test_quantum_postprocessing(qubo_instance_for_preprocessing: QUBOInstance) -> None:
+def test_quantum_postprocessing(qubo_instance_for_preprocessing: Instance) -> None:
     """
     Test instance using quantum with postprocessing.
     """
     quantum_preprocessing_config = SolverConfig(
         use_quantum=True, do_preprocessing=False, do_postprocessing=True
     )
-    solver = QUBOSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
+    solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
 
 def test_quantum_prepostprocessing(
-    qubo_instance_for_preprocessing: QUBOInstance,
+    qubo_instance_for_preprocessing: Instance,
 ) -> None:
     """
     Test instance using quantum with both preprocessing and postprocessing.
@@ -134,25 +134,25 @@ def test_quantum_prepostprocessing(
     quantum_preprocessing_config = SolverConfig(
         use_quantum=True, do_preprocessing=True, do_postprocessing=True
     )
-    solver = QUBOSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
+    solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
 
-def test_classical_preprocessing(qubo_instance_for_preprocessing: QUBOInstance) -> None:
+def test_classical_preprocessing(qubo_instance_for_preprocessing: Instance) -> None:
     """
     Test instance using classical with preprocessing.
     """
     quantum_preprocessing_config = SolverConfig(
         use_quantum=False, do_preprocessing=True, do_postprocessing=False
     )
-    solver = QUBOSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
+    solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
 
 def test_classical_postprocessing(
-    qubo_instance_for_preprocessing: QUBOInstance,
+    qubo_instance_for_preprocessing: Instance,
 ) -> None:
     """
     Test instance using classical with postprocessing.
@@ -160,13 +160,13 @@ def test_classical_postprocessing(
     quantum_preprocessing_config = SolverConfig(
         use_quantum=False, do_preprocessing=False, do_postprocessing=True
     )
-    solver = QUBOSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
+    solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
 
 def test_classical_prepostprocessing(
-    qubo_instance_for_preprocessing: QUBOInstance,
+    qubo_instance_for_preprocessing: Instance,
 ) -> None:
     """
     Test instance using classical with preprocessing and postprocessing.
@@ -174,7 +174,7 @@ def test_classical_prepostprocessing(
     quantum_preprocessing_config = SolverConfig(
         use_quantum=False, do_preprocessing=True, do_postprocessing=True
     )
-    solver = QUBOSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
+    solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
@@ -191,14 +191,14 @@ def test_reduce_qubo_2() -> None:
         ],
     )
 
-    qubo = QUBOInstance(Q)
+    qubo = Instance(Q)
 
     reduced_qubo = transforms.variable_fixing.apply_recursively(qubo)
 
     check.equal(reduced_qubo._fixed_indices, [{0: 0}, {2: 1, 3: 1}])
 
     # Hardcode solution
-    reduced_solution = QUBOSolution(
+    reduced_solution = Solution(
         bitstrings=bitstrings.tensor([[0, 1]]),
         costs=vector.tensor([0.0]),
     )
@@ -215,7 +215,7 @@ class SimpleShaper(_BaseDriveShaper):
     def generate(
         self,
         register: Register,
-    ) -> tuple[Drive, QUBOSolution]:
+    ) -> tuple[Drive, Solution]:
 
         # Defining the drive parameters
         omega = 0.01
@@ -228,7 +228,7 @@ class SimpleShaper(_BaseDriveShaper):
         wf_det = Ramp(T, delta_i, delta_f)
         drive = Drive(amplitude=wf_amp, detuning=wf_det)
 
-        return drive, QUBOSolution()
+        return drive, Solution()
 
 
 @pytest.mark.usefixtures("restore_rng_state")
@@ -256,7 +256,7 @@ def test_quantum_prepostprocessing_2(
         ]
     )
 
-    instance = QUBOInstance(Q)
+    instance = Instance(Q)
 
     config = SolverConfig(
         use_quantum=True, do_preprocessing=preprocessing, device=DigitalAnalogDevice()
@@ -270,11 +270,11 @@ def test_quantum_prepostprocessing_2(
 
     config.drive_shaping = DriveShapingConfig(drive_shaping_method=SimpleShaper, dmm=dmm)
     config.backend = LocalEmulator(num_shots=50)
-    solver = QUBOSolver(instance, config)
+    solver = Solver(instance, config)
 
     solutions = solver.solve()
 
-    analyzer = QUBOAnalyzer([solutions])
+    analyzer = Analyzer([solutions])
     df = analyzer.df
     print(f"\n{df}")
 

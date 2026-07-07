@@ -1,7 +1,7 @@
 ::: qubosolver.solvers
     options:
       filters:
-        - "!^QUBOSolver$"
+        - "!^Solver$"
         - "!^QuboSolver$"
         - "!^_[^_]"
 

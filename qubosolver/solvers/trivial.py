@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import torch
 
-from qubosolver import QUBOInstance, QUBOSolution, bitstring, vector, vectori
+from qubosolver import Instance, Solution, bitstring, vector, vectori
 
 
-def trivial_solution_search(Q: QUBOInstance) -> QUBOSolution:
+def trivial_solution_search(Q: Instance) -> Solution:
     """Analytically solve a QUBO when the coefficient structure is trivial.
 
     Three patterns are recognised:
@@ -22,11 +22,11 @@ def trivial_solution_search(Q: QUBOInstance) -> QUBOSolution:
        negative diagonal entry are set to 1, the rest to 0.
 
     Args:
-        Q (QUBOInstance): The QUBO problem whose matrix is inspected.
+        Q (Instance): The QUBO problem whose matrix is inspected.
 
     Returns:
-        QUBOSolution: A single-bitstring solution when a trivial case is
-            detected, or an empty :class:`~qubosolver.types.QUBOSolution`
+        Solution: A single-bitstring solution when a trivial case is
+            detected, or an empty :class:`~qubosolver.types.Solution`
             (no bitstrings) when none of the three patterns apply.
     """
     coeffs = Q.matrix
@@ -38,7 +38,7 @@ def trivial_solution_search(Q: QUBOInstance) -> QUBOSolution:
         # always make a batch of one: shape (1, n)
         batch = raw.unsqueeze(0)
         cost = Q.evaluate_solution(raw)
-        return QUBOSolution(
+        return Solution(
             bitstrings=batch,
             counts=vectori.tensor([1]),
             costs=vector.tensor([cost]),
@@ -50,7 +50,7 @@ def trivial_solution_search(Q: QUBOInstance) -> QUBOSolution:
         # always make a batch of one: shape (1, n)
         batch = raw.unsqueeze(0)
         cost = Q.evaluate_solution(raw)
-        return QUBOSolution(
+        return Solution(
             bitstrings=batch,
             counts=vectori.tensor([1]),
             costs=vector.tensor([cost]),
@@ -63,10 +63,10 @@ def trivial_solution_search(Q: QUBOInstance) -> QUBOSolution:
         raw = (diagonal < 0).to(bitstring.dtype())
         cost = Q.evaluate_solution(raw)
         batch = raw.unsqueeze(0)
-        return QUBOSolution(
+        return Solution(
             bitstrings=batch,
             counts=vectori.tensor([1]),
             costs=vector.tensor([cost]),
         )
 
-    return QUBOSolution()
+    return Solution()

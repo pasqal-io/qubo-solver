@@ -14,8 +14,8 @@ import qoolqit
 from qoolqit.execution.compilation_functions import CompilerProfile
 
 from qubosolver.types import (
-    QUBOInstance,
-    QUBOSolution,
+    Instance,
+    Solution,
     Bitstring,
     Matrix,
     _protocols,
@@ -25,7 +25,7 @@ from qubosolver import solvers, _utils, DriveShapingConfig
 from ._waveforms import constant_weighted_dmm
 
 
-def _default_objective(solution: QUBOSolution) -> float:
+def _default_objective(solution: Solution) -> float:
     """Return the lowest cost from a solution, or infinity if empty."""
     return solution.costs[0].item() if solution else float("inf")
 
@@ -46,7 +46,7 @@ class Config:
         n_calls: Number of Bayesian optimisation evaluations.
         seed: Random seed for reproducibility.
         qubo_cost: Callable used to evaluate bitstring cost against the QUBO matrix.
-        objective: Callable that maps a :class:`QUBOSolution` to a scalar
+        objective: Callable that maps a :class:`Solution` to a scalar
             objective (lower is better).
         callback_objective: Optional callback invoked after each evaluation.
     """
@@ -64,7 +64,7 @@ class Config:
     n_calls: int = 20
     seed: int | None = None
     qubo_cost: Callable[[Bitstring, Matrix], float] = _utils.costs.quadratic_cost
-    objective: Callable[[QUBOSolution], float] = _default_objective
+    objective: Callable[[Solution], float] = _default_objective
     callback_objective: Callable[[_CallbackObjectiveInput], None] = lambda data: None
 
     @staticmethod
@@ -93,7 +93,7 @@ class Config:
         return cfg
 
 
-def _compute_norm_weights(Q: QUBOInstance) -> list[float]:
+def _compute_norm_weights(Q: Instance) -> list[float]:
     """Compute per-qubit normalised weights from the diagonal of the QUBO matrix.
 
     Each weight is defined as ``1 - |Q_ii| / max_j(|Q_jj|)``, so a qubit
@@ -120,7 +120,7 @@ def _compute_norm_weights(Q: QUBOInstance) -> list[float]:
 
 
 def _build_drive(
-    Q: QUBOInstance,
+    Q: Instance,
     params: Sequence[float],
     *,
     dmm: bool,
@@ -191,7 +191,7 @@ def _run_simulation(
     device: qoolqit.Device,
     backend: _protocols.Backend,
     config: Config,
-) -> QUBOSolution:
+) -> Solution:
     """Execute one quantum simulation and return a costed, sorted solution.
 
     Submits an analog quantum sampling job via
@@ -201,7 +201,7 @@ def _run_simulation(
     and computes sampling probabilities in-place.
 
     If the simulation or post-processing raises any exception the error is
-    printed and an empty :class:`QUBOSolution` is returned, so callers must
+    printed and an empty :class:`Solution` is returned, so callers must
     treat an empty solution as a failure signal.
 
     Args:
@@ -214,33 +214,33 @@ def _run_simulation(
             callable used to evaluate each returned bitstring.
 
     Returns:
-        A :class:`QUBOSolution` with ``costs``, ``bitstrings``,
+        A :class:`Solution` with ``costs``, ``bitstrings``,
         ``probabilities``, and ``counts`` populated and sorted by ascending
-        cost.  Returns an empty :class:`QUBOSolution` on any failure.
+        cost.  Returns an empty :class:`Solution` on any failure.
     """
     try:
         job = solvers.analog_quantum_sample(
             register, drive, backend, device, compiler_profile=CompilerProfile.WORKING_POINT
         )
-        solution = QUBOSolution.from_results(job.results())
+        solution = Solution.from_results(job.results())
         costs = [config.qubo_cost(b, Q) for b in solution.bitstrings]
         solution.costs = tensor.tensor(costs)
         solution.sort_by_cost().compute_probabilities()
         return solution
     except Exception as e:
         print(f"Simulation failed: {e}")
-        return QUBOSolution()
+        return Solution()
 
 
 def build_drive(
-    Q: QUBOInstance,
+    Q: Instance,
     register: qoolqit.Register,
     backend: _protocols.Backend,
     device: qoolqit.Device,
     *,
     dmm: bool = False,
     config: Config = Config(),
-) -> tuple[qoolqit.Drive, QUBOSolution]:
+) -> tuple[qoolqit.Drive, Solution]:
     """Generate an optimised drive schedule via Bayesian optimisation.
 
     Uses ``skopt.gp_minimize`` to search over waveform parameters,
@@ -257,7 +257,7 @@ def build_drive(
 
     Returns:
         A tuple of the best :class:`~qoolqit.Drive` found and the
-        corresponding :class:`QUBOSolution`.
+        corresponding :class:`Solution`.
     """
     n_amp = 3
     n_det = 3
@@ -268,9 +268,9 @@ def build_drive(
 
     bounds = [(zero, one)] * n_amp + [(-one, -zero)] + [(-one, one)] * (n_det - 2) + [(zero, one)]
 
-    def run(x: list[float], eval: bool = True) -> tuple[float, QUBOSolution, qoolqit.Drive]:
+    def run(x: list[float], eval: bool = True) -> tuple[float, Solution, qoolqit.Drive]:
 
-        solution = QUBOSolution()
+        solution = Solution()
         drive = _build_drive(
             Q,
             x,

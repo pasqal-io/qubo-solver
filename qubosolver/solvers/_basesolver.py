@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 from qoolqit.execution import job
 
-from qubosolver.types import QUBOInstance, QUBOSolution
+from qubosolver.types import Instance, Solution
 from qubosolver.config import SolverConfig, _compiler_profile
 from qubosolver import solvers, transforms
 
@@ -23,7 +23,7 @@ class BaseSolver(ABC):
 
     1. :meth:`embedding` — map QUBO variables onto physical atom positions.
     2. :meth:`drive` — generate the pulse schedule that encodes the problem.
-    3. :meth:`solve` — run the full pipeline and return a :class:`~qubosolver.types.QUBOSolution`.
+    3. :meth:`solve` — run the full pipeline and return a :class:`~qubosolver.types.Solution`.
 
     ``BaseSolver`` also provides shared infrastructure used by all concrete
     solvers:
@@ -37,7 +37,7 @@ class BaseSolver(ABC):
       post-processing.
     """
 
-    def __init__(self, instance: QUBOInstance, config: SolverConfig = SolverConfig()):
+    def __init__(self, instance: Instance, config: SolverConfig = SolverConfig()):
         """Initialise the solver with a QUBO instance and configuration.
 
         Args:
@@ -46,7 +46,7 @@ class BaseSolver(ABC):
                 embedding, drive-shaping, pre/post-processing flags, etc.).
                 Defaults to a default-constructed :class:`SolverConfig`.
         """
-        self.instance: QUBOInstance = instance
+        self.instance: Instance = instance
         self.config = config
 
         self.backend = self.config.backend
@@ -59,18 +59,18 @@ class BaseSolver(ABC):
         Returns:
             The count of fixed variables, or 0 if no preprocessing was applied.
         """
-        if isinstance(self.instance, transforms.variable_fixing.QUBOInstance):
+        if isinstance(self.instance, transforms.variable_fixing.Instance):
             return self.instance.n_fixed_indices
         else:
             return 0
 
     @abstractmethod
-    def solve(self) -> QUBOSolution:
+    def solve(self) -> Solution:
         """
         Solve the given QUBO instance.
 
         Returns:
-            QUBOSolution: The result of the optimization.
+            Solution: The result of the optimization.
         """
         pass
 
@@ -85,7 +85,7 @@ class BaseSolver(ABC):
         pass
 
     @abstractmethod
-    def drive(self, embedding: Register) -> tuple[Drive, QUBOSolution]:
+    def drive(self, embedding: Register) -> tuple[Drive, Solution]:
         """Generate a pulse drive for the quantum device based on the embedding.
 
         Args:
@@ -95,7 +95,7 @@ class BaseSolver(ABC):
             A 2-tuple of:
 
             * **Drive** — the pulse schedule that encodes the QUBO problem.
-            * **QUBOSolution** — an initial solution produced as a by-product
+            * **Solution** — an initial solution produced as a by-product
               of drive shaping (may be empty if drive shaping does not sample).
         """
         pass
@@ -127,7 +127,7 @@ class BaseSolver(ABC):
             compiler_profile=_compiler_profile(self.config),
         )
 
-    def execute(self, drive: Drive, embedding: Register) -> QUBOSolution:
+    def execute(self, drive: Drive, embedding: Register) -> Solution:
         """
         Execute the drive schedule on the backend and retrieve the solution.
 
@@ -136,10 +136,10 @@ class BaseSolver(ABC):
             embedding (Register): The register to execute on.
 
         Returns:
-            QUBOSolution: The solution built from execution results.
+            Solution: The solution built from execution results.
         """
         job = self.submit(drive, embedding)
-        return QUBOSolution.from_results(job.results())
+        return Solution.from_results(job.results())
 
     def draw_sequence(self, drive: Drive, embedding: Register) -> None:
         """Draw the compiled pulse sequence of the quantum program.
@@ -161,17 +161,17 @@ class BaseSolver(ABC):
             )
             program.draw(compiled=True)
 
-    def _trivial_solution(self) -> QUBOSolution:
+    def _trivial_solution(self) -> Solution:
         """Search for a trivial solution (all-zeros, all-ones, or pure-diagonal).
 
         Delegates to `~qubosolver.solvers.trivial_solution_search`.
 
         Returns:
-            A :class:`QUBOSolution`. The solution is empty if no trivial optimum is found.
+            A :class:`Solution`. The solution is empty if no trivial optimum is found.
         """
         return solvers.trivial_solution_search(self.instance)
 
-    def _update_instance(self, instance: QUBOInstance) -> None:
+    def _update_instance(self, instance: Instance) -> None:
         """Replace the active QUBO instance on this solver and any inner solver.
 
         If the concrete subclass exposes a ``_solver`` attribute (e.g. a
@@ -179,7 +179,7 @@ class BaseSolver(ABC):
         updated so both stay in sync.
 
         Args:
-            instance: The new :class:`~qubosolver.types.QUBOInstance` to use.
+            instance: The new :class:`~qubosolver.types.Instance` to use.
         """
         self.instance = instance
         # Update _solver's as well
@@ -196,7 +196,7 @@ class BaseSolver(ABC):
         if self.config.do_preprocessing:
             self._update_instance(transforms.variable_fixing.apply_recursively(self.instance))
 
-    def post_process_fixation(self, solution: QUBOSolution) -> QUBOSolution:
+    def post_process_fixation(self, solution: Solution) -> Solution:
         """Restore fixed variables and recover a solution over the original QUBO.
 
         Reverses the variable-fixing applied by :meth:`preprocess`: re-inserts
@@ -209,7 +209,7 @@ class BaseSolver(ABC):
             solution: The solution obtained after solving the reduced instance.
 
         Returns:
-            A new :class:`~qubosolver.types.QUBOSolution` defined over the
+            A new :class:`~qubosolver.types.Solution` defined over the
             full, original QUBO variables.  Returns *solution* as-is when
             preprocessing was not applied.
         """
@@ -217,13 +217,13 @@ class BaseSolver(ABC):
         if not self.config.do_preprocessing:
             return solution
 
-        assert isinstance(self.instance, transforms.variable_fixing.QUBOInstance)  # nosec B101
+        assert isinstance(self.instance, transforms.variable_fixing.Instance)  # nosec B101
         new_solution = transforms.variable_fixing.unapply(solution, self.instance)
         self._update_instance(self.instance._parent_instance)
 
         return new_solution
 
-    def post_process(self, solution: QUBOSolution) -> QUBOSolution:
+    def post_process(self, solution: Solution) -> Solution:
         """Improve a solution with iterative bit-flip local search.
 
         When ``config.do_postprocessing`` is ``True``, applies
@@ -239,7 +239,7 @@ class BaseSolver(ABC):
                 :meth:`execute` or :meth:`drive`.
 
         Returns:
-            The improved :class:`~qubosolver.types.QUBOSolution`, or the
+            The improved :class:`~qubosolver.types.Solution`, or the
             original *solution* if postprocessing is disabled.
         """
         if not self.config.do_postprocessing:

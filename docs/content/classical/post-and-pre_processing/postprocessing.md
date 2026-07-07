@@ -7,19 +7,19 @@ The `postprocess` method of the `Fixtures` class refines raw QUBO solutions by a
 ## Method Signature
 
 ```python
-def postprocess(self, solution: QUBOSolution) -> QUBOSolution
+def postprocess(self, solution: Solution) -> Solution
 ```
 
 ### Parameters
 
-- `solution` (`QUBOSolution`): The QUBO solver's output, containing:
+- `solution` (`Solution`): The QUBO solver's output, containing:
   - `bitstrings`: Tensor of shape `(num_samples, num_variables)` representing candidate solutions.
   - `costs`: Tensor of shape `(num_samples,)` with corresponding objective values.
   - Optional `counts` and `probabilities` attributes.
 
 ### Returns
 
-- `QUBOSolution`: A new solution object where each bitstring has been locally optimized and costs recomputed. It includes:
+- `Solution`: A new solution object where each bitstring has been locally optimized and costs recomputed. It includes:
   - Updated `bitstrings` (dtype `float32`) of shape `(num_samples, num_variables)`.
   - Updated `costs` (dtype `float32`) of shape `(num_samples,)`.
   - `solution_status`: A description indicating postprocessing and listing the improved costs.
@@ -53,13 +53,13 @@ def postprocess(self, solution: QUBOSolution) -> QUBOSolution
      ```text
      postprocessed (improved costs: [c1, c2, …])
      ```
-   - Return the modified `QUBOSolution`.
+   - Return the modified `Solution`.
 
 ## Example Usage with `Fixtures`
 
 ```python exec="on" source="material-block" html="1"
 import torch
-from qubosolver import QUBOInstance, SolverConfig, ClassicalConfig, QUBOSolver, solvers
+from qubosolver import Instance, SolverConfig, ClassicalConfig, Solver, solvers
 
 # Create a random 4-variable QUBO instance
 graphics = torch.randn(4, 4)
@@ -67,7 +67,7 @@ graphics = (graphics + graphics.T) / 2  # Ensure symmetry
 n = graphics.size(0)
 off_diag_mask = ~torch.eye(n, dtype=torch.bool)
 graphics[off_diag_mask] = graphics[off_diag_mask].abs() # Ensure Abs off-diagonal
-qubo = QUBOInstance(matrix=graphics)
+qubo = Instance(matrix=graphics)
 
 # Configure solver to enable postprocessing
 cplex = ClassicalConfig(classical_solver_type="cplex", cplex_log_path="solver.log", cplex_maxtime=300.0,)
@@ -78,7 +78,7 @@ config = SolverConfig(
 )
 
 # Solve with classical solver
-classical_solver = QUBOSolver(qubo, config)
+classical_solver = Solver(qubo, config)
 raw_solution = classical_solver.solve()
 
 # Apply local bitflip postprocessing
@@ -98,12 +98,12 @@ Instead of manually instantiating `Fixtures`, you can enable postprocessing dire
 
 ```python exec="on" source="material-block" html="1"
 import torch
-from qubosolver import QUBOInstance, SolverConfig, ClassicalConfig, QUBOSolver
+from qubosolver import Instance, SolverConfig, ClassicalConfig, Solver
 import emu_mps
 
 # Assume `first_qubo_coefficients` is your 2×2 QUBO matrix (e.g., identity):
 first_qubo_coefficients = torch.eye(2)
-instance = QUBOInstance(matrix=first_qubo_coefficients)
+instance = Instance(matrix=first_qubo_coefficients)
 
 # Configure solver with postprocessing enabled
 cplex = ClassicalConfig(classical_solver_type="cplex", cplex_log_path="solver.log", cplex_maxtime=300.0,)
@@ -114,7 +114,7 @@ config = SolverConfig(
 )
 
 # Instantiate and run the classical solver
-classical_solver = QUBOSolver(instance, config)
+classical_solver = Solver(instance, config)
 solution = classical_solver.solve()
 
 print("Final bitstrings:", solution.bitstrings)
