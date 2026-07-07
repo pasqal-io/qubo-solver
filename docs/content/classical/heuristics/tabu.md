@@ -27,12 +27,12 @@ This solver applies a Tabu Search metaheuristic to escape local minima and explo
 ### Usage
 
 ```python exec="on" source="material-block" html="1"
-from qubosolver import QUBOInstance, QuboSolver, SolverConfig, ClassicalConfig, matrix
+from qubosolver import QUBOInstance, QUBOSolver, SolverConfig, ClassicalConfig, matrix
 
 qubo = QUBOInstance(matrix=matrix.tensor([[-2.0, 1.0], [1.0, -2.0]]))
 config = SolverConfig(use_quantum = False, classical=ClassicalConfig(classical_solver_type="tabu_search", tabu_time_limit=300.0))
 
-solver = QuboSolver(qubo, config)
+solver = QUBOSolver(qubo, config)
 
 solution = solver.solve()
 print(solution)

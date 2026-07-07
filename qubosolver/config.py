@@ -42,13 +42,12 @@ class _Config(BaseModel, ABC):
 
 
 class ClassicalConfig(_Config):
-    """A `ClassicalConfig` instance defines the classical
-        part of a `SolverConfig`.
+    """A `ClassicalConfig` instance defines the classical part of a `SolverConfig`.
 
     Attributes:
         classical_solver_type (str | ClassicalSolverType, optional): Classical solver type. Defaults to
-            "simulated_annealing_tabu_search".
-        cplex_maxtime (float, optional): CPLEX maximum runtime. Defaults to 600s.
+            `"simulated_annealing_tabu_search"`.
+        cplex_maxtime (float, optional): CPLEX maximum runtime in seconds. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
         max_iter (int, optional): Maximum number of iterations to perform for simulated annealing or tabu search.
         max_bitstrings (int, optional): Maximal number of bitstrings returned as solutions.
@@ -59,13 +58,13 @@ class ClassicalConfig(_Config):
         sa_start (torch.Tensor | None, optional): Optional initial bitstring of shape (n,).
         sa_energy_tol (float, optional): Energy tolerance for considering two solutions as equivalent.
         sa_time_limit (float): Maximum runtime in seconds for simulated annealing.
-            Defaults to float('inf'), meaning no time limit.
+            Defaults to `float("inf")`, meaning no time limit.
         tabu_x0 (torch.Tensor | None, optional): The initial binary solution tensor of shape (n,).
         tabu_tenure (int, optional): Number of iterations a move (bit flip) remains tabu.
         tabu_max_no_improve (int, optional): Maximum number of consecutive iterations
             without improvement before termination.
         tabu_time_limit (float): Maximum execution time for tabu search,
-            in seconds. Defaults to float("inf").
+            in seconds. Defaults to `float("inf")`, meaning no time limit.
     """
 
     classical_solver_type: str | ClassicalSolverType = "simulated_annealing_tabu_search"

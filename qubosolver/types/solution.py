@@ -18,9 +18,9 @@ from pulser.backend.results import Results
 @debug_runtime_typecheck
 @dataclass
 class QUBOSingleSolution:
-    """A single candidate solution extracted from a :class:`QUBOSolution`.
+    """A single candidate solution extracted from a [QUBOSolution][].
 
-    Instances are normally obtained via :meth:`QUBOSolution.__getitem__` rather
+    Instances are normally obtained via [`QUBOSolution.__getitem__`][] rather
     than constructed directly.
 
     Attributes:

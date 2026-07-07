@@ -14,7 +14,7 @@ from qubosolver import (
     ClassicalSolverType,
     ClassicalConfig,
     SolverConfig,
-    QuboSolver,
+    QUBOSolver,
     matrix,
     bitstring,
     torch_rng,
@@ -63,7 +63,7 @@ def test_qubo_solver_sa_or_tabu(
     )
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
-    classical_solver = QuboSolver(simple_qubo_instance, config)
+    classical_solver = QUBOSolver(simple_qubo_instance, config)
 
     # Solve the QUBO problem.
     solution = classical_solver.solve()
@@ -97,7 +97,7 @@ def test_random() -> None:
     check.is_instance(get_classical_solver(instance, config.classical), RandomSolver)
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
-    classical_solver = QuboSolver(instance, config)
+    classical_solver = QUBOSolver(instance, config)
 
     # Solve the QUBO problem.
     solution = classical_solver.solve()
@@ -134,7 +134,7 @@ def test_sa_cost(
         class_solvers[classical_methods],
     )
 
-    classical_solver = QuboSolver(simple_qubo_instance, config)
+    classical_solver = QUBOSolver(simple_qubo_instance, config)
     solution = classical_solver.solve()
 
     check.is_instance(solution, QUBOSolution)
@@ -179,7 +179,7 @@ def test_tabu_time_limit(simple_qubo_instance: QUBOInstance) -> None:
         activate_trivial_solutions=False,
     )
 
-    classical_solver = QuboSolver(simple_qubo_instance, config)
+    classical_solver = QUBOSolver(simple_qubo_instance, config)
 
     # Measure the full execution time of the solver.
     start_time = time.perf_counter()
@@ -208,7 +208,7 @@ def test_sa_time_limit(simple_qubo_instance: QUBOInstance) -> None:
         activate_trivial_solutions=False,
     )
 
-    classical_solver = QuboSolver(simple_qubo_instance, config)
+    classical_solver = QUBOSolver(simple_qubo_instance, config)
 
     # Measure the full execution time of the solver.
     start_time = time.perf_counter()
@@ -250,7 +250,7 @@ def test_empty_qubo_after_preprocessing(classical_method: ClassicalSolverType) -
     )
 
     instance = QUBOInstance(matrix=matrix.zeros(2))
-    classical_solver = QuboSolver(instance, config)
+    classical_solver = QUBOSolver(instance, config)
 
     solution = classical_solver.solve()
     solution.sort_by_cost()

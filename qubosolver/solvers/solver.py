@@ -1,9 +1,9 @@
 """Concrete QUBO solver implementations built on top of :class:`BaseSolver`.
 
 This module provides three internal solver classes and the public
-:class:`QuboSolver` dispatcher:
+:class:`QUBOSolver` dispatcher:
 
-* :class:`QuboSolver` — public entry point.  Inspects
+* :class:`QUBOSolver` — public entry point.  Inspects
   :class:`~qubosolver.config.SolverConfig` and instantiates one of the three
   solvers below.
 * :class:`_QuboSolverQuantum` — runs the full quantum pipeline: embedding →
@@ -21,6 +21,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import torch
+from typing_extensions import deprecated
 
 import qoolqit
 
@@ -32,7 +33,7 @@ from qubosolver.embedding._embedder import _get_embedder
 from qubosolver.drive_shaping._drive_shaper import _get_drive_shaper
 
 
-class QuboSolver(BaseSolver):
+class QUBOSolver(BaseSolver):
     """Public QUBO solver dispatcher.
 
     Inspects [`qubosolver.SolverConfig`][] at construction time
@@ -90,6 +91,16 @@ class QuboSolver(BaseSolver):
             The :class:`~qubosolver.types.QUBOSolution` produced by the inner solver.
         """
         return self._solver.solve()
+
+
+@deprecated("Use `qubosolver.QUBOSolver` instead")
+class QuboSolver(QUBOSolver):
+    """Legacy QUBO solver dispatcher.
+
+    !!! warning "Deprecated"
+        This class is deprecated and will be removed in a future version.
+        Use [`qubosolver.QUBOSolver`][] instead.
+    """
 
 
 class _QuboSolverQuantum(BaseSolver):

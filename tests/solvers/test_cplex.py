@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from qubosolver import QUBOInstance, QUBOSolution, ClassicalConfig, SolverConfig, QuboSolver, matrix
+from qubosolver import QUBOInstance, QUBOSolution, ClassicalConfig, SolverConfig, QUBOSolver, matrix
 
 
 def test_qubo_solver_classical_cplex() -> None:
@@ -21,7 +21,7 @@ def test_qubo_solver_classical_cplex() -> None:
     config = SolverConfig(use_quantum=False, classical=classical_config)
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
-    classical_solver = QuboSolver(instance, config)
+    classical_solver = QUBOSolver(instance, config)
 
     # Solve the QUBO problem.
     solution = classical_solver.solve()

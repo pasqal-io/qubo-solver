@@ -83,7 +83,7 @@ of cplex.
 
 ```python
 import torch
-from qubosolver import QUBOInstance, SolverConfig, QuboSolver
+from qubosolver import QUBOInstance, SolverConfig, QUBOSolver
 
 
 # define QUBO
@@ -94,7 +94,7 @@ instance = QUBOInstance(matrix=Q)
 config = SolverConfig(use_quantum=True)
 
 # Instantiate the quantum solver.
-solver = QuboSolver(instance, config)
+solver = QUBOSolver(instance, config)
 
 # Solve the QUBO problem.
 solution = solver.solve()
@@ -126,7 +126,7 @@ classical_config = ClassicalConfig(
 config = SolverConfig(use_quantum=False, classical=classical_config)
 
 # Instantiate the classical solver via the pipeline's classical solver dispatcher.
-classical_solver = QuboSolver(instance, config)
+classical_solver = QUBOSolver(instance, config)
 
 # Solve the QUBO problem.
 solution = classical_solver.solve()

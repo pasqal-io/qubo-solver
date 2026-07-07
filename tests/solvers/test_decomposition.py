@@ -13,7 +13,7 @@ from qubosolver import (
     SolverConfig,
     DecompositionConfig,
     EmbeddingConfig,
-    QuboSolver,
+    QUBOSolver,
     QUBODataset,
     QUBOInstance,
     matrix,
@@ -64,7 +64,7 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
         embedding=EmbeddingConfig(min_distance=1.0),
         device=DigitalAnalogDevice(),
     )
-    solver = QuboSolver(decomposable_qubo, config)
+    solver = QUBOSolver(decomposable_qubo, config)
 
     ## Check the distance interaction matrix matches the qubo matrix
     dist_matrix = compute_distance_interaction_matrix(
@@ -144,7 +144,7 @@ def test_decomp_solver(decomposable_qubo: QUBOInstance, use_quantum: bool) -> No
         embedding=EmbeddingConfig(min_distance=1.0),
         device=DigitalAnalogDevice(),
     )
-    solver = QuboSolver(decomposable_qubo, config)
+    solver = QUBOSolver(decomposable_qubo, config)
 
     assert isinstance(solver._solver, _DecomposeQuboSolver)
 
@@ -164,13 +164,13 @@ def test_decomp_solver(decomposable_qubo: QUBOInstance, use_quantum: bool) -> No
 def test_small_qubo_solver(simple_qubo_instance: QUBOInstance) -> None:
 
     # assert that the decomposition falls back to not being used as qubo is small
-    simple_solver = QuboSolver(
+    simple_solver = QUBOSolver(
         simple_qubo_instance,
         SolverConfig(use_quantum=False, decompose=None),
     )
     solutions1 = simple_solver.solve()
 
-    decompose_solver = QuboSolver(
+    decompose_solver = QUBOSolver(
         simple_qubo_instance,
         SolverConfig(use_quantum=False, decompose=DecompositionConfig()),
     )
@@ -192,7 +192,7 @@ def test_scope(decomposable_qubo: QUBOInstance) -> None:
     with pytest.raises(
         ValueError, match="Decomposition does not handle off-diagonal negative coefficients"
     ):
-        QuboSolver(QUBOInstance(coeffs), config)
+        QUBOSolver(QUBOInstance(coeffs), config)
 
 
 def test_compute_distance_interaction_matrix_zero_output() -> None:
@@ -339,7 +339,7 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
         decompose=DecompositionConfig(decompose_stop_number=2, decompose_break_placement=0),
         device=DigitalAnalogDevice(),
     )
-    solver = QuboSolver(qubo_instance, config)
+    solver = QUBOSolver(qubo_instance, config)
     assert isinstance(solver._solver, _DecomposeQuboSolver)
 
     solution = solver.solve()
@@ -416,7 +416,7 @@ def test_decompose_embedding() -> None:
     qubo_instance = QUBOInstance(matrix.from_torch(torch.eye(2)))
 
     config = SolverConfig(decompose=DecompositionConfig())
-    solver = QuboSolver(qubo_instance, config)
+    solver = QUBOSolver(qubo_instance, config)
     with pytest.raises(NotImplementedError):
         solver.embedding()
 
@@ -426,6 +426,6 @@ def test_decompose_drive() -> None:
     qubo_instance = QUBOInstance(matrix.from_torch(torch.eye(2)))
 
     config = SolverConfig(decompose=DecompositionConfig())
-    solver = QuboSolver(qubo_instance, config)
+    solver = QUBOSolver(qubo_instance, config)
     with pytest.raises(NotImplementedError):
         solver.drive(Register.from_coordinates([(0, 0), (1, 1)]))

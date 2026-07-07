@@ -1,6 +1,7 @@
 ::: qubosolver.solvers
     options:
       filters:
+        - "!^QUBOSolver$"
         - "!^QuboSolver$"
 
 ::: qubosolver.solvers.bitflip

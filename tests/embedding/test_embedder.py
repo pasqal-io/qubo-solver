@@ -5,7 +5,7 @@ import torch
 
 from qoolqit import Device, DigitalAnalogDevice, AnalogDevice, AnalogDeviceWithDMM
 from qubosolver import (
-    QuboSolver,
+    QUBOSolver,
     QUBOInstance,
     EmbeddingConfig,
     SolverConfig,
@@ -28,7 +28,7 @@ def test_embeddings_different_devices(
         do_preprocessing=False,
         device=local_device,
     )
-    solver = QuboSolver(qubo_for_testing_many_devices, config)
+    solver = QUBOSolver(qubo_for_testing_many_devices, config)
     assert solver.embedding()
 
 
@@ -57,7 +57,7 @@ def test_correctness_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) 
         ),
         device=DigitalAnalogDevice(),
     )
-    solver = QuboSolver(qubo_instance_for_embedding, config)
+    solver = QUBOSolver(qubo_instance_for_embedding, config)
     positions = solver.embedding()
 
     expected_greedy_positions = (
@@ -96,7 +96,7 @@ def test_error_greedy_max_radial_distance_constraint(
             device=device,
         )
 
-        solver = QuboSolver(qubo_instance_for_embedding, greedy_config)
+        solver = QUBOSolver(qubo_instance_for_embedding, greedy_config)
         # Setting a spacing larger than the max_radial_distance is not an error,
         # since scaling is performed
         solver.embedding()
@@ -141,7 +141,7 @@ def test_correctness_greedy_max_radial_distance_constraint_with_extra_greedy_tra
             device=device,
         )
 
-        solver = QuboSolver(qubo_instance_for_embedding, greedy_config)
+        solver = QUBOSolver(qubo_instance_for_embedding, greedy_config)
         geometry = solver.embedding()
 
         assert len(geometry.qubits) == len(expected)

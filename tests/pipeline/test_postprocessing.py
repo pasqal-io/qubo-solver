@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import pytest_check as check
 from qubosolver import (
-    QuboSolver,
+    QUBOSolver,
     QUBOSolution,
     SolverConfig,
     QUBODataset,
@@ -35,7 +35,7 @@ def test_basic_qubo_2d_integration(postprocessing: bool) -> None:
     # fmt: on
 
     instance = QUBOInstance(matrix=Q)
-    solver = QuboSolver(instance, SolverConfig(do_postprocessing=postprocessing))
+    solver = QUBOSolver(instance, SolverConfig(do_postprocessing=postprocessing))
     solution = QUBOSolution(
         bitstrings=bitstrings.tensor([[0, 0]]),
         costs=vector.tensor([0.0]),

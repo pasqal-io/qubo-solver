@@ -12,7 +12,7 @@ import qoolqit
 from qubosolver import (
     QUBOInstance,
     QUBOAnalyzer,
-    QuboSolver,
+    QUBOSolver,
     SolverConfig,
     EmbeddingConfig,
     DriveShapingConfig,
@@ -166,7 +166,7 @@ def test_quantum_solve(
         device=qoolqit.AnalogDevice(),
     )
 
-    solver = QuboSolver(qubo, config)
+    solver = QUBOSolver(qubo, config)
     solution = solver.solve()
     solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
 
@@ -212,7 +212,7 @@ def test_classical_solve(
         classical=classical_config,
     )
 
-    solver = QuboSolver(qubo, config)
+    solver = QUBOSolver(qubo, config)
     solution = solver.solve()
     solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
 

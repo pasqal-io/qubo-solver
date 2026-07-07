@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 import torch
 
-from qubosolver import QUBOInstance, SolverConfig, QuboSolver, matrix, bitstrings, LocalEmulator
+from qubosolver import QUBOInstance, SolverConfig, QUBOSolver, matrix, bitstrings, LocalEmulator
 
 
 def test_classical_all_positive_trivial() -> None:
@@ -16,7 +16,7 @@ def test_classical_all_positive_trivial() -> None:
     instance = QUBOInstance(matrix=coeffs)
     config = SolverConfig(use_quantum=False)
 
-    solver = QuboSolver(instance, config)
+    solver = QUBOSolver(instance, config)
     sol = solver.solve()
 
     # All entries zero
@@ -38,12 +38,12 @@ def test_quantum_all_negative_trivial(local_backend: LocalEmulator) -> None:
     with pytest.raises(
         ValueError, match="Quantum solver does not handle off-diagonal negative coefficients"
     ):
-        solver = QuboSolver(instance, config)
+        solver = QUBOSolver(instance, config)
 
     coeffs = matrix.tensor([[-1.0, 0.0], [0.0, -3.0]])
     instance = QUBOInstance(matrix=coeffs)
 
-    solver = QuboSolver(instance, config)
+    solver = QUBOSolver(instance, config)
     sol = solver.solve()
 
     # All entries one
@@ -55,6 +55,6 @@ def test_diagonal_trivial(local_backend: LocalEmulator) -> None:
     instance = QUBOInstance(matrix=coeffs)
     config = SolverConfig(use_quantum=True, backend=local_backend)
 
-    solver = QuboSolver(instance, config)
+    solver = QUBOSolver(instance, config)
     sol = solver.solve()
     torch.testing.assert_close(sol.bitstrings, bitstrings.tensor([[1, 0]]))

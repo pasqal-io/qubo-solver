@@ -59,7 +59,7 @@ def postprocess(self, solution: QUBOSolution) -> QUBOSolution
 
 ```python exec="on" source="material-block" html="1"
 import torch
-from qubosolver import QUBOInstance, SolverConfig, ClassicalConfig, QuboSolver, solvers
+from qubosolver import QUBOInstance, SolverConfig, ClassicalConfig, QUBOSolver, solvers
 
 # Create a random 4-variable QUBO instance
 graphics = torch.randn(4, 4)
@@ -78,7 +78,7 @@ config = SolverConfig(
 )
 
 # Solve with classical solver
-classical_solver = QuboSolver(qubo, config)
+classical_solver = QUBOSolver(qubo, config)
 raw_solution = classical_solver.solve()
 
 # Apply local bitflip postprocessing
@@ -98,7 +98,7 @@ Instead of manually instantiating `Fixtures`, you can enable postprocessing dire
 
 ```python exec="on" source="material-block" html="1"
 import torch
-from qubosolver import QUBOInstance, SolverConfig, ClassicalConfig, QuboSolver
+from qubosolver import QUBOInstance, SolverConfig, ClassicalConfig, QUBOSolver
 import emu_mps
 
 # Assume `first_qubo_coefficients` is your 2×2 QUBO matrix (e.g., identity):
@@ -114,7 +114,7 @@ config = SolverConfig(
 )
 
 # Instantiate and run the classical solver
-classical_solver = QuboSolver(instance, config)
+classical_solver = QUBOSolver(instance, config)
 solution = classical_solver.solve()
 
 print("Final bitstrings:", solution.bitstrings)

@@ -30,7 +30,7 @@ from qubosolver import (
     AutoRemoteEmulatorBackend,
     LocalEmulator,
     RemoteEmulator,
-    QuboSolver,
+    QUBOSolver,
     matrix,
 )
 from qubosolver.types.backends import (
@@ -205,7 +205,7 @@ def test_emulator_backend_selection(
         activate_trivial_solutions=False,
     )
 
-    solver = QuboSolver(instance, solver_config)
+    solver = QUBOSolver(instance, solver_config)
     with patch.object(expected_type, "run", return_value=results) as mock_run:
         solver.solve()
         mock_run.assert_called_once()
@@ -237,7 +237,7 @@ def test_remote_emulator_warning() -> None:
         activate_trivial_solutions=False,
         embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
     )
-    solver = QuboSolver(instance, config)
+    solver = QUBOSolver(instance, config)
 
     with patch.object(EmuSVBackend, "run", return_value=mock_results) as mock_run:
         with pytest.warns(UserWarning, match="Consider using EmuFreeBackendV2"):
@@ -257,7 +257,7 @@ def test_local_emulator_warning() -> None:
         embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
     )
 
-    solver = QuboSolver(instance, config)
+    solver = QUBOSolver(instance, config)
     results = MagicMock(spec=pulser.backend.Results)
     attach_bitstring(results, size)
     with patch.object(SVBackend, "run", return_value=results) as mock_run:

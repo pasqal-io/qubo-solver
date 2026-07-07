@@ -11,7 +11,7 @@ import random
 
 from qubosolver import (
     QUBOInstance,
-    QuboSolver,
+    QUBOSolver,
     EmbeddingConfig,
     SolverConfig,
     DriveShapingConfig,
@@ -128,7 +128,7 @@ def test_with_perfect_embedding(
         device=device_type(),
     )
 
-    solver = QuboSolver(instance, config)
+    solver = QUBOSolver(instance, config)
     qubo_solution = solver.solve()
 
     qubo_solution.sort_by_cost()

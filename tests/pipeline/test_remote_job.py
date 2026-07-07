@@ -14,7 +14,7 @@ from qubosolver import (
     QUBOInstance,
     QUBOSolution,
     QUBOAnalyzer,
-    QuboSolver,
+    QUBOSolver,
     EmbedderType,
     DriveType,
     EmbeddingConfig,
@@ -65,7 +65,7 @@ def test_quantum_remote_job(
 
     def pre(
         connection: RemoteConnection | None = None,
-    ) -> tuple[job.Job[Results], QuboSolver]:
+    ) -> tuple[job.Job[Results], QUBOSolver]:
         instance = QUBOInstance(Q)
 
         min_distance = 1.001 if drive_method == DriveType.HEURISTIC else None
@@ -87,7 +87,7 @@ def test_quantum_remote_job(
         else:
             config.backend = RemoteEmulator(connection=connection, num_shots=num_shots)
 
-        solver = QuboSolver(instance, config)
+        solver = QUBOSolver(instance, config)
 
         # 2) Apply preprocessing if requested
         solver.preprocess()
@@ -98,7 +98,7 @@ def test_quantum_remote_job(
 
         return job, solver
 
-    def post(job: job.Job[Results], solver: QuboSolver) -> QUBOSolution:
+    def post(job: job.Job[Results], solver: QUBOSolver) -> QUBOSolution:
         solution = QUBOSolution.from_results(job.results())
 
         # Post-process fixations of the preprocessing and restore the original QUBO
@@ -117,7 +117,7 @@ def test_quantum_remote_job(
     assert isinstance(remote_job.results(), Results)
 
     mock_file = io.BytesIO()
-    QuboSolver.save(mock_file, remote_solver)
+    QUBOSolver.save(mock_file, remote_solver)
     io_utils.save_string(mock_file, remote_job.job_id())
     io_utils.save_string(mock_file, get_batch_id(remote_job))
 
@@ -126,7 +126,7 @@ def test_quantum_remote_job(
         invalid_job.get_status()
 
     mock_file.seek(0)
-    remote_solver_2 = QuboSolver.load(mock_file)
+    remote_solver_2 = QUBOSolver.load(mock_file)
     job_id_2 = io_utils.load_string(mock_file)
     batch_id_2 = io_utils.load_string(mock_file)
     remote_job_2 = retrieve_remote_job(connection, job_id_2, batch_id=batch_id_2)

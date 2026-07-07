@@ -49,7 +49,7 @@ from importlib.metadata import version
 from pulser.sequence import store_package_version_metadata
 
 from qubosolver import solvers, transforms, drive_shaping, embedding
-from qubosolver.solvers import QuboSolver
+from qubosolver.solvers import QUBOSolver, QuboSolver
 
 __all__ = [
     # Submodules
@@ -75,6 +75,7 @@ __all__ = [
     "QUBOSolution",
     "QUBOAnalyzer",
     "QUBOInstance",
+    "QUBOSolver",
     "QuboSolver",
     "QUBODataset",
     "QUBOSingleSolution",

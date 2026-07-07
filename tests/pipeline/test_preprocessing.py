@@ -17,7 +17,7 @@ from qubosolver import (
     DriveShapingConfig,
     SolverConfig,
     EmbedderType,
-    QuboSolver,
+    QUBOSolver,
     matrix,
     bitstring,
     bitstrings,
@@ -108,7 +108,7 @@ def test_quantum_preprocessing(qubo_instance_for_preprocessing: QUBOInstance) ->
     quantum_preprocessing_config = SolverConfig(
         use_quantum=True, do_preprocessing=True, do_postprocessing=False
     )
-    solver = QuboSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
+    solver = QUBOSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
@@ -120,7 +120,7 @@ def test_quantum_postprocessing(qubo_instance_for_preprocessing: QUBOInstance) -
     quantum_preprocessing_config = SolverConfig(
         use_quantum=True, do_preprocessing=False, do_postprocessing=True
     )
-    solver = QuboSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
+    solver = QUBOSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
@@ -134,7 +134,7 @@ def test_quantum_prepostprocessing(
     quantum_preprocessing_config = SolverConfig(
         use_quantum=True, do_preprocessing=True, do_postprocessing=True
     )
-    solver = QuboSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
+    solver = QUBOSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
@@ -146,7 +146,7 @@ def test_classical_preprocessing(qubo_instance_for_preprocessing: QUBOInstance) 
     quantum_preprocessing_config = SolverConfig(
         use_quantum=False, do_preprocessing=True, do_postprocessing=False
     )
-    solver = QuboSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
+    solver = QUBOSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
@@ -160,7 +160,7 @@ def test_classical_postprocessing(
     quantum_preprocessing_config = SolverConfig(
         use_quantum=False, do_preprocessing=False, do_postprocessing=True
     )
-    solver = QuboSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
+    solver = QUBOSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
@@ -174,7 +174,7 @@ def test_classical_prepostprocessing(
     quantum_preprocessing_config = SolverConfig(
         use_quantum=False, do_preprocessing=True, do_postprocessing=True
     )
-    solver = QuboSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
+    solver = QUBOSolver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
@@ -270,7 +270,7 @@ def test_quantum_prepostprocessing_2(
 
     config.drive_shaping = DriveShapingConfig(drive_shaping_method=SimpleShaper, dmm=dmm)
     config.backend = LocalEmulator(num_shots=50)
-    solver = QuboSolver(instance, config)
+    solver = QUBOSolver(instance, config)
 
     solutions = solver.solve()
 

@@ -9,7 +9,7 @@ from qubosolver import (
     SolverConfig,
     ClassicalConfig,
     ClassicalSolverType,
-    QuboSolver,
+    QUBOSolver,
     vector,
     vectori,
 )
@@ -99,7 +99,7 @@ def test_analyzer_classical(simple_qubo_instance: QUBOInstance, classical_method
     config = SolverConfig(
         use_quantum=False, classical=ClassicalConfig(classical_solver_type=classical_method)
     )
-    solver = QuboSolver(simple_qubo_instance, config)
+    solver = QUBOSolver(simple_qubo_instance, config)
     solution = solver.solve()
     analyzer = QUBOAnalyzer([solution], labels=["sol1"])
 
@@ -110,7 +110,7 @@ def test_analyzer_classical(simple_qubo_instance: QUBOInstance, classical_method
 
 def test_analyzer_quantum(simple_qubo_instance: QUBOInstance) -> None:
     config = SolverConfig(use_quantum=True)
-    solver = QuboSolver(simple_qubo_instance, config)
+    solver = QUBOSolver(simple_qubo_instance, config)
     solution = solver.solve()
     analyzer = QUBOAnalyzer([solution], labels=["sol1"])
 
@@ -126,10 +126,10 @@ def test_analyzer_quantum_and_classical(
     config = SolverConfig(
         use_quantum=False, classical=ClassicalConfig(classical_solver_type=classical_method)
     )
-    solver = QuboSolver(simple_qubo_instance, config)
+    solver = QUBOSolver(simple_qubo_instance, config)
     solution = solver.solve()
 
-    quantumsolver = QuboSolver(simple_qubo_instance, SolverConfig(use_quantum=True))
+    quantumsolver = QUBOSolver(simple_qubo_instance, SolverConfig(use_quantum=True))
     quantumsolution = quantumsolver.solve()
     analyzer = QUBOAnalyzer([solution, quantumsolution], labels=["sol1", "sol2"])
 

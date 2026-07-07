@@ -2,7 +2,7 @@
 
 The `SolverConfig` class defines how a QUBO problem should be solved — specifying whether to use a quantum or classical approach, which backend to run on, and additional execution parameters.
 
-This configuration is passed into any solver (e.g., `QuboSolver`) and guides its behavior.
+This configuration is passed into any solver (e.g., `QUBOSolver`) and guides its behavior.
 Note that `SolverConfig` uses three other configuration objects: `EmbeddingConfig`, `ClassicalConfig` and `DriveShapingConfig`.
 Besides `ClassicalConfig`, the other configurations represents different parts of the solver when using a quantum approach:
 

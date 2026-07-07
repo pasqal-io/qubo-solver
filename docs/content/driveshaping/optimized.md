@@ -67,7 +67,7 @@ After the final round of optimization, the following attributes are populated:
 ```python exec="on" source="material-block" html="1"
 import torch
 
-from qubosolver import QUBOInstance, SolverConfig, DriveShapingConfig, QuboSolver, DriveType
+from qubosolver import QUBOInstance, SolverConfig, DriveShapingConfig, QUBOSolver, DriveType
 
 
 Q = torch.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
@@ -77,7 +77,7 @@ instance = QUBOInstance(Q)
 default_config = SolverConfig(
     use_quantum = True, drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.OPTIMIZED, optimized_n_calls = 25),
 )
-solver = QuboSolver(instance, default_config)
+solver = QUBOSolver(instance, default_config)
 
 solution = solver.solve()
 print(solution)

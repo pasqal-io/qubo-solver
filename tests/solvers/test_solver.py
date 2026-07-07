@@ -13,6 +13,7 @@ from qoolqit.execution import JobStatus
 
 from qubosolver import (
     QUBOInstance,
+    QUBOSolver,
     QuboSolver,
     QUBOSolution,
     EmbedderType,
@@ -42,13 +43,13 @@ from typing import Optional
 @pytest.fixture
 def implicit_default_qubo_solver_config(
     simple_qubo_instance: QUBOInstance,
-) -> QuboSolver:
-    default_solver = QuboSolver(simple_qubo_instance)
+) -> QUBOSolver:
+    default_solver = QUBOSolver(simple_qubo_instance)
     return default_solver
 
 
 def test_implicit_solver_config(
-    implicit_default_qubo_solver_config: QuboSolver,
+    implicit_default_qubo_solver_config: QUBOSolver,
 ) -> None:
     assert isinstance(implicit_default_qubo_solver_config._solver, _QuboSolverQuantum)
 
@@ -56,7 +57,7 @@ def test_implicit_solver_config(
 def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
     from pulser_simulation import QutipBackendV2
 
-    default_solver = QuboSolver(
+    default_solver = QUBOSolver(
         simple_qubo_instance,
         SolverConfig(
             use_quantum=True, backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=500)
@@ -65,7 +66,7 @@ def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
     solutions = default_solver.solve()
     assert solutions.counts.sum() == 500
 
-    lessshots_solver = QuboSolver(
+    lessshots_solver = QUBOSolver(
         simple_qubo_instance,
         SolverConfig(
             use_quantum=True, backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=100)
@@ -80,7 +81,7 @@ def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
 def test_run_local_backends(
     simple_qubo_instance: QUBOInstance, local_backend: LocalEmulator
 ) -> None:
-    solver = QuboSolver(
+    solver = QUBOSolver(
         simple_qubo_instance,
         SolverConfig(
             use_quantum=True,
@@ -114,7 +115,7 @@ def test_solver_different_devices(
         device=local_device,
         backend=LocalEmulator(backend_type=SVBackend),
     )
-    solver = QuboSolver(qubo_for_testing_many_devices, config)
+    solver = QUBOSolver(qubo_for_testing_many_devices, config)
     solution = solver.solve()
     assert solution
 
@@ -188,7 +189,7 @@ def test_parse_results_string_counts_to_integer_tensor() -> None:
     torch.testing.assert_close(solution.counts, expected_counts)
 
 
-def trivial_triangular_qubo(connection: Optional[RemoteConnection] = None) -> QuboSolver:
+def trivial_triangular_qubo(connection: Optional[RemoteConnection] = None) -> QUBOSolver:
     Q = 10.0 * matrix.tensor(
         [
             [-10.0, 6.0, 6.0],
@@ -208,7 +209,7 @@ def trivial_triangular_qubo(connection: Optional[RemoteConnection] = None) -> Qu
     else:
         config.backend = RemoteEmulator(connection=connection, num_shots=num_shots)
 
-    solver = QuboSolver(qubo, config)
+    solver = QUBOSolver(qubo, config)
 
     return solver
 
@@ -291,7 +292,7 @@ def test_save_load_qubo_solver_quantum(
     )
     qubo = QUBOInstance(Q)
     config = SolverConfig(do_preprocessing=preprocessing, do_postprocessing=postprocessing)
-    solver = QuboSolver(qubo, config)
+    solver = QUBOSolver(qubo, config)
     solver.preprocess()
 
     if preprocessing:
@@ -304,11 +305,11 @@ def test_save_load_qubo_solver_quantum(
 
     # Save the solver
     file = io.BytesIO()
-    QuboSolver.save(file, solver)
+    QUBOSolver.save(file, solver)
 
     # Load the solver
     file.seek(0)
-    loaded_solver = QuboSolver.load(file)
+    loaded_solver = QUBOSolver.load(file)
 
     # Verify the loaded solver has the same properties
     torch.testing.assert_close(loaded_solver.instance.matrix, solver.instance.matrix)
@@ -340,3 +341,12 @@ def test_save_load_qubo_solver_quantum(
             match=f"'{method}' is disabled: this method is not supported for QuboSolverQuantum loaded from a file.",
         ):
             getattr(loaded_solver, method)()
+
+
+def test_qubo_solver_wrong_case_deprecation() -> None:
+    Q = matrix.tensor([[-2.0, 0.0], [0.0, 4.0]])
+    with pytest.warns(DeprecationWarning, match="Use `qubosolver.QUBOSolver` instead"):
+        solver = QuboSolver(QUBOInstance(Q))
+        check.is_instance(solver, QUBOSolver)
+    solution = solver.solve()
+    check.equal(solution[0].string, "10")
