@@ -4,7 +4,6 @@ import inspect
 from abc import ABC
 from dataclasses import field
 from typing import Any, Callable, Literal
-
 import torch
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator, model_serializer
 
@@ -454,7 +453,8 @@ class SolverConfig(Config):
     bitflip_preprocessing: BitFlipPreprocessingConfig = BitFlipPreprocessingConfig()
     activate_trivial_solutions: bool = True
     decompose: DecompositionConfig | None = None
-
+    negative_handling: Literal["error", "zeroing"] = "error"
+    
     def __repr__(self) -> str:
         return self.config_name
 

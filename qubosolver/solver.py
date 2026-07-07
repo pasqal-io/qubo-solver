@@ -78,9 +78,12 @@ class QuboSolverQuantum(BaseSolver):
         """
         super().__init__(instance, config or SolverConfig(use_quantum=True))
 
-        if has_negative_offdiagonal(instance.coefficients):
+        if has_negative_offdiagonal(instance.coefficients) and not (
+            self.config.do_preprocessing
+            and self.config.bitflip_preprocessing.enabled
+        ):
             raise ValueError("Quantum solver does not handle off-diagonal negative coefficients")
-
+        
         self._check_size_limit()
 
         self.backend = self.config.backend
@@ -144,6 +147,12 @@ class QuboSolverQuantum(BaseSolver):
 
         # 2) Apply preprocessing if requested
         self.preprocess()
+        
+        if has_negative_offdiagonal(self.instance.coefficients):
+            raise ValueError(
+                "Quantum solver does not handle off-diagonal negative coefficients. "
+                "Preprocessing did not remove all negative coefficients."
+            )
 
         embedding = self.embedding()
 

@@ -244,7 +244,7 @@ class BaseSolver(ABC):
         if self.config.do_preprocessing:
             # Apply preprocessing on the working QUBO.
             # Note: reduced_qubo is the current preprocessed QUBO.
-            # It can be smaller after fixation, or same-size after bit-flip preprocessing.
+            # It can be smaller after fixation, or same-size after bit-flip/zeroing.
             self.fixtures.preprocess()
 
             has_preprocessed_qubo = (
@@ -254,11 +254,12 @@ class BaseSolver(ABC):
 
             has_fixation = self.fixtures.n_fixed_variables < self.instance.size
             has_bitflip = getattr(self.fixtures, "bitflip_applied", False)
+            has_zeroing = getattr(self.fixtures, "zeroing_applied", False)
 
-            if has_preprocessed_qubo and (has_fixation or has_bitflip):
+            if has_preprocessed_qubo and (has_fixation or has_bitflip or has_zeroing):
                 self.instance = self.fixtures.reduced_qubo
                 self.n_fixed_variables_preprocessing = self.fixtures.n_fixed_variables
-
+                
     def post_process_fixation(self, solution: QUBOSolution) -> QUBOSolution:
         """Post-process fixations of the preprocessing and restore the original QUBO.
 

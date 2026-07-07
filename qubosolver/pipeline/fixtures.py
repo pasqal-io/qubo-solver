@@ -122,6 +122,8 @@ class Fixtures:
         self.bitflip_offset: float = 0.0
         self.bitflip_applied: bool = False
 
+        self.zeroing_applied: bool = False
+
     @property
     def n_fixed_variables(self) -> int:
         """Returns the number of fixed variables.
@@ -143,14 +145,17 @@ class Fixtures:
         if not hasattr(self.config, "do_preprocessing") or not self.config.do_preprocessing:
             return self.instance
 
-        # Apply every rules until exhaustion
+        # Apply fixation rules until exhaustion.
         self.apply_full_fixation_exhaust()
-        
+
         # Apply bit-flip preprocessing after fixation, on the reduced QUBO.
         self.apply_bitflip_preprocessing()
 
-        return self.instance
+        # Handle remaining negative off-diagonal coefficients if requested.
+        self.apply_negative_coefficients_handling()
 
+        return self.reduced_qubo
+    
     def postprocess(self, solution: QUBOSolution) -> QUBOSolution:
         """
         Apply postprocessing steps to the QUBO solution after solving.
@@ -303,6 +308,7 @@ class Fixtures:
         self.bitflip_status = status
         self.bitflip_offset = offset
         self.bitflip_applied = True
+
     def post_process_fixation(self, solution: QUBOSolution) -> QUBOSolution:
         """
         Restores fixed variables in the solution bitstrings after QUBO reduction.
@@ -353,3 +359,28 @@ class Fixtures:
             probabilities=solution.probabilities,
             solution_status=SolutionStatusType.PREPROCESSED,
         )
+
+    def apply_negative_coefficients_handling(self) -> None:
+        """Handle remaining negative off-diagonal coefficients after preprocessing."""
+        Q = self.reduced_qubo.coefficients
+
+        if Q is None or Q.numel() == 0:
+            return
+
+        if not has_negative_offdiagonal(Q):
+            return
+
+        if getattr(self.config, "negative_handling", "error") != "zeroing":
+            return
+        
+        n = Q.shape[0]
+        offdiag_mask = ~torch.eye(n, dtype=torch.bool, device=Q.device)
+        negative_mask = offdiag_mask & (Q < 0)
+
+        Q_zeroed = Q.clone()
+        Q_zeroed[negative_mask] = 0.0
+
+        self.reduced_qubo.coefficients = Q_zeroed
+        self.reduced_qubo.update_metrics()
+
+        self.zeroing_applied = True
