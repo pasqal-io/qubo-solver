@@ -45,7 +45,7 @@ class ClassicalConfig(_Config):
     """A `ClassicalConfig` instance defines the classical part of a `SolverConfig`.
 
     Attributes:
-        classical_solver_type (str | ClassicalSolverType, optional): Classical solver type. Defaults to
+        classical_solver_type (ClassicalSolverType, optional): Classical solver type. Defaults to
             `"simulated_annealing_tabu_search"`.
         cplex_maxtime (float, optional): CPLEX maximum runtime in seconds. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
@@ -181,7 +181,7 @@ class EmbeddingConfig(_Config):
             A too high value will impede computational efficiency.
         greedy_spacing (float, optional): The minimum distance between atoms.
             Defaults to 7 (μm).
-        greedy_density (float, optional): The estimated density of the QUBO matrix.
+        greedy_density (float | None, optional): The estimated density of the QUBO matrix.
             Defaults to None.
         blade_steps_per_round (int | None): See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/)
         blade_starting_positions (torch.Tensor | None): See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/)

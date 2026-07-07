@@ -3,6 +3,7 @@
       filters:
         - "!^QUBOSolver$"
         - "!^QuboSolver$"
+        - "!^_[^_]"
 
 ::: qubosolver.solvers.bitflip
 

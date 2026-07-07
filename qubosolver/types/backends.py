@@ -20,7 +20,7 @@ from __future__ import annotations
 import warnings
 from typing import Any, Type, cast, Literal
 
-from pulser import Sequence as PulserSequence
+import pulser
 from pulser.backend.abc import EmulatorBackend
 from pulser_simulation import QutipBackendV2
 from pulser_pasqal.backends import (
@@ -99,31 +99,31 @@ def _select_backend_type(
 class AutoLocalEmulatorBackend(EmulatorBackend):
     """Factory class that automatically selects optimal emulator backends.
 
-    This factory uses __new__ to return instances of different backend types
+    This factory uses `__new__` to return instances of different backend types
     based on quantum register size for optimal performance:
-    - MPSBackend for large problems (≥26 qubits)
-    - SVBackend for medium problems (15-25 qubits)
-    - QutipBackendV2 for small problems (<15 qubits)
+
+    - `MPSBackend` for large problems (≥26 qubits)
+    - `SVBackend` for medium problems (15-25 qubits)
+    - `QutipBackendV2` for small problems (<15 qubits)
 
     Note: This class acts as a factory and never instantiates itself.
-    The __new__ method directly returns instances of the selected backend type.
+    The `__new__` method directly returns instances of the selected backend type.
     Type checking is suppressed as this factory pattern confuses static analyzers.
 
-    Required by qoolqit.LocalEmulator which expects backend_type to pass
-    issubclass(backend_type, EmulatorBackend) checks.
+    Required by `qoolqit.LocalEmulator` which expects backend_type to pass
+    `issubclass(backend_type, EmulatorBackend)` checks.
     """
 
-    def __new__(cls, sequence: PulserSequence, *args: Any, **kwargs: Any) -> EmulatorBackend:  # type: ignore[misc]
+    def __new__(cls, sequence: pulser.Sequence, *args: Any, **kwargs: Any) -> EmulatorBackend:  # type: ignore[misc]
         """Create a local emulator backend selected from the sequence size.
 
         Args:
-            sequence (PulserSequence): The pulse sequence to simulate.
+            sequence (pulser.Sequence): The pulse sequence to simulate.
             *args: Additional positional arguments passed to the selected backend.
             **kwargs: Additional keyword arguments passed to the selected backend.
 
         Returns:
-            EmulatorBackend: An instance of the automatically selected backend
-            (MPSBackend, SVBackend, or QutipBackendV2).
+            EmulatorBackend: An instance of the automatically selected backend (`MPSBackend`, `SVBackend`, or `QutipBackendV2`).
         """
         n_qubits = len(sequence.register.qubit_ids)
         return _select_backend_type(n_qubits, False)(sequence, *args, **kwargs)
@@ -132,27 +132,27 @@ class AutoLocalEmulatorBackend(EmulatorBackend):
 class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
     """Factory class that automatically selects optimal remote emulator backends.
 
-    This factory uses __new__ to return instances of different remote backend types
+    This factory uses `__new__` to return instances of different remote backend types
     based on quantum register size for optimal performance:
-    - EmuMPSBackend for large problems (≥26 qubits)
-    - EmuSVBackend for medium problems (15-25 qubits)
-    - EmuFreeBackendV2 for small problems (<15 qubits)
+
+    - `EmuMPSBackend` for large problems (≥26 qubits)
+    - `EmuSVBackend` for medium problems (15-25 qubits)
+    - `EmuFreeBackendV2` for small problems (<15 qubits)
 
     Note: This class acts as a factory and never instantiates itself.
-    The __new__ method directly returns instances of the selected remote backend type.
+    The `__new__` method directly returns instances of the selected remote backend type.
     """
 
-    def __new__(cls, sequence: PulserSequence, *args: Any, **kwargs: Any) -> RemoteEmulatorBackend:  # type: ignore[misc]
+    def __new__(cls, sequence: pulser.Sequence, *args: Any, **kwargs: Any) -> RemoteEmulatorBackend:  # type: ignore[misc]
         """Create a remote emulator backend selected from the sequence size.
 
         Args:
-            sequence (PulserSequence): The pulse sequence to simulate.
+            sequence (pulser.Sequence): The pulse sequence to simulate.
             *args: Additional positional arguments passed to the selected backend.
             **kwargs: Additional keyword arguments passed to the selected backend.
 
         Returns:
-            RemoteEmulatorBackend: An instance of the automatically selected remote backend
-            (EmuMPSBackend, EmuSVBackend, or EmuFreeBackendV2).
+            RemoteEmulatorBackend: An instance of the automatically selected remote backend (`EmuMPSBackend`, `EmuSVBackend`, or `EmuFreeBackendV2`).
         """
         n_qubits = len(sequence.register.qubit_ids)
         backend = _select_backend_type(n_qubits, True)(sequence, *args, **kwargs)
@@ -201,19 +201,21 @@ class LocalEmulator(QoolqitLocalEmulator):
     improved performance through intelligent backend selection.
 
     The optimal backend selection follows these guidelines:
-    - Small problems (< 15 qubits): QutipBackendV2
-    - Medium problems (15-25 qubits): SVBackend
-    - Large problems (≥ 26 qubits): MPSBackend
+
+    - Small problems (< 15 qubits): `QutipBackendV2`
+    - Medium problems (15-25 qubits): `SVBackend`
+    - Large problems (≥ 26 qubits): `MPSBackend`
 
     Args:
         backend_type (type, optional): Backend type to use. Defaults to
-            AutoLocalEmulatorBackend for automatic selection.
+            `AutoLocalEmulatorBackend` for automatic selection.
         **kwargs: Additional keyword arguments passed to the base LocalEmulator.
 
     Example:
-        >>> from qubosolver import LocalEmulator
-        >>> emulator = LocalEmulator(num_shots=1000)
-        >>> # Backend will be automatically selected based on problem size
+
+        from qubosolver import LocalEmulator
+        emulator = LocalEmulator(num_shots=1000)
+        # Backend will be automatically selected based on problem size
     """
 
     def __init__(
