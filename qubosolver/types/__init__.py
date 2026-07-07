@@ -32,7 +32,6 @@ from qubosolver.types.aliases import (
     QuboAnalyzer,
     QuboInstance,
     QuboDataset,
-    QuboSolver,
 )
 
 __all__ = [
@@ -75,7 +74,6 @@ __all__ = [
     "QuboAnalyzer",
     "QuboInstance",
     "QuboDataset",
-    "QuboSolver",
     # Deprecated QUBO* classes
     "QUBOSolution",
     "QUBOAnalyzer",

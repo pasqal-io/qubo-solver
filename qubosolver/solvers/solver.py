@@ -21,7 +21,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import torch
-from typing_extensions import deprecated
+from typing_extensions import TypeAlias
 
 import qoolqit
 
@@ -92,6 +92,9 @@ class Solver(BaseSolver):
         """
         return self._solver.solve()
 
+
+QuboSolver: TypeAlias = Solver
+"""Alias for [`Solver`][qubosolver.Solver]."""
 
 class _QuboSolverQuantum(BaseSolver):
     """Quantum QUBO solver using embedding, drive shaping, and analog sampling.

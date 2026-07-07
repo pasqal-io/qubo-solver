@@ -13,7 +13,7 @@ from qubosolver.solvers.cplex import cplex
 from qubosolver.solvers.tabu_search import tabu_search
 from qubosolver.solvers.simulated_annealing import simulated_annealing
 from qubosolver.solvers.random import random_solutions
-from qubosolver.solvers.solver import Solver
+from qubosolver.solvers.solver import Solver, QuboSolver
 
 __all__ = [
     "iterative_bitflip_local_search",
@@ -24,4 +24,5 @@ __all__ = [
     "simulated_annealing",
     "random_solutions",
     "Solver",
+    "QuboSolver",
 ]

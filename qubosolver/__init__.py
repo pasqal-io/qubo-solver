@@ -42,7 +42,6 @@ from qubosolver.types import (
     QuboAnalyzer,
     QuboInstance,
     QuboDataset,
-    QuboSolver,
     # Deprecated QUBO* classes
     QUBOSolution,
     QUBOAnalyzer,
@@ -61,7 +60,7 @@ from importlib.metadata import version
 from pulser.sequence import store_package_version_metadata
 
 from qubosolver import solvers, transforms, drive_shaping, embedding
-from qubosolver.solvers import Solver
+from qubosolver.solvers import Solver, QuboSolver
 
 __all__ = [
     # Submodules

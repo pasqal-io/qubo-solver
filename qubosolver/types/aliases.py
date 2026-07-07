@@ -6,7 +6,6 @@ from .solution import Solution, SingleSolution
 from .analyzer import Analyzer
 from .instance import Instance
 from .dataset import Dataset
-from qubosolver.solvers.solver import Solver
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +74,3 @@ QuboInstance: TypeAlias = Instance
 
 QuboDataset: TypeAlias = Dataset
 """Alias for [`Dataset`][qubosolver.Dataset]."""
-
-
-QuboSolver: TypeAlias = Solver
-"""Alias for [`Solver`][qubosolver.Solver]."""
