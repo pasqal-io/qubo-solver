@@ -10,6 +10,12 @@ from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.config import SolverConfig
 from qubosolver.qubo_types import SolutionStatusType
 
+from qubosolver.pipeline.bitflip_preprocessing import (
+    apply_bitflips_to_bitstrings,
+    has_negative_offdiagonal,
+    solve_bitflip_preprocessing_glpk,
+    transform_qubo_by_bitflips,
+)
 
 def bit_flip_local_search(
     qubo_func: Callable[[np.ndarray], float], s: np.ndarray, shuffle: bool = True
@@ -110,6 +116,11 @@ class Fixtures:
             hansen_fixing,
         ]
         self.fixed_var_dict_list: List[Dict[int, int]] = []
+        self.bitflip_vector: torch.Tensor | None = None
+        self.bitflip_metrics: dict | None = None
+        self.bitflip_status: str | None = None
+        self.bitflip_offset: float = 0.0
+        self.bitflip_applied: bool = False
 
     @property
     def n_fixed_variables(self) -> int:
@@ -134,6 +145,9 @@ class Fixtures:
 
         # Apply every rules until exhaustion
         self.apply_full_fixation_exhaust()
+        
+        # Apply bit-flip preprocessing after fixation, on the reduced QUBO.
+        self.apply_bitflip_preprocessing()
 
         return self.instance
 
@@ -260,6 +274,35 @@ class Fixtures:
                 fixed_var_number = self.apply_rule(fixation_rule)
                 fixed_sum += fixed_var_number
 
+    def apply_bitflip_preprocessing(self) -> None:
+        """Apply GLPK bit-flip preprocessing on the reduced QUBO."""
+        cfg = getattr(self.config, "bitflip_preprocessing", None)
+        if cfg is None or not cfg.enabled:
+            return
+
+        Q = self.reduced_qubo.coefficients
+        if Q is None or Q.numel() == 0:
+            return
+
+        if not has_negative_offdiagonal(Q, eps=cfg.eps):
+            return
+
+        flips, metrics, status = solve_bitflip_preprocessing_glpk(
+            Q,
+            time_limit_s=cfg.time_limit_s,
+            eps=cfg.eps,
+        )
+
+        Q_flipped, offset = transform_qubo_by_bitflips(Q, flips)
+
+        self.reduced_qubo.coefficients = Q_flipped
+        self.reduced_qubo.update_metrics()
+
+        self.bitflip_vector = flips
+        self.bitflip_metrics = metrics
+        self.bitflip_status = status
+        self.bitflip_offset = offset
+        self.bitflip_applied = True
     def post_process_fixation(self, solution: QUBOSolution) -> QUBOSolution:
         """
         Restores fixed variables in the solution bitstrings after QUBO reduction.
@@ -277,6 +320,11 @@ class Fixtures:
             return solution
 
         bitstring_list = solution.bitstrings.tolist() or [[]]
+
+        if self.bitflip_applied and self.bitflip_vector is not None:
+            bitstrings = torch.tensor(bitstring_list, dtype=torch.float32)
+            bitstrings = apply_bitflips_to_bitstrings(bitstrings, self.bitflip_vector)
+            bitstring_list = bitstrings.tolist()
 
         def reinsert_fixed_variables(bitstring: List[int]) -> List[int]:
             for fixation_dict in reversed(self.fixed_var_dict_list):
