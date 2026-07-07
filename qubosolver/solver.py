@@ -19,6 +19,8 @@ from qubosolver.pipeline import (
     get_drive_shaper,
 )
 
+from qubosolver.pipeline.bitflip_preprocessing import has_negative_offdiagonal
+
 # Modules to be automatically added to the qubosolver namespace
 __all__: list[str] = ["QuboSolver"]
 
@@ -76,9 +78,7 @@ class QuboSolverQuantum(BaseSolver):
         """
         super().__init__(instance, config or SolverConfig(use_quantum=True))
 
-        if (
-            instance.coefficients[~torch.eye(*instance.coefficients.shape, dtype=torch.bool)] < 0
-        ).any():
+        if has_negative_offdiagonal(instance.coefficients):
             raise ValueError("Quantum solver does not handle off-diagonal negative coefficients")
 
         self._check_size_limit()
@@ -272,11 +272,10 @@ class DecomposeQuboSolver(BaseSolver):
             solver_factory (Callable[[QUBOInstance, SolverConfig], BaseSolver]): solver class
                 for subproblems.
         """
-        if (
-            instance.coefficients[~torch.eye(*instance.coefficients.shape, dtype=torch.bool)] < 0
-        ).any():
-            raise ValueError("Decomposition does not handle off-diagonal negative coefficients")
 
+        if has_negative_offdiagonal(instance.coefficients):
+            raise ValueError("Decomposition does not handle off-diagonal negative coefficients")
+            
         # default is a quantum solver as we apply device-dependent decomposition
         super().__init__(
             QUBOInstance(instance.coefficients),
