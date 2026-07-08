@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from typing import Literal
 import pytest
 import torch
 
@@ -35,7 +35,7 @@ def non_bipartisable_negative_qubo() -> torch.Tensor:
 
 def bitflip_config(
     *,
-    negative_handling: str = "error",
+    negative_handling: Literal["error", "zeroing"] = "error",
     do_preprocessing: bool = True,
 ) -> SolverConfig:
     return SolverConfig(
@@ -52,7 +52,7 @@ def bitflip_config(
 
 def quantum_bitflip_config(
     *,
-    negative_handling: str = "error",
+    negative_handling: Literal["error", "zeroing"] = "error",
     do_preprocessing: bool = True,
 ) -> SolverConfig:
     return SolverConfig(
