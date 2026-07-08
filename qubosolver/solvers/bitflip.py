@@ -76,7 +76,7 @@ def _bit_flip_local_search(
     return s_current, current_objective
 
 
-def iterative_bitflip_local_search(Q: Instance, solution: Solution) -> Solution:
+def iterative_bitflip_local_search(instance: Instance, solution: Solution) -> Solution:
     """Improve every bitstring in *solution* via greedy single-bit-flip local search.
 
     Applies `_bit_flip_local_search` independently to each bitstring in
@@ -92,7 +92,7 @@ def iterative_bitflip_local_search(Q: Instance, solution: Solution) -> Solution:
         for convenience.  An unmodified copy of *solution* is not kept.
 
     Args:
-        Q: The :class:`~qubosolver.types.Instance` used to evaluate
+        instance: The :class:`~qubosolver.types.Instance` used to evaluate
             bitstring costs.
         solution: The :class:`~qubosolver.types.Solution` to refine.
             Returned immediately unchanged if it contains no bitstrings.
@@ -109,10 +109,10 @@ def iterative_bitflip_local_search(Q: Instance, solution: Solution) -> Solution:
     # Define an objective function that uses the existing evaluate_solution method.
     def qubo_objective(s_arr: Bitstring) -> float:
         # Convert the solution array to a list of integers
-        return Q.evaluate_solution(s_arr)
+        return instance.evaluate_solution(s_arr)
 
     num_solutions = solution.bitstrings.shape[0]
-    improved_bitstrings = bitstrings.zeros(num_solutions, Q.size)
+    improved_bitstrings = bitstrings.zeros(num_solutions, instance.size)
     improved_costs = vector.zeros(num_solutions)
 
     for idx in range(num_solutions):

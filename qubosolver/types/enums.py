@@ -1,3 +1,23 @@
+"""Enum types used throughout the QUBO solver pipeline.
+
+This module defines all enumeration classes that control solver behaviour —
+embedding strategy, lattice layout, drive shaping method, QUBO matrix density,
+and classical solver backend.
+
+All public enums are re-exported from the top-level `qubosolver` namespace
+and can be imported directly:
+
+```python
+from qubosolver import (
+    EmbedderType,
+    LayoutType,
+    DriveType,
+    DensityType,
+    ClassicalSolverType,
+)
+```
+"""
+
 from __future__ import annotations
 
 from enum import Enum

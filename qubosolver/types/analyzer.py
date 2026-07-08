@@ -32,20 +32,23 @@ _GAPS = "gaps"
 class Analyzer:
     """Aggregates and analyses one or more QUBO solutions.
 
-    Converts :class:`~qubosolver.types.solution.Solution` objects into a
-    unified :class:`~pandas.DataFrame` (``self.df``) with columns for
+    Converts [`qubosolver.Solution`][] objects into a
+    unified `pandas.DataFrame` (``self.df``) with columns for
     bitstrings, costs, and optionally counts, probabilities, and gaps.
     Multiple solutions can be labelled and compared side-by-side through the
     filtering and plotting helpers.
 
-    Attributes:
-        solutions (list[Solution]): The solutions being analysed.
-        labels (list[str]): One label per solution, used to identify each
-            group in the DataFrame and plots.
-        df (pd.DataFrame): Consolidated DataFrame built from all solutions.
-            Columns always present: ``bitstrings``, ``labels``, ``costs``.
-            Optional columns (populated on demand): ``counts``, ``probs``,
-            ``gaps``.
+    Args:
+        solutions: A single [`qubosolver.Solution`][]
+            or a list of them.  A bare instance is automatically wrapped in a list.
+        labels: One label per solution used to identify each group in the
+            `DataFrame` and plots.  Defaults to ``"0"``, ``"1"``, … when `None`.
+
+    Raises:
+        ValueError: If the number of labels does not match the number of solutions.
+        TypeError: If any element of *solutions* is not a
+             [`qubosolver.Solution`][], or if any label
+            is not a `str`.
     """
 
     def __init__(
@@ -53,19 +56,6 @@ class Analyzer:
         solutions: Solution | list[Solution],
         labels: str | list[str] | None = None,
     ):
-        """
-        Args:
-            solutions: A single :class:`~qubosolver.types.solution.Solution`
-                or a list of them.  A bare instance is automatically wrapped in a list.
-            labels: One label per solution used to identify each group in the
-                DataFrame and plots.  Defaults to ``"0"``, ``"1"``, … when *None*.
-
-        Raises:
-            ValueError: If the number of labels does not match the number of solutions.
-            TypeError: If any element of *solutions* is not a
-                :class:`~qubosolver.types.solution.Solution`, or if any label
-                is not a :class:`str`.
-        """
         # Recast solutions into a list if a single solution is provided.
         if not isinstance(solutions, list):
             solutions = [solutions]
@@ -97,7 +87,7 @@ class Analyzer:
 
     def _solution_to_dataframe(self, solution: Solution, solution_label: str) -> pd.DataFrame:
         """
-        Converts a single Solution into a pandas DataFrame.
+        Converts a single Solution into a pandas `DataFrame`.
         For better readability, each bitstring is converted to a string representation.
 
         Args:
@@ -105,7 +95,7 @@ class Analyzer:
             solution_label (str): The label associated with this solution.
 
         Returns:
-            pd.DataFrame: A DataFrame containing the solution's bitstrings, cost,
+            pd.DataFrame: A `DataFrame` containing the solution's bitstrings, cost,
                           and optionally counts and probabilities.
         """
         # Convert each row of the bitstring tensor into a string (e.g., "010101").
@@ -129,11 +119,11 @@ class Analyzer:
 
     def _to_dataframe(self) -> pd.DataFrame:
         """
-        Combines all QUBOSolutions into a single DataFrame.
-        This DataFrame can be used for filtering, sorting, and analysis.
+        Combines all QUBOSolutions into a single `DataFrame`.
+        This `DataFrame` can be used for filtering, sorting, and analysis.
 
         Returns:
-            pd.DataFrame: The concatenated DataFrame containing all solutions.
+            pd.DataFrame: The concatenated `DataFrame` containing all solutions.
         """
         df_list = []
         # Construct DataFrames for each solution using their associated label.
@@ -231,15 +221,15 @@ class Analyzer:
         self, min_probability: float, df: pd.DataFrame | None = None
     ) -> pd.DataFrame:
         """
-        Returns a DataFrame limited to bitstrings whose probability
+        Returns a `DataFrame` limited to bitstrings whose probability
         is greater than the provided threshold.
 
         Args:
             min_probability (float): Minimum probability threshold.
-            df (pd.DataFrame | None): DataFrame to filter.
+            df (pd.DataFrame | None): `DataFrame` to filter.
 
         Returns:
-            pd.DataFrame: The filtered DataFrame.
+            pd.DataFrame: The filtered `DataFrame`.
 
         Raises:
             ValueError: If the 'probabilities' column is not present.
@@ -254,15 +244,15 @@ class Analyzer:
 
     def filter_by_cost(self, max_cost: float, df: pd.DataFrame | None = None) -> pd.DataFrame:
         """
-        Returns a DataFrame limited to bitstrings whose cost
+        Returns a `DataFrame` limited to bitstrings whose cost
         is smaller than the provided threshold.
 
         Args:
             max_cost (float): Maximum cost threshold.
-            df (pd.DataFrame | None): DataFrame to filter.
+            df (pd.DataFrame | None): `DataFrame` to filter.
 
         Returns:
-            pd.DataFrame: The filtered DataFrame.
+            pd.DataFrame: The filtered `DataFrame`.
         """
 
         if df is None:
@@ -280,7 +270,7 @@ class Analyzer:
         order: str = "ascending",
     ) -> pd.DataFrame:
         """
-        Returns a DataFrame limited to the best bitstrings
+        Returns a `DataFrame` limited to the best bitstrings
         in a given column for each solution group,
         where "best" means that the cumulative probability (_PROBS)
         of the selected rows reaches at least
@@ -303,12 +293,12 @@ class Analyzer:
                          (higher values are better).
 
         Returns:
-            pd.DataFrame: The filtered DataFrame containing, for each solution group, the bitstrings
+            pd.DataFrame: The filtered `DataFrame` containing, for each solution group, the bitstrings
                           whose cumulative probability (_PROBS)
                         reaches the specified top_percent threshold.
 
         Raises:
-            ValueError: If the specified column is not in the DataFrame,
+            ValueError: If the specified column is not in the `DataFrame`,
                         if top_percent is not in (0, 1],
                         or if the order parameter is not "descending" or "ascending".
         """
@@ -350,7 +340,7 @@ class Analyzer:
                                  of lowest cost bitstrings to consider.
 
         Returns:
-            pd.DataFrame: A DataFrame with each solution label, the average cost over the
+            pd.DataFrame: A `DataFrame` with each solution label, the average cost over the
                           best top_percent bitstrings, and the count of bitstrings used.
         """
         df_top = self.filter_by_percentage(top_percent)
@@ -369,10 +359,10 @@ class Analyzer:
 
     def best_bitstrings(self) -> pd.DataFrame:
         """
-        Finds all unique bitstrings (with the best cost) in each solution's DataFrame.
+        Finds all unique bitstrings (with the best cost) in each solution's `DataFrame`.
 
         Returns:
-            pd.DataFrame: A DataFrame with all unique rows per solution (solution_label)
+            pd.DataFrame: A `DataFrame` with all unique rows per solution (solution_label)
                           that have the best (lowest) cost.
         """
         best_list = []
@@ -386,58 +376,58 @@ class Analyzer:
         best_rows = pd.concat(best_list, ignore_index=True)
         return best_rows
 
-    def calculate_costs(self, Q: Instance) -> pd.DataFrame:
+    def calculate_costs(self, instance: Instance) -> pd.DataFrame:
         """
-        Calculates the cost for each bitstring using the provided Q Instance.
+        Calculates the cost for each bitstring using the provided instance.
 
             cost = x^T Q x
 
-        The computed cost is added as the columns _COSTS in the DataFrame.
+        The computed cost is added as the columns _COSTS in the `DataFrame`.
 
         Args:
-            Q: Instance
+            instance: Instance
 
         Returns:
-            pd.DataFrame: The updated DataFrame including the _COSTS column.
+            pd.DataFrame: The updated `DataFrame` including the _COSTS column.
 
         Raises:
-            ValueError: If a bitstring's length does not match Q.shape[0].
+            ValueError: If a bitstring's length does not match instance.shape[0].
         """
 
-        self.df[_COSTS] = self.df[_BITSTRINGS].apply(Q.evaluate_solution)
+        self.df[_COSTS] = self.df[_BITSTRINGS].apply(instance.evaluate_solution)
         return self.df
 
-    def calculate_gaps(self, opt_cost: float, Q: Instance | None = None) -> pd.DataFrame:
+    def calculate_gaps(self, opt_cost: float, instance: Instance = Instance()) -> pd.DataFrame:
         """
         Calculates the gaps for each bitstring using the provided optimal cost.
         If costs are not present, calculates costs as ``x^T Q x`` first.
 
-        The computed gaps are added as the ``gaps`` column in the DataFrame.
+        The computed gaps are added as the ``gaps`` column in the `DataFrame`.
 
         Args:
             opt_cost (float): The known optimal cost used to compute
                 ``|cost - opt_cost| / |opt_cost|``.
-            Q (Instance | None): Optional QUBO instance used to compute
-                costs if they are not already present in the DataFrame.
+            instance (Instance): Optional QUBO instance used to compute
+                costs if they are not already present in the `DataFrame`.
 
         Returns:
-            pd.DataFrame: The updated DataFrame including the gaps column.
+            pd.DataFrame: The updated `DataFrame` including the gaps column.
         """
         if _COSTS in self.df.columns:
             self.df[_GAPS] = abs((self.df[_COSTS] - opt_cost) / opt_cost)
         else:
-            if Q is not None:
-                self.df[_COSTS] = self.df[_BITSTRINGS].apply(Q.evaluate_solution)
+            if instance.size > 0:
+                self.df[_COSTS] = self.df[_BITSTRINGS].apply(instance.evaluate_solution)
             else:
                 self.df[_GAPS] = abs((self.df[_COSTS] - opt_cost) / opt_cost)
         return self.df
 
     def add_counts(self, counts: Vectori) -> None:
         """
-        Updates the DataFrame by adding the counts column.
+        Updates the `DataFrame` by adding the counts column.
 
         If counts are provided at a later stage, this method will add the counts
-        to the DataFrame and ensure that they match the number of bitstrings.
+        to the `DataFrame` and ensure that they match the number of bitstrings.
 
         Args:
             counts (Vectori): An ``int64`` tensor of counts.
@@ -465,10 +455,10 @@ class Analyzer:
 
     def add_probs(self, probs: Vector) -> None:
         """
-        Updates the DataFrame by adding the probs column.
+        Updates the `DataFrame` by adding the probs column.
 
         If probs are provided at a later stage, this method will add the probs
-        to the DataFrame and ensure that they match the number of bitstrings.
+        to the `DataFrame` and ensure that they match the number of bitstrings.
 
         Args:
             probs (Vector): A float tensor of probabilities.
@@ -507,7 +497,7 @@ class Analyzer:
         Plots a bar chart of costs, counts, or probabilities as a function of bitstrings.
 
         Args:
-            df (pd.DataFrame): The DataFrame to plot. Defaults to None,
+            df (pd.DataFrame): The `DataFrame` to plot. Defaults to None,
                                 that means uses self.df.
             y_axis (str): The column name to be plotted on the y-axis.
             sort_by (str | None): Defines the column by which to sort the bitstrings.
@@ -579,7 +569,7 @@ class Analyzer:
         Plots a bar chart of probabilities or counts as a function of cost.
 
         Args:
-            df: The DataFrame to plot.
+            df: The `DataFrame` to plot.
             x_axis: Column name for the x-axis (e.g. ``"costs"``, ``"gaps"``).
             y_axis: Column name for the y-axis (e.g. ``"probs"``, ``"counts"``).
             sort_by: Column by which to order the x-axis values before plotting.

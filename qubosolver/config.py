@@ -1,3 +1,22 @@
+"""Configuration classes for the QUBO solver pipeline.
+
+This module defines Pydantic-based configuration classes that control every
+stage of the quantum and classical solving pipeline.
+
+All public classes are re-exported from the top-level [`qubosolver`][] namespace
+and can be imported directly:
+
+```python
+from qubosolver import (
+    SolverConfig,
+    EmbeddingConfig,
+    DriveShapingConfig,
+    ClassicalConfig,
+    DecompositionConfig,
+)
+```
+"""
+
 from __future__ import annotations
 
 import inspect
@@ -593,7 +612,7 @@ def _compiler_profile(config: SolverConfig) -> CompilerProfile:
     return CompilerProfile.MAX_ENERGY
 
 
-def max_duration_ratio(config: SolverConfig) -> float | None:
+def _max_duration_ratio(config: SolverConfig) -> float | None:
     """Computes the maximum pulse duration ratio for the configured device.
 
     Returns 0.99 to give a small safety margin below the device's maximum

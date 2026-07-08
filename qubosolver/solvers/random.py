@@ -23,7 +23,7 @@ from qubosolver._utils import costs
 
 
 def random_solutions(
-    Q: Instance,
+    instance: Instance,
     *,
     max_bitstrings: int = 1,
     rng: torch.Generator = torch_rng(),
@@ -47,7 +47,7 @@ def random_solutions(
         than once.
 
     Args:
-        Q: The QUBO instance whose coefficient matrix is used to evaluate
+        instance: The QUBO instance whose coefficient matrix is used to evaluate
             bitstring costs.
         max_bitstrings: Number of random bitstrings to draw before
             deduplication.  The returned solution may contain fewer unique
@@ -61,10 +61,10 @@ def random_solutions(
         by ascending cost.
     """
     bitstrings_ = bitstring.from_torch(
-        torch.randint(0, 2, size=(max_bitstrings, Q.size), generator=rng)
+        torch.randint(0, 2, size=(max_bitstrings, instance.size), generator=rng)
     )
     unique_bits, counts = torch.unique(bitstrings_, dim=0, return_counts=True)
-    costs_ = costs.batched_quadratic_cost(unique_bits.to(Q.matrix), Q.matrix)
+    costs_ = costs.batched_quadratic_cost(unique_bits.to(instance.matrix), instance.matrix)
     solution = (
         Solution(
             bitstrings=unique_bits,

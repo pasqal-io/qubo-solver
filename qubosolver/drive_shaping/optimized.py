@@ -93,7 +93,7 @@ class Config:
         return cfg
 
 
-def _compute_norm_weights(Q: Instance) -> list[float]:
+def _compute_norm_weights(instance: Instance) -> list[float]:
     """Compute per-qubit normalised weights from the diagonal of the QUBO matrix.
 
     Each weight is defined as ``1 - |Q_ii| / max_j(|Q_jj|)``, so a qubit
@@ -104,14 +104,14 @@ def _compute_norm_weights(Q: Instance) -> list[float]:
     detuning per qubit.
 
     Args:
-        Q: The QUBO instance whose diagonal entries are used.
+        instance: The QUBO instance whose diagonal entries are used.
 
     Returns:
         A list of floats in ``[0, 1]``, one per qubit, representing the
         normalised DMM weights.  Returns all-zeros when every diagonal
         entry is zero.
     """
-    weights_list = torch.abs(torch.diag(Q.matrix)).tolist()
+    weights_list = torch.abs(torch.diag(instance.matrix)).tolist()
     max_node_weight = max(weights_list) if weights_list else 1.0
     norm_weights_list = [
         (1 - (w / max_node_weight)) if max_node_weight != 0 else 0.0 for w in weights_list
@@ -120,7 +120,7 @@ def _compute_norm_weights(Q: Instance) -> list[float]:
 
 
 def _build_drive(
-    Q: Instance,
+    instance: Instance,
     params: Sequence[float],
     *,
     dmm: bool,
@@ -140,7 +140,7 @@ def _build_drive(
     `_compute_norm_weights`).
 
     Args:
-        Q: The QUBO instance, used to compute DMM weights when *dmm* is
+        instance: The QUBO instance, used to compute DMM weights when *dmm* is
             ``True``.
         params: Flat sequence of 6 normalised parameters —
             ``params[:3]`` are the three interior amplitude knots and
@@ -174,7 +174,7 @@ def _build_drive(
     final_detuning = det_params[-1]
     if dmm and final_detuning > 0:
         wdetunings = constant_weighted_dmm(
-            _compute_norm_weights(Q),
+            _compute_norm_weights(instance),
             max_seq_duration,
             final_detuning=-final_detuning,
         )
@@ -233,7 +233,7 @@ def _run_simulation(
 
 
 def build_drive(
-    Q: Instance,
+    instance: Instance,
     register: qoolqit.Register,
     backend: _protocols.Backend,
     device: qoolqit.Device,
@@ -248,7 +248,7 @@ def build_drive(
     QUBO cost.
 
     Args:
-        Q: The QUBO instance to solve.
+        instance: The QUBO instance to solve.
         register: The physical atom register.
         backend: Execution backend for running simulations during optimisation.
         device: Target quantum device.
@@ -272,7 +272,7 @@ def build_drive(
 
         solution = Solution()
         drive = _build_drive(
-            Q,
+            instance,
             x,
             dmm=dmm,
             device_specs=device.specs,
@@ -280,7 +280,7 @@ def build_drive(
 
         try:
             solution = _run_simulation(
-                Q.matrix,
+                instance.matrix,
                 register,
                 drive,
                 device,

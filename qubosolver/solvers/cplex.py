@@ -63,19 +63,19 @@ def _qubo_instance_to_sparsepairs(
     return sparsepairs
 
 
-def cplex(Q: Instance, *, maxtime: float = 600.0, log_path: str = "") -> Solution:
+def cplex(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> Solution:
     """Solve a QUBO instance to optimality (or time limit) using IBM CPLEX.
 
-    Builds a Binary Quadratic Program from *Q*, sets a time limit, and runs
+    Builds a Binary Quadratic Program from *instance*, sets a time limit, and runs
     CPLEX's branch-and-bound solver.  All CPLEX log output (progress,
     warnings, errors) is redirected to *log_path*, which is opened in write
     mode (overwriting any existing file) and closed after solving.
 
     Returns an empty :class:`~qubosolver.types.Solution` immediately when
-    ``Q.size == 0`` without invoking CPLEX.
+    ``instance.size == 0`` without invoking CPLEX.
 
     Args:
-        Q: The :class:`~qubosolver.types.Instance` to solve.
+        instance: The :class:`~qubosolver.types.Instance` to solve.
         maxtime: Wall-clock time limit for CPLEX in seconds.  CPLEX returns
             the best feasible solution found so far when the limit is reached.
             Defaults to ``600.0``.
@@ -88,20 +88,20 @@ def cplex(Q: Instance, *, maxtime: float = 600.0, log_path: str = "") -> Solutio
         A :class:`~qubosolver.types.Solution` containing exactly one
         bitstring — the best (or optimal) solution found by CPLEX — with
         ``count=1`` and ``probability=1.0``.  Returns an empty
-        :class:`~qubosolver.types.Solution` if ``Q.size == 0``.
+        :class:`~qubosolver.types.Solution` if ``instance.size == 0``.
 
     Raises:
         cplex.exceptions.CplexError: If CPLEX encounters an internal solver
             error (e.g. infeasible model or licence issue).
     """
     # Determine the number of variables.
-    N: int = Q.size
+    N: int = instance.size
     # If there are no variables, return an empty solution.
     if N == 0:
         return Solution()
 
     # Convert the coefficient matrix into CPLEX sparse pairs format using the conversion tool.
-    sparsepairs: list[CPLEX.SparsePair] = _qubo_instance_to_sparsepairs(Q)
+    sparsepairs: list[CPLEX.SparsePair] = _qubo_instance_to_sparsepairs(instance)
 
     problem = CPLEX.Cplex()
 

@@ -1,9 +1,10 @@
 ::: qubosolver
     options:
       filters:
-        - "!^config$"
         - "!^types$"
         - "!^linalg$"
+        - "!Config$"
+        - "!Type$"
         - "!^QuboSolution$"
         - "!^QuboSingleSolution$"
         - "!^QuboAnalyzer$"

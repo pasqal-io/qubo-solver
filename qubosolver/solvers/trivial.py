@@ -11,7 +11,7 @@ import torch
 from qubosolver import Instance, Solution, bitstring, vector, vectori
 
 
-def trivial_solution_search(Q: Instance) -> Solution:
+def trivial_solution_search(instance: Instance) -> Solution:
     """Analytically solve a QUBO when the coefficient structure is trivial.
 
     Three patterns are recognised:
@@ -22,22 +22,22 @@ def trivial_solution_search(Q: Instance) -> Solution:
        negative diagonal entry are set to 1, the rest to 0.
 
     Args:
-        Q (Instance): The QUBO problem whose matrix is inspected.
+        instance (Instance): The QUBO problem whose matrix is inspected.
 
     Returns:
         Solution: A single-bitstring solution when a trivial case is
             detected, or an empty :class:`~qubosolver.types.Solution`
             (no bitstrings) when none of the three patterns apply.
     """
-    coeffs = Q.matrix
-    n = Q.size
+    coeffs = instance.matrix
+    n = instance.size
 
     # Case 1: all coeffs >= 0 → x = [0,...,0]
     if torch.all(coeffs >= 0):
         raw = bitstring.zeros(n)
         # always make a batch of one: shape (1, n)
         batch = raw.unsqueeze(0)
-        cost = Q.evaluate_solution(raw)
+        cost = instance.evaluate_solution(raw)
         return Solution(
             bitstrings=batch,
             counts=vectori.tensor([1]),
@@ -49,7 +49,7 @@ def trivial_solution_search(Q: Instance) -> Solution:
         raw = torch.ones(n, dtype=bitstring.dtype())
         # always make a batch of one: shape (1, n)
         batch = raw.unsqueeze(0)
-        cost = Q.evaluate_solution(raw)
+        cost = instance.evaluate_solution(raw)
         return Solution(
             bitstrings=batch,
             counts=vectori.tensor([1]),
@@ -61,7 +61,7 @@ def trivial_solution_search(Q: Instance) -> Solution:
     diagonal = torch.diag(coeffs)
     if (torch.diag(diagonal) == coeffs).all():
         raw = (diagonal < 0).to(bitstring.dtype())
-        cost = Q.evaluate_solution(raw)
+        cost = instance.evaluate_solution(raw)
         batch = raw.unsqueeze(0)
         return Solution(
             bitstrings=batch,

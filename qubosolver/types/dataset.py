@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Iterator
 
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset as TorchDataset
 from pathlib import Path
 
 from .solution import Solution
@@ -11,7 +11,7 @@ from . import matrix
 from .random import torch_rng
 
 
-class Dataset(Dataset):
+class Dataset(TorchDataset):
     """A PyTorch ``Dataset`` of QUBO (Quadratic Unconstrained Binary Optimization) instances.
 
     Each instance is represented by a square coefficient matrix ``Q`` such that the
