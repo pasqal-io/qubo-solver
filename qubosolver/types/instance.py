@@ -16,31 +16,26 @@ class Instance:
     """A single QUBO (Quadratic Unconstrained Binary Optimization) problem instance.
 
     Wraps a symmetric square coefficient matrix ``Q`` and exposes helpers for
-    evaluation, serialisation, and introspection.  The objective to minimise is::
+    evaluation, serialisation, and introspection.  The objective to minimise is:
 
         cost(x) = x^T Q x,   x ∈ {0, 1}^n
-
-    The class is decorated with `~._checks.debug_runtime_typecheck`, so all
-    argument and return types are validated at runtime when the environment variable
-    ``QUBO_SOLVER_RUNTIME_CHECKS=1`` is set.
 
     Attributes:
         matrix (Matrix):
             Read-only property returning the ``(size, size)`` coefficient tensor.
-            Asserts squareness on every access (see :attr:`matrix`).
+            Asserts squareness on every access (see [`matrix`][]).
+
+    Args:
+        matrix (Matrix):
+            Square coefficient matrix ``Q`` of shape ``(n, n)``.
+            Defaults to an empty ``(0, 0)`` zero matrix, which represents
+            a trivial problem with no variables.
     """
 
     def __init__(
         self,
         matrix: Matrix = matrix.zeros(0),
     ):
-        """
-        Args:
-            matrix (Matrix):
-                Square coefficient matrix ``Q`` of shape ``(n, n)``.
-                Defaults to an empty ``(0, 0)`` zero matrix, which represents
-                a trivial problem with no variables.
-        """
         self._matrix: Matrix = matrix
 
     @property
@@ -52,12 +47,8 @@ class Instance:
     def matrix(self) -> torch.Tensor:
         """The ``(size, size)`` QUBO coefficient matrix.
 
-        An assertion guards that the stored tensor is exactly 2-D and square on
-        every access.  This catches accidental mutation of the internal state
-        early (disabled in optimised / no-check builds via ``# nosec B101``).
-
         Returns:
-            torch.Tensor: Coefficient matrix of shape ``(size, size)``.
+            Coefficient matrix of shape ``(size, size)``.
 
         Raises:
             AssertionError: If the internal tensor is not 2-D or not square.
@@ -69,7 +60,7 @@ class Instance:
 
     @property
     def _max_off_diag(self) -> float:
-        """Maximum absolute value among all off-diagonal entries of :attr:`matrix`.
+        """Maximum absolute value among all off-diagonal entries of [`matrix`][].
 
         Used internally to normalise the coefficient matrix before embedding or
         solving.  Off-diagonal entries are identified via a boolean mask that
@@ -82,7 +73,7 @@ class Instance:
     def _normalized_matrix(self) -> torch.Tensor:
         """Coefficient matrix scaled so that the largest off-diagonal entry equals 1.
 
-        Divides every element of :attr:`matrix` by :attr:`_max_off_diag`.
+        Divides every element of [`matrix`][] by [`_max_off_diag`][].
         Used to bring coefficients into a hardware-friendly range before
         embedding.
         """
@@ -110,9 +101,7 @@ class Instance:
         """Human-readable summary of the instance.
 
         Returns:
-            str: A quoted string of the form
-            ``"Instance of size = <n>,density = <d>,"``
-            where *d* is rounded to two decimal places.
+            str: A quoted string of the form ``"Instance of size = <n>,density = <d>,"`` where *d* is rounded to two decimal places.
 
         Note:
             The outer `repr` call intentionally wraps the f-string in
@@ -126,17 +115,17 @@ class Instance:
         """Serialise *instance* to *file_like* using `torch.save`.
 
         The coefficient matrix is written into an internal
-        :class:`~io.BytesIO` buffer and then flushed to *file_like* using
-        ``io_utils.save_sized_buffer``, which prefixes the payload with its
+        `io.BytesIO` buffer and then flushed to *file_like* using
+        `io_utils.save_sized_buffer`, which prefixes the payload with its
         byte length.  This framing allows multiple objects to be stored
         contiguously in the same stream.
 
         Args:
             file_like (io_utils.FileLike[bytes]):
-                Destination — a file path (``str`` or :class:`~os.PathLike`),
-                or a binary-writable :class:`~typing.IO` stream.
+                Destination — a file path (`str` or `os.PathLike`),
+                or a binary-writable `typing.IO` stream.
             instance (Instance):
-                The instance to serialise.  Only :attr:`matrix` is persisted;
+                The instance to serialise.  Only [`matrix`][] is persisted;
                 any derived state is recomputed on load.
         """
         with io_utils.open(file_like, "wb") as f:
@@ -146,25 +135,24 @@ class Instance:
 
     @staticmethod
     def load(file_like: io_utils.FileLike[bytes]) -> Instance:
-        """Deserialise a :class:`Instance` previously saved with :meth:`save`.
+        """Deserialise a `Instance` previously saved with `save`.
 
         Reads a length-prefixed byte block from *file_like* into a dedicated
-        :class:`~io.BytesIO` buffer before calling `torch.load`.  The
-        isolated buffer prevents ``torch.load`` from over-consuming the source
+        `io.BytesIO` buffer before calling `torch.load`.  The
+        isolated buffer prevents `torch.load` from over-consuming the source
         stream when multiple objects are packed together.
 
         Args:
             file_like (io_utils.FileLike[bytes]):
-                Source — a file path (``str`` or :class:`~os.PathLike`),
-                or a binary-readable :class:`~typing.IO` stream.  Must contain
-                data written by :meth:`save`.
+                Source — a file path (`str` or `os.PathLike`),
+                or a binary-readable `typing.IO` stream.  Must contain
+                data written by `save`.
 
         Returns:
-            Instance: A new instance whose :attr:`matrix` is the
-            deserialised coefficient tensor.
+            A new instance whose `matrix` is the deserialised coefficient tensor.
 
         Note:
-            ``torch.load`` is called with ``weights_only=True`` to prevent
+            `torch.load` is called with `weights_only=True` to prevent
             arbitrary code execution from untrusted checkpoint files.
         """
         with io_utils.open(file_like, "rb") as f:

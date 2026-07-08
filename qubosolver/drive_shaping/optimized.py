@@ -69,13 +69,13 @@ class Config:
 
     @staticmethod
     def from_drive_shaping_config(config: DriveShapingConfig) -> Config:
-        """Create a :class:`Config` from a user-facing :class:`DriveShapingConfig`.
+        """Create a `Config` from a user-facing [`DriveShapingConfig`][].
 
         Args:
             config: The drive-shaping configuration to convert.
 
         Returns:
-            A :class:`Config` populated from the drive-shaping settings.
+            A configuration populated from the drive-shaping settings.
         """
         cfg = Config()
         cfg.x0 = (
@@ -256,8 +256,7 @@ def build_drive(
         config: Optimisation parameters (initial guess, number of calls, etc.).
 
     Returns:
-        A tuple of the best :class:`~qoolqit.Drive` found and the
-        corresponding :class:`Solution`.
+        A tuple of the best `qoolqit.Drive` found and the corresponding [`Solution`][].
     """
     n_amp = 3
     n_det = 3

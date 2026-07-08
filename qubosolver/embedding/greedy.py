@@ -1,18 +1,13 @@
 """Greedy embedding algorithm adapter for QUBO instances.
 
-This module wraps the internal :class:`~._algorithms.greedy.greedy.Greedy`
-algorithm and exposes a single `embed` entry point that accepts a
-:class:`~qubosolver.types.Instance` and returns a
-:class:`~qoolqit.Register` ready for use in a quantum program.
+This module wraps the internal greedy embedding and exposes a single `embed`
+entry point that accepts a [`qubosolver.Instance`][] and returns a
+`qoolqit.Register` ready for use in a quantum program.
 
 The greedy algorithm places logical QUBO nodes one at a time onto trap sites
 of a pre-defined lattice (triangular or square), choosing at each step the
 (node, trap) pair that minimises the incremental mismatch between the QUBO
 coefficient matrix and the physical interaction matrix (∝ C/‖rᵢ − rⱼ‖⁶).
-
-Typical usage goes through :class:`~qubosolver.embedding.GreedyEmbedder`,
-which reads :class:`~qubosolver.config.EmbeddingConfig` parameters and calls
-`embed` directly.
 """
 
 from __future__ import annotations
@@ -69,18 +64,16 @@ class Config:
 
     @staticmethod
     def from_embedding_config(config: EmbeddingConfig) -> Config:
-        """Create a :class:`Config` from a user-facing :class:`EmbeddingConfig`.
+        """Create a [`Config`][] from a user-facing [`EmbeddingConfig`][].
 
         Maps the ``greedy_*`` fields of *config* onto the corresponding
-        :class:`Config` attributes and converts ``animation_save_path`` to a
-        :class:`pathlib.Path` when provided.
+        `Config` attributes.
 
         Args:
             config: The embedding configuration to convert.
 
         Returns:
-            A :class:`Config` fully populated from the ``greedy_*`` embedding
-            settings of *config*.
+            A configuration fully populated from the ``greedy_*`` embedding settings of *config*.
         """
         cfg = Config()
         cfg.traps = config.greedy_traps
@@ -130,8 +123,7 @@ def embed(
 ) -> qoolqit.Register:
     """Embed a QUBO instance using the greedy algorithm.
 
-    Calls :meth:`Config.update_from_device` to resolve any auto-detected
-    fields, then runs the greedy placer on the QUBO coefficient matrix.
+    Runs the greedy placer on the QUBO coefficient matrix.
     Atom labels in the returned register are stringified integer indices
     (``"0"``, ``"1"``, …) matching the variable ordering of the QUBO matrix.
 
@@ -157,8 +149,7 @@ def embed(
         normalize: Controls coordinate post-processing; see above.
 
     Returns:
-        A :class:`~qoolqit.Register` mapping each atom label to its 2-D
-        position, with positions determined by the greedy placer.
+        A register mapping each atom label to its 2-D position, with positions determined by the greedy placer.
 
     Raises:
         ValueError: If the resolved trap count is less than ``instance.size``

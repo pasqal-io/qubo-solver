@@ -51,8 +51,8 @@ class Solution:
     metadata (costs, sample counts, probabilities).  Fields whose data is not
     yet available are represented as zero-element tensors (``numel() == 0``).
 
-    Use :meth:`compute_costs` and :meth:`compute_probabilities` to populate
-    derived fields after construction, and :meth:`sort_by_cost` to rank
+    Use `compute_costs` and `compute_probabilities` to populate
+    derived fields after construction, and `sort_by_cost` to rank
     candidates for analysis.
 
     Attributes:
@@ -61,7 +61,7 @@ class Solution:
             binary vectors (values in ``{0, 1}``).
         costs (Vector):
             Float tensor of shape ``(num_solutions,)`` with the QUBO objective
-            ``x^T Q x`` for each bitstring.  Empty until :meth:`compute_costs`
+            ``x^T Q x`` for each bitstring.  Empty until `compute_costs`
             is called.
         counts (Vectori):
             ``int64`` tensor of shape ``(num_solutions,)`` with the number of
@@ -70,7 +70,7 @@ class Solution:
         probabilities (Vector):
             Float tensor of shape ``(num_solutions,)`` with the empirical
             sampling probability of each bitstring.  Empty until
-            :meth:`compute_probabilities` is called.
+            `compute_probabilities` is called.
     """
 
     bitstrings: Bitstrings = _bitstrings.zeros(0, 0)
@@ -103,17 +103,17 @@ class Solution:
         return not self.empty()
 
     def __getitem__(self, idx: int) -> SingleSolution:
-        """Return the candidate at position *idx* as a :class:`SingleSolution`.
+        """Return the candidate at position *idx* as a `SingleSolution`.
 
         Cost and probability are copied only when their respective tensors are
-        non-empty; otherwise the :class:`SingleSolution` defaults
+        non-empty; otherwise the `SingleSolution` defaults
         (``cost=inf``, ``probability=0.0``) are kept.
 
         Args:
             idx (int): Zero-based index into the ``num_solutions`` axis.
 
         Returns:
-            SingleSolution: Snapshot of the candidate at *idx*.
+            Snapshot of the candidate at *idx*.
         """
         solution = SingleSolution(self.bitstrings[idx])
         if self.costs.numel() > 0:
@@ -128,41 +128,41 @@ class Solution:
         return self.bitstrings.shape[0]
 
     def __iter__(self) -> Iterator[SingleSolution]:
-        """Iterate over all candidates in index order, yielding :class:`SingleSolution` objects."""
+        """Iterate over all candidates in index order, yielding `SingleSolution` objects."""
         for i in range(len(self)):
             yield self[i]
 
     def compute_costs(self, matrix: Matrix) -> Self:
         """Compute and store the QUBO objective ``x^T Q x`` for every bitstring.
 
-        Casts :attr:`bitstrings` to the dtype of *matrix* before calling the
+        Casts `bitstrings` to the dtype of *matrix* before calling the
         batched cost kernel to avoid dtype mismatches.  The result overwrites
-        :attr:`costs` in-place.
+        `costs` in-place.
 
         Args:
-            matrix (Matrix): QUBO coefficient matrix ``Q`` of shape ``(n, n)``.
+            matrix: QUBO coefficient matrix ``Q`` of shape ``(n, n)``.
 
         Returns:
-            Self: The same :class:`Solution` instance, allowing method chaining.
+            The same [`Solution`][] instance, allowing method chaining.
         """
         dtype = matrix.dtype
         self.costs = _utils.costs.batched_quadratic_cost(self.bitstrings.to(dtype), matrix)
         return self
 
     def compute_probabilities(self) -> Self:
-        """Derive empirical sampling probabilities from :attr:`counts`.
+        """Derive empirical sampling probabilities from `counts`.
 
         Divides each count by the total number of samples.  When the total is
         zero (no counts recorded), the probabilities tensor is set to all zeros.
-        The result is cast to the same dtype as :attr:`costs` and overwrites
-        :attr:`probabilities` in-place.
+        The result is cast to the same dtype as `costs` and overwrites
+        `probabilities` in-place.
 
         Returns:
-            Self: The same :class:`Solution` instance, allowing method chaining.
+            The same [`Solution`][] instance, allowing method chaining.
 
         Note:
-            :attr:`counts` must be populated before calling this method;
-            calling it on an empty :attr:`counts` tensor produces an all-zero
+            `counts` must be populated before calling this method;
+            calling it on an empty `counts` tensor produces an all-zero
             probabilities tensor.
         """
         total_counts = self.counts.sum().item()
@@ -175,15 +175,15 @@ class Solution:
     def sort_by_cost(self) -> Self:
         """Sort all fields in-place by ascending cost.
 
-        Reorders :attr:`bitstrings`, :attr:`costs`, and — when non-empty —
-        :attr:`counts` and :attr:`probabilities`, so that the lowest-cost
+        Reorders `bitstrings`, `costs`, and — when non-empty —
+        `counts` and `probabilities`, so that the lowest-cost
         candidate appears first.
 
         Returns:
-            Self: The same :class:`Solution` instance, allowing method chaining.
+            The same [`Solution`][] instance, allowing method chaining.
 
         Note:
-            :attr:`costs` must be populated (via :meth:`compute_costs`) before
+            `costs` must be populated (via `compute_costs`) before
             calling this method; sorting by an empty tensor raises an error.
         """
         sorted_indices = torch.argsort(self.costs)
@@ -197,14 +197,14 @@ class Solution:
 
     @staticmethod
     def from_results(results: Results) -> Solution:
-        """Build a :class:`Solution` from Pulser quantum-simulation results.
+        """Build a [`Solution`][] from Pulser quantum-simulation results.
 
         Parses ``results.final_bitstrings`` — a ``dict[str, int]`` mapping
         each observed bitstring (e.g. ``"0101"``) to its sample count — and
-        converts it into the tensor representation used by :class:`Solution`.
+        converts it into the tensor representation used by [`Solution`][].
 
-        Only :attr:`bitstrings` and :attr:`counts` are populated; call
-        :meth:`compute_costs` and :meth:`compute_probabilities` afterwards to
+        Only `bitstrings` and `counts` are populated; call
+        `compute_costs` and `compute_probabilities` afterwards to
         derive the remaining fields.
 
         Args:
@@ -212,11 +212,11 @@ class Solution:
                 whose ``final_bitstrings`` attribute is a ``dict[str, int]``.
 
         Returns:
-            Solution: A new solution with:
+            A new solution with:
 
-            * ``bitstrings`` — ``int8`` tensor of shape ``(num_solutions, n)``.
-            * ``counts``     — ``int64`` tensor of shape ``(num_solutions,)``.
-            * ``costs`` / ``probabilities`` — empty (not yet computed).
+                * ``bitstrings`` — ``int8`` tensor of shape ``(num_solutions, n)``.
+                * ``counts``     — ``int64`` tensor of shape ``(num_solutions,)``.
+                * ``costs`` / ``probabilities`` — empty (not yet computed).
 
         Note:
             When ``final_bitstrings`` is empty (no samples recorded),

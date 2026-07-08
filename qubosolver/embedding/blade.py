@@ -1,9 +1,9 @@
 """BLaDE (Balanced Layout and Distance Embedding) adapter for QUBO instances.
 
-This module is a thin wrapper around :class:`qoolqit.embedding.Blade` that
+This module is a thin wrapper around `qoolqit.embedding.Blade` that
 exposes a single `embed` entry point accepting a
-:class:`~qubosolver.types.Instance` and returning a
-:class:`~qoolqit.Register` ready for use in a quantum program.
+[`qubosolver.Instance`][] and returning a `qoolqit.Register` ready for use
+in a quantum program.
 
 BLaDE maps the QUBO coefficient matrix onto a 2-D (or higher-dimensional)
 set of atom positions so that the physical interaction strengths
@@ -11,9 +11,8 @@ set of atom positions so that the physical interaction strengths
 It does so by iteratively refining coordinates across multiple dimensional
 reduction rounds.
 
-Typical usage goes through :class:`~qubosolver.embedding.BLaDEmbedder`, which
-reads :class:`~qubosolver.config.EmbeddingConfig` parameters and calls
-`embed` directly.
+Typical usage goes through [`qubosolver.embedding.blade.embed`][], which
+reads [`qubosolver.embedding.blade.Config`][] parameters.
 """
 
 from __future__ import annotations
@@ -39,24 +38,21 @@ def embed(
     """Embed a QUBO instance using the BLaDE algorithm.
 
     Runs the BLaDE optimisation on the QUBO coefficient matrix and converts
-    the resulting graph coordinates into a :class:`~qoolqit.Register`.  Atom
+    the resulting graph coordinates into a `qoolqit.Register`.  Atom
     labels are assigned as stringified integer indices (``"0"``, ``"1"``, …)
     matching the variable ordering of the QUBO matrix.
 
     Args:
-        instance: The QUBO instance to embed.  Its ``matrix`` attribute is
-            passed directly to the BLaDE optimiser as a NumPy array.
+        instance: The QUBO instance to embed.
         config: BLaDE configuration controlling the optimisation (number of
             steps per round, initial atom positions, dimension sequence,
             maximum allowed ratio of radial to minimum distance, etc.).
-            Defaults to :class:`Config` with its own defaults.
         normalize: If ``True``, rescale the final atom coordinates so that the
             minimum inter-atom distance is exactly ``1.0001`` — the
             smallest separation accepted by normalized Pasqal devices.
 
     Returns:
-        A :class:`~qoolqit.Register` mapping each atom label to its 2-D
-        position, with atom positions determined by BLaDE.
+        A register mapping each atom label to its 2-D position, with atom positions determined by BLaDE.
     """
     _blade = Blade(config)
     graph = _blade.embed(instance.matrix.numpy())

@@ -139,27 +139,24 @@ class Analyzer:
 
         Prints a human-readable summary to *stdout* reporting:
 
-        * The total and unique bitstring counts for each solution.
-        * Bitstrings present in the first solution but absent from the second,
+        - The total and unique bitstring counts for each solution.
+        - Bitstrings present in the first solution but absent from the second,
           and vice-versa.
-        * The ratio of differing bitstrings over the total unique set.
+        - The ratio of differing bitstrings over the total unique set.
 
-        .. note::
+        Note:
             Duplicate bitstrings within a single solution are deduplicated
             before comparison.  This is a temporary workaround until the
             upstream duplicate-bitstring issue in
-            :class:`~qubosolver.types.solution.Solution` is resolved.
+            [`Solution`][qubosolver.Solution] is resolved.
 
         Args:
             target_labels: Exactly two labels identifying the solutions to
-                compare.  Both must be present in :attr:`labels`.
-
-        Returns:
-            None — all output is written to *stdout*.
+                compare.  Both must be present in the [`Analyzer`][] labels.
 
         Raises:
-            ValueError: If ``len(target_labels) != 2``, or if any label is not
-                present in :attr:`labels`.
+            ValueError: If `len(target_labels) != 2`, or if any label is not
+                present in the [`Analyzer`][] labels.
         """
 
         def print_diff(
@@ -168,14 +165,13 @@ class Analyzer:
             main_label: str,
             compare_label: str,
         ) -> None:
-            """
-            Prints the differences between two sets of bitstrings.
+            """Print the bitstrings present in one solution but absent from the other.
+
             Args:
-                diff (set[str]): The set of bitstrings that are in main_label but not in
-                    compare_label.
-                bs_set (set[str]): The set of all unique bitstrings.
-                main_label (str): The label of the solution being compared from.
-                compare_label (str): The label of the solution being compared to.
+                diff: Bitstrings in `main_label` not present in `compare_label`.
+                bs_set: Full set of unique bitstrings for `main_label`.
+                main_label: Label of the solution being compared from.
+                compare_label: Label of the solution being compared to.
             """
             if len(diff) > 0:
                 print(f"\nBitstrings in {main_label} not present in {compare_label}:")

@@ -17,6 +17,14 @@ class Dataset(TorchDataset):
     Each instance is represented by a square coefficient matrix ``Q`` such that the
     optimization objective is ``x^T Q x``, where ``x`` is a binary vector.
 
+    Args:
+        coefficients (torch.Tensor):
+            Coefficient matrices of shape ``(size, size, num_instances)``.
+            ``coefficients[:, :, i]`` is the ``i``-th QUBO matrix.
+        solutions (list[Solution]):
+            Ground-truth solutions, one per instance.  Pass an empty list
+            (default) when solutions are unknown.
+
     Attributes:
         matrix (torch.Tensor):
             Coefficient matrices stored as a 3-D tensor of shape
@@ -24,23 +32,14 @@ class Dataset(TorchDataset):
             problem instances.
         solutions (list[Solution]):
             Known solutions for each instance.  Empty when the dataset was
-            created without ground-truth solutions (e.g. via :meth:`from_random`).
+            created without ground-truth solutions (e.g. via [`from_random`][]).
+
+    Note:
+        ``coefficients`` is stored directly (no copy).  Mutating the tensor
+        after construction will affect the dataset.
     """
 
     def __init__(self, coefficients: torch.Tensor, solutions: list[Solution] = []):
-        """
-        Args:
-            coefficients (torch.Tensor):
-                Coefficient matrices of shape ``(size, size, num_instances)``.
-                ``coefficients[:, :, i]`` is the ``i``-th QUBO matrix.
-            solutions (list[Solution]):
-                Ground-truth solutions, one per instance.  Pass an empty list
-                (default) when solutions are unknown.
-
-        Note:
-            ``coefficients`` is stored directly (no copy).  Mutating the tensor
-            after construction will affect the dataset.
-        """
         self.matrix = coefficients
         self.solutions = solutions or []
 
@@ -55,10 +54,9 @@ class Dataset(TorchDataset):
             idx (int): Zero-based index of the instance.
 
         Returns:
-            tuple[torch.Tensor, Solution]:
-                ``(Q, solution)`` where ``Q`` has shape ``(size, size)``.
+            A matrix and a solution ``(Q, solution)`` where ``Q`` has shape ``(size, size)``.
                 When no solutions were provided, ``solution`` is an empty
-                :class:`~.Solution`.
+                [`Solution`][].
         """
         if self.solutions:
             return self.matrix[:, :, idx], self.solutions[idx]
@@ -68,8 +66,8 @@ class Dataset(TorchDataset):
         """Iterate over all ``(coefficient_matrix, solution)`` pairs in order.
 
         Yields:
-            tuple[torch.Tensor, Solution]:
-                Same as :meth:`__getitem__` for each index ``0 … len(self)-1``.
+             A matrix and a solution.
+                Same as [`__getitem__`][] for each index ``0 … len(self)-1``.
         """
         return map(self.__getitem__, range(len(self)))
 
@@ -89,19 +87,23 @@ class Dataset(TorchDataset):
         Generates a Dataset with random QUBO coefficient matrices.
 
         Generation Steps:
+
         1. Initialize a reproducible random generator.
         2. Create a storage tensor for coefficients.
         3. For each density:
-            a. Compute the exact target number of non-zero elements.
-            b. For each instance:
-                i.  Generate a symmetric boolean mask with an exact number of True elements.
-                ii. Generate random values within the coefficient_bounds.
-                iii. Apply the mask to zero out unselected elements.
-                iv. Symmetrize the matrix by mirroring the upper triangle onto the lower triangle.
-                v. Force all off-diagonal coefficients to be positive.
-                vi. Ensure that at least one diagonal element is negative.
-                vii. Ensure at least one coefficient equals the upper bound, excluding
+
+            1. Compute the exact target number of non-zero elements.
+            2. For each instance:
+
+                1.  Generate a symmetric boolean mask with an exact number of True elements.
+                2. Generate random values within the coefficient_bounds.
+                3. Apply the mask to zero out unselected elements.
+                4. Symmetrize the matrix by mirroring the upper triangle onto the lower triangle.
+                5. Force all off-diagonal coefficients to be positive.
+                6. Ensure that at least one diagonal element is negative.
+                7. Ensure at least one coefficient equals the upper bound, excluding
                 any diagonal already at the lower bound.
+
         4. Return a Dataset instance containing the generated matrices.
 
         Args:
@@ -117,7 +119,7 @@ class Dataset(TorchDataset):
                 Defaults to None, meaning no off-diagonal coefficient will be present.
 
         Returns:
-            Dataset: A dataset containing the generated coefficient matrices.
+            A dataset containing the generated coefficient matrices.
         """
         # Step 1: Initialize a reproducible random generator.
         device = rng.device.type
@@ -244,14 +246,13 @@ class Dataset(TorchDataset):
 
     @staticmethod
     def load(filepath: Path) -> Dataset:
-        """Load a dataset previously saved with :meth:`save`.
+        """Load a dataset previously saved with [`save`][].
 
         Args:
-            filepath (Path): Path to the file produced by :meth:`save`.
+            filepath (Path): Path to the file produced by [`save`][].
 
         Returns:
-            Dataset: The deserialised dataset, including solutions if they
-            were present when the file was saved.
+            The deserialised dataset, including solutions if they were present when the file was saved.
         """
         return _load_qubo_dataset(filepath)
 

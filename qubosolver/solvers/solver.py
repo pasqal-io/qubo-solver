@@ -69,7 +69,7 @@ class Solver(BaseSolver):
         """Delegate embedding generation to the inner solver.
 
         Returns:
-            The :class:`~qoolqit.Register` produced by the inner solver.
+            The `qoolqit.Register` produced by the inner solver.
         """
         return self._solver.embedding()
 
@@ -77,7 +77,7 @@ class Solver(BaseSolver):
         """Delegate drive generation to the inner solver.
 
         Args:
-            embedding: The register layout produced by :meth:`embedding`.
+            embedding: The register layout produced by [`embedding`][].
 
         Returns:
             A ``(Drive, Solution)`` tuple from the inner solver.
@@ -88,7 +88,7 @@ class Solver(BaseSolver):
         """Solve the QUBO instance by delegating to the selected inner solver.
 
         Returns:
-            The :class:`~qubosolver.types.Solution` produced by the inner solver.
+            The solution produced by the inner solver.
         """
         return self._solver.solve()
 

@@ -106,9 +106,10 @@ class AutoLocalEmulatorBackend(EmulatorBackend):
     - `SVBackend` for medium problems (15-25 qubits)
     - `QutipBackendV2` for small problems (<15 qubits)
 
-    Note: This class acts as a factory and never instantiates itself.
-    The `__new__` method directly returns instances of the selected backend type.
-    Type checking is suppressed as this factory pattern confuses static analyzers.
+    Note:
+        This class acts as a factory and never instantiates itself.
+        The `__new__` method directly returns instances of the selected backend type.
+        Type checking is suppressed as this factory pattern confuses static analyzers.
 
     Required by `qoolqit.LocalEmulator` which expects backend_type to pass
     `issubclass(backend_type, EmulatorBackend)` checks.
@@ -139,8 +140,9 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
     - `EmuSVBackend` for medium problems (15-25 qubits)
     - `EmuFreeBackendV2` for small problems (<15 qubits)
 
-    Note: This class acts as a factory and never instantiates itself.
-    The `__new__` method directly returns instances of the selected remote backend type.
+    Note:
+        This class acts as a factory and never instantiates itself.
+        The `__new__` method directly returns instances of the selected remote backend type.
     """
 
     def __new__(cls, sequence: pulser.Sequence, *args: Any, **kwargs: Any) -> RemoteEmulatorBackend:  # type: ignore[misc]
@@ -212,10 +214,11 @@ class LocalEmulator(QoolqitLocalEmulator):
         **kwargs: Additional keyword arguments passed to the base LocalEmulator.
 
     Example:
-
+        ```python
         from qubosolver import LocalEmulator
         emulator = LocalEmulator(num_shots=1000)
         # Backend will be automatically selected based on problem size
+        ```
     """
 
     def __init__(
@@ -241,29 +244,32 @@ class LocalEmulator(QoolqitLocalEmulator):
 class RemoteEmulator(QoolqitRemoteEmulator):
     """Remote quantum emulator with automatic backend selection.
 
-    This class wraps qoolqit.RemoteEmulator and provides backend selection
+    This class wraps `qoolqit.RemoteEmulator` and provides backend selection
     recommendations based on quantum register size and tractability constraints.
 
     Backend selection guidelines based on computational tractability:
-    - Small problems (< 15 qubits): EmuFreeBackendV2 (default)
-    - Medium problems (15-25 qubits): EmuSVBackend
-    - Large problems (≥ 26 qubits): EmuMPSBackend
 
-    Note: EmuFreeBackendV2 becomes intractable beyond ~15 qubits, similar to its
-    local counterpart QutipBackendV2. For larger problems, EmuSVBackend and
-    EmuMPSBackend are necessary. Fees may apply for remote execution.
+    - Small problems (< 15 qubits): `EmuFreeBackendV2` (default)
+    - Medium problems (15-25 qubits): `EmuSVBackend`
+    - Large problems (≥ 26 qubits): `EmuMPSBackend`
+
+    Note:
+        `EmuFreeBackendV2` becomes intractable beyond ~15 qubits, similar to its
+        local counterpart `QutipBackendV2`. For larger problems, `EmuSVBackend` and
+        `EmuMPSBackend` are necessary. Fees may apply for remote execution.
 
     Args:
-        backend_type (type, optional): Backend type to use. Defaults to
-            EmuFreeBackendV2.
-        **kwargs: Additional keyword arguments passed to the base RemoteEmulator.
+        backend_type: Backend type to use.
+        **kwargs: Additional keyword arguments passed to the base `qoolqit.RemoteEmulator`.
 
     Example:
-        >>> from qubosolver import RemoteEmulator
-        >>> from pulser_pasqal import PasqalCloud
-        >>> connection = PasqalCloud(username="user", password="pass", project_id="project")
-        >>> emulator = RemoteEmulator(connection=connection, num_shots=1000)
-        >>> # Uses EmuFreeBackendV2 by default
+        ```python
+        from qubosolver import RemoteEmulator
+        from pulser_pasqal import PasqalCloud
+        connection = PasqalCloud(username="user", password="pass", project_id="project")
+        emulator = RemoteEmulator(connection=connection, num_shots=1000)
+        # Uses EmuFreeBackendV2 by default
+        ```
     """
 
     def __init__(

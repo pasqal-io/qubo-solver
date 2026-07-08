@@ -21,19 +21,19 @@ class BaseSolver(ABC):
     Concrete subclasses must implement the three abstract methods that form the
     standard QUBO-solving pipeline:
 
-    1. :meth:`embedding` — map QUBO variables onto physical atom positions.
-    2. :meth:`drive` — generate the pulse schedule that encodes the problem.
-    3. :meth:`solve` — run the full pipeline and return a :class:`~qubosolver.types.Solution`.
+    1. `embedding` — map QUBO variables onto physical atom positions.
+    2. `drive` — generate the pulse schedule that encodes the problem.
+    3. `solve` — run the full pipeline and return a `qubosolver.types.Solution`.
 
     ``BaseSolver`` also provides shared infrastructure used by all concrete
     solvers:
 
-    * :meth:`submit` / :meth:`execute` — compile and run a quantum program.
-    * :meth:`preprocess` / :meth:`post_process_fixation` — variable-fixing
+    * `submit` / `execute` — compile and run a quantum program.
+    * `preprocess` / `post_process_fixation` — variable-fixing
       pre- and post-processing to reduce problem size.
-    * :meth:`post_process` — iterative bit-flip local search to improve solutions.
-    * :meth:`draw_sequence` — visualise the compiled pulse sequence.
-    * :meth:`save` / :meth:`load` — partial serialisation for deferred
+    * `post_process` — iterative bit-flip local search to improve solutions.
+    * `draw_sequence` — visualise the compiled pulse sequence.
+    * `save` / `load` — partial serialisation for deferred
       post-processing.
     """
 
@@ -44,7 +44,7 @@ class BaseSolver(ABC):
             instance: The QUBO problem to solve.
             config: Configuration settings for the solver (backend, device,
                 embedding, drive-shaping, pre/post-processing flags, etc.).
-                Defaults to a default-constructed :class:`SolverConfig`.
+                Defaults to a default-constructed `SolverConfig`.
         """
         self.instance: Instance = instance
         self.config = config
@@ -89,7 +89,7 @@ class BaseSolver(ABC):
         """Generate a pulse drive for the quantum device based on the embedding.
 
         Args:
-            embedding: The atom register layout produced by :meth:`embedding`.
+            embedding: The atom register layout produced by `embedding`.
 
         Returns:
             A 2-tuple of:
@@ -112,12 +112,12 @@ class BaseSolver(ABC):
         to the target device, and submits it for execution.
 
         Args:
-            drive (Drive): The drive schedule containing the quantum operations to execute.
-            embedding (Register): The register configuration defining the qubit layout
+            drive: The drive schedule containing the quantum operations to execute.
+            embedding: The register configuration defining the qubit layout
                 and connectivity for the quantum program.
 
         Returns:
-            job.Job: A job handle for the submitted execution.
+            A job handle for the submitted execution.
         """
         return solvers.analog_quantum_sample(
             embedding,
@@ -144,8 +144,8 @@ class BaseSolver(ABC):
     def draw_sequence(self, drive: Drive, embedding: Register) -> None:
         """Draw the compiled pulse sequence of the quantum program.
 
-        Builds the same :class:`~qoolqit.QuantumProgram` that would be
-        submitted by :meth:`submit`, compiles it, and renders the compiled
+        Builds the same `qoolqit.QuantumProgram` that would be
+        submitted by `submit`, compiles it, and renders the compiled
         sequence inline.
 
         This method is a no-op when ``config.use_quantum`` is ``False``
@@ -164,10 +164,10 @@ class BaseSolver(ABC):
     def _trivial_solution(self) -> Solution:
         """Search for a trivial solution (all-zeros, all-ones, or pure-diagonal).
 
-        Delegates to `~qubosolver.solvers.trivial_solution_search`.
+        Delegates to `qubosolver.solvers.trivial_solution_search`.
 
         Returns:
-            A :class:`Solution`. The solution is empty if no trivial optimum is found.
+            A `Solution`. The solution is empty if no trivial optimum is found.
         """
         return solvers.trivial_solution_search(self.instance)
 
@@ -179,7 +179,7 @@ class BaseSolver(ABC):
         updated so both stay in sync.
 
         Args:
-            instance: The new :class:`~qubosolver.types.Instance` to use.
+            instance: The new `qubosolver.types.Instance` to use.
         """
         self.instance = instance
         # Update _solver's as well
@@ -199,7 +199,7 @@ class BaseSolver(ABC):
     def post_process_fixation(self, solution: Solution) -> Solution:
         """Restore fixed variables and recover a solution over the original QUBO.
 
-        Reverses the variable-fixing applied by :meth:`preprocess`: re-inserts
+        Reverses the variable-fixing applied by [`preprocess`][]: re-inserts
         the fixed variable values into *solution*.
 
         Returns *solution* unchanged when ``config.do_preprocessing`` is
@@ -209,7 +209,7 @@ class BaseSolver(ABC):
             solution: The solution obtained after solving the reduced instance.
 
         Returns:
-            A new :class:`~qubosolver.types.Solution` defined over the
+            A new [`qubosolver.Solution`][] defined over the
             full, original QUBO variables.  Returns *solution* as-is when
             preprocessing was not applied.
         """
@@ -227,7 +227,7 @@ class BaseSolver(ABC):
         """Improve a solution with iterative bit-flip local search.
 
         When ``config.do_postprocessing`` is ``True``, applies
-        `~qubosolver.solvers.iterative_bitflip_local_search` to *solution*,
+        [`qubosolver.solvers.iterative_bitflip_local_search`][] to *solution*,
         which flips individual bits one at a time and accepts changes that
         reduce the QUBO cost.
 
@@ -236,10 +236,10 @@ class BaseSolver(ABC):
 
         Args:
             solution: The raw solution to improve, typically the output of
-                :meth:`execute` or :meth:`drive`.
+                `execute` or `drive`.
 
         Returns:
-            The improved :class:`~qubosolver.types.Solution`, or the
+            The improved [`qubosolver.Solution`][], or the
             original *solution* if postprocessing is disabled.
         """
         if not self.config.do_postprocessing:
