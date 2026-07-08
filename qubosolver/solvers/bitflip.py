@@ -80,27 +80,23 @@ def iterative_bitflip_local_search(instance: Instance, solution: Solution) -> So
     """Improve every bitstring in *solution* via greedy single-bit-flip local search.
 
     Applies `_bit_flip_local_search` independently to each bitstring in
-    *solution*, using :meth:`~qubosolver.types.Instance.evaluate_solution`
-    as the cost function.  After refinement, duplicate bitstrings that were
+    *solution*.  After refinement, duplicate bitstrings that were
     driven to the same local minimum are merged: their counts are summed and
     the minimum cost is retained (via ``scatter_reduce``).  Sampling
     probabilities are recomputed from the merged counts.
 
-    .. note::
+    Note:
+
         This function mutates *solution* in-place (``bitstrings``, ``costs``,
         ``counts``, and ``probabilities`` are all replaced) and also returns it
         for convenience.  An unmodified copy of *solution* is not kept.
 
     Args:
-        instance: The :class:`~qubosolver.types.Instance` used to evaluate
-            bitstring costs.
-        solution: The :class:`~qubosolver.types.Solution` to refine.
-            Returned immediately unchanged if it contains no bitstrings.
+        instance: The instance used to evaluate bitstring costs.
+        solution: The solution to refine. Returned immediately unchanged if it contains no bitstrings.
 
     Returns:
-        The same *solution* object with updated ``bitstrings``, ``costs``,
-        ``counts``, and ``probabilities`` reflecting the locally optimal
-        (and deduplicated) results.
+        The same *solution* object with updated ``bitstrings``, ``costs``, ``counts``, and ``probabilities`` reflecting the locally optimal results.
     """
     # If there are no bitstrings, return the solution unchanged.
     if solution.bitstrings.numel() == 0:
