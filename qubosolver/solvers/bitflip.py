@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import torch
 from collections.abc import Callable
+from copy import deepcopy
 
 
 from qubosolver import Instance, Solution, bitstrings, vector, vectori, Bitstring
@@ -77,27 +78,22 @@ def _bit_flip_local_search(
 
 
 def iterative_bitflip_local_search(instance: Instance, solution: Solution) -> Solution:
-    """Improve every bitstring in *solution* via greedy single-bit-flip local search.
+    """Improve every bitstring in `solution` via greedy single-bit-flip local search.
 
-    Applies `_bit_flip_local_search` independently to each bitstring in
-    *solution*.  After refinement, duplicate bitstrings that were
-    driven to the same local minimum are merged: their counts are summed and
-    the minimum cost is retained (via ``scatter_reduce``).  Sampling
-    probabilities are recomputed from the merged counts.
-
-    Note:
-
-        This function mutates *solution* in-place (``bitstrings``, ``costs``,
-        ``counts``, and ``probabilities`` are all replaced) and also returns it
-        for convenience.  An unmodified copy of *solution* is not kept.
+    After refinement, duplicate bitstrings that were driven to
+    the same local minimum are merged: their counts are summed, the minimum
+    cost is retained, and sampling probabilities are recomputed from the merged
+    counts.
 
     Args:
         instance: The instance used to evaluate bitstring costs.
-        solution: The solution to refine. Returned immediately unchanged if it contains no bitstrings.
+        solution: The solution to refine.
 
     Returns:
-        The same *solution* object with updated ``bitstrings``, ``costs``, ``counts``, and ``probabilities`` reflecting the locally optimal results.
+        A new solution with updated `bitstrings`, `costs`, `counts`, and `probabilities` reflecting the locally optimal results.
     """
+    solution = deepcopy(solution)
+
     # If there are no bitstrings, return the solution unchanged.
     if solution.bitstrings.numel() == 0:
         return solution
