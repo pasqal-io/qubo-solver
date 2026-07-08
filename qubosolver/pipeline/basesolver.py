@@ -259,7 +259,7 @@ class BaseSolver(ABC):
             if has_preprocessed_qubo and (has_fixation or has_bitflip or has_zeroing):
                 self.instance = self.fixtures.reduced_qubo
                 self.n_fixed_variables_preprocessing = self.fixtures.n_fixed_variables
-                
+
     def post_process_fixation(self, solution: QUBOSolution) -> QUBOSolution:
         """Post-process fixations of the preprocessing and restore the original QUBO.
 

@@ -401,12 +401,13 @@ class DecompositionConfig(Config):
     neglecting_inter_distance: float = 15.0
     neglecting_max_coefficient: float = 1.0
 
+
 class BitFlipPreprocessingConfig(Config):
     """Configuration for GLPK-based bit-flip preprocessing."""
 
     enabled: bool = False
     time_limit_s: float = 10.0
-    eps: float = 0.0    
+    eps: float = 0.0
 
 
 class SolverConfig(Config):
@@ -454,7 +455,7 @@ class SolverConfig(Config):
     activate_trivial_solutions: bool = True
     decompose: DecompositionConfig | None = None
     negative_handling: Literal["error", "zeroing"] = "error"
-    
+
     def __repr__(self) -> str:
         return self.config_name
 
@@ -503,8 +504,7 @@ class SolverConfig(Config):
         }
         classical_fields = {k: v for k, v in kwargs.items() if k in ClassicalConfig.model_fields}
         bitflip_preprocessing_fields = {
-            k: v for k, v in kwargs.items()
-            if k in BitFlipPreprocessingConfig.model_fields
+            k: v for k, v in kwargs.items() if k in BitFlipPreprocessingConfig.model_fields
         }
         decompose_fields = {
             k: v for k, v in kwargs.items() if k in DecompositionConfig.model_fields
@@ -514,7 +514,8 @@ class SolverConfig(Config):
             k: v
             for k, v in kwargs.items()
             if k in cls.model_fields
-            and k not in ("embedding", "drive_shaping", "classical", "decompose", "bitflip_preprocessing")
+            and k
+            not in ("embedding", "drive_shaping", "classical", "decompose", "bitflip_preprocessing")
         }
         solver_fields["embedding"] = EmbeddingConfig.model_validate(
             kwargs.get("embedding", embedding_fields)

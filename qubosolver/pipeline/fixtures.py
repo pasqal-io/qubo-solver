@@ -17,6 +17,7 @@ from qubosolver.pipeline.bitflip_preprocessing import (
     transform_qubo_by_bitflips,
 )
 
+
 def bit_flip_local_search(
     qubo_func: Callable[[np.ndarray], float], s: np.ndarray, shuffle: bool = True
 ) -> tuple[np.ndarray, float]:
@@ -155,7 +156,7 @@ class Fixtures:
         self.apply_negative_coefficients_handling()
 
         return self.reduced_qubo
-    
+
     def postprocess(self, solution: QUBOSolution) -> QUBOSolution:
         """
         Apply postprocessing steps to the QUBO solution after solving.
@@ -372,7 +373,7 @@ class Fixtures:
 
         if getattr(self.config, "negative_handling", "error") != "zeroing":
             return
-        
+
         n = Q.shape[0]
         offdiag_mask = ~torch.eye(n, dtype=torch.bool, device=Q.device)
         negative_mask = offdiag_mask & (Q < 0)
