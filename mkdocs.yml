@@ -27,6 +27,7 @@ nav:
     - Pre and Post Processing:
       - Pre-processing: content/classical/post-and-pre_processing/preprocessing.md
       - Post-processing: content/classical/post-and-pre_processing/postprocessing.md
+      - negative coefficients: content/classical/post-and-pre_processing/negative_coefficients.md
 
   - Tutorials:
     - A tour of QUBO: tutorial/00-a-tour-of-qubo.ipynb
