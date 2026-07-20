@@ -28,7 +28,7 @@ import qoolqit
 from qubosolver.types import Solution, Instance, random
 from qubosolver.config import DecompositionConfig, SolverConfig
 from ._basesolver import BaseSolver
-from ._classical_solver import get_classical_solver
+from .classical._solver import get_classical_solver
 from qubosolver.embedding._embedder import _get_embedder
 from qubosolver.drive_shaping._drive_shaper import _get_drive_shaper
 

@@ -21,7 +21,7 @@ from qubosolver import (
     _utils,
     torch_rng,
 )
-from qubosolver.solvers.bitflip import _bit_flip_local_search
+from qubosolver.solvers.classical.bitflip import _bit_flip_local_search
 
 
 @pytest.mark.parametrize("postprocessing", [True, False])
