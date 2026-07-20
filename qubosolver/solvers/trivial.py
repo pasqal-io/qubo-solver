@@ -26,8 +26,7 @@ def trivial_solution_search(instance: Instance) -> Solution:
 
     Returns:
         Solution: A single-bitstring solution when a trivial case is
-            detected, or an empty :class:`~qubosolver.types.Solution`
-            (no bitstrings) when none of the three patterns apply.
+            detected, or an empty solution (no bitstrings) when none of the three patterns apply.
     """
     coeffs = instance.matrix
     n = instance.size
