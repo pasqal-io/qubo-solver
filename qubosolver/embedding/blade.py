@@ -27,6 +27,7 @@ from qoolqit.embedding import Blade, BladeConfig
 # refer to ``blade.Config`` without importing from qoolqit directly.
 # TODO: Replace TypeAlias with the ``type`` statement when Python >= 3.12.
 Config: TypeAlias = BladeConfig
+"""Alias for `qoolqit.BladeConfig`."""
 
 
 def embed(

@@ -33,10 +33,9 @@ def build_drive(
         device: Target quantum device (provides hardware limits).
         dmm: Whether to use the Detuning Map Modulator for local control.
         kappa: Ratio between peak Rabi frequency and peak detuning.
-            Defaults to 0.25.
 
     Returns:
-        A `qoolqit.Drive` ready for compilation and execution.
+        A drive ready for compilation and execution.
     """
     # Hardware bounds
     specs = device.specs

@@ -12,7 +12,7 @@ from qubosolver import Instance, Solution, bitstring, vector, vectori
 
 
 def trivial_solution_search(instance: Instance) -> Solution:
-    """Analytically solve a QUBO when the coefficient structure is trivial.
+    """Solve a QUBO when the coefficient structure is trivial.
 
     Three patterns are recognised:
 
@@ -22,10 +22,10 @@ def trivial_solution_search(instance: Instance) -> Solution:
        negative diagonal entry are set to 1, the rest to 0.
 
     Args:
-        instance (Instance): The QUBO problem whose matrix is inspected.
+        instance: The QUBO problem whose matrix is inspected.
 
     Returns:
-        Solution: A single-bitstring solution when a trivial case is
+        A single-bitstring solution when a trivial case is
             detected, or an empty solution (no bitstrings) when none of the three patterns apply.
     """
     coeffs = instance.matrix

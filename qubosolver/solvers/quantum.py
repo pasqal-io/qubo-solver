@@ -82,12 +82,10 @@ def analog_quantum_sample(
         device: Target quantum device used for compilation constraints.
         compiler_profile: Compilation strategy forwarded to
             `_quantum_program`.  Defaults to ``MAX_ENERGY``; use
-            ``WORKING_POINT`` for the optimised drive-shaping path.
+            ``WORKING_POINT`` for the optimized drive-shaping path.
 
     Returns:
-        A :class:`~qoolqit.execution.job.Job` handle for the submitted
-        execution.  Call ``job.results()`` to retrieve the measurement
-        outcomes once the job completes.
+        A job handle for the submitted execution.  Call ``.results()`` to retrieve the measurement outcomes once the job completes.
     """
     program = _quantum_program(register, drive, device, compiler_profile=compiler_profile)
 

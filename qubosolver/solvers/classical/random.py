@@ -24,8 +24,7 @@ def random_solutions(
     Draws `max_bitstrings` independent binary vectors uniformly at random,
     deduplicates them (identical samples are merged and their draw count is
     accumulated in `counts`), evaluates the QUBO cost of each unique
-    bitstring, and returns the result sorted by ascending cost with
-    probabilities computed from the counts.
+    bitstring.
 
     Note:
         Because of deduplication, the returned solution may contain fewer than
@@ -41,7 +40,7 @@ def random_solutions(
         rng: PyTorch random number generator controlling the sampling.
 
     Returns:
-        A solution with unique bitstrings, their QUBO costs, draw counts, and normalised probabilities, sorted by ascending cost.
+        A solution with unique bitstrings, their QUBO costs, draw counts, and probabilities.
     """
     bitstrings_ = bitstring.from_torch(
         torch.randint(0, 2, size=(max_bitstrings, instance.size), generator=rng)

@@ -1,6 +1,6 @@
 """Simulated Annealing solver for QUBO problems.
 
-Implements a single-run Metropolis–Hastings bit-flip annealer that minimises
+Implements a single-run bit-flip annealer that minimises
 the quadratic objective E(x) = xᵀ Q x over binary vectors x ∈ {0,1}ⁿ.
 
 The public entry point is `simulated_annealing`.  It is called by
@@ -33,16 +33,12 @@ def simulated_annealing(
 ) -> Solution:
     """Run Simulated Annealing on a QUBO instance and return the best solutions found.
 
-    Minimises E(x) = xᵀ Q x over x ∈ {0,1}ⁿ using the Metropolis–Hastings
-    acceptance rule with a geometric cooling schedule.  The QUBO matrix is
-    symmetrised internally as ``(Q + Qᵀ) / 2`` before solving.
-
-    At each of *max_iter* steps a random bit is proposed for flipping.  The
+    At each of `max_iter` steps a random bit is proposed for flipping.  The
     flip is always accepted when it reduces the energy; otherwise it is
     accepted with probability ``exp(-ΔE / T)``.  Energy updates are computed
     incrementally in O(n) per step using the cached matrix-vector product ``Qx``.
 
-    Up to *top_k* unique lowest-energy bitstrings encountered during the run
+    Up to `top_k` unique lowest-energy bitstrings encountered during the run
     are retained and returned, deduplicated by byte-hashing.
 
     Args:
@@ -51,36 +47,31 @@ def simulated_annealing(
         start: Initial binary solution tensor of shape ``(n,)`` with values
             in ``{0, 1}``.  The search begins from this configuration.
         top_k: Maximum number of unique best solutions to keep, ordered by
-            ascending energy.  Defaults to ``5``.
-        max_iter: Number of Metropolis bit-flip proposals to perform.
-            Defaults to ``1000``.
+            ascending energy.
+        max_iter: Number of bit-flip proposals to perform.
         initial_temp: Starting temperature T₀.  Higher values increase the
             probability of accepting uphill moves early in the search.
             Defaults to ``5.0``.
         final_temp: Target temperature T_f at the end of the schedule, used
-            to derive the cooling rate when *cooling_rate* is ``None``.
-            Ignored when *cooling_rate* is provided explicitly.
-            Defaults to ``1e-3``.
+            to derive the cooling rate when `cooling_rate` is ``None``.
+            Ignored when `cooling_rate` is provided explicitly.
         cooling_rate: Geometric cooling factor α ∈ (0, 1) such that
             T ← α·T at each step.  When ``None`` (default), α is derived
-            automatically from *initial_temp*, *final_temp*, and *max_iter*
-            so that the temperature reaches *final_temp* after *max_iter* steps.
+            automatically from `initial_temp`, `final_temp`, and `max_iter`
+            so that the temperature reaches `final_temp` after `max_iter` steps.
         energy_tol: Two solutions with energies differing by at most this
             value are treated as equivalent when maintaining the top-k list.
             Defaults to ``0.0`` (strict equality).
         time_limit: Wall-clock budget in seconds.  The algorithm stops early
-            when either *max_iter* steps or the time limit is reached,
+            when either `max_iter` steps or the time limit is reached,
             whichever comes first.  Defaults to ``float("inf")`` (no limit).
         rng: PyTorch random number generator used for bit selection and
-            Metropolis acceptance sampling.  Defaults to a module-level
+            acceptance sampling.  Defaults to a module-level
             generator created once at import time; pass an explicit generator
             for reproducibility across calls.
 
     Returns:
-        A :class:`~qubosolver.types.Solution` containing up to *top_k*
-        unique bitstrings sorted by ascending energy, with their costs,
-        counts (how many times each was visited during the run), and
-        normalised probabilities.
+        A solution containing up to `top_k` unique bitstrings sorted by ascending energy, with their costs, counts (how many times each was visited during the run), and normalised probabilities.
 
     Raises:
         ValueError: If ``top_k < 1``.

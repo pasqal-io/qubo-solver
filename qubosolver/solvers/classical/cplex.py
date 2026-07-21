@@ -66,33 +66,17 @@ def _qubo_instance_to_sparsepairs(
 def cplex(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> Solution:
     """Solve a QUBO instance to optimality (or time limit) using IBM CPLEX.
 
-    Builds a Binary Quadratic Program from *instance*, sets a time limit, and runs
-    CPLEX's branch-and-bound solver.  All CPLEX log output (progress,
-    warnings, errors) is redirected to *log_path*, which is opened in write
-    mode (overwriting any existing file) and closed after solving.
-
-    Returns an empty :class:`~qubosolver.types.Solution` immediately when
-    ``instance.size == 0`` without invoking CPLEX.
-
     Args:
-        instance: The :class:`~qubosolver.types.Instance` to solve.
+        instance: The QUBO instance to solve.
         maxtime: Wall-clock time limit for CPLEX in seconds.  CPLEX returns
             the best feasible solution found so far when the limit is reached.
-            Defaults to ``600.0``.
         log_path: File path where CPLEX log output (progress, warnings,
             errors) is written, opened in write mode (``"w"``), so any
             existing file is overwritten.  When empty (the default), logging
             is suppressed and no file is created.
 
     Returns:
-        A :class:`~qubosolver.types.Solution` containing exactly one
-        bitstring — the best (or optimal) solution found by CPLEX — with
-        ``count=1`` and ``probability=1.0``.  Returns an empty
-        :class:`~qubosolver.types.Solution` if ``instance.size == 0``.
-
-    Raises:
-        cplex.exceptions.CplexError: If CPLEX encounters an internal solver
-            error (e.g. infeasible model or licence issue).
+        A solution containing exactly one bitstring — the best (or optimal) solution found by CPLEX.
     """
     # Determine the number of variables.
     N: int = instance.size

@@ -25,7 +25,7 @@ def _bit_flip_local_search(
     s: Bitstring,
     rng: torch.Generator | None = None,
 ) -> tuple[Bitstring, float]:
-    """Improve a single bitstring via greedy best-improvement bit-flip search.
+    """Improve a single bitstring via best-improvement bit-flip search.
 
     At each iteration, evaluates all *n* single-bit flips and applies the one
     with the lowest resulting objective value.  Repeats until no flip reduces
@@ -78,7 +78,7 @@ def _bit_flip_local_search(
 
 
 def iterative_bitflip_local_search(instance: Instance, solution: Solution) -> Solution:
-    """Improve every bitstring in `solution` via greedy single-bit-flip local search.
+    """Improve every bitstring in `solution` via single-bit-flip local search.
 
     After refinement, duplicate bitstrings that were driven to
     the same local minimum are merged: their counts are summed, the minimum

@@ -25,30 +25,29 @@ def tabu_search(
 ) -> Solution:
     """Perform Tabu Search on a QUBO instance to find low-cost bitstrings.
 
-    Runs ``max_bitstrings`` parallel searches that each start from ``start``
+    Runs ``max_bitstrings`` independent searches that each start from ``start``
     and explore single-bit-flip neighbours.  A tabu list prevents revisiting
     recently flipped bits; aspiration overrides the tabu restriction whenever a
-    move yields a new global best.  All parallel runs share the same stopping
+    move yields a new global best.  All independent runs share the same stopping
     criteria and are deduplicated before being returned.
 
     Args:
         qubo (Instance): The QUBO instance providing the cost matrix.
         start (Bitstring): Initial binary solution of length ``n``.  Replicated
-            across all ``max_bitstrings`` parallel runs.
+            across all ``max_bitstrings`` independent runs.
         max_iter (int): Maximum number of search iterations. Defaults to 100.
         tabu_tenure (int): Number of iterations a bit-flip move stays tabu.
             Defaults to 7.
         max_no_improve (int): Maximum consecutive iterations without improvement
             before a run is considered stagnated.  Search stops early when
-            **all** parallel runs have stagnated. Defaults to 20.
-        max_bitstrings (int): Number of parallel search runs (and upper bound on
+            **all** independent runs have stagnated. Defaults to 20.
+        max_bitstrings (int): Number of independent search runs (and upper bound on
             unique solutions returned). Defaults to 1.
         time_limit (float): Wall-clock time budget in seconds.  Defaults to
             ``float('inf')`` (no limit).
 
     Returns:
-        Solution: Deduplicated best bitstrings found across all runs,
-            together with their objective values and occurrence counts.
+        Deduplicated best bitstrings found across all runs, together with their objective values and occurrence counts.
     """
     Q = qubo.matrix
     device = Q.device

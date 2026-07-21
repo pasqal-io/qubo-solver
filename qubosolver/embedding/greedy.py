@@ -123,10 +123,6 @@ def embed(
 ) -> qoolqit.Register:
     """Embed a QUBO instance using the greedy algorithm.
 
-    Runs the greedy placer on the QUBO coefficient matrix.
-    Atom labels in the returned register are stringified integer indices
-    (``"0"``, ``"1"``, …) matching the variable ordering of the QUBO matrix.
-
     Two coordinate-scaling modes are supported, selected via *normalize*:
 
     * **normalize=True** (default) — rescales coordinates so that the
@@ -149,7 +145,7 @@ def embed(
         normalize: Controls coordinate post-processing; see above.
 
     Returns:
-        A register mapping each atom label to its 2-D position, with positions determined by the greedy placer.
+        A register mapping each atom to a 2-D position.
 
     Raises:
         ValueError: If the resolved trap count is less than ``instance.size``

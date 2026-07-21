@@ -46,7 +46,7 @@ class Config:
         n_calls: Number of Bayesian optimisation evaluations.
         seed: Random seed for reproducibility.
         qubo_cost: Callable used to evaluate bitstring cost against the QUBO matrix.
-        objective: Callable that maps a :class:`Solution` to a scalar
+        objective: Callable that maps a `Solution` to a scalar
             objective (lower is better).
         callback_objective: Optional callback invoked after each evaluation.
     """
@@ -241,7 +241,7 @@ def build_drive(
     dmm: bool = False,
     config: Config = Config(),
 ) -> tuple[qoolqit.Drive, Solution]:
-    """Generate an optimised drive schedule via Bayesian optimisation.
+    """Generate a drive schedule via Bayesian optimisation.
 
     Uses ``skopt.gp_minimize`` to search over waveform parameters,
     running quantum simulations at each evaluation to minimise the
@@ -256,7 +256,7 @@ def build_drive(
         config: Optimisation parameters (initial guess, number of calls, etc.).
 
     Returns:
-        A tuple of the best `qoolqit.Drive` found and the corresponding [`Solution`][].
+        A tuple of the best `qoolqit.Drive` found and the corresponding `Solution`.
     """
     n_amp = 3
     n_det = 3
