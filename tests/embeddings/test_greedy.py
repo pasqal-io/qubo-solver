@@ -127,7 +127,7 @@ def test_triangular_qubo(traps: int, relative_noise: float, max_min_dist_ratio: 
     torch.testing.assert_close(U, expected_U)
 
 
-@pytest.mark.parametrize("traps", [1, 2, 4, 9])
+@pytest.mark.parametrize("traps", [1, 2, 6, 9])
 @pytest.mark.parametrize("layout", [LayoutType.SQUARE, "square"])
 @pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
 def test_square_qubo(traps: int, layout: LayoutType | str, relative_noise: float, max_min_dist_ratio: float) -> None:
