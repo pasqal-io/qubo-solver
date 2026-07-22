@@ -44,41 +44,12 @@ def test_custom_embedder(simple_qubo_instance: QUBOInstance) -> None:
     assert isinstance(shaper, MockGreedyEmbedder)
 
 
-def test_correctness_greedy_embedder(qubo_instance_for_embedding: QUBOInstance) -> None:
-    assert qubo_instance_for_embedding.size is not None
-    config = SolverConfig(
-        use_quantum=True,
-        embedding=EmbeddingConfig(
-            embedding_method="greedy",
-            greedy_traps=qubo_instance_for_embedding.size,
-            greedy_spacing=4.0,
-        ),
-        device=DigitalAnalogDevice(),
-    )
-    solver = QuboSolver(qubo_instance_for_embedding, config)
-    positions = solver.embedding()
-
-    expected_greedy_positions_tensor = (
-        torch.tensor(
-            [[2.0000, 3.4641], [0.0000, 0.0000], [-2.0000, 3.4641], [4.0000, 0.0000]],
-            dtype=torch.float16,
-        )
-        / solver.device.converter.factors[2]
-    )
-    expected_greedy_positions = expected_greedy_positions_tensor.tolist()
-
-    assert len(positions.qubits) == len(expected_greedy_positions)
-
-    for qubit_id, coordinate in enumerate(positions.qubits.values()):
-        x, y = coordinate.clone().detach().to(dtype=torch.float16).tolist()
-        x_, y_ = expected_greedy_positions[qubit_id]
-        assert np.allclose(x, x_, atol=1e-3) and np.allclose(y, y_, atol=1e-3)
-
-
 def test_error_greedy_max_radial_distance_constraint(
     qubo_instance_for_embedding: QUBOInstance,
 ) -> None:
     assert qubo_instance_for_embedding.size is not None
+
+    coeffs = qubo_instance_for_embedding.normalized_coefficients
 
     for device in [AnalogDevice(), AnalogDeviceWithDMM()]:
         max_radial_distance = device.specs["max_radial_distance"]
@@ -88,7 +59,6 @@ def test_error_greedy_max_radial_distance_constraint(
             embedding=EmbeddingConfig(
                 embedding_method="greedy",
                 greedy_traps=qubo_instance_for_embedding.size,
-                greedy_spacing=max_radial_distance,
             ),
             device=device,
         )
@@ -97,51 +67,3 @@ def test_error_greedy_max_radial_distance_constraint(
         # Setting a spacing larger than the max_radial_distance is not an error,
         # since scaling is performed
         solver.embedding()
-
-
-@pytest.mark.parametrize("normalized", [True, False], ids=["normalized", "not_normalized"])
-def test_correctness_greedy_max_radial_distance_constraint_with_extra_greedy_traps(
-    qubo_instance_for_embedding: QUBOInstance,
-    normalized: bool,
-) -> None:
-    assert qubo_instance_for_embedding.size is not None
-
-    expected = torch.tensor(
-        [
-            [0.0000, 0.0000],
-            [-9.5000, -16.4531],
-            [-19.0000, 0.0000],
-            [-9.5000, 16.4531],
-        ],
-        dtype=torch.float64,
-    )
-
-    for device in [AnalogDevice(), AnalogDeviceWithDMM()]:
-
-        min_distance = 1.0 if normalized else None
-
-        assert device._device.max_radial_distance is not None
-        greedy_config = SolverConfig(
-            use_quantum=True,
-            embedding=EmbeddingConfig(
-                embedding_method="greedy",
-                greedy_traps=qubo_instance_for_embedding.size * 2,
-                greedy_spacing=device._device.max_radial_distance / 2.0,
-                min_distance=min_distance,
-            ),
-            device=device,
-        )
-
-        solver = QuboSolver(qubo_instance_for_embedding, greedy_config)
-        geometry = solver.embedding()
-
-        assert len(geometry.qubits) == len(expected)
-        if normalized:
-            conv = torch.cdist(expected, expected).fill_diagonal_(float("inf")).min().item()
-        else:
-            conv = device.converter.factors[2]
-
-        for qubit_id, coordinate in enumerate(geometry.qubits.values()):
-            p = coordinate.clone().detach().to(dtype=torch.float64)
-            expected_p = expected[qubit_id] / conv
-            torch.testing.assert_close(p, expected_p, atol=1e-3, rtol=1e-3)

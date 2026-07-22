@@ -58,15 +58,12 @@ def test_quantum_batch_id(
     ) -> tuple[job.Job[Results], QuboSolverQuantum]:
         instance = QUBOInstance(Q)
 
-        min_distance = 1.001 if drive_method == DriveType.HEURISTIC else None
-
         config = SolverConfig(
             use_quantum=True, do_preprocessing=preprocessing, device=DigitalAnalogDevice()
         )
         config.embedding = EmbeddingConfig(
             embedding_method=embedding_method,
             greedy_traps=100,
-            min_distance=min_distance,
         )
         config.drive_shaping = DriveShapingConfig(drive_shaping_method=drive_method, dmm=dmm)
         num_shots = 50

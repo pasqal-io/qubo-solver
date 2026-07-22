@@ -106,7 +106,6 @@ def test_with_perfect_embedding(
         embedding_method="greedy",
         greedy_traps=100,
         greedy_max_possible_term=1,
-        min_distance=1.0001,
     )
 
     drive_cfg = DriveShapingConfig(

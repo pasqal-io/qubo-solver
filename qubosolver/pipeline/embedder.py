@@ -33,22 +33,6 @@ class BaseEmbedder(ABC):
         backend (Backend): The execution backend (used to access device specs).
 
     Note:
-        **`config.embedding.min_distance`** controls whether the generated register
-        is rescaled after embedding, and its correct value depends on the
-        drive-shaping method used:
-
-        - **Set to `1 + margin` (e.g. `1.001`)** when pairing with drive shapers
-          that support the `MAX_ENERGY` qoolqit compiler profile (e.g.
-          `HeuristicDriveShaper`). The compiler may rescale atom coordinates at
-          compile time; providing a value just above 1 (in normalised units) ensures
-          the register satisfies the minimum-distance constraint while leaving room
-          for the compiler to adjust it freely.
-
-        - **Set to `None`** when pairing with drive shapers that do **not** use the
-          `MAX_ENERGY` profile (e.g. `OptimizedDriveShaper`). In this case no
-          rescaling is applied and the register coordinates are kept exactly as
-          produced by the embedding algorithm, ready to be sent to the physical QPU as-is.
-
         See Qoolqit's documentation for more details on rescaling:
 
         - [Qoolqit model](https://pasqal-io.github.io/qoolqit/latest/get_started/qoolqit_model/)
@@ -82,20 +66,20 @@ class BLaDEmbedder(BaseEmbedder):
     Atom-register embedder using the qoolqit BLaDe (Block-Layout and
     Degree-based) matrix-embedding algorithm.
 
-    BLaDe jointly optimises atom positions to match the logical adjacency
+    BLaDE jointly optimises atom positions to match the logical adjacency
     structure of the QUBO graph with the physical Rydberg interaction matrix.
-    Configuration is taken from ``config.embedding`` (BLaDe-specific fields:
+    Configuration is taken from ``config.max_min_dist_ratio`` and
+    ``config.embedding`` (BLaDe-specific fields:
     ``blade_steps_per_round``, ``blade_starting_positions``,
-    ``blade_dimensions``, ``min_distance``).
+    ``blade_dimensions``).
     """
 
     def embed(self) -> Register:
-        """Run the BLaDe embedding algorithm and return the resulting register.
+        """Run the BLaDE algorithm and return the resulting register.
 
         Reads embedding hyper-parameters from ``self.config.embedding``,
         constructs a ``BladeConfig``, runs ``Blade.embed`` on the QUBO
-        coefficient matrix, optionally rescales coordinates to satisfy the
-        ``min_distance`` constraint, and wraps the result as a ``Register``.
+        coefficient matrix, and wraps the result as a ``Register``.
         See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/latest/reference/embedding/#qoolqit.embedding.BladeConfig) for details.
 
 
@@ -112,21 +96,11 @@ class BLaDEmbedder(BaseEmbedder):
         else:
             starting_positions = None
 
-        min_distance = self.config.embedding.min_distance
-        max_radial_distance = self.config.device.specs["max_radial_distance"]
-        if min_distance is None or max_radial_distance is None:
-            device = self.config.device
-            max_min_dist_ratio = None
-        else:
-            device = None
-            max_min_dist_ratio = max_radial_distance / min_distance
-
         config = BladeConfig(
             steps_per_round=step_per_round,
             starting_positions=starting_positions,
             dimensions=tuple(embed_config.blade_dimensions),
-            max_min_dist_ratio=max_min_dist_ratio,
-            device=device,
+            max_min_dist_ratio=self.config.max_min_dist_ratio,
         )
 
         _blade = Blade(config)

@@ -214,7 +214,6 @@ class EmbeddingConfig(Config):
             "embedding_method": self.embedding_method,
             "draw_steps": self.draw_steps,
             "animation_save_path": self.animation_save_path,
-            "min_distance": self.min_distance,
         }
         dict_all_fields = self.__dict__
         if self.embedding_method == EmbedderType.GREEDY:
@@ -326,7 +325,7 @@ class DriveShapingConfig(Config):
     optimized_callback_objective: Callable[..., None] | None = None
     optimized_seed: int | None = None
     heuristic_kappa: float = 0.25
-    default_sequence_duration: int = 20000
+    default_sequence_duration: int = 50000
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:

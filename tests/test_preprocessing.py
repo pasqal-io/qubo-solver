@@ -263,26 +263,6 @@ def test_reduce_qubo_2() -> None:
     check.almost_equal(solution.costs[0], -27.288260)
 
 
-class SimpleShaper(BaseDriveShaper):
-    def generate(
-        self,
-        register: Register,
-    ) -> tuple[Drive, QUBOSolution]:
-
-        # Defining the drive parameters
-        omega = 0.01
-        delta_i = -0.09
-        delta_f = -delta_i
-        T = 4000.0
-
-        # Defining the drive
-        wf_amp = Constant(T, omega)
-        wf_det = Ramp(T, delta_i, delta_f)
-        drive = Drive(amplitude=wf_amp, detuning=wf_det)
-
-        return drive, QUBOSolution(torch.Tensor(), torch.Tensor())
-
-
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("embedding_method", [EmbedderType.BLADE])
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no_pre"])
@@ -312,12 +292,10 @@ def test_quantum_prepostprocessing_2(
     )
     config.embedding = EmbeddingConfig(
         embedding_method=embedding_method,
-        greedy_spacing=0.1,
         greedy_traps=500,
-        min_distance=1.001,
     )
 
-    config.drive_shaping = DriveShapingConfig(drive_shaping_method=SimpleShaper, dmm=dmm)
+    config.drive_shaping = DriveShapingConfig(dmm=dmm)
     config.backend = LocalEmulator(num_shots=50)
     solver = QuboSolver(instance, config)
 

@@ -64,10 +64,6 @@ class BaseDriveShaper(ABC):
     def qubo_coefficients(self) -> torch.Tensor:
         return self.instance.coefficients
 
-    @property
-    def qubo_normalized_coefficients(self) -> torch.Tensor:
-        return self.instance.normalized_coefficients
-
     def _compute_norm_weights(self) -> list[float]:
         """Compute normalization weights.
 
@@ -305,14 +301,15 @@ class HeuristicDriveShaper(BaseDriveShaper):
         pulser_specs = _pulser_specs(self.device)
         use_dmm = self.dmm and (pulser_specs["dmm_bottom_detuning"] is not None)
 
-        max_amplitude = specs["max_amplitude"] or 1.0
-        max_abs_detuning = specs["max_abs_detuning"] or 9.0
+        if specs.get("max_amplitude") is not None and specs.get("max_abs_detuning") is not None:
+            max_amplitude = specs["max_amplitude"]
+            max_abs_detuning = specs["max_abs_detuning"]
 
-        det_amp_ratio = max_amplitude / max_abs_detuning
-        if kappa < det_amp_ratio:
-            warnings.warn(
-                f"heuristic_kappa is too small ({kappa}), you're likely to get a qoolqit CompilationError. Set it above {det_amp_ratio}."
-            )
+            det_amp_ratio = max_amplitude / max_abs_detuning # type: ignore
+            if kappa < det_amp_ratio:
+                warnings.warn(
+                    f"heuristic_kappa is too small ({kappa}), you're likely to get a qoolqit CompilationError. Set it above {det_amp_ratio}."
+                )
 
         Q = self.qubo_coefficients
         n = self.instance.size

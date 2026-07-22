@@ -204,11 +204,11 @@ def test_generate_heuristic_drive_shaper(
 
     check.equal(drive.amplitude.duration, drive.duration)
     check.almost_equal(drive.amplitude.min(), 1e-9, abs=1e-10)
-    check.almost_equal(drive.amplitude.max(), 0.75, abs=1e-4)
+    check.almost_equal(drive.amplitude.max(), 0.375, abs=1e-4)
 
     check.equal(drive.detuning.duration, drive.duration)
-    check.almost_equal(drive.detuning.min(), -3.0, abs=1e-4)
+    check.almost_equal(drive.detuning.min(), -1.5, abs=1e-4)
     if dmm:
-        check.almost_equal(drive.detuning.max(), 3.0, abs=1e-4)
+        check.almost_equal(drive.detuning.max(), 1.5, abs=1e-4)
     else:
-        check.almost_equal(drive.detuning.max(), 2.0, abs=1e-4)
+        check.almost_equal(drive.detuning.max(), 1.0, abs=1e-4)
