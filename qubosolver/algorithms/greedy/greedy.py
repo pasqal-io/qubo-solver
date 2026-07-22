@@ -180,7 +180,7 @@ class Greedy:
         results: dict,
         params: dict,
         on_step: Optional[Callable[[Dict[str, Any]], None]] = None,
-        max_radial_distance: float | None = None,
+        max_radial_distance: float = torch.inf,
     ) -> dict:
         """
         Greedy loop starting from node v. If `on_step` is provided, emit a
@@ -271,7 +271,7 @@ class Greedy:
             distance = torch.tensor(u_coordinates).norm().item()
 
             # check whether trap coordinate is within the maximal radial distance
-            if max_radial_distance and (distance >= max_radial_distance):
+            if distance >= max_radial_distance:
                 if n_extra_traps == 0:
                     raise ValueError(
                         f"no traps found to place qubit '{u}' "
@@ -626,7 +626,7 @@ class Greedy:
         self,
         Q: torch.Tensor,
         *,
-        max_min_dist_ratio: float | None,
+        max_min_dist_ratio: float,
         params: dict,
         on_step: Optional[Callable[[Dict[str, Any]], None]] = None,
     ) -> Any:
@@ -680,7 +680,7 @@ class Greedy:
         else:
             cb = None
 
-        max_radial_distance = max_min_dist_ratio * float(params['spacing']) if max_min_dist_ratio is not None else None
+        max_radial_distance = max_min_dist_ratio * float(params['spacing'])
 
         for node in nodes:
             self.greedy_algorithm(Z, Q, layout, node, results, params, on_step=cb, max_radial_distance=max_radial_distance)
