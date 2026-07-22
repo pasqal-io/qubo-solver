@@ -6,7 +6,7 @@ import numpy as np
 from qoolqit.devices.device import BaseDevice, AnalogDeviceWithDMM
 
 from qubosolver.algorithms.greedy.greedy import Greedy
-from qubosolver.qubo_types import LayoutType
+from qubosolver.algorithms.greedy.layout import LayoutType
 from qubosolver.data import QUBODataset
 import pytest
 import pytest_check as check

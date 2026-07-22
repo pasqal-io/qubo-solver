@@ -22,7 +22,8 @@ from qubosolver.config import (
     SolverConfig,
     LocalEmulator,
 )
-from qubosolver.qubo_types import EmbedderType, LayoutType, DriveType
+from qubosolver.qubo_types import EmbedderType, DriveType
+from qubosolver.algorithms.greedy.layout import LayoutType
 from mock.connection import MockConnection
 
 from typing import TYPE_CHECKING

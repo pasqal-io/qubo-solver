@@ -14,11 +14,11 @@ from pulser_pasqal import PasqalCloud
 
 from qubosolver.qubo_types import (
     EmbedderType,
-    LayoutType,
     DriveType,
     ClassicalSolverType,
 )
 from qubosolver.backends import LocalEmulator, RemoteEmulator
+from qubosolver.algorithms.greedy.layout import LayoutType
 
 # Allow torch.Tensor fields in Pydantic models.
 BaseModel.model_config["arbitrary_types_allowed"] = True

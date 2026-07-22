@@ -50,15 +50,6 @@ class EmbedderType(StrEnum):
     BLADE = "blade"
 
 
-class LayoutType(Enum):
-    """
-    Type of layout for the greedy embedding method
-    """
-
-    SQUARE = SquareLatticeLayout
-    TRIANGULAR = TriangularLatticeLayout
-
-
 class DriveType(Enum):
     """
     Type of drive shaping method used for solving the QUBO

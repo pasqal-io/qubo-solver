@@ -8,7 +8,7 @@ import torch
 from qoolqit.devices.device import AnalogDeviceWithDMM
 
 from qubosolver.algorithms.greedy.greedy import Greedy
-from qubosolver.qubo_types import LayoutType
+from qubosolver.algorithms.greedy.layout import LayoutType
 
 
 def _toy_qubo() -> torch.Tensor:

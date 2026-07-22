@@ -464,7 +464,7 @@ def cost_interaction_point_continuous(
 
     penalty_coeff = sum([coeff ** 2 for coeff in Q_target])
     if np.linalg.norm(pos_new) > max_radial_distance:
-        cost += penalty_coeff * (1 + max_radial_distance - np.linalg.norm(pos_new))
+        cost += penalty_coeff * (1 + np.linalg.norm(pos_new) - max_radial_distance)
 
     for placed_point in placed_points:
         dist = np.linalg.norm(np.array(pos_new) - np.array(placed_point))

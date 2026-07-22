@@ -15,11 +15,11 @@ from qubosolver.config import (
 )
 from qubosolver.qubo_types import (
     EmbedderType,
-    LayoutType,
     DriveType,
     ClassicalSolverType,
 )
 from qubosolver.backends import AutoLocalEmulatorBackend
+from qubosolver.algorithms.greedy.layout import LayoutType
 
 
 def test_empty_config(empty_config: SolverConfig) -> None:

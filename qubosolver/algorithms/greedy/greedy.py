@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 import torch
 from pulser.register.register_layout import RegisterLayout
 
-from qubosolver.qubo_types import LayoutType
+from qubosolver.algorithms.greedy.layout import get_layout
 
 # Optional imports for animation; guarded so library usage stays safe in non-notebook envs.
 try:  # pragma: no cover
@@ -48,27 +48,19 @@ class Greedy:
           - "spacing": float (minimum inter-site spacing)
         """
         type_layout = params["layout"]
-        n_traps = params["traps"]
-        spacing = params["spacing"]
+        n_traps: int = params["traps"]
+        spacing: float = params["spacing"]
 
-        # default layout: TRIANGULAR
-        layout: RegisterLayout = LayoutType.TRIANGULAR.value(n_traps=n_traps, spacing=spacing)
-
-        # accept both enum and string "square"
-        if type_layout == LayoutType.SQUARE or (
-            isinstance(type_layout, str) and type_layout.lower() == "square"
-        ):
-            n = int(torch.ceil(torch.sqrt(torch.tensor(n_traps))).item())
-            layout = LayoutType.SQUARE.value(n, n, spacing=spacing)
+        coords = spacing * get_layout(layout_type=type_layout, n_traps=n_traps)
 
         # build fast maps coord <-> trap index
         self.MAPPING_COORDS_POSITIONS.clear()
         self.MAPPING_POSITIONS_COORDS.clear()
-        for i, coord in enumerate(layout.coords):
+        for i, coord in enumerate(coords.tolist()):
             self.MAPPING_COORDS_POSITIONS[tuple(coord)] = i
             self.MAPPING_POSITIONS_COORDS[i] = coord
 
-        return layout, torch.tensor(layout.coords)
+        return coords
 
     # ----------------------------
     # Precompute mismatch tensor
@@ -175,7 +167,7 @@ class Greedy:
         self,
         Z: torch.Tensor,
         Q: torch.Tensor,
-        layout: RegisterLayout,
+        coords: torch.Tensor,
         v: int,
         results: dict,
         params: dict,
@@ -189,10 +181,10 @@ class Greedy:
         nodes = list(range(Q.shape[0]))
 
         vertices = set(nodes)
-        all_traps = set(list(layout.traps_dict.keys()))
+        n_traps = len(coords)
+        all_traps = set(range(n_traps))
 
         n: int = len(Q)
-        n_traps: int = len(layout.coords)
         n_extra_traps: int = 0
         init_coord: tuple = (0, 0)
         positioned: set = set([v])
@@ -648,7 +640,7 @@ class Greedy:
         if n_traps < n_nodes:
             raise ValueError(f"Not enough traps ({n_traps}) to position {n_nodes} nodes.")
 
-        layout, coordinates = self.get_predefined_coordinates(params)
+        coordinates = self.get_predefined_coordinates(params)
         predefined_coordinates = coordinates.clone().detach()
 
         Z = self.precompute_coefficients(Q, predefined_coordinates)
@@ -683,7 +675,7 @@ class Greedy:
         max_radial_distance = max_min_dist_ratio * float(params['spacing'])
 
         for node in nodes:
-            self.greedy_algorithm(Z, Q, layout, node, results, params, on_step=cb, max_radial_distance=max_radial_distance)
+            self.greedy_algorithm(Z, Q, coords=predefined_coordinates, v=node, results=results, params=params, on_step=cb, max_radial_distance=max_radial_distance)
 
         best_result = min(results.items(), key=lambda x: x[1]["distance"])
         coords = best_result[1]["coords"]
@@ -691,7 +683,7 @@ class Greedy:
         # Post-run animation if requested
         if anim_flag and frames and _VIZ_OK:  # pragma: no cover
             # Rebuild full lattice coords to show ALL traps (including extras)
-            _, all_coords_t = self.get_predefined_coordinates(params)
+            all_coords_t = self.get_predefined_coordinates(params)
             if hasattr(all_coords_t, "numpy"):
                 all_coords_np = all_coords_t.numpy()
             else:
