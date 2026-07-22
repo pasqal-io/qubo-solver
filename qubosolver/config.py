@@ -187,8 +187,6 @@ class EmbeddingConfig(Config):
             Defaults to `False`.
         animation_save_path (str | None, optional): If provided, path to save animation.
             Defaults to None.
-        min_distance (float | None): Minimum atom separation (μm).
-            If not None, the resulting register will be normalized so that the minimum atom separation is equal to this value. Should be 1.001 when using the Heuristic Drive-Shaping, and None when using the Optimized Drive-Shaping. Defaults to 1.001.
         max_min_dist_ratio: (float | None): Maximum ratio between the
             maximum radial distance and the minimum pairwise distance. None
             means that it will take the value from the device if it exists.
@@ -206,7 +204,6 @@ class EmbeddingConfig(Config):
     draw_steps: bool = False
     animation_save_path: str | None = None
     max_min_dist_ratio: float = torch.inf
-    min_distance: float | None = None # TODO removal in progress
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
