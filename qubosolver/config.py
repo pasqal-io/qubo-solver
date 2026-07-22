@@ -20,6 +20,7 @@ from qubosolver.qubo_types import (
     ClassicalSolverType,
 )
 from qubosolver.backends import LocalEmulator, RemoteEmulator
+from qubosolver.algorithms.decompose import rectification_factor
 
 # Allow torch.Tensor fields in Pydantic models.
 BaseModel.model_config["arbitrary_types_allowed"] = True
@@ -404,11 +405,11 @@ class DecompositionConfig(Config):
             we consider an interaction is neglecting.
     """
 
-    decompose_threshold: float = 25.0
+    decompose_threshold: float = 25.0 / rectification_factor # threshold to make relative
     decompose_stop_number: int = 15
     decompose_break_placement: int = 3
-    neglecting_inter_distance: float = 15.0
-    neglecting_max_coefficient: float = 1.0
+    neglecting_inter_distance: float = 15.0 * rectification_factor # threshold to make relative
+    neglecting_max_coefficient: float = 1.0 # threshold to make relative
 
 
 class SolverConfig(Config):

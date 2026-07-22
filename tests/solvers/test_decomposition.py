@@ -49,14 +49,13 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     config = SolverConfig(
         use_quantum=use_quantum,
         decompose=decompose_config,
-        embedding=EmbeddingConfig(min_distance=1.0),
         device=DigitalAnalogDevice(),
     )
     solver = QuboSolver(decomposable_qubo, config)
 
     ## Check the distance interaction matrix matches the qubo matrix
     dist_matrix = compute_distance_interaction_matrix(
-        solver._solver.device._pulser_device, qubo_mat
+        qubo_mat
     )
     assert dist_matrix.shape == qubo_mat.shape
     assert torch.all(torch.diag(dist_matrix) == torch.diag(qubo_mat))
@@ -87,13 +86,14 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
         current_vertices_dict,
         first_vertex,
         decompose_config.decompose_threshold,
-        solver._solver.device._pulser_device,
+        min_distance=solver._solver.device._pulser_device.min_atom_distance,
+        max_radial_distance=solver._solver.device._pulser_device.max_radial_distance,
     )
     assert len(placed_vertices) <= size
 
     # check matrix size correspond to placed_vertices
     matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(
-        placed_vertices, solver._solver.device._pulser_device
+        placed_vertices
     )
     # If too big, the test will take a long time to run.
     if use_quantum and matrix_to_solve.shape[0] > 13:
@@ -130,7 +130,6 @@ def test_decomp_solver(decomposable_qubo: QUBOInstance, use_quantum: bool) -> No
     config = SolverConfig(
         use_quantum=use_quantum,
         decompose=DecompositionConfig(),
-        embedding=EmbeddingConfig(min_distance=1.0),
         device=DigitalAnalogDevice(),
     )
     solver = QuboSolver(decomposable_qubo, config)
@@ -201,7 +200,7 @@ def test_compute_distance_interaction_matrix_zero_output() -> None:
     )
 
     dist_matrix = compute_distance_interaction_matrix(
-        device._pulser_device, Q, neglecting_inter_distance, neglecting_max_coefficient
+        Q, neglecting_inter_distance, neglecting_max_coefficient
     )
 
     torch.testing.assert_close(dist_matrix, torch.zeros_like(Q))
@@ -224,7 +223,7 @@ def test_compute_distance_interaction_diagonal() -> None:
     )
 
     dist_matrix = compute_distance_interaction_matrix(
-        device._pulser_device, Q, neglecting_inter_distance, neglecting_max_coefficient
+        Q, neglecting_inter_distance, neglecting_max_coefficient
     )
     expected_dist_matrix = neglecting_inter_distance * torch.ones_like(Q)
     expected_dist_matrix.diagonal().copy_(Q.diag())

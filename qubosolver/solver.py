@@ -7,6 +7,7 @@ import torch
 import random
 
 from qoolqit import Register, Drive
+import numpy as np
 
 from qubosolver.qubo_instance import QUBOInstance
 from qubosolver.data import QUBOSolution
@@ -354,7 +355,6 @@ class DecomposeQuboSolver(BaseSolver):
             global_solution = torch.full((self.instance.size,), -1)
             qubo_mat = self.instance.coefficients.clone()
             dist_matrix = compute_distance_interaction_matrix(
-                self.device._pulser_device,
                 qubo_mat,
                 neglecting_inter_distance=self.decomposition_config.neglecting_inter_distance,
                 neglecting_max_coefficient=self.decomposition_config.neglecting_max_coefficient,
@@ -378,19 +378,24 @@ class DecomposeQuboSolver(BaseSolver):
                 # random works better according to some performed numerics
                 # sort to have reproducibility when setting the seed
                 first_vertex_search = random.choice(sorted(dict_vertices_to_place.keys()))
+
+                min_distance = np.max(np.triu(qubo_mat, k=1)) ** (-1/6)
+                max_radial_distance = min_distance * self.config.max_min_dist_ratio # TODO what if infinity
+
                 placed_vertices = geometric_search(
                     qubo_mat,
                     dict_vertices_to_place,
                     first_vertex_search,
                     self.decomposition_config.decompose_threshold,
-                    self.device._pulser_device,
+                    min_distance=min_distance,
+                    max_radial_distance=max_radial_distance,
                 )
                 if len(placed_vertices) <= self.decomposition_config.decompose_break_placement:
                     break
                 self.number_iterations += 1
 
                 matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(
-                    placed_vertices, self.device._pulser_device
+                    placed_vertices
                 )
                 qubo = QUBOInstance(matrix_to_solve)
                 subsolver = self._solver_factory(qubo, self._config_subproblems)
