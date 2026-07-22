@@ -1,6 +1,7 @@
 import dataclasses
 
-from qubosolver.config import SolverConfig, compiler_profile, max_duration_ratio
+from qubosolver.config import SolverConfig, max_duration_ratio
+from qoolqit.execution.compilation_functions import CompilerProfile
 from qoolqit import Device, QuantumProgram, Drive, Register
 
 
@@ -31,5 +32,5 @@ def create_compiled_program(device: Device, config: SolverConfig, drive: Drive, 
         )
 
     program.compile_to(
-        device, profile=compiler_profile(config), device_max_duration_ratio=max_duration_ratio(device))
+        device, profile=CompilerProfile.MAX_ENERGY, device_max_duration_ratio=max_duration_ratio(device))
     return program

@@ -69,7 +69,7 @@ class BLaDEmbedder(BaseEmbedder):
     BLaDE jointly optimises atom positions to match the logical adjacency
     structure of the QUBO graph with the physical Rydberg interaction matrix.
     Configuration is taken from ``config.max_min_dist_ratio`` and
-    ``config.embedding`` (BLaDe-specific fields:
+    ``config.embedding`` (BLaDE-specific fields:
     ``blade_steps_per_round``, ``blade_starting_positions``,
     ``blade_dimensions``).
     """
@@ -175,7 +175,8 @@ class GreedyEmbedder(BaseEmbedder):
             max_possible_term = self.config.embedding.greedy_max_possible_term
         else:
             kind, max_possible_term_factor = self.config.embedding.greedy_max_possible_term
-            assert kind == 'factor'
+            if kind != 'factor':
+                raise ValueError('When it is a tuple, the first value of `greedy_max_possible_term` must be \'factor\'')
             max_possible_term = self.instance._max_off_diag * max_possible_term_factor
 
         spacing = max_possible_term ** (-1/6)

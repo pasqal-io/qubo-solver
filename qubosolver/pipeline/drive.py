@@ -15,7 +15,7 @@ from qubosolver import concepts
 
 
 from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, compiler_profile, max_duration_ratio
+from qubosolver.config import SolverConfig
 from qubosolver.data import QUBOSolution
 from qubosolver.pipeline.program import create_compiled_program
 from qubosolver.qubo_types import DriveType

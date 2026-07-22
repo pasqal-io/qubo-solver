@@ -434,13 +434,14 @@ def cost_interaction_point_continuous(
         pos_new (list[float]): Input position.
         placed_points (list[tuple[float, float]]): Placed points.
         Q_target (list[float]): Weights.
-        blocked_edges (list): List of blocked indices.
+        blocked_indices (list): List of blocked indices.
+        min_distance (float): Minimum distance to set between the points.
+        max_radial_distance (float): Maximum distance to set between each
+            each point and the origin.
 
     Returns:
         float: Cost evaluation.
     """
-
-    global debug_bfgs
 
     cost = 0.0
     epsilon = 1e-8 * AnalogDeviceWithDMM()._device.interaction_coeff**(-1/3)
@@ -470,8 +471,6 @@ def cost_interaction_point_continuous(
         if dist < min_distance:
             cost += penalty_coeff * (1 + min_distance - dist)
 
-    debug_bfgs.append((pos_new, cost))
-
     return cost
 
 
@@ -492,6 +491,9 @@ def bfgs_placement(
         placed_vertices (dict[int, WeightedZone]): Placed vertices.
         matrix (torch.Tensor): qubo matrix.
         dict_vertices_to_place (dict): Vertices to place.
+        min_distance (float): Minimum distance to set between the points.
+        max_radial_distance (float): Maximum distance to set between each
+            each point and the origin.
 
     Returns:
         OptimizeResult: Result of BFGS.
@@ -510,9 +512,6 @@ def bfgs_placement(
         counter = counter + 1
 
     init_guess = random_point_in_geometry(final_intersection)
-
-    global debug_bfgs
-    debug_bfgs = []
 
     return minimize(
         cost_interaction_point_continuous,
@@ -534,8 +533,7 @@ def check_limit_zone(final_point: Point, max_radial_distance: float) -> bool:
     """
 
     center_poly = Point(0, 0)
-    r = max_radial_distance
-    limit_zone = center_poly.buffer(r)
+    limit_zone = center_poly.buffer(max_radial_distance)
     return bool(limit_zone.contains(final_point))
 
 

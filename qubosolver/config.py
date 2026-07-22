@@ -10,7 +10,6 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator, mo
 
 from qoolqit.devices.device import Device, AnalogDeviceWithDMM
 from qoolqit.execution import QPU
-from qoolqit.execution.compilation_functions import CompilerProfile
 from pulser_pasqal import PasqalCloud
 
 from qubosolver.qubo_types import (
@@ -188,9 +187,10 @@ class EmbeddingConfig(Config):
         animation_save_path (str | None, optional): If provided, path to save animation.
             Defaults to None.
         max_min_dist_ratio: (float | None): Maximum ratio between the
-            maximum radial distance and the minimum pairwise distance. None
+            maximum radial distance and the minimum pairwise distance. 'device'
             means that it will take the value from the device if it exists.
-            Defaults to None.
+            The value can be infinite.
+            Defaults to 'device'.
     """
 
     embedding_method: Any = EmbedderType.GREEDY
@@ -203,7 +203,7 @@ class EmbeddingConfig(Config):
     blade_dimensions: list[int] = field(default_factory=lambda: [5, 4, 3, 2, 2, 2])
     draw_steps: bool = False
     animation_save_path: str | None = None
-    max_min_dist_ratio: float = torch.inf
+    max_min_dist_ratio: float | Literal['device'] = 'device'
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
@@ -405,7 +405,7 @@ class DecompositionConfig(Config):
     decompose_stop_number: int = 15
     decompose_break_placement: int = 3
     neglecting_inter_distance: float = 1.5
-    neglecting_max_coefficient: float = 1.0 # threshold to make relative
+    neglecting_max_coefficient: float = 1.0
 
 
 class SolverConfig(Config):
@@ -457,10 +457,12 @@ class SolverConfig(Config):
     
     @property
     def max_min_dist_ratio(self) -> float:
+        if self.embedding.max_min_dist_ratio != 'device':
+            return self.embedding.max_min_dist_ratio
         specs = self.device.specs
         if specs['min_distance'] > 0 and specs['max_radial_distance'] is not None:
             return specs['max_radial_distance'] / specs['min_distance']
-        return self.embedding.max_min_dist_ratio
+        return torch.inf
 
     def specs(self) -> str:
         """Return the specs of the `SolverConfig`, that is all attributes.
@@ -516,19 +518,6 @@ class SolverConfig(Config):
             solver_fields["decompose"] = DecompositionConfig.model_validate(decompose_fields)
 
         return cls.model_validate(solver_fields)
-
-
-def compiler_profile(config: SolverConfig) -> CompilerProfile:
-    """Determines the appropriate compiler profile based on the drive shaping method.
-
-    Args:
-        config (SolverConfig): The solver configuration to inspect.
-
-    Returns:
-        CompilerProfile: `CompilerProfile.WORKING_POINT` for the optimized drive
-            shaper, `CompilerProfile.MAX_ENERGY` otherwise.
-    """
-    return CompilerProfile.MAX_ENERGY
 
 
 def max_duration_ratio(device: Device) -> float | None:

@@ -12,8 +12,6 @@ import pytest
 import pytest_check as check
 
 
-
-
 def triangular_qubo() -> torch.Tensor:
     return torch.tensor(
         [
@@ -224,7 +222,7 @@ def test_too_large_spacing(too_large: str, relative_noise: float, device: BaseDe
             [1.0 / 64.0, 1.0 / 125.0, 0.0],
         ],
         dtype=torch.float32,
-    ) * (1.0 + relative_noise) #* (1 / spacing**6)
+    ) * (1.0 + relative_noise)
 
     # Tailored right triangle. With a correct spacing (e.g. 7.0):
     #   - Vertex 0 is at the origin
