@@ -19,6 +19,17 @@ from qubosolver.pipeline import (
     get_embedder,
     get_drive_shaper,
 )
+from qubosolver.algorithms.decompose import (
+    compute_distance_interaction_matrix,
+    geometric_search,
+    interaction_matrix_from_placed,
+    last_target_matrix,
+    transfer_edge_values,
+    update_global_solution,
+    vertices_to_place,
+    positive_vertices_update,
+    compute_max_min_distances,
+)
 
 # Modules to be automatically added to the qubosolver namespace
 __all__: list[str] = ["QuboSolver"]
@@ -339,17 +350,6 @@ class DecomposeQuboSolver(BaseSolver):
             return solver.solve()
 
         else:
-            from qubosolver.algorithms.decompose import (
-                compute_distance_interaction_matrix,
-                geometric_search,
-                interaction_matrix_from_placed,
-                last_target_matrix,
-                transfer_edge_values,
-                update_global_solution,
-                vertices_to_place,
-                positive_vertices_update,
-            )
-
             self._decomposition = []
 
             global_solution = torch.full((self.instance.size,), -1)
@@ -379,8 +379,7 @@ class DecomposeQuboSolver(BaseSolver):
                 # sort to have reproducibility when setting the seed
                 first_vertex_search = random.choice(sorted(dict_vertices_to_place.keys()))
 
-                min_distance = np.max(np.triu(qubo_mat, k=1)) ** (-1/6)
-                max_radial_distance = min_distance * self.config.max_min_dist_ratio # TODO what if infinity
+                min_distance, max_radial_distance = compute_max_min_distances(qubo_mat, max_min_dist_ratio=self.config.max_min_dist_ratio)
 
                 placed_vertices = geometric_search(
                     qubo_mat,

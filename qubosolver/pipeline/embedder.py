@@ -96,11 +96,13 @@ class BLaDEmbedder(BaseEmbedder):
         else:
             starting_positions = None
 
+        max_min_dist_ratio = self.config.max_min_dist_ratio if self.config.max_min_dist_ratio != torch.inf else None
+
         config = BladeConfig(
             steps_per_round=step_per_round,
             starting_positions=starting_positions,
             dimensions=tuple(embed_config.blade_dimensions),
-            max_min_dist_ratio=self.config.max_min_dist_ratio,
+            max_min_dist_ratio=max_min_dist_ratio,
         )
 
         _blade = Blade(config)

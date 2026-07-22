@@ -15,7 +15,7 @@ from qubosolver import QUBOInstance
 from qubosolver.config import SolverConfig, DecompositionConfig, EmbeddingConfig
 from qubosolver.solver import DecomposeQuboSolver, QuboSolver
 from qubosolver.data import QUBODataset
-from qubosolver.algorithms.decompose import compute_distance_interaction_matrix
+from qubosolver.algorithms.decompose import compute_distance_interaction_matrix, compute_max_min_distances
 
 
 @pytest.mark.priority(120)
@@ -81,13 +81,16 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     config_subproblems = config.model_copy(update={"decompose": False})
     first_vertex = 0
 
+    pulser_device = solver._solver.device._pulser_device
+    min_distance, max_radial_distance = compute_max_min_distances(qubo_mat, max_min_dist_ratio=pulser_device.max_radial_distance / pulser_device.min_atom_distance)
+
     placed_vertices = geometric_search(
         qubo_mat,
         current_vertices_dict,
         first_vertex,
         decompose_config.decompose_threshold,
-        min_distance=solver._solver.device._pulser_device.min_atom_distance,
-        max_radial_distance=solver._solver.device._pulser_device.max_radial_distance,
+        min_distance=min_distance,
+        max_radial_distance=max_radial_distance,
     )
     assert len(placed_vertices) <= size
 

@@ -24,7 +24,12 @@ VertexToPlace = TypedDict(
     },
 )
 
-rectification_factor = AnalogDeviceWithDMM()._device.interaction_coeff**(-1/6)
+def compute_max_min_distances(interactions: torch.Tensor, *, max_min_dist_ratio: float) -> tuple[float, float]:
+    if max_min_dist_ratio == torch.inf:
+        return 0, torch.inf
+    min_distance = float(np.max(np.triu(interactions, k=1)) ** (-1/6))
+    max_radial_distance = min_distance * max_min_dist_ratio
+    return min_distance, max_radial_distance
 
 
 class WeightedZone:
@@ -66,8 +71,8 @@ class WeightedZone:
 
 def compute_distance_interaction_matrix(
     qubo_matrix: torch.Tensor,
-    neglecting_inter_distance: float = 15.0 * rectification_factor, # TODO value to make relative
-    neglecting_max_coefficient: float = 1.0, # TODO value to make relative
+    neglecting_inter_distance: float = 1.5,
+    neglecting_max_coefficient: float = 1.0,
 ) -> torch.Tensor:
     """Compute the matrix of interaction distances.
 
@@ -115,7 +120,7 @@ def compute_distance_interaction_matrix(
 def vertices_to_place(
     dist_matrix: torch.Tensor,
     qubo_matrix: torch.Tensor,
-    separation_threshold: float = 15.0 * rectification_factor, # TODO value to make relative
+    separation_threshold: float = 1.5,
 ) -> dict[int, VertexToPlace]:
     """Obtain the dictionary of vertices to place
     (i.e., qubo variables to still consider for solving subproblems)
@@ -151,8 +156,8 @@ def vertices_to_place(
         separated_vertices = torch.argwhere(torch.eq(distances, separation_threshold))
         separated_vertices = separated_vertices[separated_vertices != i]
 
-        # 0.1 is an arbitrary value to consider them neighbor.
-        neighbors = torch.argwhere((distances > 0.1 * rectification_factor) & (distances < separation_threshold)) # TODO value 0.1 to make relative
+        # 1e-2 is an arbitrary value to consider them neighbor.
+        neighbors = torch.argwhere((distances > 1e-2) & (distances < separation_threshold))
         neighbors = neighbors[neighbors != i]
 
         vertices_dict[i] = {
@@ -438,7 +443,7 @@ def cost_interaction_point_continuous(
     global debug_bfgs
 
     cost = 0.0
-    epsilon = 1e-6 * AnalogDeviceWithDMM()._device.interaction_coeff**(-1/3) #rectification_factor # TODO value to make relative
+    epsilon = 1e-8 * AnalogDeviceWithDMM()._device.interaction_coeff**(-1/3)
     for i, (xi, yi) in enumerate(placed_points):
         dx = pos_new[0] - xi
         dy = pos_new[1] - yi
@@ -549,7 +554,7 @@ def check_prohibited_zones(placed_vertices: dict[int, WeightedZone], final_point
         if placed_vertices[key].forbidden_zone.contains(final_point):
             return False
 
-        if final_point.buffer(5.1 * rectification_factor).contains(Point(placed_vertices[key].x, placed_vertices[key].y)): # TODO value to make relative
+        if final_point.buffer(0.51).contains(Point(placed_vertices[key].x, placed_vertices[key].y)):
             return False
     return checker
 

@@ -20,7 +20,6 @@ from qubosolver.qubo_types import (
     ClassicalSolverType,
 )
 from qubosolver.backends import LocalEmulator, RemoteEmulator
-from qubosolver.algorithms.decompose import rectification_factor
 
 # Allow torch.Tensor fields in Pydantic models.
 BaseModel.model_config["arbitrary_types_allowed"] = True
@@ -206,7 +205,7 @@ class EmbeddingConfig(Config):
     blade_dimensions: list[int] = field(default_factory=lambda: [5, 4, 3, 2, 2, 2])
     draw_steps: bool = False
     animation_save_path: str | None = None
-    max_min_dist_ratio: float | None = None
+    max_min_dist_ratio: float = torch.inf
     min_distance: float | None = None # TODO removal in progress
 
     @model_serializer(mode="plain")
@@ -405,10 +404,10 @@ class DecompositionConfig(Config):
             we consider an interaction is neglecting.
     """
 
-    decompose_threshold: float = 25.0 / rectification_factor # threshold to make relative
+    decompose_threshold: float = 250
     decompose_stop_number: int = 15
     decompose_break_placement: int = 3
-    neglecting_inter_distance: float = 15.0 * rectification_factor # threshold to make relative
+    neglecting_inter_distance: float = 1.5
     neglecting_max_coefficient: float = 1.0 # threshold to make relative
 
 
@@ -460,7 +459,7 @@ class SolverConfig(Config):
         return self.config_name
     
     @property
-    def max_min_dist_ratio(self) -> float | None:
+    def max_min_dist_ratio(self) -> float:
         specs = self.device.specs
         if specs['min_distance'] > 0 and specs['max_radial_distance'] is not None:
             return specs['max_radial_distance'] / specs['min_distance']
