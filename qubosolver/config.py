@@ -6,7 +6,7 @@ from dataclasses import field
 from typing import Any, Callable, Literal
 
 import torch
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator, model_serializer
+from pydantic import BaseModel, ConfigDict, field_validator, model_serializer
 
 from qoolqit.devices.device import Device, AnalogDeviceWithDMM
 from qoolqit.execution import QPU
@@ -196,14 +196,14 @@ class EmbeddingConfig(Config):
     embedding_method: Any = EmbedderType.GREEDY
     greedy_layout: LayoutType | str = LayoutType.TRIANGULAR
     greedy_traps: int = -1
-    greedy_max_possible_term: float | tuple[Literal['factor'], float] = ('factor', 1.0)
+    greedy_max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
     greedy_density: float | None = None
     blade_steps_per_round: int | None = 200
     blade_starting_positions: torch.Tensor | None = None
     blade_dimensions: list[int] = field(default_factory=lambda: [5, 4, 3, 2, 2, 2])
     draw_steps: bool = False
     animation_save_path: str | None = None
-    max_min_dist_ratio: float | Literal['device'] = 'device'
+    max_min_dist_ratio: float | Literal["device"] = "device"
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
@@ -454,14 +454,14 @@ class SolverConfig(Config):
 
     def __repr__(self) -> str:
         return self.config_name
-    
+
     @property
     def max_min_dist_ratio(self) -> float:
-        if self.embedding.max_min_dist_ratio != 'device':
+        if self.embedding.max_min_dist_ratio != "device":
             return self.embedding.max_min_dist_ratio
         specs = self.device.specs
-        if specs['min_distance'] > 0 and specs['max_radial_distance'] is not None:
-            return specs['max_radial_distance'] / specs['min_distance']
+        if specs["min_distance"] > 0 and specs["max_radial_distance"] is not None:
+            return specs["max_radial_distance"] / specs["min_distance"]
         return torch.inf
 
     def specs(self) -> str:

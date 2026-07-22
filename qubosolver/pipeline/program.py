@@ -5,7 +5,9 @@ from qoolqit.execution.compilation_functions import CompilerProfile
 from qoolqit import Device, QuantumProgram, Drive, Register
 
 
-def create_compiled_program(device: Device, config: SolverConfig, drive: Drive, embedding: Register) -> QuantumProgram:
+def create_compiled_program(
+    device: Device, config: SolverConfig, drive: Drive, embedding: Register
+) -> QuantumProgram:
     """
     Create a compiled QuantumProgram from the drive and embedding.
 
@@ -32,5 +34,8 @@ def create_compiled_program(device: Device, config: SolverConfig, drive: Drive, 
         )
 
     program.compile_to(
-        device, profile=CompilerProfile.MAX_ENERGY, device_max_duration_ratio=max_duration_ratio(device))
+        device,
+        profile=CompilerProfile.MAX_ENERGY,
+        device_max_duration_ratio=max_duration_ratio(device),
+    )
     return program

@@ -24,10 +24,13 @@ VertexToPlace = TypedDict(
     },
 )
 
-def compute_max_min_distances(interactions: torch.Tensor, *, max_min_dist_ratio: float) -> tuple[float, float]:
+
+def compute_max_min_distances(
+    interactions: torch.Tensor, *, max_min_dist_ratio: float
+) -> tuple[float, float]:
     if max_min_dist_ratio == torch.inf:
         return 0, torch.inf
-    min_distance = float(np.max(np.triu(interactions, k=1)) ** (-1/6))
+    min_distance = float(np.max(np.triu(interactions, k=1)) ** (-1 / 6))
     max_radial_distance = min_distance * max_min_dist_ratio
     return min_distance, max_radial_distance
 
@@ -57,7 +60,7 @@ class WeightedZone:
         self.weight = weight
 
         self.radius1 = min_distance
-        self.radius2 = (-weight) ** (-1/6)
+        self.radius2 = (-weight) ** (-1 / 6)
 
         self.radius3 = 15.0
 
@@ -107,7 +110,7 @@ def compute_distance_interaction_matrix(
     )
 
     def rydberg_blockade_radius(x: float) -> float:
-        return x ** (-1/6)
+        return x ** (-1 / 6)
 
     if cond.any():
         # set value to rydberg_blockade_radius
@@ -444,7 +447,7 @@ def cost_interaction_point_continuous(
     """
 
     cost = 0.0
-    epsilon = 1e-8 * AnalogDeviceWithDMM()._device.interaction_coeff**(-1/3)
+    epsilon = 1e-8 * AnalogDeviceWithDMM()._device.interaction_coeff ** (-1 / 3)
     for i, (xi, yi) in enumerate(placed_points):
         dx = pos_new[0] - xi
         dy = pos_new[1] - yi
@@ -462,7 +465,7 @@ def cost_interaction_point_continuous(
         else:
             cost += diff**2
 
-    penalty_coeff = sum([coeff ** 2 for coeff in Q_target])
+    penalty_coeff = sum([coeff**2 for coeff in Q_target])
     if np.linalg.norm(pos_new) > max_radial_distance:
         cost += penalty_coeff * (1 + np.linalg.norm(pos_new) - max_radial_distance)
 
@@ -817,7 +820,7 @@ def interaction_matrix_from_placed(
                     value2.x,
                     value2.y,
                 )
-                mat[map_index_vertices[key]][map_index_vertices[key2]] = 1 / dist ** 6
+                mat[map_index_vertices[key]][map_index_vertices[key2]] = 1 / dist**6
             else:
                 mat[map_index_vertices[key]][map_index_vertices[key]] = value.weight
 

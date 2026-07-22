@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pulser.register.special_layouts import SquareLatticeLayout, TriangularLatticeLayout
 
 
 class StrEnum(str, Enum):

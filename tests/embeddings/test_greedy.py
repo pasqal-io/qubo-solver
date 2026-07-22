@@ -130,7 +130,9 @@ def test_triangular_qubo(traps: int, relative_noise: float, max_min_dist_ratio: 
 @pytest.mark.parametrize("traps", [1, 2, 6, 9])
 @pytest.mark.parametrize("layout", [LayoutType.SQUARE, "square"])
 @pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
-def test_square_qubo(traps: int, layout: LayoutType | str, relative_noise: float, max_min_dist_ratio: float) -> None:
+def test_square_qubo(
+    traps: int, layout: LayoutType | str, relative_noise: float, max_min_dist_ratio: float
+) -> None:
 
     spacing = 7.0
 
@@ -186,8 +188,9 @@ def test_square_qubo(traps: int, layout: LayoutType | str, relative_noise: float
 
 @pytest.mark.parametrize("too_large", ["no", "barely", "extremely"])
 @pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
-
-def test_too_large_spacing(too_large: str, relative_noise: float, device: BaseDevice, max_min_dist_ratio: float) -> None:
+def test_too_large_spacing(
+    too_large: str, relative_noise: float, device: BaseDevice, max_min_dist_ratio: float
+) -> None:
     # A square layout of size 25 is composed of two concentric squares of side
     # 2*spacing and 4*spacing, plus the origin.
     layout = LayoutType.SQUARE

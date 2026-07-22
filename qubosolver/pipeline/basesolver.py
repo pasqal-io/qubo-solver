@@ -92,7 +92,6 @@ class BaseSolver(ABC):
         """
         pass
 
-
     def submit(self, drive: Drive, embedding: Register) -> Job:
         """Compile and submit a quantum program to the backend.
 
@@ -107,7 +106,9 @@ class BaseSolver(ABC):
         Returns:
             Job: A job handle for retrieving results.
         """
-        program = create_compiled_program(device=self.device, config=self.config, drive=drive, embedding=embedding)
+        program = create_compiled_program(
+            device=self.device, config=self.config, drive=drive, embedding=embedding
+        )
 
         return self.backend.run(program)
 
@@ -169,7 +170,9 @@ class BaseSolver(ABC):
             embedding (Register): embedding program is defined over.
         """
         if self.config.use_quantum:
-            program = create_compiled_program(device=self.device, config=self.config, drive=drive, embedding=embedding)
+            program = create_compiled_program(
+                device=self.device, config=self.config, drive=drive, embedding=embedding
+            )
             program.draw(compiled=True)
 
     def _trivial_solution(self) -> Optional[QUBOSolution]:

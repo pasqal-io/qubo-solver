@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 import torch
-from qoolqit.devices.device import AnalogDeviceWithDMM
 
 from qubosolver.algorithms.greedy.greedy import Greedy
 from qubosolver.algorithms.greedy.layout import LayoutType
@@ -42,7 +41,9 @@ def test_greedy_coords_shape_no_animation() -> None:
     params["draw_steps"] = False
     params["animation"] = False
 
-    _, coords = Greedy().launch_greedy(Q=Q, params=params, max_min_dist_ratio=params["max_min_dist_ratio"])
+    _, coords = Greedy().launch_greedy(
+        Q=Q, params=params, max_min_dist_ratio=params["max_min_dist_ratio"]
+    )
 
     assert isinstance(coords, torch.Tensor)
     assert tuple(coords.shape) == (n, 2)
@@ -86,6 +87,6 @@ def test_greedy_animation_calls_renderer(monkeypatch: Any) -> None:
     # 2) Remplacer le renderer par un stub inoffensif
     monkeypatch.setattr(Greedy, "_render_animation", _fake_render, raising=True)
 
-    Greedy().launch_greedy(Q=Q, params=params, max_min_dist_ratio=params['max_min_dist_ratio'])
+    Greedy().launch_greedy(Q=Q, params=params, max_min_dist_ratio=params["max_min_dist_ratio"])
 
     assert called["count"] >= 1

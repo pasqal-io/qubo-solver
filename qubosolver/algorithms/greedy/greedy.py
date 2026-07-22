@@ -65,9 +65,7 @@ class Greedy:
     # ----------------------------
     # Precompute mismatch tensor
     # ----------------------------
-    def precompute_coefficients(
-        self, Q: torch.Tensor, coordinates: torch.Tensor
-    ) -> torch.Tensor:
+    def precompute_coefficients(self, Q: torch.Tensor, coordinates: torch.Tensor) -> torch.Tensor:
         """
         Precompute Z[i,j,p,q] = | Q[i,j] - U[p,q] | where U[p,q] is the
         physical interaction between traps p and q (C / r^6).
@@ -79,10 +77,7 @@ class Greedy:
         U = torch.zeros((n_traps, n_traps), dtype=torch.float32)
         for p in range(n_traps):
             for q in range(p + 1, n_traps):
-                U[p, q] = (
-                    1
-                    / torch.norm(coordinates[p] - coordinates[q]) ** 6
-                )
+                U[p, q] = 1 / torch.norm(coordinates[p] - coordinates[q]) ** 6
                 U[q, p] = U[p, q]
 
         # Z: node-node vs trap-trap mismatch
@@ -347,10 +342,7 @@ class Greedy:
         diff = 0.0
         for i in range(Q.shape[0]):
             for j in range(i + 1, Q.shape[0]):
-                uij = (
-                    1
-                    / torch.norm(final_coords[i] - final_coords[j]) ** 6
-                )
+                uij = 1 / torch.norm(final_coords[i] - final_coords[j]) ** 6
                 diff += abs(Q[i, j] - uij)
 
         results[v] = {"coords": final_coords, "distance": diff}
@@ -672,10 +664,19 @@ class Greedy:
         else:
             cb = None
 
-        max_radial_distance = max_min_dist_ratio * float(params['spacing'])
+        max_radial_distance = max_min_dist_ratio * float(params["spacing"])
 
         for node in nodes:
-            self.greedy_algorithm(Z, Q, coords=predefined_coordinates, v=node, results=results, params=params, on_step=cb, max_radial_distance=max_radial_distance)
+            self.greedy_algorithm(
+                Z,
+                Q,
+                coords=predefined_coordinates,
+                v=node,
+                results=results,
+                params=params,
+                on_step=cb,
+                max_radial_distance=max_radial_distance,
+            )
 
         best_result = min(results.items(), key=lambda x: x[1]["distance"])
         coords = best_result[1]["coords"]

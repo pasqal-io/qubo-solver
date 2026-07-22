@@ -7,7 +7,6 @@ import torch
 import random
 
 from qoolqit import Register, Drive
-import numpy as np
 
 from qubosolver.qubo_instance import QUBOInstance
 from qubosolver.data import QUBOSolution
@@ -379,7 +378,9 @@ class DecomposeQuboSolver(BaseSolver):
                 # sort to have reproducibility when setting the seed
                 first_vertex_search = random.choice(sorted(dict_vertices_to_place.keys()))
 
-                min_distance, max_radial_distance = compute_max_min_distances(qubo_mat, max_min_dist_ratio=self.config.max_min_dist_ratio)
+                min_distance, max_radial_distance = compute_max_min_distances(
+                    qubo_mat, max_min_dist_ratio=self.config.max_min_dist_ratio
+                )
 
                 placed_vertices = geometric_search(
                     qubo_mat,

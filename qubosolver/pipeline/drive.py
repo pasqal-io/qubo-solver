@@ -9,7 +9,7 @@ from skopt import gp_minimize
 import math
 import warnings
 
-from qoolqit import Register, QuantumProgram, Drive, Device
+from qoolqit import Register, Drive, Device
 from qoolqit.waveforms import Interpolated as InterpolatedWaveform
 from qubosolver import concepts
 
@@ -305,7 +305,7 @@ class HeuristicDriveShaper(BaseDriveShaper):
             max_amplitude = specs["max_amplitude"]
             max_abs_detuning = specs["max_abs_detuning"]
 
-            det_amp_ratio = max_amplitude / max_abs_detuning # type: ignore
+            det_amp_ratio = max_amplitude / max_abs_detuning  # type: ignore
             if kappa < det_amp_ratio:
                 warnings.warn(
                     f"heuristic_kappa is too small ({kappa}), you're likely to get a qoolqit CompilationError. Set it above {det_amp_ratio}."
@@ -619,7 +619,9 @@ class OptimizedDriveShaper(BaseDriveShaper):
             tuple: tuple of (bitstrings, counts, probabilities, costs, best cost, best bitstring)
         """
         try:
-            program = create_compiled_program(device=self.device, config=self.config, drive=drive, embedding=register)
+            program = create_compiled_program(
+                device=self.device, config=self.config, drive=drive, embedding=register
+            )
             job = self.backend.run(program)
             bitstring_counts = job.results().final_bitstrings
 

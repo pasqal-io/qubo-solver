@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import pytest
-import torch
 
-import numpy as np
-from qoolqit.devices import Device, AnalogDeviceWithDMM, AnalogDevice, DigitalAnalogDevice
+from qoolqit.devices import Device, AnalogDeviceWithDMM, AnalogDevice
 from qubosolver import QUBOInstance
 from qubosolver.config import (
     EmbeddingConfig,

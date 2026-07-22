@@ -5,7 +5,7 @@ import pytest
 import pytest_check as check
 import torch
 
-from qoolqit import Drive, Ramp, Register, Constant, DigitalAnalogDevice
+from qoolqit import DigitalAnalogDevice
 from qubosolver import QUBOInstance, QUBOSolution
 from qubosolver.qubo_analyzer import QUBOAnalyzer
 from qubosolver.config import (
@@ -20,7 +20,6 @@ from qubosolver.pipeline.fixtures import (
 )
 from qubosolver.qubo_types import SolutionStatusType, EmbedderType
 from qubosolver.solver import QuboSolver
-from qubosolver.pipeline.drive import BaseDriveShaper
 
 
 def test_apply_full_and_post_process_fixation() -> None:

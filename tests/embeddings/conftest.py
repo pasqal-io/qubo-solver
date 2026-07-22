@@ -3,6 +3,7 @@ import pytest
 from qoolqit.devices.device import AnalogDeviceWithDMM
 from pulser.devices._device_datacls import BaseDevice
 
+
 @pytest.fixture
 def device() -> BaseDevice:
     return AnalogDeviceWithDMM()._device

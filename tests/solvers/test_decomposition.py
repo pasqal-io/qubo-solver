@@ -12,10 +12,13 @@ from qoolqit.devices import AnalogDeviceWithDMM, DigitalAnalogDevice
 from qoolqit import Register
 from qubosolver import QUBOInstance
 
-from qubosolver.config import SolverConfig, DecompositionConfig, EmbeddingConfig
+from qubosolver.config import SolverConfig, DecompositionConfig
 from qubosolver.solver import DecomposeQuboSolver, QuboSolver
 from qubosolver.data import QUBODataset
-from qubosolver.algorithms.decompose import compute_distance_interaction_matrix, compute_max_min_distances
+from qubosolver.algorithms.decompose import (
+    compute_distance_interaction_matrix,
+    compute_max_min_distances,
+)
 
 
 @pytest.mark.priority(120)
@@ -54,9 +57,7 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     solver = QuboSolver(decomposable_qubo, config)
 
     ## Check the distance interaction matrix matches the qubo matrix
-    dist_matrix = compute_distance_interaction_matrix(
-        qubo_mat
-    )
+    dist_matrix = compute_distance_interaction_matrix(qubo_mat)
     assert dist_matrix.shape == qubo_mat.shape
     assert torch.all(torch.diag(dist_matrix) == torch.diag(qubo_mat))
 
@@ -82,7 +83,10 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     first_vertex = 0
 
     pulser_device = solver._solver.device._pulser_device
-    min_distance, max_radial_distance = compute_max_min_distances(qubo_mat, max_min_dist_ratio=pulser_device.max_radial_distance / pulser_device.min_atom_distance)
+    min_distance, max_radial_distance = compute_max_min_distances(
+        qubo_mat,
+        max_min_dist_ratio=pulser_device.max_radial_distance / pulser_device.min_atom_distance,
+    )
 
     placed_vertices = geometric_search(
         qubo_mat,
@@ -95,9 +99,7 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     assert len(placed_vertices) <= size
 
     # check matrix size correspond to placed_vertices
-    matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(
-        placed_vertices
-    )
+    matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(placed_vertices)
     # If too big, the test will take a long time to run.
     if use_quantum and matrix_to_solve.shape[0] > 13:
         raise RuntimeError(f"Test failed due to large matrix size = {matrix_to_solve.shape[0]}")
