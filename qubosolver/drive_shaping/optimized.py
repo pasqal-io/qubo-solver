@@ -1,5 +1,4 @@
-"""Bayesian-optimised drive schedule generation for QUBO solving.
-"""
+"""Bayesian-optimised drive schedule generation for QUBO solving."""
 
 from __future__ import annotations
 

@@ -25,8 +25,3 @@ def test_solution_not_mutated() -> None:
     check.equal(len(new_solution2), 1)
     check.equal(new_solution2[0].string, "01")
     check.is_not(new_solution2, new_solution)
-
-
-
-
-

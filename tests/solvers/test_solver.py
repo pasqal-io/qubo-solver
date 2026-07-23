@@ -78,9 +78,7 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
 
 @pytest.mark.priority(40)
 @pytest.mark.flaky(max_runs=5)
-def test_run_local_backends(
-    simple_qubo_instance: Instance, local_backend: LocalEmulator
-) -> None:
+def test_run_local_backends(simple_qubo_instance: Instance, local_backend: LocalEmulator) -> None:
     solver = Solver(
         simple_qubo_instance,
         SolverConfig(

@@ -1,3 +1,37 @@
+"""Variable-fixing transforms for QUBO problem reduction.
+
+Variable fixing eliminates variables from a QUBO instance before solving by
+proving, from the structure of the objective matrix alone, that certain
+variables must be 0 or 1 in any optimal solution.  Reducing the problem size
+this way can significantly cut the resources required by the solver.
+
+The module exposes four public entry points:
+
+* `hansen_fixing` — a single-pass fixation rule based on Hansen's bounding
+  criterion: for each variable the diagonal element and off-diagonal
+  interaction terms are used to derive lower and upper bounds on the objective
+  contribution of that variable.
+* `apply` — run one pass of an ordered sequence of :data:`Rule` callables over
+  a QUBO instance and return a reduced :class:`Instance`.
+* `apply_recursively` — repeat `apply` until no further variables can be
+  fixed.
+* `unapply` — given a solution to the reduced problem, reinsert all fixed
+  variables and evaluate costs against the original QUBO matrix.
+
+The :class:`Instance` subclass carries the full fixation history (one
+``dict[int, int]`` per reduction round) alongside a reference to the
+unreduced parent instance, so that `unapply` can faithfully reconstruct
+full-length solutions.
+
+Typical usage::
+
+    import qubosolver.transforms.variable_fixing as vf
+
+    reduced = vf.apply_recursively(qubo_instance)
+    raw_solution = solver.solve(reduced)
+    full_solution = vf.unapply(raw_solution, reduced)
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence

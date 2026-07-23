@@ -96,6 +96,7 @@ class Solver(BaseSolver):
 QuboSolver: TypeAlias = Solver
 """Alias for [`Solver`][qubosolver.Solver]."""
 
+
 class _QuboSolverQuantum(BaseSolver):
     """Quantum QUBO solver using embedding, drive shaping, and analog sampling.
 
@@ -385,9 +386,7 @@ class _DecomposeQuboSolver(BaseSolver):
             from qubosolver.transforms import _decompositions
 
             config = _decompositions.Config.from_decomposition_config(self.decomposition_config)
-            decomposed_qubo = _decompositions.Instance(
-                self.instance, self.device, config=config
-            )
+            decomposed_qubo = _decompositions.Instance(self.instance, self.device, config=config)
             solution = Solution()
 
             while len(decomposed_qubo._vertices_to_place) > config.decompose_stop_number:

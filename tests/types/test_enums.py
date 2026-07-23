@@ -4,6 +4,7 @@ import pytest_check as check
 
 from qubosolver import ClassicalSolverType
 
+
 def test_str_enum_type() -> None:
     enum_type: ClassicalSolverType = ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH
     check.is_instance(enum_type, ClassicalSolverType)

@@ -30,9 +30,7 @@ def device() -> torch.device:
     return linalg.device()
 
 
-def zeros(
-    n: int, *, dtype: torch.dtype = dtype(), device: torch.device = device()
-) -> Matrix:
+def zeros(n: int, *, dtype: torch.dtype = dtype(), device: torch.device = device()) -> Matrix:
     """Creates a zero-filled square matrix of shape ``(n, n)``.
 
     Args:

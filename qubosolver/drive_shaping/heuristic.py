@@ -1,6 +1,4 @@
-"""Heuristic drive schedule generation for QUBO solving.
-
-"""
+"""Heuristic drive schedule generation for QUBO solving."""
 
 from __future__ import annotations
 

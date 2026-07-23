@@ -11,6 +11,7 @@ Typical usage:
     analyzer.calculate_gaps(opt_cost=-42.0)
     analyzer.plot(x_axis="bitstrings", y_axis="costs", top_percent=0.1)
 """
+
 from __future__ import annotations
 
 import pandas as pd

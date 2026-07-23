@@ -3,6 +3,7 @@
 Provides `tabu_search`, a single-neighbourhood tabu search that
 explores bit-flip moves in parallel across multiple starting points.
 """
+
 from __future__ import annotations
 
 import time

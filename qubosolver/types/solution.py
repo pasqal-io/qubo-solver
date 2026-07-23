@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import torch
 from collections.abc import Iterator
-from typing_extensions import Self, deprecated, TypeAlias
+from typing_extensions import Self
 
 from ._checks import debug_runtime_typecheck
 from . import vector, vectori

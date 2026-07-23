@@ -23,10 +23,10 @@ from qubosolver import (
     QUBODataset,
 )
 
-
 # ---------------------------------------------------------------------------
 # Qubo* TypeAlias tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize(
     "alias, canonical",
@@ -54,6 +54,7 @@ def test_qubo_alias_is_canonical(alias: type, canonical: type) -> None:
 # Deprecated QUBO* class tests – each triggers a DeprecationWarning
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize(
     "deprecated_cls, canonical, match_msg",
     [
@@ -62,9 +63,7 @@ def test_qubo_alias_is_canonical(alias: type, canonical: type) -> None:
     ],
     ids=["QUBOSolution", "QUBOInstance"],
 )
-def test_deprecated_class_warns(
-    deprecated_cls: type, canonical: type, match_msg: str
-) -> None:
+def test_deprecated_class_warns(deprecated_cls: type, canonical: type, match_msg: str) -> None:
     """Instantiating a QUBO* deprecated class must emit a DeprecationWarning."""
     with pytest.warns(DeprecationWarning, match=match_msg):
         obj = deprecated_cls()

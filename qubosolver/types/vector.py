@@ -33,9 +33,7 @@ def device() -> torch.device:
     return linalg.device()
 
 
-def zeros(
-    n: int, *, dtype: torch.dtype = dtype(), device: torch.device = device()
-) -> Vector:
+def zeros(n: int, *, dtype: torch.dtype = dtype(), device: torch.device = device()) -> Vector:
     """Creates a zero-filled 1-D vector of length *n*.
 
     Args:

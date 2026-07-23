@@ -166,9 +166,9 @@ class Instance:
 
 # Density classification thresholds — half-open intervals [lo, hi).
 # The HIGH bracket is closed on the right to include a fully dense matrix (1.0).
-_SPARSE_THRESHOLD: tuple[float, float] = (0.0, 0.3)   # [0.0, 0.3)
-_MEDIUM_THRESHOLD: tuple[float, float] = (0.3, 0.7)   # [0.3, 0.7)
-_HIGH_THRESHOLD: tuple[float, float] = (0.7, 1.0)     # [0.7, 1.0]
+_SPARSE_THRESHOLD: tuple[float, float] = (0.0, 0.3)  # [0.0, 0.3)
+_MEDIUM_THRESHOLD: tuple[float, float] = (0.3, 0.7)  # [0.3, 0.7)
+_HIGH_THRESHOLD: tuple[float, float] = (0.7, 1.0)  # [0.7, 1.0]
 
 
 def _classify_density(density: float) -> DensityType:

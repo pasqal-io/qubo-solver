@@ -15,6 +15,7 @@ TYPE_CHECKING : bool
     when you need imports that are required both by the type-checker and by
     beartype at runtime.
 """
+
 from __future__ import annotations
 
 import os

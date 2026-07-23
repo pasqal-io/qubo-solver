@@ -4,6 +4,7 @@ Provides `trivial_solution_search`, which recognises coefficient
 patterns whose optimal solution can be read off analytically without any
 search.
 """
+
 from __future__ import annotations
 
 import torch

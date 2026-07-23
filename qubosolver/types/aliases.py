@@ -7,10 +7,10 @@ from .analyzer import Analyzer
 from .instance import Instance
 from .dataset import Dataset
 
-
 # ---------------------------------------------------------------------------
 # Deprecated QUBO* classes
 # ---------------------------------------------------------------------------
+
 
 @deprecated("Use `qubosolver.Solution` instead")
 class QUBOSolution(Solution):

@@ -90,7 +90,7 @@ def cplex(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> 
     problem = CPLEX.Cplex()
 
     if log_path:
-    # Open a log file.
+        # Open a log file.
         log_file = open(log_path, "w")
 
         # Redirect logging streams.
