@@ -196,9 +196,6 @@ class GreedyEmbedder(BaseEmbedder):
             "animation_save_path": self.config.embedding.animation_save_path,  # optional export
         }
 
-        # --- DEBUG / INFO: show where Greedy comes from + the params we’ll pass
-        printable = dict(params)
-        # --- Call Greedy (unchanged public signature)
         best, coords = Greedy().launch_greedy(
             Q=self.instance.coefficients,
             max_min_dist_ratio=self.config.max_min_dist_ratio,
