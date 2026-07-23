@@ -344,3 +344,24 @@ def test_save_load_qubo_solver_quantum(
             match=f"'{method}' is disabled: this method is not supported for QuboSolverQuantum loaded from a file.",
         ):
             getattr(loaded_solver, method)()
+
+
+def test_respects_total_bottom_detuning() -> None:
+    n = 6
+    Q = torch.zeros((n, n))
+    for i in range(n):
+        Q[i, i] = -50.0 if i % 2 == 0 else 50.0
+    for i in range(n):
+        for j in range(i + 1, n):
+            Q[i, j] = Q[j, i] = 1.0
+
+    instance = QUBOInstance(coefficients=Q)
+    config = SolverConfig(drive_shaping=DriveShapingConfig(dmm=True))
+
+    with pytest.warns(
+        UserWarning,
+        match="DMM final detuning would exceed the device's total_bottom_detuning",
+    ):
+        solution = QuboSolver(instance, config).solve()
+
+    assert solution.bitstrings.numel() > 0

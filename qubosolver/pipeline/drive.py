@@ -361,11 +361,14 @@ class HeuristicDriveShaper(BaseDriveShaper):
         # DMM weighted detunings
         dmm = None
         if use_dmm:
+            energy_scale = self.device._target_amp / omega_max
             dmm = constant_weighted_dmm(
                 register,
                 max_seq_duration,
                 weights,
                 final_detuning=delta_dmm_T,
+                device=self.device,
+                energy_scale=energy_scale,
             )
 
         shaped_drive = Drive(
@@ -572,11 +575,15 @@ class OptimizedDriveShaper(BaseDriveShaper):
         dmm = None
         final_detuning = det_params[-1]
         if self.dmm and final_detuning > 0:
+            amp_max = amp_wave.max()
+            energy_scale = self.device._target_amp / amp_max
             dmm = constant_weighted_dmm(
                 self.register,
                 max_seq_duration,
                 self.norm_weights_list,
                 final_detuning=-final_detuning,
+                device=self.device,
+                energy_scale=energy_scale,
             )
 
         shaped_drive = Drive(amplitude=amp_wave, detuning=det_wave, dmm=dmm)
