@@ -186,7 +186,7 @@ class EmbeddingConfig(Config):
             Defaults to `False`.
         animation_save_path (str | None, optional): If provided, path to save animation.
             Defaults to None.
-        max_min_dist_ratio: (float | None): Maximum ratio between the
+        max_min_dist_ratio: (float | Literal["device"]): Maximum ratio between the
             maximum radial distance and the minimum pairwise distance. 'device'
             means that it will take the value from the device if it exists.
             The value can be infinite.

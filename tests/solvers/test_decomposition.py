@@ -17,7 +17,7 @@ from qubosolver.solver import DecomposeQuboSolver, QuboSolver
 from qubosolver.data import QUBODataset
 from qubosolver.algorithms.decompose import (
     compute_distance_interaction_matrix,
-    compute_max_min_distances,
+    compute_min_max_distances,
 )
 
 
@@ -83,7 +83,7 @@ def test_initial_steps_solver(decomposable_qubo: QUBOInstance, use_quantum: bool
     first_vertex = 0
 
     pulser_device = solver._solver.device._pulser_device
-    min_distance, max_radial_distance = compute_max_min_distances(
+    min_distance, max_radial_distance = compute_min_max_distances(
         qubo_mat,
         max_min_dist_ratio=pulser_device.max_radial_distance / pulser_device.min_atom_distance,
     )

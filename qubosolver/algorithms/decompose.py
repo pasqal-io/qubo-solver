@@ -25,7 +25,7 @@ VertexToPlace = TypedDict(
 )
 
 
-def compute_max_min_distances(
+def compute_min_max_distances(
     interactions: torch.Tensor, *, max_min_dist_ratio: float
 ) -> tuple[float, float]:
     if max_min_dist_ratio == torch.inf:

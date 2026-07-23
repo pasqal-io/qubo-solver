@@ -57,7 +57,7 @@ def test_get_layout_square_is_compact(n_traps: int) -> None:
     sel_set = {tuple(p.tolist()) for p in coords}
     assert sel_set.issubset(cand_set)
     cand_d2 = (candidates**2).sum(dim=1)
-    sel_d2 = (coords**2).sum(dim=1)
+    sel_d2 = coords.square().sum(dim=1)
     kth = torch.kthvalue(cand_d2, k=n_traps).values.item()
     assert sel_d2.max().item() == pytest.approx(kth)
     closer = candidates[cand_d2 < kth]

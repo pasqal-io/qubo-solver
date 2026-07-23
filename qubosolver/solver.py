@@ -27,7 +27,7 @@ from qubosolver.algorithms.decompose import (
     update_global_solution,
     vertices_to_place,
     positive_vertices_update,
-    compute_max_min_distances,
+    compute_min_max_distances,
 )
 
 # Modules to be automatically added to the qubosolver namespace
@@ -378,7 +378,7 @@ class DecomposeQuboSolver(BaseSolver):
                 # sort to have reproducibility when setting the seed
                 first_vertex_search = random.choice(sorted(dict_vertices_to_place.keys()))
 
-                min_distance, max_radial_distance = compute_max_min_distances(
+                min_distance, max_radial_distance = compute_min_max_distances(
                     qubo_mat, max_min_dist_ratio=self.config.max_min_dist_ratio
                 )
 

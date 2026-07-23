@@ -48,5 +48,5 @@ def get_layout(*, layout_type: LayoutType = LayoutType.TRIANGULAR, n_traps: int)
             n = int(torch.ceil(torch.sqrt(2 * torch.tensor(n_traps))).item())
             layout = LayoutType.SQUARE.value(n, n, spacing=1)
             coords = torch.tensor(layout.coords)
-            squared_distances = (coords**2).sum(dim=1)
+            squared_distances = coords.square().sum(dim=1)
             return coords[torch.argsort(squared_distances)[:n_traps]]
