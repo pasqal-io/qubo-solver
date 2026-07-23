@@ -1,39 +1,31 @@
 # SolverConfig – Solver Configuration Reference
 
-The `SolverConfig` class defines how a QUBO problem should be solved — specifying whether to use a quantum or classical approach, which backend to run on, and additional execution parameters.
+The [`qubosolver.SolverConfig`][] class defines how a QUBO problem should be solved — specifying whether to use a quantum or classical approach, which backend to run on, and additional execution parameters.
 
 This configuration is passed into any solver (e.g., `Solver`) and guides its behavior.
-Note that `SolverConfig` uses three other configuration objects: `EmbeddingConfig`, `ClassicalConfig` and `DriveShapingConfig`.
-Besides `ClassicalConfig`, the other configurations represents different parts of the solver when using a quantum approach:
+Note that [`qubosolver.SolverConfig`][] uses three other configuration objects: [`qubosolver.EmbeddingConfig`][], [`qubosolver.ClassicalConfig`][] and [`qubosolver.DriveShapingConfig`][].
+Besides [`qubosolver.ClassicalConfig`][], the other configurations represents different parts of the solver when using a quantum approach:
 
 ---
 
-## Fields for SolverConfig
-
-::: qubosolver.config.SolverConfig
+## Fields for [`qubosolver.SolverConfig`][]
 
 ### Embedding configuration
 
 When solving with a quantum approach, we need to define an embedding method, that is how we define the geometry (register) of atoms based on the QUBO instance and compatibility with a device.
-The embedding configuration part (the `embedding` field of `SolverConfig`) is divided into several attributes that concerns the `embedding_method` chosen (`BLaDE` or `Greedy`, for which a prefix enables defning to which method they belong):
-
-::: qubosolver.config.EmbeddingConfig
+The embedding configuration part (the `embedding` field of [`qubosolver.SolverConfig`][]) is divided into several attributes that concerns the `embedding_method` chosen (`BLaDE` or `Greedy`, for which a prefix enables defining to which method they belong). See [`qubosolver.EmbeddingConfig`][].
 
 
 ### Drive Shaping configuration
 
 Quantum devices can be programmed by specifying a Drive. A program in the Rydberg analog model is defined as a time-dependent drive Hamiltonian that is imposed on the qubits.
-The drive shaping configuration part (the `drive_shaping` field of `SolverConfig`) is set via the `DriveShapingConfig` class, and defines how the drive parameters are constructed (heuristically from the QUBO diagonal, via bayesian optimization, ...).
+The drive shaping configuration part (the `drive_shaping` field of [`qubosolver.SolverConfig`][]) is set via the [`qubosolver.DriveShapingConfig`][] class, and defines how the drive parameters are constructed (heuristically from the QUBO diagonal, via bayesian optimization, ...).
 Note, for parameters concerning exclusively the heuristic drive shaping method, a `heuristic_` prefix is present.
-Similarly, for parameters concerning exclusively the optimized drive shaping method (bayesian optimization), an `optimized_` prefix is present.
-
-::: qubosolver.config.DriveShapingConfig
+Similarly, for parameters concerning exclusively the optimized drive shaping method (bayesian optimization), an `optimized_` prefix is present. See [`qubosolver.DriveShapingConfig`][].
 
 ### Classical solver configuration
 
-For the classical solver, its configuration can be set via the `ClassicalConfig` class:
-
-::: qubosolver.config.ClassicalConfig
+For the classical solver, its configuration can be set via the [`qubosolver.ClassicalConfig`][] class.
 
 Note, for parameters concerning exclusively simulated annealing, an `sa_` prefix is present.
 Similarly for tabu search, the prefix is `tabu_`.
@@ -51,9 +43,9 @@ We can also apply preprocessing of the QUBO instance (to reduce it to another sm
 ---
 
 ## Example
-The `SolverConfig` is designed in such way that all parameters have a default value which fulfilled the minimum required configuration to execute the necessary steps to solve a QUBO.
+The [`qubosolver.SolverConfig`][] is designed in such way that all parameters have a default value which fulfilled the minimum required configuration to execute the necessary steps to solve a QUBO.
 
-All the parameters are optional which allows for running `SolverConfig` without specifying any parameter:
+All the parameters are optional which allows for running [`qubosolver.SolverConfig`][] without specifying any parameter:
 ```python exec="on" source="material-block"
 from qubosolver import SolverConfig, EmbedderType
 
@@ -76,7 +68,7 @@ config = SolverConfig(
 )
 ```
 
-Equivalently, one can instantiate a `SolverConfig` simply using the keyword arguments of the other configs via the `SolverConfig.from_kwargs` method:
+Equivalently, one can instantiate a [`qubosolver.SolverConfig`][] simply using the keyword arguments of the other configs via the `qubosolver.SolverConfig.from_kwargs` method:
 
 ```python exec="on" source="material-block"
 from qubosolver import Instance, SolverConfig, matrix

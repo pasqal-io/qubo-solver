@@ -5,31 +5,15 @@ proving, from the structure of the objective matrix alone, that certain
 variables must be 0 or 1 in any optimal solution.  Reducing the problem size
 this way can significantly cut the resources required by the solver.
 
-The module exposes four public entry points:
+Typical usage:
 
-* `hansen_fixing` — a single-pass fixation rule based on Hansen's bounding
-  criterion: for each variable the diagonal element and off-diagonal
-  interaction terms are used to derive lower and upper bounds on the objective
-  contribution of that variable.
-* `apply` — run one pass of an ordered sequence of :data:`Rule` callables over
-  a QUBO instance and return a reduced :class:`Instance`.
-* `apply_recursively` — repeat `apply` until no further variables can be
-  fixed.
-* `unapply` — given a solution to the reduced problem, reinsert all fixed
-  variables and evaluate costs against the original QUBO matrix.
+```python
+import qubosolver.transforms.variable_fixing as vf
 
-The :class:`Instance` subclass carries the full fixation history (one
-``dict[int, int]`` per reduction round) alongside a reference to the
-unreduced parent instance, so that `unapply` can faithfully reconstruct
-full-length solutions.
-
-Typical usage::
-
-    import qubosolver.transforms.variable_fixing as vf
-
-    reduced = vf.apply_recursively(qubo_instance)
-    raw_solution = solver.solve(reduced)
-    full_solution = vf.unapply(raw_solution, reduced)
+reduced_instance = vf.apply_recursively(qubo_instance)
+reduced_solution = solver.solve(reduced_instance)
+full_solution = vf.unapply(reduced_solution, reduced)
+```
 """
 
 from __future__ import annotations
@@ -41,15 +25,15 @@ import copy
 import json
 import torch
 
+import qubosolver
 from qubosolver.types import Solution, bitstrings, vector
-from qubosolver.types import Instance as QUBOInstanceBase
 from qubosolver._io import utils as io_utils
 
 #  TODO: Using `type` statement when Python >= 3.12
-Rule: TypeAlias = Callable[[QUBOInstanceBase], dict[int, int]]
+Rule: TypeAlias = Callable[[qubosolver.Instance], dict[int, int]]
 
 
-def hansen_fixing(qubo: QUBOInstanceBase) -> dict[int, int]:
+def hansen_fixing(qubo: qubosolver.Instance) -> dict[int, int]:
     """Identify variables that can be fixed using Hansen's bounding criterion.
 
     For each variable *i*, computes a lower bound
@@ -91,15 +75,15 @@ def hansen_fixing(qubo: QUBOInstanceBase) -> dict[int, int]:
     return fixed_dict
 
 
-class Instance(QUBOInstanceBase):
+class Instance(qubosolver.Instance):
     """A QUBO instance with variable-fixing history.
 
-    Wraps a parent :class:`~qubosolver.types.instance.Instance` and
+    Wraps a parent [`qubosolver.Instance`][] and
     tracks which variables were fixed (and to which value) so the original
     solution can be reconstructed via `unapply`.
     """
 
-    def __init__(self, parent_instance: QUBOInstanceBase):
+    def __init__(self, parent_instance: qubosolver.Instance):
         """Initialize from a parent QUBO instance.
 
         Args:
@@ -123,50 +107,50 @@ class Instance(QUBOInstanceBase):
         return sum([len(fixed) for fixed in self.fixed_indices])
 
     @staticmethod
-    def save(file_like: io_utils.FileLike[bytes], instance: QUBOInstanceBase) -> None:
-        """Serialise a :class:`Instance` (including fixation history) to *file_like*.
+    def save(file_like: io_utils.FileLike[bytes], instance: qubosolver.Instance) -> None:
+        """Serialise an `Instance` (including fixation history) to *file_like*.
 
         Args:
             file_like: Binary-writable file-like object or path.
-            instance: The :class:`Instance` to save.
+            instance: The instance to save.
 
         Raises:
-            TypeError: If *instance* is not a variable-fixing :class:`Instance`.
+            TypeError: If *instance* is not a variable-fixing `Instance`.
         """
         _check_QUBOInstance(instance)
         assert isinstance(instance, Instance)  # nosec B101
 
         with io_utils.open(file_like, "wb") as f:
-            QUBOInstanceBase.save(f, instance)
-            QUBOInstanceBase.save(f, instance._parent_instance)
+            qubosolver.Instance.save(f, instance)
+            qubosolver.Instance.save(f, instance._parent_instance)
             fixed_var_json = json.dumps(instance._fixed_indices)
             io_utils.save_string(f, fixed_var_json)
 
     @staticmethod
     def load(file_like: io_utils.FileLike[bytes]) -> Instance:
-        """Deserialise a :class:`Instance` (including fixation history) from *file_like*.
+        """Deserialise an `Instance` (including fixation history) from *file_like*.
 
         Args:
-            file_like: Binary-readable file-like object or path produced by :meth:`save`.
+            file_like: Binary-readable file-like object or path produced by `save`.
 
         Returns:
-            The reconstructed :class:`Instance`.
+            The reconstructed instance.
         """
 
         def decode_int_keys(obj: dict) -> dict:
             return {int(k): v for k, v in obj.items()}
 
         with io_utils.open(file_like, "rb") as f:
-            instance = Instance(QUBOInstanceBase.load(f))
-            instance._parent_instance = QUBOInstanceBase.load(f)
+            instance = Instance(qubosolver.Instance.load(f))
+            instance._parent_instance = qubosolver.Instance.load(f)
             fixed_var_json = io_utils.load_string(f)
             instance._fixed_indices = json.loads(fixed_var_json, object_hook=decode_int_keys)
 
         return instance
 
 
-def _check_QUBOInstance(qubo: QUBOInstanceBase) -> None:
-    """Raise :class:`TypeError` if *qubo* is not a variable-fixing :class:`Instance`."""
+def _check_QUBOInstance(qubo: qubosolver.Instance) -> None:
+    """Raise `TypeError` if *qubo* is not a variable-fixing `Instance`."""
     if not isinstance(qubo, Instance):
         raise TypeError("Input must be an instance of _QUBOInstance.")
 
@@ -177,7 +161,7 @@ def _default_rules() -> tuple[Rule]:
 
 
 def _reduce_qubo(
-    qubo: QUBOInstanceBase, fixed_indices: dict[int, int], *, inplace: bool = False
+    qubo: qubosolver.Instance, fixed_indices: dict[int, int], *, inplace: bool = False
 ) -> Instance:
     """Reduce the QUBO matrix by fixing a set of variables.
 
@@ -189,10 +173,10 @@ def _reduce_qubo(
         qubo: The QUBO instance to reduce.
         fixed_indices: Mapping of variable index to fixed value (``0`` or ``1``).
         inplace: If ``False`` (default), wraps *qubo* in a new
-            :class:`Instance` before modifying it.
+            `Instance` before modifying it.
 
     Returns:
-        The (possibly new) :class:`Instance` with the reduced matrix and
+        The (possibly new) instance with the reduced matrix and
         *fixed_indices* appended to its fixation history.
     """
     if not inplace:
@@ -229,7 +213,7 @@ def _reduce_qubo(
 
 
 def apply(
-    qubo: QUBOInstanceBase,
+    qubo: qubosolver.Instance,
     fixation_rules: Sequence[Rule] = _default_rules(),
     *,
     inplace: bool = False,
@@ -241,13 +225,13 @@ def apply(
 
     Args:
         qubo: The QUBO instance to reduce.
-        fixation_rules: Ordered sequence of :data:`Rule` callables.
+        fixation_rules: Ordered sequence of `Rule` callables.
             Defaults to ``(hansen_fixing,)``.
         inplace: If ``False`` (default), wraps *qubo* in a new
-            :class:`Instance` before modifying it.
+            `Instance` before modifying it.
 
     Returns:
-        The reduced :class:`Instance` with updated fixation history.
+        The reduced instance with updated fixation history.
     """
     if not inplace:
         qubo = Instance(qubo)
@@ -263,7 +247,7 @@ def apply(
 
 
 def apply_recursively(
-    qubo: QUBOInstanceBase,
+    qubo: qubosolver.Instance,
     fixation_rules: Sequence[Rule] = _default_rules(),
     *,
     inplace: bool = False,
@@ -275,13 +259,13 @@ def apply_recursively(
 
     Args:
         qubo: The QUBO instance to reduce.
-        fixation_rules: Ordered sequence of :data:`Rule` callables.
+        fixation_rules: Ordered sequence of `Rule` callables.
             Defaults to ``(hansen_fixing,)``.
         inplace: If ``False`` (default), wraps *qubo* in a new
-            :class:`Instance` before modifying it.
+            `Instance` before modifying it.
 
     Returns:
-        The fully reduced :class:`Instance`.
+        The fully reduced instance.
     """
     if not inplace:
         qubo = Instance(qubo)
@@ -310,13 +294,13 @@ def unapply(reduced_solution: Solution, reduced_qubo: Instance) -> Solution:
 
     Args:
         reduced_solution: Solution obtained from solving the reduced QUBO.
-        reduced_qubo: The reduced :class:`Instance` carrying the fixation
+        reduced_qubo: The reduced instance carrying the fixation
             history and a reference to the original instance.
 
     Returns:
-        A new :class:`~qubosolver.types.Solution` with full-length
-        bitstrings and costs evaluated against the original QUBO matrix.
-        Counts and probabilities are carried over from *reduced_solution*.
+        A new solution with full-length
+            bitstrings and costs evaluated against the original QUBO matrix.
+            Counts and probabilities are carried over from *reduced_solution*.
     """
     bitstrings_list = reduced_solution.bitstrings.tolist() or [[]]
 

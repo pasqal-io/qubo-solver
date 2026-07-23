@@ -66,7 +66,7 @@ class Dataset(TorchDataset):
         """Iterate over all ``(coefficient_matrix, solution)`` pairs in order.
 
         Yields:
-             A matrix and a solution.
+            A matrix and a solution.
                 Same as [`__getitem__`][] for each index ``0 … len(self)-1``.
         """
         return map(self.__getitem__, range(len(self)))
