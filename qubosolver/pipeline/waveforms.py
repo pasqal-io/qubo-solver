@@ -6,7 +6,7 @@ import numpy as np
 from qoolqit.devices import Device
 from qoolqit.register import Register
 from qoolqit.drive import DetuningMapModulator
-from qoolqit.waveforms import Constant
+from qoolqit import Constant as ConstantWaveform
 
 
 def _clip_final_detuning_to_dmm_budget(
@@ -99,7 +99,7 @@ def constant_weighted_dmm(
         final_detuning=final_detuning,
         energy_scale=energy_scale,
     )
-    waveform = Constant(duration, final_detuning)
+    waveform = ConstantWaveform(duration, final_detuning)
     return DetuningMapModulator(
         weights={embedding.qubits_ids[i]: w for i, w in enumerate(norm_weights)},
         waveform=waveform,

@@ -10,7 +10,8 @@ import math
 import warnings
 
 from qoolqit import Register, Drive, Device
-from qoolqit.waveforms import Interpolated as InterpolatedWaveform
+from qoolqit import Interpolated as InterpolatedWaveform
+
 from qubosolver import concepts
 
 
