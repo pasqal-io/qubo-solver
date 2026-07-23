@@ -264,12 +264,3 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
     solution_remote = Solution.from_results(results)
     torch.testing.assert_close(solution_remote.bitstrings, solution.bitstrings)
     torch.testing.assert_close(solution_remote.counts, solution.counts)
-
-
-def test_qubo_solver_wrong_case_deprecation() -> None:
-    Q = matrix.tensor([[-2.0, 0.0], [0.0, 4.0]])
-    with pytest.warns(DeprecationWarning, match="Use `qubosolver.Solver` instead"):
-        solver = QuboSolver(Instance(Q))
-        check.is_instance(solver, Solver)
-    solution = solver.solve()
-    check.equal(solution[0].string, "10")

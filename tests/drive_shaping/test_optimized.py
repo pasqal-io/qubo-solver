@@ -55,7 +55,7 @@ def probability_based_ojective(
     w = math.copysign(0.5, min_cost)
     weighted_cost = min_cost * (1.0 + w * (1.0 - total_prob))
 
-    optimal_bitstrings = [s.bitstring for s in optimal_solutions]
+    optimal_bitstrings = [s.string for s in optimal_solutions]
     print(
         f"Best bitstrings: {optimal_bitstrings}, cost: {min_cost}, total probability: {total_prob}, weighted cost: {weighted_cost} "
     )
@@ -123,16 +123,16 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
     min_cost = optimal_solutions[0].cost
     check.almost_equal(min_cost, expected_optimal_solutions[0].cost)
 
-    expected_optimal_bitstrings = [s.bitstring for s in expected_optimal_solutions]
+    expected_optimal_bitstrings = [s.string for s in expected_optimal_solutions]
     for solution in optimal_solutions:
-        check.is_in(solution.bitstring, expected_optimal_bitstrings)
+        check.is_in(solution.string, expected_optimal_bitstrings)
 
     if use_probability_based_objective:
         total_optimal_probability = sum(s.probability for s in optimal_solutions)
         check.greater(total_optimal_probability, 0.75)
 
     print(f"\nMinimum cost: {min_cost}")
-    print(f"All optimal bitstrings: {[s.bitstring for s in optimal_solutions]}")
+    print(f"All optimal bitstrings: {[s.string for s in optimal_solutions]}")
     print(f"Number of optimal solutions: {len(optimal_solutions)}\n")
 
 
@@ -197,16 +197,16 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
     min_cost = optimal_solutions[0].cost
     check.almost_equal(min_cost, expected_optimal_solutions[0].cost)
 
-    expected_optimal_bitstrings = [s.bitstring for s in expected_optimal_solutions]
+    expected_optimal_bitstrings = [s.string for s in expected_optimal_solutions]
     for solution in optimal_solutions:
-        check.is_in(solution.bitstring, expected_optimal_bitstrings)
+        check.is_in(solution.string, expected_optimal_bitstrings)
 
     if use_probability_based_objective:
         total_optimal_probability = sum(s.probability for s in optimal_solutions)
         check.greater(total_optimal_probability, 0.6)
 
     print(f"\nMinimum cost: {min_cost}")
-    print(f"All optimal bitstrings: {[s.bitstring for s in optimal_solutions]}")
+    print(f"All optimal bitstrings: {[s.string for s in optimal_solutions]}")
     print(f"Number of optimal solutions: {len(optimal_solutions)}\n")
 
 

@@ -22,7 +22,12 @@ from qubosolver.drive_shaping._drive_shaper import (
 
 @pytest.fixture
 def dummy_register() -> qoolqit.Register:
-    register = qoolqit.Register.from_coordinates([(0.0, 0.0), (1.0, 0.0), (2.0, 3.0)])
+    qubits = {
+        "0": (0.0, 0.0),
+        "1": (1.0, 0.0),
+        "2": (2.0, 3.0),
+    }
+    register = qoolqit.Register(qubits)
     return register
 
 
@@ -70,6 +75,7 @@ def test_generate_optimized_drive_shaper(
     default_config = SolverConfig(
         use_quantum=True,
         drive_shaping=optimized_drive_shaping,
+        device=qoolqit.DigitalAnalogDevice(),
     )
     backend = default_config.backend
     shaper = _get_drive_shaper(simple_qubo_instance, default_config, backend)
