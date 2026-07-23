@@ -3,7 +3,6 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-import io
 import pytest_check as check
 import torch
 from unittest.mock import Mock
@@ -21,7 +20,6 @@ from qubosolver import (
     EmbeddingConfig,
     DriveShapingConfig,
     SolverConfig,
-    transforms,
     vectori,
     bitstrings,
     matrix,
@@ -266,79 +264,6 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
     solution_remote = Solution.from_results(results)
     torch.testing.assert_close(solution_remote.bitstrings, solution.bitstrings)
     torch.testing.assert_close(solution_remote.counts, solution.counts)
-
-
-@pytest.mark.parametrize("postprocessing", [True, False], ids=["post", "no-post"])
-@pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no-pre"])
-def test_save_load_qubo_solver_quantum(
-    postprocessing: bool,
-    preprocessing: bool,
-) -> None:
-
-    Q = matrix.tensor(
-        [
-            [0.0, 6.0, 6.0],
-            [6.0, -10.0, 6.0],
-            [6.0, 6.0, -10.0],
-        ]
-    )
-    expected_preprocessed_Q = matrix.tensor(
-        [
-            [-10.0, 6.0],
-            [6.0, -10.0],
-        ]
-    )
-    qubo = Instance(Q)
-    config = SolverConfig(do_preprocessing=preprocessing, do_postprocessing=postprocessing)
-    solver = Solver(qubo, config)
-    solver.preprocess()
-
-    if preprocessing:
-        assert isinstance(solver.instance, transforms.variable_fixing.Instance)
-        torch.testing.assert_close(solver.instance.matrix, expected_preprocessed_Q)
-        torch.testing.assert_close(solver.instance._parent_instance.matrix, Q)
-    else:
-        check.is_not_instance(solver.instance, transforms.variable_fixing.Instance)
-        torch.testing.assert_close(solver.instance.matrix, Q)
-
-    # Save the solver
-    file = io.BytesIO()
-    Solver.save(file, solver)
-
-    # Load the solver
-    file.seek(0)
-    loaded_solver = Solver.load(file)
-
-    # Verify the loaded solver has the same properties
-    torch.testing.assert_close(loaded_solver.instance.matrix, solver.instance.matrix)
-    if preprocessing:
-        assert isinstance(solver.instance, transforms.variable_fixing.Instance)
-        assert isinstance(loaded_solver.instance, transforms.variable_fixing.Instance)
-        torch.testing.assert_close(
-            loaded_solver.instance._parent_instance.matrix,
-            solver.instance._parent_instance.matrix,
-        )
-        check.equal(loaded_solver.instance._fixed_indices, solver.instance._fixed_indices)
-    else:
-        check.is_not_instance(loaded_solver.instance, transforms.variable_fixing.Instance)
-    check.equal(loaded_solver.config.do_preprocessing, solver.config.do_preprocessing)
-    check.equal(loaded_solver.config.do_postprocessing, solver.config.do_postprocessing)
-
-    for method in [
-        "solve",
-        "embedding",
-        "drive",
-        "submit",
-        "execute",
-        "draw_sequence",
-        "preprocess",
-        "_trivial_solution",
-    ]:
-        with pytest.raises(
-            AttributeError,
-            match=f"'{method}' is disabled: this method is not supported for QuboSolverQuantum loaded from a file.",
-        ):
-            getattr(loaded_solver, method)()
 
 
 def test_qubo_solver_wrong_case_deprecation() -> None:

@@ -157,7 +157,9 @@ def test_quantum_solve(
     emulator = qoolqit.execution.LocalEmulator()
 
     if drive_shaping_method == "heuristic":
-        drive = drive_shaping.heuristic.build_drive(effective_qubo, device, dmm=False, kappa=0.25)
+        drive = drive_shaping.heuristic.build_drive(
+            effective_qubo, device=device, dmm=False, kappa=0.25
+        )
     elif drive_shaping_method == "optimized":
         drive, _ = drive_shaping.optimized.build_drive(
             effective_qubo,

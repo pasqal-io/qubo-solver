@@ -122,7 +122,7 @@ class HeuristicDriveShaper(_BaseDriveShaper):
         # Heuristic coefficient for omega
         kappa = self.config.drive_shaping.heuristic_kappa
         return (
-            heuristic.build_drive(self.instance, device, dmm=dmm, kappa=kappa),
+            heuristic.build_drive(self.instance, device=device, dmm=dmm, kappa=kappa),
             Solution(),
         )
 

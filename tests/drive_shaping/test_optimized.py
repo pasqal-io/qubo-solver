@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import torch
 import itertools
 import numpy as np
@@ -16,6 +15,7 @@ from qoolqit.register import Register
 from qubosolver.drive_shaping._drive_shaper import OptimizedDriveShaper
 from qubosolver import (
     Instance,
+    SingleSolution,
     Solution,
     SolverConfig,
     DriveShapingConfig,
@@ -36,25 +36,9 @@ def interaction_matrix_from_vertices(vertices: Tensor) -> Matrix:
     return U
 
 
-@dataclass
-class Solution:
-    bitstring: str
-    cost: float = float("inf")
-    probability: float = 0.0
-
-
-def to_solutions(
-    solution: Solution,
-) -> list[Solution]:
-    return [
-        Solution(bitstring.to_string(b), c.item(), p.item())
-        for b, c, p in zip(solution.bitstrings, solution.costs, solution.probabilities)
-    ]
-
-
 def gather_optimal_solutions(
-    data: Iterable[Solution], min_cost: float | None = None
-) -> list[Solution]:
+    data: Iterable[SingleSolution], min_cost: float | None = None
+) -> list[SingleSolution]:
     if min_cost is None:
         min_cost = min(d.cost for d in data)
     return [d for d in data if np.allclose(d.cost, min_cost)]
@@ -63,7 +47,7 @@ def gather_optimal_solutions(
 def probability_based_ojective(
     solution: Solution,
 ) -> float:
-    optimal_solutions = gather_optimal_solutions(to_solutions(solution))
+    optimal_solutions = gather_optimal_solutions(solution)
     check.is_not(optimal_solutions, [])
     min_cost = optimal_solutions[0].cost
     total_prob = sum(s.probability for s in optimal_solutions)
@@ -107,14 +91,14 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
     for bits in itertools.product([0, 1], repeat=3):
         z = bitstring.tensor(bits)
         cost = costs.quadratic_cost(z, Q)
-        results.append(Solution(bitstring.to_string(z), cost))
+        results.append(SingleSolution(z, cost))
 
     # Get all bitstrings with minimum cost
     expected_optimal_solutions = gather_optimal_solutions(results)
     check.is_not(expected_optimal_solutions, [])
 
     print(f"\nExpected Minimum cost: {expected_optimal_solutions[0].cost}")
-    print(f"All expected optimal bitstrings: {[s.bitstring for s in expected_optimal_solutions]}")
+    print(f"All expected optimal bitstrings: {[s.string for s in expected_optimal_solutions]}")
     print(f"Number of expected optimal solutions: {len(expected_optimal_solutions)}\n")
 
     register = Register.from_coordinates(vertices.tolist())
@@ -133,7 +117,7 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
     print(f"{analyzer.df}")
 
     assert isinstance(qubo_solution.probabilities, torch.Tensor)
-    optimal_solutions = gather_optimal_solutions(to_solutions(qubo_solution))
+    optimal_solutions = gather_optimal_solutions(qubo_solution)
     check.is_not(optimal_solutions, [])
 
     min_cost = optimal_solutions[0].cost
@@ -179,7 +163,7 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
     for bits in itertools.product([0, 1], repeat=3):
         z = bitstring.tensor(bits)
         cost = costs.quadratic_cost(z, Q)
-        results.append(Solution(bitstring.to_string(z), cost))
+        results.append(SingleSolution(z, cost))
 
     # Get all bitstrings with minimum cost
     expected_optimal_solutions = gather_optimal_solutions(results)
@@ -207,7 +191,7 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
     print(f"{analyzer.df}")
 
     assert isinstance(qubo_solution.probabilities, torch.Tensor)
-    optimal_solutions = gather_optimal_solutions(to_solutions(qubo_solution))
+    optimal_solutions = gather_optimal_solutions(qubo_solution)
     check.is_not(optimal_solutions, [])
 
     min_cost = optimal_solutions[0].cost
