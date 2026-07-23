@@ -364,19 +364,6 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: Tuple[int]) -> None:
     # the QUBO into smaller sub-decompositions.
     check.is_true(is_refinement_of(decomposition, block_decomposition))
 
-    # The solver may decompose the QUBO into too many sub-decompositions. The reconstructed solution
-    # is then not guaranteed to be optimal.
-    if (seed, dims) in [
-        (1935225697, (3,)),
-        (66987, (2, 3, 2)),
-        (1547, (4, 3, 2, 3)),
-        (1547, (3,)),
-    ]:
-        check.not_equal(sorted_decomposition, block_decomposition)
-        check.is_not_in(best_solution, optimal_bitstrings.keys())
-        check.greater(min_cost, min(optimal_bitstrings.values()))
-        pytest.xfail("The decomposition is not perfect")
-
     check.is_in(best_solution, optimal_bitstrings.keys())
     check.almost_equal(min_cost, optimal_bitstrings[best_solution])
 
