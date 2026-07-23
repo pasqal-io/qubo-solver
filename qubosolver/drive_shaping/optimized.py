@@ -1,3 +1,5 @@
+"""Bayesian-optimised drive schedule generation for QUBO solving."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -11,20 +13,18 @@ import qoolqit
 from qoolqit.execution.compilation_functions import CompilerProfile
 
 from qubosolver.types import (
-    QUBOInstance,
-    QUBOSolution,
+    Instance,
+    Solution,
     Bitstring,
     Matrix,
     _protocols,
     tensor,
-    Labelling,
 )
-from qubosolver.config import DriveShapingConfig
-from qubosolver import solvers, _utils
+from qubosolver import solvers, _utils, DriveShapingConfig
 from ._waveforms import constant_weighted_dmm
 
 
-def _default_objective(solution: QUBOSolution) -> float:
+def _default_objective(solution: Solution) -> float:
     """Return the lowest cost from a solution, or infinity if empty."""
     return solution.costs[0].item() if solution else float("inf")
 
@@ -45,7 +45,7 @@ class Config:
         n_calls: Number of Bayesian optimisation evaluations.
         seed: Random seed for reproducibility.
         qubo_cost: Callable used to evaluate bitstring cost against the QUBO matrix.
-        objective: Callable that maps a :class:`QUBOSolution` to a scalar
+        objective: Callable that maps a `Solution` to a scalar
             objective (lower is better).
         callback_objective: Optional callback invoked after each evaluation.
     """
@@ -63,18 +63,18 @@ class Config:
     n_calls: int = 20
     seed: int | None = None
     qubo_cost: Callable[[Bitstring, Matrix], float] = _utils.costs.quadratic_cost
-    objective: Callable[[QUBOSolution], float] = _default_objective
+    objective: Callable[[Solution], float] = _default_objective
     callback_objective: Callable[[_CallbackObjectiveInput], None] = lambda data: None
 
     @staticmethod
     def from_drive_shaping_config(config: DriveShapingConfig) -> Config:
-        """Create a :class:`Config` from a user-facing :class:`DriveShapingConfig`.
+        """Create a `Config` from a user-facing [`DriveShapingConfig`][].
 
         Args:
             config: The drive-shaping configuration to convert.
 
         Returns:
-            A :class:`Config` populated from the drive-shaping settings.
+            A configuration populated from the drive-shaping settings.
         """
         cfg = Config()
         cfg.x0 = (
@@ -92,13 +92,25 @@ class Config:
         return cfg
 
 
-def _compute_norm_weights(Q: QUBOInstance) -> list[float]:
-    """Compute normalization weights.
+def _compute_norm_weights(instance: Instance) -> list[float]:
+    """Compute per-qubit normalised weights from the diagonal of the QUBO matrix.
+
+    Each weight is defined as ``1 - |Q_ii| / max_j(|Q_jj|)``, so a qubit
+    whose diagonal coefficient equals the maximum gets weight 0 (fully
+    penalised) and a qubit with a zero diagonal coefficient gets weight 1
+    (unrestricted).  These weights are passed to the
+    :class:`~qoolqit.drive.DetuningMapModulator` to modulate the local
+    detuning per qubit.
+
+    Args:
+        instance: The QUBO instance whose diagonal entries are used.
 
     Returns:
-        list[float]: normalization weights.
+        A list of floats in ``[0, 1]``, one per qubit, representing the
+        normalised DMM weights.  Returns all-zeros when every diagonal
+        entry is zero.
     """
-    weights_list = torch.abs(torch.diag(Q.matrix)).tolist()
+    weights_list = torch.abs(torch.diag(instance.matrix)).tolist()
     max_node_weight = max(weights_list) if weights_list else 1.0
     norm_weights_list = [
         (1 - (w / max_node_weight)) if max_node_weight != 0 else 0.0 for w in weights_list
@@ -107,20 +119,42 @@ def _compute_norm_weights(Q: QUBOInstance) -> list[float]:
 
 
 def _build_drive(
-    Q: QUBOInstance,
+    instance: Instance,
     params: Sequence[float],
     *,
     dmm: bool,
     device_specs: dict[str, float | None],
-    labelling: Labelling,
 ) -> qoolqit.Drive:
-    """Build the drive from a list of parameters for the objective.
+    """Build a :class:`~qoolqit.Drive` from a flat parameter vector.
+
+    The first three values in *params* control the amplitude waveform and the
+    remaining three control the detuning waveform.  Both are represented as
+    :class:`~qoolqit.Interpolated` waveforms over the full sequence duration.
+    Raw parameters are normalised in ``[0, 1]`` or ``[-1, 1]`` and are scaled
+    to physical units using the device limits before constructing the waveform.
+
+    When *dmm* is enabled **and** the final detuning value is positive, a
+    :class:`~qoolqit.drive.DetuningMapModulator` is added with
+    per-qubit weights derived from the diagonal of the QUBO matrix (see
+    `_compute_norm_weights`).
 
     Args:
-        params (list): List of parameters.
+        instance: The QUBO instance, used to compute DMM weights when *dmm* is
+            ``True``.
+        params: Flat sequence of 6 normalised parameters —
+            ``params[:3]`` are the three interior amplitude knots and
+            ``params[3:]`` are the three detuning knots.  Both ends of the
+            amplitude waveform are pinned to zero.
+        dmm: If ``True``, attach a constant weighted
+            :class:`~qoolqit.drive.DetuningMapModulator` when the final
+            detuning is positive.
+        device_specs: Mapping of device capability keys to their physical
+            limits.  Expected keys: ``"max_duration"``, ``"max_amplitude"``,
+            ``"max_abs_detuning"``.  ``None`` values fall back to large
+            defaults (``1e3`` for duration, ``1e4`` for amplitude/detuning).
 
     Returns:
-        Drive: Drive sequence.
+        A fully configured :class:`~qoolqit.Drive` ready for simulation.
     """
     max_seq_duration: float = device_specs["max_duration"] or 1e3
     max_amplitude: float = device_specs["max_amplitude"] or 1e4
@@ -139,10 +173,9 @@ def _build_drive(
     final_detuning = det_params[-1]
     if dmm and final_detuning > 0:
         wdetunings = constant_weighted_dmm(
-            _compute_norm_weights(Q),
+            _compute_norm_weights(instance),
             max_seq_duration,
             final_detuning=-final_detuning,
-            labelling=labelling,
         )
 
     shaped_drive = qoolqit.Drive(amplitude=amp_wave, detuning=det_wave, dmm=wdetunings)
@@ -157,61 +190,72 @@ def _run_simulation(
     device: qoolqit.Device,
     backend: _protocols.Backend,
     config: Config,
-) -> QUBOSolution:
-    """Run a quantum program using backend and returns
-        a tuple of (bitstrings, counts, probabilities, costs, best cost, best bitstring).
+) -> Solution:
+    """Execute one quantum simulation and return a costed, sorted solution.
+
+    Submits an analog quantum sampling job via
+    `~qubosolver.solvers.analog_quantum_sample` using the
+    ``WORKING_POINT`` compiler profile, evaluates the QUBO cost for every
+    returned bitstring with ``config.qubo_cost``, then sorts results by cost
+    and computes sampling probabilities in-place.
+
+    If the simulation or post-processing raises any exception the error is
+    printed and an empty :class:`Solution` is returned, so callers must
+    treat an empty solution as a failure signal.
 
     Args:
-        register (Register): register of quantum program.
-        drive (Drive): drive to run on backend.
-        QUBO (torch.Tensor): Qubo coefficients.
-        convert_to_tensor (bool, optional): Convert tuple components to tensors.
-            Defaults to True.
+        Q: The raw QUBO coefficient matrix (``torch.Tensor``).
+        register: Physical atom register describing qubit positions.
+        drive: The drive sequence to apply during the simulation.
+        device: Target quantum device that defines hardware constraints.
+        backend: Execution backend used to run the quantum program.
+        config: Optimisation configuration supplying the ``qubo_cost``
+            callable used to evaluate each returned bitstring.
 
     Returns:
-        tuple: tuple of (bitstrings, counts, probabilities, costs, best cost, best bitstring)
+        A :class:`Solution` with ``costs``, ``bitstrings``,
+        ``probabilities``, and ``counts`` populated and sorted by ascending
+        cost.  Returns an empty :class:`Solution` on any failure.
     """
     try:
         job = solvers.analog_quantum_sample(
             register, drive, backend, device, compiler_profile=CompilerProfile.WORKING_POINT
         )
-        solution = QUBOSolution.from_results(job.results())
+        solution = Solution.from_results(job.results())
         costs = [config.qubo_cost(b, Q) for b in solution.bitstrings]
         solution.costs = tensor.tensor(costs)
         solution.sort_by_cost().compute_probabilities()
         return solution
     except Exception as e:
         print(f"Simulation failed: {e}")
-        return QUBOSolution()
+        return Solution()
 
 
 def build_drive(
-    Q: QUBOInstance,
+    instance: Instance,
     register: qoolqit.Register,
     backend: _protocols.Backend,
     device: qoolqit.Device,
     *,
     dmm: bool = False,
     config: Config = Config(),
-    labelling: Labelling = str,
-) -> tuple[qoolqit.Drive, QUBOSolution]:
-    """Generate an optimised drive schedule via Bayesian optimisation.
+) -> tuple[qoolqit.Drive, Solution]:
+    """Generate a drive schedule via Bayesian optimisation.
 
     Uses ``skopt.gp_minimize`` to search over waveform parameters,
     running quantum simulations at each evaluation to minimise the
     QUBO cost.
 
     Args:
+        instance: The QUBO instance to solve.
         register: The physical atom register.
-        Q: The QUBO instance to solve.
+        backend: Execution backend for running simulations during optimisation.
         device: Target quantum device.
         dmm: Whether to use the Detuning Map Modulator.
-        backend: Execution backend for running simulations during optimisation.
         config: Optimisation parameters (initial guess, number of calls, etc.).
 
     Returns:
-        A tuple of the best :class:`~qoolqit.Drive` found and the
-        corresponding :class:`QUBOSolution`.
+        A tuple of the best `qoolqit.Drive` found and the corresponding `Solution`.
     """
     n_amp = 3
     n_det = 3
@@ -222,20 +266,19 @@ def build_drive(
 
     bounds = [(zero, one)] * n_amp + [(-one, -zero)] + [(-one, one)] * (n_det - 2) + [(zero, one)]
 
-    def run(x: list[float], eval: bool = True) -> tuple[float, QUBOSolution, qoolqit.Drive]:
+    def run(x: list[float], eval: bool = True) -> tuple[float, Solution, qoolqit.Drive]:
 
-        solution = QUBOSolution()
+        solution = Solution()
         drive = _build_drive(
-            Q,
+            instance,
             x,
             dmm=dmm,
             device_specs=device.specs,
-            labelling=labelling,
         )
 
         try:
             solution = _run_simulation(
-                Q.matrix,
+                instance.matrix,
                 register,
                 drive,
                 device,

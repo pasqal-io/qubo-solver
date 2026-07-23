@@ -1,3 +1,15 @@
+"""Greedy embedding algorithm adapter for QUBO instances.
+
+This module wraps the internal greedy embedding and exposes a single `embed`
+entry point that accepts a [`qubosolver.Instance`][] and returns a
+`qoolqit.Register` ready for use in a quantum program.
+
+The greedy algorithm places logical QUBO nodes one at a time onto trap sites
+of a pre-defined lattice (triangular or square), choosing at each step the
+(node, trap) pair that minimises the incremental mismatch between the QUBO
+coefficient matrix and the physical interaction matrix (∝ C/‖rᵢ − rⱼ‖⁶).
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -8,8 +20,7 @@ import torch
 import qoolqit
 
 from ._algorithms import greedy
-from qubosolver import QUBOInstance, LayoutType, EmbeddingConfig
-from qubosolver.types.label import Labelling, _to_callable
+from qubosolver import Instance, LayoutType, EmbeddingConfig
 
 
 @dataclass
@@ -32,10 +43,17 @@ class Config:
     animation_save_path: pathlib.Path | None = None
 
     def update_from_device(self, device: qoolqit.Device) -> None:
-        """Update trap count and spacing from device constraints.
+        """Update trap count and spacing in-place from device constraints.
+
+        When ``traps`` is ``-1`` (auto), resolves the trap count via
+        `_number_of_traps_from_device`.  Also raises ``spacing`` to the
+        device's ``min_atom_distance`` when that property is available, so the
+        resulting layout always satisfies hardware constraints.
 
         Args:
-            device: Target quantum device.
+            device: Target quantum device whose ``_device`` attributes are
+                inspected for ``max_layout_traps``, ``max_atom_num``,
+                ``max_layout_filling``, and ``min_atom_distance``.
         """
         if self.traps == -1:
             self.traps = _number_of_traps_from_device(device)
@@ -46,13 +64,16 @@ class Config:
 
     @staticmethod
     def from_embedding_config(config: EmbeddingConfig) -> Config:
-        """Create a :class:`Config` from a user-facing :class:`EmbeddingConfig`.
+        """Create a [`Config`][] from a user-facing [`EmbeddingConfig`][].
+
+        Maps the ``greedy_*`` fields of *config* onto the corresponding
+        `Config` attributes.
 
         Args:
             config: The embedding configuration to convert.
 
         Returns:
-            A :class:`Config` populated from the embedding settings.
+            A configuration fully populated from the ``greedy_*`` embedding settings of *config*.
         """
         cfg = Config()
         cfg.traps = config.greedy_traps
@@ -94,31 +115,41 @@ def _number_of_traps_from_device(device: qoolqit.Device) -> int:
 
 
 def embed(
-    instance: QUBOInstance,
+    instance: Instance,
     device: qoolqit.Device,
     *,
     config: Config = Config(),
     normalize: bool = True,
-    labelling: Labelling = str,
 ) -> qoolqit.Register:
     """Embed a QUBO instance using the greedy algorithm.
 
-    Places logical nodes one at a time onto trap sites, minimising
-    the incremental mismatch between the QUBO coefficient matrix and
-    the physical interaction matrix.
+    Two coordinate-scaling modes are supported, selected via *normalize*:
+
+    * **normalize=True** (default) — rescales coordinates so that the
+      minimum inter-atom distance is exactly ``1.0001``, the smallest
+      separation accepted by normalized Pasqal devices.  Use this when
+      ``EmbeddingConfig.min_distance`` is set (heuristic drive-shaping).
+    * **normalize=False** — converts the raw greedy coordinates from μm to
+      qoolqit's internal distance unit using ``device.converter.factors[2]``.
+      Use this when the caller (e.g. the optimised drive-shaping path) will
+      handle normalisation externally or does not require a fixed minimum
+      distance.
 
     Args:
-        instance: The QUBO instance to embed.
-        device: Target quantum device (provides layout and distance constraints).
-        config: Greedy embedding parameters.
-        normalize: If ``True``, rescale coordinates so that the minimum
-            inter-atom spacing is approximately 1.
+        instance: The QUBO instance to embed.  Its ``matrix`` attribute drives
+            the greedy cost function.
+        device: Target quantum device.
+        config: Greedy embedding parameters.  ``update_from_device`` is called
+            on this object before the algorithm runs, so device constraints
+            are always respected.
+        normalize: Controls coordinate post-processing; see above.
 
     Returns:
-        A :class:`~qoolqit.Register` with atom positions.
+        A register mapping each atom to a 2-D position.
 
     Raises:
-        ValueError: If the number of traps is smaller than the problem size.
+        ValueError: If the resolved trap count is less than ``instance.size``
+            (i.e. there are not enough trap sites for all QUBO variables).
     """
     config.update_from_device(device)
 
@@ -151,8 +182,7 @@ def embed(
         distance_conversion = device.converter.factors[2]
         coords /= distance_conversion
 
-    labelling = _to_callable(labelling)
     # build the register (unchanged)
-    qubits = {labelling(i): coord for i, coord in enumerate(coords)}
+    qubits = {str(i): coord for i, coord in enumerate(coords)}
     register = qoolqit.Register(qubits)
     return register

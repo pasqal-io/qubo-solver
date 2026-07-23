@@ -12,7 +12,7 @@ site-dependent bias information.
 The shaper returns:
 
 - a generated `Drive`, ready to be simulated by the solver;
-- an empty `QUBOSolution` placeholder. The actual bitstrings, probabilities, and
+- an empty `Solution` placeholder. The actual bitstrings, probabilities, and
   costs are produced later, when the quantum simulation is executed.
 
 ---
@@ -171,7 +171,7 @@ generation time.
 
 ```python
 import torch
-from qubosolver import QUBOInstance, SolverConfig, DriveShapingConfig, QuboSolver, DriveType
+from qubosolver import Instance, SolverConfig, DriveShapingConfig, Solver, DriveType
 
 Q = torch.tensor([
     [-1.0, 0.5, 0.2],
@@ -179,7 +179,7 @@ Q = torch.tensor([
     [0.2, 0.3, -3.0],
 ])
 
-instance = QUBOInstance(Q)
+instance = Instance(Q)
 
 config = SolverConfig(
     use_quantum=True,
@@ -190,7 +190,7 @@ config = SolverConfig(
     ),
 )
 
-solver = QuboSolver(instance, config)
+solver = Solver(instance, config)
 solution = solver.solve()
 
 print(solution)

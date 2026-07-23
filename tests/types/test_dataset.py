@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 import numpy as np
-from qubosolver import QUBODataset, torch_rng
+from qubosolver import Dataset, torch_rng
 from qubosolver.types.instance import _calculate_density
 
 
@@ -20,7 +20,7 @@ def test_dataset_generation(negative_offdiag_rate: float) -> None:
     coefficient_bounds = (-100.0, 100.0)
     seed = 42
 
-    dataset = QUBODataset.from_random(
+    dataset = Dataset.from_random(
         n_matrices=num_instances,
         matrix_dim=size,
         densities=[density],
@@ -32,9 +32,9 @@ def test_dataset_generation(negative_offdiag_rate: float) -> None:
 
     # test also save and load
     file_path = Path(__file__).parent / "qubo_dataset_test.pt"
-    QUBODataset.save(dataset, file_path)
+    Dataset.save(dataset, file_path)
     assert os.path.exists(file_path)
-    loaded_data = QUBODataset.load(file_path)
+    loaded_data = Dataset.load(file_path)
     assert len(loaded_data) == num_instances
     if os.path.exists(file_path):
         os.remove(file_path)

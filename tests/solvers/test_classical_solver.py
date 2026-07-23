@@ -9,17 +9,17 @@ import random
 import numpy as np
 
 from qubosolver import (
-    QUBOInstance,
-    QUBOSolution,
+    Instance,
+    Solution,
     ClassicalSolverType,
     ClassicalConfig,
     SolverConfig,
-    QuboSolver,
+    Solver,
     matrix,
     bitstring,
     torch_rng,
 )
-from qubosolver.solvers._classical_solver import (
+from qubosolver.solvers.classical._solver import (
     get_classical_solver,
     SimulatedAnnealingSolver,
     TabuSearchSolver,
@@ -45,7 +45,7 @@ def manual_seed(seed: int) -> torch.Generator:
 @pytest.mark.parametrize("classical_method", list(class_solvers.keys()))
 @pytest.mark.parametrize("max_bitstrings", [1, 3])
 def test_qubo_solver_sa_or_tabu(
-    simple_qubo_instance: QUBOInstance, classical_method: ClassicalSolverType, max_bitstrings: int
+    simple_qubo_instance: Instance, classical_method: ClassicalSolverType, max_bitstrings: int
 ) -> None:
     # Create a SolverConfig object with classical solver options.
     classical_config = ClassicalConfig(
@@ -63,13 +63,13 @@ def test_qubo_solver_sa_or_tabu(
     )
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
-    classical_solver = QuboSolver(simple_qubo_instance, config)
+    classical_solver = Solver(simple_qubo_instance, config)
 
     # Solve the QUBO problem.
     solution = classical_solver.solve()
 
-    # Assert that the solution is an instance of QUBOSolution.
-    check.is_instance(solution, QUBOSolution)
+    # Assert that the solution is an instance of Solution.
+    check.is_instance(solution, Solution)
 
     # assert shape matches config
     check.greater(solution.bitstrings.shape[0], 0)
@@ -85,7 +85,7 @@ def test_qubo_solver_sa_or_tabu(
 
 def test_random() -> None:
     Q = matrix.tensor([[1.0, 0.0], [0.0, 1.0]])
-    instance = QUBOInstance(matrix=Q)
+    instance = Instance(matrix=Q)
 
     # Create a SolverConfig object with classical solver options.
     classical_config = ClassicalConfig(classical_solver_type="random", max_bitstrings=3)
@@ -97,13 +97,13 @@ def test_random() -> None:
     check.is_instance(get_classical_solver(instance, config.classical), RandomSolver)
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
-    classical_solver = QuboSolver(instance, config)
+    classical_solver = Solver(instance, config)
 
     # Solve the QUBO problem.
     solution = classical_solver.solve()
 
-    # Assert that the solution is an instance of QUBOSolution.
-    check.is_instance(solution, QUBOSolution)
+    # Assert that the solution is an instance of Solution.
+    check.is_instance(solution, Solution)
     check.equal(solution.bitstrings.shape[1], 2)  # two variables
     check.less_equal(len(solution.bitstrings), classical_config.max_bitstrings)
     check.equal(len(solution.costs), len(solution.bitstrings))
@@ -119,7 +119,7 @@ def test_random() -> None:
 )
 @pytest.mark.parametrize("max_bitstrings", [1])
 def test_sa_cost(
-    simple_qubo_instance: QUBOInstance, classical_methods: ClassicalSolverType, max_bitstrings: int
+    simple_qubo_instance: Instance, classical_methods: ClassicalSolverType, max_bitstrings: int
 ) -> None:
     classical_config = ClassicalConfig(
         classical_solver_type=classical_methods, max_bitstrings=max_bitstrings, sa_seed=42
@@ -134,10 +134,10 @@ def test_sa_cost(
         class_solvers[classical_methods],
     )
 
-    classical_solver = QuboSolver(simple_qubo_instance, config)
+    classical_solver = Solver(simple_qubo_instance, config)
     solution = classical_solver.solve()
 
-    check.is_instance(solution, QUBOSolution)
+    check.is_instance(solution, Solution)
 
     Q = simple_qubo_instance.matrix
     n = Q.shape[0]
@@ -162,7 +162,7 @@ def test_sa_cost(
         torch.testing.assert_close(cost_, cost_sa, rtol=1e-4, atol=0.0)
 
 
-def test_tabu_time_limit(simple_qubo_instance: QUBOInstance) -> None:
+def test_tabu_time_limit(simple_qubo_instance: Instance) -> None:
     # Set max_iter and max_no_improve to very large values to ensure that
     # the solver is stopped by tabu_time_limit, not by another stop criterion.
     classical_config = ClassicalConfig(
@@ -179,7 +179,7 @@ def test_tabu_time_limit(simple_qubo_instance: QUBOInstance) -> None:
         activate_trivial_solutions=False,
     )
 
-    classical_solver = QuboSolver(simple_qubo_instance, config)
+    classical_solver = Solver(simple_qubo_instance, config)
 
     # Measure the full execution time of the solver.
     start_time = time.perf_counter()
@@ -188,11 +188,11 @@ def test_tabu_time_limit(simple_qubo_instance: QUBOInstance) -> None:
 
     # Check that a valid solution is returned and that the solver
     # stops well before reaching the large iteration limit.
-    assert isinstance(solution, QUBOSolution)
+    assert isinstance(solution, Solution)
     assert elapsed_time < 1.0
 
 
-def test_sa_time_limit(simple_qubo_instance: QUBOInstance) -> None:
+def test_sa_time_limit(simple_qubo_instance: Instance) -> None:
     # Use a very large iteration limit so that the solver is stopped
     # by the time limit rather than by max_iter.
     classical_config = ClassicalConfig(
@@ -208,7 +208,7 @@ def test_sa_time_limit(simple_qubo_instance: QUBOInstance) -> None:
         activate_trivial_solutions=False,
     )
 
-    classical_solver = QuboSolver(simple_qubo_instance, config)
+    classical_solver = Solver(simple_qubo_instance, config)
 
     # Measure the full execution time of the solver.
     start_time = time.perf_counter()
@@ -217,7 +217,7 @@ def test_sa_time_limit(simple_qubo_instance: QUBOInstance) -> None:
 
     # Check that a valid solution is returned and that the solver
     # stops well before reaching the large iteration limit.
-    assert isinstance(solution, QUBOSolution)
+    assert isinstance(solution, Solution)
     assert elapsed_time < 1.0
 
 
@@ -249,8 +249,8 @@ def test_empty_qubo_after_preprocessing(classical_method: ClassicalSolverType) -
         activate_trivial_solutions=False,
     )
 
-    instance = QUBOInstance(matrix=matrix.zeros(2))
-    classical_solver = QuboSolver(instance, config)
+    instance = Instance(matrix=matrix.zeros(2))
+    classical_solver = Solver(instance, config)
 
     solution = classical_solver.solve()
     solution.sort_by_cost()

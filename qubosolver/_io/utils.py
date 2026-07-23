@@ -278,7 +278,31 @@ def open(
     file_like: Union[FileLike[bytes], FileLike[str]],
     mode: Literal["rb", "wb", "r", "w"] = "wb",
 ) -> AbstractContextManager[IO[bytes]] | AbstractContextManager[IO[str]]:
+    """Open a file path or wrap an existing file-like object as a context manager.
 
+    When given a path (str or PathLike), opens the file with the specified mode
+    and returns the resulting file object as a context manager. When given an
+    already-open IO object, wraps it in a nullcontext so it can be used in a
+    ``with`` statement without closing it on exit.
+
+    Args:
+        file_like: A file path (str or PathLike) or an existing IO object.
+            Binary modes (``"rb"``, ``"wb"``) require a bytes-mode IO object;
+            text modes (``"r"``, ``"w"``) require a text-mode IO object.
+        mode: The file access mode. One of ``"rb"``, ``"wb"``, ``"r"``, or
+            ``"w"``. Defaults to ``"wb"`` (write binary).
+
+    Returns:
+        AbstractContextManager[IO[bytes]] | AbstractContextManager[IO[str]]:
+        A context manager yielding the appropriate IO object. Paths opened here
+        are closed on context exit; pre-existing IO objects are left open.
+
+    Raises:
+        TypeError: If ``file_like`` is an IO object whose type does not match
+            the requested mode (e.g. a text stream passed with ``"rb"``).
+        OSError: If a file path cannot be opened (e.g. permission denied,
+            file not found).
+    """
     if "b" in mode:
         if isinstance(file_like, (str, os.PathLike)):
             return builtins.open(file_like, mode)

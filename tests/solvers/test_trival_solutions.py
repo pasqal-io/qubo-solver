@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 import torch
 
-from qubosolver import QUBOInstance, SolverConfig, QuboSolver, matrix, bitstrings, LocalEmulator
+from qubosolver import Instance, SolverConfig, Solver, matrix, bitstrings, LocalEmulator
 
 
 def test_classical_all_positive_trivial() -> None:
@@ -13,10 +13,10 @@ def test_classical_all_positive_trivial() -> None:
     with solution_status 'trivial-zero'.
     """
     coeffs = matrix.tensor([[1.0, 0.5], [0.5, 2.0]])
-    instance = QUBOInstance(matrix=coeffs)
+    instance = Instance(matrix=coeffs)
     config = SolverConfig(use_quantum=False)
 
-    solver = QuboSolver(instance, config)
+    solver = Solver(instance, config)
     sol = solver.solve()
 
     # All entries zero
@@ -33,17 +33,17 @@ def test_quantum_all_negative_trivial(local_backend: LocalEmulator) -> None:
     config = SolverConfig(use_quantum=True, backend=local_backend)
 
     coeffs = matrix.tensor([[-1.0, -0.2], [-0.2, -3.0]])
-    instance = QUBOInstance(matrix=coeffs)
+    instance = Instance(matrix=coeffs)
     # check if value error is raised.
     with pytest.raises(
         ValueError, match="Quantum solver does not handle off-diagonal negative coefficients"
     ):
-        solver = QuboSolver(instance, config)
+        solver = Solver(instance, config)
 
     coeffs = matrix.tensor([[-1.0, 0.0], [0.0, -3.0]])
-    instance = QUBOInstance(matrix=coeffs)
+    instance = Instance(matrix=coeffs)
 
-    solver = QuboSolver(instance, config)
+    solver = Solver(instance, config)
     sol = solver.solve()
 
     # All entries one
@@ -52,9 +52,9 @@ def test_quantum_all_negative_trivial(local_backend: LocalEmulator) -> None:
 
 def test_diagonal_trivial(local_backend: LocalEmulator) -> None:
     coeffs = matrix.tensor([[-1.0, 0.0], [0.0, 3.0]])
-    instance = QUBOInstance(matrix=coeffs)
+    instance = Instance(matrix=coeffs)
     config = SolverConfig(use_quantum=True, backend=local_backend)
 
-    solver = QuboSolver(instance, config)
+    solver = Solver(instance, config)
     sol = solver.solve()
     torch.testing.assert_close(sol.bitstrings, bitstrings.tensor([[1, 0]]))

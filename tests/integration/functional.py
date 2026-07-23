@@ -10,10 +10,10 @@ import torch
 import qoolqit
 
 from qubosolver import (
-    QUBOInstance,
-    QUBOSolution,
-    QUBOSingleSolution,
-    QUBOAnalyzer,
+    Instance,
+    Solution,
+    SingleSolution,
+    Analyzer,
     solvers,
     transforms,
     embedding,
@@ -24,7 +24,7 @@ from qubosolver import (
 )
 
 
-def gather_optimal_solutions(solutions: QUBOSolution) -> list[QUBOSingleSolution]:
+def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
     min_cost = solutions[0].cost
     return [d for d in solutions if np.allclose(d.cost, min_cost)]
 
@@ -35,7 +35,7 @@ def interaction_matrix_from_vertices(vertices: torch.Tensor) -> torch.Tensor:
     return U
 
 
-def simple_qubo() -> tuple[QUBOInstance, list[QUBOSingleSolution]]:
+def simple_qubo() -> tuple[Instance, list[SingleSolution]]:
 
     sqrt3 = np.sqrt(3.0)
     vertices = torch.tensor(
@@ -57,7 +57,7 @@ def simple_qubo() -> tuple[QUBOInstance, list[QUBOSingleSolution]]:
     Q = interaction_matrix_from_vertices(vertices) + diagonal_scale * torch.diag(diagonal)
     Q /= Q.max()
 
-    solutions = QUBOSolution()
+    solutions = Solution()
     solutions.bitstrings = bitstrings.tensor(list(itertools.product([0, 1], repeat=n_qubits)))
     solutions.counts = vectori.zeros(solutions.bitstrings.shape[0]).fill_(1)
     solutions.compute_costs(Q).sort_by_cost().compute_probabilities()
@@ -70,7 +70,7 @@ def simple_qubo() -> tuple[QUBOInstance, list[QUBOSingleSolution]]:
     print(f"All expected optimal bitstrings: {[s.string for s in expected_optimal_solutions]}")
     print(f"Number of expected optimal solutions: {len(expected_optimal_solutions)}\n")
 
-    return QUBOInstance(matrix=Q), expected_optimal_solutions
+    return Instance(matrix=Q), expected_optimal_solutions
 
 
 def manual_seed(seed: int) -> torch.Generator:
@@ -81,15 +81,15 @@ def manual_seed(seed: int) -> torch.Generator:
 
 
 def check_solution(
-    solutions: QUBOSolution,
-    expected_optimal_solutions: list[QUBOSingleSolution],
+    solutions: Solution,
+    expected_optimal_solutions: list[SingleSolution],
     expect_optimality: bool = True,
 ) -> None:
 
     # Solutions are not duplicated
     check.equal(solutions.bitstrings.unique(dim=0).shape[0], solutions.bitstrings.shape[0])
 
-    analyzer = QUBOAnalyzer([solutions])
+    analyzer = Analyzer([solutions])
     print(f"{analyzer.df}")
 
     assert isinstance(solutions.probabilities, torch.Tensor)
@@ -157,7 +157,9 @@ def test_quantum_solve(
     emulator = qoolqit.execution.LocalEmulator()
 
     if drive_shaping_method == "heuristic":
-        drive = drive_shaping.heuristic.build_drive(effective_qubo, device, dmm=False, kappa=0.25)
+        drive = drive_shaping.heuristic.build_drive(
+            effective_qubo, device=device, dmm=False, kappa=0.25
+        )
     elif drive_shaping_method == "optimized":
         drive, _ = drive_shaping.optimized.build_drive(
             effective_qubo,
@@ -171,11 +173,11 @@ def test_quantum_solve(
         raise ValueError(f"Invalid drive shaping method: {drive_shaping_method}")
 
     job = solvers.analog_quantum_sample(register, drive, emulator, device)
-    solution = QUBOSolution.from_results(job.results())
+    solution = Solution.from_results(job.results())
 
     # Post-process fixations of the preprocessing and restore the original QUBO
     if preprocessing:
-        assert isinstance(effective_qubo, transforms.variable_fixing.QUBOInstance)
+        assert isinstance(effective_qubo, transforms.variable_fixing.Instance)
         solution = transforms.variable_fixing.unapply(solution, effective_qubo)
 
     if postprocessing:
@@ -226,7 +228,7 @@ def test_classical_solve(
         raise ValueError(f"Invalid solving method: {solving_method}")
 
     if preprocessing:
-        assert isinstance(effective_qubo, transforms.variable_fixing.QUBOInstance)
+        assert isinstance(effective_qubo, transforms.variable_fixing.Instance)
         solution = transforms.variable_fixing.unapply(solution, effective_qubo)
 
     if postprocessing:

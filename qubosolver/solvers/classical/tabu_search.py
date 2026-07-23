@@ -1,15 +1,21 @@
+"""Tabu Search solver for QUBO problems.
+
+Provides `tabu_search`, a single-neighbourhood tabu search that
+explores bit-flip moves in parallel across multiple starting points.
+"""
+
 from __future__ import annotations
 
 import time
 
 import torch
 
-from qubosolver.types import QUBOInstance, QUBOSolution, Bitstring, bitstrings
+from qubosolver.types import Instance, Solution, Bitstring, bitstrings
 from qubosolver._utils import costs as _costs
 
 
 def tabu_search(
-    qubo: QUBOInstance,
+    qubo: Instance,
     start: Bitstring,
     *,
     max_iter: int = 100,
@@ -17,38 +23,32 @@ def tabu_search(
     max_no_improve: int = 20,
     max_bitstrings: int = 1,
     time_limit: float = float("inf"),
-) -> QUBOSolution:
-    """
-    Perform Tabu Search on a QUBO instance to find low-cost bitstrings.
+) -> Solution:
+    """Perform Tabu Search on a QUBO instance to find low-cost bitstrings.
 
-    The algorithm iteratively flips bits in the current solution to
-    explore neighboring solutions, while maintaining a tabu list to
-    prevent cycling. It keeps track of the best solution encountered
-    and stops when no improvement is observed for a given number of
-    iterations.
+    Runs ``max_bitstrings`` independent searches that each start from ``start``
+    and explore single-bit-flip neighbours.  A tabu list prevents revisiting
+    recently flipped bits; aspiration overrides the tabu restriction whenever a
+    move yields a new global best.  All independent runs share the same stopping
+    criteria and are deduplicated before being returned.
 
     Args:
-        qubo (QUBOInstance): The QUBO instance providing the cost matrix.
-        x0 (torch.Tensor): The initial binary solution tensor of shape (n,).
-        max_iter (int, optional): Maximum number of search iterations.
-        tabu_tenure (int, optional): Number of iterations a move (bit flip)
-            remains tabu. Defaults to 7.
-        max_no_improve (int, optional): Maximum number of consecutive iterations
-            without improvement before termination. Defaults to 20.
-        max_bitstrings (int, optional): Maximum number of bitstring solutions returned.
-            Defaults to 1.
-        time_limit: Maximum execution time in seconds. If infinite, no time
-            limit is applied. Defaults to float('inf').
+        qubo (Instance): The QUBO instance providing the cost matrix.
+        start (Bitstring): Initial binary solution of length ``n``.  Replicated
+            across all ``max_bitstrings`` independent runs.
+        max_iter (int): Maximum number of search iterations. Defaults to 100.
+        tabu_tenure (int): Number of iterations a bit-flip move stays tabu.
+            Defaults to 7.
+        max_no_improve (int): Maximum consecutive iterations without improvement
+            before a run is considered stagnated.  Search stops early when
+            **all** independent runs have stagnated. Defaults to 20.
+        max_bitstrings (int): Number of independent search runs (and upper bound on
+            unique solutions returned). Defaults to 1.
+        time_limit (float): Wall-clock time budget in seconds.  Defaults to
+            ``float('inf')`` (no limit).
 
     Returns:
-        A tuple `(bitstrings, costs, counts)` where:
-            - `bitstrings`: Tensor representing the best bitstrings found.
-            - `costs`: Corresponding objective values.
-            - `counts`: Frequencies each bitstring was found.
-
-    Example:
-        >>> x, costs, counts = tabu_search(qubo, torch.randint(0, 2, (10,)))
-        >>> print(x, costs, counts)
+        Deduplicated best bitstrings found across all runs, together with their objective values and occurrence counts.
     """
     Q = qubo.matrix
     device = Q.device
@@ -109,7 +109,7 @@ def tabu_search(
     uniq, counts = torch.unique(x_best, dim=0, return_counts=True)
     costs = _costs.batched_quadratic_cost(uniq.to(Q), Q)
 
-    solution = QUBOSolution(
+    solution = Solution(
         bitstrings=bitstrings.from_torch(uniq),
         costs=costs,
         counts=counts,

@@ -10,12 +10,12 @@ import pytest_check as check
 import random
 
 from qubosolver import (
-    QUBOInstance,
-    QuboSolver,
+    Instance,
+    Solver,
     EmbeddingConfig,
     SolverConfig,
     DriveShapingConfig,
-    QUBOAnalyzer,
+    Analyzer,
     tensor,
     vector,
 )
@@ -106,7 +106,7 @@ def test_with_perfect_embedding(
     print(f"All expected optimal bitstrings: {[s.bitstring for s in expected_optimal_solutions]}")
     print(f"Number of expected optimal solutions: {len(expected_optimal_solutions)}\n")
 
-    instance = QUBOInstance(matrix=Q)
+    instance = Instance(matrix=Q)
 
     embed_cfg = EmbeddingConfig(
         embedding_method="greedy",
@@ -128,11 +128,11 @@ def test_with_perfect_embedding(
         device=device_type(),
     )
 
-    solver = QuboSolver(instance, config)
+    solver = Solver(instance, config)
     qubo_solution = solver.solve()
 
     qubo_solution.sort_by_cost()
-    analyzer = QUBOAnalyzer([qubo_solution])
+    analyzer = Analyzer([qubo_solution])
     print(f"{analyzer.df}")
 
     register = solver.embedding()

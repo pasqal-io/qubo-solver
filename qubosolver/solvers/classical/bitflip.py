@@ -1,10 +1,23 @@
+"""Bit-flip local search for QUBO solutions.
+
+This module provides a greedy single-bit-flip local search that improves an
+existing :class:`~qubosolver.types.Solution` by iteratively flipping the
+bit that yields the greatest cost reduction, stopping when no single flip
+improves the objective.
+
+The main public entry point is `iterative_bitflip_local_search`, which
+applies this search independently to every bitstring in a solution and is used
+as the post-processing step in :class:`~qubosolver.solvers.BaseSolver`.
+"""
+
 from __future__ import annotations
 
 import torch
 from collections.abc import Callable
+from copy import deepcopy
 
 
-from qubosolver import QUBOInstance, QUBOSolution, bitstrings, vector, vectori, Bitstring
+from qubosolver import Instance, Solution, bitstrings, vector, vectori, Bitstring
 
 
 def _bit_flip_local_search(
@@ -12,16 +25,29 @@ def _bit_flip_local_search(
     s: Bitstring,
     rng: torch.Generator | None = None,
 ) -> tuple[Bitstring, float]:
-    """
-    Performs a local search by flipping bits to improve the objective value.
+    """Improve a single bitstring via best-improvement bit-flip search.
+
+    At each iteration, evaluates all *n* single-bit flips and applies the one
+    with the lowest resulting objective value.  Repeats until no flip reduces
+    the cost (a local minimum is reached).
 
     Args:
-        qubo_func: Function that computes the objective value for a solution array.
-        s (np.ndarray): Binary array representing a candidate solution.
-        shuffle (bool, optional): Shuffle to diversify
+        qubo_func: Callable that maps a :class:`~qubosolver.types.Bitstring`
+            to a scalar cost (lower is better).
+        s: Binary tensor of shape ``(n,)`` representing the starting solution.
+            The tensor is cloned internally; the original is not modified.
+        rng: Optional :class:`torch.Generator` used to randomise the order in
+            which bit positions are evaluated at each iteration.  When
+            provided, positions are visited in a random permutation, which
+            can help escape ties and improve diversity.  When ``None``,
+            positions are visited in index order ``0, 1, …, n-1``.
 
     Returns:
-        tuple[np.ndarray, float]: The improved solution and its objective value.
+        A 2-tuple of:
+
+        * **improved bitstring** — a :class:`~qubosolver.types.Bitstring` of
+          shape ``(n,)`` at a local minimum of *qubo_func*.
+        * **cost** — the scalar objective value at that local minimum.
     """
     s_current = s.detach().clone()
     current_objective = qubo_func(s_current)
@@ -51,20 +77,23 @@ def _bit_flip_local_search(
     return s_current, current_objective
 
 
-def iterative_bitflip_local_search(Q: QUBOInstance, solution: QUBOSolution) -> QUBOSolution:
-    """Improve every bitstring in *solution* via greedy single-bit-flip local search.
+def iterative_bitflip_local_search(instance: Instance, solution: Solution) -> Solution:
+    """Improve every bitstring in `solution` via single-bit-flip local search.
 
-    Each bitstring is independently refined by flipping the bit that yields the
-    largest cost decrease, repeating until no single flip improves the cost.
-    Duplicate bitstrings are merged after improvement.
+    After refinement, duplicate bitstrings that were driven to
+    the same local minimum are merged: their counts are summed, the minimum
+    cost is retained, and sampling probabilities are recomputed from the merged
+    counts.
 
     Args:
-        solution: The initial :class:`QUBOSolution` to refine.
-        Q: The :class:`QUBOInstance` used for cost evaluation.
+        instance: The instance used to evaluate bitstring costs.
+        solution: The solution to refine.
 
     Returns:
-        The refined :class:`QUBOSolution` with improved (and deduplicated) bitstrings.
+        A new solution with updated `bitstrings`, `costs`, `counts`, and `probabilities` reflecting the locally optimal results.
     """
+    solution = deepcopy(solution)
+
     # If there are no bitstrings, return the solution unchanged.
     if solution.bitstrings.numel() == 0:
         return solution
@@ -72,10 +101,10 @@ def iterative_bitflip_local_search(Q: QUBOInstance, solution: QUBOSolution) -> Q
     # Define an objective function that uses the existing evaluate_solution method.
     def qubo_objective(s_arr: Bitstring) -> float:
         # Convert the solution array to a list of integers
-        return Q.evaluate_solution(s_arr)
+        return instance.evaluate_solution(s_arr)
 
     num_solutions = solution.bitstrings.shape[0]
-    improved_bitstrings = bitstrings.zeros(num_solutions, Q.size)
+    improved_bitstrings = bitstrings.zeros(num_solutions, instance.size)
     improved_costs = vector.zeros(num_solutions)
 
     for idx in range(num_solutions):

@@ -44,7 +44,7 @@ def pulser_specs(
             (distances by ``min_atom_distance``, energies by the nearest-neighbour
             interaction strength J₀).
         check_against_qoolqit: If ``True``, compare the result against
-            :func:`qoolqit_specs` and warn on mismatches.
+            `qoolqit_specs` and warn on mismatches.
 
     Returns:
         A dictionary of device specifications (max duration, amplitude, detuning, etc.).
@@ -110,7 +110,7 @@ def qoolqit_specs(
         device: A qoolqit device.
         complete_with_pulser: If ``True``, fill missing keys from
             the underlying Pulser device specs.
-        check_against_pulser: If ``True``, compare with :func:`pulser_specs`
+        check_against_pulser: If ``True``, compare with `pulser_specs`
             and warn on mismatches.
 
     Returns:

@@ -1,10 +1,24 @@
+"""Analysis utilities for QUBO solutions.
+
+Provides :class:`Analyzer`, which aggregates one or more
+:class:`~qubosolver.types.solution.Solution` objects into a unified
+:class:`~pandas.DataFrame` and exposes filtering, statistical, and plotting
+helpers for comparing solver outputs.
+
+Typical usage:
+
+    analyzer = Analyzer([sol_a, sol_b], labels=["classical", "quantum"])
+    analyzer.calculate_gaps(opt_cost=-42.0)
+    analyzer.plot(x_axis="bitstrings", y_axis="costs", top_percent=0.1)
+"""
+
 from __future__ import annotations
 
 import pandas as pd
 import seaborn as sns
 
-from .solution import QUBOSolution
-from .instance import QUBOInstance
+from .solution import Solution
+from .instance import Instance
 from . import bitstrings
 from .linalg import Vectori, Vector
 
@@ -16,39 +30,40 @@ _PROBS = "probs"
 _GAPS = "gaps"
 
 
-class QUBOAnalyzer:
+class Analyzer:
+    """Aggregates and analyses one or more QUBO solutions.
+
+    Converts [`qubosolver.Solution`][] objects into a
+    unified `pandas.DataFrame` (``self.df``) with columns for
+    bitstrings, costs, and optionally counts, probabilities, and gaps.
+    Multiple solutions can be labelled and compared side-by-side through the
+    filtering and plotting helpers.
+
+    Args:
+        solutions: A single [`qubosolver.Solution`][]
+            or a list of them.  A bare instance is automatically wrapped in a list.
+        labels: One label per solution used to identify each group in the
+            `DataFrame` and plots.  Defaults to ``"0"``, ``"1"``, … when `None`.
+
+    Raises:
+        ValueError: If the number of labels does not match the number of solutions.
+        TypeError: If any element of *solutions* is not a
+             [`qubosolver.Solution`][], or if any label
+            is not a `str`.
+    """
+
     def __init__(
         self,
-        solutions: QUBOSolution | list[QUBOSolution],
+        solutions: Solution | list[Solution],
         labels: str | list[str] | None = None,
     ):
-        """
-        Analyzer for solutions to a Quadratic Unconstrained Binary Optimization (QUBO) problem.
-
-        Initializes the analyzer with one or a list of QUBOSolutions.
-
-        If a single QUBOSolution is provided, it is automatically wrapped into a list.
-        Optionally, you can provide a list of labels corresponding to each QUBOSolution.
-        If labels are not provided, they are assigned automatically as '0', '1', etc.
-
-        Args:
-            solutions (QUBOSolution | list[QUBOSolution]):
-                A single QUBOSolution or a list of QUBOSolution instances.
-            labels (str | list[str] | None):
-                A list of labels for the QUBOSolutions. Must match the number of solutions.
-
-        Raises:
-            ValueError: If no solutions are provided or if the number of labels
-                        does not match the number of solutions.
-            TypeError: If any solution or label is not of the expected type.
-        """
         # Recast solutions into a list if a single solution is provided.
         if not isinstance(solutions, list):
             solutions = [solutions]
 
         for sol in solutions:
-            if not isinstance(sol, QUBOSolution):
-                raise TypeError("Each solution must be a QUBOSolution instance.")
+            if not isinstance(sol, Solution):
+                raise TypeError("Each solution must be a Solution instance.")
 
         self.solutions = solutions
 
@@ -71,17 +86,17 @@ class QUBOAnalyzer:
 
         self.df = self._to_dataframe()
 
-    def _solution_to_dataframe(self, solution: QUBOSolution, solution_label: str) -> pd.DataFrame:
+    def _solution_to_dataframe(self, solution: Solution, solution_label: str) -> pd.DataFrame:
         """
-        Converts a single QUBOSolution into a pandas DataFrame.
+        Converts a single Solution into a pandas `DataFrame`.
         For better readability, each bitstring is converted to a string representation.
 
         Args:
-            solution (QUBOSolution): The QUBOSolution to convert.
+            solution (Solution): The Solution to convert.
             solution_label (str): The label associated with this solution.
 
         Returns:
-            pd.DataFrame: A DataFrame containing the solution's bitstrings, cost,
+            pd.DataFrame: A `DataFrame` containing the solution's bitstrings, cost,
                           and optionally counts and probabilities.
         """
         # Convert each row of the bitstring tensor into a string (e.g., "010101").
@@ -105,11 +120,11 @@ class QUBOAnalyzer:
 
     def _to_dataframe(self) -> pd.DataFrame:
         """
-        Combines all QUBOSolutions into a single DataFrame.
-        This DataFrame can be used for filtering, sorting, and analysis.
+        Combines all QUBOSolutions into a single `DataFrame`.
+        This `DataFrame` can be used for filtering, sorting, and analysis.
 
         Returns:
-            pd.DataFrame: The concatenated DataFrame containing all solutions.
+            pd.DataFrame: The concatenated `DataFrame` containing all solutions.
         """
         df_list = []
         # Construct DataFrames for each solution using their associated label.
@@ -121,13 +136,28 @@ class QUBOAnalyzer:
         self,
         target_labels: list[str],
     ) -> None:
-        """
-        Compare two `QUBOSolution` objects and provide a statistical analysis of the differences,
-        including degenerate solution matching and mismatch statistics.
+        """Compare the bitstring sets of exactly two labelled solutions.
+
+        Prints a human-readable summary to *stdout* reporting:
+
+        - The total and unique bitstring counts for each solution.
+        - Bitstrings present in the first solution but absent from the second,
+          and vice-versa.
+        - The ratio of differing bitstrings over the total unique set.
+
+        Note:
+            Duplicate bitstrings within a single solution are deduplicated
+            before comparison.  This is a temporary workaround until the
+            upstream duplicate-bitstring issue in
+            [`Solution`][qubosolver.Solution] is resolved.
 
         Args:
-            target_labels (list[str]): The labels of the solutions to compare. If None, compares
-                all solutions.
+            target_labels: Exactly two labels identifying the solutions to
+                compare.  Both must be present in the [`Analyzer`][] labels.
+
+        Raises:
+            ValueError: If `len(target_labels) != 2`, or if any label is not
+                present in the [`Analyzer`][] labels.
         """
 
         def print_diff(
@@ -136,14 +166,13 @@ class QUBOAnalyzer:
             main_label: str,
             compare_label: str,
         ) -> None:
-            """
-            Prints the differences between two sets of bitstrings.
+            """Print the bitstrings present in one solution but absent from the other.
+
             Args:
-                diff (set[str]): The set of bitstrings that are in main_label but not in
-                    compare_label.
-                bs_set (set[str]): The set of all unique bitstrings.
-                main_label (str): The label of the solution being compared from.
-                compare_label (str): The label of the solution being compared to.
+                diff: Bitstrings in `main_label` not present in `compare_label`.
+                bs_set: Full set of unique bitstrings for `main_label`.
+                main_label: Label of the solution being compared from.
+                compare_label: Label of the solution being compared to.
             """
             if len(diff) > 0:
                 print(f"\nBitstrings in {main_label} not present in {compare_label}:")
@@ -158,13 +187,13 @@ class QUBOAnalyzer:
         if len(target_labels) != 2:
             raise ValueError("Exactly two target labels must be provided for comparison.")
         if not all(label in self.labels for label in target_labels):
-            raise ValueError("All target labels must be present in the QUBOAnalyzer's labels.")
+            raise ValueError("All target labels must be present in the Analyzer's labels.")
 
         # Extract bitstrings for each target label
         bs_list1 = self.df[self.df["labels"] == target_labels[0]]["bitstrings"].tolist()
         bs_list2 = self.df[self.df["labels"] == target_labels[1]]["bitstrings"].tolist()
 
-        # TODO: Once issue about duplicate bitstrings in QUBOSolution is fixed, this can be removed
+        # TODO: Once issue about duplicate bitstrings in Solution is fixed, this can be removed
         bs_set1 = set(bs_list1)
         bs_set2 = set(bs_list2)
 
@@ -189,15 +218,15 @@ class QUBOAnalyzer:
         self, min_probability: float, df: pd.DataFrame | None = None
     ) -> pd.DataFrame:
         """
-        Returns a DataFrame limited to bitstrings whose probability
+        Returns a `DataFrame` limited to bitstrings whose probability
         is greater than the provided threshold.
 
         Args:
             min_probability (float): Minimum probability threshold.
-            df (pd.DataFrame | None): DataFrame to filter.
+            df (pd.DataFrame | None): `DataFrame` to filter.
 
         Returns:
-            pd.DataFrame: The filtered DataFrame.
+            pd.DataFrame: The filtered `DataFrame`.
 
         Raises:
             ValueError: If the 'probabilities' column is not present.
@@ -212,15 +241,15 @@ class QUBOAnalyzer:
 
     def filter_by_cost(self, max_cost: float, df: pd.DataFrame | None = None) -> pd.DataFrame:
         """
-        Returns a DataFrame limited to bitstrings whose cost
+        Returns a `DataFrame` limited to bitstrings whose cost
         is smaller than the provided threshold.
 
         Args:
             max_cost (float): Maximum cost threshold.
-            df (pd.DataFrame | None): DataFrame to filter.
+            df (pd.DataFrame | None): `DataFrame` to filter.
 
         Returns:
-            pd.DataFrame: The filtered DataFrame.
+            pd.DataFrame: The filtered `DataFrame`.
         """
 
         if df is None:
@@ -238,7 +267,7 @@ class QUBOAnalyzer:
         order: str = "ascending",
     ) -> pd.DataFrame:
         """
-        Returns a DataFrame limited to the best bitstrings
+        Returns a `DataFrame` limited to the best bitstrings
         in a given column for each solution group,
         where "best" means that the cumulative probability (_PROBS)
         of the selected rows reaches at least
@@ -261,12 +290,12 @@ class QUBOAnalyzer:
                          (higher values are better).
 
         Returns:
-            pd.DataFrame: The filtered DataFrame containing, for each solution group, the bitstrings
+            pd.DataFrame: The filtered `DataFrame` containing, for each solution group, the bitstrings
                           whose cumulative probability (_PROBS)
                         reaches the specified top_percent threshold.
 
         Raises:
-            ValueError: If the specified column is not in the DataFrame,
+            ValueError: If the specified column is not in the `DataFrame`,
                         if top_percent is not in (0, 1],
                         or if the order parameter is not "descending" or "ascending".
         """
@@ -308,7 +337,7 @@ class QUBOAnalyzer:
                                  of lowest cost bitstrings to consider.
 
         Returns:
-            pd.DataFrame: A DataFrame with each solution label, the average cost over the
+            pd.DataFrame: A `DataFrame` with each solution label, the average cost over the
                           best top_percent bitstrings, and the count of bitstrings used.
         """
         df_top = self.filter_by_percentage(top_percent)
@@ -327,10 +356,10 @@ class QUBOAnalyzer:
 
     def best_bitstrings(self) -> pd.DataFrame:
         """
-        Finds all unique bitstrings (with the best cost) in each solution's DataFrame.
+        Finds all unique bitstrings (with the best cost) in each solution's `DataFrame`.
 
         Returns:
-            pd.DataFrame: A DataFrame with all unique rows per solution (solution_label)
+            pd.DataFrame: A `DataFrame` with all unique rows per solution (solution_label)
                           that have the best (lowest) cost.
         """
         best_list = []
@@ -344,58 +373,58 @@ class QUBOAnalyzer:
         best_rows = pd.concat(best_list, ignore_index=True)
         return best_rows
 
-    def calculate_costs(self, Q: QUBOInstance) -> pd.DataFrame:
+    def calculate_costs(self, instance: Instance) -> pd.DataFrame:
         """
-        Calculates the cost for each bitstring using the provided Q QUBOInstance.
+        Calculates the cost for each bitstring using the provided instance.
 
             cost = x^T Q x
 
-        The computed cost is added as the columns _COSTS in the DataFrame.
+        The computed cost is added as the columns _COSTS in the `DataFrame`.
 
         Args:
-            Q: QUBOInstance
+            instance: Instance
 
         Returns:
-            pd.DataFrame: The updated DataFrame including the _COSTS column.
+            pd.DataFrame: The updated `DataFrame` including the _COSTS column.
 
         Raises:
-            ValueError: If a bitstring's length does not match Q.shape[0].
+            ValueError: If a bitstring's length does not match instance.shape[0].
         """
 
-        self.df[_COSTS] = self.df[_BITSTRINGS].apply(Q.evaluate_solution)
+        self.df[_COSTS] = self.df[_BITSTRINGS].apply(instance.evaluate_solution)
         return self.df
 
-    def calculate_gaps(self, opt_cost: float, Q: QUBOInstance | None = None) -> pd.DataFrame:
+    def calculate_gaps(self, opt_cost: float, instance: Instance = Instance()) -> pd.DataFrame:
         """
         Calculates the gaps for each bitstring using the provided optimal cost.
         If costs are not present, calculates costs as ``x^T Q x`` first.
 
-        The computed gaps are added as the ``gaps`` column in the DataFrame.
+        The computed gaps are added as the ``gaps`` column in the `DataFrame`.
 
         Args:
             opt_cost (float): The known optimal cost used to compute
                 ``|cost - opt_cost| / |opt_cost|``.
-            Q (QUBOInstance | None): Optional QUBO instance used to compute
-                costs if they are not already present in the DataFrame.
+            instance (Instance): Optional QUBO instance used to compute
+                costs if they are not already present in the `DataFrame`.
 
         Returns:
-            pd.DataFrame: The updated DataFrame including the gaps column.
+            pd.DataFrame: The updated `DataFrame` including the gaps column.
         """
         if _COSTS in self.df.columns:
             self.df[_GAPS] = abs((self.df[_COSTS] - opt_cost) / opt_cost)
         else:
-            if Q is not None:
-                self.df[_COSTS] = self.df[_BITSTRINGS].apply(Q.evaluate_solution)
+            if instance.size > 0:
+                self.df[_COSTS] = self.df[_BITSTRINGS].apply(instance.evaluate_solution)
             else:
                 self.df[_GAPS] = abs((self.df[_COSTS] - opt_cost) / opt_cost)
         return self.df
 
     def add_counts(self, counts: Vectori) -> None:
         """
-        Updates the DataFrame by adding the counts column.
+        Updates the `DataFrame` by adding the counts column.
 
         If counts are provided at a later stage, this method will add the counts
-        to the DataFrame and ensure that they match the number of bitstrings.
+        to the `DataFrame` and ensure that they match the number of bitstrings.
 
         Args:
             counts (Vectori): An ``int64`` tensor of counts.
@@ -423,10 +452,10 @@ class QUBOAnalyzer:
 
     def add_probs(self, probs: Vector) -> None:
         """
-        Updates the DataFrame by adding the probs column.
+        Updates the `DataFrame` by adding the probs column.
 
         If probs are provided at a later stage, this method will add the probs
-        to the DataFrame and ensure that they match the number of bitstrings.
+        to the `DataFrame` and ensure that they match the number of bitstrings.
 
         Args:
             probs (Vector): A float tensor of probabilities.
@@ -465,7 +494,7 @@ class QUBOAnalyzer:
         Plots a bar chart of costs, counts, or probabilities as a function of bitstrings.
 
         Args:
-            df (pd.DataFrame): The DataFrame to plot. Defaults to None,
+            df (pd.DataFrame): The `DataFrame` to plot. Defaults to None,
                                 that means uses self.df.
             y_axis (str): The column name to be plotted on the y-axis.
             sort_by (str | None): Defines the column by which to sort the bitstrings.
@@ -537,14 +566,22 @@ class QUBOAnalyzer:
         Plots a bar chart of probabilities or counts as a function of cost.
 
         Args:
-            df (pd.DataFrame): The DataFrame to plot. Defaults to None,
-                                that means uses self.df.
-            x_axis (str): The column name to be plotted on the x-axis.
-            y_axis (str): The column name to be plotted on the y-axis.
-            sort_by (str | None): Defines the column by which to sort the costs.
-                                     If None, no sorting is done.
-            sort_order (str): Defines the sorting order. Accepts 'ascending' or 'descending'.
-                              Default is 'ascending'. Ignored if `sort_by` is None.
+            df: The `DataFrame` to plot.
+            x_axis: Column name for the x-axis (e.g. ``"costs"``, ``"gaps"``).
+            y_axis: Column name for the y-axis (e.g. ``"probs"``, ``"counts"``).
+            sort_by: Column by which to order the x-axis values before plotting.
+                Must be one of *x_axis* or *y_axis*.  No sorting when *None*.
+            sort_order: ``"ascending"`` or ``"descending"``.  Default is
+                ``"ascending"``.  Ignored when *sort_by* is *None*.
+            context: Seaborn plotting context (e.g. ``"notebook"``, ``"talk"``).
+
+        Returns:
+            sns.axisgrid.FacetGrid: The resulting grouped bar chart, one bar
+            group per unique x-axis value with hue mapped to solution labels.
+
+        Raises:
+            ValueError: If *x_axis* or *y_axis* is not a column in *df*, or if
+                *sort_by* is not one of *x_axis* or *y_axis*.
         """
         if x_axis not in df.columns:
             raise ValueError(

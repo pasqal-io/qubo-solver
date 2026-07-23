@@ -36,9 +36,9 @@ After solving the reduced QUBO, fixed variables are automatically reinserted int
 ### Example
 
 ```python exec="on" source="material-block" html="1"
-from qubosolver import QUBOInstance, QuboSolver, SolverConfig, ClassicalConfig, matrix
+from qubosolver import Instance, Solver, SolverConfig, ClassicalConfig, matrix
 
-qubo = QUBOInstance(matrix=matrix.tensor([[-2.0, 1.0], [1.0, -2.0]]))
+qubo = Instance(matrix=matrix.tensor([[-2.0, 1.0], [1.0, -2.0]]))
 
 # Create a SolverConfig object with classical solver options.
 config = SolverConfig(
@@ -47,7 +47,7 @@ config = SolverConfig(
     do_preprocessing=True
 )
 
-solver = QuboSolver(qubo, config)
+solver = Solver(qubo, config)
 solution = solver.solve()
 print(solution)
 ```

@@ -3,7 +3,6 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-import io
 import pytest_check as check
 import torch
 from unittest.mock import Mock
@@ -12,15 +11,14 @@ from qoolqit import Device
 from qoolqit.execution import JobStatus
 
 from qubosolver import (
-    QUBOInstance,
-    QuboSolver,
-    QUBOSolution,
+    Instance,
+    Solver,
+    Solution,
     EmbedderType,
-    QUBOAnalyzer,
+    Analyzer,
     EmbeddingConfig,
     DriveShapingConfig,
     SolverConfig,
-    transforms,
     vectori,
     bitstrings,
     matrix,
@@ -41,22 +39,22 @@ from typing import Optional
 
 @pytest.fixture
 def implicit_default_qubo_solver_config(
-    simple_qubo_instance: QUBOInstance,
-) -> QuboSolver:
-    default_solver = QuboSolver(simple_qubo_instance)
+    simple_qubo_instance: Instance,
+) -> Solver:
+    default_solver = Solver(simple_qubo_instance)
     return default_solver
 
 
 def test_implicit_solver_config(
-    implicit_default_qubo_solver_config: QuboSolver,
+    implicit_default_qubo_solver_config: Solver,
 ) -> None:
     assert isinstance(implicit_default_qubo_solver_config._solver, _QuboSolverQuantum)
 
 
-def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
+def test_different_shots(simple_qubo_instance: Instance) -> None:
     from pulser_simulation import QutipBackendV2
 
-    default_solver = QuboSolver(
+    default_solver = Solver(
         simple_qubo_instance,
         SolverConfig(
             use_quantum=True, backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=500)
@@ -65,7 +63,7 @@ def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
     solutions = default_solver.solve()
     assert solutions.counts.sum() == 500
 
-    lessshots_solver = QuboSolver(
+    lessshots_solver = Solver(
         simple_qubo_instance,
         SolverConfig(
             use_quantum=True, backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=100)
@@ -77,10 +75,8 @@ def test_different_shots(simple_qubo_instance: QUBOInstance) -> None:
 
 @pytest.mark.priority(40)
 @pytest.mark.flaky(max_runs=5)
-def test_run_local_backends(
-    simple_qubo_instance: QUBOInstance, local_backend: LocalEmulator
-) -> None:
-    solver = QuboSolver(
+def test_run_local_backends(simple_qubo_instance: Instance, local_backend: LocalEmulator) -> None:
+    solver = Solver(
         simple_qubo_instance,
         SolverConfig(
             use_quantum=True,
@@ -96,7 +92,7 @@ def test_run_local_backends(
 @pytest.mark.priority(150)
 def test_solver_different_devices(
     request: pytest.FixtureRequest,
-    qubo_for_testing_many_devices: QUBOInstance,
+    qubo_for_testing_many_devices: Instance,
     local_device: Device,
     embedding_method: EmbedderType,
 ) -> None:
@@ -114,7 +110,7 @@ def test_solver_different_devices(
         device=local_device,
         backend=LocalEmulator(backend_type=SVBackend),
     )
-    solver = QuboSolver(qubo_for_testing_many_devices, config)
+    solver = Solver(qubo_for_testing_many_devices, config)
     solution = solver.solve()
     assert solution
 
@@ -124,7 +120,7 @@ def test_parse_results() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"001": 10, "110": 5, "010": 3}
 
-    solution = QUBOSolution.from_results(mock_result)
+    solution = Solution.from_results(mock_result)
 
     expected_bitstrings = bitstrings.tensor([[0, 0, 1], [1, 1, 0], [0, 1, 0]])
     expected_counts = vectori.tensor([10, 5, 3])
@@ -138,7 +134,7 @@ def test_parse_results_empty_final_bitstrings() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {}
 
-    solution = QUBOSolution.from_results(mock_result)
+    solution = Solution.from_results(mock_result)
 
     check.equal(solution.bitstrings.shape, (0, 0))
     check.equal(solution.bitstrings.dtype, torch.int8)
@@ -151,7 +147,7 @@ def test_parse_results_binary_string_conversion() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"0101": 8, "1010": 12, "1111": 4}
 
-    solution = QUBOSolution.from_results(mock_result)
+    solution = Solution.from_results(mock_result)
 
     expected_bitstrings = bitstrings.tensor([[0, 1, 0, 1], [1, 0, 1, 0], [1, 1, 1, 1]])
     expected_counts = vectori.tensor([8, 12, 4])
@@ -165,7 +161,7 @@ def test_parse_results_single_bitstring() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"101": 25}
 
-    solution = QUBOSolution.from_results(mock_result)
+    solution = Solution.from_results(mock_result)
 
     expected_bitstrings = bitstrings.tensor([[1, 0, 1]])
     expected_counts = vectori.tensor([25])
@@ -179,7 +175,7 @@ def test_parse_results_string_counts_to_integer_tensor() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"101": "15", "010": "8", "111": "12"}
 
-    solution = QUBOSolution.from_results(mock_result)
+    solution = Solution.from_results(mock_result)
 
     expected_bitstrings = bitstrings.tensor([[1, 0, 1], [0, 1, 0], [1, 1, 1]])
     expected_counts = vectori.tensor([15, 8, 12])
@@ -188,7 +184,7 @@ def test_parse_results_string_counts_to_integer_tensor() -> None:
     torch.testing.assert_close(solution.counts, expected_counts)
 
 
-def trivial_triangular_qubo(connection: Optional[RemoteConnection] = None) -> QuboSolver:
+def trivial_triangular_qubo(connection: Optional[RemoteConnection] = None) -> Solver:
     Q = 10.0 * matrix.tensor(
         [
             [-10.0, 6.0, 6.0],
@@ -196,7 +192,7 @@ def trivial_triangular_qubo(connection: Optional[RemoteConnection] = None) -> Qu
             [6.0, 6.0, -10.0],
         ]
     )
-    qubo = QUBOInstance(Q)
+    qubo = Instance(Q)
 
     config = SolverConfig(use_quantum=True, do_preprocessing=False)
 
@@ -208,7 +204,7 @@ def trivial_triangular_qubo(connection: Optional[RemoteConnection] = None) -> Qu
     else:
         config.backend = RemoteEmulator(connection=connection, num_shots=num_shots)
 
-    solver = QuboSolver(qubo, config)
+    solver = Solver(qubo, config)
 
     return solver
 
@@ -229,7 +225,7 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
     job = solver.submit(drive, embedding)
     results = job.results()
 
-    solution = QUBOSolution.from_results(results)
+    solution = Solution.from_results(results)
     solution.compute_costs(solver.instance.matrix).compute_probabilities()
 
     # Take the top 3 solutions with the highest probabilities
@@ -241,7 +237,7 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
 
     torch.testing.assert_close(bitstrings_, bitstrings.tensor([[0, 0, 1], [0, 1, 0], [1, 0, 0]]))
 
-    analyzer = QUBOAnalyzer([solution])
+    analyzer = Analyzer([solution])
     print(f"\n{analyzer.df}")
 
     # Remote solutions should be identical to local ones
@@ -264,79 +260,6 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
     assert isinstance(results_remote, Results)
     check.equal(remote_job.get_status(), JobStatus.DONE)
 
-    solution_remote = QUBOSolution.from_results(results)
+    solution_remote = Solution.from_results(results)
     torch.testing.assert_close(solution_remote.bitstrings, solution.bitstrings)
     torch.testing.assert_close(solution_remote.counts, solution.counts)
-
-
-@pytest.mark.parametrize("postprocessing", [True, False], ids=["post", "no-post"])
-@pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no-pre"])
-def test_save_load_qubo_solver_quantum(
-    postprocessing: bool,
-    preprocessing: bool,
-) -> None:
-
-    Q = matrix.tensor(
-        [
-            [0.0, 6.0, 6.0],
-            [6.0, -10.0, 6.0],
-            [6.0, 6.0, -10.0],
-        ]
-    )
-    expected_preprocessed_Q = matrix.tensor(
-        [
-            [-10.0, 6.0],
-            [6.0, -10.0],
-        ]
-    )
-    qubo = QUBOInstance(Q)
-    config = SolverConfig(do_preprocessing=preprocessing, do_postprocessing=postprocessing)
-    solver = QuboSolver(qubo, config)
-    solver.preprocess()
-
-    if preprocessing:
-        assert isinstance(solver.instance, transforms.variable_fixing.QUBOInstance)
-        torch.testing.assert_close(solver.instance.matrix, expected_preprocessed_Q)
-        torch.testing.assert_close(solver.instance._parent_instance.matrix, Q)
-    else:
-        check.is_not_instance(solver.instance, transforms.variable_fixing.QUBOInstance)
-        torch.testing.assert_close(solver.instance.matrix, Q)
-
-    # Save the solver
-    file = io.BytesIO()
-    QuboSolver.save(file, solver)
-
-    # Load the solver
-    file.seek(0)
-    loaded_solver = QuboSolver.load(file)
-
-    # Verify the loaded solver has the same properties
-    torch.testing.assert_close(loaded_solver.instance.matrix, solver.instance.matrix)
-    if preprocessing:
-        assert isinstance(solver.instance, transforms.variable_fixing.QUBOInstance)
-        assert isinstance(loaded_solver.instance, transforms.variable_fixing.QUBOInstance)
-        torch.testing.assert_close(
-            loaded_solver.instance._parent_instance.matrix,
-            solver.instance._parent_instance.matrix,
-        )
-        check.equal(loaded_solver.instance._fixed_indices, solver.instance._fixed_indices)
-    else:
-        check.is_not_instance(loaded_solver.instance, transforms.variable_fixing.QUBOInstance)
-    check.equal(loaded_solver.config.do_preprocessing, solver.config.do_preprocessing)
-    check.equal(loaded_solver.config.do_postprocessing, solver.config.do_postprocessing)
-
-    for method in [
-        "solve",
-        "embedding",
-        "drive",
-        "submit",
-        "execute",
-        "draw_sequence",
-        "preprocess",
-        "_trivial_solution",
-    ]:
-        with pytest.raises(
-            AttributeError,
-            match=f"'{method}' is disabled: this method is not supported for QuboSolverQuantum loaded from a file.",
-        ):
-            getattr(loaded_solver, method)()

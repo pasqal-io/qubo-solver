@@ -10,13 +10,13 @@ The `CplexSolver` class implements a classical QUBO solver using IBM ILOG CPLEX.
 class CplexSolver(BaseClassicalSolver):
     def __init__(
         self,
-        instance: QUBOInstance,
+        instance: Instance,
         config: Optional[dict[str, Any]] = None
     )
 ```
 
 - **Parameters**:
-  - `instance` (`QUBOInstance`): QUBO problem containing a square coefficient matrix (`torch.Tensor`).
+  - `instance` (`Instance`): QUBO problem containing a square coefficient matrix (`torch.Tensor`).
   - `config` (`Optional[dict[str, Any]]`): Dictionary supporting:
     - `cplex_maxtime` (`float`, default `600.0`): Maximum solve time in seconds.
     - `cplex_log_path` (`str`, default `"solver.log"`): Path for CPLEX log output.
@@ -41,10 +41,10 @@ solver = CplexSolver(qubo_instance, config)
 ## `solve()` Method
 
 ```python
-def solve(self) -> QUBOSolution
+def solve(self) -> Solution
 ```
 
-Solves the QUBO problem via CPLEX and returns a `QUBOSolution` containing bitstrings and costs.
+Solves the QUBO problem via CPLEX and returns a `Solution` containing bitstrings and costs.
 
 ### Behavior
 
@@ -52,7 +52,7 @@ Solves the QUBO problem via CPLEX and returns a `QUBOSolution` containing bitstr
    Raises `ValueError` if `instance.matrix` is `None`.
 
 2. **Handle Empty Problem**
-   If the coefficient matrix has size zero, returns an empty `QUBOSolution`.
+   If the coefficient matrix has size zero, returns an empty `Solution`.
 
 3. **Convert to Sparse Format**
    Calls `qubo_instance_to_sparsepairs(instance)` to obtain `List[cplex.SparsePair]` for quadratic terms.
@@ -75,7 +75,7 @@ Solves the QUBO problem via CPLEX and returns a `QUBOSolution` containing bitstr
 7. **Format Output**
    - Build a `torch.Tensor` for bitstrings of shape `(1, N)`, dtype `float32`.
    - Build a `torch.Tensor` for cost of shape `(1,)`, dtype `float32`.
-   - Return `QUBOSolution(bitstrings, costs)`.
+   - Return `Solution(bitstrings, costs)`.
 
 ### Exceptions
 
@@ -85,11 +85,11 @@ Solves the QUBO problem via CPLEX and returns a `QUBOSolution` containing bitstr
 
 ```python exec="on" source="material-block" html="1"
 import torch
-from qubosolver import QUBOInstance, SolverConfig, ClassicalConfig, QuboSolver
+from qubosolver import Instance, SolverConfig, ClassicalConfig, Solver
 
 # Define a simple 2×2 QUBO matrix (identity)
 matrix = torch.eye(2)
-instance = QUBOInstance(matrix=matrix)
+instance = Instance(matrix=matrix)
 
 # Prepare solver configuration
 cplex = ClassicalConfig(
@@ -103,7 +103,7 @@ config = SolverConfig(
 )
 
 # Directly obtain solution via dispatcher
-classical_solver = QuboSolver(instance, config)
+classical_solver = Solver(instance, config)
 solution = classical_solver.solve()
 
 print("Bitstrings:", solution.bitstrings)

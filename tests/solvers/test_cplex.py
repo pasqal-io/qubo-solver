@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from qubosolver import QUBOInstance, QUBOSolution, ClassicalConfig, SolverConfig, QuboSolver, matrix
+from qubosolver import Instance, Solution, ClassicalConfig, SolverConfig, Solver, matrix
 
 
 def test_qubo_solver_classical_cplex() -> None:
@@ -10,7 +10,7 @@ def test_qubo_solver_classical_cplex() -> None:
     # For example, consider a QUBO where the optimum is known.
     # Here we use an identity matrix.
     Q = matrix.tensor([[1.0, 0.0], [0.0, 1.0]])
-    instance = QUBOInstance(matrix=Q)
+    instance = Instance(matrix=Q)
 
     # Create a SolverConfig object with classical solver options.
     classical_config = ClassicalConfig(
@@ -21,13 +21,13 @@ def test_qubo_solver_classical_cplex() -> None:
     config = SolverConfig(use_quantum=False, classical=classical_config)
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
-    classical_solver = QuboSolver(instance, config)
+    classical_solver = Solver(instance, config)
 
     # Solve the QUBO problem.
     solution = classical_solver.solve()
 
-    # Assert that the solution is an instance of QUBOSolution.
-    assert isinstance(solution, QUBOSolution)
+    # Assert that the solution is an instance of Solution.
+    assert isinstance(solution, Solution)
 
     # Since we used an identity matrix as Q and the conversion in the CPLEX,
     #  solver multiplies the coefficients by 2,

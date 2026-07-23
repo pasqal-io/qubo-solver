@@ -6,8 +6,8 @@ import pytest_check as check
 
 import qoolqit
 from qubosolver import (
-    QUBOInstance,
-    QUBOSolution,
+    Instance,
+    Solution,
     DriveShapingConfig,
     SolverConfig,
     DriveType,
@@ -22,12 +22,17 @@ from qubosolver.drive_shaping._drive_shaper import (
 
 @pytest.fixture
 def dummy_register() -> qoolqit.Register:
-    register = qoolqit.Register.from_coordinates([(0.0, 0.0), (1.0, 0.0), (2.0, 3.0)])
+    qubits = {
+        "0": (0.0, 0.0),
+        "1": (1.0, 0.0),
+        "2": (2.0, 3.0),
+    }
+    register = qoolqit.Register(qubits)
     return register
 
 
 def test_generate_returns_drive_and_solution_heuristic(
-    dummy_register: qoolqit.Register, simple_qubo_instance: QUBOInstance
+    dummy_register: qoolqit.Register, simple_qubo_instance: Instance
 ) -> None:
     default_config = SolverConfig(use_quantum=True)
     backend = default_config.backend
@@ -35,7 +40,7 @@ def test_generate_returns_drive_and_solution_heuristic(
     drive, solution = shaper.generate(dummy_register)
 
     assert isinstance(drive, qoolqit.Drive)
-    assert isinstance(solution, QUBOSolution)
+    assert isinstance(solution, Solution)
     assert len(solution.bitstrings) == 0
     assert len(solution.costs) == 0
     assert solution.probabilities.numel() == 0
@@ -44,7 +49,7 @@ def test_generate_returns_drive_and_solution_heuristic(
 
 def test_generate_returns_drive_and_solution_optimized(
     dummy_register: qoolqit.Register,
-    simple_qubo_instance: QUBOInstance,
+    simple_qubo_instance: Instance,
     optimized_drive_shaping: DriveShapingConfig,
 ) -> None:
     default_config = SolverConfig(use_quantum=True, drive_shaping=optimized_drive_shaping)
@@ -53,7 +58,7 @@ def test_generate_returns_drive_and_solution_optimized(
     drive, solution = shaper.generate(dummy_register)
 
     assert isinstance(drive, qoolqit.Drive)
-    assert isinstance(solution, QUBOSolution)
+    assert isinstance(solution, Solution)
     assert len(solution.bitstrings) == 0
     assert len(solution.costs) == 0
     assert len(solution.probabilities) == 0
@@ -64,12 +69,13 @@ def test_generate_returns_drive_and_solution_optimized(
 @pytest.mark.priority(35)
 def test_generate_optimized_drive_shaper(
     dummy_register: qoolqit.Register,
-    simple_qubo_instance: QUBOInstance,
+    simple_qubo_instance: Instance,
     optimized_drive_shaping: DriveShapingConfig,
 ) -> None:
     default_config = SolverConfig(
         use_quantum=True,
         drive_shaping=optimized_drive_shaping,
+        device=qoolqit.DigitalAnalogDevice(),
     )
     backend = default_config.backend
     shaper = _get_drive_shaper(simple_qubo_instance, default_config, backend)
@@ -77,7 +83,7 @@ def test_generate_optimized_drive_shaper(
     drive, solution = shaper.generate(dummy_register)
 
     assert isinstance(drive, qoolqit.Drive)
-    assert isinstance(solution, QUBOSolution)
+    assert isinstance(solution, Solution)
     assert solution.bitstrings.numel() > 0
     assert solution.costs.numel() > 0
     if isinstance(solution.probabilities, torch.Tensor):
@@ -87,7 +93,7 @@ def test_generate_optimized_drive_shaper(
 
     # try with custom objective
 
-    def custom_ojective(solution: QUBOSolution) -> float:
+    def custom_ojective(solution: Solution) -> float:
         return float(1e4)
 
     opt_res = []
@@ -123,7 +129,7 @@ def test_normalized_weights_in_drive(
     drive_method: DriveType,
     dmm: bool,
     dummy_register: qoolqit.Register,
-    simple_qubo_instance: QUBOInstance,
+    simple_qubo_instance: Instance,
 ) -> None:
     # skip heuristic-drive as its normalization is very specific
     if dmm and drive_method is DriveType.HEURISTIC:
@@ -151,7 +157,7 @@ def test_normalized_weights_in_drive(
 
 
 def test_drive_duration_set(
-    dummy_register: qoolqit.Register, simple_qubo_instance: QUBOInstance
+    dummy_register: qoolqit.Register, simple_qubo_instance: Instance
 ) -> None:
     default_config = SolverConfig(use_quantum=True, device=qoolqit.DigitalAnalogDevice())
     backend = default_config.backend
@@ -162,7 +168,7 @@ def test_drive_duration_set(
     check.almost_equal(drive.duration, 1000.0)
 
 
-def test_custom_drive_shaper(simple_qubo_instance: QUBOInstance) -> None:
+def test_custom_drive_shaper(simple_qubo_instance: Instance) -> None:
 
     class MockHeuristicDriveShaper(HeuristicDriveShaper):
         pass
@@ -179,7 +185,7 @@ def test_custom_drive_shaper(simple_qubo_instance: QUBOInstance) -> None:
 @pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
 def test_generate_heuristic_drive_shaper(
     dummy_register: qoolqit.Register,
-    simple_qubo_instance: QUBOInstance,
+    simple_qubo_instance: Instance,
     dmm: bool,
 ) -> None:
     default_config = SolverConfig(
@@ -193,7 +199,7 @@ def test_generate_heuristic_drive_shaper(
     drive, solution = shaper.generate(dummy_register)
 
     assert isinstance(drive, qoolqit.Drive)
-    assert isinstance(solution, QUBOSolution)
+    assert isinstance(solution, Solution)
     print("drive.duration =", drive.duration)
 
     check.almost_equal(drive.duration, 1000.0, abs=1.0e-3)
