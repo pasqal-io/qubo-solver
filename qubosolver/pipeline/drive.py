@@ -566,11 +566,14 @@ class OptimizedDriveShaper(BaseDriveShaper):
         max_detuning: float = specs["max_abs_detuning"] or 1e4
 
         amp_params = [1e-9] + list(params[:3]) + [1e-9]
-        det_params = list(params[3:])
         amp_params = [p * max_amplitude for p in amp_params]
-        det_params = [p * max_detuning for p in det_params]
-
         amp_wave = InterpolatedWaveform(max_seq_duration, amp_params)
+
+        # QoolQit rescales only based on the amplitude, so the maximum
+        # of the detuning depends on the amplitude.
+        det_ratio = max_detuning / max_amplitude
+        det_scale = det_ratio * float(amp_wave.max()) * (1.0 - 1e-3)
+        det_params = [p * det_scale for p in params[3:]]
         det_wave = InterpolatedWaveform(max_seq_duration, det_params)
 
         dmm = None
