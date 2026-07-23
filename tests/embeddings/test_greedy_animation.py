@@ -30,7 +30,7 @@ def _base_params(n: int) -> Dict[str, Any]:
         "layout": LayoutType.TRIANGULAR,
         "traps": n + 4,
         "spacing": 5.0,
-        "max_min_dist_ratio": 12.5, # TODO use test device's one?
+        "max_min_dist_ratio": 12.5,
     }
 
 
