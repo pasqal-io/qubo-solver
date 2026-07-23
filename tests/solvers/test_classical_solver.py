@@ -19,7 +19,7 @@ from qubosolver import (
     bitstring,
     torch_rng,
 )
-from qubosolver.solvers._classical_solver import (
+from qubosolver.solvers.classical._solver import (
     get_classical_solver,
     SimulatedAnnealingSolver,
     TabuSearchSolver,
