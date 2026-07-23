@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 import torch
 import pytest_check as check
-from pulser.waveforms import InterpolatedWaveform
 from scipy.spatial.distance import pdist, squareform
 from qoolqit import DigitalAnalogDevice
 from qoolqit.graphs import DataGraph
@@ -254,8 +253,8 @@ def _embedding_drive_ratio(solver: QuboSolver) -> float:
     # greedy labels qubits "q0"/"q1", blade labels them 0/1
     key = ("q0", "q1") if ("q0", "q1") in interactions else (0, 1)
     interaction = interactions[key]
-    assert isinstance(inner._drive.detuning, InterpolatedWaveform)
-    detuning = inner._drive.detuning._values[-1]
+    detuning_wf = inner._drive.detuning
+    detuning = detuning_wf(detuning_wf.duration)
     return float(interaction / detuning)
 
 
