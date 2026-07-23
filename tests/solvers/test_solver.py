@@ -11,6 +11,10 @@ from unittest.mock import Mock
 from qoolqit.devices import Device
 from qoolqit.execution import JobStatus
 
+
+from scipy.spatial.distance import pdist, squareform
+from qoolqit.graphs import DataGraph
+
 from qubosolver.config import (
     EmbeddingConfig,
     DriveShapingConfig,
@@ -18,7 +22,7 @@ from qubosolver.config import (
     LocalEmulator,
     RemoteEmulator,
 )
-from qubosolver.qubo_types import EmbedderType
+from qubosolver.qubo_types import DriveType, EmbedderType
 from qubosolver.solver import (
     QUBOInstance,
     QuboSolver,
@@ -365,3 +369,45 @@ def test_respects_total_bottom_detuning() -> None:
         solution = QuboSolver(instance, config).solve()
 
     assert solution.bitstrings.numel() > 0
+
+
+def _triangular_register_qubo() -> np.ndarray:
+    data_graph = DataGraph.triangular(4, 4, 1)
+    np.random.seed(0)
+    removed = np.random.choice(
+        data_graph.number_of_nodes(), data_graph.number_of_nodes() - 8, replace=False
+    )
+    data_graph.remove_nodes_from(removed)
+    coords = [data_graph.coords[n] for n in data_graph.nodes]
+    dist_matrix = squareform(pdist(coords))
+    with np.errstate(divide="ignore"):
+        qubo = 1.0 / dist_matrix**6
+    np.fill_diagonal(qubo, -0.5)
+    return np.asarray(qubo, dtype=float)
+
+
+@pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
+def test_quantum_matches_classical_triangular(embedding_method: str) -> None:
+    qubo = _triangular_register_qubo()
+    instance = QUBOInstance(coefficients=qubo)
+
+    quantum_config = SolverConfig(
+        use_quantum=True,
+        embedding=EmbeddingConfig(embedding_method=embedding_method),
+        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.HEURISTIC),
+        do_preprocessing=False,
+        do_postprocessing=False,
+    )
+    quantum_solution = QuboSolver(instance, quantum_config).solve()
+    quantum_solution.sort_by_cost()
+
+    classical_solution = QuboSolver(instance, SolverConfig(use_quantum=False)).solve()
+    classical_solution.sort_by_cost()
+
+    check.almost_equal(
+        quantum_solution.costs[0].item(),
+        classical_solution.costs[0].item(),
+        abs=1e-4,
+    )
+
+    check.greater_equal(quantum_solution.probabilities[0], 0.1)

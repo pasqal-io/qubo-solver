@@ -183,7 +183,7 @@ class GreedyEmbedder(BaseEmbedder):
                 )
             max_possible_term = self.instance._max_off_diag * max_possible_term_factor
 
-        spacing = max_possible_term ** (-1 / 6)
+        spacing = max_possible_term ** (-1 / 6) if max_possible_term != 0 else 1
 
         # build params for the Greedy algorithm
         params = {
