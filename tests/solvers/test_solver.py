@@ -13,7 +13,6 @@ from qoolqit.execution import JobStatus
 from qubosolver import (
     Instance,
     Solver,
-    QuboSolver,
     Solution,
     EmbedderType,
     Analyzer,
