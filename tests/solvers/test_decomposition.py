@@ -8,7 +8,7 @@ import numpy as np
 import random
 from typing import Tuple, List
 
-from qoolqit.devices import AnalogDeviceWithDMM, DigitalAnalogDevice
+from qoolqit.devices import DigitalAnalogDevice
 from qoolqit import Register
 from qubosolver import QUBOInstance
 
@@ -192,7 +192,6 @@ def test_compute_distance_interaction_matrix_zero_output() -> None:
 
     neglecting_inter_distance = 15.0
     neglecting_max_coefficient = 1.0
-    device = AnalogDeviceWithDMM()
 
     Q = torch.tensor(
         [
@@ -215,7 +214,6 @@ def test_compute_distance_interaction_diagonal() -> None:
 
     neglecting_inter_distance = 15.0
     neglecting_max_coefficient = 1.0
-    device = AnalogDeviceWithDMM()
 
     Q = torch.tensor(
         [

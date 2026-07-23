@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from qoolqit.devices import Device, AnalogDeviceWithDMM, AnalogDevice
+from qoolqit.devices import Device
 from qubosolver import QUBOInstance
 from qubosolver.config import (
     EmbeddingConfig,
@@ -40,28 +40,3 @@ def test_custom_embedder(simple_qubo_instance: QUBOInstance) -> None:
     backend = config.backend
     shaper = get_embedder(simple_qubo_instance, config, backend)
     assert isinstance(shaper, MockGreedyEmbedder)
-
-
-def test_error_greedy_max_radial_distance_constraint(
-    qubo_instance_for_embedding: QUBOInstance,
-) -> None:
-    assert qubo_instance_for_embedding.size is not None
-
-    coeffs = qubo_instance_for_embedding.normalized_coefficients
-
-    for device in [AnalogDevice(), AnalogDeviceWithDMM()]:
-        max_radial_distance = device.specs["max_radial_distance"]
-        assert max_radial_distance is not None
-        greedy_config = SolverConfig(
-            use_quantum=True,
-            embedding=EmbeddingConfig(
-                embedding_method="greedy",
-                greedy_traps=qubo_instance_for_embedding.size,
-            ),
-            device=device,
-        )
-
-        solver = QuboSolver(qubo_instance_for_embedding, greedy_config)
-        # Setting a spacing larger than the max_radial_distance is not an error,
-        # since scaling is performed
-        solver.embedding()
