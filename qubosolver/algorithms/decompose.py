@@ -110,7 +110,7 @@ def compute_distance_interaction_matrix(
     )
 
     def rydberg_blockade_radius(x: float) -> float:
-        return x ** (-1 / 6)
+        return float(x ** (-1 / 6))
 
     if cond.any():
         # set value to rydberg_blockade_radius
@@ -467,12 +467,12 @@ def cost_interaction_point_continuous(
 
     penalty_coeff = sum([coeff**2 for coeff in Q_target])
     if np.linalg.norm(pos_new) > max_radial_distance:
-        cost += penalty_coeff * (1 + np.linalg.norm(pos_new) - max_radial_distance)
+        cost += float(penalty_coeff * (1 + np.linalg.norm(pos_new) - max_radial_distance))
 
     for placed_point in placed_points:
         dist = np.linalg.norm(np.array(pos_new) - np.array(placed_point))
         if dist < min_distance:
-            cost += penalty_coeff * (1 + min_distance - dist)
+            cost += float(penalty_coeff * (1 + min_distance - dist))
 
     return cost
 

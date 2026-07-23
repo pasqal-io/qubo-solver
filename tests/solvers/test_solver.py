@@ -411,4 +411,5 @@ def test_quantum_matches_classical_triangular(embedding_method: str) -> None:
         abs=1e-4,
     )
 
+    assert quantum_solution.probabilities is not None
     check.greater_equal(quantum_solution.probabilities[0], 0.1)

@@ -465,8 +465,10 @@ class SolverConfig(Config):
         if self.embedding.max_min_dist_ratio != "device":
             return self.embedding.max_min_dist_ratio
         specs = self.device.specs
-        if specs["min_distance"] > 0 and specs["max_radial_distance"] is not None:
-            return specs["max_radial_distance"] / specs["min_distance"]
+        min_distance = specs["min_distance"]
+        max_radial_distance = specs["max_radial_distance"]
+        if min_distance is not None and min_distance > 0 and max_radial_distance is not None:
+            return max_radial_distance / min_distance
         return torch.inf
 
     def specs(self) -> str:

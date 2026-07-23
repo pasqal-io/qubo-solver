@@ -5,7 +5,6 @@ import typing
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 import torch
-from pulser.register.register_layout import RegisterLayout
 
 from qubosolver.algorithms.greedy.layout import get_layout
 
@@ -38,7 +37,7 @@ class Greedy:
     # ----------------------------
     # Layout utilities
     # ----------------------------
-    def get_predefined_coordinates(self, params: dict) -> tuple[RegisterLayout, torch.Tensor]:
+    def get_predefined_coordinates(self, params: dict) -> torch.Tensor:
         """
         Build the initial Pulser layout and return its coordinates.
 

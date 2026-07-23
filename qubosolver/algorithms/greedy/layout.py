@@ -14,7 +14,9 @@ class LayoutType(Enum):
     TRIANGULAR = TriangularLatticeLayout
 
 
-def get_layout(*, layout_type: LayoutType = LayoutType.TRIANGULAR, n_traps: int) -> torch.Tensor:
+def get_layout(
+    *, layout_type: LayoutType | str = LayoutType.TRIANGULAR, n_traps: int
+) -> torch.Tensor:
     """Return `n_traps` 2D trap coordinates on a specified lattice with unit spacing.
 
     Parameters:
@@ -50,3 +52,6 @@ def get_layout(*, layout_type: LayoutType = LayoutType.TRIANGULAR, n_traps: int)
             coords = torch.tensor(layout.coords)
             squared_distances = coords.square().sum(dim=1)
             return coords[torch.argsort(squared_distances)[:n_traps]]
+
+        case _:
+            raise ValueError(f"Unsupported layout_type: {layout_type!r}")
