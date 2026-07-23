@@ -220,6 +220,7 @@ def test_generate_heuristic_drive_shaper(
         check.almost_equal(drive.detuning.max(), 1.0, abs=1e-4)
 
 
+@pytest.mark.usefixtures("restore_rng_state")
 def test_shaper_does_not_overflow_device() -> None:
     data_graph = DataGraph.triangular(4, 4, 1)
     np.random.seed(0)

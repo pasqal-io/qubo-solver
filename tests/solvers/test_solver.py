@@ -386,6 +386,7 @@ def _triangular_register_qubo() -> np.ndarray:
     return np.asarray(qubo, dtype=float)
 
 
+@pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
 def test_quantum_matches_classical_triangular(embedding_method: str) -> None:
     qubo = _triangular_register_qubo()
