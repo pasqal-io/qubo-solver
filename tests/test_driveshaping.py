@@ -259,7 +259,7 @@ def _embedding_drive_ratio(solver: QuboSolver) -> float:
 
 
 @pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
-def test_heuristic_register_and_drive_share_normalization(
+def test_heuristic_register_and_drive_shape_normalization(
     embedding_method: str,
 ) -> None:
     """The heuristic drive shaper must normalize the pulse

@@ -9,9 +9,6 @@ import torch
 from scipy.optimize import OptimizeResult, minimize
 from shapely.geometry import Point, Polygon
 
-
-from qoolqit.devices.device import AnalogDeviceWithDMM
-
 VertexToPlace = TypedDict(
     "VertexToPlace",
     {
@@ -447,15 +444,13 @@ def cost_interaction_point_continuous(
     """
 
     cost = 0.0
-    epsilon = 1e-8 * AnalogDeviceWithDMM()._device.interaction_coeff ** (-1 / 3)
+
     for i, (xi, yi) in enumerate(placed_points):
         dx = pos_new[0] - xi
         dy = pos_new[1] - yi
         dist2 = dx**2 + dy**2
 
-        dist2 = max(dist2, epsilon)
-
-        interaction = 1 / (dist2**3)
+        interaction = 1 / (dist2**3) if dist2 != 0 else torch.inf
 
         diff = Q_target[i] - interaction
 
