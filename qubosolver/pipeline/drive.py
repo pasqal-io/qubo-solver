@@ -79,6 +79,43 @@ class BaseDriveShaper(ABC):
         ]
         return norm_weights_list
 
+    def _max_virtual_amplitude(self, register: Register) -> float:
+        """Maximum drive amplitude compilable on the device for a given register.
+
+        In the ``MAX_ENERGY`` compiler, when the amplitude is the binding
+        constraint the register is expanded (its physical distances grow with the
+        amplitude) up to the device's maximum radial distance. The largest
+        amplitude still compilable is therefore the one for which the expanded
+        register exactly fills the device radial extent. A small margin is
+        applied to stay strictly within the device limit and avoid a
+        ``CompilationError`` from rounding or automatic-layout snapping.
+
+        Args:
+            register (Register): register the drive will be applied to.
+
+        Returns:
+            float: maximum drive amplitude in the device's dimensionless units.
+        """
+        specs = self.device.specs
+        max_amplitude: float = specs["max_amplitude"] or 1e4
+        max_radial = specs["max_radial_distance"]
+        if max_radial is not None and register.n_qubits > 1:
+            reg_radial = register.max_radial_distance()
+            if reg_radial > 0:
+                max_amplitude *= (max_radial / reg_radial) ** 6 * (1.0 - 1e-3)
+        return max_amplitude
+
+    def _detuning_amplitude_ratio(self) -> float:
+        """Ratio between the device's maximum absolute detuning and amplitude.
+
+        Returns:
+            float: ``max_abs_detuning / max_amplitude`` in dimensionless units.
+        """
+        specs = self.device.specs
+        max_amplitude: float = specs["max_amplitude"] or 1e4
+        max_detuning: float = specs["max_abs_detuning"] or 1e4
+        return max_detuning / max_amplitude
+
     @abstractmethod
     def generate(
         self,
@@ -320,6 +357,29 @@ class HeuristicDriveShaper(BaseDriveShaper):
         d_min = np.min(d)
         d_max = np.max(d)
 
+        omega_max = kappa * np.max(np.abs(d))
+
+        max_amplitude = self._max_virtual_amplitude(register)
+        if omega_max > max_amplitude:
+            warnings.warn(
+                f"The heuristic drive amplitude ({omega_max}) exceeds the maximum "
+                f"amplitude compilable on the device for this register "
+                f"({max_amplitude}); clamping to it."
+            )
+            omega_max = max_amplitude
+
+        max_detuning = self._detuning_amplitude_ratio() * omega_max * (1.0 - 1e-3)
+        max_abs_d = float(np.max(np.abs(d)))
+        if max_abs_d > max_detuning:
+            warnings.warn(
+                f"The heuristic detuning ({max_abs_d}) exceeds the maximum detuning "
+                f"compilable on the device for this amplitude ({max_detuning}); "
+                f"scaling the detuning down."
+            )
+            d = d * (max_detuning / max_abs_d)
+            d_min = np.min(d)
+            d_max = np.max(d)
+
         if use_dmm:
             # Final global detuning is the top value, DMM pulls down locally
             delta_g_T = d_max
@@ -342,7 +402,6 @@ class HeuristicDriveShaper(BaseDriveShaper):
             delta_dmm_T = 0.0
             weights = [0.0] * n
 
-        omega_max = kappa * np.max(np.abs(d))
         # How to get max detuning ?
         delta_0 = -np.max(np.abs(d))
 
@@ -562,16 +621,15 @@ class OptimizedDriveShaper(BaseDriveShaper):
         """
         specs = self.device.specs
         max_seq_duration: float = specs["max_duration"] or 1e3
-        max_amplitude: float = specs["max_amplitude"] or 1e4
-        max_detuning: float = specs["max_abs_detuning"] or 1e4
+        max_virtual_amplitude: float = self._max_virtual_amplitude(self.register)
 
         amp_params = [1e-9] + list(params[:3]) + [1e-9]
-        amp_params = [p * max_amplitude for p in amp_params]
+        amp_params = [p * max_virtual_amplitude for p in amp_params]
         amp_wave = InterpolatedWaveform(max_seq_duration, amp_params)
 
         # QoolQit rescales only based on the amplitude, so the maximum
         # of the detuning depends on the amplitude.
-        det_ratio = max_detuning / max_amplitude
+        det_ratio = self._detuning_amplitude_ratio()
         det_scale = det_ratio * float(amp_wave.max()) * (1.0 - 1e-3)
         det_params = [p * det_scale for p in params[3:]]
         det_wave = InterpolatedWaveform(max_seq_duration, det_params)
