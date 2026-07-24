@@ -19,13 +19,12 @@ import copy
 from dataclasses import dataclass
 import torch
 
-import qoolqit
-
 from qubosolver.config import DecompositionConfig
 from qubosolver import Solution, Matrix, matrix, Bitstring, bitstring, vectori, torch_rng
 from qubosolver import Instance as QUBOInstanceBase
 from ._algorithms.decompose import (
     compute_distance_interaction_matrix,
+    compute_min_max_distances,
     geometric_search,
     interaction_matrix_from_placed,
     last_target_matrix,
@@ -48,16 +47,21 @@ class Config:
         decompose_stop_number: Minimum remaining variables before switching to a classical solver.
         decompose_threshold: Cost-function threshold for accepting an embedded placement.
         decompose_break_placement: Minimum placed vertices required to form a valid subproblem.
+        max_min_dist_ratio: Maximum allowed ratio between the largest and the smallest
+            inter-atom distance in an extracted sub-problem's embedding.
     """
 
-    neglecting_inter_distance: float = 15.0
+    neglecting_inter_distance: float = 1.5
     neglecting_max_coefficient: float = 1.0
     decompose_stop_number: int = 15
-    decompose_threshold: float = 25.0
+    decompose_threshold: float = 250
     decompose_break_placement: int = 3
+    max_min_dist_ratio: float = float("inf")
 
     @staticmethod
-    def from_decomposition_config(config: DecompositionConfig) -> Config:
+    def from_decomposition_config(
+        config: DecompositionConfig, *, max_min_dist_ratio: float
+    ) -> Config:
         """Create a :class:`Config` from a user-facing :class:`DecompositionConfig`."""
         return Config(
             neglecting_inter_distance=config.neglecting_inter_distance,
@@ -65,6 +69,7 @@ class Config:
             decompose_stop_number=config.decompose_stop_number,
             decompose_threshold=config.decompose_threshold,
             decompose_break_placement=config.decompose_break_placement,
+            max_min_dist_ratio=max_min_dist_ratio,
         )
 
 
@@ -78,7 +83,6 @@ class Instance(QUBOInstanceBase):
     def __init__(
         self,
         parent_instance: QUBOInstanceBase,
-        device: qoolqit.Device,
         *,
         config: Config = Config(),
     ):
@@ -86,7 +90,6 @@ class Instance(QUBOInstanceBase):
 
         Args:
             parent_instance: The original QUBO instance.
-            device: Target quantum device (used for interaction distances).
             config: Decomposition algorithm parameters.
         """
         super().__init__(parent_instance.matrix)
@@ -101,7 +104,6 @@ class Instance(QUBOInstanceBase):
         self._decomposition: list[list[int]] = []
 
         dist_matrix = compute_distance_interaction_matrix(
-            device._pulser_device,
             self._qubo_matrix,
             neglecting_inter_distance=config.neglecting_inter_distance,
             neglecting_max_coefficient=config.neglecting_max_coefficient,
@@ -144,7 +146,6 @@ class SubQUBOInstance(QUBOInstanceBase):
 
 def extract_subqubo(
     qubo: Instance,
-    device: qoolqit.Device,
     config: Config,
     *,
     last: bool = False,
@@ -157,7 +158,6 @@ def extract_subqubo(
 
     Args:
         qubo: The decomposition-aware QUBO instance.
-        device: Target quantum device.
         config: Decomposition algorithm parameters.
         last: If ``True``, extract the remaining (final) sub-problem
             without geometric search.
@@ -182,20 +182,22 @@ def extract_subqubo(
     idx: int = int(torch.randint(0, len(keys), (), generator=rng).item())
     first_vertex_search = keys[idx]
 
+    min_distance, max_radial_distance = compute_min_max_distances(
+        qubo._qubo_matrix, max_min_dist_ratio=config.max_min_dist_ratio
+    )
     qubo._placed_vertices = geometric_search(
         qubo._qubo_matrix,
         qubo._vertices_to_place,
         first_vertex_search,
         config.decompose_threshold,
-        device._pulser_device,
+        min_distance=min_distance,
+        max_radial_distance=max_radial_distance,
         rng=rng,
     )
     if len(qubo._placed_vertices) <= config.decompose_break_placement:
         return SubQUBOInstance()
 
-    matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(
-        qubo._placed_vertices, device._pulser_device
-    )
+    matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(qubo._placed_vertices)
     return SubQUBOInstance(matrix_to_solve, map_index_vertices)
 
 

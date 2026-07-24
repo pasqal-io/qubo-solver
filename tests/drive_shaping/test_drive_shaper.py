@@ -1,23 +1,30 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 import torch
 import pytest_check as check
+from scipy.spatial.distance import pdist, squareform
 
 import qoolqit
+from qoolqit.graphs import DataGraph
 from qubosolver import (
     Instance,
     Solution,
+    Solver,
+    EmbeddingConfig,
     DriveShapingConfig,
     SolverConfig,
     DriveType,
     Bitstring,
+    matrix,
 )
 from qubosolver.drive_shaping._drive_shaper import (
     _get_drive_shaper,
     OptimizedDriveShaper,
     HeuristicDriveShaper,
 )
+from qubosolver.solvers.solver import _QuboSolverQuantum
 
 
 @pytest.fixture
@@ -207,11 +214,72 @@ def test_generate_heuristic_drive_shaper(
 
     check.equal(drive.amplitude.duration, drive.duration)
     check.almost_equal(drive.amplitude.min(), 1e-9, abs=1e-10)
-    check.almost_equal(drive.amplitude.max(), 0.75, abs=1e-4)
+    check.almost_equal(drive.amplitude.max(), 0.375, abs=1e-4)
 
     check.equal(drive.detuning.duration, drive.duration)
-    check.almost_equal(drive.detuning.min(), -3.0, abs=1e-4)
+    check.almost_equal(drive.detuning.min(), -1.5, abs=1e-4)
     if dmm:
-        check.almost_equal(drive.detuning.max(), 3.0, abs=1e-4)
+        check.almost_equal(drive.detuning.max(), 1.5, abs=1e-4)
     else:
-        check.almost_equal(drive.detuning.max(), 2.0, abs=1e-4)
+        check.almost_equal(drive.detuning.max(), 1.0, abs=1e-4)
+
+
+@pytest.mark.usefixtures("restore_rng_state")
+def test_shaper_does_not_overflow_device() -> None:
+    data_graph = DataGraph.triangular(4, 4, 1)
+    np.random.seed(0)
+    removed = np.random.choice(
+        data_graph.number_of_nodes(), data_graph.number_of_nodes() - 8, replace=False
+    )
+    data_graph.remove_nodes_from(removed)
+    coords = [data_graph.coords[n] for n in data_graph.nodes]
+    dist_matrix = squareform(pdist(coords))
+    with np.errstate(divide="ignore"):
+        qubo = 1.0 / dist_matrix**6
+    np.fill_diagonal(qubo, -1.0)
+    coefficients = np.asarray(qubo, dtype=float)
+
+    config = SolverConfig(
+        use_quantum=True,
+        embedding=EmbeddingConfig(embedding_method="greedy"),
+        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.HEURISTIC),
+    )
+    solver = Solver(Instance(matrix.tensor(coefficients)), config)
+
+    solution = solver.solve()
+    assert solution.bitstrings.numel() > 0
+
+
+def _embedding_drive_ratio(solver: Solver) -> float:
+    """Return ``interaction(q0, q1) / final_detuning`` for a solved instance."""
+    inner = solver._solver
+    assert isinstance(inner, _QuboSolverQuantum)
+    assert inner._register is not None and inner._drive is not None
+    interactions = inner._register.interactions()
+    interaction = interactions[("0", "1")]
+    detuning_wf = inner._drive.detuning
+    detuning = detuning_wf(detuning_wf.duration)
+    return float(interaction / detuning)
+
+
+@pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
+def test_heuristic_register_and_drive_shape_normalization(
+    embedding_method: str,
+) -> None:
+    """The heuristic drive shaper must normalize the pulse
+    with the same convention as the register.
+    """
+    qubo = np.array([[-1.0, 2.0], [2.0, -1.0]])
+    config = SolverConfig(
+        use_quantum=True,
+        embedding=EmbeddingConfig(embedding_method=embedding_method),
+    )
+    solver = Solver(Instance(matrix.tensor(qubo)), config)
+    solver.solve()
+
+    ratio = _embedding_drive_ratio(solver)
+
+    # Physically expected ratio: Q_ij encoded by the interaction, -0.5*Q_ii by
+    # the final detuning -> 2.0 / (0.5) = 4.0
+    expected = qubo[0, 1] / (-0.5 * qubo[0, 0])
+    np.testing.assert_allclose(ratio, expected, rtol=1e-3)

@@ -7,14 +7,18 @@ import pytest_check as check
 import torch
 from unittest.mock import Mock
 
+from scipy.spatial.distance import pdist, squareform
+
 from qoolqit import Device
 from qoolqit.execution import JobStatus
+from qoolqit.graphs import DataGraph
 
 from qubosolver import (
     Instance,
     Solver,
     Solution,
     EmbedderType,
+    DriveType,
     Analyzer,
     EmbeddingConfig,
     DriveShapingConfig,
@@ -103,7 +107,6 @@ def test_solver_different_devices(
         embedding=EmbeddingConfig(
             embedding_method=embedding_method,
             greedy_traps=qubo_for_testing_many_devices.size,
-            min_distance=1.001,
         ),
         do_postprocessing=False,
         do_preprocessing=False,
@@ -263,3 +266,68 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
     solution_remote = Solution.from_results(results)
     torch.testing.assert_close(solution_remote.bitstrings, solution.bitstrings)
     torch.testing.assert_close(solution_remote.counts, solution.counts)
+
+
+def test_respects_total_bottom_detuning() -> None:
+    n = 6
+    Q = matrix.zeros(n)
+    for i in range(n):
+        Q[i, i] = -50.0 if i % 2 == 0 else 50.0
+    for i in range(n):
+        for j in range(i + 1, n):
+            Q[i, j] = Q[j, i] = 1.0
+
+    instance = Instance(Q)
+    config = SolverConfig(drive_shaping=DriveShapingConfig(dmm=True))
+
+    with pytest.warns(
+        UserWarning,
+        match="DMM final detuning would exceed the device's total_bottom_detuning",
+    ):
+        solution = Solver(instance, config).solve()
+
+    assert solution.bitstrings.numel() > 0
+
+
+def _triangular_register_qubo() -> np.ndarray:
+    data_graph = DataGraph.triangular(4, 4, 1)
+    np.random.seed(0)
+    removed = np.random.choice(
+        data_graph.number_of_nodes(), data_graph.number_of_nodes() - 8, replace=False
+    )
+    data_graph.remove_nodes_from(removed)
+    coords = [data_graph.coords[n] for n in data_graph.nodes]
+    dist_matrix = squareform(pdist(coords))
+    with np.errstate(divide="ignore"):
+        qubo = 1.0 / dist_matrix**6
+    np.fill_diagonal(qubo, -0.5)
+    return np.asarray(qubo, dtype=float)
+
+
+@pytest.mark.usefixtures("restore_rng_state")
+@pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
+def test_quantum_matches_classical_triangular(embedding_method: str) -> None:
+    qubo = _triangular_register_qubo()
+    instance = Instance(matrix.tensor(qubo))
+
+    quantum_config = SolverConfig(
+        use_quantum=True,
+        embedding=EmbeddingConfig(embedding_method=embedding_method),
+        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.HEURISTIC),
+        do_preprocessing=False,
+        do_postprocessing=False,
+    )
+    quantum_solution = Solver(instance, quantum_config).solve()
+    quantum_solution.sort_by_cost()
+
+    classical_solution = Solver(instance, SolverConfig(use_quantum=False)).solve()
+    classical_solution.sort_by_cost()
+
+    check.almost_equal(
+        quantum_solution.costs[0].item(),
+        classical_solution.costs[0].item(),
+        abs=1e-4,
+    )
+
+    assert quantum_solution.probabilities is not None
+    check.greater_equal(quantum_solution.probabilities[0], 0.1)

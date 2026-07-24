@@ -385,15 +385,15 @@ class _DecomposeQuboSolver(BaseSolver):
         else:
             from qubosolver.transforms import _decompositions
 
-            config = _decompositions.Config.from_decomposition_config(self.decomposition_config)
-            decomposed_qubo = _decompositions.Instance(self.instance, self.device, config=config)
+            config = _decompositions.Config.from_decomposition_config(
+                self.decomposition_config, max_min_dist_ratio=self.config.max_min_dist_ratio
+            )
+            decomposed_qubo = _decompositions.Instance(self.instance, config=config)
             solution = Solution()
 
             while len(decomposed_qubo._vertices_to_place) > config.decompose_stop_number:
 
-                subqubo = _decompositions.extract_subqubo(
-                    decomposed_qubo, self.device, config, rng=rng
-                )
+                subqubo = _decompositions.extract_subqubo(decomposed_qubo, config, rng=rng)
 
                 if subqubo.size == 0:
                     break
@@ -409,7 +409,6 @@ class _DecomposeQuboSolver(BaseSolver):
             # classical resolution of last matrix
             subqubo = _decompositions.extract_subqubo(
                 decomposed_qubo,
-                self.device,
                 config,
                 last=True,
                 rng=rng,

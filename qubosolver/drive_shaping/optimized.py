@@ -10,7 +10,6 @@ from typing import TypedDict
 import torch
 
 import qoolqit
-from qoolqit.execution.compilation_functions import CompilerProfile
 
 from qubosolver.types import (
     Instance,
@@ -21,6 +20,7 @@ from qubosolver.types import (
     tensor,
 )
 from qubosolver import solvers, _utils, DriveShapingConfig
+from ._device_specs import max_virtual_amplitude, detuning_amplitude_ratio
 from ._waveforms import constant_weighted_dmm
 
 
@@ -48,6 +48,8 @@ class Config:
         objective: Callable that maps a `Solution` to a scalar
             objective (lower is better).
         callback_objective: Optional callback invoked after each evaluation.
+        default_sequence_duration: Fallback maximum sequence duration (ns)
+            injected when the target device has no `max_duration` cap.
     """
 
     x0: list[float] = field(
@@ -65,6 +67,7 @@ class Config:
     qubo_cost: Callable[[Bitstring, Matrix], float] = _utils.costs.quadratic_cost
     objective: Callable[[Solution], float] = _default_objective
     callback_objective: Callable[[_CallbackObjectiveInput], None] = lambda data: None
+    default_sequence_duration: int = 50000
 
     @staticmethod
     def from_drive_shaping_config(config: DriveShapingConfig) -> Config:
@@ -82,6 +85,7 @@ class Config:
         )
         cfg.n_calls = config.optimized_n_calls
         cfg.seed = config.optimized_seed
+        cfg.default_sequence_duration = config.default_sequence_duration
         if config.optimized_custom_qubo_cost is not None:
             cfg.qubo_cost = config.optimized_custom_qubo_cost
         if config.optimized_custom_objective is not None:
@@ -123,7 +127,8 @@ def _build_drive(
     params: Sequence[float],
     *,
     dmm: bool,
-    device_specs: dict[str, float | None],
+    device: qoolqit.Device,
+    register: qoolqit.Register,
 ) -> qoolqit.Drive:
     """Build a :class:`~qoolqit.Drive` from a flat parameter vector.
 
@@ -131,7 +136,9 @@ def _build_drive(
     remaining three control the detuning waveform.  Both are represented as
     :class:`~qoolqit.Interpolated` waveforms over the full sequence duration.
     Raw parameters are normalised in ``[0, 1]`` or ``[-1, 1]`` and are scaled
-    to physical units using the device limits before constructing the waveform.
+    so that the amplitude waveform stays within what the compiler can realize
+    on `device` for `register`, and the detuning waveform stays within the
+    detuning budget available for that (realized) amplitude.
 
     When *dmm* is enabled **and** the final detuning value is positive, a
     :class:`~qoolqit.drive.DetuningMapModulator` is added with
@@ -148,34 +155,37 @@ def _build_drive(
         dmm: If ``True``, attach a constant weighted
             :class:`~qoolqit.drive.DetuningMapModulator` when the final
             detuning is positive.
-        device_specs: Mapping of device capability keys to their physical
-            limits.  Expected keys: ``"max_duration"``, ``"max_amplitude"``,
-            ``"max_abs_detuning"``.  ``None`` values fall back to large
-            defaults (``1e3`` for duration, ``1e4`` for amplitude/detuning).
+        device: Target quantum device.
+        register: The physical register the drive will run on.
 
     Returns:
         A fully configured :class:`~qoolqit.Drive` ready for simulation.
     """
-    max_seq_duration: float = device_specs["max_duration"] or 1e3
-    max_amplitude: float = device_specs["max_amplitude"] or 1e4
-    max_detuning: float = device_specs["max_abs_detuning"] or 1e4
+    max_seq_duration: float = device.specs["max_duration"] or 1e3
+    max_amplitude = max_virtual_amplitude(device, register)
 
     amp_params = [1e-9] + list(params[:3]) + [1e-9]
-    # FIXME: det_params of length 4 ? with last param as final det for dmm?
-    det_params = list(params[3:])
     amp_params = [p * max_amplitude for p in amp_params]
-    det_params = [p * max_detuning for p in det_params]
-
     amp_wave = qoolqit.Interpolated(max_seq_duration, amp_params)
+
+    # QoolQit rescales only based on the amplitude, so the maximum
+    # of the detuning depends on the amplitude.
+    det_ratio = detuning_amplitude_ratio(device)
+    det_scale = det_ratio * float(amp_wave.max()) * (1.0 - 1e-3)
+    # FIXME: det_params of length 4 ? with last param as final det for dmm?
+    det_params = [p * det_scale for p in params[3:]]
     det_wave = qoolqit.Interpolated(max_seq_duration, det_params)
 
     wdetunings = None
     final_detuning = det_params[-1]
     if dmm and final_detuning > 0:
+        energy_scale = device._target_amp / float(amp_wave.max())
         wdetunings = constant_weighted_dmm(
             _compute_norm_weights(instance),
             max_seq_duration,
             final_detuning=-final_detuning,
+            device=device,
+            energy_scale=energy_scale,
         )
 
     shaped_drive = qoolqit.Drive(amplitude=amp_wave, detuning=det_wave, dmm=wdetunings)
@@ -195,9 +205,9 @@ def _run_simulation(
 
     Submits an analog quantum sampling job via
     `~qubosolver.solvers.analog_quantum_sample` using the
-    ``WORKING_POINT`` compiler profile, evaluates the QUBO cost for every
-    returned bitstring with ``config.qubo_cost``, then sorts results by cost
-    and computes sampling probabilities in-place.
+    ``MAX_ENERGY`` compiler profile (the default), evaluates the QUBO cost
+    for every returned bitstring with ``config.qubo_cost``, then sorts
+    results by cost and computes sampling probabilities in-place.
 
     If the simulation or post-processing raises any exception the error is
     printed and an empty :class:`Solution` is returned, so callers must
@@ -210,7 +220,8 @@ def _run_simulation(
         device: Target quantum device that defines hardware constraints.
         backend: Execution backend used to run the quantum program.
         config: Optimisation configuration supplying the ``qubo_cost``
-            callable used to evaluate each returned bitstring.
+            callable used to evaluate each returned bitstring and the
+            fallback sequence duration for devices without a native cap.
 
     Returns:
         A :class:`Solution` with ``costs``, ``bitstrings``,
@@ -219,7 +230,11 @@ def _run_simulation(
     """
     try:
         job = solvers.analog_quantum_sample(
-            register, drive, backend, device, compiler_profile=CompilerProfile.WORKING_POINT
+            register,
+            drive,
+            backend,
+            device,
+            default_sequence_duration=config.default_sequence_duration,
         )
         solution = Solution.from_results(job.results())
         costs = [config.qubo_cost(b, Q) for b in solution.bitstrings]
@@ -273,7 +288,8 @@ def build_drive(
             instance,
             x,
             dmm=dmm,
-            device_specs=device.specs,
+            device=device,
+            register=register,
         )
 
         try:
