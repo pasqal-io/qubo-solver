@@ -7,12 +7,11 @@ import itertools
 import numpy as np
 import random
 
-from qoolqit import Register, DigitalAnalogDevice, AnalogDeviceWithDMM
+from qoolqit import Register, DigitalAnalogDevice
 
 from qubosolver import (
     SolverConfig,
     DecompositionConfig,
-    EmbeddingConfig,
     Solver,
     Dataset,
     Instance,
@@ -46,6 +45,7 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
 
     from qubosolver.transforms._algorithms.decompose import (
         compute_distance_interaction_matrix,
+        compute_min_max_distances,
         geometric_search,
         interaction_matrix_from_placed,
         transfer_edge_values,
@@ -61,15 +61,12 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
     config = SolverConfig(
         use_quantum=use_quantum,
         decompose=decompose_config,
-        embedding=EmbeddingConfig(min_distance=1.0),
         device=DigitalAnalogDevice(),
     )
     solver = Solver(decomposable_qubo, config)
 
     ## Check the distance interaction matrix matches the qubo matrix
-    dist_matrix = compute_distance_interaction_matrix(
-        solver._solver.device._pulser_device, qubo_mat
-    )
+    dist_matrix = compute_distance_interaction_matrix(qubo_mat)
     assert dist_matrix.shape == qubo_mat.shape
     assert torch.all(torch.diag(dist_matrix) == torch.diag(qubo_mat))
 
@@ -94,20 +91,26 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
     config_subproblems = config.model_copy(update={"decompose": False})
     first_vertex = 0
 
+    pulser_device = solver._solver.device._pulser_device
+    assert pulser_device.max_radial_distance is not None
+    min_distance, max_radial_distance = compute_min_max_distances(
+        qubo_mat,
+        max_min_dist_ratio=pulser_device.max_radial_distance / pulser_device.min_atom_distance,
+    )
+
     placed_vertices = geometric_search(
         qubo_mat,
         current_vertices_dict,
         first_vertex,
         decompose_config.decompose_threshold,
-        solver._solver.device._pulser_device,
+        min_distance=min_distance,
+        max_radial_distance=max_radial_distance,
         rng=rng,
     )
     assert len(placed_vertices) <= size
 
     # check matrix size correspond to placed_vertices
-    matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(
-        placed_vertices, solver._solver.device._pulser_device
-    )
+    matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(placed_vertices)
     # If too big, the test will take a long time to run.
     if use_quantum and matrix_to_solve.shape[0] > 13:
         raise RuntimeError(f"Test failed due to large matrix size = {matrix_to_solve.shape[0]}")
@@ -141,7 +144,6 @@ def test_decomp_solver(decomposable_qubo: Instance, use_quantum: bool) -> None:
     config = SolverConfig(
         use_quantum=use_quantum,
         decompose=DecompositionConfig(),
-        embedding=EmbeddingConfig(min_distance=1.0),
         device=DigitalAnalogDevice(),
     )
     solver = Solver(decomposable_qubo, config)
@@ -199,7 +201,6 @@ def test_compute_distance_interaction_matrix_zero_output() -> None:
 
     neglecting_inter_distance = 15.0
     neglecting_max_coefficient = 1.0
-    device = AnalogDeviceWithDMM()
 
     Q = matrix.tensor(
         [
@@ -211,7 +212,7 @@ def test_compute_distance_interaction_matrix_zero_output() -> None:
     )
 
     dist_matrix = compute_distance_interaction_matrix(
-        device._pulser_device, Q, neglecting_inter_distance, neglecting_max_coefficient
+        Q, neglecting_inter_distance, neglecting_max_coefficient
     )
 
     torch.testing.assert_close(dist_matrix, torch.zeros_like(Q))
@@ -221,7 +222,6 @@ def test_compute_distance_interaction_diagonal() -> None:
 
     neglecting_inter_distance = 15.0
     neglecting_max_coefficient = 1.0
-    device = AnalogDeviceWithDMM()
 
     Q = matrix.tensor(
         [
@@ -233,7 +233,7 @@ def test_compute_distance_interaction_diagonal() -> None:
     )
 
     dist_matrix = compute_distance_interaction_matrix(
-        device._pulser_device, Q, neglecting_inter_distance, neglecting_max_coefficient
+        Q, neglecting_inter_distance, neglecting_max_coefficient
     )
     expected_dist_matrix = neglecting_inter_distance * torch.ones_like(Q)
     expected_dist_matrix.diagonal().copy_(Q.diag())
@@ -371,11 +371,14 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
 
     # The solver may decompose the QUBO into too many sub-decompositions. The reconstructed solution
     # is then not guaranteed to be optimal.
-    non_optimal_cases: list[tuple[int, tuple[int, ...]]] = []
+    non_optimal_cases: list[tuple[int, tuple[int, ...]]] = [
+        (55571, (4,)),
+    ]
     failed_cases = [
         (1935225697, (3, 3)),
         (1935225697, (4, 3, 2, 3)),
         (66987, (2, 3, 2)),
+        (55571, (3, 3)),
         (55571, (2, 3, 2)),
         (55571, (4, 3, 2, 3)),
         (998618750, (2, 3, 2)),

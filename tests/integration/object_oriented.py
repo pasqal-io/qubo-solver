@@ -132,13 +132,11 @@ def test_quantum_solve(
     qubo, expected_optimal_solutions = simple_qubo()
 
     if embedding_method == "blade":
-        embedding_config = EmbeddingConfig(embedding_method=EmbedderType.BLADE, min_distance=1.001)
+        embedding_config = EmbeddingConfig(embedding_method=EmbedderType.BLADE)
     elif embedding_method == "greedy":
         embedding_config = EmbeddingConfig(
             embedding_method=EmbedderType.GREEDY,
-            min_distance=1.001,
             greedy_traps=100,
-            greedy_spacing=0.1,
         )
     else:
         raise ValueError(f"Invalid embedding method: {embedding_method}")

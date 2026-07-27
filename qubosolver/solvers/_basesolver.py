@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from qoolqit.execution import job
 
 from qubosolver.types import Instance, Solution
-from qubosolver.config import SolverConfig, _compiler_profile
+from qubosolver.config import SolverConfig
 from qubosolver import solvers, transforms
 
 
@@ -124,7 +124,7 @@ class BaseSolver(ABC):
             drive,
             self.backend,
             self.device,
-            compiler_profile=_compiler_profile(self.config),
+            default_sequence_duration=self.config.drive_shaping.default_sequence_duration,
         )
 
     def execute(self, drive: Drive, embedding: Register) -> Solution:
@@ -157,7 +157,10 @@ class BaseSolver(ABC):
         """
         if self.config.use_quantum:
             program = solvers.quantum._quantum_program(
-                embedding, drive, self.device, compiler_profile=_compiler_profile(self.config)
+                embedding,
+                drive,
+                self.device,
+                default_sequence_duration=self.config.drive_shaping.default_sequence_duration,
             )
             program.draw(compiled=True)
 
