@@ -5,7 +5,6 @@ from typing import TypedDict
 
 import numpy as np
 import numpy.typing as npt
-from pulser.devices._device_datacls import BaseDevice as PulserBaseDevice
 import torch
 from scipy.optimize import OptimizeResult, minimize
 from shapely.geometry import Point, Polygon, MultiPolygon
@@ -42,15 +41,15 @@ class WeightedZone:
         circle_end_blocking: circle delimiting end of blocking_zone.
     """
 
-    def __init__(self, id: int, x: float, y: float, weight: float, device: PulserBaseDevice):
+    def __init__(self, id: int, x: float, y: float, weight: float, min_distance: float) -> None:
 
         self.id = id
         self.x = x
         self.y = y
         self.weight = weight
 
-        self.radius1 = device.min_atom_distance + 0.1
-        self.radius2 = device.rydberg_blockade_radius(-weight)
+        self.radius1 = min_distance
+        self.radius2 = (-weight) ** (-1 / 6)
 
         self.radius3 = 15.0
 
@@ -62,17 +61,40 @@ class WeightedZone:
         self.range_zone = self.circle_end_blocking.difference(self.circle_end_forbidden)
 
 
-def compute_distance_interaction_matrix(
-    device: PulserBaseDevice,
-    qubo_matrix: Matrix,
-    neglecting_inter_distance: float = 15.0,
-    neglecting_max_coefficient: float = 1.0,
-) -> Matrix:
-    """Compute the matrix of interaction distances given device
-        (using `device.rydberg_blockade_radius`).
+def compute_min_max_distances(
+    interactions: Matrix, *, max_min_dist_ratio: float
+) -> tuple[float, float]:
+    """Compute the minimum inter-atom distance and the maximum radial distance.
+
+    The minimum distance is derived from the strongest (closest-required)
+    interaction in the whole matrix, consistent with the adimensional
+    interaction law ``U(r) = 1 / r ** 6``.
 
     Args:
-        device (PulserBaseDevice): Device to calculate distance from.
+        interactions (Matrix): QUBO interaction matrix.
+        max_min_dist_ratio (float): Maximum allowed ratio between the maximum
+            radial distance and the minimum inter-atom distance.
+
+    Returns:
+        tuple[float, float]: The minimum inter-atom distance and the maximum
+            radial distance. Returns ``(0, torch.inf)`` when
+            ``max_min_dist_ratio`` is infinite (no distance limits).
+    """
+    if max_min_dist_ratio == torch.inf:
+        return 0, torch.inf
+    min_distance = float(np.max(np.triu(interactions, k=1)) ** (-1 / 6))
+    max_radial_distance = min_distance * max_min_dist_ratio
+    return min_distance, max_radial_distance
+
+
+def compute_distance_interaction_matrix(
+    qubo_matrix: Matrix,
+    neglecting_inter_distance: float = 1.5,
+    neglecting_max_coefficient: float = 1.0,
+) -> Matrix:
+    """Compute the matrix of interaction distances (adimensional, ``U(r) = 1 / r ** 6``).
+
+    Args:
         qubo_matrix (torch.Tensor): Matrix of qubo coefficients.
         neglecting_inter_distance (float, optional): Default distance value
             for neglecting interactions.
@@ -80,11 +102,14 @@ def compute_distance_interaction_matrix(
             interaction is neglecting.
 
     Returns:
-        torch.Tensor: distance matrix (unit of `device.rydberg_blockade_radius`),
+        torch.Tensor: distance matrix (adimensional units),
             diagonal elements are taken from `qubo_matrix`,
             neglecting interactions (coefficients less than 1) are set to the
-            `neglecting_inter_distance` value. The rest from `device.rydberg_blockade_radius`.
+            `neglecting_inter_distance` value. The rest derived from ``U(r) = 1 / r ** 6``.
     """
+
+    def rydberg_blockade_radius(x: float) -> float:
+        return float(x ** (-1 / 6))
 
     diag_mat = torch.diag(qubo_matrix)
     # note: blocking interactions already set to 0
@@ -103,8 +128,8 @@ def compute_distance_interaction_matrix(
     )
 
     if cond.any():
-        # set value to rydberg_blockade_radius
-        dist_matrix[cond] = qubo_matrix[cond].apply_(device.rydberg_blockade_radius)
+        # set value to the adimensional interaction distance
+        dist_matrix[cond] = qubo_matrix[cond].apply_(rydberg_blockade_radius)
     # set diagonal elements to `qubo_matrix` diagonal
     dist_matrix[range(len(dist_matrix)), range(len(dist_matrix))] = diag_mat
     return dist_matrix
@@ -113,7 +138,7 @@ def compute_distance_interaction_matrix(
 def vertices_to_place(
     dist_matrix: Matrix,
     qubo_matrix: Matrix,
-    separation_threshold: float = 15.0,
+    separation_threshold: float = 1.5,
 ) -> dict[int, VertexToPlace]:
     """Obtain the dictionary of vertices to place
     (i.e., qubo variables to still consider for solving subproblems)
@@ -149,8 +174,8 @@ def vertices_to_place(
         separated_vertices = torch.argwhere(torch.eq(distances, separation_threshold))
         separated_vertices = separated_vertices[separated_vertices != i]
 
-        # 0.1 is an arbitrary value to consider them neighbor.
-        neighbors = torch.argwhere((distances > 0.1) & (distances < separation_threshold))
+        # 1e-2 is an arbitrary value to consider them neighbor.
+        neighbors = torch.argwhere((distances > 1e-2) & (distances < separation_threshold))
         neighbors = neighbors[neighbors != i]
 
         vertices_dict[i] = {
@@ -426,7 +451,8 @@ def cost_interaction_point_continuous(
     placed_points: list[list[float]],
     Q_target: list[float],
     blocked_indices: list[int],
-    device: PulserBaseDevice,
+    min_distance: float,
+    max_radial_distance: float,
 ) -> float:
     """Cost for BFGS search.
 
@@ -435,22 +461,19 @@ def cost_interaction_point_continuous(
         placed_points (list[tuple[float, float]]): Placed points.
         Q_target (list[float]): Weights.
         blocked_edges (list): List of blocked indices.
-        device (PulserBaseDevice): Device
+        min_distance (float): Minimum allowed distance to any placed point.
+        max_radial_distance (float): Maximum allowed radial distance from origin.
 
     Returns:
         float: Cost evaluation.
     """
     cost = 0.0
-    epsilon = 1e-6
-    interaction_coeff = device.interaction_coeff
     for i, (xi, yi) in enumerate(placed_points):
         dx = pos_new[0] - xi
         dy = pos_new[1] - yi
         dist2 = dx**2 + dy**2
 
-        dist2 = max(dist2, epsilon)
-
-        interaction = interaction_coeff / (dist2**3)
+        interaction = 1 / (dist2**3) if dist2 != 0 else torch.inf
 
         diff = Q_target[i] - interaction
 
@@ -459,6 +482,15 @@ def cost_interaction_point_continuous(
             cost += penalty**2
         else:
             cost += diff**2
+
+    penalty_coeff = sum([coeff**2 for coeff in Q_target])
+    if np.linalg.norm(pos_new) > max_radial_distance:
+        cost += float(penalty_coeff * (1 + np.linalg.norm(pos_new) - max_radial_distance))
+
+    for placed_point in placed_points:
+        dist = np.linalg.norm(np.array(pos_new) - np.array(placed_point))
+        if dist < min_distance:
+            cost += float(penalty_coeff * (1 + min_distance - dist))
 
     return cost
 
@@ -469,7 +501,8 @@ def bfgs_placement(
     placed_vertices: dict[int, WeightedZone],
     matrix: Matrix,
     dict_vertices_to_place: dict,
-    device: PulserBaseDevice,
+    min_distance: float,
+    max_radial_distance: float,
 ) -> OptimizeResult:
     """BFGS search for placing vertices.
 
@@ -479,7 +512,8 @@ def bfgs_placement(
         placed_vertices (dict[int, WeightedZone]): Placed vertices.
         matrix (torch.Tensor): qubo matrix.
         dict_vertices_to_place (dict): Vertices to place.
-        device (PulserBaseDevice): Device.
+        min_distance (float): Minimum allowed distance to any placed point.
+        max_radial_distance (float): Maximum allowed radial distance from origin.
 
     Returns:
         OptimizeResult: Result of BFGS.
@@ -500,25 +534,24 @@ def bfgs_placement(
     return minimize(
         cost_interaction_point_continuous,
         x0=init_guess.to(torch.float64).numpy(),
-        args=(placed_points, Q_target, current_blocked_edges, device),
+        args=(placed_points, Q_target, current_blocked_edges, min_distance, max_radial_distance),
         method="BFGS",
     )
 
 
-def check_limit_zone(final_point: Point, device: PulserBaseDevice) -> bool:
+def check_limit_zone(final_point: Point, max_radial_distance: float) -> bool:
     """Check if the new embedded vertex is within the limit zone.
 
     Args:
         final_point (Point): New embedded vertex.
-        device (PulserBaseDevice): Device to extract limit zone.
+        max_radial_distance (float): Maximum allowed radial distance from origin.
 
     Returns:
         bool: Returns True if point is within limit zone.
     """
 
     center_poly = Point(0, 0)
-    r = device.max_radial_distance
-    limit_zone = center_poly.buffer(r)
+    limit_zone = center_poly.buffer(max_radial_distance)
     return bool(limit_zone.contains(final_point))
 
 
@@ -537,7 +570,7 @@ def check_prohibited_zones(placed_vertices: dict[int, WeightedZone], final_point
         if placed_vertices[key].forbidden_zone.contains(final_point):
             return False
 
-        if final_point.buffer(5.1).contains(Point(placed_vertices[key].x, placed_vertices[key].y)):
+        if final_point.buffer(0.51).contains(Point(placed_vertices[key].x, placed_vertices[key].y)):
             return False
     return checker
 
@@ -546,7 +579,8 @@ def test_placing_vertex(
     vertex: int,
     dict_vertices_to_place: dict[int, VertexToPlace],
     placed_vertices: dict[int, WeightedZone],
-    device: PulserBaseDevice,
+    min_distance: float,
+    max_radial_distance: float,
     matrix: Matrix,
     cost_function_thresold: float,
     tested_vertices: list[int],
@@ -559,7 +593,8 @@ def test_placing_vertex(
         vertex (int): Vertex to place.
         dict_vertices_to_place (dict[int, VertexToPlace]): Vertices to place.
         placed_vertices (dict[int, WeightedZone]): Placed vertices.
-        device (PulserBaseDevice): Device.
+        min_distance (float): Minimum allowed distance to any placed point.
+        max_radial_distance (float): Maximum allowed radial distance from origin.
         matrix (torch.Tensor): Qubo matrix.
         cost_function_thresold (float): Threshold for cost function.
         tested_vertices (list[int]): Already tested vertices.
@@ -577,7 +612,7 @@ def test_placing_vertex(
     ]
 
     center_poly = Point(0, 0)
-    final_intersection = center_poly.buffer(device.max_radial_distance)
+    final_intersection = center_poly.buffer(max_radial_distance)
 
     final_intersection = zone_intersection(
         final_intersection, blockings, placed_vertices, "blocking_zone"
@@ -597,14 +632,15 @@ def test_placing_vertex(
             placed_vertices,
             matrix,
             dict_vertices_to_place,
-            device,
+            min_distance=min_distance,
+            max_radial_distance=max_radial_distance,
         )
         final_point = Point(result_descent.x[0], result_descent.x[1])
 
         if (
             result_descent.fun < cost_function_thresold
             and check_prohibited_zones(placed_vertices, final_point)
-            and check_limit_zone(final_point, device)
+            and check_limit_zone(final_point, max_radial_distance=max_radial_distance)
         ):
             # admit point in placed_vertices
             temp_zone = WeightedZone(
@@ -612,7 +648,7 @@ def test_placing_vertex(
                 x=result_descent.x[0],
                 y=result_descent.x[1],
                 weight=dict_vertices_to_place[vertex]["weight"].item(),
-                device=device,
+                min_distance=min_distance,
             )
             placed_vertices[vertex] = temp_zone
 
@@ -686,7 +722,8 @@ def geometric_search(
     dict_vertices_to_place: dict[int, VertexToPlace],
     first_vertex: int,
     cost_function_thresold: float,
-    device: PulserBaseDevice,
+    min_distance: float,
+    max_radial_distance: float,
     rng: torch.Generator,
 ) -> dict[int, WeightedZone]:
     """Search an embeddable subproblem on the device
@@ -698,7 +735,8 @@ def geometric_search(
         first_vertex (int): First vertex to start search from.
         cost_function_thresold (float): Threshold between sum of target
             interactions and sum of interactions from embedding.
-        device (PulserBaseDevice): Device used by embedding.
+        min_distance (float): Minimum allowed distance between placed points.
+        max_radial_distance (float): Maximum allowed radial distance from origin.
 
     Returns:
         dict[int, WeightedZone]: placed vertices (from the matrix variables)
@@ -711,7 +749,7 @@ def geometric_search(
         x=0.0,
         y=0.0,
         weight=dict_vertices_to_place[first_vertex]["weight"].item(),
-        device=device,
+        min_distance=min_distance,
     )
     placed_vertices: dict[int, WeightedZone] = dict()
     placed_vertices[first_vertex] = zone0
@@ -731,12 +769,13 @@ def geometric_search(
             neighbor.item(),
             dict_vertices_to_place,
             placed_vertices,
-            device,
-            matrix,
-            cost_function_thresold,
-            tested_vertices,
-            queue,
-            rng,
+            min_distance=min_distance,
+            max_radial_distance=max_radial_distance,
+            matrix=matrix,
+            cost_function_thresold=cost_function_thresold,
+            tested_vertices=tested_vertices,
+            queue=queue,
+            rng=rng,
         )
 
     while queue:
@@ -746,12 +785,13 @@ def geometric_search(
             i,
             dict_vertices_to_place,
             placed_vertices,
-            device,
-            matrix,
-            cost_function_thresold,
-            tested_vertices,
-            queue,
-            rng,
+            min_distance=min_distance,
+            max_radial_distance=max_radial_distance,
+            matrix=matrix,
+            cost_function_thresold=cost_function_thresold,
+            tested_vertices=tested_vertices,
+            queue=queue,
+            rng=rng,
         )
 
     return placed_vertices
@@ -774,7 +814,6 @@ def distance_plan(x1: float, y1: float, x2: float, y2: float) -> float:
 
 def interaction_matrix_from_placed(
     placed_vertices: dict[int, WeightedZone],
-    device: PulserBaseDevice,
 ) -> tuple[Matrix, dict[int, int]]:
     """
     Compute interaction matrix corresponding to embedded subgraph.
@@ -782,7 +821,6 @@ def interaction_matrix_from_placed(
     Args:
         dict_vertices_to_place (dict[int, dict]): Vertices to place.
         placed_vertices (dict[int, WeightedZone]): Vertices already placed.
-        device (PulserBaseDevice): Device.
 
     Returns:
         tuple[torch.Tensor, dict]: Interacton matrix of embedded subgraph
@@ -803,9 +841,7 @@ def interaction_matrix_from_placed(
                     value2.x,
                     value2.y,
                 )
-                mat[map_index_vertices[key]][map_index_vertices[key2]] = device.rabi_from_blockade(
-                    dist
-                )
+                mat[map_index_vertices[key]][map_index_vertices[key2]] = 1 / dist**6
             else:
                 mat[map_index_vertices[key]][map_index_vertices[key]] = value.weight
 

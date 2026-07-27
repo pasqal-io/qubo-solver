@@ -147,7 +147,7 @@ def test_quantum_solve(
     elif embedding_method == "greedy":
         greedy_config = embedding.greedy.Config(traps=100, spacing=0.1)
         register = embedding.greedy.embed(
-            effective_qubo, device, config=greedy_config, normalize=True
+            effective_qubo, device, config=greedy_config, max_min_dist_ratio=float("inf")
         )
     else:
         raise ValueError(f"Invalid embedding method: {embedding_method}")

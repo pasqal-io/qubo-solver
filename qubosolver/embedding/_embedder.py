@@ -4,6 +4,7 @@ import typing
 from abc import ABC, abstractmethod
 import warnings
 
+import torch
 from qoolqit import Register
 
 from . import blade, greedy
@@ -37,10 +38,6 @@ class _BaseEmbedder(ABC):
         self.register: Register | None = None
         self.backend = backend
 
-        # TODO: remove when bumping to qoolqit v1
-        # for converting to qoolqit
-        self._distance_conversion = self.config.device.converter.factors[2]
-
     @abstractmethod
     def embed(self) -> Register:
         """Place atoms and return the resulting register.
@@ -68,12 +65,9 @@ class BLaDEmbedder(_BaseEmbedder):
     def embed(self) -> Register:
         """Embed the QUBO instance using BLaDE.
 
-        Reads embedding parameters from ``self.config.embedding`` and device
-        limits from ``self.config.device``.  When ``min_distance`` is set in
-        the embedding config the resulting register is normalised so that the
-        closest atom pair is exactly ``min_distance`` apart; otherwise the
-        raw device radial-distance bounds drive the layout directly via
-        ``max_min_dist_ratio``.
+        Reads embedding parameters from ``self.config.embedding`` and the
+        resolved ``self.config.max_min_dist_ratio`` that bounds the layout's
+        largest-to-smallest inter-atom distance ratio.
 
         Returns:
             The atom register with positions determined by BLaDE.
@@ -88,23 +82,17 @@ class BLaDEmbedder(_BaseEmbedder):
         else:
             starting_positions = None
 
-        min_distance = self.config.embedding.min_distance
-        max_radial_distance = self.config.device.specs["max_radial_distance"]
-        if min_distance is None or max_radial_distance is None:
-            device = self.config.device
+        max_min_dist_ratio = self.config.max_min_dist_ratio
+        if max_min_dist_ratio == torch.inf:
             max_min_dist_ratio = None
-        else:
-            device = None
-            max_min_dist_ratio = max_radial_distance / min_distance
 
         config = blade.Config(
             steps_per_round=step_per_round,
             starting_positions=starting_positions,
             dimensions=tuple(embed_config.blade_dimensions),
             max_min_dist_ratio=max_min_dist_ratio,
-            device=device,
         )
-        return blade.embed(self.instance, config=config, normalize=(min_distance is not None))
+        return blade.embed(self.instance, config=config, normalize=False)
 
 
 class GreedyEmbedder(_BaseEmbedder):
@@ -112,7 +100,7 @@ class GreedyEmbedder(_BaseEmbedder):
 
     At each step, place one logical node onto one trap to minimize the
     incremental mismatch between the logical QUBO matrix Q and the physical
-    interaction matrix U (approx. C / ||r_i - r_j||^6).
+    interaction matrix U (approx. 1 / ||r_i - r_j||^6).
     """
 
     def embed(self) -> Register:
@@ -120,17 +108,20 @@ class GreedyEmbedder(_BaseEmbedder):
 
         At each step the algorithm selects the logical node and the available
         trap that minimise the incremental mismatch between the QUBO edge
-        weights and the physical interaction matrix (∝ C/‖rᵢ − rⱼ‖⁶).
-        When ``min_distance`` is set in the embedding config the register is
-        normalised so that the closest atom pair is exactly ``min_distance``
-        apart.
+        weights and the physical interaction matrix (∝ 1/‖rᵢ − rⱼ‖⁶). The
+        algorithm operates entirely in adimensional units, so its output
+        coordinates require no further normalization.
 
         Returns:
             The atom register with positions determined by the greedy placer.
         """
-        config = greedy.Config.from_embedding_config(self.config.embedding)
-        normalize = self.config.embedding.min_distance is not None
-        return greedy.embed(self.instance, self.config.device, config=config, normalize=normalize)
+        config = greedy.Config.from_embedding_config(self.config.embedding, self.instance)
+        return greedy.embed(
+            self.instance,
+            self.config.device,
+            config=config,
+            max_min_dist_ratio=self.config.max_min_dist_ratio,
+        )
 
 
 def _get_embedder(

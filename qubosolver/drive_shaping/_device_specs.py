@@ -135,3 +135,48 @@ def qoolqit_specs(
         compare_specs(specs, _pulser_specs)
 
     return specs
+
+
+def max_virtual_amplitude(device: qoolqit.Device, register: qoolqit.Register) -> float:
+    """Maximum drive amplitude actually compilable on `device` for `register`.
+
+    The `MAX_ENERGY` compiler profile rescales a sequence's energies based on
+    the register's radial extent, so the amplitude a register can realize
+    shrinks as its radial extent grows past the device's own
+    `max_radial_distance`. A `(1.0 - 1e-3)` margin guards against
+    rounding-induced compilation failures right at the boundary.
+
+    Args:
+        device: Target quantum device.
+        register: The physical register the drive will run on.
+
+    Returns:
+        The maximum amplitude this register can realize on this device.
+    """
+    specs = device.specs
+    max_amplitude: float = specs["max_amplitude"] or 1e4
+    max_radial = specs["max_radial_distance"]
+    if max_radial is not None and register.n_qubits > 1:
+        reg_radial = register.max_radial_distance()
+        if reg_radial > 0:
+            max_amplitude *= (max_radial / reg_radial) ** 6 * (1.0 - 1e-3)
+    return max_amplitude
+
+
+def detuning_amplitude_ratio(device: qoolqit.Device) -> float:
+    """Ratio of the device's maximum detuning to its maximum amplitude.
+
+    Since the `MAX_ENERGY` compiler profile rescales a sequence based on its
+    amplitude only, the maximum detuning realizable for a given amplitude is
+    this ratio times that amplitude.
+
+    Args:
+        device: Target quantum device.
+
+    Returns:
+        `max_abs_detuning / max_amplitude` from the device's specs.
+    """
+    specs = device.specs
+    max_amplitude: float = specs["max_amplitude"] or 1e4
+    max_detuning: float = specs["max_abs_detuning"] or 1e4
+    return max_detuning / max_amplitude
