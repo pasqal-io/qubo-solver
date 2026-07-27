@@ -67,7 +67,7 @@ class Config:
     qubo_cost: Callable[[Bitstring, Matrix], float] = _utils.costs.quadratic_cost
     objective: Callable[[Solution], float] = _default_objective
     callback_objective: Callable[[_CallbackObjectiveInput], None] = lambda data: None
-    default_sequence_duration: float = 50000
+    default_sequence_duration: int = 50000
 
     @staticmethod
     def from_drive_shaping_config(config: DriveShapingConfig) -> Config:

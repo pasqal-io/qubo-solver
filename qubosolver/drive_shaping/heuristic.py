@@ -50,7 +50,10 @@ def build_drive(
     use_dmm = dmm and (pulser_specs["dmm_bottom_detuning"] is not None)
 
     if specs.get("max_amplitude") is not None and specs.get("max_abs_detuning") is not None:
-        det_amp_ratio = specs["max_amplitude"] / specs["max_abs_detuning"]
+        max_amplitude = specs["max_amplitude"]
+        max_abs_detuning = specs["max_abs_detuning"]
+        assert max_amplitude is not None and max_abs_detuning is not None
+        det_amp_ratio = max_amplitude / max_abs_detuning
         if kappa < det_amp_ratio:
             warnings.warn(
                 f"heuristic_kappa is too small ({kappa}), you're likely to get a qoolqit CompilationError. Set it above {det_amp_ratio}."

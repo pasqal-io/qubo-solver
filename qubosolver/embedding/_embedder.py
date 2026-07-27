@@ -82,7 +82,7 @@ class BLaDEmbedder(_BaseEmbedder):
         else:
             starting_positions = None
 
-        max_min_dist_ratio = self.config.max_min_dist_ratio
+        max_min_dist_ratio: float | None = self.config.max_min_dist_ratio
         if max_min_dist_ratio == torch.inf:
             max_min_dist_ratio = None
 

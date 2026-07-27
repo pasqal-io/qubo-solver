@@ -34,13 +34,11 @@ def get_layout(
 
     match layout_type:
         case LayoutType.TRIANGULAR | "triangular":
-            layout = LayoutType.TRIANGULAR.value(n_traps, spacing=1)
-            return torch.tensor(layout.coords)
+            return torch.tensor(LayoutType.TRIANGULAR.value(n_traps, spacing=1).coords)
 
         case LayoutType.SQUARE | "square":
             n = int(torch.ceil(torch.sqrt(2 * torch.tensor(n_traps))).item())
-            layout = LayoutType.SQUARE.value(n, n, spacing=1)
-            coords = torch.tensor(layout.coords)
+            coords = torch.tensor(LayoutType.SQUARE.value(n, n, spacing=1).coords)
             squared_distances = coords.square().sum(dim=1)
             return coords[torch.argsort(squared_distances)[:n_traps]]
 
