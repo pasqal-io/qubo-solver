@@ -270,7 +270,7 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
 
 def test_respects_total_bottom_detuning() -> None:
     n = 6
-    Q = torch.zeros((n, n))
+    Q = matrix.zeros(n)
     for i in range(n):
         Q[i, i] = -50.0 if i % 2 == 0 else 50.0
     for i in range(n):

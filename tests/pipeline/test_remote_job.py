@@ -4,6 +4,7 @@ import io
 import pytest
 import pytest_check as check
 import numpy as np
+import random
 import torch
 
 
@@ -52,7 +53,10 @@ def test_quantum_remote_job(
     if drive_method == DriveType.OPTIMIZED:
         pytest.skip(reason="Does not work with the optimized drive shaping method")
 
-    torch.manual_seed(7979)
+    seed = 7979
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    random.seed(seed)
 
     Q = matrix.tensor(
         [

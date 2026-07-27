@@ -461,7 +461,7 @@ class DecompositionConfig(_Config):
             we consider an interaction is neglecting.
     """
 
-    decompose_threshold: float = 250
+    decompose_threshold: float = 250.0
     decompose_stop_number: int = 15
     decompose_break_placement: int = 3
     neglecting_inter_distance: float = 1.5
