@@ -197,12 +197,17 @@ class EmbeddingConfig(_Config):
         greedy_traps (int, optional): The number of traps on the register.
             Defaults to ``-1``, i.e. automatically set to match the selected device capacity.
             A too high value will impede computational efficiency.
-        greedy_max_possible_term (float | tuple[Literal["factor"], float], optional): The
-            largest QUBO interaction term the greedy layout should be able to represent at
-            minimum trap-trap distance. Either an explicit value, or a tuple
-            ``("factor", f)`` meaning ``f * instance._max_off_diag``. Used to derive the
-            adimensional trap spacing (``spacing = max_possible_term ** (-1 / 6)``).
-            Defaults to ``("factor", 1.0)``.
+        greedy_max_possible_term (float | tuple[Literal['factor'], float]):
+            If a float, it corresponds to the maximum representable quadratic
+            term. If a tuple, the first element should be 'factor', and the
+            second element is a multiplier on the QUBO's maximum quadratic term
+            to define the maximum representable quadratic term.
+            Defaults to ('factor', 1.0). The maximum possible term corresponds
+            to the interaction for the closest possible pair in the layout.
+            Setting it to a higher value than the actual maximum increases the
+            resolution to represent the terms. Setting it to a lower value
+            decreases the resolution and allows traps to be set farther to
+            potentially represent smaller terms.
         greedy_density (float | None, optional): The estimated density of the QUBO matrix.
             Defaults to None.
         blade_steps_per_round (int | None): See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/)
