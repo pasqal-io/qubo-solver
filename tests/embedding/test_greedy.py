@@ -72,9 +72,7 @@ def interaction_matrix_from_vertices(vertices: torch.Tensor) -> torch.Tensor:
 
 @pytest.mark.parametrize("traps", [1, 2, 3, 6])
 @pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
-def test_triangular_qubo(
-    traps: int, relative_noise: float, max_min_dist_ratio: float
-) -> None:
+def test_triangular_qubo(traps: int, relative_noise: float, max_min_dist_ratio: float) -> None:
 
     spacing = 7.0
 

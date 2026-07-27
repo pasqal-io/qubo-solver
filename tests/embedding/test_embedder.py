@@ -40,5 +40,3 @@ def test_custom_embedder(simple_qubo_instance: Instance) -> None:
     backend = config.backend
     shaper = _get_embedder(simple_qubo_instance, config, backend)
     assert isinstance(shaper, MockGreedyEmbedder)
-
-

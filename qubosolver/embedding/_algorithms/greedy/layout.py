@@ -7,7 +7,9 @@ import torch
 from qubosolver import LayoutType
 
 
-def get_layout(*, layout_type: LayoutType | str = LayoutType.TRIANGULAR, n_traps: int) -> torch.Tensor:
+def get_layout(
+    *, layout_type: LayoutType | str = LayoutType.TRIANGULAR, n_traps: int
+) -> torch.Tensor:
     """Build a lattice of `n_traps` unit-spacing trap coordinates.
 
     For a square lattice, builds a grid large enough to contain `n_traps`

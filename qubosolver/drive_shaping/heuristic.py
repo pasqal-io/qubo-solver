@@ -9,7 +9,11 @@ import warnings
 import qoolqit
 from qubosolver import Instance
 
-from ._device_specs import pulser_specs as _pulser_specs, max_virtual_amplitude, detuning_amplitude_ratio
+from ._device_specs import (
+    pulser_specs as _pulser_specs,
+    max_virtual_amplitude,
+    detuning_amplitude_ratio,
+)
 from ._waveforms import constant_weighted_dmm
 
 

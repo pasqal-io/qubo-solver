@@ -61,7 +61,9 @@ def _quantum_program(
             device._device,
             max_sequence_duration=default_sequence_duration,
         )
-        device = qoolqit.Device(pulser_device=device_with_duration, default_converter=device.converter)
+        device = qoolqit.Device(
+            pulser_device=device_with_duration, default_converter=device.converter
+        )
 
     program = qoolqit.QuantumProgram(
         register=register,
