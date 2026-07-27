@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import torch
 import itertools
 import numpy as np
@@ -8,62 +7,47 @@ import math
 import pytest
 import pytest_check as check
 from unittest.mock import MagicMock, patch
-from typing import List, Iterable, Dict, Any
+from typing import Iterable, Any
 
 from qoolqit.devices.device import AnalogDeviceWithDMM, AnalogDevice
 from qoolqit.register import Register
 
-from qubosolver.pipeline.drive import OptimizedDriveShaper
-from qubosolver.qubo_instance import QUBOInstance
-from qubosolver.config import SolverConfig, DriveShapingConfig, LocalEmulator
-from qubosolver.qubo_analyzer import QUBOAnalyzer
+from qubosolver.drive_shaping._drive_shaper import OptimizedDriveShaper
+from qubosolver import (
+    Instance,
+    SingleSolution,
+    Solution,
+    SolverConfig,
+    DriveShapingConfig,
+    Analyzer,
+    matrix,
+    tensor,
+    bitstring,
+    Tensor,
+    Matrix,
+    LocalEmulator,
+)
+from qubosolver._utils import costs
 
 
-def interaction_matrix_from_vertices(vertices: torch.Tensor) -> torch.Tensor:
+def interaction_matrix_from_vertices(vertices: Tensor) -> Matrix:
     U = 1.0 / torch.cdist(vertices, vertices) ** 6
     U.fill_diagonal_(0.0)
     return U
 
 
-@dataclass
-class Solution:
-    bitstring: str
-    cost: float = float("inf")
-    probability: float = 0.0
-
-
-def to_solutions(
-    bitstrings: Iterable[str | torch.Tensor],
-    costs: Iterable[float] = itertools.repeat(float("inf")),
-    probabilities: Iterable[float] = itertools.repeat(0.0),
-) -> List[Solution]:
-    def to_string(b: str | torch.Tensor) -> str:
-        if isinstance(b, torch.Tensor):
-            return "".join(str(int(i)) for i in b)
-        if isinstance(b, str):
-            return b
-        raise ValueError()
-
-    return [Solution(to_string(b), c, p) for b, c, p in zip(bitstrings, costs, probabilities)]
-
-
 def gather_optimal_solutions(
-    data: Iterable[Solution], min_cost: float | None = None
-) -> List[Solution]:
+    data: Iterable[SingleSolution], min_cost: float | None = None
+) -> list[SingleSolution]:
     if min_cost is None:
         min_cost = min(d.cost for d in data)
     return [d for d in data if np.allclose(d.cost, min_cost)]
 
 
 def probability_based_ojective(
-    bitstrings: list,
-    counts: list,
-    probabilities: list,
-    costs: list,
-    best_cost: float,
-    best_bitstring: str,
+    solution: Solution,
 ) -> float:
-    optimal_solutions = gather_optimal_solutions(to_solutions(bitstrings, costs, probabilities))
+    optimal_solutions = gather_optimal_solutions(solution)
     check.is_not(optimal_solutions, [])
     min_cost = optimal_solutions[0].cost
     total_prob = sum(s.probability for s in optimal_solutions)
@@ -71,7 +55,7 @@ def probability_based_ojective(
     w = math.copysign(0.5, min_cost)
     weighted_cost = min_cost * (1.0 + w * (1.0 - total_prob))
 
-    optimal_bitstrings = [s.bitstring for s in optimal_solutions]
+    optimal_bitstrings = [s.string for s in optimal_solutions]
     print(
         f"Best bitstrings: {optimal_bitstrings}, cost: {min_cost}, total probability: {total_prob}, weighted cost: {weighted_cost} "
     )
@@ -91,31 +75,30 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
 
     # Set a Register and compute the associated QUBO
     # Equilateral triangle centered on origin
-    vertices = spacing * torch.tensor(
+    vertices = spacing * tensor.tensor(
         [
             [0.0, 1.0 / np.sqrt(3.0)],
             [-0.5, -0.5 / np.sqrt(3.0)],
             [0.5, -0.5 / np.sqrt(3.0)],
         ],
-        dtype=torch.float32,
     )
     # Choose scaling factor so that coefficients and costs are in a human readable range (~10)
     Q = 10.0 * interaction_matrix_from_vertices(vertices)
     # Choose diagonal coefficients so that the solutions are 011, 101 and 110
-    Q = Q - 2.5 * torch.eye(3, dtype=torch.float32) * Q[0, 1]
+    Q = Q - 2.5 * matrix.from_torch(torch.eye(3)) * Q[0, 1]
 
     results = []
     for bits in itertools.product([0, 1], repeat=3):
-        z = torch.tensor(bits, dtype=torch.float32)
-        cost = (z @ Q @ z).item()
-        results.append(Solution("".join(str(int(b)) for b in z.flatten()), cost))
+        z = bitstring.tensor(bits)
+        cost = costs.quadratic_cost(z, Q)
+        results.append(SingleSolution(z, cost))
 
     # Get all bitstrings with minimum cost
     expected_optimal_solutions = gather_optimal_solutions(results)
     check.is_not(expected_optimal_solutions, [])
 
     print(f"\nExpected Minimum cost: {expected_optimal_solutions[0].cost}")
-    print(f"All expected optimal bitstrings: {[s.bitstring for s in expected_optimal_solutions]}")
+    print(f"All expected optimal bitstrings: {[s.string for s in expected_optimal_solutions]}")
     print(f"Number of expected optimal solutions: {len(expected_optimal_solutions)}\n")
 
     register = Register.from_coordinates(vertices.tolist())
@@ -127,31 +110,29 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
     ds_config.optimized_seed = seed
     config = SolverConfig(device=AnalogDevice(), drive_shaping=ds_config)
 
-    drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
+    drive_shaper = OptimizedDriveShaper(Instance(Q), config, config.backend)
     drive, qubo_solution = drive_shaper.generate(register)
     qubo_solution.sort_by_cost()
-    analyzer = QUBOAnalyzer([qubo_solution])
+    analyzer = Analyzer([qubo_solution])
     print(f"{analyzer.df}")
 
     assert isinstance(qubo_solution.probabilities, torch.Tensor)
-    optimal_solutions = gather_optimal_solutions(
-        to_solutions(qubo_solution.bitstrings, qubo_solution.costs, qubo_solution.probabilities)
-    )
+    optimal_solutions = gather_optimal_solutions(qubo_solution)
     check.is_not(optimal_solutions, [])
 
     min_cost = optimal_solutions[0].cost
     check.almost_equal(min_cost, expected_optimal_solutions[0].cost)
 
-    expected_optimal_bistrings = [s.bitstring for s in expected_optimal_solutions]
+    expected_optimal_bitstrings = [s.string for s in expected_optimal_solutions]
     for solution in optimal_solutions:
-        check.is_in(solution.bitstring, expected_optimal_bistrings)
+        check.is_in(solution.string, expected_optimal_bitstrings)
 
     if use_probability_based_objective:
         total_optimal_probability = sum(s.probability for s in optimal_solutions)
         check.greater(total_optimal_probability, 0.75)
 
     print(f"\nMinimum cost: {min_cost}")
-    print(f"All optimal bitstrings: {[s.bitstring for s in optimal_solutions]}")
+    print(f"All optimal bitstrings: {[s.string for s in optimal_solutions]}")
     print(f"Number of optimal solutions: {len(optimal_solutions)}\n")
 
 
@@ -166,24 +147,23 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
     spacing = 1.5
 
     # Set a Register and compute the associated QUBO
-    vertices = spacing * torch.tensor(
+    vertices = spacing * tensor.tensor(
         [
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
         ],
-        dtype=torch.float32,
     )
     # Choose scaling factor so that coefficients and costs are in a human readable range (~10)
     Q = 400.0 * interaction_matrix_from_vertices(vertices)
     # Choose diagonal coefficients so that the solution is 110
-    Q = Q - 2.5 * torch.eye(3, dtype=torch.float32) * Q[0, 1]
+    Q = Q - 2.5 * matrix.from_torch(torch.eye(3)) * Q[0, 1]
 
     results = []
     for bits in itertools.product([0, 1], repeat=3):
-        z = torch.tensor(bits, dtype=torch.float32)
-        cost = (z @ Q @ z).item()
-        results.append(Solution("".join(str(int(b)) for b in z.flatten()), cost))
+        z = bitstring.tensor(bits)
+        cost = costs.quadratic_cost(z, Q)
+        results.append(SingleSolution(z, cost))
 
     # Get all bitstrings with minimum cost
     expected_optimal_solutions = gather_optimal_solutions(results)
@@ -204,31 +184,29 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
         device=AnalogDevice(), drive_shaping=ds_config, backend=LocalEmulator(num_shots=500)
     )
 
-    drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
+    drive_shaper = OptimizedDriveShaper(Instance(Q), config, config.backend)
     drive, qubo_solution = drive_shaper.generate(register)
     qubo_solution.sort_by_cost()
-    analyzer = QUBOAnalyzer([qubo_solution])
+    analyzer = Analyzer([qubo_solution])
     print(f"{analyzer.df}")
 
     assert isinstance(qubo_solution.probabilities, torch.Tensor)
-    optimal_solutions = gather_optimal_solutions(
-        to_solutions(qubo_solution.bitstrings, qubo_solution.costs, qubo_solution.probabilities)
-    )
+    optimal_solutions = gather_optimal_solutions(qubo_solution)
     check.is_not(optimal_solutions, [])
 
     min_cost = optimal_solutions[0].cost
     check.almost_equal(min_cost, expected_optimal_solutions[0].cost)
 
-    expected_optimal_bistrings = [s.bitstring for s in expected_optimal_solutions]
+    expected_optimal_bitstrings = [s.string for s in expected_optimal_solutions]
     for solution in optimal_solutions:
-        check.is_in(solution.bitstring, expected_optimal_bistrings)
+        check.is_in(solution.string, expected_optimal_bitstrings)
 
     if use_probability_based_objective:
         total_optimal_probability = sum(s.probability for s in optimal_solutions)
         check.greater(total_optimal_probability, 0.6)
 
     print(f"\nMinimum cost: {min_cost}")
-    print(f"All optimal bitstrings: {[s.bitstring for s in optimal_solutions]}")
+    print(f"All optimal bitstrings: {[s.string for s in optimal_solutions]}")
     print(f"Number of optimal solutions: {len(optimal_solutions)}\n")
 
 
@@ -236,32 +214,23 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
 def test_errors(raise_exception: bool) -> None:
 
     # Set a Register and compute the associated QUBO
-    vertices = torch.tensor(
+    vertices = tensor.tensor(
         [
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
         ],
-        dtype=torch.float32,
     )
-    Q = interaction_matrix_from_vertices(vertices) - torch.eye(3, dtype=torch.float32)
+    Q = interaction_matrix_from_vertices(vertices) - matrix.from_torch(torch.eye(3))
 
     register = Register.from_coordinates(vertices.tolist())
 
-    def error(
-        bitstrings: list,
-        counts: list,
-        probabilities: list,
-        costs: list,
-        best_cost: float,
-        best_bitstring: str,
-    ) -> float:
-
+    def error(solution: Solution) -> float:
         if raise_exception:
             raise RuntimeError("Error occurred")
         return float("inf")
 
-    def optimized_callback_objective(d: Dict[Any, Any]) -> None:
+    def optimized_callback_objective(d: dict[Any, Any]) -> None:
         check.almost_equal(d["cost_eval"], 1e4)
 
     mock_error = MagicMock(wraps=error)
@@ -276,7 +245,7 @@ def test_errors(raise_exception: bool) -> None:
         drive_shaping=ds_config,
     )
 
-    drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
+    drive_shaper = OptimizedDriveShaper(Instance(Q), config, config.backend)
     drive, qubo_solution = drive_shaper.generate(register)
 
     check.equal(mock_error.call_count, 11)
@@ -286,15 +255,14 @@ def test_errors(raise_exception: bool) -> None:
 def test_failed_simulation() -> None:
 
     # Set a Register and compute the associated QUBO
-    vertices = torch.tensor(
+    vertices = tensor.tensor(
         [
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
         ],
-        dtype=torch.float32,
     )
-    Q = interaction_matrix_from_vertices(vertices) - torch.eye(3, dtype=torch.float32)
+    Q = interaction_matrix_from_vertices(vertices) - matrix.from_torch(torch.eye(3))
 
     register = Register.from_coordinates(vertices.tolist())
 
@@ -305,7 +273,7 @@ def test_failed_simulation() -> None:
         drive_shaping=ds_config,
     )
 
-    drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
+    drive_shaper = OptimizedDriveShaper(Instance(Q), config, config.backend)
     with patch("qoolqit.QuantumProgram.compile_to", side_effect=RuntimeError()):
         drive, qubo_solution = drive_shaper.generate(register)
 
@@ -313,15 +281,14 @@ def test_failed_simulation() -> None:
 def test_failed_simulation_2() -> None:
 
     # Set a Register and compute the associated QUBO
-    vertices = torch.tensor(
+    vertices = tensor.tensor(
         [
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
         ],
-        dtype=torch.float32,
     )
-    Q = interaction_matrix_from_vertices(vertices) - torch.eye(3, dtype=torch.float32)
+    Q = interaction_matrix_from_vertices(vertices) - matrix.from_torch(torch.eye(3))
 
     register = Register.from_coordinates(vertices.tolist())
 
@@ -332,27 +299,26 @@ def test_failed_simulation_2() -> None:
         drive_shaping=ds_config,
     )
 
-    drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
+    drive_shaper = OptimizedDriveShaper(Instance(Q), config, config.backend)
     with patch(
-        "qubosolver.pipeline.drive.OptimizedDriveShaper.run_simulation",
-        return_value=(None, None, None, None, None, None),
+        "qubosolver.drive_shaping.optimized._run_simulation",
+        return_value=Solution(),
     ):
-        with pytest.raises(RuntimeError, match="No solution found"):
-            drive, qubo_solution = drive_shaper.generate(register)
+        drive, qubo_solution = drive_shaper.generate(register)
+        check.is_true(qubo_solution.empty())
 
 
 def test_failed_skopt() -> None:
 
     # Set a Register and compute the associated QUBO
-    vertices = torch.tensor(
+    vertices = tensor.tensor(
         [
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
         ],
-        dtype=torch.float32,
     )
-    Q = interaction_matrix_from_vertices(vertices) - torch.eye(3, dtype=torch.float32)
+    Q = interaction_matrix_from_vertices(vertices) - matrix.from_torch(torch.eye(3))
 
     register = Register.from_coordinates(vertices.tolist())
 
@@ -363,8 +329,8 @@ def test_failed_skopt() -> None:
         drive_shaping=ds_config,
     )
 
-    drive_shaper = OptimizedDriveShaper(QUBOInstance(Q), config, config.backend)
+    drive_shaper = OptimizedDriveShaper(Instance(Q), config, config.backend)
 
-    with patch("qubosolver.pipeline.drive.gp_minimize", return_value=None):
-        with pytest.raises(RuntimeError, match="No solution found"):
-            drive, qubo_solution = drive_shaper.generate(register)
+    with patch("qubosolver.drive_shaping.optimized.gp_minimize", return_value=None):
+        drive, qubo_solution = drive_shaper.generate(register)
+        check.is_true(qubo_solution.empty())

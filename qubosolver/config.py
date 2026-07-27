@@ -1,57 +1,72 @@
+"""Configuration classes for the QUBO solver pipeline.
+
+This module defines Pydantic-based configuration classes that control every
+stage of the quantum and classical solving pipeline.
+
+All public classes are re-exported from the top-level [`qubosolver`][] namespace
+and can be imported directly:
+
+```python
+from qubosolver import (
+    SolverConfig,
+    EmbeddingConfig,
+    DriveShapingConfig,
+    ClassicalConfig,
+    DecompositionConfig,
+)
+```
+"""
+
 from __future__ import annotations
 
 import inspect
 from abc import ABC
+from collections.abc import Callable
 from dataclasses import field
-from typing import Any, Callable
+from typing import Any
 
 import torch
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator, model_serializer
 
-from qoolqit.devices.device import Device, AnalogDeviceWithDMM
+from qoolqit import Device, AnalogDeviceWithDMM
 from qoolqit.execution import QPU
 from qoolqit.execution.compilation_functions import CompilerProfile
-from pulser_pasqal import PasqalCloud
 
-from qubosolver.qubo_types import (
+
+from .types import (
     EmbedderType,
     LayoutType,
     DriveType,
     ClassicalSolverType,
+    Bitstring,
+    Matrix,
+    Solution,
+    LocalEmulator,
+    RemoteEmulator,
 )
-from qubosolver.backends import LocalEmulator, RemoteEmulator
 
 # Allow torch.Tensor fields in Pydantic models.
 BaseModel.model_config["arbitrary_types_allowed"] = True
 
-# Modules to be automatically added to the qubosolver namespace
-__all__: list[str] = [
-    "LocalEmulator",
-    "RemoteEmulator",
-    "QPU",
-    "PasqalCloud",
-    "ClassicalConfig",
-    "EmbeddingConfig",
-    "DriveShapingConfig",
-    "DecompositionConfig",
-    "SolverConfig",
-]
 
+class _Config(BaseModel, ABC):
+    """Abstract base class for all solver configuration models.
 
-class Config(BaseModel, ABC):
-    """Pydantic class for configs."""
+    Enforces strict field validation by forbidding any extra fields not
+    declared on the subclass. All concrete config classes (``ClassicalConfig``,
+    ``EmbeddingConfig``, etc.) inherit from this class.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
 
-class ClassicalConfig(Config):
-    """A `ClassicalConfig` instance defines the classical
-        part of a `SolverConfig`.
+class ClassicalConfig(_Config):
+    """A `ClassicalConfig` instance defines the classical part of a `SolverConfig`.
 
     Attributes:
-        classical_solver_type (str | ClassicalSolverType, optional): Classical solver type. Defaults to
-            "simulated_annealing_tabu_search".
-        cplex_maxtime (float, optional): CPLEX maximum runtime. Defaults to 600s.
+        classical_solver_type (ClassicalSolverType, optional): Classical solver type. Defaults to
+            `"simulated_annealing_tabu_search"`.
+        cplex_maxtime (float, optional): CPLEX maximum runtime in seconds. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
         max_iter (int, optional): Maximum number of iterations to perform for simulated annealing or tabu search.
         max_bitstrings (int, optional): Maximal number of bitstrings returned as solutions.
@@ -62,13 +77,13 @@ class ClassicalConfig(Config):
         sa_start (torch.Tensor | None, optional): Optional initial bitstring of shape (n,).
         sa_energy_tol (float, optional): Energy tolerance for considering two solutions as equivalent.
         sa_time_limit (float): Maximum runtime in seconds for simulated annealing.
-            Defaults to float('inf'), meaning no time limit.
+            Defaults to `float("inf")`, meaning no time limit.
         tabu_x0 (torch.Tensor | None, optional): The initial binary solution tensor of shape (n,).
         tabu_tenure (int, optional): Number of iterations a move (bit flip) remains tabu.
         tabu_max_no_improve (int, optional): Maximum number of consecutive iterations
             without improvement before termination.
         tabu_time_limit (float): Maximum execution time for tabu search,
-            in seconds. Defaults to float("inf").
+            in seconds. Defaults to `float("inf")`, meaning no time limit.
     """
 
     classical_solver_type: str | ClassicalSolverType = "simulated_annealing_tabu_search"
@@ -108,6 +123,17 @@ class ClassicalConfig(Config):
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
+        """Serialize only the fields relevant to the active solver type.
+
+        Returns a dict containing ``classical_solver_type`` plus the subset of
+        fields that are meaningful for the chosen solver
+        (``CPLEX``, ``SIMULATED_ANNEALING``, ``TABU_SEARCH``, or
+        ``SIMULATED_ANNEALING_TABU_SEARCH``). Fields belonging to inactive
+        solvers are omitted to keep serialized output minimal.
+
+        Returns:
+            dict[str, Any]: Serialized representation of this config.
+        """
         serialization: dict = {"classical_solver_type": self.classical_solver_type}
         if self.classical_solver_type == ClassicalSolverType.CPLEX:
             serialization.update(
@@ -159,7 +185,7 @@ class ClassicalConfig(Config):
         return serialization
 
 
-class EmbeddingConfig(Config):
+class EmbeddingConfig(_Config):
     """A `EmbeddingConfig` instance defines the embedding
         part of a `SolverConfig`.
 
@@ -174,7 +200,7 @@ class EmbeddingConfig(Config):
             A too high value will impede computational efficiency.
         greedy_spacing (float, optional): The minimum distance between atoms.
             Defaults to 7 (μm).
-        greedy_density (float, optional): The estimated density of the QUBO matrix.
+        greedy_density (float | None, optional): The estimated density of the QUBO matrix.
             Defaults to None.
         blade_steps_per_round (int | None): See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/)
         blade_starting_positions (torch.Tensor | None): See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/)
@@ -201,6 +227,16 @@ class EmbeddingConfig(Config):
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
+        """Serialize only the fields relevant to the active embedder type.
+
+        Always includes ``embedding_method``, ``draw_steps``,
+        ``animation_save_path``, and ``min_distance``. Additionally includes
+        ``greedy_*`` fields when ``embedding_method`` is ``GREEDY``, or
+        ``blade_*`` fields when it is ``BLADE``.
+
+        Returns:
+            dict[str, Any]: Serialized representation of this config.
+        """
         serialization: dict = {
             "embedding_method": self.embedding_method,
             "draw_steps": self.draw_steps,
@@ -234,10 +270,10 @@ class EmbeddingConfig(Config):
             except KeyError:
                 raise ValueError(f"Invalid str embedding method '{val}'.")
         elif inspect.isclass(val):
-            from qubosolver.pipeline.embedder import BaseEmbedder
+            from qubosolver.embedding._embedder import _BaseEmbedder
 
-            if not issubclass(val, BaseEmbedder):
-                raise TypeError(f"Class must be a subclass of {BaseEmbedder.__name__}")
+            if not issubclass(val, _BaseEmbedder):
+                raise TypeError(f"Class must be a subclass of {_BaseEmbedder.__name__}")
             else:
                 return val
         else:
@@ -258,7 +294,7 @@ class EmbeddingConfig(Config):
             raise ValueError(f"Invalid layout '{val}'.")
 
 
-class DriveShapingConfig(Config):
+class DriveShapingConfig(_Config):
     """A `DriveShapingConfig` instance defines the drive shaping part of a `SolverConfig`.
 
     Attributes:
@@ -271,9 +307,9 @@ class DriveShapingConfig(Config):
             after optimization. Defaults to False.
         optimized_n_calls (int, optional): Number of calls for the optimization process.
             Defaults to 20. Note the optimizer accepts a minimal value of 12.
-        optimized_initial_omega_parameters (List[float], optional): Default initial omega parameters
+        optimized_initial_omega_parameters (list[float], optional): Default initial omega parameters
             for the drive. Defaults to Omega = (1, 2, 1).
-        optimized_initial_detuning_parameters (List[float], optional): Default initial detuning parameters
+        optimized_initial_detuning_parameters (list[float], optional): Default initial detuning parameters
             for the drive. Defaults to delta = (-2, 0, 2).
         optimized_custom_qubo_cost (Callable[[str, torch.Tensor], float], optional): Apply a different
             qubo cost evaluation
@@ -282,13 +318,13 @@ class DriveShapingConfig(Config):
             Must be defined as:
             `def optimized_custom_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float`.
             Defaults to None, meaning we use the default QUBO evaluation.
-        optimized_custom_objective_fn (Callable[[list, list, list, list, float, str], float], optional):
+        optimized_custom_objective (Callable[[list, list, list, list, float, str], float], optional):
             For bayesian optimization, one can change the output of
             `qubosolver/pipeline/drive.py:OptimizedDriveShaper.run_simulation`
             to optimize differently. Instead of using the best cost
             out of the samples, one can change the objective for an average,
             or any function out of the form
-            `cost_eval = optimized_custom_objective_fn(bitstrings,
+            `cost_eval = optimized_custom_objective(bitstrings,
                 counts, probabilities, costs, best_cost, best_bitstring)`
             Defaults to None, which means we optimize using the best cost
             out of the samples.
@@ -306,20 +342,36 @@ class DriveShapingConfig(Config):
 
     drive_shaping_method: Any = DriveType.HEURISTIC
     dmm: bool = True
-    optimized_re_execute_opt_drive: bool = False
     optimized_n_calls: int = 20
     optimized_initial_omega_parameters: list[float] = field(default_factory=lambda: [0.5, 0.9, 0.5])
     optimized_initial_detuning_parameters: list[float] = field(
-        default_factory=lambda: [-0.8, 0.0, 0.8]
-    )
-    optimized_custom_qubo_cost: Callable[[str, torch.Tensor], float] | None = None
-    optimized_custom_objective: Callable[[list, list, list, list, float, str], float] | None = None
+        default_factory=lambda: [
+            -0.8,
+            0.0,
+            0.8,
+        ]
+    )  # ---> default initial drive parameters: delta = (-2, 0, 2)
+    optimized_custom_qubo_cost: Callable[[Bitstring, Matrix], float] | None = None
+    optimized_custom_objective: Callable[[Solution], float] | None = None
     optimized_callback_objective: Callable[..., None] | None = None
     optimized_seed: int | None = None
+    optimized_re_execute_opt_drive: bool = False
+
+    # Heuristic coefficient for omega
     heuristic_kappa: float = 0.25
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
+        """Serialize only the fields relevant to the active drive shaping method.
+
+        Always includes ``drive_shaping_method`` and ``dmm``. When
+        ``drive_shaping_method`` is ``OPTIMIZED``, all ``optimized_*`` fields
+        are also included. Heuristic-only fields are omitted for the optimized
+        path and vice-versa.
+
+        Returns:
+            dict[str, Any]: Serialized representation of this config.
+        """
         serialization: dict = {
             "drive_shaping_method": self.drive_shaping_method,
             "dmm": self.dmm,
@@ -350,10 +402,10 @@ class DriveShapingConfig(Config):
             else:
                 raise ValueError(f"Invalid drive shaping method '{val}'.")
         elif inspect.isclass(val):
-            from qubosolver.pipeline.drive import BaseDriveShaper
+            from qubosolver.drive_shaping._drive_shaper import _BaseDriveShaper
 
-            if not issubclass(val, BaseDriveShaper):
-                raise TypeError(f"Class must be a subclass of {BaseDriveShaper.__name__}")
+            if not issubclass(val, _BaseDriveShaper):
+                raise TypeError(f"Class must be a subclass of {_BaseDriveShaper.__name__}")
             else:
                 return val
         else:
@@ -378,7 +430,7 @@ class DriveShapingConfig(Config):
             )
 
 
-class DecompositionConfig(Config):
+class DecompositionConfig(_Config):
     """The configuration parameters when using a decomposition method
         for solving large QUBO instances.
 
@@ -402,7 +454,7 @@ class DecompositionConfig(Config):
     neglecting_max_coefficient: float = 1.0
 
 
-class SolverConfig(Config):
+class SolverConfig(_Config):
     """
     A `SolverConfig` instance defines how a QUBO problem should be solved.
     We specify whether to use a quantum or classical approach,
@@ -435,7 +487,7 @@ class SolverConfig(Config):
     """
 
     config_name: str = ""
-    use_quantum: bool | None = True
+    use_quantum: bool = True
     embedding: EmbeddingConfig = EmbeddingConfig()
     drive_shaping: DriveShapingConfig = DriveShapingConfig()
     classical: ClassicalConfig = ClassicalConfig()
@@ -450,21 +502,38 @@ class SolverConfig(Config):
         return self.config_name
 
     def specs(self) -> str:
-        """Return the specs of the `SolverConfig`, that is all attributes.
+        """Return a human-readable summary of all configuration attributes.
+
+        Each attribute is formatted as ``key: value``, one per line.
+        Empty-string values are rendered as ``key: ''``.
 
         Returns:
-            dict: Dictionary of specs key-values.
+            str: Newline-separated ``key: value`` pairs for all config fields.
         """
         return "\n".join(
             f"{k}: ''" if v == "" else f"{k}: {v}" for k, v in self.model_dump().items()
         )
 
     def print_specs(self) -> None:
-        """Print specs."""
+        """Print all configuration attributes to stdout.
+
+        Convenience wrapper around :meth:`specs` for interactive use.
+        """
         print(self.specs())
 
     @model_validator(mode="after")
     def _set_greedy_spacing_from_device(self) -> SolverConfig:
+        """Enforce device minimum atom distance on the greedy embedder spacing.
+
+        If the configured ``device`` exposes a ``min_atom_distance`` constraint
+        and the current ``embedding.greedy_spacing`` is smaller than that
+        constraint, ``greedy_spacing`` is silently raised to match the device
+        limit. This prevents the embedder from generating registers that would
+        be rejected during compilation.
+
+        Returns:
+            SolverConfig: The (potentially updated) config instance.
+        """
 
         if self.device:
             device = self.device._device
@@ -478,14 +547,24 @@ class SolverConfig(Config):
 
     @classmethod
     def from_kwargs(cls, **kwargs: dict) -> SolverConfig:
-        """Create an instance based on entries of other configs.
+        """Create a ``SolverConfig`` from a flat or mixed keyword dictionary.
 
-        Note that if any of the keywords
-        ("embedding", "drive_shaping", "classical")
-        are present in kwargs, the values are taken directly.
+        Keyword arguments are automatically routed to the appropriate
+        sub-config (``EmbeddingConfig``, ``DriveShapingConfig``,
+        ``ClassicalConfig``, or ``DecompositionConfig``) based on their field
+        names. Top-level ``SolverConfig`` fields are handled directly.
+
+        If any of the sub-config keys (``"embedding"``, ``"drive_shaping"``,
+        ``"classical"``, ``"decompose"``) appear in ``kwargs``, their values
+        are forwarded as-is and take precedence over individually routed fields.
+
+        Args:
+            **kwargs: Any combination of fields from ``SolverConfig``,
+                ``EmbeddingConfig``, ``DriveShapingConfig``,
+                ``ClassicalConfig``, or ``DecompositionConfig``.
 
         Returns:
-            SolverConfig: An instance from values.
+            SolverConfig: A fully validated ``SolverConfig`` instance.
         """
         # Extract fields from pydantic BaseModel
         embedding_fields = {k: v for k, v in kwargs.items() if k in EmbeddingConfig.model_fields}
@@ -518,7 +597,7 @@ class SolverConfig(Config):
         return cls.model_validate(solver_fields)
 
 
-def compiler_profile(config: SolverConfig) -> CompilerProfile:
+def _compiler_profile(config: SolverConfig) -> CompilerProfile:
     """Determines the appropriate compiler profile based on the drive shaping method.
 
     Args:
@@ -533,7 +612,7 @@ def compiler_profile(config: SolverConfig) -> CompilerProfile:
     return CompilerProfile.MAX_ENERGY
 
 
-def max_duration_ratio(config: SolverConfig) -> float | None:
+def _max_duration_ratio(config: SolverConfig) -> float | None:
     """Computes the maximum pulse duration ratio for the configured device.
 
     Returns 0.99 to give a small safety margin below the device's maximum

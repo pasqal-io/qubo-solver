@@ -1,1 +1,0 @@
-::: qubosolver.qubo_instance

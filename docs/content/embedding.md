@@ -10,18 +10,17 @@ The `SolverConfig()` without argument has a default behavior (e.g. Solver Config
 ```python exec="on" source="material-block" html="1" session="embedding"
 import torch
 
-from qubosolver.config import SolverConfig, EmbeddingConfig
-from qubosolver.solver import QUBOInstance, QuboSolver
+from qubosolver import SolverConfig, EmbeddingConfig, Instance, Solver
 
 # define qubo matrix
 coefficients = torch.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
 
-# Instantiate a QUBOInstance with coefficients
-instance = QUBOInstance(coefficients)
+# Instantiate a Instance with coefficients
+instance = Instance(coefficients)
 
 # define the solver with default configuration
 default_config = SolverConfig()
-solver = QuboSolver(instance, default_config)
+solver = Solver(instance, default_config)
 register = solver.embedding()
 
 # draw the register
@@ -39,7 +38,7 @@ blade_config = SolverConfig(
     embedding=embedconfig,
 )
 
-solver = QuboSolver(instance, blade_config)
+solver = Solver(instance, blade_config)
 register = solver.embedding()
 
 # register.draw()
@@ -58,7 +57,7 @@ greedy_config = SolverConfig(
     device = AnalogDevice(),
 )
 
-solver = QuboSolver(instance, greedy_config)
+solver = Solver(instance, greedy_config)
 register = solver.embedding()
 
 # register.draw()
@@ -71,32 +70,33 @@ If one desires to develop their own embedding method, a subclass of `qubosolver.
 The `embed` method `def embed(self) -> qoolqit.Register` specifies how the problem is mapped into a register of qubits when running using a quantum device. Let us show a simple example where each variable $i$ is mapped into a qubit lying on a horizontal line (with coordinates $[i, 0]$, $i$ normalized by the device specs).
 
 ```python exec="on" source="material-block" html="1" session="embedding"
-import typing
-from qoolqit import Register
-from qubosolver.pipeline.embedder import BaseEmbedder
-from qubosolver.config import (
-    EmbeddingConfig,
-    SolverConfig,
-)
-
-class FixedEmbedder(BaseEmbedder):
-
-    @typing.no_type_check
-    def embed(self) -> Register:
-        # The register is scaled so that the minimal distance between atoms is 1 (plus a margin). This is the recommended minimal distance.
-        scale = 1.001
-        qubits = {f"q{i}": (i * scale ,0) for i in range(self.instance.coefficients.shape[0])}
-        register = Register(qubits)
-        return register
-
-
-config = SolverConfig(
-    use_quantum=True,
-    embedding=EmbeddingConfig(embedding_method=FixedEmbedder),
-)
-
-solver = QuboSolver(instance, config)
-register = solver.embedding()
+# TODO: rewrite with functional
+# import typing
+# from qoolqit import Register
+# from qubosolver.pipeline.embedder import BaseEmbedder
+# from qubosolver import (
+#     EmbeddingConfig,
+#     SolverConfig,
+# )
+#
+# class FixedEmbedder(BaseEmbedder):
+#
+#     @typing.no_type_check
+#     def embed(self) -> Register:
+#         # The register is scaled so that the minimal distance between atoms is 1 (plus a margin). This is the recommended minimal # distance.
+#         scale = 1.001
+#         qubits = {f"q{i}": (i * scale ,0) for i in range(self.instance.matrix.shape[0])}
+#         register = Register(qubits)
+#         return register
+#
+#
+# config = SolverConfig(
+#     use_quantum=True,
+#     embedding=EmbeddingConfig(embedding_method=FixedEmbedder),
+# )
+#
+# solver = Solver(instance, config)
+# register = solver.embedding()
 
 # register.draw()
 ```

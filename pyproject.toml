@@ -64,9 +64,11 @@ dev = [
   "jupyter",
   "tqdm",
   "mypy",
+  "jaxtyping",
+  "beartype",
 ]
 doc = [
-  "mkdocs",
+  "properdocs",
   "mkdocs-material",
   "mkdocstrings",
   "mkdocstrings-python",
@@ -128,9 +130,9 @@ installer = "uv"
 features = ["doc"]
 
 [tool.hatch.envs.docs.scripts]
-build = "mkdocs build --clean --strict {args}"
-serve = "mkdocs serve --dev-addr localhost:8000"
-test = "mkdocs build --clean --strict"
+build = "properdocs build --clean --strict {args}"
+serve = "properdocs serve --dev-addr localhost:8000"
+test = "properdocs build --clean --strict"
 
 [[tool.hatch.envs.test.matrix]]
 python = ["310", "311", "312"]

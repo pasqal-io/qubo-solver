@@ -6,7 +6,6 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import List
 
 import pytest
 
@@ -20,7 +19,7 @@ skip: dict[str, str] = {
 }
 
 
-def get_ipynb_files(dir: Path) -> List[Path]:
+def get_ipynb_files(dir: Path) -> list[Path]:
     files = []
 
     for it in dir.iterdir():

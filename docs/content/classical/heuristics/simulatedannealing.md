@@ -6,12 +6,12 @@ Simple classical solver class using Simulated Annealing. Designed to integrate w
 
 ```python
 class SimulatedAnnealingSolver(BaseClassicalSolver):
-    def solve(self) -> QUBOSolution
+    def solve(self) -> Solution
 ```
 
 ### Description
 
-This solver uses a Simulated Annealing to probabilistically explore the solution space. It is suitable for approximating solutions on medium-sized QUBO instances. Computation is entirely classical and based on the `SimulatedAnnealingSolver`. The output is fully compatible with the `QUBOSolution` structure used in the `qubo-solver` package.
+This solver uses a Simulated Annealing to probabilistically explore the solution space. It is suitable for approximating solutions on medium-sized QUBO instances. Computation is entirely classical and based on the `SimulatedAnnealingSolver`. The output is fully compatible with the `Solution` structure used in the `qubo-solver` package.
 
 ## Fields
 
@@ -28,11 +28,9 @@ This solver uses a Simulated Annealing to probabilistically explore the solution
 ### Usage
 
 ```python exec="on" source="material-block" html="1"
-from qubosolver import QUBOInstance
-from qubosolver.solver import QuboSolver
-from qubosolver.config import SolverConfig, ClassicalConfig
+from qubosolver import Instance, Solver, SolverConfig, ClassicalConfig, matrix
 
-qubo = QUBOInstance(coefficients=[[-2.0, 1.0], [1.0, -2.0]])
+qubo = Instance(matrix=matrix.tensor([[-2.0, 1.0], [1.0, -2.0]]))
 config = SolverConfig(
     use_quantum=False,
     classical=ClassicalConfig(
@@ -42,7 +40,7 @@ config = SolverConfig(
     ),
 )
 
-solver = QuboSolver(qubo, config)
+solver = Solver(qubo, config)
 
 solution = solver.solve()
 print(solution)

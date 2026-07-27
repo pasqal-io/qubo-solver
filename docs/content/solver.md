@@ -1,6 +1,6 @@
 # Solving a Quadratic Unconstrained Binary Optimization instance
 
-Solving a QUBO instance is straightforward with `qubo-solver`. We can directly use the `QuboSolver` class by feeding instances of the [`QUBOInstance`](qubo_instance.md) and [`SolverConfig`](config.md) classes. We can also specify whether to use a classical approach or a quantum one.
+Solving a QUBO instance is straightforward with `qubo-solver`. We can directly use the `Solver` class by feeding instances of the [`Instance`](qubo_instance.md) and [`SolverConfig`](config.md) classes. We can also specify whether to use a classical approach or a quantum one.
 
 ## Solving with a quantum approach
 
@@ -25,9 +25,7 @@ We can perform quantum simulations locally via an emulator (here, we choose the 
 
 ```python exec="on" source="material-block" html="1"
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, LocalEmulator
-from qubosolver.solver import QuboSolver
+from qubosolver import Instance, SolverConfig, LocalEmulator, Solver
 from pulser_simulation import QutipBackendV2
 from emu_sv import SVBackend
 from emu_mps import MPSBackend
@@ -43,13 +41,13 @@ locals_bkds = [
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
-instance = QUBOInstance(coefficients=Q)
+instance = Instance(matrix=Q)
 
 # Create a SolverConfig object to use a quantum backend
 config = SolverConfig(use_quantum=True, backend = locals_bkds[0])
 
 # Instantiate the quantum solver.
-solver = QuboSolver(instance, config)
+solver = Solver(instance, config)
 
 # Solve the QUBO problem.
 solution = solver.solve()
@@ -66,13 +64,12 @@ The code above can be modified to solve the QUBO instance using our real QPU rem
 
 ```python
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, QPU
-from qubosolver.solver import QuboSolver
+import qoolqit
+from qubosolver import Instance, SolverConfig, Solver
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
-instance = QUBOInstance(coefficients=Q)
+instance = Instance(matrix=Q)
 
 # define credentials
 USERNAME='#TO_PROVIDE'
@@ -89,10 +86,10 @@ if PASSWORD is not None:
 
 
     # define a remote backend
-    backendconf = QPU(connection=connection)
+    backendconf = qoolqit.exection.QPU(connection=connection)
 
     # Instantiate the quantum solver.
-    solver = QuboSolver(instance, backend=backendconf)
+    solver = Solver(instance, backend=backendconf)
 
     # Solve the QUBO problem.
     solution = solver.solve()
@@ -104,13 +101,11 @@ Emulators are also available remotely:
 
 ```python
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.config import SolverConfig, RemoteEmulator, PasqalCloud
-from qubosolver.solver import QuboSolver
+from qubosolver import Instance, SolverConfig, RemoteEmulator, PasqalCloud, Solver
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
-instance = QUBOInstance(coefficients=Q)
+instance = Instance(matrix=Q)
 
 # define credentials
 USERNAME='#TO_PROVIDE'
@@ -129,7 +124,7 @@ if PASSWORD is not None:
     backendconf = RemoteEmulator(connection=connection)
 
     # Instantiate the quantum solver.
-    solver = QuboSolver(instance, backend=backendconf)
+    solver = Solver(instance, backend=backendconf)
 
     # Solve the QUBO problem.
     solution = solver.solve()
@@ -143,14 +138,11 @@ More information on classical approaches can be found in the `Classical solvers`
 
 ```python exec="on" source="material-block" html="1"
 import torch
-from qubosolver import QUBOInstance
-from qubosolver.solver import QuboSolver
-from qubosolver.config import ClassicalConfig, SolverConfig
-from qubosolver.solver import QuboSolverClassical, QuboSolverQuantum
+from qubosolver import Instance, Solver, ClassicalConfig, SolverConfig
 
 # define QUBO
 Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
-instance = QUBOInstance(coefficients=Q)
+instance = Instance(matrix=Q)
 
 # Create a SolverConfig object with classical solver options.
 classical_config = ClassicalConfig(
@@ -161,7 +153,7 @@ classical_config = ClassicalConfig(
 config = SolverConfig(use_quantum=False, classical=classical_config)
 
 # Instantiate the classical solver via the pipeline's classical solver dispatcher.
-classical_solver = QuboSolver(instance, config)
+classical_solver = Solver(instance, config)
 
 # Solve the QUBO problem.
 solution = classical_solver.solve()
