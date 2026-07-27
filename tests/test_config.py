@@ -105,20 +105,17 @@ def test_greedy_embedding_config(greedy_embedding_config: SolverConfig) -> None:
     assert type(greedy_embedding_config.device) is AnalogDeviceWithDMM
     assert greedy_embedding_config.embedding.greedy_layout == LayoutType.SQUARE
     assert greedy_embedding_config.embedding.greedy_traps == 10
-    assert greedy_embedding_config.embedding.greedy_spacing == 5.0
 
 
 def test_initialization_device() -> None:
 
     solver = SolverConfig()
     assert solver.embedding.greedy_traps == -1
-    assert solver.embedding.greedy_spacing == 7.0
 
     deviceanalog = AnalogDevice()
     kwargs: dict[Any, Any] = {"device": deviceanalog}
     solver = SolverConfig.from_kwargs(**kwargs)
     assert solver.embedding.greedy_traps == -1
-    assert solver.embedding.greedy_spacing == 7.0
 
 
 def test_decomposition_config() -> None:

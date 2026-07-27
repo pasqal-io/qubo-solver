@@ -7,7 +7,7 @@ import pytest_check as check
 import torch
 from copy import deepcopy
 
-from qoolqit import Drive, Ramp, Register, Constant, DigitalAnalogDevice
+from qoolqit import DigitalAnalogDevice
 from qubosolver import (
     Instance,
     Solution,
@@ -24,7 +24,6 @@ from qubosolver import (
     vector,
     LocalEmulator,
 )
-from qubosolver.drive_shaping._drive_shaper import _BaseDriveShaper
 
 
 def test_apply_full_and_post_process_fixation() -> None:
@@ -211,26 +210,6 @@ def test_reduce_qubo_2() -> None:
     check.almost_equal(solution.costs[0], -27.288260)
 
 
-class SimpleShaper(_BaseDriveShaper):
-    def generate(
-        self,
-        register: Register,
-    ) -> tuple[Drive, Solution]:
-
-        # Defining the drive parameters
-        omega = 0.01
-        delta_i = -0.09
-        delta_f = -delta_i
-        T = 4000.0
-
-        # Defining the drive
-        wf_amp = Constant(T, omega)
-        wf_det = Ramp(T, delta_i, delta_f)
-        drive = Drive(amplitude=wf_amp, detuning=wf_det)
-
-        return drive, Solution()
-
-
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("embedding_method", [EmbedderType.BLADE])
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no_pre"])
@@ -263,12 +242,10 @@ def test_quantum_prepostprocessing_2(
     )
     config.embedding = EmbeddingConfig(
         embedding_method=embedding_method,
-        greedy_spacing=0.1,
         greedy_traps=500,
-        min_distance=1.001,
     )
 
-    config.drive_shaping = DriveShapingConfig(drive_shaping_method=SimpleShaper, dmm=dmm)
+    config.drive_shaping = DriveShapingConfig(dmm=dmm)
     config.backend = LocalEmulator(num_shots=50)
     solver = Solver(instance, config)
 

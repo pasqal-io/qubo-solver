@@ -90,7 +90,7 @@ def test_quantum_remote_job(
             backend = RemoteEmulator(connection=connection, num_shots=num_shots)
 
         if drive_method == DriveType.HEURISTIC:
-            drive = drive_shaping.heuristic.build_drive(instance, device=device, dmm=dmm)
+            drive = drive_shaping.heuristic.build_drive(instance, register, device=device, dmm=dmm)
         else:
             drive, _ = drive_shaping.optimized.build_drive(
                 instance, register, backend, device, dmm=dmm

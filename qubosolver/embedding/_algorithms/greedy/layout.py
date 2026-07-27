@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import torch
 
-from qubosolver.types.enums import LayoutType
+from qubosolver import LayoutType
 
 
 def get_layout(*, layout_type: LayoutType | str = LayoutType.TRIANGULAR, n_traps: int) -> torch.Tensor:

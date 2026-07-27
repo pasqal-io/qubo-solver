@@ -172,7 +172,6 @@ def greedy_embedding_config() -> SolverConfig:
         embedding_method="greedy",
         greedy_layout=LayoutType.SQUARE,
         greedy_traps=10,
-        greedy_spacing=5.0,
     )
     return SolverConfig(
         embedding=embed_method,
@@ -306,3 +305,15 @@ def restore_rng_state() -> Generator:
 @pytest.fixture
 def make_mock_connection() -> type[MockConnection]:
     return MockConnection
+
+
+@pytest.fixture
+def device() -> qoolqit.devices.device.BaseDevice:
+    return qoolqit.AnalogDeviceWithDMM()._device
+
+
+@pytest.fixture
+def max_min_dist_ratio(device: qoolqit.devices.device.BaseDevice) -> float:
+    assert isinstance(device.max_radial_distance, int)
+    assert isinstance(device.min_atom_distance, int)
+    return device.max_radial_distance / device.min_atom_distance
