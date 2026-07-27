@@ -6,10 +6,9 @@ import typing
 from typing import Any, Optional, cast
 
 import torch
-from pulser.register.register_layout import RegisterLayout
-from qoolqit import AnalogDeviceWithDMM
 
-from qubosolver import LayoutType, Matrix, matrix, Tensor, tensor
+from qubosolver import Matrix, matrix, Tensor, tensor
+from .layout import get_layout
 
 # Optional imports for animation; guarded so library usage stays safe in non-notebook envs.
 try:  # pragma: no cover
@@ -27,7 +26,7 @@ class Greedy:
 
     At each step, place one logical node onto one trap to minimize the
     incremental mismatch between the logical QUBO matrix Q and the physical
-    interaction matrix U (approx. C / ||r_i - r_j||^6).
+    interaction matrix U (approx. 1 / ||r_i - r_j||^6).
 
     Adds:
       - optional `on_step(state: dict)` callback for instrumentation
@@ -40,9 +39,9 @@ class Greedy:
     # ----------------------------
     # Layout utilities
     # ----------------------------
-    def get_predefined_coordinates(self, params: dict) -> tuple[RegisterLayout, Tensor]:
+    def get_predefined_coordinates(self, params: dict) -> Tensor:
         """
-        Build the initial Pulser layout and return its coordinates.
+        Build the initial lattice of trap coordinates.
 
         Expected `params` keys:
           - "layout": LayoutType (TRIANGULAR or SQUARE) or "triangular"/"square"
@@ -50,35 +49,27 @@ class Greedy:
           - "spacing": float (minimum inter-site spacing)
         """
         type_layout = params["layout"]
-        n_traps = params["traps"]
-        spacing = params["spacing"]
+        n_traps: int = params["traps"]
+        spacing: float = params["spacing"]
 
-        # default layout: TRIANGULAR
-        layout: RegisterLayout = LayoutType.TRIANGULAR.value(n_traps=n_traps, spacing=spacing)
-
-        # accept both enum and string "square"
-        if type_layout == LayoutType.SQUARE or (
-            isinstance(type_layout, str) and type_layout.lower() == "square"
-        ):
-            n = int(torch.ceil(torch.sqrt(tensor.tensor(n_traps))).item())
-            layout = LayoutType.SQUARE.value(n, n, spacing=spacing)
+        coords = spacing * get_layout(layout_type=type_layout, n_traps=n_traps)
 
         # build fast maps coord <-> trap index
         self.MAPPING_COORDS_POSITIONS.clear()
         self.MAPPING_POSITIONS_COORDS.clear()
-        for i, coord in enumerate(layout.coords):
+        for i, coord in enumerate(coords.tolist()):
             self.MAPPING_COORDS_POSITIONS[tuple(coord)] = i
             self.MAPPING_POSITIONS_COORDS[i] = coord
 
-        return layout, tensor.tensor(layout.coords)
+        return coords
 
     # ----------------------------
     # Precompute mismatch tensor
     # ----------------------------
-    def precompute_coefficients(self, Q: Matrix, coordinates: Tensor, params: dict) -> Tensor:
+    def precompute_coefficients(self, Q: Matrix, coordinates: Tensor) -> Tensor:
         """
         Precompute Z[i,j,p,q] = | Q[i,j] - U[p,q] | where U[p,q] is the
-        physical interaction between traps p and q (C / r^6).
+        physical interaction between traps p and q (1 / r^6).
         """
         n_nodes = Q.shape[0]
         n_traps = len(coordinates)
@@ -87,10 +78,7 @@ class Greedy:
         U = matrix.zeros(n_traps)
         for p in range(n_traps):
             for q in range(p + 1, n_traps):
-                U[p, q] = (
-                    params["device"].interaction_coeff
-                    / torch.norm(coordinates[p] - coordinates[q]) ** 6
-                )
+                U[p, q] = 1 / torch.norm(coordinates[p] - coordinates[q]) ** 6
                 U[q, p] = U[p, q]
 
         # Z: node-node vs trap-trap mismatch
@@ -175,26 +163,24 @@ class Greedy:
         self,
         Z: torch.Tensor,
         Q: torch.Tensor,
-        layout: RegisterLayout,
+        coords: Tensor,
         v: int,
         results: dict,
         params: dict,
         on_step: Optional[Callable[[dict[str, Any]], None]] = None,
+        max_radial_distance: float = torch.inf,
     ) -> dict:
         """
         Greedy loop starting from node v. If `on_step` is provided, emit a
         state snapshot after each placement (and an initial snapshot).
         """
-        max_radial_distance = params.get(
-            "max_radial_distance", params["device"].max_radial_distance
-        )
         nodes = list(range(Q.shape[0]))
 
         vertices = set(nodes)
-        all_traps = set(list(layout.traps_dict.keys()))
+        n_traps: int = len(coords)
+        all_traps = set(range(n_traps))
 
         n: int = len(Q)
-        n_traps: int = len(layout.coords)
         n_extra_traps: int = 0
         init_coord: tuple = (0, 0)
         positioned: set = set([v])
@@ -273,11 +259,11 @@ class Greedy:
             distance = torch.tensor(u_coordinates).norm().item()
 
             # check whether trap coordinate is within the maximal radial distance
-            if max_radial_distance and (distance >= max_radial_distance):
+            if distance >= max_radial_distance:
                 if n_extra_traps == 0:
                     raise ValueError(
                         f"no traps found to place qubit '{u}' "
-                        f"within {max_radial_distance}µm from origin."
+                        f"within {max_radial_distance} of origin."
                     )
 
                 used_coords.add(u_coordinates)
@@ -357,10 +343,7 @@ class Greedy:
         diff = 0.0
         for i in range(Q.shape[0]):
             for j in range(i + 1, Q.shape[0]):
-                uij = (
-                    params["device"].interaction_coeff
-                    / torch.norm(final_coords[i] - final_coords[j]) ** 6
-                )
+                uij = 1 / torch.norm(final_coords[i] - final_coords[j]) ** 6
                 diff += abs(Q[i, j] - uij)
 
         results[v] = {"coords": final_coords, "distance": diff}
@@ -627,6 +610,8 @@ class Greedy:
     def launch_greedy(
         self,
         Q: torch.Tensor,
+        *,
+        max_min_dist_ratio: float,
         params: dict,
         on_step: Optional[Callable[[dict[str, Any]], None]] = None,
     ) -> Any:
@@ -640,7 +625,7 @@ class Greedy:
           - Else, no instrumentation (zero overhead).
 
         Returns:
-          (best_result_item, None, coords, r_cut, omega)
+          (best_result_item, coords)
         """
         n_traps = params["traps"]
         n_nodes = Q.shape[0]
@@ -648,11 +633,12 @@ class Greedy:
         if n_traps < n_nodes:
             raise ValueError(f"Not enough traps ({n_traps}) to position {n_nodes} nodes.")
 
-        layout, coordinates = self.get_predefined_coordinates(params)
+        coordinates = self.get_predefined_coordinates(params)
         predefined_coordinates = coordinates.detach().clone()
 
-        Z = self.precompute_coefficients(Q, predefined_coordinates, params)
+        Z = self.precompute_coefficients(Q, predefined_coordinates)
         nodes = list(range(n_nodes))
+        max_radial_distance = max_min_dist_ratio * float(params["spacing"])
 
         results: dict = {}
 
@@ -681,22 +667,24 @@ class Greedy:
             cb = None
 
         for node in nodes:
-            self.greedy_algorithm(Z, Q, layout, node, results, params, on_step=cb)
+            self.greedy_algorithm(
+                Z,
+                Q,
+                coords=predefined_coordinates,
+                v=node,
+                results=results,
+                params=params,
+                on_step=cb,
+                max_radial_distance=max_radial_distance,
+            )
 
         best_result = min(results.items(), key=lambda x: x[1]["distance"])
         coords = best_result[1]["coords"]
 
-        lb_radius = params["device"].rydberg_blockade_radius(1)
-        ub_radius = params["device"].rydberg_blockade_radius(
-            1 if isinstance(params["device"], AnalogDeviceWithDMM) else 200
-        )
-        blockade_radius = (ub_radius - lb_radius) + lb_radius
-        omega = params["device"].rabi_from_blockade(blockade_radius)
-
         # Post-run animation if requested
         if anim_flag and frames and _VIZ_OK:  # pragma: no cover
             # Rebuild full lattice coords to show ALL traps (including extras)
-            _, all_coords_t = self.get_predefined_coordinates(params)
+            all_coords_t = self.get_predefined_coordinates(params)
             if hasattr(all_coords_t, "numpy"):
                 all_coords_np = all_coords_t.numpy()
             else:
@@ -711,4 +699,4 @@ class Greedy:
                 fps=0.5,
             )
 
-        return best_result, None, coords, blockade_radius * 2.2, omega
+        return best_result, coords

@@ -7,7 +7,7 @@ entry point that accepts a [`qubosolver.Instance`][] and returns a
 The greedy algorithm places logical QUBO nodes one at a time onto trap sites
 of a pre-defined lattice (triangular or square), choosing at each step the
 (node, trap) pair that minimises the incremental mismatch between the QUBO
-coefficient matrix and the physical interaction matrix (∝ C/‖rᵢ − rⱼ‖⁶).
+coefficient matrix and the physical interaction matrix (∝ 1/‖rᵢ − rⱼ‖⁶).
 """
 
 from __future__ import annotations
@@ -15,7 +15,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 import pathlib
-import torch
 
 import qoolqit
 
@@ -30,54 +29,69 @@ class Config:
     Attributes:
         traps: Number of trap sites in the layout. ``-1`` means auto-detect
             from the device.
-        spacing: Minimum distance between adjacent trap sites (µm).
+        spacing: Minimum distance between adjacent trap sites, in adimensional
+            units (derived from the largest representable QUBO term).
         layout: Lattice layout type (square or triangular).
         draw_steps: If ``True``, collect per-step data for animation.
         animation_save_path: Optional path to save the embedding animation.
     """
 
     traps: int = -1
-    spacing: float = 7.0
+    spacing: float = 1.0
     layout: LayoutType = LayoutType.TRIANGULAR
     draw_steps: bool = False
     animation_save_path: pathlib.Path | None = None
 
     def update_from_device(self, device: qoolqit.Device) -> None:
-        """Update trap count and spacing in-place from device constraints.
+        """Update the trap count in-place from device constraints.
 
         When ``traps`` is ``-1`` (auto), resolves the trap count via
-        `_number_of_traps_from_device`.  Also raises ``spacing`` to the
-        device's ``min_atom_distance`` when that property is available, so the
-        resulting layout always satisfies hardware constraints.
+        `_number_of_traps_from_device`.
 
         Args:
             device: Target quantum device whose ``_device`` attributes are
-                inspected for ``max_layout_traps``, ``max_atom_num``,
-                ``max_layout_filling``, and ``min_atom_distance``.
+                inspected for ``max_layout_traps``, ``max_atom_num``, and
+                ``max_layout_filling``.
         """
         if self.traps == -1:
             self.traps = _number_of_traps_from_device(device)
 
-        _device = device._device
-        if hasattr(_device, "min_atom_distance"):
-            self.spacing = max(self.spacing, float(_device.min_atom_distance))
-
     @staticmethod
-    def from_embedding_config(config: EmbeddingConfig) -> Config:
+    def from_embedding_config(config: EmbeddingConfig, instance: Instance) -> Config:
         """Create a [`Config`][] from a user-facing [`EmbeddingConfig`][].
 
         Maps the ``greedy_*`` fields of *config* onto the corresponding
-        `Config` attributes.
+        `Config` attributes. ``spacing`` is derived from
+        ``greedy_max_possible_term`` so that the largest QUBO interaction term
+        is exactly representable at the minimum trap-trap distance
+        (``spacing = max_possible_term ** (-1 / 6)``, since interactions scale
+        as ``1 / distance ** 6``).
 
         Args:
             config: The embedding configuration to convert.
+            instance: The QUBO instance being embedded, used to resolve
+                ``greedy_max_possible_term`` when expressed as a factor of the
+                instance's largest off-diagonal coefficient.
 
         Returns:
             A configuration fully populated from the ``greedy_*`` embedding settings of *config*.
         """
         cfg = Config()
         cfg.traps = config.greedy_traps
-        cfg.spacing = config.greedy_spacing
+
+        max_possible_term_config = config.greedy_max_possible_term
+        if isinstance(max_possible_term_config, float):
+            max_possible_term = max_possible_term_config
+        else:
+            kind, factor = max_possible_term_config
+            if kind != "factor":
+                raise ValueError(
+                    "When it is a tuple, the first value of `greedy_max_possible_term` "
+                    "must be 'factor'."
+                )
+            max_possible_term = instance._max_off_diag * factor
+        cfg.spacing = max_possible_term ** (-1 / 6) if max_possible_term != 0 else 1
+
         cfg.layout = EmbeddingConfig._normalize_layout(config.greedy_layout)
         cfg.draw_steps = config.draw_steps
         path = config.animation_save_path
@@ -119,21 +133,13 @@ def embed(
     device: qoolqit.Device,
     *,
     config: Config = Config(),
-    normalize: bool = True,
+    max_min_dist_ratio: float,
 ) -> qoolqit.Register:
     """Embed a QUBO instance using the greedy algorithm.
 
-    Two coordinate-scaling modes are supported, selected via *normalize*:
-
-    * **normalize=True** (default) — rescales coordinates so that the
-      minimum inter-atom distance is exactly ``1.0001``, the smallest
-      separation accepted by normalized Pasqal devices.  Use this when
-      ``EmbeddingConfig.min_distance`` is set (heuristic drive-shaping).
-    * **normalize=False** — converts the raw greedy coordinates from μm to
-      qoolqit's internal distance unit using ``device.converter.factors[2]``.
-      Use this when the caller (e.g. the optimised drive-shaping path) will
-      handle normalisation externally or does not require a fixed minimum
-      distance.
+    The greedy algorithm operates entirely in adimensional units (interactions
+    scale as ``1 / distance ** 6``), so the coordinates it returns are already
+    final and require no post-hoc rescaling.
 
     Args:
         instance: The QUBO instance to embed.  Its ``matrix`` attribute drives
@@ -142,7 +148,8 @@ def embed(
         config: Greedy embedding parameters.  ``update_from_device`` is called
             on this object before the algorithm runs, so device constraints
             are always respected.
-        normalize: Controls coordinate post-processing; see above.
+        max_min_dist_ratio: Maximum allowed ratio between the largest and the
+            smallest inter-atom distance in the resulting register.
 
     Returns:
         A register mapping each atom to a 2-D position.
@@ -160,7 +167,6 @@ def embed(
 
     # build params for the Greedy algorithm
     params = {
-        "device": device._device,
         "layout": config.layout,
         "traps": config.traps,
         "spacing": config.spacing,
@@ -171,16 +177,11 @@ def embed(
     }
 
     # --- Call Greedy (unchanged public signature)
-    _, _, coords, _, _ = greedy.Greedy().launch_greedy(
+    _, coords = greedy.Greedy().launch_greedy(
         Q=instance.matrix,
+        max_min_dist_ratio=max_min_dist_ratio,
         params=params,
     )
-    if normalize:
-        min_reg_distance = torch.cdist(coords, coords).fill_diagonal_(float("inf")).min()
-        coords *= 1.0001 / min_reg_distance
-    else:
-        distance_conversion = device.converter.factors[2]
-        coords /= distance_conversion
 
     # build the register (unchanged)
     qubits = {str(i): coord for i, coord in enumerate(coords)}

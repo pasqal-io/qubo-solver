@@ -23,14 +23,13 @@ import inspect
 from abc import ABC
 from collections.abc import Callable
 from dataclasses import field
-from typing import Any
+from typing import Any, Literal
 
 import torch
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator, model_serializer
+from pydantic import BaseModel, ConfigDict, field_validator, model_serializer
 
 from qoolqit import Device, AnalogDeviceWithDMM
 from qoolqit.execution import QPU
-from qoolqit.execution.compilation_functions import CompilerProfile
 
 
 from .types import (
@@ -198,8 +197,17 @@ class EmbeddingConfig(_Config):
         greedy_traps (int, optional): The number of traps on the register.
             Defaults to ``-1``, i.e. automatically set to match the selected device capacity.
             A too high value will impede computational efficiency.
-        greedy_spacing (float, optional): The minimum distance between atoms.
-            Defaults to 7 (μm).
+        greedy_max_possible_term (float | tuple[Literal['factor'], float]):
+            If a float, it corresponds to the maximum representable quadratic
+            term. If a tuple, the first element should be 'factor', and the
+            second element is a multiplier on the QUBO's maximum quadratic term
+            to define the maximum representable quadratic term.
+            Defaults to ('factor', 1.0). The maximum possible term corresponds
+            to the interaction for the closest possible pair in the layout.
+            Setting it to a higher value than the actual maximum increases the
+            resolution to represent the terms. Setting it to a lower value
+            decreases the resolution and allows traps to be set farther to
+            potentially represent smaller terms.
         greedy_density (float | None, optional): The estimated density of the QUBO matrix.
             Defaults to None.
         blade_steps_per_round (int | None): See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/)
@@ -209,30 +217,32 @@ class EmbeddingConfig(_Config):
             Defaults to `False`.
         animation_save_path (str | None, optional): If provided, path to save animation.
             Defaults to None.
-        min_distance (float | None): Minimum atom separation (μm).
-            If not None, the resulting register will be normalized so that the minimum atom separation is equal to this value. Should be 1.001 when using the Heuristic Drive-Shaping, and None when using the Optimized Drive-Shaping. Defaults to 1.001.
+        max_min_dist_ratio (float | Literal["device"], optional): Maximum allowed ratio
+            between the largest and the smallest inter-atom distance in the resulting
+            register. When ``"device"``, it is derived from the configured device's
+            ``max_radial_distance`` / ``min_distance`` specs. Defaults to ``"device"``.
     """
 
     embedding_method: Any = EmbedderType.GREEDY
     greedy_layout: LayoutType | str = LayoutType.TRIANGULAR
     greedy_traps: int = -1
-    greedy_spacing: float = 7.0
+    greedy_max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
     greedy_density: float | None = None
     blade_steps_per_round: int | None = 200
     blade_starting_positions: torch.Tensor | None = None
     blade_dimensions: list[int] = field(default_factory=lambda: [5, 4, 3, 2, 2, 2])
     draw_steps: bool = False
     animation_save_path: str | None = None
-    min_distance: float | None = 1.001
+    max_min_dist_ratio: float | Literal["device"] = "device"
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
         """Serialize only the fields relevant to the active embedder type.
 
-        Always includes ``embedding_method``, ``draw_steps``,
-        ``animation_save_path``, and ``min_distance``. Additionally includes
-        ``greedy_*`` fields when ``embedding_method`` is ``GREEDY``, or
-        ``blade_*`` fields when it is ``BLADE``.
+        Always includes ``embedding_method``, ``draw_steps``, and
+        ``animation_save_path``. Additionally includes ``greedy_*`` fields
+        when ``embedding_method`` is ``GREEDY``, or ``blade_*`` fields when it
+        is ``BLADE``.
 
         Returns:
             dict[str, Any]: Serialized representation of this config.
@@ -241,7 +251,6 @@ class EmbeddingConfig(_Config):
             "embedding_method": self.embedding_method,
             "draw_steps": self.draw_steps,
             "animation_save_path": self.animation_save_path,
-            "min_distance": self.min_distance,
         }
         dict_all_fields = self.__dict__
         if self.embedding_method == EmbedderType.GREEDY:
@@ -338,6 +347,9 @@ class DriveShapingConfig(_Config):
             Defaults to None.
         heuristic_kappa (float): Scaling coefficient for the Omega waveform in
             the heuristic drive shaper. Defaults to 0.25.
+        default_sequence_duration (int, optional): Fallback maximum sequence duration
+            (ns) injected when the target device has no ``max_duration`` cap.
+            Defaults to 50000.
     """
 
     drive_shaping_method: Any = DriveType.HEURISTIC
@@ -359,6 +371,8 @@ class DriveShapingConfig(_Config):
 
     # Heuristic coefficient for omega
     heuristic_kappa: float = 0.25
+
+    default_sequence_duration: int = 50000
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
@@ -447,10 +461,10 @@ class DecompositionConfig(_Config):
             we consider an interaction is neglecting.
     """
 
-    decompose_threshold: float = 25.0
+    decompose_threshold: float = 250
     decompose_stop_number: int = 15
     decompose_break_placement: int = 3
-    neglecting_inter_distance: float = 15.0
+    neglecting_inter_distance: float = 1.5
     neglecting_max_coefficient: float = 1.0
 
 
@@ -521,29 +535,26 @@ class SolverConfig(_Config):
         """
         print(self.specs())
 
-    @model_validator(mode="after")
-    def _set_greedy_spacing_from_device(self) -> SolverConfig:
-        """Enforce device minimum atom distance on the greedy embedder spacing.
+    @property
+    def max_min_dist_ratio(self) -> float:
+        """Maximum allowed ratio between the largest and smallest inter-atom distance.
 
-        If the configured ``device`` exposes a ``min_atom_distance`` constraint
-        and the current ``embedding.greedy_spacing`` is smaller than that
-        constraint, ``greedy_spacing`` is silently raised to match the device
-        limit. This prevents the embedder from generating registers that would
-        be rejected during compilation.
+        Resolves ``embedding.max_min_dist_ratio``: returns it directly unless it is
+        the sentinel ``"device"``, in which case the ratio is derived from the
+        configured device's ``max_radial_distance`` / ``min_distance`` specs
+        (or ``inf`` when the device imposes no such limits).
 
         Returns:
-            SolverConfig: The (potentially updated) config instance.
+            float: The resolved maximum min/max distance ratio.
         """
-
-        if self.device:
-            device = self.device._device
-            if hasattr(device, "min_atom_distance"):
-                greedy_spacing_device = float(device.min_atom_distance)
-                if self.embedding.greedy_spacing < greedy_spacing_device:
-                    self.embedding = self.embedding.model_copy(
-                        update={"greedy_spacing": greedy_spacing_device}
-                    )
-        return self
+        if self.embedding.max_min_dist_ratio != "device":
+            return self.embedding.max_min_dist_ratio
+        specs = self.device.specs
+        min_distance = specs["min_distance"]
+        max_radial_distance = specs["max_radial_distance"]
+        if min_distance is not None and min_distance > 0 and max_radial_distance is not None:
+            return max_radial_distance / min_distance
+        return torch.inf
 
     @classmethod
     def from_kwargs(cls, **kwargs: dict) -> SolverConfig:
@@ -595,35 +606,3 @@ class SolverConfig(_Config):
             solver_fields["decompose"] = DecompositionConfig.model_validate(decompose_fields)
 
         return cls.model_validate(solver_fields)
-
-
-def _compiler_profile(config: SolverConfig) -> CompilerProfile:
-    """Determines the appropriate compiler profile based on the drive shaping method.
-
-    Args:
-        config (SolverConfig): The solver configuration to inspect.
-
-    Returns:
-        CompilerProfile: `CompilerProfile.WORKING_POINT` for the optimized drive
-            shaper, `CompilerProfile.MAX_ENERGY` otherwise.
-    """
-    if config.drive_shaping.drive_shaping_method == DriveType.OPTIMIZED:
-        return CompilerProfile.WORKING_POINT
-    return CompilerProfile.MAX_ENERGY
-
-
-def _max_duration_ratio(config: SolverConfig) -> float | None:
-    """Computes the maximum pulse duration ratio for the configured device.
-
-    Returns 0.99 to give a small safety margin below the device's maximum
-    duration, or None if the device has no duration limit.
-
-    Args:
-        config (SolverConfig): The solver configuration to inspect.
-
-    Returns:
-        float | None: 0.99 if the device has a maximum duration, else None.
-    """
-    if config.device.specs["max_duration"] is None:
-        return None
-    return 0.99

@@ -201,7 +201,7 @@ def test_emulator_backend_selection(
     solver_config = SolverConfig(
         use_quantum=True,
         backend=backend,
-        embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
+        embedding=EmbeddingConfig(embedding_method="blade"),
         activate_trivial_solutions=False,
     )
 
@@ -235,7 +235,7 @@ def test_remote_emulator_warning() -> None:
         use_quantum=True,
         backend=RemoteEmulator(backend_type=EmuSVBackend, connection=mock_connection),
         activate_trivial_solutions=False,
-        embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
+        embedding=EmbeddingConfig(embedding_method="blade"),
     )
     solver = Solver(instance, config)
 
@@ -254,7 +254,7 @@ def test_local_emulator_warning() -> None:
         use_quantum=True,
         backend=LocalEmulator(backend_type=SVBackend),
         activate_trivial_solutions=False,
-        embedding=EmbeddingConfig(embedding_method="blade", min_distance=1.001),
+        embedding=EmbeddingConfig(embedding_method="blade"),
     )
 
     solver = Solver(instance, config)

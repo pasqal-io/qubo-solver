@@ -53,11 +53,6 @@ class _BaseDriveShaper(ABC):
         """The raw QUBO coefficient matrix."""
         return self.instance.matrix
 
-    @property
-    def qubo_normalized_coefficients(self) -> torch.Tensor:
-        """The QUBO coefficient matrix normalized by its maximum off-diagonal value."""
-        return self.instance._normalized_matrix
-
     @abstractmethod
     def generate(
         self,
@@ -122,7 +117,7 @@ class HeuristicDriveShaper(_BaseDriveShaper):
         # Heuristic coefficient for omega
         kappa = self.config.drive_shaping.heuristic_kappa
         return (
-            heuristic.build_drive(self.instance, device=device, dmm=dmm, kappa=kappa),
+            heuristic.build_drive(self.instance, register, device=device, dmm=dmm, kappa=kappa),
             Solution(),
         )
 

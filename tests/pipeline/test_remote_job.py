@@ -78,7 +78,9 @@ def test_quantum_remote_job(
             register = embedding.blade.embed(instance, normalize=normalize)
         else:
             config = embedding.greedy.Config(traps=100, spacing=7.0)
-            register = embedding.greedy.embed(instance, device, config=config)
+            register = embedding.greedy.embed(
+                instance, device, config=config, max_min_dist_ratio=float("inf")
+            )
 
         num_shots = 50
         backend: _protocols.Backend
@@ -88,7 +90,7 @@ def test_quantum_remote_job(
             backend = RemoteEmulator(connection=connection, num_shots=num_shots)
 
         if drive_method == DriveType.HEURISTIC:
-            drive = drive_shaping.heuristic.build_drive(instance, device=device, dmm=dmm)
+            drive = drive_shaping.heuristic.build_drive(instance, register, device=device, dmm=dmm)
         else:
             drive, _ = drive_shaping.optimized.build_drive(
                 instance, register, backend, device, dmm=dmm
