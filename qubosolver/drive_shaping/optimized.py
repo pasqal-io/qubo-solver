@@ -19,7 +19,7 @@ from qubosolver.types import (
     _protocols,
     tensor,
 )
-from qubosolver import solvers, _utils, DriveShapingConfig
+from qubosolver import solvers, utils, DriveShapingConfig
 from ._device_specs import max_virtual_amplitude, detuning_amplitude_ratio
 from ._waveforms import constant_weighted_dmm
 
@@ -64,7 +64,7 @@ class Config:
     )
     n_calls: int = 20
     seed: int | None = None
-    qubo_cost: Callable[[Bitstring, Matrix], float] = _utils.costs.quadratic_cost
+    qubo_cost: Callable[[Bitstring, Matrix], float] = utils._costs.quadratic_cost
     objective: Callable[[Solution], float] = _default_objective
     callback_objective: Callable[[_CallbackObjectiveInput], None] = lambda data: None
     default_sequence_duration: int = 50000

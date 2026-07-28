@@ -11,7 +11,7 @@ import time
 import torch
 
 from qubosolver.types import Instance, Solution, Bitstring, bitstrings
-from qubosolver._utils import costs as _costs
+from qubosolver.utils import _costs
 
 
 def tabu_search(

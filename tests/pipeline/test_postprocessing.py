@@ -18,7 +18,7 @@ from qubosolver import (
     matrix,
     vector,
     vectori,
-    _utils,
+    utils,
     torch_rng,
 )
 from qubosolver.solvers.classical.bitflip import _bit_flip_local_search
@@ -142,7 +142,7 @@ def test_bit_flip_local_search_basic(shuffle: bool) -> None:
     ])
     # fmt: on
     def cost_function(b: Bitstring) -> float:
-        return _utils.costs.quadratic_cost(b, Q)
+        return utils._costs.quadratic_cost(b, Q)
 
     s = bitstring.zeros(2)
     initial_cost = cost_function(s)
@@ -169,7 +169,7 @@ def test_bit_flip_local_search_randoms(shuffle: bool, density: float) -> None:
         for Q, _ in dataset:
 
             def cost_function(b: Bitstring) -> float:
-                return _utils.costs.quadratic_cost(b, Q)
+                return utils._costs.quadratic_cost(b, Q)
 
             initial_cost = cost_function(s)
             _, best_cost = _bit_flip_local_search(cost_function, s, rng=rng if shuffle else None)

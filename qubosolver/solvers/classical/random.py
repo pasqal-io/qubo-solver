@@ -10,7 +10,7 @@ from __future__ import annotations
 import torch
 
 from qubosolver.types import Instance, Solution, bitstring, torch_rng
-from qubosolver._utils import costs
+from qubosolver.utils import _costs
 
 
 def random_solutions(
@@ -46,7 +46,7 @@ def random_solutions(
         torch.randint(0, 2, size=(max_bitstrings, instance.size), generator=rng)
     )
     unique_bits, counts = torch.unique(bitstrings_, dim=0, return_counts=True)
-    costs_ = costs.batched_quadratic_cost(unique_bits.to(instance.matrix), instance.matrix)
+    costs_ = _costs.batched_quadratic_cost(unique_bits.to(instance.matrix), instance.matrix)
     solution = (
         Solution(
             bitstrings=unique_bits,

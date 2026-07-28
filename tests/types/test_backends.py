@@ -160,6 +160,7 @@ def remote_auto_backend() -> tuple[RemoteEmulator, pulser.backend.RemoteResults]
     )
 
 
+@pytest.mark.priority(120)
 @pytest.mark.parametrize(
     "size, backend_and_results, expected_type",
     [

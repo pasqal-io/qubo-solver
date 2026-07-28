@@ -26,7 +26,7 @@ from qubosolver.solvers.classical._solver import (
     HybridSATabuSolver,
     RandomSolver,
 )
-from qubosolver._utils import costs
+from qubosolver.utils import _costs
 
 class_solvers = {
     ClassicalSolverType.SIMULATED_ANNEALING: SimulatedAnnealingSolver,
@@ -148,7 +148,7 @@ def test_sa_cost(
     for bits in itertools.product([0, 1], repeat=n):
         z = bitstring.tensor(bits)
         bitstrings.append(z)
-        cost = costs.quadratic_cost(z, Q)
+        cost = _costs.quadratic_cost(z, Q)
         costs_.append(cost)
 
     sorted_results = sorted(zip(bitstrings, costs_), key=lambda x: x[1])
