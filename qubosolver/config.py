@@ -347,6 +347,8 @@ class DriveShapingConfig(Config):
                 return DriveType.HEURISTIC
             elif u == DriveType.OPTIMIZED.name:
                 return DriveType.OPTIMIZED
+            elif u == DriveType.MEAN_ENERGY_HEURISTIC.name:
+                return DriveType.MEAN_ENERGY_HEURISTIC
             else:
                 raise ValueError(f"Invalid drive shaping method '{val}'.")
         elif inspect.isclass(val):

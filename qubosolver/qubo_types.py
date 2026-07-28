@@ -61,11 +61,13 @@ class LayoutType(Enum):
 
 class DriveType(Enum):
     """
-    Type of drive shaping method used for solving the QUBO
+    Type of drive shaping method used for solving the QUBO.
     """
 
     OPTIMIZED = "optimized"
     HEURISTIC = "heuristic"
+    MEAN_ENERGY_HEURISTIC = "mean_energy_heuristic"
+
 
 
 class SolutionStatusType(StrEnum):
