@@ -6,6 +6,8 @@ import pytest_check as check
 import torch
 
 import qoolqit
+from qoolqit import Constant as ConstantWaveform
+from qoolqit import Ramp as RampWaveform
 from qubosolver import Instance, matrix, vector, drive_shaping, embedding, extract_qubo, LayoutType
 
 
@@ -22,7 +24,7 @@ def _register() -> qoolqit.Register:
 def test_extract_qubo_off_diagonal_matches_interactions() -> None:
     register = _register()
     # No detuning
-    drive = qoolqit.Drive(amplitude=qoolqit.ConstantWaveform(10.0, 1.0))
+    drive = qoolqit.Drive(amplitude=ConstantWaveform(10.0, 1.0))
 
     instance = extract_qubo(register, drive)
 
@@ -42,8 +44,8 @@ def test_extract_qubo_off_diagonal_matches_interactions() -> None:
 def test_extract_qubo_diagonal_from_constant_detuning() -> None:
     register = _register()
     drive = qoolqit.Drive(
-        amplitude=qoolqit.ConstantWaveform(10.0, 1.0),
-        detuning=qoolqit.ConstantWaveform(10.0, -3.0),
+        amplitude=ConstantWaveform(10.0, 1.0),
+        detuning=ConstantWaveform(10.0, -3.0),
     )
 
     instance = extract_qubo(register, drive)
@@ -55,8 +57,8 @@ def test_extract_qubo_diagonal_from_constant_detuning() -> None:
 def test_extract_qubo_diagonal_from_ramp_detuning_uses_final_value() -> None:
     register = _register()
     drive = qoolqit.Drive(
-        amplitude=qoolqit.ConstantWaveform(10.0, 1.0),
-        detuning=qoolqit.RampWaveform(10.0, 0.0, -2.0),
+        amplitude=ConstantWaveform(10.0, 1.0),
+        detuning=RampWaveform(10.0, 0.0, -2.0),
     )
 
     instance = extract_qubo(register, drive)
@@ -68,12 +70,12 @@ def test_extract_qubo_diagonal_from_ramp_detuning_uses_final_value() -> None:
 def test_extract_qubo_diagonal_with_dmm_weights_per_atom() -> None:
     register = _register()
     dmm = qoolqit.drive.DetuningMapModulator(
-        waveform=qoolqit.ConstantWaveform(10.0, -1.0),
+        waveform=ConstantWaveform(10.0, -1.0),
         weights={"0": 1.0, "1": 0.5, "2": 0.0},
     )
     drive = qoolqit.Drive(
-        amplitude=qoolqit.ConstantWaveform(10.0, 1.0),
-        detuning=qoolqit.ConstantWaveform(10.0, -2.0),
+        amplitude=ConstantWaveform(10.0, 1.0),
+        detuning=ConstantWaveform(10.0, -2.0),
         dmm=dmm,
     )
 
@@ -93,8 +95,8 @@ def test_extract_qubo_diagonal_with_dmm_weights_per_atom() -> None:
 def test_extract_qubo_matrix_is_symmetric() -> None:
     register = _register()
     drive = qoolqit.Drive(
-        amplitude=qoolqit.ConstantWaveform(10.0, 1.0),
-        detuning=qoolqit.ConstantWaveform(10.0, -1.0),
+        amplitude=ConstantWaveform(10.0, 1.0),
+        detuning=ConstantWaveform(10.0, -1.0),
     )
 
     instance = extract_qubo(register, drive)
