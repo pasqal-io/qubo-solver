@@ -21,6 +21,7 @@ def _register() -> qoolqit.Register:
 
 def test_extract_qubo_off_diagonal_matches_interactions() -> None:
     register = _register()
+    # No detuning
     drive = qoolqit.Drive(amplitude=qoolqit.ConstantWaveform(10.0, 1.0))
 
     instance = extract_qubo(register, drive)
