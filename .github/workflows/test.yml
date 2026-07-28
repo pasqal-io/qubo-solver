@@ -89,7 +89,6 @@ jobs:
       matrix:
         python-version: ["3.12"]
         use-double-precision: [0, 1]
-        runtime-checks: [0, 1]
     steps:
         - name: Checkout main code and submodules
           uses: actions/checkout@v6
@@ -102,7 +101,7 @@ jobs:
         - name: Perform unit tests
           env:
             USE_DOUBLE_PRECISION: ${{ matrix.use-double-precision }}
-            QUBO_SOLVER_RUNTIME_CHECKS: ${{ matrix.runtime-checks }}
+            QUBO_SOLVER_RUNTIME_CHECKS: 1
           run: |
             uv run --all-extras pytest
 
