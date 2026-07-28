@@ -20,12 +20,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  setup:
+    name: Compute Python version matrix
+    runs-on: ubuntu-latest
+    outputs:
+      python-versions: ${{ (github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release/')) && '["3.10"]' || '["3.10", "3.11", "3.12"]' }}
+    steps:
+      - run: echo "Computed matrix"
+
   unit_tests:
     name: Unit testing
+    needs: setup
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ${{ fromJSON(needs.setup.outputs.python-versions) }}
     steps:
         - name: Checkout main code and submodules
           uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -48,10 +57,11 @@ jobs:
 
   unit_tests_windows:
     name: Unit testing Windows
+    needs: setup
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ${{ fromJSON(needs.setup.outputs.python-versions) }}
     steps:
         - name: Checkout main code and submodules
           uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
