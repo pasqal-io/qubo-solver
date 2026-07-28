@@ -8,7 +8,7 @@ from . import matrix
 from .linalg import Matrix, Bitstring
 from .enums import DensityType
 from qubosolver._io import utils as io_utils
-from qubosolver._utils import costs
+from qubosolver.utils import _costs
 
 
 @debug_runtime_typecheck
@@ -93,7 +93,7 @@ class Instance:
             The result type is asserted to be a plain ``float`` (not a tensor
             or numpy scalar) before returning.
         """
-        cost = costs.quadratic_cost(solution, self.matrix)
+        cost = _costs.quadratic_cost(solution, self.matrix)
         assert type(cost) is float  # nosec B101
         return cost
 

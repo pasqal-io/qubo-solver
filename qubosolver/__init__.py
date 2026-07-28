@@ -56,6 +56,8 @@ from qubosolver.config import (
     DecompositionConfig,
 )
 
+from qubosolver.utils import extract_qubo
+
 from importlib.metadata import version
 from pulser.sequence import store_package_version_metadata
 
@@ -107,6 +109,7 @@ __all__ = [
     "DecompositionConfig",
     # Functions
     "torch_rng",
+    "extract_qubo",
     # Qubo* TypeAliases
     "QuboSolution",
     "QuboSingleSolution",

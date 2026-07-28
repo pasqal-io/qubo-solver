@@ -115,13 +115,8 @@ class GreedyEmbedder(_BaseEmbedder):
         Returns:
             The atom register with positions determined by the greedy placer.
         """
-        config = greedy.Config.from_embedding_config(self.config.embedding, self.instance)
-        return greedy.embed(
-            self.instance,
-            self.config.device,
-            config=config,
-            max_min_dist_ratio=self.config.max_min_dist_ratio,
-        )
+        config = greedy.Config.from_embedding_config(self.config.embedding)
+        return greedy.embed(self.instance, self.config.device, config=config)
 
 
 def _get_embedder(
