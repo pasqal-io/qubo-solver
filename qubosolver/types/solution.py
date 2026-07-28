@@ -11,7 +11,7 @@ from . import bitstrings as _bitstrings
 from . import bitstring
 from .linalg import Bitstrings, Vector, Vectori, Matrix, Bitstring
 
-from qubosolver import _utils
+from qubosolver import utils
 from pulser.backend.results import Results
 
 
@@ -146,7 +146,7 @@ class Solution:
             The same [`Solution`][] instance, allowing method chaining.
         """
         dtype = matrix.dtype
-        self.costs = _utils.costs.batched_quadratic_cost(self.bitstrings.to(dtype), matrix)
+        self.costs = utils._costs.batched_quadratic_cost(self.bitstrings.to(dtype), matrix)
         return self
 
     def compute_probabilities(self) -> Self:

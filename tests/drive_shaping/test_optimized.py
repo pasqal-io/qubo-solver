@@ -27,7 +27,7 @@ from qubosolver import (
     Matrix,
     LocalEmulator,
 )
-from qubosolver._utils import costs
+from qubosolver.utils import _costs
 
 
 def interaction_matrix_from_vertices(vertices: Tensor) -> Matrix:
@@ -90,7 +90,7 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
     results = []
     for bits in itertools.product([0, 1], repeat=3):
         z = bitstring.tensor(bits)
-        cost = costs.quadratic_cost(z, Q)
+        cost = _costs.quadratic_cost(z, Q)
         results.append(SingleSolution(z, cost))
 
     # Get all bitstrings with minimum cost
@@ -162,7 +162,7 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
     results = []
     for bits in itertools.product([0, 1], repeat=3):
         z = bitstring.tensor(bits)
-        cost = costs.quadratic_cost(z, Q)
+        cost = _costs.quadratic_cost(z, Q)
         results.append(SingleSolution(z, cost))
 
     # Get all bitstrings with minimum cost
