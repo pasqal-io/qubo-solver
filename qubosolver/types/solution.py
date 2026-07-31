@@ -6,12 +6,11 @@ from collections.abc import Iterator
 from typing_extensions import Self
 
 from ._checks import debug_runtime_typecheck
-from . import vector, vectori
+from . import bitstring, vector, vectori
 from . import bitstrings as _bitstrings
-from . import bitstring
 from .linalg import Bitstrings, Vector, Vectori, Matrix, Bitstring
+from .instance import Instance
 
-from qubosolver import utils
 from pulser.backend.results import Results
 
 
@@ -145,8 +144,11 @@ class Solution:
         Returns:
             The same [`Solution`][] instance, allowing method chaining.
         """
+        # Import here to avoid circular imports
+        from qubosolver.utils import _costs
+
         dtype = matrix.dtype
-        self.costs = utils._costs.batched_quadratic_cost(self.bitstrings.to(dtype), matrix)
+        self.costs = _costs.batched_quadratic_cost(self.bitstrings.to(dtype), matrix)
         return self
 
     def compute_probabilities(self) -> Self:
@@ -196,7 +198,7 @@ class Solution:
         return self
 
     @staticmethod
-    def from_results(results: Results) -> Solution:
+    def from_results(results: Results, *, instance: Instance = Instance()) -> Solution:
         """Build a [`Solution`][] from Pulser quantum-simulation results.
 
         Parses ``results.final_bitstrings`` — a ``dict[str, int]`` mapping
@@ -231,7 +233,12 @@ class Solution:
             bitstrings = torch.empty((0, 0), dtype=torch.int8)
         counts = torch.tensor(list(map(int, list(counter.values()))), dtype=torch.int64)
 
-        return Solution(
+        solution = Solution(
             bitstrings=bitstrings,
             counts=counts,
         )
+
+        if instance.size != 0:
+            solution.compute_costs(instance.matrix).sort_by_cost().compute_probabilities()
+
+        return solution

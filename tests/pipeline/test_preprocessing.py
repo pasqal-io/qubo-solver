@@ -100,6 +100,48 @@ def test_apply_rule() -> None:
     torch.testing.assert_close(reduced_qubo.matrix, expected_coefficients)
 
 
+def test_quantum_preprocessing_falls_back_to_zeroing_when_bitflip_is_not_enough(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """
+    A non-bipartisable QUBO: bit-flip preprocessing cannot remove every
+    negative off-diagonal coefficient, so the quantum solver must zero the
+    rest out automatically (and log it) before embedding.
+    """
+    Q = matrix.tensor(
+        [
+            [0.0, -2.0, 1.0, 1.0],
+            [-2.0, 0.0, -2.0, 1.0],
+            [1.0, -2.0, 0.0, -2.0],
+            [1.0, 1.0, -2.0, 0.0],
+        ]
+    )
+    instance = Instance(Q)
+    flipped = transforms.negative_bitflip.apply(instance)
+    check.is_true(transforms.negative_bitflip._has_negative_offdiagonal(flipped.matrix))
+
+    config = SolverConfig(
+        use_quantum=True,
+        do_preprocessing=True,
+        activate_trivial_solutions=False,
+        do_postprocessing=False,
+    )
+    solver = Solver(instance, config)
+
+    with caplog.at_level("INFO", logger="qubosolver.solvers.solver"):
+        solution = solver.solve()
+
+    check.is_true(
+        any("zeroing the remainder" in record.message for record in caplog.records),
+        "expected the automatic-zeroing fallback to log a message",
+    )
+    check.equal(len(solution[0].string), instance.size)
+    # Costs in the returned solution must be evaluated against the true,
+    # original QUBO, not the zeroed approximation used internally.
+    for sol in solution:
+        check.almost_equal(sol.cost, instance.evaluate_solution(sol.bitstring))
+
+
 def test_quantum_preprocessing(qubo_instance_for_preprocessing: Instance) -> None:
     """
     Test instance using quantum with preprocessing.

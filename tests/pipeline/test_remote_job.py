@@ -73,13 +73,12 @@ def test_quantum_remote_job(
     ) -> tuple[job.Job[Results], Instance]:
         instance = Instance(Q)
         device = DigitalAnalogDevice()
-        normalize = drive_method == DriveType.HEURISTIC
 
         if preprocessing:
             instance = transforms.variable_fixing.apply_recursively(instance)
 
         if embedding_method == EmbedderType.BLADE:
-            register = embedding.blade.embed(instance, normalize=normalize)
+            register = embedding.blade.embed(instance)
         else:
             config = embedding.greedy.Config(traps=100)
             register = embedding.greedy.embed(instance, device, config=config)

@@ -143,7 +143,7 @@ def test_quantum_solve(
     if embedding_method == "blade":
         print(device)
         blade_config = embedding.blade.Config(device=device)
-        register = embedding.blade.embed(effective_qubo, config=blade_config, normalize=True)
+        register = embedding.blade.embed(effective_qubo, config=blade_config)
     elif embedding_method == "greedy":
         greedy_config = embedding.greedy.Config(traps=100)
         register = embedding.greedy.embed(effective_qubo, device, config=greedy_config)

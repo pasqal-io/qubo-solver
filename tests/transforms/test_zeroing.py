@@ -1,0 +1,130 @@
+from __future__ import annotations
+
+import pytest_check as check
+import torch
+
+from qubosolver import Instance, Solution, transforms, bitstrings, matrix, vectori
+from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
+
+
+def non_bipartisable_negative_qubo() -> Instance:
+    """QUBO where bit flips reduce but do not remove all negative coefficients."""
+    return Instance(
+        matrix.tensor(
+            [
+                [0.0, -2.0, 1.0, 1.0],
+                [-2.0, 0.0, -2.0, 1.0],
+                [1.0, -2.0, 0.0, -2.0],
+                [1.0, 1.0, -2.0, 0.0],
+            ]
+        )
+    )
+
+
+def positive_qubo() -> Instance:
+    """QUBO with no negative off-diagonal coefficient."""
+    return Instance(
+        matrix.tensor(
+            [
+                [0.0, 1.0, 2.0],
+                [1.0, 0.0, 3.0],
+                [2.0, 3.0, 0.0],
+            ]
+        )
+    )
+
+
+def test_apply_removes_all_negative_offdiagonals() -> None:
+    instance = non_bipartisable_negative_qubo()
+    check.is_true(_has_negative_offdiagonal(instance.matrix))
+
+    zeroed = transforms.zeroing.apply(instance)
+
+    check.is_instance(zeroed, transforms.zeroing.Instance)
+    check.is_false(_has_negative_offdiagonal(zeroed.matrix))
+
+
+def test_negative_matrix_holds_the_removed_coefficients() -> None:
+    instance = non_bipartisable_negative_qubo()
+    offdiag = ~torch.eye(instance.size, dtype=torch.bool)
+    # Capture the negatives before zeroing mutates the matrix in place.
+    negative_offdiag_before = offdiag & (instance.matrix < 0)
+    removed_values = instance.matrix[negative_offdiag_before].detach().clone()
+
+    zeroed = transforms.zeroing.apply(instance)
+
+    # negative_matrix carries the original values exactly at the zeroed positions...
+    torch.testing.assert_close(zeroed.negative_matrix != 0, negative_offdiag_before)
+    torch.testing.assert_close(zeroed.negative_matrix[negative_offdiag_before], removed_values)
+    # ...and those positions are now zero in the reduced matrix.
+    check.is_true(torch.all(zeroed.matrix[negative_offdiag_before] == 0.0))
+
+
+def test_zeroed_edges_is_nx2_and_counts_symmetric_pairs_once() -> None:
+    instance = non_bipartisable_negative_qubo()
+    offdiag = ~torch.eye(instance.size, dtype=torch.bool)
+    n_negative_offdiag = int((offdiag & (instance.matrix < 0)).sum())
+
+    edges = transforms.zeroing.apply(instance).zeroed_edges
+
+    check.equal(edges.dtype, vectori.dtype())
+    # Each symmetric pair counted once: N = (number of negative off-diagonal entries) / 2.
+    check.equal(edges.shape, (n_negative_offdiag // 2, 2))
+    # Every returned pair is upper-triangular (i < j).
+    check.is_true(torch.all(edges[:, 0] < edges[:, 1]))
+
+
+def test_empty_when_nothing_to_zero() -> None:
+    instance = positive_qubo()
+    zeroed = transforms.zeroing.apply(instance)
+
+    torch.testing.assert_close(zeroed.negative_matrix, matrix.zeros(instance.size))
+    check.is_true(torch.all(zeroed.negative_matrix == 0.0))
+    torch.testing.assert_close(zeroed.zeroed_edges, torch.zeros(0, 2, dtype=vectori.dtype()))
+
+
+def test_unapply_keeps_bitstrings_and_recomputes_costs_against_pre_zeroing() -> None:
+    instance = non_bipartisable_negative_qubo()
+    zeroed = transforms.zeroing.apply(instance)
+
+    solution = Solution(
+        bitstrings=bitstrings.from_strings(["1111", "0101"]),
+        counts=vectori.tensor([3, 2]),
+    )
+
+    restored = transforms.zeroing.unapply(solution, zeroed)
+
+    # Bitstrings pass through unchanged (zeroing does not permute variables).
+    torch.testing.assert_close(restored.bitstrings, solution.bitstrings)
+    torch.testing.assert_close(restored.counts, solution.counts)
+    # Costs are evaluated against the pre-zeroing matrix, not the zeroed one.
+    for sol in restored:
+        expected_cost = instance.evaluate_solution(sol.bitstring)
+        check.almost_equal(sol.cost, expected_cost)
+
+
+def test_unapply_is_identity_when_nothing_zeroed() -> None:
+    zeroed = transforms.zeroing.apply(positive_qubo())
+
+    sol = Solution(bitstrings=bitstrings.from_strings(["101"]), counts=vectori.tensor([1]))
+    restored = transforms.zeroing.unapply(sol, zeroed)
+
+    torch.testing.assert_close(restored.bitstrings, sol.bitstrings)
+
+
+def test_apply_does_not_alias_the_parent_instance() -> None:
+    # _parent_instance must be an independent copy: mutating the caller's
+    # instance after apply() must not change what unapply() evaluates costs
+    # against, or costs silently drift from the true pre-zeroing objective.
+    instance = non_bipartisable_negative_qubo()
+    zeroed = transforms.zeroing.apply(instance)
+
+    instance._matrix.fill_(0.0)
+
+    sol = Solution(bitstrings=bitstrings.from_strings(["1111"]), counts=vectori.tensor([1]))
+    restored = transforms.zeroing.unapply(sol, zeroed)
+
+    check.not_equal(restored[0].cost, 0.0)
+    check.almost_equal(
+        restored[0].cost, zeroed._parent_instance.evaluate_solution(sol[0].bitstring)
+    )

@@ -91,7 +91,7 @@ class Instance(qubosolver.Instance):
                 A deep copy is kept internally for later reconstruction.
         """
         super().__init__(
-            parent_instance.matrix,
+            parent_instance.matrix.detach().clone(),
         )
         self._parent_instance = copy.deepcopy(parent_instance)
         self._fixed_indices: list[dict[int, int]] = []

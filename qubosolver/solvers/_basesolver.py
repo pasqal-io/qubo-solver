@@ -52,18 +52,6 @@ class BaseSolver(ABC):
         self.backend = self.config.backend
         self.device = self.config.device
 
-    @property
-    def n_fixed_variables_preprocessing(self) -> int:
-        """Number of variables fixed during preprocessing.
-
-        Returns:
-            The count of fixed variables, or 0 if no preprocessing was applied.
-        """
-        if isinstance(self.instance, transforms.variable_fixing.Instance):
-            return self.instance.n_fixed_indices
-        else:
-            return 0
-
     @abstractmethod
     def solve(self) -> Solution:
         """
@@ -192,18 +180,26 @@ class BaseSolver(ABC):
             _solver.instance = self.instance
 
     def preprocess(self) -> None:
-        """Apply variable-fixing preprocessing to reduce the problem size.
+        """Apply preprocessing to reduce the problem size and handle negative interactions.
+
+        Runs variable-fixing first, then GLPK bit-flip preprocessing
+        to remove negative off-diagonal coefficients.
 
         This method is a no-op when ``config.do_preprocessing`` is ``False``.
         """
-        if self.config.do_preprocessing:
-            self._update_instance(transforms.variable_fixing.apply_recursively(self.instance))
+        if not self.config.do_preprocessing:
+            return
+
+        instance: Instance = transforms.variable_fixing.apply_recursively(self.instance)
+        instance = transforms.negative_bitflip.apply(instance)
+        assert isinstance(instance, transforms.negative_bitflip.Instance)
+        self._update_instance(instance)
 
     def post_process_fixation(self, solution: Solution) -> Solution:
         """Restore fixed variables and recover a solution over the original QUBO.
 
-        Reverses the variable-fixing applied by [`preprocess`][]: re-inserts
-        the fixed variable values into *solution*.
+        Reverses the preprocessing applied by [`preprocess`][]: first undoes any
+        bit flips, then re-inserts the fixed variable values into *solution*.
 
         Returns *solution* unchanged when ``config.do_preprocessing`` is
         ``False``.
@@ -219,6 +215,13 @@ class BaseSolver(ABC):
         # Means that preprocessing was not applied
         if not self.config.do_preprocessing:
             return solution
+
+        # Unwind the preprocessing layers in reverse: bit flips, then
+        # variable fixing. Bit-flip and fixing each remap the solution.
+        assert isinstance(self.instance, transforms.negative_bitflip.Instance)  # nosec B101
+        flipped_instance = self.instance
+        solution = transforms.negative_bitflip.unapply(solution, flipped_instance)
+        self._update_instance(flipped_instance._parent_instance)
 
         assert isinstance(self.instance, transforms.variable_fixing.Instance)  # nosec B101
         new_solution = transforms.variable_fixing.unapply(solution, self.instance)
