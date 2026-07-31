@@ -13,6 +13,7 @@ from qubosolver.solvers.classical.cplex import cplex
 from qubosolver.solvers.classical.tabu_search import tabu_search
 from qubosolver.solvers.classical.simulated_annealing import simulated_annealing
 from qubosolver.solvers.classical.random import random_solutions
+from qubosolver.solvers.classical.brute_force import brute_force
 from qubosolver.solvers.solver import Solver, QuboSolver
 
 __all__ = [
@@ -23,6 +24,7 @@ __all__ = [
     "tabu_search",
     "simulated_annealing",
     "random_solutions",
+    "brute_force",
     "Solver",
     "QuboSolver",
 ]

@@ -6,9 +6,11 @@ problem size before solving.
 
 from __future__ import annotations
 
-from qubosolver.transforms import variable_fixing
+from qubosolver.transforms import negative_bitflip, variable_fixing, zeroing
 
 __all__ = [
     # Submodules
+    "negative_bitflip",
     "variable_fixing",
+    "zeroing",
 ]

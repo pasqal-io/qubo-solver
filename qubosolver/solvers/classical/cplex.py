@@ -92,14 +92,14 @@ def cplex(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> 
     if log_path:
         # Open a log file.
         log_file = open(log_path, "w")
-
-        # Redirect logging streams.
-        problem.set_log_stream(log_file)
-        problem.set_error_stream(log_file)
-        problem.set_warning_stream(log_file)
-        problem.set_results_stream(log_file)
     else:
         log_file = None
+
+    # Redirect logging streams.
+    problem.set_log_stream(log_file)
+    problem.set_error_stream(log_file)
+    problem.set_warning_stream(log_file)
+    problem.set_results_stream(log_file)
 
     problem.parameters.timelimit.set(maxtime)
     problem.objective.set_sense(problem.objective.sense.minimize)

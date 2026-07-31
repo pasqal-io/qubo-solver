@@ -21,6 +21,7 @@ import qoolqit
 
 from ._algorithms import greedy
 from qubosolver import Instance, LayoutType, EmbeddingConfig
+from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
 
 @dataclass
@@ -46,13 +47,13 @@ class Config:
     """
 
     traps: int | Literal["device"] = "device"
-    max_possible_term: float | tuple[Literal["factor"], float] = 1.0
+    max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
     layout: LayoutType = LayoutType.TRIANGULAR
     draw_steps: bool = False
     animation_save_path: pathlib.Path | None = None
     max_min_dist_ratio: float | Literal["device"] = "device"
 
-    def update_from_device(self, device: qoolqit.Device) -> None:
+    def _update_from_device(self, device: qoolqit.Device) -> None:
         """Resolve the ``"device"`` sentinels in-place from device constraints.
 
         When ``traps`` is ``"device"`` (auto), resolves it via
@@ -194,7 +195,10 @@ def embed(
         ValueError: If the resolved trap count is less than ``instance.size``
             (i.e. there are not enough trap sites for all QUBO variables).
     """
-    config.update_from_device(device)
+    if _has_negative_offdiagonal(instance.matrix):
+        raise ValueError("QUBOs with negative off-diagonal coefficients cannot be embedded.")
+
+    config._update_from_device(device)
     assert isinstance(config.traps, int)  # nosec B101
     assert isinstance(config.max_min_dist_ratio, float)  # nosec B101
 

@@ -20,6 +20,7 @@ from __future__ import annotations
 from typing import TypeAlias
 
 from qubosolver import Instance
+from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from qoolqit import Register
 from qoolqit.embedding import Blade, BladeConfig
 
@@ -34,7 +35,6 @@ def embed(
     instance: Instance,
     *,
     config: Config = Config(),
-    normalize: bool = True,
 ) -> Register:
     """Embed a QUBO instance using the BLaDE algorithm.
 
@@ -48,17 +48,14 @@ def embed(
         config: BLaDE configuration controlling the optimisation (number of
             steps per round, initial atom positions, dimension sequence,
             maximum allowed ratio of radial to minimum distance, etc.).
-        normalize: If ``True``, rescale the final atom coordinates so that the
-            minimum inter-atom distance is exactly ``1.0001`` — the
-            smallest separation accepted by normalized Pasqal devices.
 
     Returns:
         A register mapping each atom label to its 2-D position, with atom positions determined by BLaDE.
     """
+    if _has_negative_offdiagonal(instance.matrix):
+        raise ValueError("QUBOs with negative off-diagonal coefficients cannot be embedded.")
     _blade = Blade(config)
     graph = _blade.embed(instance.matrix.numpy())
-    if normalize:
-        graph.rescale_coords(spacing=1.0001)
 
     register = Register({str(i): coord for (i, coord) in enumerate(graph.coords.values())})
 

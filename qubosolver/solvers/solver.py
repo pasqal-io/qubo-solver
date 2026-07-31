@@ -20,17 +20,20 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+import logging
 import torch
 from typing_extensions import TypeAlias
 
 import qoolqit
 
-from qubosolver.types import Solution, Instance, random
-from qubosolver.config import DecompositionConfig, SolverConfig
+from qubosolver import Solution, Instance, DecompositionConfig, SolverConfig, transforms, torch_rng
+from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from ._basesolver import BaseSolver
 from .classical._solver import get_classical_solver
 from qubosolver.embedding._embedder import _get_embedder
 from qubosolver.drive_shaping._drive_shaper import _get_drive_shaper
+
+logger = logging.getLogger(__name__)
 
 
 class Solver(BaseSolver):
@@ -122,14 +125,17 @@ class _QuboSolverQuantum(BaseSolver):
                 ``SolverConfig(use_quantum=True)`` when ``None``.
 
         Raises:
-            ValueError: If any off-diagonal coefficient in ``instance.matrix``
-                is negative.
             ValueError: If ``instance.size > 80``.
         """
         super().__init__(instance, config or SolverConfig(use_quantum=True))
 
-        if (instance.matrix[~torch.eye(*instance.matrix.shape, dtype=torch.bool)] < 0).any():
-            raise ValueError("Quantum solver does not handle off-diagonal negative coefficients")
+        if _has_negative_offdiagonal(instance.matrix) and not self.config.do_preprocessing:
+            logger.warning(
+                "Negative off-diagonal coefficients detected. Without preprocessing, this "
+                "instance will be embedded via automatic zeroing (an approximation). Set "
+                "config.do_preprocessing=True to try bit-flip preprocessing instead, which "
+                "is likely to give better results."
+            )
 
         self._check_size_limit()
 
@@ -207,12 +213,24 @@ class _QuboSolverQuantum(BaseSolver):
         # 2) Apply preprocessing if requested
         self.preprocess()
 
+        if _has_negative_offdiagonal(self.instance.matrix):
+            logger.info(
+                "Bit-flip preprocessing could not remove all negative off-diagonal "
+                "coefficients; zeroing the remainder as an approximation before embedding."
+            )
+            self.instance = transforms.zeroing.apply(self.instance)
+            self._update_instance(self.instance)
+
         embedding = self.embedding()
 
         drive, solution = self.drive(embedding)
 
         if not solution or self.config.drive_shaping.optimized_re_execute_opt_drive:
             solution = self.execute(drive, embedding)
+
+        if isinstance(self.instance, transforms.zeroing.Instance):
+            solution = transforms.zeroing.unapply(solution, self.instance)
+            self._update_instance(self.instance._parent_instance)
 
         # Post-process fixations of the preprocessing and restore the original QUBO
         solution = self.post_process_fixation(solution)
@@ -372,7 +390,7 @@ class _DecomposeQuboSolver(BaseSolver):
             bitstring — the merged result of all subproblem solutions.
         """
         # Create a local Generator that inherits whatever seeding you did via torch.manual_seed(...) (copies the current global RNG state).
-        rng = random.torch_rng().set_state(torch.get_rng_state())
+        rng = torch_rng().set_state(torch.get_rng_state())
         self.number_iterations = 0
         assert self.instance.size  # nosec B101
         if self.instance.size <= self.decomposition_config.decompose_stop_number:

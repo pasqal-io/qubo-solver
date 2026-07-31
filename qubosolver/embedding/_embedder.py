@@ -92,7 +92,7 @@ class BLaDEmbedder(_BaseEmbedder):
             dimensions=tuple(embed_config.blade_dimensions),
             max_min_dist_ratio=max_min_dist_ratio,
         )
-        return blade.embed(self.instance, config=config, normalize=False)
+        return blade.embed(self.instance, config=config)
 
 
 class GreedyEmbedder(_BaseEmbedder):
