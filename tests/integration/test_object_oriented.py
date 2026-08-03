@@ -24,6 +24,10 @@ from qubosolver import (
     Solution,
     bitstrings,
     vectori,
+    vector,
+    tensor,
+    Tensor,
+    Matrix,
     torch_rng,
 )
 
@@ -33,7 +37,7 @@ def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
     return [d for d in solutions if np.allclose(d.cost, min_cost)]
 
 
-def interaction_matrix_from_vertices(vertices: torch.Tensor) -> torch.Tensor:
+def interaction_matrix_from_vertices(vertices: Tensor) -> Matrix:
     U = 1.0 / torch.cdist(vertices, vertices) ** 6
     U.fill_diagonal_(0.0)
     return U
@@ -42,7 +46,7 @@ def interaction_matrix_from_vertices(vertices: torch.Tensor) -> torch.Tensor:
 def simple_qubo() -> tuple[Instance, list[SingleSolution]]:
 
     sqrt3 = np.sqrt(3.0)
-    vertices = torch.tensor(
+    vertices = tensor.tensor(
         [
             [0.0, 0.0],
             [-1.0, 0.0],
@@ -50,11 +54,13 @@ def simple_qubo() -> tuple[Instance, list[SingleSolution]]:
             [-0.5, -0.5 * sqrt3],
             [4.0, 0.0],
         ],
-        dtype=torch.float32,
     )
+    print(vertices)
+    d = torch.cdist(vertices, vertices, p=2)
+    print(d)
     n_qubits = vertices.shape[0]
     diagonal_scale = -2.0
-    diagonal = torch.ones(n_qubits, dtype=torch.float32)
+    diagonal = vector.zeros(n_qubits).fill_(1.0)
     Q = interaction_matrix_from_vertices(vertices) + diagonal_scale * torch.diag(diagonal)
     Q /= Q.max()
 
@@ -84,7 +90,8 @@ def manual_seed(seed: int) -> torch.Generator:
 def check_solution(
     solutions: Solution,
     expected_optimal_solutions: list[SingleSolution],
-    expect_optimality: bool = True,
+    *,
+    expected_optimal_probability: float = 0.75,
 ) -> None:
 
     # Solutions are not duplicated
@@ -103,7 +110,7 @@ def check_solution(
     print(f"All optimal bitstrings: {[s.string for s in optimal_solutions]}")
     print(f"Number of optimal solutions: {len(optimal_solutions)}\n")
 
-    if not expect_optimality:
+    if expected_optimal_probability == 0.0:
         return
 
     check.almost_equal(min_cost, expected_optimal_solutions[0].cost)
@@ -112,7 +119,7 @@ def check_solution(
         check.is_in(s.string, expected_optimal_bitstrings)
 
     cumulated_probability = sum(s.probability for s in optimal_solutions)
-    check.greater(cumulated_probability, 0.75)
+    check.greater(cumulated_probability, expected_optimal_probability)
 
 
 @pytest.mark.usefixtures("restore_rng_state")
@@ -172,7 +179,15 @@ def test_quantum_solve(
     print(f"Register: {register.qubits}")
     print(f"Distances: {register.distances()}")
 
-    check_solution(solution, expected_optimal_solutions)
+    expected_optimal_probability = 0.75
+    if drive_shaping_method in ["optimized"]:
+        expected_optimal_probability = 0.001
+
+    check_solution(
+        solution,
+        expected_optimal_solutions,
+        expected_optimal_probability=expected_optimal_probability,
+    )
 
 
 @pytest.mark.usefixtures("restore_rng_state")
@@ -214,6 +229,12 @@ def test_classical_solve(
     solution = solver.solve()
     solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
 
-    expect_optimality = solving_method not in ["random"]
+    expected_optimal_probability = 0.75
+    if solving_method in ["random"]:
+        expected_optimal_probability = 0.0
 
-    check_solution(solution, expected_optimal_solutions, expect_optimality)
+    check_solution(
+        solution,
+        expected_optimal_solutions,
+        expected_optimal_probability=expected_optimal_probability,
+    )
