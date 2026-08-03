@@ -71,7 +71,7 @@ def simulated_annealing(
             for reproducibility across calls.
 
     Returns:
-        A solution containing up to `top_k` unique bitstrings sorted by ascending energy, with their costs, counts (how many times each was visited during the run), and normalised probabilities.
+        A solution containing up to `top_k` unique bitstrings sorted by ascending energy, with their costs, counts (how many times each was visited during the run), and probabilities.
 
     Raises:
         ValueError: If ``top_k < 1``.

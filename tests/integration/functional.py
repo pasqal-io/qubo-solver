@@ -21,6 +21,7 @@ from qubosolver import (
     torch_rng,
     bitstrings,
     vectori,
+    tensor,
 )
 
 
@@ -38,15 +39,14 @@ def interaction_matrix_from_vertices(vertices: torch.Tensor) -> torch.Tensor:
 def simple_qubo() -> tuple[Instance, list[SingleSolution]]:
 
     sqrt3 = np.sqrt(3.0)
-    vertices = torch.tensor(
+    vertices = tensor.tensor(
         [
             [0.0, 0.0],
             [-1.0, 0.0],
             [-1.5, -0.5 * sqrt3],
             [-0.5, -0.5 * sqrt3],
             [4.0, 0.0],
-        ],
-        dtype=torch.float32,
+        ]
     )
     print(vertices)
     d = torch.cdist(vertices, vertices, p=2)
@@ -211,15 +211,15 @@ def test_classical_solve(
     if solving_method == "cplex":
         solution = solvers.cplex(effective_qubo)
     elif solving_method == "tabu":
-        solution = solvers.random_solutions(effective_qubo, rng=rng, max_bitstrings=1)
-        solution = solvers.tabu_search(effective_qubo, solution.bitstrings[0])
+        solution = solvers.random_solutions(effective_qubo, rng=rng, max_bitstrings=3)
+        solution = solvers.tabu_search(effective_qubo, solution.bitstrings)
     elif solving_method == "sa":
         solution = solvers.random_solutions(effective_qubo, rng=rng, max_bitstrings=1)
         solution = solvers.simulated_annealing(effective_qubo, solution.bitstrings[0], top_k=1)
     elif solving_method == "sa+tabu":
         solution = solvers.random_solutions(effective_qubo, rng=rng, max_bitstrings=1)
         solution = solvers.simulated_annealing(effective_qubo, solution.bitstrings[0], top_k=1)
-        solution = solvers.tabu_search(effective_qubo, solution.bitstrings[0])
+        solution = solvers.tabu_search(effective_qubo, solution.bitstrings)
     elif solving_method == "random":
         solution = solvers.random_solutions(effective_qubo, rng=rng)
     else:

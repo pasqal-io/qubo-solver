@@ -42,14 +42,20 @@ def manual_seed(seed: int) -> torch.Generator:
     return torch_rng(seed)
 
 
+@pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("classical_method", list(class_solvers.keys()))
 @pytest.mark.parametrize("max_bitstrings", [1, 3])
 def test_qubo_solver_sa_or_tabu(
     simple_qubo_instance: Instance, classical_method: ClassicalSolverType, max_bitstrings: int
 ) -> None:
+
+    seed = 1567
+    manual_seed(seed)
+
     # Create a SolverConfig object with classical solver options.
     classical_config = ClassicalConfig(
-        classical_solver_type=classical_method, max_bitstrings=max_bitstrings
+        classical_solver_type=classical_method, max_bitstrings=max_bitstrings,
+        sa_seed=seed,
     )
 
     config = SolverConfig(
@@ -72,14 +78,14 @@ def test_qubo_solver_sa_or_tabu(
     check.is_instance(solution, Solution)
 
     # assert shape matches config
-    check.greater(solution.bitstrings.shape[0], 0)
-    check.less_equal(
-        solution.bitstrings.shape[0], max_bitstrings
-    )  # max_bitstrings solution returned
+    check.greater(len(solution), 0)
+    check.less_equal(len(solution), max_bitstrings)  # max_bitstrings solution returned
     check.equal(solution.bitstrings.shape[1], simple_qubo_instance.size)
     check.equal(len(solution.counts), len(solution.bitstrings))
     check.equal(len(solution.probabilities), len(solution.bitstrings))
-    check.equal(solution.counts.sum().item(), max_bitstrings)
+    # random_solutions draws max_bitstrings uniformly at random and dedups them,
+    # so the total count can be less than max_bitstrings if a bitstring is drawn twice.
+    check.less_equal(solution.counts.sum().item(), max_bitstrings)
     check.almost_equal(solution.probabilities.sum().item(), 1.0)
 
 

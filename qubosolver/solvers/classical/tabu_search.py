@@ -10,40 +10,38 @@ import time
 
 import torch
 
-from qubosolver.types import Instance, Solution, Bitstring, bitstrings
+from qubosolver.types import Instance, Solution, Bitstrings, bitstrings
 from qubosolver.utils import _costs
 
 
 def tabu_search(
     qubo: Instance,
-    start: Bitstring,
+    start: Bitstrings,
     *,
     max_iter: int = 100,
     tabu_tenure: int = 7,
     max_no_improve: int = 20,
-    max_bitstrings: int = 1,
     time_limit: float = float("inf"),
 ) -> Solution:
     """Perform Tabu Search on a QUBO instance to find low-cost bitstrings.
 
-    Runs ``max_bitstrings`` independent searches that each start from ``start``
-    and explore single-bit-flip neighbours.  A tabu list prevents revisiting
-    recently flipped bits; aspiration overrides the tabu restriction whenever a
-    move yields a new global best.  All independent runs share the same stopping
-    criteria and are deduplicated before being returned.
+    Runs one independent search per row of ``start``, each exploring
+    single-bit-flip neighbours from its own starting point.  A tabu list
+    prevents revisiting recently flipped bits; aspiration overrides the tabu
+    restriction whenever a move yields a new global best.  All independent
+    runs share the same stopping criteria and are deduplicated before being
+    returned.
 
     Args:
         qubo (Instance): The QUBO instance providing the cost matrix.
-        start (Bitstring): Initial binary solution of length ``n``.  Replicated
-            across all ``max_bitstrings`` independent runs.
+        start (Bitstrings): Initial binary solutions, one row per independent
+            run, each of length ``n``.
         max_iter (int): Maximum number of search iterations. Defaults to 100.
         tabu_tenure (int): Number of iterations a bit-flip move stays tabu.
             Defaults to 7.
         max_no_improve (int): Maximum consecutive iterations without improvement
             before a run is considered stagnated.  Search stops early when
             **all** independent runs have stagnated. Defaults to 20.
-        max_bitstrings (int): Number of independent search runs (and upper bound on
-            unique solutions returned). Defaults to 1.
         time_limit (float): Wall-clock time budget in seconds.  Defaults to
             ``float('inf')`` (no limit).
 
@@ -52,17 +50,17 @@ def tabu_search(
     """
     Q = qubo.matrix
     device = Q.device
-    n = start.numel()
+    n_bitstrings, n = start.shape
 
     # Repeat x0 for each parallel run
-    x_current = start.clone().to(torch.int64).unsqueeze(0).repeat(max_bitstrings, 1)
+    x_current = start.detach().clone()
     f_current = _costs.batched_quadratic_cost(x_current.to(Q), Q)
     x_best = x_current.clone()
     f_best = f_current.clone()
 
     # Tabu list per run and bit
-    tabu_list = torch.zeros((max_bitstrings, n), dtype=torch.int64, device=device)
-    iter_since_last_improve = torch.zeros(max_bitstrings, dtype=torch.int64, device=device)
+    tabu_list = torch.zeros((n_bitstrings, n), dtype=torch.int64, device=device)
+    iter_since_last_improve = torch.zeros(n_bitstrings, dtype=torch.int64, device=device)
 
     deadline = time.perf_counter() + time_limit
 
@@ -75,7 +73,7 @@ def tabu_search(
         x_neighbors = x_current.unsqueeze(1).clone()
         x_neighbors = (x_neighbors + flips) % 2  # each bit flipped
         f_candidates = _costs.batched_quadratic_cost(x_neighbors.view(-1, n).to(Q), Q).view(
-            max_bitstrings, n
+            n_bitstrings, n
         )
 
         # Tabu and aspiration
@@ -109,10 +107,14 @@ def tabu_search(
     uniq, counts = torch.unique(x_best, dim=0, return_counts=True)
     costs = _costs.batched_quadratic_cost(uniq.to(Q), Q)
 
-    solution = Solution(
-        bitstrings=bitstrings.from_torch(uniq),
-        costs=costs,
-        counts=counts,
-    ).compute_probabilities()
+    solution = (
+        Solution(
+            bitstrings=bitstrings.from_torch(uniq),
+            costs=costs,
+            counts=counts,
+        )
+        .sort_by_cost()
+        .compute_probabilities()
+    )
 
     return solution
