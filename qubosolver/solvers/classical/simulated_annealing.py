@@ -162,15 +162,22 @@ def simulated_annealing(
             temperature = 1e-12
 
     top_sol.sort(key=lambda t: t[0])
-    bitstrings_ = bitstrings.from_torch(torch.stack([b for (_, b) in top_sol], dim=0))
-    energies = vector.tensor([e for (e, _) in top_sol])
+    all_bits = bitstrings.from_torch(torch.stack([b for (_, b) in top_sol], dim=0))
+    all_energies = vector.tensor([e for (e, _) in top_sol])
 
+    # dedup defensively: inverse_indices[i] is the unique-row slot that row i
+    # maps to, so aligning energies with unique_bits is a scatter, not a
+    # gather — energies[inverse_indices] would silently mispair rows.
+    # Duplicate rows share the same energy, so any of them can be scattered in.
     unique_bits, inverse_indices, counts = torch.unique(
-        bitstrings_, dim=0, return_inverse=True, return_counts=True
+        all_bits, dim=0, return_inverse=True, return_counts=True
     )
-    energies = energies[inverse_indices]
+    energies = torch.empty(len(unique_bits), dtype=all_energies.dtype)
+    energies[inverse_indices] = all_energies
 
-    solution = Solution(
-        bitstrings=unique_bits, counts=counts, costs=energies
-    ).compute_probabilities()
+    solution = (
+        Solution(bitstrings=unique_bits, counts=counts, costs=energies)
+        .sort_by_cost()
+        .compute_probabilities()
+    )
     return solution
