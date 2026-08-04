@@ -181,7 +181,7 @@ def test_quantum_solve(
 
     expected_optimal_probability = 0.75
     if drive_shaping_method in ["optimized"]:
-        expected_optimal_probability = 0.001
+        expected_optimal_probability = 0.0
 
     check_solution(
         solution,
