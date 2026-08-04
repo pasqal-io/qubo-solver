@@ -52,7 +52,7 @@ Q = Instance(matrix.tensor(
     ]
 ))
 
-reduced = transforms.negative_bitflip.apply(Q, time_limit_s=5.0)
+reduced = transforms.negative_bitflip.apply(Q, time_limit_s=60.0)
 
 print(f"Flip vector: {reduced.flips}")
 print(f"Bitflip status: {reduced.status}")
@@ -109,7 +109,7 @@ Q_hard = Instance(matrix.tensor(
     ]
 ))
 
-reduced_hard = transforms.negative_bitflip.apply(Q_hard, time_limit_s=5.0)
+reduced_hard = transforms.negative_bitflip.apply(Q_hard, time_limit_s=60.0)
 
 print(f"Bitflip status: {reduced_hard.status}")
 print(f"Bitflip metrics: {json.dumps(reduced_hard.metrics, indent=4)}")

@@ -13,7 +13,7 @@ off-diagonal coefficient to zero and records which positions were zeroed on a
 import qubosolver.transforms.negative_bitflip as bitflip
 import qubosolver.transforms.zeroing as zeroing
 
-reduced = bitflip.apply(qubo_instance, time_limit_s=10.0)
+reduced = bitflip.apply(qubo_instance, time_limit_s=60.0)
 reduced = zeroing.apply(reduced)  # drop any negative coefficient bit flips could not remove
 print(reduced.zeroed_edges)       # (N, 2) tensor of zeroed (i, j) index pairs
 ```
