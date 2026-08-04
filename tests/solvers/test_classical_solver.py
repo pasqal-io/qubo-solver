@@ -54,7 +54,8 @@ def test_qubo_solver_sa_or_tabu(
 
     # Create a SolverConfig object with classical solver options.
     classical_config = ClassicalConfig(
-        classical_solver_type=classical_method, max_bitstrings=max_bitstrings,
+        classical_solver_type=classical_method,
+        max_bitstrings=max_bitstrings,
         sa_seed=seed,
     )
 
