@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from typing import Sequence
-import warnings
+import logging
 
 import numpy as np
 import qoolqit
 from qoolqit import Constant as ConstantWaveform
+
+logger = logging.getLogger(__name__)
 
 
 def _clip_final_detuning_to_dmm_budget(
@@ -47,7 +49,7 @@ def _clip_final_detuning_to_dmm_budget(
     max_abs_final_detuning = abs(safe_total_bottom_detuning) / (sum_weight * energy_scale)
 
     if abs(final_detuning) > max_abs_final_detuning:
-        warnings.warn(
+        logger.info(
             "DMM final detuning would exceed the device's total_bottom_detuning "
             f"budget ({total_bottom_detuning} rad/us) once compiled "
             f"(sum(weights)={sum_weight:.3f}); clipping from {final_detuning:.3f} to "
