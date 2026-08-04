@@ -120,7 +120,7 @@ def cplex(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> 
         log_file.close()
 
     # Convert the solution into a Solution.
-    bitstring_tensor = bitstrings.tensor([[int(b) for b in solution_values]])
+    bitstring_tensor = bitstrings.tensor([[int(round(b)) for b in solution_values]])
     counts = vectori.tensor([1])
     cost_tensor = vector.tensor([solution_cost])
 
