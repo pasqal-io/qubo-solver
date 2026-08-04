@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 import torch
 from collections.abc import Iterator
 from typing_extensions import Self
@@ -12,6 +13,8 @@ from .linalg import Bitstrings, Vector, Vectori, Matrix, Bitstring
 from .instance import Instance
 
 from pulser.backend.results import Results
+
+logger = logging.getLogger(__name__)
 
 
 @debug_runtime_typecheck
@@ -242,3 +245,107 @@ class Solution:
             solution.compute_costs(instance.matrix).sort_by_cost().compute_probabilities()
 
         return solution
+
+    def check_consistency(self, instance: Instance, *, throw: bool = False) -> bool:
+        """Check internal consistency of this solution against a QUBO instance.
+
+        Recomputes costs from `bitstrings` and `instance.matrix` and checks
+        for duplicate rows, so this can be slow on large solutions — prefer
+        calling it in tests / debugging rather than on every solver result.
+
+        Verifies that:
+
+        * `bitstrings` has ``instance.size`` columns.
+        * `costs`, `counts`, and `probabilities` each have exactly
+          `len(self)` elements (i.e. none of them is empty).
+        * `costs` matches ``x^T Q x`` for every bitstring, computed from
+          ``instance.matrix``.
+        * `costs` is sorted in non-decreasing order.
+        * `probabilities` matches `counts` normalised by their sum.
+        * `counts` are strictly positive integers.
+        * `bitstrings` contains no duplicate rows.
+        * `bitstrings` entries are all ``0`` or ``1``.
+
+        Args:
+            instance: The QUBO instance this solution is expected to solve.
+            throw: When ``True``, raise an `AssertionError` on the first
+                failing check instead of returning ``False``.
+
+        Returns:
+            bool: ``True`` if all checks pass, ``False`` otherwise (unless
+            ``throw`` is ``True``, in which case an exception is raised).
+        """
+        num_solutions = len(self)
+
+        def check(condition: bool, message: str) -> bool:
+            if condition:
+                return True
+            logger.warning(message)
+            if throw:
+                raise AssertionError(message)
+            return False
+
+        expected_shapes = (
+            ("bitstrings", self.bitstrings, (num_solutions, instance.size)),
+            ("costs", self.costs, (num_solutions,)),
+            ("counts", self.counts, (num_solutions,)),
+            ("probabilities", self.probabilities, (num_solutions,)),
+        )
+
+        valid = True
+        for name, tensor, expected_shape in expected_shapes:
+            valid &= check(
+                tuple(tensor.shape) == expected_shape,
+                f"{name} has shape {tuple(tensor.shape)}, expected {expected_shape}",
+            )
+
+        if not valid:
+            return False
+
+        from qubosolver.utils import _costs
+
+        expected_costs = _costs.batched_quadratic_cost(
+            self.bitstrings.to(instance.matrix.dtype), instance.matrix
+        )
+
+        valid &= check(
+            torch.allclose(self.costs, expected_costs.to(self.costs.dtype)),
+            f"costs {self.costs.tolist()} does not match x^T Q x "
+            f"{expected_costs.tolist()} for the corresponding bitstrings",
+        )
+        valid &= check(
+            bool(torch.all(self.costs[:-1] <= self.costs[1:])),
+            f"costs {self.costs.tolist()} is not sorted in non-decreasing order",
+        )
+
+        if num_solutions == 0:
+            return valid
+
+        num_unique_bitstrings = self.bitstrings.unique(dim=0).shape[0]
+        valid &= check(
+            num_unique_bitstrings == num_solutions,
+            f"bitstrings contains {num_solutions - num_unique_bitstrings} duplicate row(s)",
+        )
+
+        valid &= check(
+            bool(torch.all((self.bitstrings == 0) | (self.bitstrings == 1))),
+            f"bitstrings {self.bitstrings.tolist()} contains entries other than 0 or 1",
+        )
+
+        valid &= check(
+            bool(torch.all(self.counts == self.counts.round())),
+            f"counts {self.counts.tolist()} contains non-integer values",
+        )
+        valid &= check(
+            bool(torch.all(self.counts > 0)),
+            f"counts {self.counts.tolist()} contains non-positive entries",
+        )
+
+        expected_probabilities = self.counts / self.counts.sum()
+        valid &= check(
+            torch.allclose(self.probabilities, expected_probabilities.to(self.probabilities.dtype)),
+            f"probabilities {self.probabilities.tolist()} does not match counts "
+            f"{self.counts.tolist()} normalised by their sum",
+        )
+
+        return valid
