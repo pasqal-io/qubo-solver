@@ -3,9 +3,6 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import pytest_check as check
-import random
-import torch
-import qoolqit
 
 from qubosolver import (
     Analyzer,
@@ -13,10 +10,6 @@ from qubosolver import (
     Solution,
     SingleSolution,
     solvers,
-    embedding,
-    drive_shaping,
-    torch_rng,
-    extract_qubo,
 )
 
 from qubos import QUBOS
@@ -62,10 +55,13 @@ def check_solution(
     cumulated_probability = sum(s.probability for s in optimal_solutions)
     return cumulated_probability
 
+
 _n: int = len(QUBOS)
 
+
 @pytest.mark.parametrize(
-    "qubo_id", range(_n),
+    "qubo_id",
+    range(_n),
     ids=[f"qubo{i}" for i in range(_n)],
 )
 def test_cplex(
