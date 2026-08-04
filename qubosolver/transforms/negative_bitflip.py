@@ -331,9 +331,14 @@ def _solve_bitflip_preprocessing_glpk(
             elif return_code != 0:
                 status = f"GLPK_ERROR_{return_code}"
 
+            hint = (
+                " Consider increasing time_limit_s to give GLPK more time to find a solution."
+                if status == "TIME_LIMIT_NO_SOLUTION"
+                else ""
+            )
             logger.warning(
                 f"Bit-flip preprocessing ILP did not reach a feasible solution "
-                f"(status={status}); falling back to no-op flips."
+                f"(status={status}); falling back to no-op flips.{hint}"
             )
 
     except Exception:
