@@ -28,6 +28,7 @@ full = bitflip.unapply(solution, reduced)
 from __future__ import annotations
 
 import copy
+import logging
 from dataclasses import dataclass
 from typing import Any
 
@@ -35,6 +36,8 @@ import torch
 
 import qubosolver
 from qubosolver.types import Solution, vector, Matrix, Bitstrings, Bitstring, bitstring
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -328,7 +331,16 @@ def _solve_bitflip_preprocessing_glpk(
             elif return_code != 0:
                 status = f"GLPK_ERROR_{return_code}"
 
+            logger.warning(
+                f"Bit-flip preprocessing ILP did not reach a feasible solution "
+                f"(status={status}); falling back to no-op flips."
+            )
+
     except Exception:
+        logger.warning(
+            "Bit-flip preprocessing ILP raised an exception; falling back to no-op flips.",
+            exc_info=True,
+        )
         flips = bitstring.zeros(n)
         status = "FAIL"
         objective_value = float("nan")
@@ -375,7 +387,10 @@ def apply(
     Wraps *qubo* in a bit-flip [`Instance`][], solves the negative-weight ILP
     with GLPK, and replaces the matrix with its flipped counterpart.  When
     *qubo* has no negative off-diagonal coefficient, the wrapper is returned
-    unchanged (``status`` stays ``"NONE"`` and ``flips`` stays all-zero).
+    unchanged (``status`` stays ``"NONE"`` and ``flips`` stays all-zero).  If
+    the solved flips would leave *more* negative weight than doing nothing
+    (a known GLPK edge case), they are rejected and replaced with a no-op
+    (``status`` becomes ``"REJECTED_WORSE_THAN_NOOP"``).
 
     Args:
         qubo: The QUBO instance to preprocess.
@@ -396,12 +411,25 @@ def apply(
         time_limit_s=time_limit_s,
         eps=eps,
     )
+    metrics = _compute_negative_weight_metrics(Q, flips, eps)
+
+    if metrics["neg_weight_reduction_pct"] < 0.0:
+        reduction_pct = metrics["neg_weight_reduction_pct"]
+        logger.warning(
+            f"Bit-flip preprocessing (status={status}) increased the remaining negative "
+            f"off-diagonal weight instead of reducing it ({reduction_pct:.2f}% change); "
+            f"falling back to no-op flips."
+        )
+        flips.fill_(0)
+        objective_value = float("nan")
+        status = "REJECTED_WORSE_THAN_NOOP"
+        metrics = _compute_negative_weight_metrics(Q, flips, eps)
 
     Q_flipped, offset = _transform_qubo_with_bitflips(Q, flips)
 
     instance._matrix = Q_flipped
     instance.flips = flips
-    instance.metrics = _compute_negative_weight_metrics(Q, flips, eps)
+    instance.metrics = metrics
     instance.metrics["objective_value"] = objective_value
     instance.status = status
     instance.offset = offset
