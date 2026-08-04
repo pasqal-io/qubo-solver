@@ -101,6 +101,7 @@ def check_hamiltonian_qubo(
     return rel_diagonal_error, rel_offdiagonal_error
 
 
+@pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("seed", [16844214, 650], ids=[f"seed{i}" for i in range(2)])
 @pytest.mark.parametrize(
     "qubo_id, expected_diag_error, expected_offdiag_error, expected_optimum_prob",
@@ -157,6 +158,7 @@ def test_quantum_solve_blade_heuristic(
     check.less_equal(offdiag_error, expected_offdiag_error)
 
 
+@pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("seed", [42, 271828], ids=[f"seed{i}" for i in range(2)])
 @pytest.mark.parametrize(
     "qubo_id, expected_diag_error, expected_offdiag_error, expected_optimum_prob",
