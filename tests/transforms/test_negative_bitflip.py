@@ -245,6 +245,79 @@ def test_glpk_infeasible_or_error_falls_back_to_noop_flips() -> None:
     check.equal(flips.shape[0], instance.size)
 
 
+def test_glpk_time_limit_warns_when_falling_back(caplog: pytest.LogCaptureFixture) -> None:
+    # When GLPK can't reach a feasible solution in time, apply() must degrade
+    # to no-op flips *and* surface a warning, so the failure is observable.
+    instance, _ = non_bipartisable_negative_qubo()
+
+    with caplog.at_level("WARNING", logger="qubosolver.transforms.negative_bitflip"):
+        flips, _, status = _solve_bitflip_preprocessing_glpk(instance.matrix, time_limit_s=0.0)
+
+    if status in ("TIME_LIMIT_NO_SOLUTION", "GLPK_ERROR_0"):
+        check.is_false(flips.any())
+        check.is_true(len(caplog.records) >= 1)
+
+
+def test_apply_rejects_flips_that_increase_negative_weight(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    # Regression test: GLPK can return flips that are individually "optimal"
+    # for its internal objective but still leave *more* negative weight than
+    # doing nothing (see issue #237). apply() must detect and reject this,
+    # falling back to a safe no-op rather than handing back a worse matrix.
+    instance, _ = non_bipartisable_negative_qubo()
+
+    # These flips are a genuine regression on this fixture: negative weight
+    # goes from 6.0 (no-op) to 7.0 (flipped).
+    worse_flips = bitstring.from_string("1100")
+
+    def _fake_solve(*args: Any, **kwargs: Any) -> tuple[Any, float, str]:
+        return worse_flips, 0.0, "OPTIMAL"
+
+    monkeypatch.setattr(
+        "qubosolver.transforms.negative_bitflip._solve_bitflip_preprocessing_glpk",
+        _fake_solve,
+    )
+
+    with caplog.at_level("WARNING", logger="qubosolver.transforms.negative_bitflip"):
+        flipped_instance = transforms.negative_bitflip.apply(instance)
+
+    check.equal(flipped_instance.status, "REJECTED_WORSE_THAN_NOOP")
+    check.is_false(flipped_instance.flips.any())
+    check.is_nan(flipped_instance.metrics["objective_value"])
+    torch.testing.assert_close(flipped_instance.matrix, instance.matrix)
+    check.equal(
+        flipped_instance.metrics["neg_weight_after"],
+        flipped_instance.metrics["neg_weight_before"],
+    )
+    check.is_true(len(caplog.records) >= 1)
+
+
+def test_apply_keeps_flips_that_reduce_negative_weight(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Sanity check for the new guard: a genuinely-improving flip vector must
+    # still be kept and must not be flagged as a regression.
+    instance, _ = non_bipartisable_negative_qubo()
+    good_flips = bitstring.from_string("0100")
+    expected_matrix, _ = _transform_qubo_with_bitflips(instance.matrix, good_flips)
+
+    def _fake_solve(*args: Any, **kwargs: Any) -> tuple[Any, float, str]:
+        return good_flips, 0.0, "OPTIMAL"
+
+    monkeypatch.setattr(
+        "qubosolver.transforms.negative_bitflip._solve_bitflip_preprocessing_glpk",
+        _fake_solve,
+    )
+
+    flipped_instance = transforms.negative_bitflip.apply(instance)
+
+    check.equal(flipped_instance.status, "OPTIMAL")
+    check.is_true(flipped_instance.flips.any())
+    torch.testing.assert_close(flipped_instance.matrix, expected_matrix)
+
+
 def test_glpk_solve_survives_internal_exception(monkeypatch: pytest.MonkeyPatch) -> None:
     # If GLPK itself raises during the solve (e.g. a binding error), the
     # function must still return a usable (no-op) result instead of
