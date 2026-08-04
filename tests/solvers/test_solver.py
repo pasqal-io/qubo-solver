@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import numpy as np
 import pytest
 
@@ -268,7 +270,7 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
     torch.testing.assert_close(solution_remote.counts, solution.counts)
 
 
-def test_respects_total_bottom_detuning() -> None:
+def test_respects_total_bottom_detuning(caplog: pytest.LogCaptureFixture) -> None:
     n = 6
     Q = matrix.zeros(n)
     for i in range(n):
@@ -280,11 +282,10 @@ def test_respects_total_bottom_detuning() -> None:
     instance = Instance(Q)
     config = SolverConfig(drive_shaping=DriveShapingConfig(dmm=True))
 
-    with pytest.warns(
-        UserWarning,
-        match="DMM final detuning would exceed the device's total_bottom_detuning",
-    ):
+    with caplog.at_level(logging.INFO):
         solution = Solver(instance, config).solve()
+
+    assert "DMM final detuning would exceed the device's total_bottom_detuning" in caplog.text
 
     assert solution.bitstrings.numel() > 0
 
