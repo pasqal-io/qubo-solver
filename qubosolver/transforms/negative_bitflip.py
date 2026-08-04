@@ -19,7 +19,7 @@ Typical usage:
 ```python
 import qubosolver.transforms.negative_bitflip as bitflip
 
-reduced = bitflip.apply(qubo_instance, time_limit_s=10.0)
+reduced = bitflip.apply(qubo_instance, time_limit_s=60.0)
 solution = solver.solve(reduced)
 full = bitflip.unapply(solution, reduced)
 ```
@@ -157,7 +157,7 @@ def _compute_negative_weight_metrics(
 def _solve_bitflip_preprocessing_glpk(
     Q: Matrix,
     *,
-    time_limit_s: float = 10.0,
+    time_limit_s: float = 60.0,
     eps: float = 0.0,
     log: bool = False,
 ) -> tuple[torch.Tensor, float, str]:
@@ -384,7 +384,7 @@ class Instance(qubosolver.Instance):
 def apply(
     qubo: qubosolver.Instance,
     *,
-    time_limit_s: float = 10.0,
+    time_limit_s: float = 60.0,
     eps: float = 0.0,
 ) -> Instance:
     """Solve the bit-flip ILP and apply the optimal flips to the QUBO matrix.
