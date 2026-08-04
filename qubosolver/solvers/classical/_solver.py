@@ -163,8 +163,10 @@ class TabuSearchSolver(BaseClassicalSolver):
         if self.config.tabu_x0 is None:
             assert self.instance.size
             rng = torch_rng().set_state(torch.get_rng_state())
-            random_solution = solvers.random_solutions(self.instance, rng=rng, max_bitstrings=1)
-            x0 = random_solution.bitstrings[0]
+            random_solution = solvers.random_solutions(
+                self.instance, rng=rng, max_bitstrings=self.config.max_bitstrings
+            )
+            x0 = random_solution.bitstrings
         else:
             x0 = self.config.tabu_x0
         tabu_search_solution = solvers.tabu_search(
@@ -173,7 +175,6 @@ class TabuSearchSolver(BaseClassicalSolver):
             max_iter=self.config.max_iter,
             tabu_tenure=self.config.tabu_tenure,
             max_no_improve=self.config.tabu_max_no_improve,
-            max_bitstrings=self.config.max_bitstrings,
             time_limit=self.config.tabu_time_limit,
         )
         return tabu_search_solution
@@ -215,7 +216,7 @@ class HybridSATabuSolver(BaseClassicalSolver):
         config_tabu = self.config.model_copy(
             update={
                 "classical_solver_type": ClassicalSolverType.TABU_SEARCH,
-                "tabu_x0": sa_solution.bitstrings[0],
+                "tabu_x0": sa_solution.bitstrings,
             }
         )
         tabu = TabuSearchSolver(self.instance, config_tabu)
