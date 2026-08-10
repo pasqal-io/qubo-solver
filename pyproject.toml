@@ -125,6 +125,8 @@ asyncio_default_fixture_loop_scope="function"
 markers = [
 	"priority(n): run higher priority tests first.",
 ]
+log_cli = true
+log_cli_level = "WARNING"
 
 [tool.hatch.envs.docs]
 installer = "uv"

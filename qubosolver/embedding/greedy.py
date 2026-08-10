@@ -20,7 +20,7 @@ import pathlib
 import qoolqit
 
 from ._algorithms import greedy
-from qubosolver import Instance, LayoutType, EmbeddingConfig
+from qubosolver import Instance, LayoutType, EmbeddingConfig, tensor
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
 
@@ -125,7 +125,8 @@ def _resolve_max_possible_term(
 
     Raises:
         ValueError: If *max_possible_term* is a tuple whose first element is
-            not ``'factor'``.
+            not ``'factor'``, or if *instance* has fewer than 2 variables and
+            therefore no off-diagonal coefficient to scale by.
     """
     if isinstance(max_possible_term, float):
         return max_possible_term
@@ -134,6 +135,11 @@ def _resolve_max_possible_term(
     if kind != "factor":
         raise ValueError(
             "When it is a tuple, the first value of `max_possible_term` must be 'factor'."
+        )
+    if instance.size < 2:
+        raise ValueError(
+            "Cannot resolve a 'factor' `max_possible_term` for an instance with fewer than "
+            f"2 variables (size={instance.size}): it has no off-diagonal coefficient to scale."
         )
     return instance._max_off_diag * factor
 
@@ -192,9 +198,14 @@ def embed(
         A register mapping each atom to a 2-D position.
 
     Raises:
-        ValueError: If the resolved trap count is less than ``instance.size``
-            (i.e. there are not enough trap sites for all QUBO variables).
+        ValueError: If *instance* has no variables (``size == 0``), since a
+            register must contain at least one qubit. If the resolved trap
+            count is less than ``instance.size`` (i.e. there are not enough
+            trap sites for all QUBO variables).
     """
+    if not instance:
+        raise ValueError("Cannot embed an empty instance (size=0): nothing to place.")
+
     if _has_negative_offdiagonal(instance.matrix):
         raise ValueError("QUBOs with negative off-diagonal coefficients cannot be embedded.")
 
@@ -206,6 +217,11 @@ def embed(
         raise ValueError(
             "Number of traps must be at least equal to the number of atoms on the register."
         )
+
+    if instance.size == 1:
+        # A single atom has no off-diagonal term to place it relative to,
+        # so it is placed at the origin without running the algorithm.
+        return qoolqit.Register.from_coordinates(tensor.zeros(1, 2))
 
     # spacing between adjacent trap sites, derived from the largest QUBO term
     # so that it is exactly representable at the minimum trap-trap distance

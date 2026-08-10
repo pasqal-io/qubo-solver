@@ -42,6 +42,10 @@ class Instance:
         """Number of binary variables in the QUBO problem (side length of ``Q``)."""
         return self.matrix.shape[0]
 
+    def __len__(self) -> int:
+        """Number of binary variables in the QUBO problem (same as [`size`][])."""
+        return self.size
+
     @property
     def matrix(self) -> torch.Tensor:
         """The ``(size, size)`` QUBO coefficient matrix.
@@ -64,9 +68,19 @@ class Instance:
         Used internally to normalise the coefficient matrix before embedding or
         solving.  Off-diagonal entries are identified via a boolean mask that
         excludes the main diagonal.
+
+        Raises:
+            RuntimeError: If [`size`][] is less than 2, since there are then no
+                off-diagonal entries and the maximum is undefined.
         """
         mask = ~torch.eye(self.size, dtype=torch.bool, device=self.matrix.device)
-        return self.matrix[mask].max().item()
+        off_diag = self.matrix[mask]
+        if off_diag.numel() == 0:
+            raise RuntimeError(
+                "_max_off_diag is undefined for an instance with no off-diagonal entries "
+                f"(size={self.size})."
+            )
+        return off_diag.max().item()
 
     @property
     def _normalized_matrix(self) -> torch.Tensor:
@@ -74,8 +88,11 @@ class Instance:
 
         Divides every element of [`matrix`][] by [`_max_off_diag`][].
         Used to bring coefficients into a hardware-friendly range before
-        embedding.
+        embedding.  If [`size`][] is less than 2, there is nothing to
+        normalise and [`matrix`][] is returned unchanged.
         """
+        if self.size < 2:
+            return self.matrix
         return self.matrix / self._max_off_diag
 
     def evaluate_solution(self, solution: Bitstring) -> float:

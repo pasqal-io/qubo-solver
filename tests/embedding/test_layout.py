@@ -1,4 +1,5 @@
 import pytest
+import pytest_check as check
 import math
 import torch
 import scipy
@@ -64,3 +65,8 @@ def test_get_layout_square_is_compact(n_traps: int) -> None:
     closer = candidates[cand_d2 < kth]
     closer_set = {tuple(p.tolist()) for p in closer}
     assert closer_set.issubset(sel_set)
+
+
+def test_empty_layout(layout_type: LayoutType) -> None:
+    coords = get_layout(layout_type=layout_type, n_traps=0)
+    check.equal(coords.size(), (0, 2))

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import logging
+
 import numpy as np
 import torch
-import warnings
 
 import qoolqit
 from qubosolver import Instance
@@ -15,6 +16,8 @@ from ._device_specs import (
     detuning_amplitude_ratio,
 )
 from ._waveforms import constant_weighted_dmm
+
+logger = logging.getLogger(__name__)
 
 
 def build_drive(
@@ -55,7 +58,7 @@ def build_drive(
         assert max_amplitude is not None and max_abs_detuning is not None
         det_amp_ratio = max_amplitude / max_abs_detuning
         if kappa < det_amp_ratio:
-            warnings.warn(
+            logger.warning(
                 f"heuristic_kappa is too small ({kappa}), you're likely to get a qoolqit CompilationError. Set it above {det_amp_ratio}."
             )
 
@@ -70,7 +73,7 @@ def build_drive(
 
     max_amplitude = max_virtual_amplitude(device, register)
     if omega_max > max_amplitude:
-        warnings.warn(
+        logger.info(
             f"The heuristic drive amplitude ({omega_max}) exceeds the maximum "
             f"amplitude compilable on the device for this register "
             f"({max_amplitude}); clamping to it."
@@ -80,7 +83,7 @@ def build_drive(
     max_detuning = detuning_amplitude_ratio(device) * omega_max * (1.0 - 1e-3)
     max_abs_d = float(np.max(np.abs(d)))
     if max_abs_d > max_detuning:
-        warnings.warn(
+        logger.info(
             f"The heuristic detuning ({max_abs_d}) exceeds the maximum detuning "
             f"compilable on the device for this amplitude ({max_detuning}); "
             f"scaling the detuning down."
@@ -116,13 +119,13 @@ def build_drive(
 
     # Amplitude waveform: 0 -> plateau -> 0
     eps = 1e-9
-    amp_wave = qoolqit.Interpolated(
+    amp_wave = qoolqit.InterpolatedWaveform(
         max_seq_duration,
         [eps, omega_max, omega_max, eps],
     )
 
     # Global detuning waveform: initial negative -> final target
-    det_wave = qoolqit.Interpolated(
+    det_wave = qoolqit.InterpolatedWaveform(
         max_seq_duration,
         [delta_0, delta_0, delta_g_T, delta_g_T],
     )

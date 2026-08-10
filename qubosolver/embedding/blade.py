@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import TypeAlias
 
-from qubosolver import Instance
+from qubosolver import Instance, tensor
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from qoolqit import Register
 from qoolqit.embedding import Blade, BladeConfig
@@ -51,9 +51,22 @@ def embed(
 
     Returns:
         A register mapping each atom label to its 2-D position, with atom positions determined by BLaDE.
+
+    Raises:
+        ValueError: If *instance* has no variables (``size == 0``), since a
+            register must contain at least one qubit.
     """
+    if not instance:
+        raise ValueError("Cannot embed an empty instance (size=0): nothing to place.")
+
     if _has_negative_offdiagonal(instance.matrix):
         raise ValueError("QUBOs with negative off-diagonal coefficients cannot be embedded.")
+
+    if instance.size == 1:
+        # A single atom has no off-diagonal term to place it relative to,
+        # so it is placed at the origin without running the algorithm.
+        return Register.from_coordinates(tensor.zeros(1, 2))
+
     _blade = Blade(config)
     graph = _blade.embed(instance.matrix.numpy())
 

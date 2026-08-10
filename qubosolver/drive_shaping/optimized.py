@@ -134,7 +134,7 @@ def _build_drive(
 
     The first three values in *params* control the amplitude waveform and the
     remaining three control the detuning waveform.  Both are represented as
-    :class:`~qoolqit.Interpolated` waveforms over the full sequence duration.
+    :class:`~qoolqit.InterpolatedWaveform` waveforms over the full sequence duration.
     Raw parameters are normalised in ``[0, 1]`` or ``[-1, 1]`` and are scaled
     so that the amplitude waveform stays within what the compiler can realize
     on `device` for `register`, and the detuning waveform stays within the
@@ -166,7 +166,7 @@ def _build_drive(
 
     amp_params = [1e-9] + list(params[:3]) + [1e-9]
     amp_params = [p * max_amplitude for p in amp_params]
-    amp_wave = qoolqit.Interpolated(max_seq_duration, amp_params)
+    amp_wave = qoolqit.InterpolatedWaveform(max_seq_duration, amp_params)
 
     # QoolQit rescales only based on the amplitude, so the maximum
     # of the detuning depends on the amplitude.
@@ -174,7 +174,7 @@ def _build_drive(
     det_scale = det_ratio * float(amp_wave.max()) * (1.0 - 1e-3)
     # FIXME: det_params of length 4 ? with last param as final det for dmm?
     det_params = [p * det_scale for p in params[3:]]
-    det_wave = qoolqit.Interpolated(max_seq_duration, det_params)
+    det_wave = qoolqit.InterpolatedWaveform(max_seq_duration, det_params)
 
     wdetunings = None
     final_detuning = det_params[-1]

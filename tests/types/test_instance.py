@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import numpy as np
 import pytest
+import pytest_check as check
 import torch
 
 from qubosolver import Instance, Solver, SolverConfig, matrix
@@ -19,6 +20,18 @@ def test_valid_qubo_passes_without_error() -> None:
     assert qi.matrix.shape == (5, 5)
 
 
+def test_len_matches_size() -> None:
+    qi = Instance(matrix.from_torch(torch.eye(5)))
+    check.equal(len(qi), 5)
+    check.is_true(bool(qi))
+
+
+def test_len_zero_is_falsy() -> None:
+    qi = Instance(matrix.zeros(0))
+    check.equal(len(qi), 0)
+    check.is_false(bool(qi))
+
+
 def test_size_exceeds_limit_triggers_system_exit() -> None:
 
     # An 81×81 QUBO exceeds the maximum supported size of 80×80
@@ -31,6 +44,19 @@ def test_size_exceeds_limit_triggers_system_exit() -> None:
     match_msg = "QUBO size 81×81 exceeds the maximum supported size of 80×80"
     with pytest.raises(ValueError, match=match_msg):
         Solver(qi, SolverConfig(use_quantum=True))
+
+
+@pytest.mark.parametrize("size", [0, 1])
+def test_max_off_diag_no_off_diag_entries(size: int) -> None:
+    qi = Instance(matrix.zeros(size))
+    with pytest.raises(RuntimeError, match="undefined"):
+        qi._max_off_diag
+
+
+@pytest.mark.parametrize("size", [0, 1])
+def test_normalized_matrix_no_off_diag_entries(size: int) -> None:
+    qi = Instance(matrix.zeros(size))
+    torch.testing.assert_close(qi._normalized_matrix, qi.matrix)
 
 
 def test_save_load(simple_qubo_instance: Instance) -> None:
