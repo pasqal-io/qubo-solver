@@ -69,38 +69,38 @@ config = SolverConfig(
 Remote backends submit jobs to a remote server via [pasqal-cloud](https://docs.pasqal.com/cloud/).
 The `RemoteEmulator` provides backend selection recommendations with the same tractability constraints as local backends:
 
-- **EmuFreeBackendV2**: free remote emulator for small problems (< 15 qubits) - becomes intractable beyond this limit,
-- **EmuSVBackend**: paid remote state-vector emulator for medium problems (15-25 qubits),
-- **EmuMPSBackend**: paid remote tensor network emulator for large problems (≥ 26 qubits).
+- **RemoteEmuFreeBackend**: free remote emulator for small problems (< 15 qubits) - becomes intractable beyond this limit,
+- **RemoteSVBackend**: paid remote state-vector emulator for medium problems (15-25 qubits),
+- **RemoteMPSBackend**: paid remote tensor network emulator for large problems (≥ 26 qubits).
 
-Note: EmuSVBackend and EmuMPSBackend incur fees, while EmuFreeBackendV2 is free. By default, `RemoteEmulator` uses `EmuFreeBackendV2`.
+Note: RemoteSVBackend and RemoteMPSBackend incur fees, while RemoteEmuFreeBackend is free. By default, `RemoteEmulator` uses `RemoteEmuFreeBackend`.
 
 ### Automatic Remote Backend Factory
 
 For fully automatic remote backend selection, you can use `AutoRemoteEmulatorBackend`, which automatically selects the optimal remote backend based on the number of qubits.
 
-Unlike local emulation, remote emulation typically uses manual backend selection due to cost considerations. Automatic selection is available when needed, but **will incur fees** for problems ≥15 qubits as it automatically switches from the free EmuFreeBackendV2 to paid backends (EmuSVBackend or EmuMPSBackend) based on problem size.
+Unlike local emulation, remote emulation typically uses manual backend selection due to cost considerations. Automatic selection is available when needed, but **will incur fees** for problems ≥15 qubits as it automatically switches from the free RemoteEmuFreeBackend to paid backends (RemoteSVBackend or RemoteMPSBackend) based on problem size.
 
 For this, we require specifying a `RemoteEmulator` or `QPU` and connection details.
 Using the code below, replace with your username, project id and password on the Pasqal Cloud.
 
 ```python exec="on" source="material-block"
 from qubosolver import SolverConfig, RemoteEmulator, AutoRemoteEmulatorBackend
-from pulser_pasqal import PasqalCloud
-from pulser_pasqal.backends import EmuFreeBackendV2, EmuSVBackend, EmuMPSBackend
+from pasqal_cloud import PasqalCloudConnection
+from pasqal_cloud.backends import RemoteEmuFreeBackend, RemoteSVBackend, RemoteMPSBackend
 
 USERNAME="#TO_PROVIDE"
 PROJECT_ID="#TO_PROVIDE"
 PASSWORD=None
 
 if PASSWORD is not None:
-    connection = PasqalCloud(
+    connection = PasqalCloudConnection(
         username=USERNAME,
         password=PASSWORD,
         project_id=PROJECT_ID,
     )
 
-    # Default behavior - uses EmuFreeBackendV2 with warnings for larger problems
+    # Default behavior - uses RemoteEmuFreeBackend with warnings for larger problems
     config_default = SolverConfig(
         use_quantum=True,
         backend=RemoteEmulator(connection=connection, num_shots=500),
@@ -116,9 +116,9 @@ if PASSWORD is not None:
     # Manual backend selection (if needed)
     remote_emulators = [RemoteEmulator(backend_type=btype, connection=connection, num_shots=500)
     for btype in [
-        EmuFreeBackendV2,  # For < 15 qubits
-        EmuSVBackend,      # For 15-25 qubits
-        EmuMPSBackend,     # For ≥ 26 qubits
+        RemoteEmuFreeBackend,  # For < 15 qubits
+        RemoteSVBackend,      # For 15-25 qubits
+        RemoteMPSBackend,     # For ≥ 26 qubits
     ]]
     manual_config = SolverConfig(
         use_quantum=True,
@@ -131,15 +131,15 @@ We can also target a remote QPU as follows:
 ```python exec="on" source="material-block"
 import qoolqit
 from qubosolver import SolverConfig
-from pulser_pasqal import PasqalCloud
-from pulser_pasqal.backends import EmuFreeBackendV2, EmuMPSBackend
+from pasqal_cloud import PasqalCloudConnection
+from pasqal_cloud.backends import RemoteEmuFreeBackend, RemoteMPSBackend
 
 USERNAME="#TO_PROVIDE"
 PROJECT_ID="#TO_PROVIDE"
 PASSWORD=None
 
 if PASSWORD is not None:
-    connection = PasqalCloud(
+    connection = PasqalCloudConnection(
         username=USERNAME,
         password=PASSWORD,
         project_id=PROJECT_ID,

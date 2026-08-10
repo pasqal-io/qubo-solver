@@ -6,8 +6,8 @@ import pytest_check as check
 import torch
 
 import qoolqit
-from qoolqit import Constant as ConstantWaveform
-from qoolqit import Ramp as RampWaveform
+from qoolqit import ConstantWaveform
+from qoolqit import RampWaveform
 from qubosolver import Instance, matrix, vector, drive_shaping, embedding, extract_qubo, LayoutType
 
 
