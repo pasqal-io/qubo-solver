@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import torch
 
-from qubosolver import LayoutType
+from qubosolver import LayoutType, tensor, Tensor
 
 
-def get_layout(
-    *, layout_type: LayoutType | str = LayoutType.TRIANGULAR, n_traps: int
-) -> torch.Tensor:
+def get_layout(*, layout_type: LayoutType | str = LayoutType.TRIANGULAR, n_traps: int) -> Tensor:
     """Build a lattice of `n_traps` unit-spacing trap coordinates.
 
     For a square lattice, builds a grid large enough to contain `n_traps`
@@ -32,9 +30,20 @@ def get_layout(
     if isinstance(layout_type, str):
         layout_type = layout_type.lower()
 
+    if layout_type not in [
+        LayoutType.TRIANGULAR,
+        "triangular",
+        LayoutType.SQUARE,
+        "square",
+    ]:
+        raise ValueError(f"Unsupported layout_type: {layout_type!r}")
+
+    if n_traps == 0:
+        return tensor.zeros(0, 2)
+
     match layout_type:
         case LayoutType.TRIANGULAR | "triangular":
-            return torch.tensor(LayoutType.TRIANGULAR.value(n_traps, spacing=1).coords)
+            return tensor.tensor(LayoutType.TRIANGULAR.value(n_traps, spacing=1).coords)
 
         case LayoutType.SQUARE | "square":
             n = int(torch.ceil(torch.sqrt(2 * torch.tensor(n_traps))).item())
@@ -43,4 +52,5 @@ def get_layout(
             return coords[torch.argsort(squared_distances)[:n_traps]]
 
         case _:
-            raise ValueError(f"Unsupported layout_type: {layout_type!r}")
+            # Unreachable: layout_type was already validated above.
+            assert False, f"Unhandled layout_type: {layout_type!r}"  # nosec B101

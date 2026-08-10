@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from typing import Iterable
 import torch
 import itertools
+import logging
+import re
 import numpy as np
 import pytest
 import pytest_check as check
@@ -18,7 +20,10 @@ from qubosolver import (
     Analyzer,
     tensor,
     vector,
+    matrix,
+    drive_shaping,
 )
+import qoolqit
 from qoolqit import DigitalAnalogDevice, AnalogDevice
 
 
@@ -164,3 +169,53 @@ def test_with_perfect_embedding(
 
     cumulated_probability = sum(s.probability for s in optimal_solutions)
     check.greater(cumulated_probability, 0.75)
+
+
+def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
+
+    device = qoolqit.AnalogDeviceWithDMM()
+    specs = device.specs
+    eps = 0.001
+    d = specs["min_distance"]
+    assert d is not None
+    d += eps
+    D = specs["max_radial_distance"]
+    assert D is not None
+    D -= eps
+
+    # Build a register that cannot be scaled
+    register = qoolqit.Register.from_coordinates(
+        [
+            [0.0, 0.0],
+            [d, 0.0],
+            [D, 0.0],
+        ]
+    )
+    Q = matrix.tensor(register.interaction_matrix()) + vector.zeros(3).fill_(-50.0).diag()
+    instance = Instance(Q)
+
+    with caplog.at_level(logging.INFO, logger="qubosolver.drive_shaping.heuristic"):
+        _ = drive_shaping.heuristic.build_drive(instance, register, device=device)
+
+    # Since the register cannot be rescaled, limits are the one of the device
+    max_amplitude = specs["max_amplitude"]
+    max_detuning = specs["max_abs_detuning"]
+    assert max_amplitude is not None
+    assert max_detuning is not None
+
+    amplitude_match = re.search(
+        r"The heuristic drive amplitude \(([^)]+)\) exceeds the maximum amplitude "
+        r"compilable on the device for this register \(([^)]+)\); clamping to it\.",
+        caplog.text,
+    )
+    assert amplitude_match is not None
+    check.almost_equal(float(amplitude_match.group(2)), max_amplitude, rel=1e-2)
+
+    detuning_match = re.search(
+        r"The heuristic detuning \(([^)]+)\) exceeds the maximum detuning "
+        r"compilable on the device for this amplitude \(([^)]+)\); "
+        r"scaling the detuning down\.",
+        caplog.text,
+    )
+    assert detuning_match is not None
+    check.almost_equal(float(detuning_match.group(2)), max_detuning, rel=1e-2)
