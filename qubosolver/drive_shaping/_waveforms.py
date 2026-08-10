@@ -5,7 +5,7 @@ import logging
 
 import numpy as np
 import qoolqit
-from qoolqit import Constant as ConstantWaveform
+from qoolqit import ConstantWaveform
 
 logger = logging.getLogger(__name__)
 
