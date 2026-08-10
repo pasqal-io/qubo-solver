@@ -4,9 +4,11 @@ from __future__ import annotations
 import torch
 import numpy as np
 from qoolqit.devices.device import BaseDevice
+from qoolqit import AnalogDeviceWithDMM
 
 from qubosolver.embedding._algorithms.greedy import Greedy
-from qubosolver import LayoutType, Dataset
+from qubosolver.embedding.greedy import _resolve_max_possible_term
+from qubosolver import LayoutType, Dataset, embedding, Instance, matrix
 import pytest
 import pytest_check as check
 
@@ -293,7 +295,6 @@ def test_too_large_spacing(
 
 
 def test_max_distance_constraint() -> None:
-    from qoolqit.devices.device import AnalogDeviceWithDMM
 
     device = AnalogDeviceWithDMM()._device
 
@@ -317,3 +318,39 @@ def test_max_distance_constraint() -> None:
 
     with pytest.raises(ValueError):
         Greedy().launch_greedy(Q=Q, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
+
+
+def test_empty_embedding() -> None:
+    config = embedding.greedy.Config(traps=0)
+    with pytest.raises(ValueError, match="empty instance"):
+        embedding.greedy.embed(Instance(), AnalogDeviceWithDMM(), config=config)
+
+
+def test_single_atom_embedding() -> None:
+    config = embedding.greedy.Config(traps=1)
+    instance = Instance(matrix.zeros(1))
+    register = embedding.greedy.embed(instance, AnalogDeviceWithDMM(), config=config)
+    check.equal(len(register), 1)
+
+
+def test_resolve_max_possible_term_float() -> None:
+    instance = Instance(matrix.from_torch(triangular_qubo()))
+    check.equal(_resolve_max_possible_term(2.5, instance), 2.5)
+
+
+def test_resolve_max_possible_term_factor() -> None:
+    instance = Instance(matrix.from_torch(triangular_qubo()))
+    check.almost_equal(_resolve_max_possible_term(("factor", 2.0), instance), 2.0)
+
+
+def test_resolve_max_possible_term_invalid_kind() -> None:
+    instance = Instance(matrix.from_torch(triangular_qubo()))
+    with pytest.raises(ValueError, match="must be 'factor'"):
+        _resolve_max_possible_term(("bogus", 2.0), instance)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("size", [0, 1])
+def test_resolve_max_possible_term_factor_no_off_diag_entries(size: int) -> None:
+    instance = Instance(matrix.zeros(size))
+    with pytest.raises(ValueError, match="fewer than"):
+        _resolve_max_possible_term(("factor", 2.0), instance)
