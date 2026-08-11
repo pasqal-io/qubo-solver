@@ -1,6 +1,15 @@
 from __future__ import annotations
 
-from qubosolver.types import bitstring, bitstrings, matrix, tensor, vector, vectori, linalg
+from qubosolver.types import (
+    bitstring,
+    bitstrings,
+    matrix,
+    tensor,
+    vector,
+    vectori,
+    linalg,
+    protocols,
+)
 from qubosolver.types.linalg import Bitstring, Bitstrings, Matrix, Tensor, Vector, Vectori
 from qubosolver.types.solution import Solution, SingleSolution
 from qubosolver.types.analyzer import Analyzer
@@ -43,6 +52,7 @@ __all__ = [
     "vector",
     "vectori",
     "linalg",
+    "protocols",
     # Type Aliases
     "Bitstring",
     "Bitstrings",

@@ -21,7 +21,7 @@ The embedding configuration part (the `embedding` field of [`qubosolver.SolverCo
 Quantum devices can be programmed by specifying a Drive. A program in the Rydberg analog model is defined as a time-dependent drive Hamiltonian that is imposed on the qubits.
 The drive shaping configuration part (the `drive_shaping` field of [`qubosolver.SolverConfig`][]) is set via the [`qubosolver.DriveShapingConfig`][] class, and defines how the drive parameters are constructed (heuristically from the QUBO diagonal, via bayesian optimization, ...).
 Note, for parameters concerning exclusively the heuristic drive shaping method, a `heuristic_` prefix is present.
-Similarly, for parameters concerning exclusively the optimized drive shaping method (bayesian optimization), an `optimized_` prefix is present. See [`qubosolver.DriveShapingConfig`][].
+Similarly, for parameters concerning exclusively the Bayesian-search drive shaping method (bayesian optimization), a `bayesian_search_` prefix is present. See [`qubosolver.DriveShapingConfig`][].
 
 ### Classical solver configuration
 

@@ -120,9 +120,9 @@ def test_with_perfect_embedding(
     )
 
     drive_cfg = DriveShapingConfig(
-        drive_shaping_method="heuristic",
+        drive_shaping_method="proportional_diagonal",
         dmm=dmm,
-        heuristic_kappa=0.5,
+        proportional_diagonal_kappa=0.5,
     )
 
     config = SolverConfig(
@@ -194,8 +194,8 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
     Q = matrix.tensor(register.interaction_matrix()) + vector.zeros(3).fill_(-50.0).diag()
     instance = Instance(Q)
 
-    with caplog.at_level(logging.INFO, logger="qubosolver.drive_shaping.heuristic"):
-        _ = drive_shaping.heuristic.build_drive(instance, register, device=device)
+    with caplog.at_level(logging.INFO, logger="qubosolver.drive_shaping.proportional_diagonal"):
+        _ = drive_shaping.proportional_diagonal.build_drive(instance, register, device=device)
 
     # Since the register cannot be rescaled, limits are the one of the device
     max_amplitude = specs["max_amplitude"]
@@ -204,7 +204,7 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
     assert max_detuning is not None
 
     amplitude_match = re.search(
-        r"The heuristic drive amplitude \(([^)]+)\) exceeds the maximum amplitude "
+        r"The proportional-diagonal drive amplitude \(([^)]+)\) exceeds the maximum amplitude "
         r"compilable on the device for this register \(([^)]+)\); clamping to it\.",
         caplog.text,
     )
@@ -212,7 +212,7 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
     check.almost_equal(float(amplitude_match.group(2)), max_amplitude, rel=1e-2)
 
     detuning_match = re.search(
-        r"The heuristic detuning \(([^)]+)\) exceeds the maximum detuning "
+        r"The proportional-diagonal detuning \(([^)]+)\) exceeds the maximum detuning "
         r"compilable on the device for this amplitude \(([^)]+)\); "
         r"scaling the detuning down\.",
         caplog.text,

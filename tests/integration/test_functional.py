@@ -119,7 +119,7 @@ def check_solution(
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("drive_shaping_method", ["heuristic", "optimized"])
+@pytest.mark.parametrize("drive_shaping_method", ["proportional_diagonal", "bayesian_search"])
 @pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
 @pytest.mark.parametrize("postprocessing", [True, False], ids=["post", "no-post"])
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no-pre"])
@@ -157,23 +157,23 @@ def test_quantum_solve(
 
     emulator = qoolqit.execution.LocalEmulator()
 
-    if drive_shaping_method == "heuristic":
-        drive = drive_shaping.heuristic.build_drive(
+    if drive_shaping_method == "proportional_diagonal":
+        drive = drive_shaping.proportional_diagonal.build_drive(
             effective_qubo, register, device=device, dmm=False, kappa=0.25
         )
-    elif drive_shaping_method == "optimized":
-        drive, _ = drive_shaping.optimized.build_drive(
+    elif drive_shaping_method == "bayesian_search":
+        drive, _ = drive_shaping.bayesian_search.build_drive(
             effective_qubo,
             register,
             emulator,
             device,
             dmm=False,
-            config=drive_shaping.optimized.Config(n_calls=11, seed=seed),
+            config=drive_shaping.bayesian_search.Config(n_calls=11, seed=seed),
         )
     else:
         raise ValueError(f"Invalid drive shaping method: {drive_shaping_method}")
 
-    job = solvers.analog_quantum_sample(register, drive, emulator, device)
+    job = solvers.analog_quantum_sampling(register, drive, emulator, device)
     solution = Solution.from_results(job.results())
 
     # Post-process fixations of the preprocessing and restore the original QUBO
@@ -187,7 +187,7 @@ def test_quantum_solve(
     solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
 
     expected_optimal_probability = 0.75
-    if drive_shaping_method in ["optimized"]:
+    if drive_shaping_method in ["bayesian_search"]:
         expected_optimal_probability = 0.0
 
     check_solution(
@@ -222,17 +222,17 @@ def test_classical_solve(
     if solving_method == "cplex":
         solution = solvers.cplex(effective_qubo)
     elif solving_method == "tabu":
-        solution = solvers.random_solutions(effective_qubo, rng=rng, max_bitstrings=3)
+        solution = solvers.random_sampling(effective_qubo, rng=rng, max_bitstrings=3)
         solution = solvers.tabu_search(effective_qubo, solution.bitstrings)
     elif solving_method == "sa":
-        solution = solvers.random_solutions(effective_qubo, rng=rng, max_bitstrings=1)
+        solution = solvers.random_sampling(effective_qubo, rng=rng, max_bitstrings=1)
         solution = solvers.simulated_annealing(effective_qubo, solution.bitstrings[0], top_k=1)
     elif solving_method == "sa+tabu":
-        solution = solvers.random_solutions(effective_qubo, rng=rng, max_bitstrings=1)
+        solution = solvers.random_sampling(effective_qubo, rng=rng, max_bitstrings=1)
         solution = solvers.simulated_annealing(effective_qubo, solution.bitstrings[0], top_k=1)
         solution = solvers.tabu_search(effective_qubo, solution.bitstrings)
     elif solving_method == "random":
-        solution = solvers.random_solutions(effective_qubo, rng=rng)
+        solution = solvers.random_sampling(effective_qubo, rng=rng)
     else:
         raise ValueError(f"Invalid solving method: {solving_method}")
 

@@ -23,7 +23,6 @@ from qubosolver.solvers.classical._solver import (
     get_classical_solver,
     SimulatedAnnealingSolver,
     TabuSearchSolver,
-    HybridSATabuSolver,
     RandomSolver,
 )
 from qubosolver.utils import _costs
@@ -31,7 +30,6 @@ from qubosolver.utils import _costs
 class_solvers = {
     ClassicalSolverType.SIMULATED_ANNEALING: SimulatedAnnealingSolver,
     ClassicalSolverType.TABU_SEARCH: TabuSearchSolver,
-    ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH: HybridSATabuSolver,
 }
 
 
@@ -84,7 +82,7 @@ def test_qubo_solver_sa_or_tabu(
     check.equal(solution.bitstrings.shape[1], simple_qubo_instance.size)
     check.equal(len(solution.counts), len(solution.bitstrings))
     check.equal(len(solution.probabilities), len(solution.bitstrings))
-    # random_solutions draws max_bitstrings uniformly at random and dedups them,
+    # random_sampling draws max_bitstrings uniformly at random and dedups them,
     # so the total count can be less than max_bitstrings if a bitstring is drawn twice.
     check.less_equal(solution.counts.sum().item(), max_bitstrings)
     check.almost_equal(solution.probabilities.sum().item(), 1.0)
@@ -122,7 +120,7 @@ def test_random() -> None:
 
 @pytest.mark.parametrize(
     "classical_methods",
-    [ClassicalSolverType.SIMULATED_ANNEALING, ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH],
+    [ClassicalSolverType.SIMULATED_ANNEALING],
 )
 @pytest.mark.parametrize("max_bitstrings", [1])
 def test_sa_cost(
@@ -233,7 +231,6 @@ def test_sa_time_limit(simple_qubo_instance: Instance) -> None:
     "classical_method",
     [
         ClassicalSolverType.SIMULATED_ANNEALING,
-        ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH,
         ClassicalSolverType.CPLEX,
         ClassicalSolverType.TABU_SEARCH,
     ],

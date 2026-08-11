@@ -16,7 +16,7 @@ from qubosolver.types import (
     Solution,
     Bitstring,
     Matrix,
-    _protocols,
+    protocols,
     tensor,
 )
 from qubosolver import solvers, utils, DriveShapingConfig
@@ -81,17 +81,18 @@ class Config:
         """
         cfg = Config()
         cfg.x0 = (
-            config.optimized_initial_omega_parameters + config.optimized_initial_detuning_parameters
+            config.bayesian_search_initial_omega_parameters
+            + config.bayesian_search_initial_detuning_parameters
         )
-        cfg.n_calls = config.optimized_n_calls
-        cfg.seed = config.optimized_seed
+        cfg.n_calls = config.bayesian_search_n_calls
+        cfg.seed = config.bayesian_search_seed
         cfg.default_sequence_duration = config.default_sequence_duration
-        if config.optimized_custom_qubo_cost is not None:
-            cfg.qubo_cost = config.optimized_custom_qubo_cost
-        if config.optimized_custom_objective is not None:
-            cfg.objective = config.optimized_custom_objective
-        if config.optimized_callback_objective is not None:
-            cfg.callback_objective = config.optimized_callback_objective
+        if config.bayesian_search_custom_qubo_cost is not None:
+            cfg.qubo_cost = config.bayesian_search_custom_qubo_cost
+        if config.bayesian_search_custom_objective is not None:
+            cfg.objective = config.bayesian_search_custom_objective
+        if config.bayesian_search_callback_objective is not None:
+            cfg.callback_objective = config.bayesian_search_callback_objective
 
         return cfg
 
@@ -198,13 +199,13 @@ def _run_simulation(
     register: qoolqit.Register,
     drive: qoolqit.Drive,
     device: qoolqit.Device,
-    backend: _protocols.Backend,
+    backend: protocols.Backend,
     config: Config,
 ) -> Solution:
     """Execute one quantum simulation and return a costed, sorted solution.
 
     Submits an analog quantum sampling job via
-    `~qubosolver.solvers.analog_quantum_sample` using the
+    `~qubosolver.solvers.analog_quantum_sampling` using the
     ``MAX_ENERGY`` compiler profile (the default), evaluates the QUBO cost
     for every returned bitstring with ``config.qubo_cost``, then sorts
     results by cost and computes sampling probabilities in-place.
@@ -229,7 +230,7 @@ def _run_simulation(
         cost.  Returns an empty :class:`Solution` on any failure.
     """
     try:
-        job = solvers.analog_quantum_sample(
+        job = solvers.analog_quantum_sampling(
             register,
             drive,
             backend,
@@ -249,7 +250,7 @@ def _run_simulation(
 def build_drive(
     instance: Instance,
     register: qoolqit.Register,
-    backend: _protocols.Backend,
+    backend: protocols.Backend,
     device: qoolqit.Device,
     *,
     dmm: bool = False,

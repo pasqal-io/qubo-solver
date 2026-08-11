@@ -1,6 +1,6 @@
 """Uniform random bitstring sampler for QUBO instances.
 
-This module provides `random_solutions`, which samples uniformly random
+This module provides `random_sampling`, which samples uniformly random
 binary vectors, evaluates their QUBO cost, and returns a deduplicated
 `qubosolver.Solution` sorted by ascending cost.
 """
@@ -13,7 +13,7 @@ from qubosolver.types import Instance, Solution, bitstring, torch_rng
 from qubosolver.utils import _costs
 
 
-def random_solutions(
+def random_sampling(
     instance: Instance,
     *,
     max_bitstrings: int = 1,

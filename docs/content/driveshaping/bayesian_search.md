@@ -1,6 +1,6 @@
-## Optimized Drive Shaper
+## Bayesian Search Drive Shaper
 
-`OptimizedDriveShaper` uses bayesian optimization to find drive parameters (amplitude and detuning) in order to solve a QUBO problem using quantum simulation.
+`BayesianSearchDriveShaper` uses bayesian optimization to find drive parameters (amplitude and detuning) in order to solve a QUBO problem using quantum simulation.
 
 It outputs both the optimized drive and a solution object containing bitstrings, counts, probabilities, and associated costs.
 
@@ -75,7 +75,7 @@ Q = torch.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
 instance = Instance(Q)
 
 default_config = SolverConfig(
-    use_quantum = True, drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.OPTIMIZED, optimized_n_calls = 25),
+    use_quantum = True, drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.BAYESIAN_SEARCH, bayesian_search_n_calls = 25),
 )
 solver = Solver(instance, default_config)
 

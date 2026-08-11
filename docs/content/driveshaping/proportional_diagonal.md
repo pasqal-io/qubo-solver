@@ -1,10 +1,10 @@
-## Heuristic Drive Shaper
+## Proportional-Diagonal Drive Shaper
 
-`HeuristicDriveShaper` constructs a fixed, closed-form analog drive directly from
+`ProportionalDiagonalDriveShaper` constructs a fixed, closed-form analog drive directly from
 the diagonal of the QUBO matrix, without running any classical pulse
 optimization loop.
 
-Compared with [`OptimizedDriveShaper`](./optimized.md), it is lighter and faster:
+Compared with [`BayesianSearchDriveShaper`](./bayesian_search.md), it is lighter and faster:
 it builds the drive analytically from the problem structure and the hardware
 limits. It is especially useful when the diagonal coefficients carry meaningful
 site-dependent bias information.
@@ -89,7 +89,7 @@ $$
 
 The current fallback default is:
 
-- `heuristic_kappa = 0.25`
+- `proportional_diagonal_kappa = 0.25`
 
 ---
 
@@ -147,9 +147,9 @@ The register should be normalized to have a minimal inter-atomic distance equal 
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `drive_shaping_method` | `DriveType \| str` | Must be set to `DriveType.HEURISTIC` or `"heuristic"` |
+| `drive_shaping_method` | `DriveType \| str` | Must be set to `DriveType.PROPORTIONAL_DIAGONAL` or `"proportional_diagonal"` |
 | `dmm` | `bool` | Enables site-dependent final detuning through weighted DMM detunings |
-| `heuristic_kappa` | `float` | Proportionality factor used to derive $\Omega_{\max}$ from the detuning scale; current fallback default: `0.25` |
+| `proportional_diagonal_kappa` | `float` | Proportionality factor used to derive $\Omega_{\max}$ from the detuning scale; current fallback default: `0.25` |
 
 These parameters are provided through `DriveShapingConfig` and read at drive
 generation time.
@@ -184,9 +184,9 @@ instance = Instance(Q)
 config = SolverConfig(
     use_quantum=True,
     drive_shaping=DriveShapingConfig(
-        drive_shaping_method=DriveType.HEURISTIC,
+        drive_shaping_method=DriveType.PROPORTIONAL_DIAGONAL,
         dmm=True,
-        heuristic_kappa=0.25,
+        proportional_diagonal_kappa=0.25,
     ),
 )
 

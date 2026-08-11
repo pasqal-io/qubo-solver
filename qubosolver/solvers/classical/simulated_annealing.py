@@ -4,8 +4,7 @@ Implements a single-run bit-flip annealer that minimises
 the quadratic objective E(x) = xᵀ Q x over binary vectors x ∈ {0,1}ⁿ.
 
 The public entry point is `simulated_annealing`.  It is called by
-:class:`~qubosolver.solvers.SimulatedAnnealingSolver` and used as the first
-phase of :class:`~qubosolver.solvers.HybridSATabuSolver`.
+:class:`~qubosolver.solvers.SimulatedAnnealingSolver`.
 """
 
 from __future__ import annotations

@@ -1,6 +1,6 @@
 """Analog quantum sampling solver.
 
-The public entry point of this module is `analog_quantum_sample` — the
+The public entry point of this module is `analog_quantum_sampling` — the
 primary quantum solving primitive that compiles a pulse program and runs it on
 a backend to sample bitstrings from the quantum state.  It is exported via
 :mod:`qubosolver.solvers` and called by
@@ -14,7 +14,7 @@ import dataclasses
 import qoolqit
 from qoolqit.execution.compilation_functions import CompilerProfile
 from qoolqit.execution import job
-from qubosolver.types import _protocols
+from qubosolver.types import protocols
 
 
 def _quantum_program(
@@ -79,10 +79,10 @@ def _quantum_program(
     return program
 
 
-def analog_quantum_sample(
+def analog_quantum_sampling(
     register: qoolqit.Register,
     drive: qoolqit.Drive,
-    backend: _protocols.Backend,
+    backend: protocols.Backend,
     device: qoolqit.Device,
     *,
     compiler_profile: CompilerProfile = CompilerProfile.MAX_ENERGY,

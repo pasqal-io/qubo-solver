@@ -15,8 +15,8 @@ nav:
       - Utilities: content/utilities.md
     - Quantum solver components:
       - Drive Shaping:
-        - Heuristic Drive: content/driveshaping/heuristic.md
-        - Optimized Drive: content/driveshaping/optimized.md
+        - Proportional-Diagonal Drive: content/driveshaping/proportional_diagonal.md
+        - Bayesian Search Drive: content/driveshaping/bayesian_search.md
         - Custom: content/driveshaping/custom.md
       - Embedding: content/embedding.md
     - Classical solvers:

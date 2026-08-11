@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 import qoolqit
 from qoolqit.execution import job
 from pulser.backend import Results
-from .protocol import Protocol
+from ._protocol import Protocol
 
 
 class Backend(Protocol):
