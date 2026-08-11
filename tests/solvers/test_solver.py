@@ -25,6 +25,7 @@ from qubosolver import (
     EmbeddingConfig,
     DriveShapingConfig,
     SolverConfig,
+    ClassicalConfig,
     vectori,
     bitstrings,
     matrix,
@@ -321,7 +322,11 @@ def test_quantum_matches_classical_triangular(embedding_method: str) -> None:
     quantum_solution = Solver(instance, quantum_config).solve()
     quantum_solution.sort_by_cost()
 
-    classical_solution = Solver(instance, SolverConfig(use_quantum=False)).solve()
+    classical_config = SolverConfig(
+        use_quantum=False,
+        classical=ClassicalConfig(max_bitstrings=4),
+    )
+    classical_solution = Solver(instance, classical_config).solve()
     classical_solution.sort_by_cost()
 
     check.almost_equal(
