@@ -85,17 +85,15 @@ class LayoutType(Enum):
 class DriveType(Enum):
     """Type of drive shaping method applied to the analog quantum pulse sequence."""
 
-    OPTIMIZED = "optimized"
-    """Numerically optimized drive that minimizes the cost function via pulse optimization."""
-    HEURISTIC = "heuristic"
-    """Fast heuristic drive based on predefined pulse shapes; no numerical optimization."""
+    BAYESIAN_SEARCH = "bayesian_search"
+    """Drive whose parameters are found via Bayesian search that minimizes the cost function via pulse optimization."""
+    PROPORTIONAL_DIAGONAL = "proportional_diagonal"
+    """Drive whose amplitude/detuning scale proportionally to the QUBO diagonal; no numerical optimization."""
 
 
 class ClassicalSolverType(_StrEnum):
     """Type of classical solver used as a backend for QUBO optimization."""
 
-    SIMULATED_ANNEALING_TABU_SEARCH = "simulated_annealing_tabu_search"
-    """Hybrid solver combining simulated annealing with tabu-search post-processing."""
     TABU_SEARCH = "tabu_search"
     """Tabu search metaheuristic that avoids recently visited solutions."""
     SIMULATED_ANNEALING = "simulated_annealing"

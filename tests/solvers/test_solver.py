@@ -105,7 +105,7 @@ def test_solver_different_devices(
 
     config = SolverConfig(
         use_quantum=True,
-        drive_shaping=DriveShapingConfig(drive_shaping_method="heuristic"),
+        drive_shaping=DriveShapingConfig(drive_shaping_method="proportional_diagonal"),
         embedding=EmbeddingConfig(
             embedding_method=embedding_method,
             greedy_traps=qubo_for_testing_many_devices.size,
@@ -314,7 +314,7 @@ def test_quantum_matches_classical_triangular(embedding_method: str) -> None:
     quantum_config = SolverConfig(
         use_quantum=True,
         embedding=EmbeddingConfig(embedding_method=embedding_method),
-        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.HEURISTIC),
+        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.PROPORTIONAL_DIAGONAL),
         do_preprocessing=False,
         do_postprocessing=False,
     )

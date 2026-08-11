@@ -8,8 +8,8 @@ import torch
 import qoolqit
 
 
-from . import heuristic, optimized
-from qubosolver.types import Instance, Solution, DriveType, _protocols
+from . import proportional_diagonal, bayesian_search
+from qubosolver.types import Instance, Solution, DriveType, protocols
 from qubosolver.config import SolverConfig
 
 
@@ -29,7 +29,7 @@ class _BaseDriveShaper(ABC):
 
     """
 
-    def __init__(self, instance: Instance, config: SolverConfig, backend: _protocols.Backend):
+    def __init__(self, instance: Instance, config: SolverConfig, backend: protocols.Backend):
         """
         Initialize the drive shaping module with a QUBO instance.
 
@@ -70,9 +70,9 @@ class _BaseDriveShaper(ABC):
         pass
 
 
-class HeuristicDriveShaper(_BaseDriveShaper):
+class ProportionalDiagonalDriveShaper(_BaseDriveShaper):
     """
-    Heuristic schedule drive shaper.
+    Proportional-diagonal schedule drive shaper.
 
     With DMM:
         Final target encoding:
@@ -99,7 +99,7 @@ class HeuristicDriveShaper(_BaseDriveShaper):
     """
 
     def generate(self, register: qoolqit.Register) -> tuple[qoolqit.Drive, Solution]:
-        """Generate a drive using the heuristic schedule.
+        """Generate a drive using the proportional-diagonal schedule.
 
         Builds amplitude and detuning waveforms from the QUBO coefficients.
         When DMM is available, per-qubit detuning weights are encoded via a
@@ -109,22 +109,24 @@ class HeuristicDriveShaper(_BaseDriveShaper):
             register (qoolqit.Register): The physical register layout.
 
         Returns:
-            tuple[qoolqit.Drive, Solution]: The heuristic drive and an
-            empty QUBO solution (no optimization is performed).
+            tuple[qoolqit.Drive, Solution]: The proportional-diagonal drive
+            and an empty QUBO solution (no optimization is performed).
         """
         device = self.config.device
         dmm = self.config.drive_shaping.dmm
-        # Heuristic coefficient for omega
-        kappa = self.config.drive_shaping.heuristic_kappa
+        # Proportional-diagonal coefficient for omega
+        kappa = self.config.drive_shaping.proportional_diagonal_kappa
         return (
-            heuristic.build_drive(self.instance, register, device=device, dmm=dmm, kappa=kappa),
+            proportional_diagonal.build_drive(
+                self.instance, register, device=device, dmm=dmm, kappa=kappa
+            ),
             Solution(),
         )
 
 
-class OptimizedDriveShaper(_BaseDriveShaper):
+class BayesianSearchDriveShaper(_BaseDriveShaper):
     """
-    qoolqit.Drive shaper that uses optimization to find the best drive parameters for solving QUBOs.
+    qoolqit.Drive shaper that uses Bayesian search to find the best drive parameters for solving QUBOs.
     Returns an optimized drive, the bitstrings, their counts, probabilities, and costs.
     """
 
@@ -132,9 +134,9 @@ class OptimizedDriveShaper(_BaseDriveShaper):
         self,
         instance: Instance,
         config: SolverConfig,
-        backend: _protocols.Backend,
+        backend: protocols.Backend,
     ):
-        """Instantiate an `OptimizedDriveShaper`.
+        """Instantiate a `BayesianSearchDriveShaper`.
 
         Args:
             instance (Instance): Qubo instance.
@@ -148,7 +150,7 @@ class OptimizedDriveShaper(_BaseDriveShaper):
         self,
         register: qoolqit.Register,
     ) -> tuple[qoolqit.Drive, Solution]:
-        """Generate a drive via optimization.
+        """Generate a drive via Bayesian search.
 
         Builds drive parameters by running a Bayesian optimization loop
         over the QUBO cost. Supports optional DMM channels and custom
@@ -163,9 +165,9 @@ class OptimizedDriveShaper(_BaseDriveShaper):
             probabilities from the final simulation run.
         """
 
-        config = optimized.Config.from_drive_shaping_config(self.config.drive_shaping)
+        config = bayesian_search.Config.from_drive_shaping_config(self.config.drive_shaping)
 
-        return optimized.build_drive(
+        return bayesian_search.build_drive(
             self.instance,
             register,
             self.backend,
@@ -178,13 +180,13 @@ class OptimizedDriveShaper(_BaseDriveShaper):
 def _get_drive_shaper(
     instance: Instance,
     config: SolverConfig,
-    backend: _protocols.Backend,
+    backend: protocols.Backend,
 ) -> _BaseDriveShaper:
     """Return the appropriate drive shaper for the given configuration.
 
     Selects and instantiates a :class:`_BaseDriveShaper` subclass based on
     ``config.drive_shaping.drive_shaping_method``. Supports the built-in
-    :class:`HeuristicDriveShaper` and :class:`OptimizedDriveShaper`, as well
+    :class:`ProportionalDiagonalDriveShaper` and :class:`BayesianSearchDriveShaper`, as well
     as any custom subclass of :class:`_BaseDriveShaper` passed directly in
     the config.
 
@@ -202,10 +204,10 @@ def _get_drive_shaper(
             is not a recognised :class:`DriveType` and is not a subclass of
             :class:`_BaseDriveShaper`.
     """
-    if config.drive_shaping.drive_shaping_method == DriveType.HEURISTIC:
-        return HeuristicDriveShaper(instance, config, backend)
-    elif config.drive_shaping.drive_shaping_method == DriveType.OPTIMIZED:
-        return OptimizedDriveShaper(instance, config, backend)
+    if config.drive_shaping.drive_shaping_method == DriveType.PROPORTIONAL_DIAGONAL:
+        return ProportionalDiagonalDriveShaper(instance, config, backend)
+    elif config.drive_shaping.drive_shaping_method == DriveType.BAYESIAN_SEARCH:
+        return BayesianSearchDriveShaper(instance, config, backend)
     elif issubclass(config.drive_shaping.drive_shaping_method, _BaseDriveShaper):
         return cast(
             _BaseDriveShaper,

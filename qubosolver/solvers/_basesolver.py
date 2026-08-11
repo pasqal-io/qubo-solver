@@ -107,7 +107,7 @@ class BaseSolver(ABC):
         Returns:
             A job handle for the submitted execution.
         """
-        return solvers.analog_quantum_sample(
+        return solvers.analog_quantum_sampling(
             embedding,
             drive,
             self.backend,

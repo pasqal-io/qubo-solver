@@ -129,7 +129,9 @@ def test_extract_qubo_round_trip_through_greedy_embedding_and_drive_shaping() ->
     device = qoolqit.AnalogDeviceWithDMM()
     config = embedding.greedy.Config(traps=12, max_possible_term=1.0)
     register = embedding.greedy.embed(original, device, config=config)
-    drive = drive_shaping.heuristic.build_drive(original, register, device=device, dmm=True)
+    drive = drive_shaping.proportional_diagonal.build_drive(
+        original, register, device=device, dmm=True
+    )
 
     extracted = extract_qubo(register, drive)
     torch.testing.assert_close(extracted.matrix, original.matrix)

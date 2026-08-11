@@ -175,7 +175,7 @@ class _QuboSolverQuantum(BaseSolver):
     def drive(self, embedding: qoolqit.Register) -> tuple[qoolqit.Drive, Solution]:
         """Generate the pulse drive schedule for the given embedding.
 
-        Calls the configured drive shaper (heuristic or optimised) and
+        Calls the configured drive shaper (proportional-diagonal or optimised) and
         caches the drive in ``self._drive``.
 
         Args:
@@ -188,7 +188,7 @@ class _QuboSolverQuantum(BaseSolver):
               execution.
             * :class:`~qubosolver.types.Solution` — an initial solution
               produced as a by-product of drive shaping (may be empty for the
-              heuristic shaper).
+              proportional-diagonal shaper).
         """
         self.drive_shaper.instance = self.instance
         drive, qubo_solution = self.drive_shaper.generate(embedding)
@@ -225,7 +225,7 @@ class _QuboSolverQuantum(BaseSolver):
 
         drive, solution = self.drive(embedding)
 
-        if not solution or self.config.drive_shaping.optimized_re_execute_opt_drive:
+        if not solution or self.config.drive_shaping.bayesian_search_re_execute_opt_drive:
             solution = self.execute(drive, embedding)
 
         if isinstance(self.instance, transforms.zeroing.Instance):

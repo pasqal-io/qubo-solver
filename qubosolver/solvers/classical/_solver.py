@@ -10,8 +10,6 @@ Available solvers:
 * :class:`CplexSolver` — exact MIP solver via IBM CPLEX (optional dependency).
 * :class:`SimulatedAnnealingSolver` — stochastic temperature-cooling search.
 * :class:`TabuSearchSolver` — neighbourhood search with a tabu memory.
-* :class:`HybridSATabuSolver` — SA warm-start for Tabu Search; runs SA first
-  and seeds Tabu Search with the best SA bitstring.
 * :class:`RandomSolver` — uniform random sampling baseline.
 """
 
@@ -117,7 +115,7 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
         """
         rng = torch_rng(self.config.sa_seed)
         if self.config.sa_start is None:
-            random_solution = solvers.random_solutions(self.instance, rng=rng, max_bitstrings=1)
+            random_solution = solvers.random_sampling(self.instance, rng=rng, max_bitstrings=1)
             start = random_solution.bitstrings[0]
         else:
             start = self.config.sa_start
@@ -163,7 +161,7 @@ class TabuSearchSolver(BaseClassicalSolver):
         if self.config.tabu_x0 is None:
             assert self.instance.size
             rng = torch_rng().set_state(torch.get_rng_state())
-            random_solution = solvers.random_solutions(
+            random_solution = solvers.random_sampling(
                 self.instance, rng=rng, max_bitstrings=self.config.max_bitstrings
             )
             x0 = random_solution.bitstrings
@@ -178,51 +176,6 @@ class TabuSearchSolver(BaseClassicalSolver):
             time_limit=self.config.tabu_time_limit,
         )
         return tabu_search_solution
-
-
-class HybridSATabuSolver(BaseClassicalSolver):
-    """QUBO solver that combines Simulated Annealing with Tabu Search.
-
-    Runs SA first to explore the solution space broadly, then seeds Tabu
-    Search with the best bitstring found by SA for focused local refinement.
-    This two-phase approach balances global exploration (SA) with precise
-    local exploitation (Tabu).
-
-    All ``sa_*`` and ``tabu_*`` fields of
-    :class:`~qubosolver.config.ClassicalConfig` apply to their respective
-    phases; ``max_iter`` and ``max_bitstrings`` are shared.
-    """
-
-    def solve(self) -> Solution:
-        """Solve via SA warm-started Tabu Search.
-
-        Internally creates a :class:`SimulatedAnnealingSolver` and a
-        :class:`TabuSearchSolver` from copies of ``self.config`` with
-        ``classical_solver_type`` overridden appropriately.  The best
-        (lowest-cost) bitstring from SA is injected as ``tabu_x0`` for
-        the Tabu phase.
-
-        Returns:
-            A :class:`~qubosolver.types.Solution` containing up to
-            ``config.max_bitstrings`` best bitstrings found by Tabu Search,
-            sorted by ascending cost.
-        """
-        config_sa = self.config.model_copy(
-            update={"classical_solver_type": ClassicalSolverType.SIMULATED_ANNEALING}
-        )
-        sa = SimulatedAnnealingSolver(self.instance, config_sa)
-        sa_solution = sa.solve()
-        sa_solution.sort_by_cost()
-        config_tabu = self.config.model_copy(
-            update={
-                "classical_solver_type": ClassicalSolverType.TABU_SEARCH,
-                "tabu_x0": sa_solution.bitstrings,
-            }
-        )
-        tabu = TabuSearchSolver(self.instance, config_tabu)
-        tabu_sol = tabu.solve()
-        tabu_sol.sort_by_cost()
-        return tabu_sol
 
 
 class RandomSolver(BaseClassicalSolver):
@@ -242,7 +195,7 @@ class RandomSolver(BaseClassicalSolver):
             their corresponding QUBO costs.
         """
         rng = torch_rng().set_state(torch.get_rng_state())
-        return solvers.random_solutions(
+        return solvers.random_sampling(
             self.instance, rng=rng, max_bitstrings=self.config.max_bitstrings
         )
 
@@ -251,11 +204,10 @@ def get_classical_solver(instance: Instance, config: ClassicalConfig) -> BaseCla
     """Return the appropriate classical solver for the given configuration.
 
     Dispatches on ``config.classical_solver_type`` (case-insensitive) to one
-    of the five concrete solver classes:
+    of the four concrete solver classes:
 
     * ``"cplex"`` → :class:`CplexSolver`
     * ``"simulated_annealing"`` → :class:`SimulatedAnnealingSolver`
-    * ``"simulated_annealing_tabu_search"`` → :class:`HybridSATabuSolver`
     * ``"tabu_search"`` → :class:`TabuSearchSolver`
     * ``"random"`` → :class:`RandomSolver`
 
@@ -280,8 +232,6 @@ def get_classical_solver(instance: Instance, config: ClassicalConfig) -> BaseCla
         return CplexSolver(instance, config)
     if solver_type == ClassicalSolverType.SIMULATED_ANNEALING:
         return SimulatedAnnealingSolver(instance, config)
-    if solver_type == ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH:
-        return HybridSATabuSolver(instance, config)
     if solver_type == ClassicalSolverType.TABU_SEARCH:
         return TabuSearchSolver(instance, config)
     if solver_type == ClassicalSolverType.RANDOM:

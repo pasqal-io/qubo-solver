@@ -26,7 +26,7 @@ from qubosolver import (
     transforms,
 )
 import qubosolver._io.utils as io_utils
-from qubosolver.types import _protocols
+from qubosolver.types import protocols
 
 from qoolqit import DigitalAnalogDevice
 from qoolqit.execution import (
@@ -50,8 +50,8 @@ def test_quantum_remote_job(
     preprocessing: bool,
     dmm: bool,
 ) -> None:
-    if drive_method == DriveType.OPTIMIZED:
-        pytest.skip(reason="Does not work with the optimized drive shaping method")
+    if drive_method == DriveType.BAYESIAN_SEARCH:
+        pytest.skip(reason="Does not work with the Bayesian-search drive shaping method")
 
     seed = 7979
     np.random.seed(seed)
@@ -84,20 +84,22 @@ def test_quantum_remote_job(
             register = embedding.greedy.embed(instance, device, config=config)
 
         num_shots = 50
-        backend: _protocols.Backend
+        backend: protocols.Backend
         if connection is None:
             backend = LocalEmulator(num_shots=num_shots)
         else:
             backend = RemoteEmulator(connection=connection, num_shots=num_shots)
 
-        if drive_method == DriveType.HEURISTIC:
-            drive = drive_shaping.heuristic.build_drive(instance, register, device=device, dmm=dmm)
+        if drive_method == DriveType.PROPORTIONAL_DIAGONAL:
+            drive = drive_shaping.proportional_diagonal.build_drive(
+                instance, register, device=device, dmm=dmm
+            )
         else:
-            drive, _ = drive_shaping.optimized.build_drive(
+            drive, _ = drive_shaping.bayesian_search.build_drive(
                 instance, register, backend, device, dmm=dmm
             )
 
-        job = solvers.analog_quantum_sample(register, drive, backend, device)
+        job = solvers.analog_quantum_sampling(register, drive, backend, device)
 
         return job, instance
 

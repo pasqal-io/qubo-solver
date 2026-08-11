@@ -1,4 +1,4 @@
-"""Heuristic drive schedule generation for QUBO solving."""
+"""Proportional-diagonal drive schedule generation for QUBO solving."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ def build_drive(
     dmm: bool = False,
     kappa: float = 0.25,
 ) -> qoolqit.Drive:
-    """Generate a heuristic drive schedule for QUBO solving.
+    """Generate a proportional-diagonal drive schedule for QUBO solving.
 
     Constructs amplitude and detuning waveforms from the QUBO diagonal
     coefficients, clamped so they stay within what the compiler can realize
@@ -59,7 +59,7 @@ def build_drive(
         det_amp_ratio = max_amplitude / max_abs_detuning
         if kappa < det_amp_ratio:
             logger.warning(
-                f"heuristic_kappa is too small ({kappa}), you're likely to get a qoolqit CompilationError. Set it above {det_amp_ratio}."
+                f"proportional_diagonal_kappa is too small ({kappa}), you're likely to get a qoolqit CompilationError. Set it above {det_amp_ratio}."
             )
 
     n = instance.size
@@ -74,7 +74,7 @@ def build_drive(
     max_amplitude = max_virtual_amplitude(device, register)
     if omega_max > max_amplitude:
         logger.info(
-            f"The heuristic drive amplitude ({omega_max}) exceeds the maximum "
+            f"The proportional-diagonal drive amplitude ({omega_max}) exceeds the maximum "
             f"amplitude compilable on the device for this register "
             f"({max_amplitude}); clamping to it."
         )
@@ -84,7 +84,7 @@ def build_drive(
     max_abs_d = float(np.max(np.abs(d)))
     if max_abs_d > max_detuning:
         logger.info(
-            f"The heuristic detuning ({max_abs_d}) exceeds the maximum detuning "
+            f"The proportional-diagonal detuning ({max_abs_d}) exceeds the maximum detuning "
             f"compilable on the device for this amplitude ({max_detuning}); "
             f"scaling the detuning down."
         )

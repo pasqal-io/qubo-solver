@@ -34,7 +34,7 @@ def extract_qubo(register: qoolqit.Register, drive: qoolqit.Drive) -> Instance:
     interaction strengths. Diagonal coefficients are recovered from the
     drive's final detuning value(s), inverting the
     ``d_i = -0.5 * Q[i, i]`` convention used when shaping a drive from a
-    QUBO instance (see `qubosolver.drive_shaping.heuristic.build_drive`).
+    QUBO instance (see `qubosolver.drive_shaping.proportional_diagonal.build_drive`).
 
     Args:
         register: The physical register whose geometry encodes the QUBO's

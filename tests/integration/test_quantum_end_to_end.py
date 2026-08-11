@@ -121,7 +121,7 @@ def check_hamiltonian_qubo(
     ],
     ids=[f"qubo{i}" for i in range(12)],
 )
-def test_quantum_solve_blade_heuristic(
+def test_quantum_solve_blade_proportional_diagonal(
     qubo_id: int,
     expected_diag_error: float,
     expected_offdiag_error: float,
@@ -139,14 +139,14 @@ def test_quantum_solve_blade_heuristic(
     blade_config = embedding.blade.Config(device=device)
     register = embedding.blade.embed(instance, config=blade_config)
 
-    drive = drive_shaping.heuristic.build_drive(
+    drive = drive_shaping.proportional_diagonal.build_drive(
         instance,
         register,
         device=device,
         dmm=True,
     )
 
-    job = solvers.analog_quantum_sample(register, drive, emulator, device)
+    job = solvers.analog_quantum_sampling(register, drive, emulator, device)
     solution = Solution.from_results(job.results())
     solution.compute_costs(instance.matrix).sort_by_cost().compute_probabilities()
 
@@ -178,7 +178,7 @@ def test_quantum_solve_blade_heuristic(
     ],
     ids=[f"qubo{i}" for i in range(12)],
 )
-def test_quantum_solve_greedy_heuristic(
+def test_quantum_solve_greedy_proportional_diagonal(
     qubo_id: int,
     expected_diag_error: float,
     expected_offdiag_error: float,
@@ -196,14 +196,14 @@ def test_quantum_solve_greedy_heuristic(
     greedy_config = embedding.greedy.Config(traps=100)
     register = embedding.greedy.embed(instance, device, config=greedy_config)
 
-    drive = drive_shaping.heuristic.build_drive(
+    drive = drive_shaping.proportional_diagonal.build_drive(
         instance,
         register,
         device=device,
         dmm=True,
     )
 
-    job = solvers.analog_quantum_sample(register, drive, emulator, device)
+    job = solvers.analog_quantum_sampling(register, drive, emulator, device)
     solution = Solution.from_results(job.results())
     solution.compute_costs(instance.matrix).sort_by_cost().compute_probabilities()
 
