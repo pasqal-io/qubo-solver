@@ -33,10 +33,7 @@ def test_empty_config(empty_config: SolverConfig) -> None:
 
 def test_classical_part() -> None:
     default_classical = ClassicalConfig()
-    assert (
-        default_classical.classical_solver_type
-        == ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH
-    )
+    assert default_classical.classical_solver_type == ClassicalSolverType.TABU_SEARCH
 
     with pytest.raises(ValueError):
         ClassicalConfig(classical_solver_type=1)  # type: ignore[arg-type]
@@ -44,22 +41,22 @@ def test_classical_part() -> None:
 
 def test_pulseshape_part() -> None:
     default_pshaper = DriveShapingConfig()
-    assert default_pshaper.drive_shaping_method == DriveType.HEURISTIC
-    assert not default_pshaper.optimized_re_execute_opt_drive
+    assert default_pshaper.drive_shaping_method == DriveType.PROPORTIONAL_DIAGONAL
+    assert not default_pshaper.bayesian_search_re_execute_opt_drive
 
-    assert len(default_pshaper.optimized_initial_detuning_parameters) == 3
-    assert len(default_pshaper.optimized_initial_omega_parameters) == 3
+    assert len(default_pshaper.bayesian_search_initial_detuning_parameters) == 3
+    assert len(default_pshaper.bayesian_search_initial_omega_parameters) == 3
 
     with pytest.raises(ValueError):
         DriveShapingConfig(drive_shaping_method="dummy")
 
     check.equal(
-        DriveShapingConfig(drive_shaping_method="heuristic").drive_shaping_method,
-        DriveType.HEURISTIC,
+        DriveShapingConfig(drive_shaping_method="proportional_diagonal").drive_shaping_method,
+        DriveType.PROPORTIONAL_DIAGONAL,
     )
     check.equal(
-        DriveShapingConfig(drive_shaping_method="optimized").drive_shaping_method,
-        DriveType.OPTIMIZED,
+        DriveShapingConfig(drive_shaping_method="bayesian_search").drive_shaping_method,
+        DriveType.BAYESIAN_SEARCH,
     )
 
 

@@ -64,7 +64,7 @@ class ClassicalConfig(_Config):
 
     Attributes:
         classical_solver_type (ClassicalSolverType, optional): Classical solver type. Defaults to
-            `"simulated_annealing_tabu_search"`.
+            `"tabu_search"`.
         cplex_maxtime (float, optional): CPLEX maximum runtime in seconds. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
         max_iter (int, optional): Maximum number of iterations to perform for simulated annealing or tabu search.
@@ -85,7 +85,7 @@ class ClassicalConfig(_Config):
             in seconds. Defaults to `float("inf")`, meaning no time limit.
     """
 
-    classical_solver_type: str | ClassicalSolverType = "simulated_annealing_tabu_search"
+    classical_solver_type: str | ClassicalSolverType = "tabu_search"
     cplex_maxtime: float = 600.0
     cplex_log_path: str = "solver.log"
 
@@ -126,9 +126,9 @@ class ClassicalConfig(_Config):
 
         Returns a dict containing ``classical_solver_type`` plus the subset of
         fields that are meaningful for the chosen solver
-        (``CPLEX``, ``SIMULATED_ANNEALING``, ``TABU_SEARCH``, or
-        ``SIMULATED_ANNEALING_TABU_SEARCH``). Fields belonging to inactive
-        solvers are omitted to keep serialized output minimal.
+        (``CPLEX``, ``SIMULATED_ANNEALING``, or ``TABU_SEARCH``). Fields
+        belonging to inactive solvers are omitted to keep serialized output
+        minimal.
 
         Returns:
             dict[str, Any]: Serialized representation of this config.
@@ -157,24 +157,6 @@ class ClassicalConfig(_Config):
                 {
                     "max_bitstrings": self.max_bitstrings,
                     "max_iter": self.max_iter,
-                    "tabu_x0": self.tabu_x0,
-                    "tabu_tenure": self.tabu_tenure,
-                    "tabu_max_no_improve": self.tabu_max_no_improve,
-                    "tabu_time_limit": self.tabu_time_limit,
-                }
-            )
-        if self.classical_solver_type == ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH:
-            serialization.update(
-                {
-                    "max_iter": self.max_iter,
-                    "max_bitstrings": self.max_bitstrings,
-                    "sa_initial_temp": self.sa_initial_temp,
-                    "sa_final_temp": self.sa_final_temp,
-                    "sa_cooling_rate": self.sa_cooling_rate,
-                    "sa_seed": self.sa_seed,
-                    "sa_start": self.sa_start,
-                    "sa_energy_tol": self.sa_energy_tol,
-                    "sa_time_limit": self.sa_time_limit,
                     "tabu_x0": self.tabu_x0,
                     "tabu_tenure": self.tabu_tenure,
                     "tabu_max_no_improve": self.tabu_max_no_improve,
@@ -308,69 +290,71 @@ class DriveShapingConfig(_Config):
 
     Attributes:
         drive_shaping_method (str | DriveType | type[BaseDriveShaper], optional): Drive shaping
-            method used. Defaults to `DriveType.HEURISTIC`.
+            method used. Defaults to `DriveType.PROPORTIONAL_DIAGONAL`.
         dmm (bool, optional): Whether to use a detuning map when applying drive shaping or not.
             This adds WeightedDetuning with a Constant Waveform.
             Defaults to True, which applies DMM.
-        optimized_re_execute_opt_drive (bool, optional): Whether to re-run the optimal drive sequence
+        bayesian_search_re_execute_opt_drive (bool, optional): Whether to re-run the optimal drive sequence
             after optimization. Defaults to False.
-        optimized_n_calls (int, optional): Number of calls for the optimization process.
+        bayesian_search_n_calls (int, optional): Number of calls for the optimization process.
             Defaults to 20. Note the optimizer accepts a minimal value of 12.
-        optimized_initial_omega_parameters (list[float], optional): Default initial omega parameters
+        bayesian_search_initial_omega_parameters (list[float], optional): Default initial omega parameters
             for the drive. Defaults to Omega = (1, 2, 1).
-        optimized_initial_detuning_parameters (list[float], optional): Default initial detuning parameters
+        bayesian_search_initial_detuning_parameters (list[float], optional): Default initial detuning parameters
             for the drive. Defaults to delta = (-2, 0, 2).
-        optimized_custom_qubo_cost (Callable[[str, torch.Tensor], float], optional): Apply a different
+        bayesian_search_custom_qubo_cost (Callable[[str, torch.Tensor], float], optional): Apply a different
             qubo cost evaluation
             than the default QUBO evaluation defined in
-            `qubosolver/pipeline/drive.py:OptimizedDriveShaper.compute_qubo_cost`.
+            `qubosolver/pipeline/drive.py:BayesianSearchDriveShaper.compute_qubo_cost`.
             Must be defined as:
-            `def optimized_custom_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float`.
+            `def bayesian_search_custom_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float`.
             Defaults to None, meaning we use the default QUBO evaluation.
-        optimized_custom_objective (Callable[[list, list, list, list, float, str], float], optional):
+        bayesian_search_custom_objective (Callable[[list, list, list, list, float, str], float], optional):
             For bayesian optimization, one can change the output of
-            `qubosolver/pipeline/drive.py:OptimizedDriveShaper.run_simulation`
+            `qubosolver/pipeline/drive.py:BayesianSearchDriveShaper.run_simulation`
             to optimize differently. Instead of using the best cost
             out of the samples, one can change the objective for an average,
             or any function out of the form
-            `cost_eval = optimized_custom_objective(bitstrings,
+            `cost_eval = bayesian_search_custom_objective(bitstrings,
                 counts, probabilities, costs, best_cost, best_bitstring)`
             Defaults to None, which means we optimize using the best cost
             out of the samples.
-        optimized_callback_objective (Callable[..., None], optional): Apply a callback
+        bayesian_search_callback_objective (Callable[..., None], optional): Apply a callback
             during bayesian optimization. Only accepts one input dictionary
             created during optimization `d = {"x": x, "cost_eval": cost_eval}`
             hence should be defined as:
             `def callback_fn(d: dict) -> None:`
             Defaults to None, which means no callback is applied.
-        optimized_seed (int | None): Random seed for the Bayesian optimiser.
+        bayesian_search_seed (int | None): Random seed for the Bayesian optimiser.
             Defaults to None.
-        heuristic_kappa (float): Scaling coefficient for the Omega waveform in
-            the heuristic drive shaper. Defaults to 0.25.
+        proportional_diagonal_kappa (float): Scaling coefficient for the Omega waveform in
+            the proportional-diagonal drive shaper. Defaults to 0.25.
         default_sequence_duration (int, optional): Fallback maximum sequence duration
             (ns) injected when the target device has no ``max_duration`` cap.
             Defaults to 50000.
     """
 
-    drive_shaping_method: Any = DriveType.HEURISTIC
+    drive_shaping_method: Any = DriveType.PROPORTIONAL_DIAGONAL
     dmm: bool = True
-    optimized_n_calls: int = 20
-    optimized_initial_omega_parameters: list[float] = field(default_factory=lambda: [0.5, 0.9, 0.5])
-    optimized_initial_detuning_parameters: list[float] = field(
+    bayesian_search_n_calls: int = 20
+    bayesian_search_initial_omega_parameters: list[float] = field(
+        default_factory=lambda: [0.5, 0.9, 0.5]
+    )
+    bayesian_search_initial_detuning_parameters: list[float] = field(
         default_factory=lambda: [
             -0.8,
             0.0,
             0.8,
         ]
     )  # ---> default initial drive parameters: delta = (-2, 0, 2)
-    optimized_custom_qubo_cost: Callable[[Bitstring, Matrix], float] | None = None
-    optimized_custom_objective: Callable[[Solution], float] | None = None
-    optimized_callback_objective: Callable[..., None] | None = None
-    optimized_seed: int | None = None
-    optimized_re_execute_opt_drive: bool = False
+    bayesian_search_custom_qubo_cost: Callable[[Bitstring, Matrix], float] | None = None
+    bayesian_search_custom_objective: Callable[[Solution], float] | None = None
+    bayesian_search_callback_objective: Callable[..., None] | None = None
+    bayesian_search_seed: int | None = None
+    bayesian_search_re_execute_opt_drive: bool = False
 
-    # Heuristic coefficient for omega
-    heuristic_kappa: float = 0.25
+    # Proportional-diagonal coefficient for omega
+    proportional_diagonal_kappa: float = 0.25
 
     default_sequence_duration: int = 50000
 
@@ -379,9 +363,9 @@ class DriveShapingConfig(_Config):
         """Serialize only the fields relevant to the active drive shaping method.
 
         Always includes ``drive_shaping_method`` and ``dmm``. When
-        ``drive_shaping_method`` is ``OPTIMIZED``, all ``optimized_*`` fields
-        are also included. Heuristic-only fields are omitted for the optimized
-        path and vice-versa.
+        ``drive_shaping_method`` is ``BAYESIAN_SEARCH``, all ``bayesian_search_*`` fields
+        are also included. Proportional-diagonal-only fields are omitted for the
+        Bayesian-search path and vice-versa.
 
         Returns:
             dict[str, Any]: Serialized representation of this config.
@@ -390,13 +374,13 @@ class DriveShapingConfig(_Config):
             "drive_shaping_method": self.drive_shaping_method,
             "dmm": self.dmm,
         }
-        if self.drive_shaping_method == DriveType.OPTIMIZED:
+        if self.drive_shaping_method == DriveType.BAYESIAN_SEARCH:
             dict_all_fields = self.__dict__
             serialization.update(
                 {
                     k: v
                     for k, v in dict_all_fields.items()
-                    if k.startswith(DriveType.OPTIMIZED.value)
+                    if k.startswith(DriveType.BAYESIAN_SEARCH.value)
                 }
             )
         return serialization
@@ -409,10 +393,10 @@ class DriveShapingConfig(_Config):
             return val
         elif isinstance(val, str):
             u = val.upper()
-            if u == DriveType.HEURISTIC.name:
-                return DriveType.HEURISTIC
-            elif u == DriveType.OPTIMIZED.name:
-                return DriveType.OPTIMIZED
+            if u == DriveType.PROPORTIONAL_DIAGONAL.name:
+                return DriveType.PROPORTIONAL_DIAGONAL
+            elif u == DriveType.BAYESIAN_SEARCH.name:
+                return DriveType.BAYESIAN_SEARCH
             else:
                 raise ValueError(f"Invalid drive shaping method '{val}'.")
         elif inspect.isclass(val):
@@ -425,22 +409,24 @@ class DriveShapingConfig(_Config):
         else:
             raise TypeError("Invalid drive shaping method type.")
 
-    @field_validator("optimized_initial_omega_parameters")
+    @field_validator("bayesian_search_initial_omega_parameters")
     @classmethod
-    def _check_optimized_initial_omega_parameters(cls, val: list[float]) -> list[float]:
-        if len(val) == 3:
-            return val
-        else:
-            raise ValueError("`optimized_initial_omega_parameters` should be a list of 3 numbers.")
-
-    @field_validator("optimized_initial_detuning_parameters")
-    @classmethod
-    def _check_optimized_initial_detuning_parameters(cls, val: list[float]) -> list[float]:
+    def _check_bayesian_search_initial_omega_parameters(cls, val: list[float]) -> list[float]:
         if len(val) == 3:
             return val
         else:
             raise ValueError(
-                "`optimized_initial_detuning_parameters` should be a list of 3 numbers."
+                "`bayesian_search_initial_omega_parameters` should be a list of 3 numbers."
+            )
+
+    @field_validator("bayesian_search_initial_detuning_parameters")
+    @classmethod
+    def _check_bayesian_search_initial_detuning_parameters(cls, val: list[float]) -> list[float]:
+        if len(val) == 3:
+            return val
+        else:
+            raise ValueError(
+                "`bayesian_search_initial_detuning_parameters` should be a list of 3 numbers."
             )
 
 

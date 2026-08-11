@@ -12,7 +12,7 @@ It returns:
 - an instance of `qoolqit.Drive`
 - a `Solution` specyfing the solution that may be used by a solver.
 
-For concrete examples, we have the [`HeuristicDriveShaper`](./heuristic.md) and the [`OptimizedDriveShaper`](./optimized.md) and their current implementations lie in `qubosolver.pipeline.drive.py`.
+For concrete examples, we have the [`ProportionalDiagonalDriveShaper`](./proportional_diagonal.md) and the [`BayesianSearchDriveShaper`](./bayesian_search.md) and their current implementations lie in `qubosolver.pipeline.drive.py`.
 
 Let us show an example of a custom simple hard-coded drive shaper.
 

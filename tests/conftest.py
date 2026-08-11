@@ -156,8 +156,8 @@ def blade_config() -> SolverConfig:
 
 
 @pytest.fixture
-def optimized_drive_shaping() -> DriveShapingConfig:
-    return DriveShapingConfig(drive_shaping_method=DriveType.OPTIMIZED)
+def bayesian_search_drive_shaping() -> DriveShapingConfig:
+    return DriveShapingConfig(drive_shaping_method=DriveType.BAYESIAN_SEARCH)
 
 
 @pytest.fixture

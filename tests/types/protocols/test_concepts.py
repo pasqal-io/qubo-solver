@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from qubosolver.types import _protocols
+from qubosolver.types import protocols
 
 from typing import TYPE_CHECKING
 
@@ -16,7 +16,7 @@ from pulser.backend import Results
 # to detect whether a class matches the concept when it's expected not to.
 
 
-def _test_backend(backend: _protocols.Backend) -> None: ...
+def _test_backend(backend: protocols.Backend) -> None: ...
 
 
 def test_not_backend() -> None:
@@ -24,28 +24,28 @@ def test_not_backend() -> None:
     class NotBackend0: ...
 
     _test_backend(NotBackend0())  # type: ignore[arg-type]
-    _b0: _protocols.Backend = NotBackend0()  # type: ignore[assignment]
+    _b0: protocols.Backend = NotBackend0()  # type: ignore[assignment]
 
     class NotBackend1:
         def run(self: Self, program: qoolqit.QuantumProgram) -> None:
             return
 
     _test_backend(NotBackend1())  # type: ignore[arg-type]
-    _b1: _protocols.Backend = NotBackend1()  # type: ignore[assignment]
+    _b1: protocols.Backend = NotBackend1()  # type: ignore[assignment]
 
     class NotBackend2:
         def run(self: Self, program: int) -> job.Job[Results]:
             return job._LocalJob(Results(atom_order=(), total_duration=0))
 
     _test_backend(NotBackend2())  # type: ignore[arg-type]
-    _b2: _protocols.Backend = NotBackend2()  # type: ignore[assignment]
+    _b2: protocols.Backend = NotBackend2()  # type: ignore[assignment]
 
     class NotBackend3:
         def run(self: Self, program: qoolqit.QuantumProgram) -> job.Job[Results] | None:
             return job._LocalJob(Results(atom_order=(), total_duration=0))
 
     _test_backend(NotBackend3())  # type: ignore[arg-type]
-    _b3: _protocols.Backend = NotBackend3()  # type: ignore[assignment]
+    _b3: protocols.Backend = NotBackend3()  # type: ignore[assignment]
 
 
 def test_backend() -> None:
@@ -55,11 +55,11 @@ def test_backend() -> None:
             return job._LocalJob(Results(atom_order=(), total_duration=0))
 
     _test_backend(Backend0())
-    _b0: _protocols.Backend = Backend0()
+    _b0: protocols.Backend = Backend0()
 
     class Backend1:
         def run(self: Self, program: qoolqit.QuantumProgram | None) -> job.Job[Results]:
             return job._LocalJob(Results(atom_order=(), total_duration=0))
 
     _test_backend(Backend1())
-    _b1: _protocols.Backend = Backend1()
+    _b1: protocols.Backend = Backend1()

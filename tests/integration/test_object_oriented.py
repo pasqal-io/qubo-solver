@@ -123,7 +123,7 @@ def check_solution(
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("drive_shaping_method", ["heuristic", "optimized"])
+@pytest.mark.parametrize("drive_shaping_method", ["proportional_diagonal", "bayesian_search"])
 @pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
 @pytest.mark.parametrize("postprocessing", [True, False], ids=["post", "no-post"])
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no-pre"])
@@ -148,16 +148,18 @@ def test_quantum_solve(
     else:
         raise ValueError(f"Invalid embedding method: {embedding_method}")
 
-    if drive_shaping_method == "optimized":
+    if drive_shaping_method == "bayesian_search":
         drive_shaping_config = DriveShapingConfig(
-            drive_shaping_method=DriveType.OPTIMIZED,
-            optimized_n_calls=11,
-            optimized_seed=seed,
+            drive_shaping_method=DriveType.BAYESIAN_SEARCH,
+            bayesian_search_n_calls=11,
+            bayesian_search_seed=seed,
             dmm=False,
         )
-    elif drive_shaping_method == "heuristic":
+    elif drive_shaping_method == "proportional_diagonal":
         drive_shaping_config = DriveShapingConfig(
-            drive_shaping_method=DriveType.HEURISTIC, heuristic_kappa=0.25, dmm=False
+            drive_shaping_method=DriveType.PROPORTIONAL_DIAGONAL,
+            proportional_diagonal_kappa=0.25,
+            dmm=False,
         )
     else:
         raise ValueError(f"Invalid drive shaping method: {drive_shaping_method}")
@@ -180,7 +182,7 @@ def test_quantum_solve(
     print(f"Distances: {register.distances()}")
 
     expected_optimal_probability = 0.75
-    if drive_shaping_method in ["optimized"]:
+    if drive_shaping_method in ["bayesian_search"]:
         expected_optimal_probability = 0.0
 
     check_solution(
@@ -191,7 +193,7 @@ def test_quantum_solve(
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("solving_method", ["cplex", "tabu", "sa", "sa+tabu", "random"])
+@pytest.mark.parametrize("solving_method", ["cplex", "tabu", "sa", "random"])
 @pytest.mark.parametrize("postprocessing", [True, False], ids=["post", "no-post"])
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no-pre"])
 def test_classical_solve(
@@ -208,7 +210,6 @@ def test_classical_solve(
         "cplex": ClassicalSolverType.CPLEX,
         "tabu": ClassicalSolverType.TABU_SEARCH,
         "sa": ClassicalSolverType.SIMULATED_ANNEALING,
-        "sa+tabu": ClassicalSolverType.SIMULATED_ANNEALING_TABU_SEARCH,
         "random": ClassicalSolverType.RANDOM,
     }
 

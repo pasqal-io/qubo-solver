@@ -8,7 +8,7 @@ import torch
 from qoolqit import Register
 
 from . import blade, greedy
-from qubosolver.types import Instance, EmbedderType, _protocols
+from qubosolver.types import Instance, EmbedderType, protocols
 from qubosolver.config import SolverConfig
 
 warnings.filterwarnings("ignore", module="pulser")
@@ -23,7 +23,7 @@ class _BaseEmbedder(ABC):
     2-D trap layout.
     """
 
-    def __init__(self, instance: Instance, config: SolverConfig, backend: _protocols.Backend):
+    def __init__(self, instance: Instance, config: SolverConfig, backend: protocols.Backend):
         """
         Args:
             instance: The QUBO problem to embed.
@@ -120,7 +120,7 @@ class GreedyEmbedder(_BaseEmbedder):
 
 
 def _get_embedder(
-    instance: Instance, config: SolverConfig, backend: _protocols.Backend
+    instance: Instance, config: SolverConfig, backend: protocols.Backend
 ) -> _BaseEmbedder:
     """Return the appropriate embedder instance for the given configuration.
 

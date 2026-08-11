@@ -11,6 +11,7 @@ from qubosolver.types import (
     vector,
     vectori,
     linalg,
+    protocols,
     # Type Aliases
     Bitstring,
     Bitstrings,
@@ -73,6 +74,7 @@ __all__ = [
     "vector",
     "vectori",
     "linalg",
+    "protocols",
     "solvers",
     "transforms",
     "embedding",
