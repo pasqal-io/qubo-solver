@@ -411,6 +411,8 @@ class DriveShapingConfig(_Config):
             u = val.upper()
             if u == DriveType.HEURISTIC.name:
                 return DriveType.HEURISTIC
+            elif u == DriveType.MEAN_ENERGY_HEURISTIC.name:
+                return DriveType.MEAN_ENERGY_HEURISTIC
             elif u == DriveType.OPTIMIZED.name:
                 return DriveType.OPTIMIZED
             else:

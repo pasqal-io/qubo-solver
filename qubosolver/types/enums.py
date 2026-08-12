@@ -87,9 +87,12 @@ class DriveType(Enum):
 
     OPTIMIZED = "optimized"
     """Numerically optimized drive that minimizes the cost function via pulse optimization."""
+
     HEURISTIC = "heuristic"
     """Fast heuristic drive based on predefined pulse shapes; no numerical optimization."""
 
+    MEAN_ENERGY_HEURISTIC = "mean_energy_heuristic"
+    """Heuristic drive whose peak amplitude is based on the mean local physical energy."""
 
 class ClassicalSolverType(_StrEnum):
     """Type of classical solver used as a backend for QUBO optimization."""
