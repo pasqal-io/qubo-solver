@@ -95,6 +95,18 @@ def _to_cplex(instance: Instance, *, log_file: Any = None) -> CPLEX.Cplex:
 
 
 def _to_solution(cplex_solution: CPLEX.SolutionInterface) -> Solution:
+    """Extract a :class:`Solution` from a solved CPLEX solution interface.
+
+    Raises:
+        RuntimeError: If CPLEX has no incumbent to report (e.g. the time or
+            node limit was reached before any feasible solution was found),
+            since `get_values`/`get_objective_value` raise an opaque
+            `CplexSolverError` in that case.
+    """
+    if not cplex_solution.is_primal_feasible():
+        raise RuntimeError(
+            "CPLEX found no feasible solution within the given time/node limit."
+        )
 
     solution_values = cplex_solution.get_values()
     solution_cost = cplex_solution.get_objective_value()
