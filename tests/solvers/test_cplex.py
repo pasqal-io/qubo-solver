@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import cplex
 import pytest
 import pytest_check as check
 import torch
@@ -14,7 +15,46 @@ from qubosolver import (
     solvers,
     vectori,
     tensor,
+    torch_rng,
 )
+from qubosolver.solvers.classical.cplex import _to_solution
+
+
+def test_to_solution_without_incumbent() -> None:
+    # Regression test flagged in review: if CPLEX's time/node limit is hit
+    # before any incumbent is found, `problem.solution.get_values()` raises
+    # an opaque `CplexSolverError: No solution exists`. `_to_solution` must
+    # check `is_primal_feasible()` before extracting results and raise a
+    # clear `RuntimeError` instead of letting that error propagate.
+    #
+    # Build the CPLEX problem directly (bypassing `_to_cplex`) and disable
+    # presolve/heuristics/node exploration so CPLEX cannot find even the
+    # trivial all-zero incumbent that an unconstrained QUBO always admits.
+    n = 40
+    Q = torch.rand(n, n, generator=torch_rng(1)) * 100 - 50
+    Q = (Q + Q.T) / 2
+
+    problem = cplex.Cplex()
+    problem.set_log_stream(None)
+    problem.set_error_stream(None)
+    problem.set_warning_stream(None)
+    problem.set_results_stream(None)
+    problem.objective.set_sense(problem.objective.sense.minimize)
+    problem.variables.add(types="B" * n)
+    problem.objective.set_quadratic(
+        [cplex.SparsePair(ind=list(range(n)), val=Q[i].tolist()) for i in range(n)]
+    )
+    problem.parameters.optimalitytarget.set(3)  # accept non-convex QUBO objective
+    problem.parameters.mip.limits.nodes.set(0)
+    problem.parameters.mip.strategy.heuristicfreq.set(-1)
+    problem.parameters.mip.strategy.probe.set(-1)
+    problem.parameters.preprocessing.presolve.set(0)
+
+    problem.solve()
+    check.is_false(problem.solution.is_primal_feasible())
+
+    with pytest.raises(RuntimeError):
+        _to_solution(problem.solution)
 
 
 def test_qubo_solver_classical_cplex() -> None:
