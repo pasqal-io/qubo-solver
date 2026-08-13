@@ -65,7 +65,13 @@ def _qubo_instance_to_sparsepairs(
 
 
 def _to_cplex(instance: Instance, *, log_file: Any = None) -> CPLEX.Cplex:
+    """Build the minimal CPLEX problem translating a QUBO symmetric matrix.
 
+    Sets only what is needed to represent the QUBO instance as a CPLEX
+    problem (binary variables, minimization sense, quadratic objective), plus
+    logging streams as the sole exception. Every other parameter, including
+    the time limit, must be set by the caller on the returned problem.
+    """
     # Convert the coefficient matrix into CPLEX sparse pairs format using the conversion tool.
     sparsepairs: list[CPLEX.SparsePair] = _qubo_instance_to_sparsepairs(instance)
 
