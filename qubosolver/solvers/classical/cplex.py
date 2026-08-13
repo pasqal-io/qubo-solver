@@ -119,10 +119,8 @@ def cplex(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> 
     Returns:
         A solution containing exactly one bitstring — the best (or optimal) solution found by CPLEX.
     """
-    # Determine the number of variables.
-    N: int = instance.size
     # If there are no variables, return an empty solution.
-    if N == 0:
+    if not instance:
         return Solution()
 
     if log_path:
