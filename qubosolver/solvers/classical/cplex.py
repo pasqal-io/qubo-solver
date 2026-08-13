@@ -18,6 +18,7 @@ reads :class:`~qubosolver.config.ClassicalConfig` parameters and calls
 from __future__ import annotations
 
 import cplex as CPLEX
+from typing import Any
 
 from qubosolver import Instance, Solution, bitstrings, vector, vectori
 
@@ -46,9 +47,9 @@ def _qubo_instance_to_sparsepairs(
         where element *i* encodes the non-zero scaled coefficients in row *i*
         of the QUBO matrix.
     """
-    matrix = instance.matrix.cpu().numpy()
-    size = matrix.shape[0]
+    size = instance.size
     sparsepairs: list[CPLEX.SparsePair] = []
+    matrix = instance.matrix.cpu().numpy()
 
     for i in range(size):
         indices: list[int] = []
@@ -61,6 +62,46 @@ def _qubo_instance_to_sparsepairs(
         sparsepairs.append(CPLEX.SparsePair(ind=indices, val=values))
 
     return sparsepairs
+
+
+def _to_cplex(instance: Instance, *, log_file: Any = None) -> CPLEX.Cplex:
+
+    # Convert the coefficient matrix into CPLEX sparse pairs format using the conversion tool.
+    sparsepairs: list[CPLEX.SparsePair] = _qubo_instance_to_sparsepairs(instance)
+
+    problem = CPLEX.Cplex()
+
+    # Redirect logging streams.
+    problem.set_log_stream(log_file)
+    problem.set_error_stream(log_file)
+    problem.set_warning_stream(log_file)
+    problem.set_results_stream(log_file)
+
+    problem.objective.set_sense(problem.objective.sense.minimize)
+
+    # Add binary variables.
+    problem.variables.add(types="B" * instance.size)
+
+    # Set the quadratic objective.
+    problem.objective.set_quadratic(sparsepairs)
+
+    return problem
+
+
+def _to_solution(cplex_solution: CPLEX.SolutionInterface) -> Solution:
+
+    solution_values = cplex_solution.get_values()
+    solution_cost = cplex_solution.get_objective_value()
+
+    # Convert the solution into a Solution.
+    bitstring_tensor = bitstrings.tensor([[int(round(b)) for b in solution_values]])
+    counts = vectori.tensor([1])
+    cost_tensor = vector.tensor([solution_cost])
+
+    solution = Solution(
+        bitstrings=bitstring_tensor, counts=counts, costs=cost_tensor
+    ).compute_probabilities()
+    return solution
 
 
 def cplex(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> Solution:
@@ -84,47 +125,21 @@ def cplex(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> 
     if N == 0:
         return Solution()
 
-    # Convert the coefficient matrix into CPLEX sparse pairs format using the conversion tool.
-    sparsepairs: list[CPLEX.SparsePair] = _qubo_instance_to_sparsepairs(instance)
-
-    problem = CPLEX.Cplex()
-
     if log_path:
         # Open a log file.
         log_file = open(log_path, "w")
     else:
         log_file = None
 
-    # Redirect logging streams.
-    problem.set_log_stream(log_file)
-    problem.set_error_stream(log_file)
-    problem.set_warning_stream(log_file)
-    problem.set_results_stream(log_file)
-
+    problem = _to_cplex(instance, log_file=log_file)
     problem.parameters.timelimit.set(maxtime)
-    problem.objective.set_sense(problem.objective.sense.minimize)
-
-    # Add binary variables.
-    problem.variables.add(types="B" * N)
-
-    # Set the quadratic objective.
-    problem.objective.set_quadratic(sparsepairs)
 
     problem.solve()
 
     # Retrieve solution.
-    solution_values = problem.solution.get_values()
-    solution_cost = problem.solution.get_objective_value()
+    solution = _to_solution(problem.solution)
 
     if log_file:
         log_file.close()
 
-    # Convert the solution into a Solution.
-    bitstring_tensor = bitstrings.tensor([[int(round(b)) for b in solution_values]])
-    counts = vectori.tensor([1])
-    cost_tensor = vector.tensor([solution_cost])
-
-    solution = Solution(
-        bitstrings=bitstring_tensor, counts=counts, costs=cost_tensor
-    ).compute_probabilities()
     return solution
