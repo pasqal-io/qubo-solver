@@ -104,9 +104,7 @@ def _to_solution(cplex_solution: CPLEX.SolutionInterface) -> Solution:
             `CplexSolverError` in that case.
     """
     if not cplex_solution.is_primal_feasible():
-        raise RuntimeError(
-            "CPLEX found no feasible solution within the given time/node limit."
-        )
+        raise RuntimeError("CPLEX found no feasible solution within the given time/node limit.")
 
     solution_values = cplex_solution.get_values()
     solution_cost = cplex_solution.get_objective_value()
