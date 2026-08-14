@@ -16,6 +16,7 @@ nav:
     - Quantum solver components:
       - Drive Shaping:
         - Proportional-Diagonal Drive: content/driveshaping/proportional_diagonal.md
+        - Local-Energy-Scale Drive: content/driveshaping/local_energy_scale.md
         - Bayesian Search Drive: content/driveshaping/bayesian_search.md
         - Custom: content/driveshaping/custom.md
       - Embedding: content/embedding.md
