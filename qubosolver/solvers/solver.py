@@ -360,9 +360,9 @@ class _DecomposeQuboSolver(BaseSolver):
 
         # A cached version of `config` that we're going
         # to use for problems we do not wish to decompose.
-        self._config_subproblems = SolverConfig.from_kwargs(
-            **self.config.model_dump(exclude={"decompose"})
-        )
+        subproblem_kwargs = self.config.to_dict()
+        del subproblem_kwargs["decompose"]
+        self._config_subproblems = SolverConfig.from_kwargs(**subproblem_kwargs)
 
         self._decomposition = [list(range(instance.size))]
 

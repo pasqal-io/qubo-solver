@@ -1,6 +1,6 @@
 """Configuration classes for the QUBO solver pipeline.
 
-This module defines Pydantic-based configuration classes that control every
+This module defines dataclass-based configuration classes that control every
 stage of the quantum and classical solving pipeline.
 
 All public classes are re-exported from the top-level [`qubosolver`][] namespace
@@ -22,11 +22,10 @@ from __future__ import annotations
 import inspect
 from abc import ABC
 from collections.abc import Callable
-from dataclasses import field
-from typing import Any, Literal
+from dataclasses import dataclass, field, fields
+from typing import Any, Literal, TYPE_CHECKING
 
 import torch
-from pydantic import BaseModel, ConfigDict, field_validator, model_serializer
 
 from qoolqit import Device, AnalogDeviceWithDMM
 from qoolqit.execution import QPU
@@ -41,21 +40,25 @@ from .types import (
 )
 from . import embedding, drive_shaping, solvers
 
-# Allow torch.Tensor fields in Pydantic models.
-BaseModel.model_config["arbitrary_types_allowed"] = True
+
+class _Config(ABC):
+    """Abstract base class for all solver configuration dataclasses."""
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize this config to a plain dict.
+
+        Subclasses that only expose a subset of fields relevant to the
+        active algorithm override this method.
+        """
+        return {f.name: getattr(self, f.name) for f in fields(self)}  # type: ignore[arg-type]
+
+    @classmethod
+    def field_names(cls) -> set[str]:
+        """Return the set of declared field names for this config class."""
+        return {f.name for f in fields(cls)}  # type: ignore[arg-type]
 
 
-class _Config(BaseModel, ABC):
-    """Abstract base class for all solver configuration models.
-
-    Enforces strict field validation by forbidding any extra fields not
-    declared on the subclass. All concrete config classes (``ClassicalConfig``,
-    ``EmbeddingConfig``, etc.) inherit from this class.
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-
+@dataclass
 class ClassicalConfig(_Config):
     """A `ClassicalConfig` instance defines the classical part of a `SolverConfig`.
 
@@ -101,10 +104,12 @@ class ClassicalConfig(_Config):
     tabu_max_no_improve: int = 20
     tabu_time_limit: float = float("inf")
 
-    @field_validator("algorithm")
-    @classmethod
+    def __post_init__(self) -> None:
+        self.algorithm = self._normalize_classical_solver_type(self.algorithm)
+
+    @staticmethod
     def _normalize_classical_solver_type(
-        cls, val: str | solvers.ClassicalAlgorithm
+        val: str | solvers.ClassicalAlgorithm,
     ) -> solvers.ClassicalAlgorithm | Any:
         """Normalize the classical_solver_type attribute."""
         if isinstance(val, solvers.ClassicalAlgorithm):
@@ -116,8 +121,7 @@ class ClassicalConfig(_Config):
         else:
             raise ValueError(f"Invalid classical algorithm '{val}'.")
 
-    @model_serializer(mode="plain")
-    def serialize_model(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize only the fields relevant to the active solver type.
 
         Returns a dict containing ``classical_solver_type`` plus the subset of
@@ -161,6 +165,7 @@ class ClassicalConfig(_Config):
         return serialization
 
 
+@dataclass
 class EmbeddingConfig(_Config):
     """A `EmbeddingConfig` instance defines the embedding
         part of a `SolverConfig`.
@@ -213,8 +218,11 @@ class EmbeddingConfig(_Config):
     animation_save_path: str | None = None
     max_min_dist_ratio: float | Literal["device"] = "device"
 
-    @model_serializer(mode="plain")
-    def serialize_model(self) -> dict[str, Any]:
+    def __post_init__(self) -> None:
+        self.algorithm = self._normalize_algorithm(self.algorithm)
+        self.greedy_layout = self._normalize_layout(self.greedy_layout)
+
+    def to_dict(self) -> dict[str, Any]:
         """Serialize only the fields relevant to the active embedder type.
 
         Always includes ``embedding_method``, ``draw_steps``, and
@@ -245,9 +253,8 @@ class EmbeddingConfig(_Config):
             )
         return serialization
 
-    @field_validator("algorithm")
-    @classmethod
-    def _normalize_algorithm(cls, val: Any) -> embedding.Algorithm | Any:
+    @staticmethod
+    def _normalize_algorithm(val: Any) -> embedding.Algorithm | Any:
         """Normalize the embedded attribute."""
         if isinstance(val, embedding.Algorithm):
             return val
@@ -266,9 +273,8 @@ class EmbeddingConfig(_Config):
         else:
             raise TypeError("Invalid embedding method type.")
 
-    @field_validator("greedy_layout")
-    @classmethod
-    def _normalize_layout(cls, val: str | embedding.Layout) -> embedding.Layout:
+    @staticmethod
+    def _normalize_layout(val: str | embedding.Layout) -> embedding.Layout:
         """Normalize the layout attribute."""
         if isinstance(val, embedding.Layout):
             return val
@@ -281,6 +287,7 @@ class EmbeddingConfig(_Config):
             raise ValueError(f"Invalid layout '{val}'.")
 
 
+@dataclass
 class DriveShapingConfig(_Config):
     """A `DriveShapingConfig` instance defines the drive shaping part of a `SolverConfig`.
 
@@ -354,8 +361,18 @@ class DriveShapingConfig(_Config):
 
     default_sequence_duration: int = 50000
 
-    @model_serializer(mode="plain")
-    def serialize_model(self) -> dict[str, Any]:
+    def __post_init__(self) -> None:
+        self.algorithm = self._normalize_drive_shaping_method(self.algorithm)
+        if len(self.bayesian_search_initial_omega_parameters) != 3:
+            raise ValueError(
+                "`bayesian_search_initial_omega_parameters` should be a list of 3 numbers."
+            )
+        if len(self.bayesian_search_initial_detuning_parameters) != 3:
+            raise ValueError(
+                "`bayesian_search_initial_detuning_parameters` should be a list of 3 numbers."
+            )
+
+    def to_dict(self) -> dict[str, Any]:
         """Serialize only the fields relevant to the active drive shaping method.
 
         Always includes ``drive_shaping_method`` and ``dmm``. When
@@ -381,9 +398,8 @@ class DriveShapingConfig(_Config):
             )
         return serialization
 
-    @field_validator("algorithm")
-    @classmethod
-    def _normalize_drive_shaping_method(cls, val: Any) -> drive_shaping.Algorithm | Any:
+    @staticmethod
+    def _normalize_drive_shaping_method(val: Any) -> drive_shaping.Algorithm | Any:
         """Normalize the `drive_shaping_method` attribute."""
         if isinstance(val, drive_shaping.Algorithm):
             return val
@@ -405,27 +421,8 @@ class DriveShapingConfig(_Config):
         else:
             raise TypeError("Invalid drive shaping method type.")
 
-    @field_validator("bayesian_search_initial_omega_parameters")
-    @classmethod
-    def _check_bayesian_search_initial_omega_parameters(cls, val: list[float]) -> list[float]:
-        if len(val) == 3:
-            return val
-        else:
-            raise ValueError(
-                "`bayesian_search_initial_omega_parameters` should be a list of 3 numbers."
-            )
 
-    @field_validator("bayesian_search_initial_detuning_parameters")
-    @classmethod
-    def _check_bayesian_search_initial_detuning_parameters(cls, val: list[float]) -> list[float]:
-        if len(val) == 3:
-            return val
-        else:
-            raise ValueError(
-                "`bayesian_search_initial_detuning_parameters` should be a list of 3 numbers."
-            )
-
-
+@dataclass
 class DecompositionConfig(_Config):
     """The configuration parameters when using a decomposition method
         for solving large QUBO instances.
@@ -450,6 +447,7 @@ class DecompositionConfig(_Config):
     neglecting_max_coefficient: float = 1.0
 
 
+@dataclass
 class SolverConfig(_Config):
     """
     A `SolverConfig` instance defines how a QUBO problem should be solved.
@@ -484,11 +482,11 @@ class SolverConfig(_Config):
 
     config_name: str = ""
     use_quantum: bool = True
-    embedding: EmbeddingConfig = EmbeddingConfig()
-    drive_shaping: DriveShapingConfig = DriveShapingConfig()
-    classical: ClassicalConfig = ClassicalConfig()
-    backend: LocalEmulator | RemoteEmulator | QPU = LocalEmulator()
-    device: Device = AnalogDeviceWithDMM()
+    embedding: EmbeddingConfig = field(default_factory=EmbeddingConfig)
+    drive_shaping: DriveShapingConfig = field(default_factory=DriveShapingConfig)
+    classical: ClassicalConfig = field(default_factory=ClassicalConfig)
+    backend: LocalEmulator | RemoteEmulator | QPU = field(default_factory=LocalEmulator)
+    device: Device = field(default_factory=AnalogDeviceWithDMM)
     do_postprocessing: bool = False
     do_preprocessing: bool = False
     activate_trivial_solutions: bool = True
@@ -506,9 +504,7 @@ class SolverConfig(_Config):
         Returns:
             str: Newline-separated ``key: value`` pairs for all config fields.
         """
-        return "\n".join(
-            f"{k}: ''" if v == "" else f"{k}: {v}" for k, v in self.model_dump().items()
-        )
+        return "\n".join(f"{k}: ''" if v == "" else f"{k}: {v}" for k, v in self.to_dict().items())
 
     def print_specs(self) -> None:
         """Print all configuration attributes to stdout.
@@ -559,32 +555,36 @@ class SolverConfig(_Config):
         Returns:
             SolverConfig: A fully validated ``SolverConfig`` instance.
         """
-        # Extract fields from pydantic BaseModel
-        embedding_fields = {k: v for k, v in kwargs.items() if k in EmbeddingConfig.model_fields}
+
+        def _validate(config_cls: type, value: Any) -> Any:
+            """Build `config_cls` from a dict, or pass through an existing instance."""
+            return value if isinstance(value, config_cls) else config_cls(**value)
+
+        embedding_fields = {k: v for k, v in kwargs.items() if k in EmbeddingConfig.field_names()}
         drive_shaping_fields = {
-            k: v for k, v in kwargs.items() if k in DriveShapingConfig.model_fields
+            k: v for k, v in kwargs.items() if k in DriveShapingConfig.field_names()
         }
-        classical_fields = {k: v for k, v in kwargs.items() if k in ClassicalConfig.model_fields}
+        classical_fields = {k: v for k, v in kwargs.items() if k in ClassicalConfig.field_names()}
         decompose_fields = {
-            k: v for k, v in kwargs.items() if k in DecompositionConfig.model_fields
+            k: v for k, v in kwargs.items() if k in DecompositionConfig.field_names()
         } or kwargs.get("decompose", {})
 
         solver_fields: dict[str, Any] = {
             k: v
             for k, v in kwargs.items()
-            if k in cls.model_fields
+            if k in cls.field_names()
             and k not in ("embedding", "drive_shaping", "classical", "decompose")
         }
-        solver_fields["embedding"] = EmbeddingConfig.model_validate(
-            kwargs.get("embedding", embedding_fields)
+        solver_fields["embedding"] = _validate(
+            EmbeddingConfig, kwargs.get("embedding", embedding_fields)
         )
-        solver_fields["drive_shaping"] = DriveShapingConfig.model_validate(
-            kwargs.get("drive_shaping", drive_shaping_fields)
+        solver_fields["drive_shaping"] = _validate(
+            DriveShapingConfig, kwargs.get("drive_shaping", drive_shaping_fields)
         )
-        solver_fields["classical"] = ClassicalConfig.model_validate(
-            kwargs.get("classical", classical_fields)
+        solver_fields["classical"] = _validate(
+            ClassicalConfig, kwargs.get("classical", classical_fields)
         )
         if decompose_fields:
-            solver_fields["decompose"] = DecompositionConfig.model_validate(decompose_fields)
+            solver_fields["decompose"] = _validate(DecompositionConfig, decompose_fields)
 
-        return cls.model_validate(solver_fields)
+        return cls(**solver_fields)

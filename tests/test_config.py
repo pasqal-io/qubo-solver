@@ -119,5 +119,5 @@ def test_decomposition_config() -> None:
     config = SolverConfig(decompose=DecompositionConfig())
     assert config.decompose is not None
 
-    config_kwargs = SolverConfig.from_kwargs(**config.decompose.model_dump())
+    config_kwargs = SolverConfig.from_kwargs(**config.decompose.to_dict())
     assert config_kwargs.decompose is not None

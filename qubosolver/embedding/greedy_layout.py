@@ -20,7 +20,7 @@ import pathlib
 import qoolqit
 
 from ._algorithms import greedy
-from qubosolver import Instance, EmbeddingConfig, tensor
+from qubosolver import Instance, tensor
 from qubosolver.embedding.enum import Layout
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
