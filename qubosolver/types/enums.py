@@ -90,6 +90,9 @@ class DriveType(Enum):
     PROPORTIONAL_DIAGONAL = "proportional_diagonal"
     """Drive whose amplitude/detuning scale proportionally to the QUBO diagonal; no numerical optimization."""
 
+    LOCAL_ENERGY_SCALE = "local_energy_scale"
+    """Drive whose peak amplitude is proportional to the average local physical energy scale."""
+
 
 class ClassicalSolverType(_StrEnum):
     """Type of classical solver used as a backend for QUBO optimization."""

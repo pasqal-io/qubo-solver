@@ -8,7 +8,11 @@ import torch
 import qoolqit
 
 
-from . import proportional_diagonal, bayesian_search
+from . import (
+    proportional_diagonal,
+    _local_energy_scale_drive,
+    bayesian_search,
+)
 from qubosolver.types import Instance, Solution, DriveType, protocols
 from qubosolver.config import SolverConfig
 
@@ -124,6 +128,51 @@ class ProportionalDiagonalDriveShaper(_BaseDriveShaper):
         )
 
 
+class LocalEnergyScaleDriveShaper(_BaseDriveShaper):
+    """Local-energy-scale heuristic drive shaper.
+
+    The peak Rabi frequency is proportional to the average local physical
+    energy scale,
+
+        E_i = |delta_i(T)| + sum_{j != i} |V_ij|,
+
+    according to
+
+        omega_max = kappa * mean_i(E_i).
+
+    No numerical pulse optimization is performed.
+    """
+
+    def generate(
+        self,
+        register: qoolqit.Register,
+    ) -> tuple[qoolqit.Drive, Solution]:
+        """Generate a drive using the local-energy-scale heuristic.
+
+        Args:
+            register: Physical register on which the drive will run.
+
+        Returns:
+            The generated drive and an empty solution, since no classical
+            pulse-parameter optimization is performed.
+        """
+        device = self.config.device
+        dmm = self.config.drive_shaping.dmm
+        kappa = (
+            self.config.drive_shaping.local_energy_scale_kappa
+        )
+
+        return (
+            _local_energy_scale_drive.build_drive(
+                self.instance,
+                register,
+                device=device,
+                dmm=dmm,
+                kappa=kappa,
+            ),
+            Solution(),
+        )
+
 class BayesianSearchDriveShaper(_BaseDriveShaper):
     """
     qoolqit.Drive shaper that uses Bayesian search to find the best drive parameters for solving QUBOs.
@@ -176,7 +225,6 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
             config=config,
         )
 
-
 def _get_drive_shaper(
     instance: Instance,
     config: SolverConfig,
@@ -186,32 +234,62 @@ def _get_drive_shaper(
 
     Selects and instantiates a :class:`_BaseDriveShaper` subclass based on
     ``config.drive_shaping.drive_shaping_method``. Supports the built-in
-    :class:`ProportionalDiagonalDriveShaper` and :class:`BayesianSearchDriveShaper`, as well
-    as any custom subclass of :class:`_BaseDriveShaper` passed directly in
-    the config.
+    :class:`ProportionalDiagonalDriveShaper`,
+    :class:`LocalEnergyScaleDriveShaper`, and
+    :class:`BayesianSearchDriveShaper`, as well as any custom subclass of
+    :class:`_BaseDriveShaper` passed directly in the config.
 
     Args:
-        instance (Instance): The QUBO problem to solve.
-        config (SolverConfig): The solver configuration used.
-        backend (Backend): Backend to extract device from or to use
-            during drive shaping.
+        instance: The QUBO problem to solve.
+        config: The solver configuration.
+        backend: Backend used during drive shaping.
 
     Returns:
-        _BaseDriveShaper: The instantiated drive shaper.
+        The instantiated drive shaper.
 
     Raises:
-        NotImplementedError: If ``config.drive_shaping.drive_shaping_method``
-            is not a recognised :class:`DriveType` and is not a subclass of
-            :class:`_BaseDriveShaper`.
+        NotImplementedError: If the configured method is not a recognized
+            :class:`DriveType` or a custom :class:`_BaseDriveShaper`
+            subclass.
     """
-    if config.drive_shaping.drive_shaping_method == DriveType.PROPORTIONAL_DIAGONAL:
-        return ProportionalDiagonalDriveShaper(instance, config, backend)
-    elif config.drive_shaping.drive_shaping_method == DriveType.BAYESIAN_SEARCH:
-        return BayesianSearchDriveShaper(instance, config, backend)
-    elif issubclass(config.drive_shaping.drive_shaping_method, _BaseDriveShaper):
+    if (
+        config.drive_shaping.drive_shaping_method
+        == DriveType.PROPORTIONAL_DIAGONAL
+    ):
+        return ProportionalDiagonalDriveShaper(
+            instance,
+            config,
+            backend,
+        )
+    elif (
+        config.drive_shaping.drive_shaping_method
+        == DriveType.LOCAL_ENERGY_SCALE
+    ):
+        return LocalEnergyScaleDriveShaper(
+            instance,
+            config,
+            backend,
+        )
+    elif (
+        config.drive_shaping.drive_shaping_method
+        == DriveType.BAYESIAN_SEARCH
+    ):
+        return BayesianSearchDriveShaper(
+            instance,
+            config,
+            backend,
+        )
+    elif issubclass(
+        config.drive_shaping.drive_shaping_method,
+        _BaseDriveShaper,
+    ):
         return cast(
             _BaseDriveShaper,
-            config.drive_shaping.drive_shaping_method(instance, config, backend),
+            config.drive_shaping.drive_shaping_method(
+                instance,
+                config,
+                backend,
+            ),
         )
     else:
         raise NotImplementedError
