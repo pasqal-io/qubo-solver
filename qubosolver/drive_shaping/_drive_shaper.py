@@ -11,7 +11,7 @@ import qoolqit
 from . import proportional_diagonal, bayesian_search
 from .enums import Algorithm
 from qubosolver.types import Instance, Solution, protocols
-from qubosolver.solvers.config import Config as SolverConfig
+from qubosolver import solvers
 
 
 class _BaseDriveShaper(ABC):
@@ -24,23 +24,23 @@ class _BaseDriveShaper(ABC):
 
     Attributes:
         instance (Instance): The QUBO problem instance.
-        config (SolverConfig): The solver configuration.
+        config (solvers.Config): The solver configuration.
         backend (Backend): Backend to use.
         device (Device): Device from backend.
 
     """
 
-    def __init__(self, instance: Instance, config: SolverConfig, backend: protocols.Backend):
+    def __init__(self, instance: Instance, config: solvers.Config, backend: protocols.Backend):
         """
         Initialize the drive shaping module with a QUBO instance.
 
         Args:
             instance (Instance): The QUBO problem instance.
-            config (SolverConfig): The solver configuration.
+            config (solvers.Config): The solver configuration.
             backend (Backend): Backend to use.
         """
         self.instance: Instance = instance
-        self.config: SolverConfig = config
+        self.config: solvers.Config = config
         self.backend = backend
         self.device = self.config.device
 
@@ -134,14 +134,14 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
     def __init__(
         self,
         instance: Instance,
-        config: SolverConfig,
+        config: solvers.Config,
         backend: protocols.Backend,
     ):
         """Instantiate a `BayesianSearchDriveShaper`.
 
         Args:
             instance (Instance): Qubo instance.
-            config (SolverConfig): Configuration for solving.
+            config (solvers.Config): Configuration for solving.
             backend (Backend): Backend to use during optimization.
 
         """
@@ -180,7 +180,7 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
 
 def _get_drive_shaper(
     instance: Instance,
-    config: SolverConfig,
+    config: solvers.Config,
     backend: protocols.Backend,
 ) -> _BaseDriveShaper:
     """Return the appropriate drive shaper for the given configuration.
@@ -193,7 +193,7 @@ def _get_drive_shaper(
 
     Args:
         instance (Instance): The QUBO problem to solve.
-        config (SolverConfig): The solver configuration used.
+        config (solvers.Config): The solver configuration used.
         backend (Backend): Backend to extract device from or to use
             during drive shaping.
 

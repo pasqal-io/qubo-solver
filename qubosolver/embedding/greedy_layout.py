@@ -21,7 +21,8 @@ import qoolqit
 
 from ._algorithms import greedy
 from qubosolver import Instance, tensor
-from qubosolver.embedding.enums import Layout
+from .enums import Layout
+from .config import Config as EmbeddingConfig
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
 

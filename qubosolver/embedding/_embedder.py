@@ -7,7 +7,6 @@ import warnings
 import torch
 from qoolqit import Register
 
-from qubosolver import embedding
 from . import blade, greedy_layout
 from qubosolver.types import Instance, protocols
 from qubosolver.solvers.config import Config as SolverConfig
@@ -149,13 +148,13 @@ def _get_embedder(
             :class:`_BaseEmbedder`.
     """
 
-    if config.embedding.embedding_method == embedding.Algorithm.BLADE:
+    if config.embedding.algorithm == embedding.Algorithm.BLADE:
         return BLaDEmbedder(instance, config, backend)
-    elif config.embedding.embedding_method == embedding.Algorithm.GREEDY:
+    elif config.embedding.algorithm == embedding.Algorithm.GREEDY:
         return GreedyEmbedder(instance, config, backend)
-    elif issubclass(config.embedding.embedding_method, _BaseEmbedder):
+    elif issubclass(config.embedding.algorithm, _BaseEmbedder):
         return typing.cast(
-            _BaseEmbedder, config.embedding.embedding_method(instance, config, backend)
+            _BaseEmbedder, config.embedding.algorithm(instance, config, backend)
         )
     else:
         raise NotImplementedError

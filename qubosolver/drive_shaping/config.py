@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 
 from qubosolver.types import Bitstring, Matrix, Solution
 from qubosolver.utils._config import _Config
-from . import Algorithm
+from .enums import Algorithm
 
 
 @dataclass

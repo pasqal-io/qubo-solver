@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from qoolqit.execution import job
 
 from qubosolver.types import Instance, Solution
-from qubosolver.solvers.config import Config as SolverConfig
 from qubosolver import solvers, transforms
 
 
@@ -35,14 +34,14 @@ class BaseSolver(ABC):
     * `_draw_sequence` — visualise the compiled pulse sequence.
     """
 
-    def __init__(self, instance: Instance, config: SolverConfig = SolverConfig()):
+    def __init__(self, instance: Instance, config: solvers.Config = solvers.Config()):
         """Initialise the solver with a QUBO instance and configuration.
 
         Args:
             instance: The QUBO problem to solve.
             config: Configuration settings for the solver (backend, device,
                 embedding, drive-shaping, pre/post-processing flags, etc.).
-                Defaults to a default-constructed `SolverConfig`.
+                Defaults to a default-constructed `solvers.Config`.
         """
         self.instance: Instance = instance
         self.config = config
