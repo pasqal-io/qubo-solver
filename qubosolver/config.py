@@ -74,7 +74,6 @@ class ClassicalConfig(_Config):
         sa_cooling_rate (float, optional): Cooling rate - should be slightly below 1 (e.g., 0.95–0.99).
         sa_seed (int, optional): Random seed for reproducibility.
         sa_start (torch.Tensor | None, optional): Optional initial bitstring of shape (n,).
-        sa_energy_tol (float, optional): Energy tolerance for considering two solutions as equivalent.
         sa_time_limit (float): Maximum runtime in seconds for simulated annealing.
             Defaults to `float("inf")`, meaning no time limit.
         tabu_x0 (torch.Tensor | None, optional): The initial binary solution tensor of shape (n,).
@@ -97,7 +96,6 @@ class ClassicalConfig(_Config):
     sa_cooling_rate: float | None = None
     sa_seed: int | None = None
     sa_start: torch.Tensor | None = None
-    sa_energy_tol: float = 0.0
     sa_time_limit: float = float("inf")
 
     tabu_x0: torch.Tensor | None = None
@@ -148,7 +146,6 @@ class ClassicalConfig(_Config):
                     "sa_cooling_rate": self.sa_cooling_rate,
                     "sa_seed": self.sa_seed,
                     "sa_start": self.sa_start,
-                    "sa_energy_tol": self.sa_energy_tol,
                     "sa_time_limit": self.sa_time_limit,
                 }
             )

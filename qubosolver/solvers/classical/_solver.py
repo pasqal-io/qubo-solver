@@ -97,7 +97,7 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
 
     Relevant :class:`~qubosolver.config.ClassicalConfig` fields:
     ``sa_seed``, ``sa_start``, ``sa_initial_temp``, ``sa_final_temp``,
-    ``sa_cooling_rate``, ``sa_energy_tol``, ``sa_time_limit``,
+    ``sa_cooling_rate``, ``sa_time_limit``,
     ``max_iter``, ``max_bitstrings``.
     """
 
@@ -120,19 +120,18 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
         else:
             start = self.config.sa_start
 
-        simulated_annealing_solution = solvers.simulated_annealing(
-            qubo=self.instance,
+        return solvers.simulated_annealing(
+            instance=self.instance,
             top_k=self.config.max_bitstrings,
             max_iter=self.config.max_iter,
             initial_temp=self.config.sa_initial_temp,
             final_temp=self.config.sa_final_temp,
             cooling_rate=self.config.sa_cooling_rate,
             rng=rng,
-            start=start,
-            energy_tol=self.config.sa_energy_tol,
+            start=start.unsqueeze(0),
             time_limit=self.config.sa_time_limit,
+            stats="per_run",
         )
-        return simulated_annealing_solution
 
 
 class TabuSearchSolver(BaseClassicalSolver):

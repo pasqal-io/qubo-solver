@@ -17,6 +17,7 @@ from typing import Any
 import torch
 from . import linalg, vector
 from .linalg import Bitstring
+from .random import torch_rng
 
 
 def dtype() -> torch.dtype:
@@ -91,3 +92,19 @@ def to_string(bitstring: Bitstring) -> str:
         A string of '0' and '1' characters.
     """
     return "".join(str(b.item()) for b in bitstring.flatten())
+
+
+def rand(
+    n: int, *, device: torch.device = device(), rng: torch.Generator = torch_rng()
+) -> Bitstring:
+    """Creates a bitstring of length *n* with independent uniformly random bits.
+
+    Args:
+        n: Length of the bitstring.
+        device: Torch device for the tensor.
+        rng: PyTorch random number generator controlling the sampling.
+
+    Returns:
+        A 1-D ``int8`` tensor of 0s and 1s.
+    """
+    return torch.randint(0, 2, (n,), generator=rng, device=device, dtype=dtype())
