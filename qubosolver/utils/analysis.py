@@ -362,6 +362,7 @@ def plot(
     df: pd.DataFrame,
     x_axis: str,
     y_axis: str,
+    *,
     labels: list[str] | None = None,
     sort_by: str | None = None,
     sort_order: str = "ascending",

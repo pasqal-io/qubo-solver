@@ -250,9 +250,9 @@ def _run_simulation(
 def build_drive(
     instance: Instance,
     register: qoolqit.Register,
+    *,
     backend: protocols.Backend,
     device: qoolqit.Device,
-    *,
     dmm: bool = False,
     config: Config = Config(),
 ) -> tuple[qoolqit.Drive, Solution]:
