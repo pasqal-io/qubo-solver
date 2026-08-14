@@ -7,7 +7,7 @@ import pytest
 import torch
 import pytest_check as check
 
-from qubosolver import bitstring, linalg
+from qubosolver import bitstring, linalg, torch_rng
 
 
 def test_dtype_returns_int8() -> None:
@@ -206,3 +206,39 @@ def test_to_string_length_matches_number_of_elements() -> None:
     bs = bitstring.tensor(data)
     result = bitstring.to_string(bs)
     check.equal(len(result), len(data))
+
+
+def test_rand_creates_int8_vector_of_requested_length() -> None:
+    n = 20
+    result = bitstring.rand(n, rng=torch_rng(0))
+    check.equal(result.dtype, torch.int8)
+    check.equal(result.shape, (n,))
+
+
+def test_rand_creates_empty_vector_when_n_is_zero() -> None:
+    result = bitstring.rand(0, rng=torch_rng(0))
+    check.equal(result.dtype, torch.int8)
+    check.equal(result.shape, (0,))
+
+
+def test_rand_only_contains_zeros_and_ones() -> None:
+    result = bitstring.rand(200, rng=torch_rng(0))
+    check.is_true(torch.all((result == 0) | (result == 1)).item())
+
+
+def test_rand_creates_vector_on_specified_device() -> None:
+    custom_device = torch.device("cpu")
+    result = bitstring.rand(10, device=custom_device, rng=torch_rng(0))
+    check.equal(result.device, custom_device)
+
+
+def test_rand_is_deterministic_with_seeded_rng() -> None:
+    a = bitstring.rand(50, rng=torch_rng(1234))
+    b = bitstring.rand(50, rng=torch_rng(1234))
+    torch.testing.assert_close(a, b)
+
+
+def test_rand_differs_across_seeds() -> None:
+    a = bitstring.rand(50, rng=torch_rng(1))
+    b = bitstring.rand(50, rng=torch_rng(2))
+    check.is_false(torch.equal(a, b))

@@ -20,6 +20,7 @@ from typing import Any, Sequence
 import torch
 from .linalg import Bitstrings
 from . import bitstring
+from .random import torch_rng
 
 
 def dtype() -> torch.dtype:
@@ -106,3 +107,20 @@ def to_strings(bitstrings: Bitstrings) -> list[str]:
         A list of *n* strings, each of length *m*, representing each row of the tensor.
     """
     return [bitstring.to_string(b) for b in bitstrings]
+
+
+def rand(
+    count: int, n_bits: int, *, device: torch.device = device(), rng: torch.Generator = torch_rng()
+) -> Bitstrings:
+    """Creates a 2-D bitstrings tensor with independent uniformly random bits.
+
+    Args:
+        count: Number of bitstrings (rows).
+        n_bits: Length of each bitstring (columns).
+        device: Torch device for the tensor.
+        rng: PyTorch random number generator controlling the sampling.
+
+    Returns:
+        A 2-D ``int8`` tensor of shape ``(count, n_bits)`` containing 0s and 1s.
+    """
+    return torch.randint(0, 2, (count, n_bits), generator=rng, device=device, dtype=dtype())
