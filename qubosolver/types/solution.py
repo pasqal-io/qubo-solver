@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import logging
 import torch
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from typing_extensions import Self
 
 from ._checks import debug_runtime_typecheck
@@ -36,6 +36,7 @@ class SingleSolution:
 
     bitstring: Bitstring
     cost: float = float("inf")
+    count: int = 0
     probability: float = 0.0
 
     @property
@@ -118,6 +119,7 @@ class Solution:
             Snapshot of the candidate at *idx*.
         """
         solution = SingleSolution(self.bitstrings[idx])
+        solution.count = int(self.counts[idx].item())
         if self.costs.numel() > 0:
             solution.cost = self.costs[idx].item()
         if self.probabilities.numel() > 0:
@@ -199,6 +201,153 @@ class Solution:
         if self.probabilities.numel() > 0:
             self.probabilities = self.probabilities[sorted_indices]
         return self
+
+    def truncate(self, k: int) -> Self:
+        """Keep only the first *k* candidates in-place.
+
+        Slices `bitstrings`, `costs`, `counts`, and `probabilities`
+        (whichever are non-empty) down to their first *k* rows. Does not
+        sort or deduplicate first; combine with `sort_by_cost` /
+        `deduplicate` as needed, e.g. ``solution.sort_by_cost().truncate(1)``
+        to keep the best candidate.
+
+        Args:
+            k: Number of candidates to keep. When ``k >= len(self)``, this
+                is a no-op.
+
+        Returns:
+            The same [`Solution`][] instance, allowing method chaining.
+
+        Raises:
+            ValueError: If `probabilities` is non-empty while
+                `counts` is empty.
+
+        Note:
+            When both are populated, `probabilities` are recomputed
+            from the truncated `counts` (via `compute_probabilities`)
+            rather than merely sliced, so they still sum to 1.
+        """
+        if self.probabilities.numel() > 0 and self.counts.numel() == 0:
+            raise ValueError("Solution.truncate() requires counts when probabilities is populated")
+
+        self.bitstrings = self.bitstrings[:k]
+        if self.costs.numel() > 0:
+            self.costs = self.costs[:k]
+        if self.counts.numel() > 0:
+            self.counts = self.counts[:k]
+            if self.probabilities.numel() > 0:
+                self.compute_probabilities()
+        return self
+
+    def deduplicate(self) -> Self:
+        """Collapse duplicate bitstrings in-place, summing their counts.
+
+        Rows sharing the same bitstring are merged into a single row:
+        `counts` are summed, the minimum `cost` is kept, and
+        `probabilities` are recomputed from the new totals. The result
+        is sorted by cost.
+
+        When `counts` is empty (not yet populated), count-summing and
+        probability recomputation are skipped, and `counts` /
+        `probabilities` remain empty on the result. Likewise, when
+        `costs` is empty, cost reduction and cost-based sorting are
+        skipped, and `costs` remains empty on the result.
+
+        Returns:
+            The same [`Solution`][] instance, allowing method chaining.
+
+        Note:
+            When several rows share a bitstring, the minimum of their
+            `costs` is kept. This is only meaningful if those costs
+            were all computed from the same QUBO instance (same
+            `matrix` passed to `compute_costs`); the caller is
+            responsible for ensuring that, since this method does not
+            verify it.
+        """
+        if not self:
+            return self
+
+        unique_bitstrings, inverse = self.bitstrings.unique(dim=0, return_inverse=True)
+        n = unique_bitstrings.shape[0]
+        self.bitstrings = unique_bitstrings
+
+        if self.counts.numel() > 0:
+            self.counts = vectori.zeros(n).scatter_reduce(
+                dim=0, index=inverse, src=self.counts, reduce="sum", include_self=False
+            )
+
+        if self.costs.numel() > 0:
+            self.costs = vector.zeros(n).scatter_reduce(
+                dim=0, index=inverse, src=self.costs, reduce="amin", include_self=False
+            )
+            self.sort_by_cost()
+
+        if self.counts.numel() > 0:
+            self.compute_probabilities()
+
+        return self
+
+    @staticmethod
+    def concat(solutions: Iterable[Solution], *, unit_counts: bool = False) -> Solution:
+        """Concatenate several solutions into a new one, without deduplication.
+
+        Concatenates `bitstrings`, `costs`, `counts`, and
+        `probabilities` from every solution in *solutions*. Duplicate
+        bitstrings, if any, are kept as separate rows — call
+        `deduplicate` on the result to collapse them:
+
+        ```python
+        merged = Solution.concat([a, b]).deduplicate()
+        ```
+
+        Args:
+            solutions: Solutions to concatenate. Empty solutions (no
+                bitstrings) are skipped. Among the remaining solutions,
+                each of `costs`, `counts`, and `probabilities` must be
+                either populated on all of them or empty on all of them
+                — mixing populated and empty for the same field raises
+                `ValueError`.
+            unit_counts: When ``True``, set `counts` to ``1`` for every
+                concatenated candidate instead of concatenating their
+                original counts — useful when each candidate should count
+                as a single vote once merged, e.g.
+                ``Solution.concat(solutions, unit_counts=True).deduplicate()``.
+                `probabilities`, if populated, are recomputed from the
+                resulting `counts` rather than concatenated, so they
+                still sum to 1.
+
+        Returns:
+            A new [`Solution`][] containing every candidate from every
+            solution, or an empty [`Solution`][] if *solutions* is empty
+            or contains only empty solutions.
+        """
+        non_empty = [solution for solution in solutions if solution]
+        if not non_empty:
+            return Solution()
+
+        for field in ("costs", "counts", "probabilities"):
+            populated = [getattr(s, field).numel() > 0 for s in non_empty]
+            if any(populated) and not all(populated):
+                raise ValueError(
+                    f"Solution.concat() requires {field} to be either populated on "
+                    f"every solution or empty on every solution, not a mix of both"
+                )
+
+        bitstrings = torch.cat([s.bitstrings for s in non_empty], dim=0)
+        probabilities_populated = non_empty[0].probabilities.numel() > 0
+        if unit_counts:
+            counts = vectori.zeros(bitstrings.shape[0]).fill_(1)
+        else:
+            counts = torch.cat([s.counts for s in non_empty], dim=0)
+
+        result = Solution(
+            bitstrings=bitstrings,
+            costs=torch.cat([s.costs for s in non_empty], dim=0),
+            counts=counts,
+        )
+        if probabilities_populated:
+            result.compute_probabilities()
+        return result
 
     @staticmethod
     def from_results(results: Results, *, instance: Instance = Instance()) -> Solution:

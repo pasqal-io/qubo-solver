@@ -82,8 +82,8 @@ def test_qubo_solver_sa_or_tabu(
     check.equal(solution.bitstrings.shape[1], simple_qubo_instance.size)
     check.equal(len(solution.counts), len(solution.bitstrings))
     check.equal(len(solution.probabilities), len(solution.bitstrings))
-    # random_sampling draws max_bitstrings uniformly at random and dedups them,
-    # so the total count can be less than max_bitstrings if a bitstring is drawn twice.
+    # SA uses stats='per_run', so it counts each retained bitstring once,
+    # bounded by max_bitstrings, same as tabu search.
     check.less_equal(solution.counts.sum().item(), max_bitstrings)
     check.almost_equal(solution.probabilities.sum().item(), 1.0)
 

@@ -6,7 +6,7 @@ import pytest
 import torch
 import pytest_check as check
 
-from qubosolver import bitstring, bitstrings
+from qubosolver import bitstring, bitstrings, torch_rng
 
 
 def test_dtype_returns_int8() -> None:
@@ -198,3 +198,50 @@ def test_to_strings_from_torch_converts_correctly() -> None:
     bs = bitstrings.from_torch(source)
     result = bitstrings.to_strings(bs)
     check.equal(result, ["101", "010"])
+
+
+def test_rand_creates_int8_matrix_of_requested_shape() -> None:
+    count, n_bits = 6, 20
+    result = bitstrings.rand(count, n_bits, rng=torch_rng(0))
+    check.equal(result.dtype, torch.int8)
+    check.equal(result.shape, (count, n_bits))
+
+
+def test_rand_creates_empty_matrix_when_count_is_zero() -> None:
+    result = bitstrings.rand(0, 5, rng=torch_rng(0))
+    check.equal(result.dtype, torch.int8)
+    check.equal(result.shape, (0, 5))
+
+
+def test_rand_creates_empty_matrix_when_n_bits_is_zero() -> None:
+    result = bitstrings.rand(5, 0, rng=torch_rng(0))
+    check.equal(result.dtype, torch.int8)
+    check.equal(result.shape, (5, 0))
+
+
+def test_rand_only_contains_zeros_and_ones() -> None:
+    result = bitstrings.rand(20, 20, rng=torch_rng(0))
+    check.is_true(torch.all((result == 0) | (result == 1)).item())
+
+
+def test_rand_creates_matrix_on_specified_device() -> None:
+    custom_device = torch.device("cpu")
+    result = bitstrings.rand(4, 10, device=custom_device, rng=torch_rng(0))
+    check.equal(result.device, custom_device)
+
+
+def test_rand_is_deterministic_with_seeded_rng() -> None:
+    a = bitstrings.rand(10, 50, rng=torch_rng(1234))
+    b = bitstrings.rand(10, 50, rng=torch_rng(1234))
+    torch.testing.assert_close(a, b)
+
+
+def test_rand_differs_across_seeds() -> None:
+    a = bitstrings.rand(10, 50, rng=torch_rng(1))
+    b = bitstrings.rand(10, 50, rng=torch_rng(2))
+    check.is_false(torch.equal(a, b))
+
+
+def test_rand_rows_are_independent_not_identical() -> None:
+    result = bitstrings.rand(10, 30, rng=torch_rng(0))
+    check.is_false(torch.all(result == result[0]).item())

@@ -226,10 +226,14 @@ def test_classical_solve(
         solution = solvers.tabu_search(effective_qubo, solution.bitstrings)
     elif solving_method == "sa":
         solution = solvers.random_sampling(effective_qubo, rng=rng, max_bitstrings=1)
-        solution = solvers.simulated_annealing(effective_qubo, solution.bitstrings[0], top_k=1)
+        solution = solvers.simulated_annealing(
+            effective_qubo, solution[0].bitstring.unsqueeze(0), top_k=1
+        )
     elif solving_method == "sa+tabu":
         solution = solvers.random_sampling(effective_qubo, rng=rng, max_bitstrings=1)
-        solution = solvers.simulated_annealing(effective_qubo, solution.bitstrings[0], top_k=1)
+        solution = solvers.simulated_annealing(
+            effective_qubo, solution[0].bitstring.unsqueeze(0), top_k=1
+        )
         solution = solvers.tabu_search(effective_qubo, solution.bitstrings)
     elif solving_method == "random":
         solution = solvers.random_sampling(effective_qubo, rng=rng)
