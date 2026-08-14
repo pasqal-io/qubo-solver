@@ -88,7 +88,7 @@ def test_run_local_backends(simple_qubo_instance: Instance, local_backend: Local
         SolverConfig(
             use_quantum=True,
             backend=local_backend,
-            embedding=EmbeddingConfig(embedding_method=EmbedderType.BLADE),
+            embedding=EmbeddingConfig(algorithm=EmbedderType.BLADE),
         ),
     )
     solutions = solver.solve()
@@ -101,14 +101,14 @@ def test_solver_different_devices(
     request: pytest.FixtureRequest,
     qubo_for_testing_many_devices: Instance,
     local_device: Device,
-    embedding_method: EmbedderType,
+    algorithm: EmbedderType,
 ) -> None:
 
     config = SolverConfig(
         use_quantum=True,
-        drive_shaping=DriveShapingConfig(drive_shaping_method="proportional_diagonal"),
+        drive_shaping=DriveShapingConfig(algorithm="proportional_diagonal"),
         embedding=EmbeddingConfig(
-            embedding_method=embedding_method,
+            algorithm=algorithm,
             greedy_traps=qubo_for_testing_many_devices.size,
         ),
         do_postprocessing=False,
@@ -202,7 +202,7 @@ def trivial_triangular_qubo(connection: Optional[RemoteConnection] = None) -> So
 
     config = SolverConfig(use_quantum=True, do_preprocessing=False)
 
-    config.embedding = EmbeddingConfig(embedding_method="blade")
+    config.embedding = EmbeddingConfig(algorithm="blade")
     num_shots = 100
 
     if connection is None:
@@ -307,15 +307,15 @@ def _triangular_register_qubo() -> np.ndarray:
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
-def test_quantum_matches_classical_triangular(embedding_method: str) -> None:
+@pytest.mark.parametrize("algorithm", ["greedy", "blade"])
+def test_quantum_matches_classical_triangular(algorithm: str) -> None:
     qubo = _triangular_register_qubo()
     instance = Instance(matrix.tensor(qubo))
 
     quantum_config = SolverConfig(
         use_quantum=True,
-        embedding=EmbeddingConfig(embedding_method=embedding_method),
-        drive_shaping=DriveShapingConfig(drive_shaping_method=Algorithm.PROPORTIONAL_DIAGONAL),
+        embedding=EmbeddingConfig(algorithm=algorithm),
+        drive_shaping=DriveShapingConfig(algorithm=Algorithm.PROPORTIONAL_DIAGONAL),
         do_preprocessing=False,
         do_postprocessing=False,
     )

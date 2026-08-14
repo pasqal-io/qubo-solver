@@ -107,12 +107,12 @@ def test_greedy_embedding_config(greedy_embedding_config: SolverConfig) -> None:
 def test_initialization_device() -> None:
 
     solver = SolverConfig()
-    assert solver.embedding.greedy_traps == -1
+    assert solver.embedding.greedy_traps == "device"
 
     deviceanalog = AnalogDevice()
     kwargs: dict[Any, Any] = {"device": deviceanalog}
     solver = SolverConfig.from_kwargs(**kwargs)
-    assert solver.embedding.greedy_traps == -1
+    assert solver.embedding.greedy_traps == "device"
 
 
 def test_decomposition_config() -> None:

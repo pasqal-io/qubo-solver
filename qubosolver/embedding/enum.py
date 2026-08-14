@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from enum import Enum
-
 from pulser.register.special_layouts import SquareLatticeLayout, TriangularLatticeLayout
 
 from qubosolver.types.enums import _StrEnum
@@ -18,7 +16,7 @@ class Algorithm(_StrEnum):
     """BLADE embedder using graph-theoretic optimization for qubit placement."""
 
 
-class Layout(Enum):
+class Layout(_StrEnum):
     """Type of lattice layout used by the greedy embedding method."""
 
     SQUARE = SquareLatticeLayout

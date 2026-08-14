@@ -39,10 +39,7 @@ from .types import (
     LocalEmulator,
     RemoteEmulator,
 )
-from .embedding.enum import Layout
-from .solvers.enum import ClassicalAlgorithm
-from .drive_shaping.enum import Algorithm
-from . import embedding
+from . import embedding, drive_shaping, solvers
 
 # Allow torch.Tensor fields in Pydantic models.
 BaseModel.model_config["arbitrary_types_allowed"] = True
@@ -63,7 +60,7 @@ class ClassicalConfig(_Config):
     """A `ClassicalConfig` instance defines the classical part of a `SolverConfig`.
 
     Attributes:
-        classical_solver_type (ClassicalAlgorithm, optional): Classical solver type. Defaults to
+        classical_solver_type (solvers.ClassicalAlgorithm, optional): Classical solver type. Defaults to
             `"tabu_search"`.
         cplex_maxtime (float, optional): CPLEX maximum runtime in seconds. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
@@ -84,9 +81,10 @@ class ClassicalConfig(_Config):
             in seconds. Defaults to `float("inf")`, meaning no time limit.
     """
 
-    classical_solver_type: str | ClassicalAlgorithm = "tabu_search"
+    algorithm: str | solvers.ClassicalAlgorithm = "tabu_search"
+
     cplex_maxtime: float = 600.0
-    cplex_log_path: str = "solver.log"
+    cplex_log_path: str = ""
 
     max_iter: int = 100
     max_bitstrings: int = 1
@@ -103,20 +101,20 @@ class ClassicalConfig(_Config):
     tabu_max_no_improve: int = 20
     tabu_time_limit: float = float("inf")
 
-    @field_validator("classical_solver_type")
+    @field_validator("algorithm")
     @classmethod
     def _normalize_classical_solver_type(
-        cls, val: str | ClassicalAlgorithm
-    ) -> ClassicalAlgorithm | Any:
+        cls, val: str | solvers.ClassicalAlgorithm
+    ) -> solvers.ClassicalAlgorithm | Any:
         """Normalize the classical_solver_type attribute."""
-        if isinstance(val, ClassicalAlgorithm):
+        if isinstance(val, solvers.ClassicalAlgorithm):
             return val
         u = val.upper()
-        all_names = [c.name for c in ClassicalAlgorithm]
+        all_names = [c.name for c in solvers.ClassicalAlgorithm]
         if u in all_names:
-            return ClassicalAlgorithm[u]
+            return solvers.ClassicalAlgorithm[u]
         else:
-            raise ValueError(f"Invalid classical_solver_type '{val}'.")
+            raise ValueError(f"Invalid classical algorithm '{val}'.")
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
@@ -131,12 +129,12 @@ class ClassicalConfig(_Config):
         Returns:
             dict[str, Any]: Serialized representation of this config.
         """
-        serialization: dict = {"classical_solver_type": self.classical_solver_type}
-        if self.classical_solver_type == ClassicalAlgorithm.CPLEX:
+        serialization: dict = {"algorithm": self.algorithm}
+        if self.algorithm == solvers.ClassicalAlgorithm.CPLEX:
             serialization.update(
                 {"cplex_maxtime": self.cplex_maxtime, "cplex_log_path": self.cplex_log_path}
             )
-        if self.classical_solver_type == ClassicalAlgorithm.SIMULATED_ANNEALING:
+        if self.algorithm == solvers.ClassicalAlgorithm.SIMULATED_ANNEALING:
             serialization.update(
                 {
                     "max_iter": self.max_iter,
@@ -149,7 +147,7 @@ class ClassicalConfig(_Config):
                     "sa_time_limit": self.sa_time_limit,
                 }
             )
-        if self.classical_solver_type == ClassicalAlgorithm.TABU_SEARCH:
+        if self.algorithm == solvers.ClassicalAlgorithm.TABU_SEARCH:
             serialization.update(
                 {
                     "max_bitstrings": self.max_bitstrings,
@@ -171,8 +169,8 @@ class EmbeddingConfig(_Config):
         embedding_method (str | embedding.Algorithm | type[BaseEmbedder], optional): The type of
             embedding method used to place atoms on the register according to the QUBO problem.
             Defaults to `embedding.Algorithm.GREEDY`.
-        greedy_layout (Layout | str, optional): Layout type for the
-            greedy embedder method. Defaults to `Layout.TRIANGULAR`.
+        greedy_layout (embedding.Layout | str, optional): embedding.Layout type for the
+            greedy embedder method. Defaults to `embedding.Layout.TRIANGULAR`.
         greedy_traps (int, optional): The number of traps on the register.
             Defaults to ``-1``, i.e. automatically set to match the selected device capacity.
             A too high value will impede computational efficiency.
@@ -202,9 +200,10 @@ class EmbeddingConfig(_Config):
             ``max_radial_distance`` / ``min_distance`` specs. Defaults to ``"device"``.
     """
 
-    embedding_method: Any = embedding.Algorithm.GREEDY
-    greedy_layout: Layout | str = Layout.TRIANGULAR
-    greedy_traps: int = -1
+    algorithm: embedding.Algorithm | str = embedding.Algorithm.GREEDY
+
+    greedy_layout: embedding.Layout = embedding.Layout.TRIANGULAR
+    greedy_traps: int | Literal["device"] = "device"
     greedy_max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
     greedy_density: float | None = None
     blade_steps_per_round: int | None = 200
@@ -227,12 +226,12 @@ class EmbeddingConfig(_Config):
             dict[str, Any]: Serialized representation of this config.
         """
         serialization: dict = {
-            "embedding_method": self.embedding_method,
+            "algorithm": self.algorithm,
             "draw_steps": self.draw_steps,
             "animation_save_path": self.animation_save_path,
         }
         dict_all_fields = self.__dict__
-        if self.embedding_method == embedding.Algorithm.GREEDY:
+        if self.algorithm == embedding.Algorithm.GREEDY:
             serialization.update(
                 {
                     k: v
@@ -240,15 +239,15 @@ class EmbeddingConfig(_Config):
                     if k.startswith(embedding.Algorithm.GREEDY.value)
                 }
             )
-        if self.embedding_method == embedding.Algorithm.BLADE:
+        if self.algorithm == embedding.Algorithm.BLADE:
             serialization.update(
                 {k: v for k, v in dict_all_fields.items() if k.startswith(embedding.Algorithm.BLADE.value)}
             )
         return serialization
 
-    @field_validator("embedding_method")
+    @field_validator("algorithm")
     @classmethod
-    def _normalize_embedder(cls, val: Any) -> embedding.Algorithm | Any:
+    def _normalize_algorithm(cls, val: Any) -> embedding.Algorithm | Any:
         """Normalize the embedded attribute."""
         if isinstance(val, embedding.Algorithm):
             return val
@@ -269,15 +268,15 @@ class EmbeddingConfig(_Config):
 
     @field_validator("greedy_layout")
     @classmethod
-    def _normalize_layout(cls, val: str | Layout) -> Layout:
+    def _normalize_layout(cls, val: str | embedding.Layout) -> embedding.Layout:
         """Normalize the layout attribute."""
-        if isinstance(val, Layout):
+        if isinstance(val, embedding.Layout):
             return val
         u = val.upper()
-        if u == Layout.SQUARE.name:
-            return Layout.SQUARE
-        elif u == Layout.TRIANGULAR.name:
-            return Layout.TRIANGULAR
+        if u == embedding.Layout.SQUARE.name:
+            return embedding.Layout.SQUARE
+        elif u == embedding.Layout.TRIANGULAR.name:
+            return embedding.Layout.TRIANGULAR
         else:
             raise ValueError(f"Invalid layout '{val}'.")
 
@@ -331,7 +330,7 @@ class DriveShapingConfig(_Config):
             Defaults to 50000.
     """
 
-    drive_shaping_method: Any = Algorithm.PROPORTIONAL_DIAGONAL
+    algorithm: drive_shaping.Algorithm | str = drive_shaping.Algorithm.PROPORTIONAL_DIAGONAL
     dmm: bool = True
     bayesian_search_n_calls: int = 20
     bayesian_search_initial_omega_parameters: list[float] = field(
@@ -368,32 +367,32 @@ class DriveShapingConfig(_Config):
             dict[str, Any]: Serialized representation of this config.
         """
         serialization: dict = {
-            "drive_shaping_method": self.drive_shaping_method,
+            "drive_shaping_method": self.algorithm,
             "dmm": self.dmm,
         }
-        if self.drive_shaping_method == Algorithm.BAYESIAN_SEARCH:
+        if self.algorithm == drive_shaping.Algorithm.BAYESIAN_SEARCH:
             dict_all_fields = self.__dict__
             serialization.update(
                 {
                     k: v
                     for k, v in dict_all_fields.items()
-                    if k.startswith(Algorithm.BAYESIAN_SEARCH.value)
+                    if k.startswith(drive_shaping.Algorithm.BAYESIAN_SEARCH.value)
                 }
             )
         return serialization
 
-    @field_validator("drive_shaping_method")
+    @field_validator("algorithm")
     @classmethod
-    def _normalize_drive_shaping_method(cls, val: Any) -> Algorithm | Any:
+    def _normalize_drive_shaping_method(cls, val: Any) -> drive_shaping.Algorithm | Any:
         """Normalize the `drive_shaping_method` attribute."""
-        if isinstance(val, Algorithm):
+        if isinstance(val, drive_shaping.Algorithm):
             return val
         elif isinstance(val, str):
             u = val.upper()
-            if u == Algorithm.PROPORTIONAL_DIAGONAL.name:
-                return Algorithm.PROPORTIONAL_DIAGONAL
-            elif u == Algorithm.BAYESIAN_SEARCH.name:
-                return Algorithm.BAYESIAN_SEARCH
+            if u == drive_shaping.Algorithm.PROPORTIONAL_DIAGONAL.name:
+                return drive_shaping.Algorithm.PROPORTIONAL_DIAGONAL
+            elif u == drive_shaping.Algorithm.BAYESIAN_SEARCH.name:
+                return drive_shaping.Algorithm.BAYESIAN_SEARCH
             else:
                 raise ValueError(f"Invalid drive shaping method '{val}'.")
         elif inspect.isclass(val):
