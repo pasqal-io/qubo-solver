@@ -2,4 +2,4 @@
 
 ::: qubosolver.embedding.blade
 
-::: qubosolver.embedding.greedy
+::: qubosolver.embedding.greedy_layout

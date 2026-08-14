@@ -14,10 +14,10 @@ from qubosolver import (
     EmbedderType,
     LayoutType,
     DriveType,
-    ClassicalSolverType,
     LocalEmulator,
     AutoLocalEmulatorBackend,
 )
+from qubosolver.solvers import ClassicalAlgorithm
 
 
 def test_empty_config(empty_config: SolverConfig) -> None:
@@ -33,7 +33,7 @@ def test_empty_config(empty_config: SolverConfig) -> None:
 
 def test_classical_part() -> None:
     default_classical = ClassicalConfig()
-    assert default_classical.classical_solver_type == ClassicalSolverType.TABU_SEARCH
+    assert default_classical.classical_solver_type == ClassicalAlgorithm.TABU_SEARCH
 
     with pytest.raises(ValueError):
         ClassicalConfig(classical_solver_type=1)  # type: ignore[arg-type]

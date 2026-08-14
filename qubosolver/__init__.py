@@ -32,7 +32,6 @@ from qubosolver.types import (
     EmbedderType,
     DriveType,
     LayoutType,
-    ClassicalSolverType,
     # Functions
     torch_rng,
     # Qubo* TypeAliases
@@ -97,7 +96,6 @@ __all__ = [
     "EmbedderType",
     "DriveType",
     "LayoutType",
-    "ClassicalSolverType",
     # Configs
     "SolverConfig",
     "EmbeddingConfig",

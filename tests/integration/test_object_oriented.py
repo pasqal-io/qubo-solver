@@ -17,7 +17,6 @@ from qubosolver import (
     EmbeddingConfig,
     DriveShapingConfig,
     ClassicalConfig,
-    ClassicalSolverType,
     EmbedderType,
     DriveType,
     SingleSolution,
@@ -30,6 +29,7 @@ from qubosolver import (
     Matrix,
     torch_rng,
 )
+from qubosolver.solvers import ClassicalAlgorithm
 
 
 def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
@@ -207,10 +207,10 @@ def test_classical_solve(
     qubo, expected_optimal_solutions = simple_qubo()
 
     classical_solvers = {
-        "cplex": ClassicalSolverType.CPLEX,
-        "tabu": ClassicalSolverType.TABU_SEARCH,
-        "sa": ClassicalSolverType.SIMULATED_ANNEALING,
-        "random": ClassicalSolverType.RANDOM,
+        "cplex": ClassicalAlgorithm.CPLEX,
+        "tabu": ClassicalAlgorithm.TABU_SEARCH,
+        "sa": ClassicalAlgorithm.SIMULATED_ANNEALING,
+        "random": ClassicalAlgorithm.RANDOM,
     }
 
     classical_config = ClassicalConfig(

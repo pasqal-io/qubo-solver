@@ -36,13 +36,13 @@ from .types import (
     EmbedderType,
     LayoutType,
     DriveType,
-    ClassicalSolverType,
     Bitstring,
     Matrix,
     Solution,
     LocalEmulator,
     RemoteEmulator,
 )
+from .solvers.enum import ClassicalAlgorithm
 
 # Allow torch.Tensor fields in Pydantic models.
 BaseModel.model_config["arbitrary_types_allowed"] = True
@@ -63,7 +63,7 @@ class ClassicalConfig(_Config):
     """A `ClassicalConfig` instance defines the classical part of a `SolverConfig`.
 
     Attributes:
-        classical_solver_type (ClassicalSolverType, optional): Classical solver type. Defaults to
+        classical_solver_type (ClassicalAlgorithm, optional): Classical solver type. Defaults to
             `"tabu_search"`.
         cplex_maxtime (float, optional): CPLEX maximum runtime in seconds. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
@@ -84,7 +84,7 @@ class ClassicalConfig(_Config):
             in seconds. Defaults to `float("inf")`, meaning no time limit.
     """
 
-    classical_solver_type: str | ClassicalSolverType = "tabu_search"
+    classical_solver_type: str | ClassicalAlgorithm = "tabu_search"
     cplex_maxtime: float = 600.0
     cplex_log_path: str = "solver.log"
 
@@ -106,15 +106,15 @@ class ClassicalConfig(_Config):
     @field_validator("classical_solver_type")
     @classmethod
     def _normalize_classical_solver_type(
-        cls, val: str | ClassicalSolverType
-    ) -> ClassicalSolverType | Any:
+        cls, val: str | ClassicalAlgorithm
+    ) -> ClassicalAlgorithm | Any:
         """Normalize the classical_solver_type attribute."""
-        if isinstance(val, ClassicalSolverType):
+        if isinstance(val, ClassicalAlgorithm):
             return val
         u = val.upper()
-        all_names = [c.name for c in ClassicalSolverType]
+        all_names = [c.name for c in ClassicalAlgorithm]
         if u in all_names:
-            return ClassicalSolverType[u]
+            return ClassicalAlgorithm[u]
         else:
             raise ValueError(f"Invalid classical_solver_type '{val}'.")
 
@@ -132,11 +132,11 @@ class ClassicalConfig(_Config):
             dict[str, Any]: Serialized representation of this config.
         """
         serialization: dict = {"classical_solver_type": self.classical_solver_type}
-        if self.classical_solver_type == ClassicalSolverType.CPLEX:
+        if self.classical_solver_type == ClassicalAlgorithm.CPLEX:
             serialization.update(
                 {"cplex_maxtime": self.cplex_maxtime, "cplex_log_path": self.cplex_log_path}
             )
-        if self.classical_solver_type == ClassicalSolverType.SIMULATED_ANNEALING:
+        if self.classical_solver_type == ClassicalAlgorithm.SIMULATED_ANNEALING:
             serialization.update(
                 {
                     "max_iter": self.max_iter,
@@ -149,7 +149,7 @@ class ClassicalConfig(_Config):
                     "sa_time_limit": self.sa_time_limit,
                 }
             )
-        if self.classical_solver_type == ClassicalSolverType.TABU_SEARCH:
+        if self.classical_solver_type == ClassicalAlgorithm.TABU_SEARCH:
             serialization.update(
                 {
                     "max_bitstrings": self.max_bitstrings,

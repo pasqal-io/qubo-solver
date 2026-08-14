@@ -81,7 +81,7 @@ class Config:
                 self.max_min_dist_ratio = float("inf")
 
     @staticmethod
-    def from_embedding_config(config: EmbeddingConfig) -> Config:
+    def _from_embedding_config(config: EmbeddingConfig) -> Config:
         """Create a [`Config`][] from a user-facing [`EmbeddingConfig`][].
 
         Maps the ``greedy_*`` fields of *config* onto the corresponding
@@ -174,8 +174,8 @@ def _number_of_traps_from_device(device: qoolqit.Device) -> int:
 
 def embed(
     instance: Instance,
-    device: qoolqit.Device,
     *,
+    device: qoolqit.Device,
     config: Config = Config(),
 ) -> qoolqit.Register:
     """Embed a QUBO instance using the greedy algorithm.

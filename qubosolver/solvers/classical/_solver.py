@@ -20,7 +20,8 @@ from abc import ABC, abstractmethod
 import torch
 
 from qubosolver.config import ClassicalConfig
-from qubosolver.types import Instance, Solution, ClassicalSolverType, torch_rng
+from qubosolver.types import Instance, Solution, torch_rng
+from qubosolver.solvers.enum import ClassicalAlgorithm
 from qubosolver import solvers
 
 
@@ -222,18 +223,18 @@ def get_classical_solver(instance: Instance, config: ClassicalConfig) -> BaseCla
 
     Raises:
         ValueError: If ``config.classical_solver_type`` does not match any
-            known :class:`~qubosolver.types.ClassicalSolverType` value.
+            known :class:`~qubosolver.solvers.enum.ClassicalAlgorithm` value.
     """
     solver_type = config.classical_solver_type
     solver_type = solver_type.lower()
 
-    if solver_type == ClassicalSolverType.CPLEX:
+    if solver_type == ClassicalAlgorithm.CPLEX:
         return CplexSolver(instance, config)
-    if solver_type == ClassicalSolverType.SIMULATED_ANNEALING:
+    if solver_type == ClassicalAlgorithm.SIMULATED_ANNEALING:
         return SimulatedAnnealingSolver(instance, config)
-    if solver_type == ClassicalSolverType.TABU_SEARCH:
+    if solver_type == ClassicalAlgorithm.TABU_SEARCH:
         return TabuSearchSolver(instance, config)
-    if solver_type == ClassicalSolverType.RANDOM:
+    if solver_type == ClassicalAlgorithm.RANDOM:
         return RandomSolver(instance, config)
 
     raise ValueError(f"Solver type not supported: {solver_type}")

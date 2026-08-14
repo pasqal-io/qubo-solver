@@ -7,7 +7,7 @@ from qoolqit.devices.device import BaseDevice
 from qoolqit import AnalogDeviceWithDMM
 
 from qubosolver.embedding._algorithms.greedy import Greedy
-from qubosolver.embedding.greedy import _resolve_max_possible_term
+from qubosolver.embedding.greedy_layout import _resolve_max_possible_term
 from qubosolver import LayoutType, Dataset, embedding, Instance, matrix
 import pytest
 import pytest_check as check
@@ -321,15 +321,15 @@ def test_max_distance_constraint() -> None:
 
 
 def test_empty_embedding() -> None:
-    config = embedding.greedy.Config(traps=0)
+    config = embedding.greedy_layout.Config(traps=0)
     with pytest.raises(ValueError, match="empty instance"):
-        embedding.greedy.embed(Instance(), AnalogDeviceWithDMM(), config=config)
+        embedding.greedy_layout.embed(Instance(), AnalogDeviceWithDMM(), config=config)
 
 
 def test_single_atom_embedding() -> None:
-    config = embedding.greedy.Config(traps=1)
+    config = embedding.greedy_layout.Config(traps=1)
     instance = Instance(matrix.zeros(1))
-    register = embedding.greedy.embed(instance, AnalogDeviceWithDMM(), config=config)
+    register = embedding.greedy_layout.embed(instance, AnalogDeviceWithDMM(), config=config)
     check.equal(len(register), 1)
 
 

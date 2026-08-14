@@ -80,8 +80,8 @@ def test_quantum_remote_job(
         if embedding_method == EmbedderType.BLADE:
             register = embedding.blade.embed(instance)
         else:
-            config = embedding.greedy.Config(traps=100)
-            register = embedding.greedy.embed(instance, device, config=config)
+            config = embedding.greedy_layout.Config(traps=100)
+            register = embedding.greedy_layout.embed(instance, device, config=config)
 
         num_shots = 50
         backend: protocols.Backend

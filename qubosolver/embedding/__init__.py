@@ -5,9 +5,9 @@ Provides BLaDE and greedy embedding strategies.
 
 from __future__ import annotations
 
-from qubosolver.embedding import blade, greedy
+from qubosolver.embedding import blade, greedy_layout
 
 __all__ = [
     "blade",
-    "greedy",
+    "greedy_layout",
 ]

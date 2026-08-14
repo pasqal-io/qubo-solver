@@ -8,11 +8,11 @@ from qubosolver import (
     Solution,
     SolverConfig,
     ClassicalConfig,
-    ClassicalSolverType,
     Solver,
     vector,
     vectori,
 )
+from qubosolver.solvers import ClassicalAlgorithm
 
 
 def test_init_single_solution(basic_solution: Solution) -> None:
@@ -94,7 +94,7 @@ def test_calculate_gaps(analyzer: Analyzer) -> None:
     assert "gaps" in df.columns
 
 
-@pytest.mark.parametrize("classical_method", [c.value for c in ClassicalSolverType])
+@pytest.mark.parametrize("classical_method", [c.value for c in ClassicalAlgorithm])
 def test_analyzer_classical(simple_qubo_instance: Instance, classical_method: str) -> None:
     config = SolverConfig(
         use_quantum=False, classical=ClassicalConfig(classical_solver_type=classical_method)
@@ -119,7 +119,7 @@ def test_analyzer_quantum(simple_qubo_instance: Instance) -> None:
     assert "counts" in analyzer.df.columns
 
 
-@pytest.mark.parametrize("classical_method", [c.value for c in ClassicalSolverType])
+@pytest.mark.parametrize("classical_method", [c.value for c in ClassicalAlgorithm])
 def test_analyzer_quantum_and_classical(
     simple_qubo_instance: Instance, classical_method: str
 ) -> None:

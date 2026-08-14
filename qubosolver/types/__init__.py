@@ -18,7 +18,6 @@ from qubosolver.types.enums import (
     EmbedderType,
     LayoutType,
     DriveType,
-    ClassicalSolverType,
 )
 from qubosolver.types.backends import (
     LocalEmulator,
@@ -69,7 +68,6 @@ __all__ = [
     "EmbedderType",
     "LayoutType",
     "DriveType",
-    "ClassicalSolverType",
     # Functions
     "torch_rng",
     # Qubo* TypeAliases

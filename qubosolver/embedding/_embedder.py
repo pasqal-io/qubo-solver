@@ -7,7 +7,7 @@ import warnings
 import torch
 from qoolqit import Register
 
-from . import blade, greedy
+from . import blade, greedy_layout
 from qubosolver.types import Instance, EmbedderType, protocols
 from qubosolver.config import SolverConfig
 
@@ -115,8 +115,8 @@ class GreedyEmbedder(_BaseEmbedder):
         Returns:
             The atom register with positions determined by the greedy placer.
         """
-        config = greedy.Config.from_embedding_config(self.config.embedding)
-        return greedy.embed(self.instance, self.config.device, config=config)
+        config = greedy_layout.Config._from_embedding_config(self.config.embedding)
+        return greedy_layout.embed(self.instance, self.config.device, config=config)
 
 
 def _get_embedder(

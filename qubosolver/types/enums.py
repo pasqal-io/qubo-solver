@@ -1,8 +1,8 @@
 """Enum types used throughout the QUBO solver pipeline.
 
 This module defines all enumeration classes that control solver behaviour —
-embedding strategy, lattice layout, drive shaping method, QUBO matrix density,
-and classical solver backend.
+embedding strategy, lattice layout, drive shaping method, and QUBO matrix
+density.
 
 All public enums are re-exported from the top-level `qubosolver` namespace
 and can be imported directly:
@@ -12,7 +12,6 @@ from qubosolver import (
     EmbedderType,
     LayoutType,
     DriveType,
-    ClassicalSolverType,
 )
 ```
 """
@@ -88,16 +87,3 @@ class DriveType(Enum):
     """Drive whose parameters are found via Bayesian search that minimizes the cost function via pulse optimization."""
     PROPORTIONAL_DIAGONAL = "proportional_diagonal"
     """Drive whose amplitude/detuning scale proportionally to the QUBO diagonal; no numerical optimization."""
-
-
-class ClassicalSolverType(_StrEnum):
-    """Type of classical solver used as a backend for QUBO optimization."""
-
-    TABU_SEARCH = "tabu_search"
-    """Tabu search metaheuristic that avoids recently visited solutions."""
-    SIMULATED_ANNEALING = "simulated_annealing"
-    """Simulated annealing algorithm that probabilistically accepts worse solutions to escape local minima."""
-    CPLEX = "cplex"
-    """IBM CPLEX exact solver; requires a valid CPLEX installation and licence."""
-    RANDOM = "random"
-    """Randomly samples solutions; useful as a baseline or for testing."""
