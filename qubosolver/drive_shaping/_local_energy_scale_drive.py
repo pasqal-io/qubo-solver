@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import warnings
+import logging
 
 import numpy as np
 import torch
@@ -18,6 +18,43 @@ from ._device_specs import (
 )
 from ._waveforms import constant_weighted_dmm
 
+logger = logging.getLogger(__name__)
+
+
+def _detunings(
+    d: NDArray[np.float64], use_dmm: bool
+) -> tuple[float, float, list[float], bool]:
+
+    d_min = np.min(d)
+    d_max = np.max(d)
+
+    if use_dmm:
+        # The final global detuning is the highest
+        # target value. The DMM locally pulls the
+        # detuning down.
+        delta_g_T = d_max
+
+        spread = max(0.0, d_max - d_min)
+
+        if spread > 1e-15:
+            # WeightedDetuning waveforms must be
+            # non-positive.
+            delta_dmm_T = -spread
+            denom = d_max - d_min
+            weights = ((d_max - d) / denom).clip(0.0, 1.0).tolist()
+        else:
+            use_dmm = False
+            delta_g_T = np.mean(d)
+            delta_dmm_T = 0.0
+            weights = np.zeros_like(d).tolist()
+    else:
+        # Without DMM, all atoms receive the same
+        # final global detuning.
+        delta_g_T = np.mean(d)
+        delta_dmm_T = 0.0
+        weights = np.zeros_like(d).tolist()
+
+    return delta_g_T, delta_dmm_T, weights, use_dmm
 
 def build_drive(
     instance: Instance,
@@ -70,334 +107,118 @@ def build_drive(
     """
     # Hardware bounds
     specs = device.specs
-    max_seq_duration: float = (
-        specs["max_duration"]
-        or 1000.0
-    )
-
+    max_seq_duration: float = specs["max_duration"] or 1000.0
     pulser_specs = _pulser_specs(device)
+    use_dmm = dmm and (pulser_specs["dmm_bottom_detuning"] is not None)
 
-    use_dmm = (
-        dmm
-        and pulser_specs["dmm_bottom_detuning"]
-        is not None
-    )
-
-    if (
-        specs.get("max_amplitude") is not None
-        and specs.get("max_abs_detuning") is not None
-    ):
+    if specs.get("max_amplitude") is not None and specs.get("max_abs_detuning") is not None:
         device_max_amplitude = specs["max_amplitude"]
-        device_max_abs_detuning = specs[
-            "max_abs_detuning"
-        ]
-
+        device_max_abs_detuning = specs["max_abs_detuning"]
         assert device_max_amplitude is not None
         assert device_max_abs_detuning is not None
 
-        det_amp_ratio = (
-            device_max_amplitude
-            / device_max_abs_detuning
-        )
+        det_amp_ratio = device_max_amplitude / device_max_abs_detuning
 
         if kappa < det_amp_ratio:
-            warnings.warn(
-                f"local_energy_scale_kappa is too small "
-                f"({kappa}), you're likely to get a "
-                "qoolqit CompilationError. "
-                f"Set it above {det_amp_ratio}."
+            logger.warning(
+                f"local_energy_scale_kappa is too small ({kappa}), you're likely to get a qoolqit CompilationError. Set it above {det_amp_ratio}."
             )
 
     n = instance.size
 
     # Target local final detunings.
-    d: NDArray[np.float64] = np.asarray(
-        (
-            -0.5
-            * torch.diag(instance.matrix)
-        )
-        .detach()
-        .cpu()
-        .numpy(),
-        dtype=np.float64,
-    )
+    d = (-0.5 * torch.diag(instance.matrix)).detach().cpu().numpy()
+    delta_g_T, delta_dmm_T, weights, use_dmm = _detunings(d, use_dmm)
 
-    d_min = float(np.min(d))
-    d_max = float(np.max(d))
-
-    weights: list[float]
-
-    if use_dmm:
-        # The final global detuning is the highest
-        # target value. The DMM locally pulls the
-        # detuning down.
-        delta_g_T = d_max
-
-        spread = max(
-            0.0,
-            d_max - d_min,
-        )
-
-        if spread > 1e-15:
-            # WeightedDetuning waveforms must be
-            # non-positive.
-            delta_dmm_T = -spread
-
-            normalized_weights = np.divide(
-                np.subtract(
-                    np.float64(d_max),
-                    d,
-                ),
-                np.float64(spread),
-            )
-
-            weights = np.clip(
-                normalized_weights,
-                0.0,
-                1.0,
-            ).tolist()
-        else:
-            use_dmm = False
-            delta_g_T = float(np.mean(d))
-            delta_dmm_T = 0.0
-            weights = [0.0] * n
-    else:
-        # Without DMM, all atoms receive the same
-        # final global detuning.
-        delta_g_T = float(np.mean(d))
-        delta_dmm_T = 0.0
-        weights = [0.0] * n
-
-    # Final detuning effectively applied to each
-    # qubit:
+    # Final detuning effectively applied to each qubit:
     #
-    # delta_i(T) =
-    #     delta_g(T) + delta_dmm(T) * w_i.
+    # delta_i(T) = delta_g(T) + delta_dmm(T) * w_i.
     if use_dmm:
-        weights_array: NDArray[np.float64] = (
-            np.asarray(
-                weights,
-                dtype=np.float64,
-            )
-        )
-
-        final_local_detunings: NDArray[
-            np.float64
-        ] = np.add(
-            np.float64(delta_g_T),
-            np.multiply(
-                np.float64(delta_dmm_T),
-                weights_array,
-            ),
-        )
+        final_local_detunings = delta_g_T + delta_dmm_T * np.asarray(weights)
     else:
-        final_local_detunings = np.full(
-            n,
-            delta_g_T,
-            dtype=np.float64,
-        )
+        final_local_detunings = np.full(n, delta_g_T)
 
-    # Physical interactions generated by the
-    # embedded register:
+    # Physical interactions generated by the embedded register:
     #
     # V_ij = 1 / r_ij**6.
-    physical_interactions = (
-        register.interactions()
-    )
+    physical_interactions = register.interactions()
 
-    # Associate each register qubit ID with its
-    # position in the local-energy vector.
-    qubit_index = {
-        qubit_id: index
-        for index, qubit_id in enumerate(
-            register.qubits_ids
-        )
-    }
+    # Associate each register qubit ID with its position in the local-energy vector.
+    qubit_index = { qubit_id: index for index, qubit_id in enumerate(register.qubits_ids) }
 
     # For each qubit i, compute:
     #
     # sum_{j != i} |V_ij|.
-    interaction_scale: NDArray[np.float64] = (
-        np.zeros(
-            n,
-            dtype=np.float64,
-        )
-    )
+    interaction_scale = np.zeros(n)
 
-    for (
-        qubit_i,
-        qubit_j,
-    ), interaction in physical_interactions.items():
+    for (qubit_i, qubit_j), interaction in physical_interactions.items():
         index_i = qubit_index[qubit_i]
         index_j = qubit_index[qubit_j]
 
-        interaction_magnitude = abs(
-            float(interaction)
-        )
-
-        interaction_scale[index_i] += (
-            interaction_magnitude
-        )
-
-        interaction_scale[index_j] += (
-            interaction_magnitude
-        )
+        interaction_scale[index_i] += abs(interaction)
+        interaction_scale[index_j] += abs(interaction)
 
     # Local physical energy scale:
     #
-    # E_i = |delta_i(T)|
-    #       + sum_{j != i} |V_ij|.
-    local_energy_scale: NDArray[np.float64] = (
-        np.add(
-            np.abs(final_local_detunings),
-            interaction_scale,
-        )
-    )
+    # E_i = |delta_i(T)| + sum_{j != i} |V_ij|.
+    local_energy_scale = np.abs(final_local_detunings) + interaction_scale
 
     # Average local physical energy scale:
     #
     # E_mean = (1 / n) * sum_i E_i.
-    mean_local_energy_scale = float(
-        np.mean(local_energy_scale)
-    )
+    mean_local_energy_scale = np.mean(local_energy_scale)
 
     # Local-energy-scale mixing rule:
     #
     # omega_max = kappa * E_mean.
-    omega_max = float(
-        kappa * mean_local_energy_scale
-    )
+    omega_max = kappa * mean_local_energy_scale
 
-    # Clamp the amplitude to what can be compiled
-    # for this device and register.
-    max_amplitude = float(
-        max_virtual_amplitude(
-            device,
-            register,
-        )
-    )
+    # Clamp the amplitude to what can be compiled for this device and register.
+    max_amplitude = max_virtual_amplitude(device, register)
 
     if omega_max > max_amplitude:
-        warnings.warn(
-            "The local-energy-scale drive amplitude "
-            f"({omega_max}) exceeds the maximum "
-            "amplitude compilable on the device for "
-            f"this register ({max_amplitude}); "
-            "clamping to it."
+        logger.info(
+            f"The local-energy-scale drive amplitude ({omega_max}) exceeds the maximum "
+            f"amplitude compilable on the device for this register "
+            f"({max_amplitude}); clamping to it."
         )
-
         omega_max = max_amplitude
 
-    # Ensure that the target detunings remain
-    # compilable for the selected amplitude.
-    max_detuning = float(
-        detuning_amplitude_ratio(device)
-        * omega_max
-        * (1.0 - 1e-3)
-    )
-
-    max_abs_d = float(
-        np.max(np.abs(d))
-    )
+    # Ensure that the target detunings remain compilable for the selected amplitude.
+    max_detuning = detuning_amplitude_ratio(device) * omega_max * (1.0 - 1e-3)
+    max_abs_d = np.max(np.abs(d))
 
     if max_abs_d > max_detuning:
-        warnings.warn(
-            "The local-energy-scale detuning "
-            f"({max_abs_d}) exceeds the maximum "
-            "detuning compilable on the device for "
-            f"this amplitude ({max_detuning}); "
-            "scaling the detuning down."
+        logger.info(
+            f"The local-energy-scale detuning ({max_abs_d}) exceeds the maximum detuning "
+            f"compilable on the device for this amplitude ({max_detuning}); "
+            f"scaling the detuning down."
         )
+        d = d * (max_detuning / max_abs_d)
+        # Recompute the DMM encoding after rescaling the target local detunings.
+        delta_g_T, delta_dmm_T, weights, use_dmm = _detunings(d, use_dmm)
 
-        d = np.multiply(
-            d,
-            np.float64(
-                max_detuning / max_abs_d
-            ),
-        )
+    # Keep the initial detuning rule identical to the standard heuristic drive.
+    delta_0 = -np.max(np.abs(d))
 
-        d_min = float(np.min(d))
-        d_max = float(np.max(d))
-
-        # Recompute the DMM encoding after
-        # rescaling the target local detunings.
-        if use_dmm:
-            delta_g_T = d_max
-
-            spread = max(
-                0.0,
-                d_max - d_min,
-            )
-
-            if spread > 1e-15:
-                delta_dmm_T = -spread
-
-                normalized_weights = np.divide(
-                    np.subtract(
-                        np.float64(d_max),
-                        d,
-                    ),
-                    np.float64(spread),
-                )
-
-                weights = np.clip(
-                    normalized_weights,
-                    0.0,
-                    1.0,
-                ).tolist()
-            else:
-                use_dmm = False
-                delta_dmm_T = 0.0
-                weights = [0.0] * n
-                delta_g_T = float(
-                    np.mean(d)
-                )
-        else:
-            delta_g_T = float(np.mean(d))
-            delta_dmm_T = 0.0
-            weights = [0.0] * n
-
-    # Keep the initial detuning rule identical to
-    # the standard heuristic drive.
-    delta_0 = -float(
-        np.max(np.abs(d))
-    )
-
-    # Amplitude waveform:
-    # 0 -> omega_max -> omega_max -> 0.
+    # Amplitude waveform: 0 -> omega_max -> omega_max -> 0.
     eps = 1e-9
-
     amp_wave = qoolqit.InterpolatedWaveform(
         max_seq_duration,
-        [
-            eps,
-            omega_max,
-            omega_max,
-            eps,
-        ],
+        [eps, omega_max, omega_max, eps],
     )
 
-    # Global detuning waveform:
-    # initial negative value -> final target.
+    # Global detuning waveform: initial negative value -> final target.
     det_wave = qoolqit.InterpolatedWaveform(
         max_seq_duration,
-        [
-            delta_0,
-            delta_0,
-            delta_g_T,
-            delta_g_T,
-        ],
+        [delta_0, delta_0, delta_g_T, delta_g_T],
     )
 
     # Optional DMM weighted detunings.
     wdetunings = None
 
     if use_dmm:
-        energy_scale = float(
-            device._target_amp
-            / omega_max
-        )
-
+        energy_scale = device._target_amp / omega_max
         wdetunings = constant_weighted_dmm(
             weights,
             max_seq_duration,
