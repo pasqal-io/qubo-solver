@@ -9,7 +9,8 @@ import qoolqit
 
 
 from . import proportional_diagonal, bayesian_search
-from qubosolver.types import Instance, Solution, DriveType, protocols
+from .enum import Algorithm
+from qubosolver.types import Instance, Solution, protocols
 from qubosolver.config import SolverConfig
 
 
@@ -201,12 +202,12 @@ def _get_drive_shaper(
 
     Raises:
         NotImplementedError: If ``config.drive_shaping.drive_shaping_method``
-            is not a recognised :class:`DriveType` and is not a subclass of
+            is not a recognised :class:`Algorithm` and is not a subclass of
             :class:`_BaseDriveShaper`.
     """
-    if config.drive_shaping.drive_shaping_method == DriveType.PROPORTIONAL_DIAGONAL:
+    if config.drive_shaping.drive_shaping_method == Algorithm.PROPORTIONAL_DIAGONAL:
         return ProportionalDiagonalDriveShaper(instance, config, backend)
-    elif config.drive_shaping.drive_shaping_method == DriveType.BAYESIAN_SEARCH:
+    elif config.drive_shaping.drive_shaping_method == Algorithm.BAYESIAN_SEARCH:
         return BayesianSearchDriveShaper(instance, config, backend)
     elif issubclass(config.drive_shaping.drive_shaping_method, _BaseDriveShaper):
         return cast(

@@ -147,7 +147,7 @@ The register should be normalized to have a minimal inter-atomic distance equal 
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `drive_shaping_method` | `DriveType \| str` | Must be set to `DriveType.PROPORTIONAL_DIAGONAL` or `"proportional_diagonal"` |
+| `drive_shaping_method` | `drive_shaping.Algorithm \| str` | Must be set to `drive_shaping.Algorithm.PROPORTIONAL_DIAGONAL` or `"proportional_diagonal"` |
 | `dmm` | `bool` | Enables site-dependent final detuning through weighted DMM detunings |
 | `proportional_diagonal_kappa` | `float` | Proportionality factor used to derive $\Omega_{\max}$ from the detuning scale; current fallback default: `0.25` |
 
@@ -171,7 +171,7 @@ generation time.
 
 ```python
 import torch
-from qubosolver import Instance, SolverConfig, DriveShapingConfig, Solver, DriveType
+from qubosolver import Instance, SolverConfig, DriveShapingConfig, Solver, drive_shaping
 
 Q = torch.tensor([
     [-1.0, 0.5, 0.2],
@@ -184,7 +184,7 @@ instance = Instance(Q)
 config = SolverConfig(
     use_quantum=True,
     drive_shaping=DriveShapingConfig(
-        drive_shaping_method=DriveType.PROPORTIONAL_DIAGONAL,
+        drive_shaping_method=drive_shaping.Algorithm.PROPORTIONAL_DIAGONAL,
         dmm=True,
         proportional_diagonal_kappa=0.25,
     ),

@@ -7,8 +7,9 @@ import warnings
 import torch
 from qoolqit import Register
 
+from qubosolver import embedding
 from . import blade, greedy_layout
-from qubosolver.types import Instance, EmbedderType, protocols
+from qubosolver.types import Instance, protocols
 from qubosolver.config import SolverConfig
 
 warnings.filterwarnings("ignore", module="pulser")
@@ -127,8 +128,8 @@ def _get_embedder(
     Inspects ``config.embedding.embedding_method`` and constructs the matching
     :class:`_BaseEmbedder` subclass:
 
-    * :class:`BLaDEmbedder` — when the method is :attr:`EmbedderType.BLADE`.
-    * :class:`GreedyEmbedder` — when the method is :attr:`EmbedderType.GREEDY`.
+    * :class:`BLaDEmbedder` — when the method is :attr:`embedding.Algorithm.BLADE`.
+    * :class:`GreedyEmbedder` — when the method is :attr:`embedding.Algorithm.GREEDY`.
     * A user-supplied subclass of :class:`_BaseEmbedder` — when the method is
       a class (not a string enum value) that is a subclass of
       :class:`_BaseEmbedder`.
@@ -144,13 +145,13 @@ def _get_embedder(
 
     Raises:
         NotImplementedError: If ``config.embedding.embedding_method`` is not a
-            recognised :class:`EmbedderType` value and is not a subclass of
+            recognised :class:`embedding.Algorithm` value and is not a subclass of
             :class:`_BaseEmbedder`.
     """
 
-    if config.embedding.embedding_method == EmbedderType.BLADE:
+    if config.embedding.embedding_method == embedding.Algorithm.BLADE:
         return BLaDEmbedder(instance, config, backend)
-    elif config.embedding.embedding_method == EmbedderType.GREEDY:
+    elif config.embedding.embedding_method == embedding.Algorithm.GREEDY:
         return GreedyEmbedder(instance, config, backend)
     elif issubclass(config.embedding.embedding_method, _BaseEmbedder):
         return typing.cast(

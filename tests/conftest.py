@@ -20,7 +20,6 @@ from qubosolver import (
     Solution,
     EmbedderType,
     LayoutType,
-    DriveType,
     bitstrings,
     vector,
     vectori,
@@ -31,6 +30,7 @@ from qubosolver import (
     DriveShapingConfig,
     LocalEmulator,
 )
+from qubosolver.drive_shaping import Algorithm
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
@@ -151,7 +151,7 @@ def blade_config() -> SolverConfig:
 
 @pytest.fixture
 def bayesian_search_drive_shaping() -> DriveShapingConfig:
-    return DriveShapingConfig(drive_shaping_method=DriveType.BAYESIAN_SEARCH)
+    return DriveShapingConfig(drive_shaping_method=Algorithm.BAYESIAN_SEARCH)
 
 
 @pytest.fixture

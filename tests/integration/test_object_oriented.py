@@ -18,7 +18,6 @@ from qubosolver import (
     DriveShapingConfig,
     ClassicalConfig,
     EmbedderType,
-    DriveType,
     SingleSolution,
     Solution,
     bitstrings,
@@ -30,6 +29,7 @@ from qubosolver import (
     torch_rng,
 )
 from qubosolver.solvers import ClassicalAlgorithm
+from qubosolver.drive_shaping import Algorithm
 
 
 def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
@@ -150,14 +150,14 @@ def test_quantum_solve(
 
     if drive_shaping_method == "bayesian_search":
         drive_shaping_config = DriveShapingConfig(
-            drive_shaping_method=DriveType.BAYESIAN_SEARCH,
+            drive_shaping_method=Algorithm.BAYESIAN_SEARCH,
             bayesian_search_n_calls=11,
             bayesian_search_seed=seed,
             dmm=False,
         )
     elif drive_shaping_method == "proportional_diagonal":
         drive_shaping_config = DriveShapingConfig(
-            drive_shaping_method=DriveType.PROPORTIONAL_DIAGONAL,
+            drive_shaping_method=Algorithm.PROPORTIONAL_DIAGONAL,
             proportional_diagonal_kappa=0.25,
             dmm=False,
         )

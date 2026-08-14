@@ -15,7 +15,6 @@ from qubosolver import (
     EmbeddingConfig,
     DriveShapingConfig,
     SolverConfig,
-    DriveType,
     Bitstring,
     matrix,
 )
@@ -24,6 +23,7 @@ from qubosolver.drive_shaping._drive_shaper import (
     BayesianSearchDriveShaper,
     ProportionalDiagonalDriveShaper,
 )
+from qubosolver.drive_shaping import Algorithm
 from qubosolver.solvers.solver import _QuboSolverQuantum
 
 
@@ -130,16 +130,16 @@ def test_generate_bayesian_search_drive_shaper(
 
 
 @pytest.mark.priority(25)
-@pytest.mark.parametrize("drive_method", list(DriveType))
+@pytest.mark.parametrize("drive_method", list(Algorithm))
 @pytest.mark.parametrize("dmm", [True, False])
 def test_normalized_weights_in_drive(
-    drive_method: DriveType,
+    drive_method: Algorithm,
     dmm: bool,
     dummy_register: qoolqit.Register,
     simple_qubo_instance: Instance,
 ) -> None:
     # skip proportional-diagonal drive as its normalization is very specific
-    if dmm and drive_method is DriveType.PROPORTIONAL_DIAGONAL:
+    if dmm and drive_method is Algorithm.PROPORTIONAL_DIAGONAL:
         pytest.skip("Not implemented")
     default_config = SolverConfig(
         use_quantum=True,
@@ -198,7 +198,7 @@ def test_generate_proportional_diagonal_drive_shaper(
     default_config = SolverConfig(
         use_quantum=True,
         drive_shaping=DriveShapingConfig(
-            drive_shaping_method=DriveType.PROPORTIONAL_DIAGONAL, dmm=dmm
+            drive_shaping_method=Algorithm.PROPORTIONAL_DIAGONAL, dmm=dmm
         ),
         device=qoolqit.DigitalAnalogDevice(),
     )
@@ -244,7 +244,7 @@ def test_shaper_does_not_overflow_device() -> None:
     config = SolverConfig(
         use_quantum=True,
         embedding=EmbeddingConfig(embedding_method="greedy"),
-        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.PROPORTIONAL_DIAGONAL),
+        drive_shaping=DriveShapingConfig(drive_shaping_method=Algorithm.PROPORTIONAL_DIAGONAL),
     )
     solver = Solver(Instance(matrix.tensor(coefficients)), config)
 

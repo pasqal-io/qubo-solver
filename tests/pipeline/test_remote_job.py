@@ -16,7 +16,6 @@ from qubosolver import (
     Solution,
     Analyzer,
     EmbedderType,
-    DriveType,
     matrix,
     LocalEmulator,
     RemoteEmulator,
@@ -39,7 +38,7 @@ from mock.connection import MockConnection
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("drive_method", list(DriveType))
+@pytest.mark.parametrize("drive_method", list(drive_shaping.Algorithm))
 @pytest.mark.parametrize("embedding_method", list(EmbedderType))
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no_pre"])
 @pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
@@ -50,7 +49,7 @@ def test_quantum_remote_job(
     preprocessing: bool,
     dmm: bool,
 ) -> None:
-    if drive_method == DriveType.BAYESIAN_SEARCH:
+    if drive_method == drive_shaping.Algorithm.BAYESIAN_SEARCH:
         pytest.skip(reason="Does not work with the Bayesian-search drive shaping method")
 
     seed = 7979
@@ -90,7 +89,7 @@ def test_quantum_remote_job(
         else:
             backend = RemoteEmulator(connection=connection, num_shots=num_shots)
 
-        if drive_method == DriveType.PROPORTIONAL_DIAGONAL:
+        if drive_method == drive_shaping.Algorithm.PROPORTIONAL_DIAGONAL:
             drive = drive_shaping.proportional_diagonal.build_drive(
                 instance, register, device=device, dmm=dmm
             )

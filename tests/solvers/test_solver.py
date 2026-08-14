@@ -20,7 +20,6 @@ from qubosolver import (
     Solver,
     Solution,
     EmbedderType,
-    DriveType,
     Analyzer,
     EmbeddingConfig,
     DriveShapingConfig,
@@ -33,6 +32,7 @@ from qubosolver import (
     RemoteEmulator,
 )
 from qubosolver.solvers.solver import _QuboSolverQuantum
+from qubosolver.drive_shaping import Algorithm
 from mock.connection import MockConnection
 
 from pulser.backend.remote import (
@@ -315,7 +315,7 @@ def test_quantum_matches_classical_triangular(embedding_method: str) -> None:
     quantum_config = SolverConfig(
         use_quantum=True,
         embedding=EmbeddingConfig(embedding_method=embedding_method),
-        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.PROPORTIONAL_DIAGONAL),
+        drive_shaping=DriveShapingConfig(drive_shaping_method=Algorithm.PROPORTIONAL_DIAGONAL),
         do_preprocessing=False,
         do_postprocessing=False,
     )

@@ -13,11 +13,11 @@ from qubosolver import (
     SolverConfig,
     EmbedderType,
     LayoutType,
-    DriveType,
     LocalEmulator,
     AutoLocalEmulatorBackend,
 )
 from qubosolver.solvers import ClassicalAlgorithm
+from qubosolver.drive_shaping import Algorithm
 
 
 def test_empty_config(empty_config: SolverConfig) -> None:
@@ -41,7 +41,7 @@ def test_classical_part() -> None:
 
 def test_pulseshape_part() -> None:
     default_pshaper = DriveShapingConfig()
-    assert default_pshaper.drive_shaping_method == DriveType.PROPORTIONAL_DIAGONAL
+    assert default_pshaper.drive_shaping_method == Algorithm.PROPORTIONAL_DIAGONAL
     assert not default_pshaper.bayesian_search_re_execute_opt_drive
 
     assert len(default_pshaper.bayesian_search_initial_detuning_parameters) == 3
@@ -52,11 +52,11 @@ def test_pulseshape_part() -> None:
 
     check.equal(
         DriveShapingConfig(drive_shaping_method="proportional_diagonal").drive_shaping_method,
-        DriveType.PROPORTIONAL_DIAGONAL,
+        Algorithm.PROPORTIONAL_DIAGONAL,
     )
     check.equal(
         DriveShapingConfig(drive_shaping_method="bayesian_search").drive_shaping_method,
-        DriveType.BAYESIAN_SEARCH,
+        Algorithm.BAYESIAN_SEARCH,
     )
 
 
