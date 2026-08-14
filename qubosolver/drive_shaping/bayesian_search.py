@@ -19,7 +19,7 @@ from qubosolver.types import (
     protocols,
     tensor,
 )
-from qubosolver import solvers, utils, DriveShapingConfig
+from qubosolver import solvers, utils
 from ._device_specs import max_virtual_amplitude, detuning_amplitude_ratio
 from ._waveforms import constant_weighted_dmm
 

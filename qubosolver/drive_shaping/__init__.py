@@ -9,9 +9,11 @@ from __future__ import annotations
 
 from qubosolver.drive_shaping import proportional_diagonal, bayesian_search
 from qubosolver.drive_shaping.enum import Algorithm
+from qubosolver.drive_shaping.config import Config
 
 __all__ = [
     "proportional_diagonal",
     "bayesian_search",
     "Algorithm",
+    "Config",
 ]

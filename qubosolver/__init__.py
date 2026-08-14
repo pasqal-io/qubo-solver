@@ -42,8 +42,6 @@ from qubosolver.types import (
 )
 from qubosolver.config import (
     SolverConfig,
-    EmbeddingConfig,
-    DriveShapingConfig,
     ClassicalConfig,
     DecompositionConfig,
 )
@@ -90,8 +88,6 @@ __all__ = [
     "AutoRemoteEmulatorBackend",
     # Configs
     "SolverConfig",
-    "EmbeddingConfig",
-    "DriveShapingConfig",
     "ClassicalConfig",
     "DecompositionConfig",
     # Functions
