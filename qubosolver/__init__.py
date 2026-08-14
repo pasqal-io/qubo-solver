@@ -28,10 +28,6 @@ from qubosolver.types import (
     RemoteEmulator,
     AutoLocalEmulatorBackend,
     AutoRemoteEmulatorBackend,
-    # Enums
-    EmbedderType,
-    DriveType,
-    LayoutType,
     # Functions
     torch_rng,
     # Qubo* TypeAliases
@@ -92,10 +88,6 @@ __all__ = [
     "RemoteEmulator",
     "AutoLocalEmulatorBackend",
     "AutoRemoteEmulatorBackend",
-    # Enums
-    "EmbedderType",
-    "DriveType",
-    "LayoutType",
     # Configs
     "SolverConfig",
     "EmbeddingConfig",

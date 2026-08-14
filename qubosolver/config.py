@@ -33,16 +33,16 @@ from qoolqit.execution import QPU
 
 
 from .types import (
-    EmbedderType,
-    LayoutType,
-    DriveType,
     Bitstring,
     Matrix,
     Solution,
     LocalEmulator,
     RemoteEmulator,
 )
+from .embedding.enum import Layout
 from .solvers.enum import ClassicalAlgorithm
+from .drive_shaping.enum import Algorithm
+from . import embedding
 
 # Allow torch.Tensor fields in Pydantic models.
 BaseModel.model_config["arbitrary_types_allowed"] = True
@@ -168,11 +168,11 @@ class EmbeddingConfig(_Config):
         part of a `SolverConfig`.
 
     Attributes:
-        embedding_method (str | EmbedderType | type[BaseEmbedder], optional): The type of
+        embedding_method (str | embedding.Algorithm | type[BaseEmbedder], optional): The type of
             embedding method used to place atoms on the register according to the QUBO problem.
-            Defaults to `EmbedderType.GREEDY`.
-        greedy_layout (LayoutType | str, optional): Layout type for the
-            greedy embedder method. Defaults to `LayoutType.TRIANGULAR`.
+            Defaults to `embedding.Algorithm.GREEDY`.
+        greedy_layout (Layout | str, optional): Layout type for the
+            greedy embedder method. Defaults to `Layout.TRIANGULAR`.
         greedy_traps (int, optional): The number of traps on the register.
             Defaults to ``-1``, i.e. automatically set to match the selected device capacity.
             A too high value will impede computational efficiency.
@@ -202,8 +202,8 @@ class EmbeddingConfig(_Config):
             ``max_radial_distance`` / ``min_distance`` specs. Defaults to ``"device"``.
     """
 
-    embedding_method: Any = EmbedderType.GREEDY
-    greedy_layout: LayoutType | str = LayoutType.TRIANGULAR
+    embedding_method: Any = embedding.Algorithm.GREEDY
+    greedy_layout: Layout | str = Layout.TRIANGULAR
     greedy_traps: int = -1
     greedy_max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
     greedy_density: float | None = None
@@ -232,29 +232,29 @@ class EmbeddingConfig(_Config):
             "animation_save_path": self.animation_save_path,
         }
         dict_all_fields = self.__dict__
-        if self.embedding_method == EmbedderType.GREEDY:
+        if self.embedding_method == embedding.Algorithm.GREEDY:
             serialization.update(
                 {
                     k: v
                     for k, v in dict_all_fields.items()
-                    if k.startswith(EmbedderType.GREEDY.value)
+                    if k.startswith(embedding.Algorithm.GREEDY.value)
                 }
             )
-        if self.embedding_method == EmbedderType.BLADE:
+        if self.embedding_method == embedding.Algorithm.BLADE:
             serialization.update(
-                {k: v for k, v in dict_all_fields.items() if k.startswith(EmbedderType.BLADE.value)}
+                {k: v for k, v in dict_all_fields.items() if k.startswith(embedding.Algorithm.BLADE.value)}
             )
         return serialization
 
     @field_validator("embedding_method")
     @classmethod
-    def _normalize_embedder(cls, val: Any) -> EmbedderType | Any:
+    def _normalize_embedder(cls, val: Any) -> embedding.Algorithm | Any:
         """Normalize the embedded attribute."""
-        if isinstance(val, EmbedderType):
+        if isinstance(val, embedding.Algorithm):
             return val
         elif isinstance(val, str):
             try:
-                return EmbedderType[val.upper()]
+                return embedding.Algorithm[val.upper()]
             except KeyError:
                 raise ValueError(f"Invalid str embedding method '{val}'.")
         elif inspect.isclass(val):
@@ -269,15 +269,15 @@ class EmbeddingConfig(_Config):
 
     @field_validator("greedy_layout")
     @classmethod
-    def _normalize_layout(cls, val: str | LayoutType) -> LayoutType:
+    def _normalize_layout(cls, val: str | Layout) -> Layout:
         """Normalize the layout attribute."""
-        if isinstance(val, LayoutType):
+        if isinstance(val, Layout):
             return val
         u = val.upper()
-        if u == LayoutType.SQUARE.name:
-            return LayoutType.SQUARE
-        elif u == LayoutType.TRIANGULAR.name:
-            return LayoutType.TRIANGULAR
+        if u == Layout.SQUARE.name:
+            return Layout.SQUARE
+        elif u == Layout.TRIANGULAR.name:
+            return Layout.TRIANGULAR
         else:
             raise ValueError(f"Invalid layout '{val}'.")
 
@@ -286,8 +286,8 @@ class DriveShapingConfig(_Config):
     """A `DriveShapingConfig` instance defines the drive shaping part of a `SolverConfig`.
 
     Attributes:
-        drive_shaping_method (str | DriveType | type[BaseDriveShaper], optional): Drive shaping
-            method used. Defaults to `DriveType.PROPORTIONAL_DIAGONAL`.
+        drive_shaping_method (str | Algorithm | type[BaseDriveShaper], optional): Drive shaping
+            method used. Defaults to `Algorithm.PROPORTIONAL_DIAGONAL`.
         dmm (bool, optional): Whether to use a detuning map when applying drive shaping or not.
             This adds WeightedDetuning with a Constant Waveform.
             Defaults to True, which applies DMM.
@@ -331,7 +331,7 @@ class DriveShapingConfig(_Config):
             Defaults to 50000.
     """
 
-    drive_shaping_method: Any = DriveType.PROPORTIONAL_DIAGONAL
+    drive_shaping_method: Any = Algorithm.PROPORTIONAL_DIAGONAL
     dmm: bool = True
     bayesian_search_n_calls: int = 20
     bayesian_search_initial_omega_parameters: list[float] = field(
@@ -371,29 +371,29 @@ class DriveShapingConfig(_Config):
             "drive_shaping_method": self.drive_shaping_method,
             "dmm": self.dmm,
         }
-        if self.drive_shaping_method == DriveType.BAYESIAN_SEARCH:
+        if self.drive_shaping_method == Algorithm.BAYESIAN_SEARCH:
             dict_all_fields = self.__dict__
             serialization.update(
                 {
                     k: v
                     for k, v in dict_all_fields.items()
-                    if k.startswith(DriveType.BAYESIAN_SEARCH.value)
+                    if k.startswith(Algorithm.BAYESIAN_SEARCH.value)
                 }
             )
         return serialization
 
     @field_validator("drive_shaping_method")
     @classmethod
-    def _normalize_drive_shaping_method(cls, val: Any) -> DriveType | Any:
+    def _normalize_drive_shaping_method(cls, val: Any) -> Algorithm | Any:
         """Normalize the `drive_shaping_method` attribute."""
-        if isinstance(val, DriveType):
+        if isinstance(val, Algorithm):
             return val
         elif isinstance(val, str):
             u = val.upper()
-            if u == DriveType.PROPORTIONAL_DIAGONAL.name:
-                return DriveType.PROPORTIONAL_DIAGONAL
-            elif u == DriveType.BAYESIAN_SEARCH.name:
-                return DriveType.BAYESIAN_SEARCH
+            if u == Algorithm.PROPORTIONAL_DIAGONAL.name:
+                return Algorithm.PROPORTIONAL_DIAGONAL
+            elif u == Algorithm.BAYESIAN_SEARCH.name:
+                return Algorithm.BAYESIAN_SEARCH
             else:
                 raise ValueError(f"Invalid drive shaping method '{val}'.")
         elif inspect.isclass(val):

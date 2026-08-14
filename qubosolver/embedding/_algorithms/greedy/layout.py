@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import torch
 
-from qubosolver import LayoutType, tensor, Tensor
+from qubosolver import tensor, Tensor
+from qubosolver.embedding.enum import Layout
 
 
-def get_layout(*, layout_type: LayoutType | str = LayoutType.TRIANGULAR, n_traps: int) -> Tensor:
+def get_layout(*, layout_type: Layout | str = Layout.TRIANGULAR, n_traps: int) -> Tensor:
     """Build a lattice of `n_traps` unit-spacing trap coordinates.
 
     For a square lattice, builds a grid large enough to contain `n_traps`
@@ -17,8 +18,8 @@ def get_layout(*, layout_type: LayoutType | str = LayoutType.TRIANGULAR, n_traps
     arbitrary corner block of the grid.
 
     Args:
-        layout_type: Lattice type, `LayoutType.TRIANGULAR`/`LayoutType.SQUARE`
-            or their lowercase string names. Defaults to `LayoutType.TRIANGULAR`.
+        layout_type: Lattice type, `Layout.TRIANGULAR`/`Layout.SQUARE`
+            or their lowercase string names. Defaults to `Layout.TRIANGULAR`.
         n_traps: Number of trap sites to return.
 
     Returns:
@@ -31,9 +32,9 @@ def get_layout(*, layout_type: LayoutType | str = LayoutType.TRIANGULAR, n_traps
         layout_type = layout_type.lower()
 
     if layout_type not in [
-        LayoutType.TRIANGULAR,
+        Layout.TRIANGULAR,
         "triangular",
-        LayoutType.SQUARE,
+        Layout.SQUARE,
         "square",
     ]:
         raise ValueError(f"Unsupported layout_type: {layout_type!r}")
@@ -42,12 +43,12 @@ def get_layout(*, layout_type: LayoutType | str = LayoutType.TRIANGULAR, n_traps
         return tensor.zeros(0, 2)
 
     match layout_type:
-        case LayoutType.TRIANGULAR | "triangular":
-            return tensor.tensor(LayoutType.TRIANGULAR.value(n_traps, spacing=1).coords)
+        case Layout.TRIANGULAR | "triangular":
+            return tensor.tensor(Layout.TRIANGULAR.value(n_traps, spacing=1).coords)
 
-        case LayoutType.SQUARE | "square":
+        case Layout.SQUARE | "square":
             n = int(torch.ceil(torch.sqrt(2 * torch.tensor(n_traps))).item())
-            coords = torch.tensor(LayoutType.SQUARE.value(n, n, spacing=1).coords)
+            coords = torch.tensor(Layout.SQUARE.value(n, n, spacing=1).coords)
             squared_distances = coords.square().sum(dim=1)
             return coords[torch.argsort(squared_distances)[:n_traps]]
 

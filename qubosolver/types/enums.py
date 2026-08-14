@@ -1,26 +1,12 @@
 """Enum types used throughout the QUBO solver pipeline.
 
 This module defines all enumeration classes that control solver behaviour —
-embedding strategy, lattice layout, drive shaping method, and QUBO matrix
-density.
-
-All public enums are re-exported from the top-level `qubosolver` namespace
-and can be imported directly:
-
-```python
-from qubosolver import (
-    EmbedderType,
-    LayoutType,
-    DriveType,
-)
-```
+embedding strategy and QUBO matrix density.
 """
 
 from __future__ import annotations
 
 from enum import Enum
-
-from pulser.register.special_layouts import SquareLatticeLayout, TriangularLatticeLayout
 
 
 class _StrEnum(str, Enum):
@@ -61,29 +47,3 @@ class _QUBOType(_StrEnum):
     GENERAL_QUBO = "general_qubo"
     """General-purpose QUBO with no specific structural pattern."""
 
-
-class EmbedderType(_StrEnum):
-    """Type of embedding algorithm used to map the QUBO graph onto a hardware register."""
-
-    GREEDY = "greedy"
-    """Greedy layout-based embedder that places qubits on a regular lattice."""
-    BLADE = "blade"
-    """BLADE embedder using graph-theoretic optimization for qubit placement."""
-
-
-class LayoutType(Enum):
-    """Type of lattice layout used by the greedy embedding method."""
-
-    SQUARE = SquareLatticeLayout
-    """Arrange qubits on a square lattice grid."""
-    TRIANGULAR = TriangularLatticeLayout
-    """Arrange qubits on a triangular lattice grid."""
-
-
-class DriveType(Enum):
-    """Type of drive shaping method applied to the analog quantum pulse sequence."""
-
-    BAYESIAN_SEARCH = "bayesian_search"
-    """Drive whose parameters are found via Bayesian search that minimizes the cost function via pulse optimization."""
-    PROPORTIONAL_DIAGONAL = "proportional_diagonal"
-    """Drive whose amplitude/detuning scale proportionally to the QUBO diagonal; no numerical optimization."""

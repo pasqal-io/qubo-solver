@@ -20,7 +20,8 @@ import pathlib
 import qoolqit
 
 from ._algorithms import greedy
-from qubosolver import Instance, LayoutType, EmbeddingConfig, tensor
+from qubosolver import Instance, EmbeddingConfig, tensor
+from qubosolver.embedding.enum import Layout
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
 
@@ -48,7 +49,7 @@ class Config:
 
     traps: int | Literal["device"] = "device"
     max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
-    layout: LayoutType = LayoutType.TRIANGULAR
+    layout: Layout = Layout.TRIANGULAR
     draw_steps: bool = False
     animation_save_path: pathlib.Path | None = None
     max_min_dist_ratio: float | Literal["device"] = "device"

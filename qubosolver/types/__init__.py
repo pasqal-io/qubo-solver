@@ -14,11 +14,6 @@ from qubosolver.types.linalg import Bitstring, Bitstrings, Matrix, Tensor, Vecto
 from qubosolver.types.solution import Solution, SingleSolution
 from qubosolver.types.instance import Instance
 from qubosolver.types.dataset import Dataset
-from qubosolver.types.enums import (
-    EmbedderType,
-    LayoutType,
-    DriveType,
-)
 from qubosolver.types.backends import (
     LocalEmulator,
     RemoteEmulator,
@@ -64,10 +59,6 @@ __all__ = [
     "RemoteEmulator",
     "AutoLocalEmulatorBackend",
     "AutoRemoteEmulatorBackend",
-    # Enums
-    "EmbedderType",
-    "LayoutType",
-    "DriveType",
     # Functions
     "torch_rng",
     # Qubo* TypeAliases
