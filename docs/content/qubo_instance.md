@@ -33,7 +33,7 @@ instance = Instance(matrix=coefficients)
 print(instance)
 
 solution = bitstring.from_string("101")
-cost = instance.evaluate_solution(solution)
+cost = instance.cost(solution)
 print(f"\nSolution Cost: {cost}")
 
 # Save load

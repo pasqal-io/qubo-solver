@@ -67,7 +67,7 @@ def simple_qubo() -> tuple[Instance, list[SingleSolution]]:
     solutions = Solution()
     solutions.bitstrings = bitstrings.tensor(list(itertools.product([0, 1], repeat=n_qubits)))
     solutions.counts = vectori.zeros(solutions.bitstrings.shape[0]).fill_(1)
-    solutions.compute_costs(Q).sort_by_cost().compute_probabilities()
+    solutions._compute_costs(Q)._sort_by_cost()._compute_probabilities()
 
     # Get all bitstrings with minimum cost
     expected_optimal_solutions = gather_optimal_solutions(solutions)
@@ -175,9 +175,9 @@ def test_quantum_solve(
 
     solver = Solver(qubo, config)
     solution = solver.solve()
-    solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
+    solution._compute_costs(qubo.matrix)._sort_by_cost()._compute_probabilities()
 
-    register = solver._solver.embedding()
+    register = solver._solver._embedding()
     print(f"Register: {register.qubits}")
     print(f"Distances: {register.distances()}")
 
@@ -228,7 +228,7 @@ def test_classical_solve(
 
     solver = Solver(qubo, config)
     solution = solver.solve()
-    solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
+    solution._compute_costs(qubo.matrix)._sort_by_cost()._compute_probabilities()
 
     expected_optimal_probability = 0.75
     if solving_method in ["random"]:

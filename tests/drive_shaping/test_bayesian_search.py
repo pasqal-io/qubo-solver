@@ -112,7 +112,7 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
 
     drive_shaper = BayesianSearchDriveShaper(Instance(Q), config, config.backend)
     drive, qubo_solution = drive_shaper.generate(register)
-    qubo_solution.sort_by_cost()
+    qubo_solution._sort_by_cost()
     analyzer = Analyzer([qubo_solution])
     print(f"{analyzer.df}")
 
@@ -186,7 +186,7 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
 
     drive_shaper = BayesianSearchDriveShaper(Instance(Q), config, config.backend)
     drive, qubo_solution = drive_shaper.generate(register)
-    qubo_solution.sort_by_cost()
+    qubo_solution._sort_by_cost()
     analyzer = Analyzer([qubo_solution])
     print(f"{analyzer.df}")
 
@@ -304,8 +304,8 @@ def test_failed_simulation_2() -> None:
         "qubosolver.drive_shaping.bayesian_search._run_simulation",
         return_value=Solution(),
     ):
-        drive, qubo_solution = drive_shaper.generate(register)
-        check.is_true(qubo_solution.empty())
+        _, qubo_solution = drive_shaper.generate(register)
+        check.is_false(qubo_solution)
 
 
 def test_failed_skopt() -> None:
@@ -332,7 +332,7 @@ def test_failed_skopt() -> None:
     drive_shaper = BayesianSearchDriveShaper(Instance(Q), config, config.backend)
 
     with patch("qubosolver.drive_shaping.bayesian_search.gp_minimize", return_value=None):
-        drive, qubo_solution = drive_shaper.generate(register)
+        _, qubo_solution = drive_shaper.generate(register)
         # Falls back to the default x0 parameters, which are now clamped to
         # stay compilable on the device, so the simulation succeeds.
-        check.is_false(qubo_solution.empty())
+        check.is_true(qubo_solution)

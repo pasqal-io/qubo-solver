@@ -98,10 +98,10 @@ def iterative_bitflip_local_search(instance: Instance, solution: Solution) -> So
     if solution.bitstrings.numel() == 0:
         return solution
 
-    # Define an objective function that uses the existing evaluate_solution method.
+    # Define an objective function that uses the existing cost method.
     def qubo_objective(s_arr: Bitstring) -> float:
         # Convert the solution array to a list of integers
-        return instance.evaluate_solution(s_arr)
+        return instance.cost(s_arr)
 
     num_solutions = solution.bitstrings.shape[0]
     improved_bitstrings = bitstrings.zeros(num_solutions, instance.size)
@@ -126,6 +126,6 @@ def iterative_bitflip_local_search(instance: Instance, solution: Solution) -> So
     solution.counts = vectori.zeros(n).scatter_reduce(
         dim=0, index=inverse, src=solution.counts, reduce="sum", include_self=False
     )
-    solution.compute_probabilities()
+    solution._compute_probabilities()
 
     return solution

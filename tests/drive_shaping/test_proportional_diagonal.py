@@ -135,11 +135,11 @@ def test_with_perfect_embedding(
     solver = Solver(instance, config)
     qubo_solution = solver.solve()
 
-    qubo_solution.sort_by_cost()
+    qubo_solution._sort_by_cost()
     analyzer = Analyzer([qubo_solution])
     print(f"{analyzer.df}")
 
-    register = solver.embedding()
+    register = solver._embedding()
     print(f"Register: {register.qubits}")
     print(f"Distances: {register.distances()}")
 

@@ -246,6 +246,6 @@ def test_rounding() -> None:
     check.is_true(solution.check_consistency(instance))
 
     best_cost = solution[0].cost
-    expected_best_cost = solution.compute_costs(instance.matrix)[0].cost
+    expected_best_cost = solution._compute_costs(instance.matrix)[0].cost
 
     check.equal(best_cost, expected_best_cost)

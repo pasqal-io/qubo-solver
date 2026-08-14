@@ -300,4 +300,5 @@ def simulated_annealing(
 
     if merge:
         return Solution.concat(solutions).deduplicate()
+
     return solutions

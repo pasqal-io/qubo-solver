@@ -68,24 +68,24 @@ class Solver(BaseSolver):
         else:
             self._solver = _QuboSolverClassical(instance, config)
 
-    def embedding(self) -> qoolqit.Register:
+    def _embedding(self) -> qoolqit.Register:
         """Delegate embedding generation to the inner solver.
 
         Returns:
             The `qoolqit.Register` produced by the inner solver.
         """
-        return self._solver.embedding()
+        return self._solver._embedding()
 
-    def drive(self, embedding: qoolqit.Register) -> tuple[qoolqit.Drive, Solution]:
+    def _drive(self, embedding: qoolqit.Register) -> tuple[qoolqit.Drive, Solution]:
         """Delegate drive generation to the inner solver.
 
         Args:
-            embedding: The register layout produced by [`embedding`][].
+            embedding: The register layout produced by [`_embedding`][].
 
         Returns:
             A ``(Drive, Solution)`` tuple from the inner solver.
         """
-        return self._solver.drive(embedding)
+        return self._solver._drive(embedding)
 
     def solve(self) -> Solution:
         """Solve the QUBO instance by delegating to the selected inner solver.
@@ -143,8 +143,8 @@ class _QuboSolverQuantum(BaseSolver):
         self.embedder = _get_embedder(self.instance, self.config, self.backend)
         self.drive_shaper = _get_drive_shaper(self.instance, self.config, self.backend)
 
-        self._register: qoolqit.Register | None = None
-        self._drive: qoolqit.Drive | None = None
+        self._cached_register: qoolqit.Register | None = None
+        self._cached_drive: qoolqit.Drive | None = None
 
     def _check_size_limit(self) -> None:
         """Raise if the QUBO instance exceeds the 80-variable device limit.
@@ -158,28 +158,28 @@ class _QuboSolverQuantum(BaseSolver):
                 + " exceeds the maximum supported size of 80×80."
             )
 
-    def embedding(self) -> qoolqit.Register:
+    def _embedding(self) -> qoolqit.Register:
         """Embed QUBO variables onto physical atom positions.
 
         Calls the configured embedder (BLaDE or Greedy) and caches the
-        result in ``self._register``.
+        result in ``self._cached_register``.
 
         Returns:
             The atom :class:`~qoolqit.Register` layout for the current
             instance.
         """
         self.embedder.instance = self.instance
-        self._register = self.embedder.embed()
-        return self._register
+        self._cached_register = self.embedder.embed()
+        return self._cached_register
 
-    def drive(self, embedding: qoolqit.Register) -> tuple[qoolqit.Drive, Solution]:
+    def _drive(self, embedding: qoolqit.Register) -> tuple[qoolqit.Drive, Solution]:
         """Generate the pulse drive schedule for the given embedding.
 
         Calls the configured drive shaper (proportional-diagonal or optimised) and
-        caches the drive in ``self._drive``.
+        caches the drive in ``self._cached_drive``.
 
         Args:
-            embedding: The atom register layout produced by :meth:`embedding`.
+            embedding: The atom register layout produced by :meth:`_embedding`.
 
         Returns:
             A 2-tuple of:
@@ -193,7 +193,7 @@ class _QuboSolverQuantum(BaseSolver):
         self.drive_shaper.instance = self.instance
         drive, qubo_solution = self.drive_shaper.generate(embedding)
 
-        self._drive = drive
+        self._cached_drive = drive
         return drive, qubo_solution
 
     def solve(self) -> Solution:
@@ -211,7 +211,7 @@ class _QuboSolverQuantum(BaseSolver):
         self._check_size_limit()
 
         # 2) Apply preprocessing if requested
-        self.preprocess()
+        self._preprocess()
 
         if _has_negative_offdiagonal(self.instance.matrix):
             logger.info(
@@ -221,22 +221,22 @@ class _QuboSolverQuantum(BaseSolver):
             self.instance = transforms.zeroing.apply(self.instance)
             self._update_instance(self.instance)
 
-        embedding = self.embedding()
+        embedding = self._embedding()
 
-        drive, solution = self.drive(embedding)
+        drive, solution = self._drive(embedding)
 
         if not solution or self.config.drive_shaping.bayesian_search_re_execute_opt_drive:
-            solution = self.execute(drive, embedding)
+            solution = self._execute(drive, embedding)
 
         if isinstance(self.instance, transforms.zeroing.Instance):
-            solution = transforms.zeroing.unapply(solution, self.instance)
+            solution = transforms.zeroing.lift(solution, self.instance)
             self._update_instance(self.instance._parent_instance)
 
         # Post-process fixations of the preprocessing and restore the original QUBO
-        solution = self.post_process_fixation(solution)
-        solution = self.post_process(solution)
+        solution = self._post_process_fixation(solution)
+        solution = self._post_process(solution)
 
-        solution.compute_costs(self.instance.matrix).sort_by_cost().compute_probabilities()
+        solution._compute_costs(self.instance.matrix)._sort_by_cost()._compute_probabilities()
 
         return solution
 
@@ -255,7 +255,7 @@ class _QuboSolverClassical(BaseSolver):
     def __init__(self, instance: Instance, config: SolverConfig = SolverConfig()):
         super().__init__(instance, config)
 
-    def embedding(self) -> qoolqit.Register:
+    def _embedding(self) -> qoolqit.Register:
         """No-op — classical solvers do not require an atom register.
 
         Returns:
@@ -263,7 +263,7 @@ class _QuboSolverClassical(BaseSolver):
         """
         return  # type: ignore[return-value]
 
-    def drive(self, embedding: qoolqit.Register) -> tuple:
+    def _drive(self, embedding: qoolqit.Register) -> tuple:
         """No-op — classical solvers do not use a pulse drive.
 
         Returns:
@@ -283,7 +283,7 @@ class _QuboSolverClassical(BaseSolver):
             if trivial:
                 return trivial
 
-        self.preprocess()
+        self._preprocess()
 
         solution = Solution()
 
@@ -293,8 +293,8 @@ class _QuboSolverClassical(BaseSolver):
                 classical_solver.solve()
             )  # This is a reduced solution if pre-procesing is applied
 
-        solution = self.post_process_fixation(solution)
-        solution = self.post_process(solution)
+        solution = self._post_process_fixation(solution)
+        solution = self._post_process(solution)
 
         return solution
 
@@ -366,7 +366,7 @@ class _DecomposeQuboSolver(BaseSolver):
 
         self._decomposition = [list(range(instance.size))]
 
-    def embedding(self) -> qoolqit.Register:
+    def _embedding(self) -> qoolqit.Register:
         """Not supported — decomposition manages embeddings per subproblem.
 
         Raises:
@@ -374,7 +374,7 @@ class _DecomposeQuboSolver(BaseSolver):
         """
         raise NotImplementedError()
 
-    def drive(self, embedding: qoolqit.Register) -> tuple:
+    def _drive(self, embedding: qoolqit.Register) -> tuple:
         """Not supported — decomposition manages drives per subproblem.
 
         Raises:
@@ -421,7 +421,7 @@ class _DecomposeQuboSolver(BaseSolver):
 
                 # only one bitstring is kept as per design choice of the
                 # decomposition algorithm
-                subsolution = subsolver.solve().compute_costs(subqubo.matrix).sort_by_cost()
+                subsolution = subsolver.solve()._compute_costs(subqubo.matrix)._sort_by_cost()
                 solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)
 
             # classical resolution of last matrix
@@ -436,7 +436,7 @@ class _DecomposeQuboSolver(BaseSolver):
                     subqubo,
                     SolverConfig(use_quantum=False, decompose=None),
                 )
-                subsolution = lastsolver.solve().compute_costs(subqubo.matrix).sort_by_cost()
+                subsolution = lastsolver.solve()._compute_costs(subqubo.matrix)._sort_by_cost()
                 solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)
 
             self._decomposition = decomposed_qubo._decomposition

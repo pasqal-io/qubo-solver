@@ -63,7 +63,7 @@ def simple_qubo() -> tuple[Instance, list[SingleSolution]]:
     solutions = Solution()
     solutions.bitstrings = bitstrings.tensor(list(itertools.product([0, 1], repeat=n_qubits)))
     solutions.counts = vectori.zeros(solutions.bitstrings.shape[0]).fill_(1)
-    solutions.compute_costs(Q).sort_by_cost().compute_probabilities()
+    solutions._compute_costs(Q)._sort_by_cost()._compute_probabilities()
 
     # Get all bitstrings with minimum cost
     expected_optimal_solutions = gather_optimal_solutions(solutions)
@@ -179,12 +179,12 @@ def test_quantum_solve(
     # Post-process fixations of the preprocessing and restore the original QUBO
     if preprocessing:
         assert isinstance(effective_qubo, transforms.variable_fixing.Instance)
-        solution = transforms.variable_fixing.unapply(solution, effective_qubo)
+        solution = transforms.variable_fixing.lift(solution, effective_qubo)
 
     if postprocessing:
         solution = solvers.iterative_bitflip_local_search(qubo, solution)
 
-    solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
+    solution._compute_costs(qubo.matrix)._sort_by_cost()._compute_probabilities()
 
     expected_optimal_probability = 0.75
     if drive_shaping_method in ["bayesian_search"]:
@@ -242,12 +242,12 @@ def test_classical_solve(
 
     if preprocessing:
         assert isinstance(effective_qubo, transforms.variable_fixing.Instance)
-        solution = transforms.variable_fixing.unapply(solution, effective_qubo)
+        solution = transforms.variable_fixing.lift(solution, effective_qubo)
 
     if postprocessing:
         solution = solvers.iterative_bitflip_local_search(qubo, solution)
 
-    solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
+    solution._compute_costs(qubo.matrix)._sort_by_cost()._compute_probabilities()
 
     expected_optimal_probability = 0.75
     if solving_method in ["random"]:

@@ -256,10 +256,10 @@ def _embedding_drive_ratio(solver: Solver) -> float:
     """Return ``interaction(q0, q1) / final_detuning`` for a solved instance."""
     inner = solver._solver
     assert isinstance(inner, _QuboSolverQuantum)
-    assert inner._register is not None and inner._drive is not None
-    interactions = inner._register.interactions()
+    assert inner._cached_register is not None and inner._cached_drive is not None
+    interactions = inner._cached_register.interactions()
     interaction = interactions[("0", "1")]
-    detuning_wf = inner._drive.detuning
+    detuning_wf = inner._cached_drive.detuning
     detuning = detuning_wf(detuning_wf.duration)
     return float(interaction / detuning)
 

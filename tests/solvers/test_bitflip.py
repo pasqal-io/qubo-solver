@@ -10,7 +10,7 @@ def test_solution_not_mutated() -> None:
     instance = Instance(Q)
 
     solution = Solution(bitstrings.zeros(1, 2), counts=vectori.tensor([1]))
-    solution.compute_costs(instance.matrix)
+    solution._compute_costs(instance.matrix)
     check.equal(len(solution), 1)
     check.equal(solution[0].string, "00")
 

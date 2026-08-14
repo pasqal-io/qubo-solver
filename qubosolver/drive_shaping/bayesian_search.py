@@ -240,7 +240,7 @@ def _run_simulation(
         solution = Solution.from_results(job.results())
         costs = [config.qubo_cost(b, Q) for b in solution.bitstrings]
         solution.costs = tensor.tensor(costs)
-        solution.sort_by_cost().compute_probabilities()
+        solution._sort_by_cost()._compute_probabilities()
         return solution
     except Exception as e:
         print(f"Simulation failed: {e}")

@@ -12,14 +12,12 @@ from qubosolver.types import (
 )
 from qubosolver.types.linalg import Bitstring, Bitstrings, Matrix, Tensor, Vector, Vectori
 from qubosolver.types.solution import Solution, SingleSolution
-from qubosolver.types.analyzer import Analyzer
 from qubosolver.types.instance import Instance
 from qubosolver.types.dataset import Dataset
 from qubosolver.types.enums import (
     EmbedderType,
     LayoutType,
     DriveType,
-    DensityType,
     ClassicalSolverType,
 )
 from qubosolver.types.backends import (
@@ -32,13 +30,11 @@ from qubosolver.types.random import torch_rng
 from qubosolver.types.aliases import (
     # Deprecated QUBO* classes
     QUBOSolution,
-    QUBOAnalyzer,
     QUBOInstance,
     QUBODataset,
     # Qubo* TypeAliases
     QuboSolution,
     QuboSingleSolution,
-    QuboAnalyzer,
     QuboInstance,
     QuboDataset,
 )
@@ -63,7 +59,6 @@ __all__ = [
     # Classes
     "Solution",
     "SingleSolution",
-    "Analyzer",
     "Instance",
     "Dataset",
     "LocalEmulator",
@@ -74,19 +69,16 @@ __all__ = [
     "EmbedderType",
     "LayoutType",
     "DriveType",
-    "DensityType",
     "ClassicalSolverType",
     # Functions
     "torch_rng",
     # Qubo* TypeAliases
     "QuboSolution",
     "QuboSingleSolution",
-    "QuboAnalyzer",
     "QuboInstance",
     "QuboDataset",
     # Deprecated QUBO* classes
     "QUBOSolution",
-    "QUBOAnalyzer",
     "QUBOInstance",
     "QUBODataset",
 ]

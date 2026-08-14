@@ -148,7 +148,7 @@ def test_quantum_solve_blade_proportional_diagonal(
 
     job = solvers.analog_quantum_sampling(register, drive, emulator, device)
     solution = Solution.from_results(job.results())
-    solution.compute_costs(instance.matrix).sort_by_cost().compute_probabilities()
+    solution._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
 
     optimum_prob = check_solution(solution, instance)
     check.greater_equal(optimum_prob, expected_optimum_prob)
@@ -205,7 +205,7 @@ def test_quantum_solve_greedy_proportional_diagonal(
 
     job = solvers.analog_quantum_sampling(register, drive, emulator, device)
     solution = Solution.from_results(job.results())
-    solution.compute_costs(instance.matrix).sort_by_cost().compute_probabilities()
+    solution._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
 
     expect_optimality = expected_optimum_prob > 0.0
     optimum_prob = check_solution(solution, instance, expect_optimality)

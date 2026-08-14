@@ -18,7 +18,6 @@ from mock.connection import MockConnection
 from qubosolver import (
     Instance,
     Solution,
-    Analyzer,
     EmbedderType,
     LayoutType,
     DriveType,
@@ -74,11 +73,6 @@ def basic_solution() -> Solution:
         counts=vectori.tensor([15, 5]),
         probabilities=vector.tensor([0.75, 0.25]),
     )
-
-
-@pytest.fixture
-def analyzer(basic_solution: Solution) -> Analyzer:
-    return Analyzer(solutions=[basic_solution], labels=["sol1"])
 
 
 @pytest.fixture

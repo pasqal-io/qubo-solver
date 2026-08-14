@@ -344,7 +344,7 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
 
     solution = solver.solve()
     print(f"Solution {solution}")
-    solution.sort_by_cost()
+    solution._sort_by_cost()
     print(f"Solution: {solution}")
     best_solution = solution[0].string
     min_cost = solution[0].cost
@@ -421,7 +421,7 @@ def test_decompose_embedding() -> None:
     config = SolverConfig(decompose=DecompositionConfig())
     solver = Solver(qubo_instance, config)
     with pytest.raises(NotImplementedError):
-        solver.embedding()
+        solver._embedding()
 
 
 def test_decompose_drive() -> None:
@@ -431,4 +431,4 @@ def test_decompose_drive() -> None:
     config = SolverConfig(decompose=DecompositionConfig())
     solver = Solver(qubo_instance, config)
     with pytest.raises(NotImplementedError):
-        solver.drive(Register.from_coordinates([(0, 0), (1, 1)]))
+        solver._drive(Register.from_coordinates([(0, 0), (1, 1)]))

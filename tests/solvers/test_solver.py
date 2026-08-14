@@ -223,16 +223,16 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
 
     solver = trivial_triangular_qubo()
 
-    embedding = solver.embedding()
+    embedding = solver._embedding()
     # Qoolqit's embedding has an hardcoded seed. Set the seed ourselves.
     np.random.seed(seed)
-    drive, _ = solver.drive(embedding)
+    drive, _ = solver._drive(embedding)
 
-    job = solver.submit(drive, embedding)
+    job = solver._submit(drive, embedding)
     results = job.results()
 
     solution = Solution.from_results(results)
-    solution.compute_costs(solver.instance.matrix).compute_probabilities()
+    solution._compute_costs(solver.instance.matrix)._compute_probabilities()
 
     # Take the top 3 solutions with the highest probabilities
     sorted_indices = torch.argsort(solution.probabilities, descending=True)
@@ -252,11 +252,11 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
     assert isinstance(results, Results)
     solver_remote = trivial_triangular_qubo(make_mock_connection(results, running_iterations=1))
 
-    embedding = solver_remote.embedding()
+    embedding = solver_remote._embedding()
     # Qoolqit's embedding has an hardcoded seed. Set the seed ourselves.
     np.random.seed(seed)
-    drive, _ = solver_remote.drive(embedding)
-    remote_job = solver_remote.submit(drive, embedding)
+    drive, _ = solver_remote._drive(embedding)
+    remote_job = solver_remote._submit(drive, embedding)
 
     if not wait:
         with pytest.raises(TimeoutError):
@@ -320,14 +320,14 @@ def test_quantum_matches_classical_triangular(embedding_method: str) -> None:
         do_postprocessing=False,
     )
     quantum_solution = Solver(instance, quantum_config).solve()
-    quantum_solution.sort_by_cost()
+    quantum_solution._sort_by_cost()
 
     classical_config = SolverConfig(
         use_quantum=False,
         classical=ClassicalConfig(max_bitstrings=4),
     )
     classical_solution = Solver(instance, classical_config).solve()
-    classical_solution.sort_by_cost()
+    classical_solution._sort_by_cost()
 
     check.almost_equal(
         quantum_solution.costs[0].item(),

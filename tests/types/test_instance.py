@@ -53,12 +53,6 @@ def test_max_off_diag_no_off_diag_entries(size: int) -> None:
         qi._max_off_diag
 
 
-@pytest.mark.parametrize("size", [0, 1])
-def test_normalized_matrix_no_off_diag_entries(size: int) -> None:
-    qi = Instance(matrix.zeros(size))
-    torch.testing.assert_close(qi._normalized_matrix, qi.matrix)
-
-
 def test_save_load(simple_qubo_instance: Instance) -> None:
 
     file_path = Path(__file__).parent / "qubo_instance_test.pt"

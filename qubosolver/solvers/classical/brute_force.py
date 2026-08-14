@@ -108,4 +108,4 @@ def brute_force(
         costs=best_costs,
         counts=vectori.tensor([1] * best_bits.shape[0]),
     )
-    return solution.sort_by_cost().compute_probabilities()
+    return solution._sort_by_cost()._compute_probabilities()

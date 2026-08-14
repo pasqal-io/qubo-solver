@@ -48,6 +48,8 @@ nav:
     - qubosolver.embedding: api/embedding.md
     - qubosolver.solvers: api/solvers.md
     - qubosolver.transforms: api/transforms.md
+    - qubosolver.analysis: api/analysis.md
+    - qubosolver.protocols: api/protocols.md
     - Configuration:
       - qubosolver.config: api/config.md
     - Enums:

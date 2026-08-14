@@ -54,8 +54,8 @@ class Solution:
     metadata (costs, sample counts, probabilities).  Fields whose data is not
     yet available are represented as zero-element tensors (``numel() == 0``).
 
-    Use `compute_costs` and `compute_probabilities` to populate
-    derived fields after construction, and `sort_by_cost` to rank
+    Use `_compute_costs` and `_compute_probabilities` to populate
+    derived fields after construction, and `_sort_by_cost` to rank
     candidates for analysis.
 
     Attributes:
@@ -64,7 +64,7 @@ class Solution:
             binary vectors (values in ``{0, 1}``).
         costs (Vector):
             Float tensor of shape ``(num_solutions,)`` with the QUBO objective
-            ``x^T Q x`` for each bitstring.  Empty until `compute_costs`
+            ``x^T Q x`` for each bitstring.  Empty until `_compute_costs`
             is called.
         counts (Vectori):
             ``int64`` tensor of shape ``(num_solutions,)`` with the number of
@@ -73,37 +73,13 @@ class Solution:
         probabilities (Vector):
             Float tensor of shape ``(num_solutions,)`` with the empirical
             sampling probability of each bitstring.  Empty until
-            `compute_probabilities` is called.
+            `_compute_probabilities` is called.
     """
 
     bitstrings: Bitstrings = _bitstrings.zeros(0, 0)
     costs: Vector = vector.zeros(0)
     counts: Vectori = vectori.zeros(0)
     probabilities: Vector = vector.zeros(0)
-
-    def empty(self) -> bool:
-        """Return ``True`` when the solution contains no bitstrings.
-
-        When the solution *is* empty, also asserts (in debug / runtime-check
-        builds) that all other tensors — ``costs``, ``counts``, and
-        ``probabilities`` — are also empty, enforcing internal consistency.
-
-        Returns:
-            bool: ``True`` if ``len(self) == 0``, ``False`` otherwise.
-        """
-        r = len(self) == 0
-        if not r:
-            return False
-        assert self.bitstrings.numel() == 0  # nosec B101
-        assert self.costs.numel() == 0  # nosec B101
-        assert self.counts.numel() == 0  # nosec B101
-        assert self.probabilities.numel() == 0  # nosec B101
-
-        return True
-
-    def __bool__(self) -> bool:
-        """Return ``True`` if the solution is non-empty (contains at least one bitstring)."""
-        return not self.empty()
 
     def __getitem__(self, idx: int) -> SingleSolution:
         """Return the candidate at position *idx* as a `SingleSolution`.
@@ -136,7 +112,7 @@ class Solution:
         for i in range(len(self)):
             yield self[i]
 
-    def compute_costs(self, matrix: Matrix) -> Self:
+    def _compute_costs(self, matrix: Matrix) -> Self:
         """Compute and store the QUBO objective ``x^T Q x`` for every bitstring.
 
         Casts `bitstrings` to the dtype of *matrix* before calling the
@@ -156,7 +132,7 @@ class Solution:
         self.costs = _costs.batched_quadratic_cost(self.bitstrings.to(dtype), matrix)
         return self
 
-    def compute_probabilities(self) -> Self:
+    def _compute_probabilities(self) -> Self:
         """Derive empirical sampling probabilities from `counts`.
 
         Divides each count by the total number of samples.  When the total is
@@ -179,7 +155,7 @@ class Solution:
 
         return self
 
-    def sort_by_cost(self) -> Self:
+    def _sort_by_cost(self) -> Self:
         """Sort all fields in-place by ascending cost.
 
         Reorders `bitstrings`, `costs`, and — when non-empty —
@@ -190,7 +166,7 @@ class Solution:
             The same [`Solution`][] instance, allowing method chaining.
 
         Note:
-            `costs` must be populated (via `compute_costs`) before
+            `costs` must be populated (via `_compute_costs`) before
             calling this method; sorting by an empty tensor raises an error.
         """
         sorted_indices = torch.argsort(self.costs)
@@ -358,7 +334,7 @@ class Solution:
         converts it into the tensor representation used by [`Solution`][].
 
         Only `bitstrings` and `counts` are populated; call
-        `compute_costs` and `compute_probabilities` afterwards to
+        `_compute_costs` and `_compute_probabilities` afterwards to
         derive the remaining fields.
 
         Args:
@@ -391,11 +367,11 @@ class Solution:
         )
 
         if instance.size != 0:
-            solution.compute_costs(instance.matrix).sort_by_cost().compute_probabilities()
+            solution._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
 
         return solution
 
-    def check_consistency(self, instance: Instance, *, throw: bool = False) -> bool:
+    def check_consistency(self, *, instance: Instance | None, throw: bool = False) -> bool:
         """Check internal consistency of this solution against a QUBO instance.
 
         Recomputes costs from `bitstrings` and `instance.matrix` and checks
@@ -425,6 +401,7 @@ class Solution:
             ``throw`` is ``True``, in which case an exception is raised).
         """
         num_solutions = len(self)
+        bitstring_size = instance.size if instance is not None else self.bitstrings.shape[1]
 
         def check(condition: bool, message: str) -> bool:
             if condition:
@@ -435,7 +412,7 @@ class Solution:
             return False
 
         expected_shapes = (
-            ("bitstrings", self.bitstrings, (num_solutions, instance.size)),
+            ("bitstrings", self.bitstrings, (num_solutions, bitstring_size)),
             ("costs", self.costs, (num_solutions,)),
             ("counts", self.counts, (num_solutions,)),
             ("probabilities", self.probabilities, (num_solutions,)),
@@ -453,15 +430,17 @@ class Solution:
 
         from qubosolver.utils import _costs
 
-        expected_costs = _costs.batched_quadratic_cost(
-            self.bitstrings.to(instance.matrix.dtype), instance.matrix
-        )
+        if instance is not None:
+            expected_costs = _costs.batched_quadratic_cost(
+                self.bitstrings.to(instance.matrix.dtype), instance.matrix
+            )
 
-        valid &= check(
-            torch.allclose(self.costs, expected_costs.to(self.costs.dtype)),
-            f"costs {self.costs.tolist()} does not match x^T Q x "
-            f"{expected_costs.tolist()} for the corresponding bitstrings",
-        )
+            valid &= check(
+                torch.allclose(self.costs, expected_costs.to(self.costs.dtype)),
+                f"costs {self.costs.tolist()} does not match x^T Q x "
+                f"{expected_costs.tolist()} for the corresponding bitstrings",
+            )
+
         valid &= check(
             bool(torch.all(self.costs[:-1] <= self.costs[1:])),
             f"costs {self.costs.tolist()} is not sorted in non-decreasing order",

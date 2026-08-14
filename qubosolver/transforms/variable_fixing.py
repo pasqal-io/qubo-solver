@@ -12,7 +12,7 @@ import qubosolver.transforms.variable_fixing as vf
 
 reduced_instance = vf.apply_recursively(qubo_instance)
 reduced_solution = solver.solve(reduced_instance)
-full_solution = vf.unapply(reduced_solution, reduced)
+full_solution = vf.lift(reduced_solution, reduced)
 ```
 """
 
@@ -80,7 +80,7 @@ class Instance(qubosolver.Instance):
 
     Wraps a parent [`qubosolver.Instance`][] and
     tracks which variables were fixed (and to which value) so the original
-    solution can be reconstructed via `unapply`.
+    solution can be reconstructed via `lift`.
     """
 
     def __init__(self, parent_instance: qubosolver.Instance):
@@ -282,7 +282,7 @@ def apply_recursively(
             return qubo
 
 
-def unapply(reduced_solution: Solution, reduced_qubo: Instance) -> Solution:
+def lift(reduced_solution: Solution, reduced_qubo: Instance) -> Solution:
     """Reconstruct the full solution by reinserting fixed variables.
 
     Reverses the fixation history stored in *reduced_qubo*: fixed variables
@@ -324,7 +324,7 @@ def unapply(reduced_solution: Solution, reduced_qubo: Instance) -> Solution:
         [reinsert_fixed_variables(bitstring) for bitstring in bitstrings_list]
     )
     solution.costs = vector.tensor(
-        [reduced_qubo._parent_instance.evaluate_solution(b) for b in solution.bitstrings]
+        [reduced_qubo._parent_instance.cost(b) for b in solution.bitstrings]
     )
     solution.counts = reduced_solution.counts
     solution.probabilities = reduced_solution.probabilities

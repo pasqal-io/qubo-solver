@@ -25,7 +25,7 @@ def test_embeddings_different_devices(
         device=local_device,
     )
     solver = Solver(qubo_for_testing_many_devices, config)
-    assert solver.embedding()
+    assert solver._embedding()
 
 
 def test_custom_embedder(simple_qubo_instance: Instance) -> None:

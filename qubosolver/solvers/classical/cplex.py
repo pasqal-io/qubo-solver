@@ -116,7 +116,7 @@ def _to_solution(cplex_solution: CPLEX.SolutionInterface) -> Solution:
 
     solution = Solution(
         bitstrings=bitstring_tensor, counts=counts, costs=cost_tensor
-    ).compute_probabilities()
+    )._compute_probabilities()
     return solution
 
 

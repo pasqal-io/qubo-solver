@@ -22,7 +22,6 @@ from qubosolver.types import (
     # Classes
     Solution,
     SingleSolution,
-    Analyzer,
     Instance,
     Dataset,
     LocalEmulator,
@@ -33,19 +32,16 @@ from qubosolver.types import (
     EmbedderType,
     DriveType,
     LayoutType,
-    DensityType,
     ClassicalSolverType,
     # Functions
     torch_rng,
     # Qubo* TypeAliases
     QuboSolution,
     QuboSingleSolution,
-    QuboAnalyzer,
     QuboInstance,
     QuboDataset,
     # Deprecated QUBO* classes
     QUBOSolution,
-    QUBOAnalyzer,
     QUBOInstance,
     QUBODataset,
 )
@@ -57,7 +53,7 @@ from qubosolver.config import (
     DecompositionConfig,
 )
 
-from qubosolver.utils import extract_qubo
+from qubosolver.utils import extract_qubo, analysis
 
 from importlib.metadata import version
 from pulser.sequence import store_package_version_metadata
@@ -79,6 +75,7 @@ __all__ = [
     "transforms",
     "embedding",
     "drive_shaping",
+    "analysis",
     # Type Aliases
     "Bitstring",
     "Bitstrings",
@@ -89,7 +86,6 @@ __all__ = [
     # Classes
     "Solution",
     "SingleSolution",
-    "Analyzer",
     "Instance",
     "Solver",
     "Dataset",
@@ -101,7 +97,6 @@ __all__ = [
     "EmbedderType",
     "DriveType",
     "LayoutType",
-    "DensityType",
     "ClassicalSolverType",
     # Configs
     "SolverConfig",
@@ -115,13 +110,11 @@ __all__ = [
     # Qubo* TypeAliases
     "QuboSolution",
     "QuboSingleSolution",
-    "QuboAnalyzer",
     "QuboInstance",
     "QuboDataset",
     "QuboSolver",
     # Deprecated QUBO* classes
     "QUBOSolution",
-    "QUBOAnalyzer",
     "QUBOInstance",
     "QUBODataset",
 ]

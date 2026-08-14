@@ -109,11 +109,11 @@ def test_quantum_remote_job(
         # Post-process fixations of the preprocessing and restore the original QUBO
         if preprocessing:
             assert isinstance(instance, transforms.variable_fixing.Instance)
-            solution = transforms.variable_fixing.unapply(solution, instance)
+            solution = transforms.variable_fixing.lift(solution, instance)
             instance = instance._parent_instance
         solution = solvers.iterative_bitflip_local_search(instance, solution)
 
-        solution.compute_costs(instance.matrix).sort_by_cost().compute_probabilities()
+        solution._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
 
         return solution
 

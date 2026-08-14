@@ -12,7 +12,6 @@ from qubosolver import (
     EmbedderType,
     LayoutType,
     DriveType,
-    DensityType,
     ClassicalSolverType,
 )
 ```
@@ -42,7 +41,7 @@ class _StrEnum(str, Enum):
         return list(map(lambda c: c.value, cls))
 
 
-class DensityType(_StrEnum):
+class _DensityType(_StrEnum):
     """String-based enum for classifying the density of a QUBO matrix."""
 
     SPARSE = "sparse"

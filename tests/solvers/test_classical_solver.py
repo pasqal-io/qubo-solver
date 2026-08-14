@@ -257,7 +257,7 @@ def test_empty_qubo_after_preprocessing(classical_method: ClassicalSolverType) -
     classical_solver = Solver(instance, config)
 
     solution = classical_solver.solve()
-    solution.sort_by_cost()
+    solution._sort_by_cost()
 
     best_bitstring = bitstring.to_string(solution.bitstrings[0])
     check.equal(best_bitstring, "00")

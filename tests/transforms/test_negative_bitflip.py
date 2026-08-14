@@ -126,14 +126,14 @@ def test_bitflip_apply_is_noop_without_negative_coefficients() -> None:
     torch.testing.assert_close(flipped_instance.matrix, instance.matrix)
 
 
-def test_bitflip_unapply_restores_original_variables() -> None:
+def test_bitflip_lift_restores_original_variables() -> None:
     instance, _ = bipartisable_negative_qubo()
     solution = solvers.brute_force(instance)
 
     flipped_instance = transforms.negative_bitflip.apply(instance)
     flipped_solution = solvers.brute_force(flipped_instance)
 
-    restored = transforms.negative_bitflip.unapply(flipped_solution, flipped_instance)
+    restored = transforms.negative_bitflip.lift(flipped_solution, flipped_instance)
 
     torch.testing.assert_close(restored[0].bitstring, solution[0].bitstring)
     check.almost_equal(restored[0].cost, solution[0].cost)
@@ -210,16 +210,16 @@ def test_metrics_reflect_the_original_matrix_not_the_flipped_one() -> None:
     check.greater(expected_before_count, expected_after_count)
 
 
-def test_bitflip_unapply_restores_original_variables_for_a_batch() -> None:
+def test_bitflip_lift_restores_original_variables_for_a_batch() -> None:
     instance, _ = bipartisable_negative_qubo()
     solution = solvers.brute_force(instance, max_bitstrings=4)
-    solution.sort_by_cost()
+    solution._sort_by_cost()
 
     flipped_instance = transforms.negative_bitflip.apply(instance)
     flipped_solution = solvers.brute_force(flipped_instance, max_bitstrings=4)
 
-    restored = transforms.negative_bitflip.unapply(flipped_solution, flipped_instance)
-    restored.sort_by_cost()
+    restored = transforms.negative_bitflip.lift(flipped_solution, flipped_instance)
+    restored._sort_by_cost()
 
     torch.testing.assert_close(restored.costs, solution.costs)
     torch.testing.assert_close(restored[0].bitstring, solution[0].bitstring)
@@ -230,7 +230,7 @@ def test_bitflip_unapply_restores_original_variables_for_a_batch() -> None:
     for i in range(len(restored)):
         x = torch.abs(flipped_solution[i].bitstring - flipped_instance.flips)
         torch.testing.assert_close(restored[i].bitstring, x)
-        check.almost_equal(restored[i].cost, instance.evaluate_solution(restored[i].bitstring))
+        check.almost_equal(restored[i].cost, instance.cost(restored[i].bitstring))
 
 
 def test_glpk_infeasible_or_error_falls_back_to_noop_flips() -> None:

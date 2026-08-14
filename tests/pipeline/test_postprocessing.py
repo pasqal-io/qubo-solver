@@ -43,8 +43,8 @@ def test_basic_qubo_2d_integration(postprocessing: bool) -> None:
         probabilities=vector.tensor([1.0]),
     )
 
-    pp_solution = solver.post_process(solution)
-    pp_solution.sort_by_cost()
+    pp_solution = solver._post_process(solution)
+    pp_solution._sort_by_cost()
 
     if postprocessing:
         torch.testing.assert_close(pp_solution.bitstrings[0, :], bitstring.tensor([1, 1]))
@@ -76,7 +76,7 @@ def test_basic_qubo_2d() -> None:
     )
 
     pp_solution = solvers.iterative_bitflip_local_search(instance, solution)
-    pp_solution.sort_by_cost()
+    pp_solution._sort_by_cost()
 
     torch.testing.assert_close(pp_solution.bitstrings[0, :], bitstring.tensor([1, 1]))
     torch.testing.assert_close(pp_solution.costs, vector.tensor([-18.0]))
@@ -98,7 +98,7 @@ def test_random_qubos(density: float) -> None:
         for Q, _ in dataset:
             instance = Instance(matrix=Q)
             bitstring_ = (torch.rand(size) > 0.5).to(bitstring.dtype())
-            cost = instance.evaluate_solution(bitstring_)
+            cost = instance.cost(bitstring_)
             solution = Solution(
                 bitstrings=bitstring_.unsqueeze(0),
                 costs=vector.tensor([cost]),
@@ -106,7 +106,7 @@ def test_random_qubos(density: float) -> None:
                 probabilities=vector.tensor([1.0]),
             )
             pp_solution = solvers.iterative_bitflip_local_search(instance, solution)
-            pp_solution.sort_by_cost()
+            pp_solution._sort_by_cost()
 
             analyzer = Analyzer(pp_solution)
             df = analyzer.df

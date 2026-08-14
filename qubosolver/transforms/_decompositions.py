@@ -256,9 +256,9 @@ def update(qubo: Instance, subqubo: SubQUBOInstance, subsolution: Solution) -> S
             bitstrings=qubo._global_solution.unsqueeze(0),
             counts=vectori.tensor([1]),
         )
-        .compute_costs(qubo.matrix)
-        .sort_by_cost()
-        .compute_probabilities()
+        ._compute_costs(qubo.matrix)
+        ._sort_by_cost()
+        ._compute_probabilities()
     )
 
     return solution

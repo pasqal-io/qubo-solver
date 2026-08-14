@@ -40,7 +40,7 @@ def test_apply_full_and_post_process_fixation() -> None:
 
     reduced_solution = Solution(bitstrings.zeros(0, 0), vector.zeros(0))
 
-    sol_reconstructed = transforms.variable_fixing.unapply(reduced_solution, reduced_qubo)
+    sol_reconstructed = transforms.variable_fixing.lift(reduced_solution, reduced_qubo)
 
     assert isinstance(sol_reconstructed, Solution)
 
@@ -139,7 +139,7 @@ def test_quantum_preprocessing_falls_back_to_zeroing_when_bitflip_is_not_enough(
     # Costs in the returned solution must be evaluated against the true,
     # original QUBO, not the zeroed approximation used internally.
     for sol in solution:
-        check.almost_equal(sol.cost, instance.evaluate_solution(sol.bitstring))
+        check.almost_equal(sol.cost, instance.cost(sol.bitstring))
 
 
 def test_quantum_preprocessing(qubo_instance_for_preprocessing: Instance) -> None:
@@ -244,7 +244,7 @@ def test_reduce_qubo_2() -> None:
         costs=vector.tensor([0.0]),
     )
 
-    solution = transforms.variable_fixing.unapply(reduced_solution, reduced_qubo)
+    solution = transforms.variable_fixing.lift(reduced_solution, reduced_qubo)
     check.equal(solution.bitstrings.shape, (1, 5))
 
     bitstring_ = bitstring.to_string(solution.bitstrings[0])
