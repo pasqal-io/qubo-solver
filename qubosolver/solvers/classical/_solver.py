@@ -21,7 +21,7 @@ import torch
 
 from qubosolver.solvers.config import ClassicalConfig
 from qubosolver.types import Instance, Solution, torch_rng
-from qubosolver.solvers.enum import ClassicalAlgorithm
+from qubosolver.solvers.enums import ClassicalAlgorithm
 from qubosolver import solvers
 
 
@@ -223,7 +223,7 @@ def get_classical_solver(instance: Instance, config: ClassicalConfig) -> BaseCla
 
     Raises:
         ValueError: If ``config.classical_solver_type`` does not match any
-            known :class:`~qubosolver.solvers.enum.ClassicalAlgorithm` value.
+            known :class:`~qubosolver.solvers.enums.ClassicalAlgorithm` value.
     """
     solver_type = config.classical_solver_type
     solver_type = solver_type.lower()

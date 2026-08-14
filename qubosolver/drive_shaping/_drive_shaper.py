@@ -9,7 +9,7 @@ import qoolqit
 
 
 from . import proportional_diagonal, bayesian_search
-from .enum import Algorithm
+from .enums import Algorithm
 from qubosolver.types import Instance, Solution, protocols
 from qubosolver.solvers.config import Config as SolverConfig
 

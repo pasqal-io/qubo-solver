@@ -6,7 +6,7 @@ Provides BLaDE and greedy embedding strategies.
 from __future__ import annotations
 
 from qubosolver.embedding import blade, greedy_layout
-from qubosolver.embedding.enum import Algorithm, Layout
+from qubosolver.embedding.enums import Algorithm, Layout
 from qubosolver.embedding.config import Config
 
 __all__ = [

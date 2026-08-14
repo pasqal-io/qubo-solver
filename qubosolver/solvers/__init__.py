@@ -6,7 +6,7 @@ used as post-processing steps to refine an existing solution.
 
 from __future__ import annotations
 
-from qubosolver.solvers.enum import ClassicalAlgorithm
+from qubosolver.solvers.enums import ClassicalAlgorithm
 from qubosolver.solvers.classical.bitflip import iterative_bitflip_local_search
 from qubosolver.solvers.quantum import analog_quantum_sampling
 from qubosolver.solvers.classical.trivial import trivial_solution_search

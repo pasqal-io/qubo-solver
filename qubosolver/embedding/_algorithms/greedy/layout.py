@@ -5,7 +5,7 @@ from __future__ import annotations
 import torch
 
 from qubosolver import tensor, Tensor
-from qubosolver.embedding.enum import Layout
+from qubosolver.embedding.enums import Layout
 
 
 def get_layout(*, layout_type: Layout | str = Layout.TRIANGULAR, n_traps: int) -> Tensor:
