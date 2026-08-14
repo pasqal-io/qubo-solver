@@ -1,38 +1,17 @@
-"""Configuration classes for the QUBO solver pipeline.
-
-This module defines dataclass-based configuration classes that control every
-stage of the quantum and classical solving pipeline.
-
-All public classes are re-exported from the top-level [`qubosolver`][] namespace
-and can be imported directly:
-
-```python
-from qubosolver import (
-    SolverConfig,
-    ClassicalConfig,
-    DecompositionConfig,
-)
-from qubosolver import embedding, drive_shaping
-```
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Literal, TYPE_CHECKING
+from typing import Any
 
 import torch
 
 from qoolqit import Device, AnalogDeviceWithDMM
 from qoolqit.execution import QPU
 
-
-from .types import (
-    LocalEmulator,
-    RemoteEmulator,
-)
-from . import embedding, drive_shaping, solvers
-from .utils._config import _Config
+from qubosolver.types import LocalEmulator, RemoteEmulator
+from qubosolver.utils._config import _Config
+from qubosolver import embedding, drive_shaping
+from . import ClassicalAlgorithm
 
 
 @dataclass
@@ -61,7 +40,7 @@ class ClassicalConfig(_Config):
             in seconds. Defaults to `float("inf")`, meaning no time limit.
     """
 
-    algorithm: str | solvers.ClassicalAlgorithm = "tabu_search"
+    algorithm: str | ClassicalAlgorithm = "tabu_search"
 
     cplex_maxtime: float = 600.0
     cplex_log_path: str = ""
@@ -86,15 +65,15 @@ class ClassicalConfig(_Config):
 
     @staticmethod
     def _normalize_classical_solver_type(
-        val: str | solvers.ClassicalAlgorithm,
-    ) -> solvers.ClassicalAlgorithm | Any:
+        val: str | ClassicalAlgorithm,
+    ) -> ClassicalAlgorithm | Any:
         """Normalize the classical_solver_type attribute."""
-        if isinstance(val, solvers.ClassicalAlgorithm):
+        if isinstance(val, ClassicalAlgorithm):
             return val
         u = val.upper()
-        all_names = [c.name for c in solvers.ClassicalAlgorithm]
+        all_names = [c.name for c in ClassicalAlgorithm]
         if u in all_names:
-            return solvers.ClassicalAlgorithm[u]
+            return ClassicalAlgorithm[u]
         else:
             raise ValueError(f"Invalid classical algorithm '{val}'.")
 
@@ -111,11 +90,11 @@ class ClassicalConfig(_Config):
             dict[str, Any]: Serialized representation of this config.
         """
         serialization: dict = {"algorithm": self.algorithm}
-        if self.algorithm == solvers.ClassicalAlgorithm.CPLEX:
+        if self.algorithm == ClassicalAlgorithm.CPLEX:
             serialization.update(
                 {"cplex_maxtime": self.cplex_maxtime, "cplex_log_path": self.cplex_log_path}
             )
-        if self.algorithm == solvers.ClassicalAlgorithm.SIMULATED_ANNEALING:
+        if self.algorithm == ClassicalAlgorithm.SIMULATED_ANNEALING:
             serialization.update(
                 {
                     "max_iter": self.max_iter,
@@ -128,7 +107,7 @@ class ClassicalConfig(_Config):
                     "sa_time_limit": self.sa_time_limit,
                 }
             )
-        if self.algorithm == solvers.ClassicalAlgorithm.TABU_SEARCH:
+        if self.algorithm == ClassicalAlgorithm.TABU_SEARCH:
             serialization.update(
                 {
                     "max_bitstrings": self.max_bitstrings,
@@ -168,7 +147,7 @@ class DecompositionConfig(_Config):
 
 
 @dataclass
-class SolverConfig(_Config):
+class Config(_Config):
     """
     A `SolverConfig` instance defines how a QUBO problem should be solved.
     We specify whether to use a quantum or classical approach,
@@ -255,7 +234,7 @@ class SolverConfig(_Config):
         return torch.inf
 
     @classmethod
-    def from_kwargs(cls, **kwargs: dict) -> SolverConfig:
+    def from_kwargs(cls, **kwargs: dict) -> Config:
         """Create a ``SolverConfig`` from a flat or mixed keyword dictionary.
 
         Keyword arguments are automatically routed to the appropriate

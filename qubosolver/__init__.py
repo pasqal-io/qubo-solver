@@ -40,12 +40,6 @@ from qubosolver.types import (
     QUBOInstance,
     QUBODataset,
 )
-from qubosolver.config import (
-    SolverConfig,
-    ClassicalConfig,
-    DecompositionConfig,
-)
-
 from qubosolver.utils import extract_qubo, analysis
 
 from importlib.metadata import version
@@ -86,10 +80,6 @@ __all__ = [
     "RemoteEmulator",
     "AutoLocalEmulatorBackend",
     "AutoRemoteEmulatorBackend",
-    # Configs
-    "SolverConfig",
-    "ClassicalConfig",
-    "DecompositionConfig",
     # Functions
     "torch_rng",
     "extract_qubo",

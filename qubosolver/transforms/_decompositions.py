@@ -19,7 +19,7 @@ import copy
 from dataclasses import dataclass
 import torch
 
-from qubosolver.config import DecompositionConfig
+from qubosolver.solvers.config import DecompositionConfig
 from qubosolver import Solution, Matrix, matrix, Bitstring, bitstring, vectori, torch_rng
 from qubosolver import Instance as QUBOInstanceBase
 from ._algorithms.decompose import (

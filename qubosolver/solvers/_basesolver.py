@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from qoolqit.execution import job
 
 from qubosolver.types import Instance, Solution
-from qubosolver.config import SolverConfig
+from qubosolver.solvers.config import Config as SolverConfig
 from qubosolver import solvers, transforms
 
 

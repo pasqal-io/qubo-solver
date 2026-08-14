@@ -10,7 +10,7 @@ from qoolqit import Register
 from qubosolver import embedding
 from . import blade, greedy_layout
 from qubosolver.types import Instance, protocols
-from qubosolver.config import SolverConfig
+from qubosolver.solvers.config import Config as SolverConfig
 
 warnings.filterwarnings("ignore", module="pulser")
 

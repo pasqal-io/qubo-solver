@@ -11,7 +11,7 @@ import qoolqit
 from . import proportional_diagonal, bayesian_search
 from .enum import Algorithm
 from qubosolver.types import Instance, Solution, protocols
-from qubosolver.config import SolverConfig
+from qubosolver.solvers.config import Config as SolverConfig
 
 
 class _BaseDriveShaper(ABC):

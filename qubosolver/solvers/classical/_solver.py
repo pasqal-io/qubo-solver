@@ -3,7 +3,7 @@
 This module provides a family of classical optimisation solvers for QUBO
 problems, all sharing the :class:`BaseClassicalSolver` interface.  The
 correct solver is selected at runtime by `get_classical_solver` based
-on :attr:`~qubosolver.config.ClassicalConfig.classical_solver_type`.
+on :attr:`~qubosolver.solvers.config.ClassicalConfig.classical_solver_type`.
 
 Available solvers:
 
@@ -19,7 +19,7 @@ from abc import ABC, abstractmethod
 
 import torch
 
-from qubosolver.config import ClassicalConfig
+from qubosolver.solvers.config import ClassicalConfig
 from qubosolver.types import Instance, Solution, torch_rng
 from qubosolver.solvers.enum import ClassicalAlgorithm
 from qubosolver import solvers
@@ -30,7 +30,7 @@ class BaseClassicalSolver(ABC):
 
     Each concrete subclass implements a single optimisation strategy.
     Use `get_classical_solver` to obtain the right subclass from a
-    :class:`~qubosolver.config.ClassicalConfig` rather than instantiating
+    :class:`~qubosolver.solvers.config.ClassicalConfig` rather than instantiating
     subclasses directly.
     """
 
@@ -66,7 +66,7 @@ class CplexSolver(BaseClassicalSolver):
     the import is deferred to :meth:`solve` so the rest of the module remains
     usable without it.
 
-    Relevant :class:`~qubosolver.config.ClassicalConfig` fields:
+    Relevant :class:`~qubosolver.solvers.config.ClassicalConfig` fields:
     ``cplex_maxtime``, ``cplex_log_path``.
     """
 
@@ -96,7 +96,7 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
     that decreases as temperature cools from ``sa_initial_temp`` to
     ``sa_final_temp``.
 
-    Relevant :class:`~qubosolver.config.ClassicalConfig` fields:
+    Relevant :class:`~qubosolver.solvers.config.ClassicalConfig` fields:
     ``sa_seed``, ``sa_start``, ``sa_initial_temp``, ``sa_final_temp``,
     ``sa_cooling_rate``, ``sa_time_limit``,
     ``max_iter``, ``max_bitstrings``.
@@ -142,7 +142,7 @@ class TabuSearchSolver(BaseClassicalSolver):
     tabu list that forbids recently visited moves for ``tabu_tenure``
     iterations, preventing short cycles.
 
-    Relevant :class:`~qubosolver.config.ClassicalConfig` fields:
+    Relevant :class:`~qubosolver.solvers.config.ClassicalConfig` fields:
     ``tabu_x0``, ``tabu_tenure``, ``tabu_max_no_improve``,
     ``tabu_time_limit``, ``max_iter``, ``max_bitstrings``.
     """
@@ -182,7 +182,7 @@ class RandomSolver(BaseClassicalSolver):
     """QUBO solver that returns uniformly random bitstrings.
 
     Useful as a baseline or for generating diverse starting points.
-    Relevant :class:`~qubosolver.config.ClassicalConfig` field:
+    Relevant :class:`~qubosolver.solvers.config.ClassicalConfig` field:
     ``max_bitstrings``.
     """
 

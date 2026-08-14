@@ -4,7 +4,7 @@ This module provides three internal solver classes and the public
 :class:`Solver` dispatcher:
 
 * :class:`Solver` — public entry point.  Inspects
-  :class:`~qubosolver.config.SolverConfig` and instantiates one of the three
+  :class:`~qubosolver.solvers.config.Config` and instantiates one of the three
   solvers below.
 * :class:`_QuboSolverQuantum` — runs the full quantum pipeline: embedding →
   drive shaping → analog quantum sampling → postprocessing.
@@ -26,7 +26,8 @@ from typing_extensions import TypeAlias
 
 import qoolqit
 
-from qubosolver import Solution, Instance, DecompositionConfig, SolverConfig, transforms, torch_rng
+from qubosolver import Solution, Instance, transforms, torch_rng
+from qubosolver.solvers.config import Config as SolverConfig, DecompositionConfig
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from ._basesolver import BaseSolver
 from .classical._solver import get_classical_solver
@@ -39,7 +40,7 @@ logger = logging.getLogger(__name__)
 class Solver(BaseSolver):
     """Public QUBO solver dispatcher.
 
-    Inspects [`qubosolver.SolverConfig`][] at construction time
+    Inspects [`qubosolver.solvers.config.Config`][] at construction time
     and selects the appropriate inner solver.
 
     All public methods delegate directly to the selected inner solver.
@@ -307,7 +308,7 @@ class _DecomposeQuboSolver(BaseSolver):
     geometric search, solves each subproblem with a configurable
     ``solver_factory``, and merges the partial solutions back into a
     global solution.  The final tail of variables (those that fall below
-    :attr:`~qubosolver.config.DecompositionConfig.decompose_stop_number`)
+    :attr:`~qubosolver.solvers.config.DecompositionConfig.decompose_stop_number`)
     is always solved classically.
 
     Constraints:

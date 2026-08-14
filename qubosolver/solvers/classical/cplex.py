@@ -11,7 +11,7 @@ solution within the given time limit.
     raise :exc:`ModuleNotFoundError` at import time.
 
 Typical usage goes through :class:`~qubosolver.solvers.CplexSolver`, which
-reads :class:`~qubosolver.config.ClassicalConfig` parameters and calls
+reads :class:`~qubosolver.solvers.config.ClassicalConfig` parameters and calls
 `cplex` directly.
 """
 
