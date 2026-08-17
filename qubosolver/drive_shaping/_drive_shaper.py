@@ -10,7 +10,7 @@ import qoolqit
 
 from . import (
     proportional_diagonal,
-    _local_energy_scale_drive,
+    local_energy_scale,
     bayesian_search,
 )
 from qubosolver.types import Instance, Solution, DriveType, protocols
@@ -161,7 +161,7 @@ class LocalEnergyScaleDriveShaper(_BaseDriveShaper):
         kappa = self.config.drive_shaping.local_energy_scale_kappa
 
         return (
-            _local_energy_scale_drive.build_drive(
+            local_energy_scale.build_drive(
                 self.instance,
                 register,
                 device=device,

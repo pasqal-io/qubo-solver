@@ -159,8 +159,8 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
     Q = matrix.tensor(register.interaction_matrix()) + vector.zeros(3).fill_(-50.0).diag()
     instance = Instance(Q)
 
-    with caplog.at_level(logging.INFO, logger="qubosolver.drive_shaping._local_energy_scale_drive"):
-        _ = drive_shaping._local_energy_scale_drive.build_drive(instance, register, device=device)
+    with caplog.at_level(logging.INFO, logger="qubosolver.drive_shaping.local_energy_scale"):
+        _ = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
 
     # Since the register cannot be rescaled, limits are the one of the device
     max_amplitude = specs["max_amplitude"]

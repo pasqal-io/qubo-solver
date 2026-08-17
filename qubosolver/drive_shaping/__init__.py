@@ -9,12 +9,12 @@ from __future__ import annotations
 
 from qubosolver.drive_shaping import (
     proportional_diagonal,
-    _local_energy_scale_drive,
+    local_energy_scale,
     bayesian_search,
 )
 
 __all__ = [
     "proportional_diagonal",
-    "_local_energy_scale_drive",
+    "local_energy_scale",
     "bayesian_search",
 ]
