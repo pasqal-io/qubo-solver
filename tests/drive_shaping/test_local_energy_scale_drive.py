@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import random
 import re
 
@@ -24,8 +25,8 @@ from qubosolver import (
     vector,
     SingleSolution,
     solvers,
+    drive_shaping,
 )
-from qubosolver.drive_shaping import _local_energy_scale_drive
 
 
 def gather_optimal_solutions(
@@ -135,61 +136,51 @@ def test_with_perfect_embedding(
     check.greater(cumulated_probability, 0.6)
 
 
-def test_too_high_diagonal() -> None:
-    """Test amplitude clamping and detuning rescaling."""
+def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
+
     device = qoolqit.AnalogDeviceWithDMM()
     specs = device.specs
-
     eps = 0.001
+    d = specs["min_distance"]
+    assert d is not None
+    d += eps
+    D = specs["max_radial_distance"]
+    assert D is not None
+    D -= eps
 
-    minimum_distance = specs["min_distance"]
-    assert minimum_distance is not None
-    minimum_distance += eps
-
-    maximum_radius = specs["max_radial_distance"]
-    assert maximum_radius is not None
-    maximum_radius -= eps
-
-    # Build a register that cannot be rescaled.
+    # Build a register that cannot be scaled
     register = qoolqit.Register.from_coordinates(
-        [[0.0, 0.0], [minimum_distance, 0.0], [maximum_radius, 0.0]]
+        [
+            [0.0, 0.0],
+            [d, 0.0],
+            [D, 0.0],
+        ]
     )
+    Q = matrix.tensor(register.interaction_matrix()) + vector.zeros(3).fill_(-50.0).diag()
+    instance = Instance(Q)
 
-    qubo = matrix.tensor(register.interaction_matrix()) + vector.zeros(3).fill_(-50.0).diag()
+    with caplog.at_level(logging.INFO, logger="qubosolver.drive_shaping._local_energy_scale_drive"):
+        _ = drive_shaping._local_energy_scale_drive.build_drive(instance, register, device=device)
 
-    instance = Instance(qubo)
-
-    with pytest.warns(UserWarning) as recorded_warnings:
-        _local_energy_scale_drive.build_drive(instance, register, device=device)
-
-    warning_text = "\n".join(str(warning.message) for warning in recorded_warnings)
-
+    # Since the register cannot be rescaled, limits are the one of the device
     max_amplitude = specs["max_amplitude"]
     max_detuning = specs["max_abs_detuning"]
-
     assert max_amplitude is not None
     assert max_detuning is not None
 
     amplitude_match = re.search(
-        r"The local-energy-scale drive amplitude "
-        r"\(([^)]+)\) exceeds the maximum amplitude "
-        r"compilable on the device for this register "
-        r"\(([^)]+)\); clamping to it\.",
-        warning_text,
+        r"The local-energy-scale drive amplitude \(([^)]+)\) exceeds the maximum amplitude "
+        r"compilable on the device for this register \(([^)]+)\); clamping to it\.",
+        caplog.text,
     )
-
     assert amplitude_match is not None
-
     check.almost_equal(float(amplitude_match.group(2)), max_amplitude, rel=1e-2)
 
     detuning_match = re.search(
-        r"The local-energy-scale detuning "
-        r"\(([^)]+)\) exceeds the maximum detuning "
-        r"compilable on the device for this amplitude "
-        r"\(([^)]+)\); scaling the detuning down\.",
-        warning_text,
+        r"The local-energy-scale detuning \(([^)]+)\) exceeds the maximum detuning "
+        r"compilable on the device for this amplitude \(([^)]+)\); "
+        r"scaling the detuning down\.",
+        caplog.text,
     )
-
     assert detuning_match is not None
-
     check.almost_equal(float(detuning_match.group(2)), max_detuning, rel=1e-2)
