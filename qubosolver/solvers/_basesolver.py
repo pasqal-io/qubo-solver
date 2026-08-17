@@ -251,4 +251,10 @@ class BaseSolver(ABC):
         if not self.config.do_postprocessing:
             return solution
 
-        return solvers.iterative_bitflip_local_search(self.instance, solution)
+        return solvers.iterative_bitflip_local_search(
+            self.instance,
+            solution,
+            strategy="greedy_sweep",
+            max_iterations=1,
+            time_limit=self.config.postprocessing_time_limit,
+        )

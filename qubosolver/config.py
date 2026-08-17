@@ -488,6 +488,9 @@ class SolverConfig(_Config):
             or not (`False`). Defaults to True.
         decompose (DecompositionConfig | None, optional): which decomposition configuration to use
             when solving large QUBOs. Defaults to None, i.e. no decomposition is applied.
+        postprocessing_time_limit (float, optional): Maximum total time in seconds for the
+            whole post-processing batch, shared across all bitstrings. Defaults to
+            `float("inf")`, meaning no time limit.
     """
 
     config_name: str = ""
@@ -501,6 +504,7 @@ class SolverConfig(_Config):
     do_preprocessing: bool = False
     activate_trivial_solutions: bool = True
     decompose: DecompositionConfig | None = None
+    postprocessing_time_limit: float = float("inf")
 
     def __repr__(self) -> str:
         return self.config_name
