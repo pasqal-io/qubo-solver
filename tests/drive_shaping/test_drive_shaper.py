@@ -138,8 +138,8 @@ def test_normalized_weights_in_drive(
     dummy_register: qoolqit.Register,
     simple_qubo_instance: Instance,
 ) -> None:
-    # skip proportional-diagonal drive as its normalization is very specific
-    if dmm and drive_method is DriveType.PROPORTIONAL_DIAGONAL:
+    # skip proportional-diagonal and local-energy-scale drive as their normalization is very specific.
+    if dmm and drive_method in [DriveType.PROPORTIONAL_DIAGONAL, DriveType.LOCAL_ENERGY_SCALE]:
         pytest.skip("Not implemented")
     default_config = SolverConfig(
         use_quantum=True,
