@@ -21,7 +21,7 @@ from qubosolver import (
     utils,
     torch_rng,
 )
-from qubosolver.solvers.classical.bitflip import _bit_flip_local_search
+from qubosolver.solvers.classical.bitflip import _best_improvement_search
 
 
 @pytest.mark.parametrize("postprocessing", [True, False])
@@ -133,7 +133,7 @@ def test_no_solution() -> None:
 
 
 @pytest.mark.parametrize("shuffle", [True, False])
-def test_bit_flip_local_search_basic(shuffle: bool) -> None:
+def test_best_improvement_search_basic(shuffle: bool) -> None:
 
     # fmt: off
     Q = matrix.tensor([
@@ -148,7 +148,7 @@ def test_bit_flip_local_search_basic(shuffle: bool) -> None:
     initial_cost = cost_function(s)
     check.almost_equal(initial_cost, 0.0)
 
-    best_bitstring, best_cost = _bit_flip_local_search(cost_function, s, rng=torch_rng(65))
+    best_bitstring, best_cost = _best_improvement_search(cost_function, s, rng=torch_rng(65))
 
     np.testing.assert_allclose(best_bitstring, np.array([1, 1]))
     check.almost_equal(best_cost, -18.0)
@@ -157,7 +157,7 @@ def test_bit_flip_local_search_basic(shuffle: bool) -> None:
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("shuffle", [True, False])
 @pytest.mark.parametrize("density", [0.2, 0.5, 0.8])
-def test_bit_flip_local_search_randoms(shuffle: bool, density: float) -> None:
+def test_best_improvement_search_randoms(shuffle: bool, density: float) -> None:
 
     size = 5
 
@@ -172,5 +172,5 @@ def test_bit_flip_local_search_randoms(shuffle: bool, density: float) -> None:
                 return utils._costs.quadratic_cost(b, Q)
 
             initial_cost = cost_function(s)
-            _, best_cost = _bit_flip_local_search(cost_function, s, rng=rng if shuffle else None)
+            _, best_cost = _best_improvement_search(cost_function, s, rng=rng if shuffle else None)
             check.less_equal(best_cost, initial_cost)
