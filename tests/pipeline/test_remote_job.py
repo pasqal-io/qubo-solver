@@ -28,7 +28,7 @@ from qubosolver import (
 import qubosolver._io.utils as io_utils
 from qubosolver.types import protocols
 
-from qoolqit import DigitalAnalogDevice
+from qoolqit import AnalogDeviceWithDMM
 from qoolqit.execution import (
     retrieve_remote_job,
     get_batch_id,
@@ -72,7 +72,7 @@ def test_quantum_remote_job(
         connection: RemoteConnection | None = None,
     ) -> tuple[job.Job[Results], Instance]:
         instance = Instance(Q)
-        device = DigitalAnalogDevice()
+        device = AnalogDeviceWithDMM()
 
         if preprocessing:
             instance = transforms.variable_fixing.apply_recursively(instance)

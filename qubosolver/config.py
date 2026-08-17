@@ -326,6 +326,9 @@ class DriveShapingConfig(_Config):
             Defaults to None.
         proportional_diagonal_kappa (float): Scaling coefficient for the Omega waveform in
             the proportional-diagonal drive shaper. Defaults to 0.25.
+        local_energy_scale_kappa (float): Scaling coefficient relating the
+            peak Rabi frequency to the average local physical energy scale.
+            Defaults to 0.25.
         default_sequence_duration (int, optional): Fallback maximum sequence duration
             (ns) injected when the target device has no ``max_duration`` cap.
             Defaults to 50000.
@@ -353,33 +356,32 @@ class DriveShapingConfig(_Config):
     # Proportional-diagonal coefficient for omega
     proportional_diagonal_kappa: float = 0.25
 
+    # Local-energy-scale coefficient for omega
+    local_energy_scale_kappa: float = 0.25
+
     default_sequence_duration: int = 50000
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
-        """Serialize only the fields relevant to the active drive shaping method.
-
-        Always includes ``drive_shaping_method`` and ``dmm``. When
-        ``drive_shaping_method`` is ``BAYESIAN_SEARCH``, all ``bayesian_search_*`` fields
-        are also included. Proportional-diagonal-only fields are omitted for the
-        Bayesian-search path and vice-versa.
-
-        Returns:
-            dict[str, Any]: Serialized representation of this config.
-        """
-        serialization: dict = {
+        """Serialize only the fields relevant to the active drive shaping method."""
+        serialization: dict[str, Any] = {
             "drive_shaping_method": self.drive_shaping_method,
             "dmm": self.dmm,
         }
+
         if self.drive_shaping_method == DriveType.BAYESIAN_SEARCH:
-            dict_all_fields = self.__dict__
             serialization.update(
                 {
                     k: v
-                    for k, v in dict_all_fields.items()
+                    for k, v in self.__dict__.items()
                     if k.startswith(DriveType.BAYESIAN_SEARCH.value)
                 }
             )
+        elif self.drive_shaping_method == DriveType.PROPORTIONAL_DIAGONAL:
+            serialization["proportional_diagonal_kappa"] = self.proportional_diagonal_kappa
+        elif self.drive_shaping_method == DriveType.LOCAL_ENERGY_SCALE:
+            serialization["local_energy_scale_kappa"] = self.local_energy_scale_kappa
+
         return serialization
 
     @field_validator("drive_shaping_method")
@@ -388,14 +390,19 @@ class DriveShapingConfig(_Config):
         """Normalize the `drive_shaping_method` attribute."""
         if isinstance(val, DriveType):
             return val
+
         elif isinstance(val, str):
             u = val.upper()
+
             if u == DriveType.PROPORTIONAL_DIAGONAL.name:
                 return DriveType.PROPORTIONAL_DIAGONAL
             elif u == DriveType.BAYESIAN_SEARCH.name:
                 return DriveType.BAYESIAN_SEARCH
+            elif u == DriveType.LOCAL_ENERGY_SCALE.name:
+                return DriveType.LOCAL_ENERGY_SCALE
             else:
                 raise ValueError(f"Invalid drive shaping method '{val}'.")
+
         elif inspect.isclass(val):
             from qubosolver.drive_shaping._drive_shaper import _BaseDriveShaper
 
