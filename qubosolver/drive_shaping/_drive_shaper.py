@@ -158,9 +158,7 @@ class LocalEnergyScaleDriveShaper(_BaseDriveShaper):
         """
         device = self.config.device
         dmm = self.config.drive_shaping.dmm
-        kappa = (
-            self.config.drive_shaping.local_energy_scale_kappa
-        )
+        kappa = self.config.drive_shaping.local_energy_scale_kappa
 
         return (
             _local_energy_scale_drive.build_drive(
@@ -172,6 +170,7 @@ class LocalEnergyScaleDriveShaper(_BaseDriveShaper):
             ),
             Solution(),
         )
+
 
 class BayesianSearchDriveShaper(_BaseDriveShaper):
     """
@@ -225,6 +224,7 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
             config=config,
         )
 
+
 def _get_drive_shaper(
     instance: Instance,
     config: SolverConfig,
@@ -252,28 +252,19 @@ def _get_drive_shaper(
             :class:`DriveType` or a custom :class:`_BaseDriveShaper`
             subclass.
     """
-    if (
-        config.drive_shaping.drive_shaping_method
-        == DriveType.PROPORTIONAL_DIAGONAL
-    ):
+    if config.drive_shaping.drive_shaping_method == DriveType.PROPORTIONAL_DIAGONAL:
         return ProportionalDiagonalDriveShaper(
             instance,
             config,
             backend,
         )
-    elif (
-        config.drive_shaping.drive_shaping_method
-        == DriveType.LOCAL_ENERGY_SCALE
-    ):
+    elif config.drive_shaping.drive_shaping_method == DriveType.LOCAL_ENERGY_SCALE:
         return LocalEnergyScaleDriveShaper(
             instance,
             config,
             backend,
         )
-    elif (
-        config.drive_shaping.drive_shaping_method
-        == DriveType.BAYESIAN_SEARCH
-    ):
+    elif config.drive_shaping.drive_shaping_method == DriveType.BAYESIAN_SEARCH:
         return BayesianSearchDriveShaper(
             instance,
             config,

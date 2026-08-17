@@ -378,23 +378,18 @@ class DriveShapingConfig(_Config):
                 }
             )
         elif self.drive_shaping_method == DriveType.PROPORTIONAL_DIAGONAL:
-            serialization["proportional_diagonal_kappa"] = (
-                self.proportional_diagonal_kappa
-            )
+            serialization["proportional_diagonal_kappa"] = self.proportional_diagonal_kappa
         elif self.drive_shaping_method == DriveType.LOCAL_ENERGY_SCALE:
-            serialization["local_energy_scale_kappa"] = (
-                self.local_energy_scale_kappa
-            )
+            serialization["local_energy_scale_kappa"] = self.local_energy_scale_kappa
 
         return serialization
-    
+
     @field_validator("drive_shaping_method")
     @classmethod
     def _normalize_drive_shaping_method(cls, val: Any) -> DriveType | Any:
         """Normalize the `drive_shaping_method` attribute."""
         if isinstance(val, DriveType):
             return val
-        
 
         elif isinstance(val, str):
             u = val.upper()
@@ -406,10 +401,8 @@ class DriveShapingConfig(_Config):
             elif u == DriveType.LOCAL_ENERGY_SCALE.name:
                 return DriveType.LOCAL_ENERGY_SCALE
             else:
-                raise ValueError(
-                    f"Invalid drive shaping method '{val}'."
-                )
-            
+                raise ValueError(f"Invalid drive shaping method '{val}'.")
+
         elif inspect.isclass(val):
             from qubosolver.drive_shaping._drive_shaper import _BaseDriveShaper
 
