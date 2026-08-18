@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-08-19
+
+### Fixed
+- Clamp `qoolqit`, `pulser`, `pulser-pasqal`, `emu-base`, `emu-sv`, and `emu-mps` upper bounds: newer releases of these packages break `qubo-solver` 0.8.0, and the incompatibility will only be fixed in v1. ([#263](https://github.com/pasqal-io/qubo-solver/pull/263))
+
 ## [0.8.0] - 2026-06-29
 
 ### Added
@@ -86,7 +91,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove references to D-Wave ([#118](https://github.com/pasqal-io/qubo-solver/pull/118))
 
 
-[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.0...v0.7.1
