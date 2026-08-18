@@ -42,8 +42,13 @@ dependencies = [
   "scikit-optimize",
   "cplex",
   "pydantic>=2",
-  "qoolqit[extras]>=1.1.1", # The version in .pre-commit-config.yaml must match
+  "qoolqit[extras]>=1.1.1,<1.3", # The version in .pre-commit-config.yaml must match
   "shapely",
+  "pulser<1.9",
+  "pulser-pasqal<0.23",
+  "emu-base<2.8",
+  "emu-sv<2.8",
+  "emu-mps<2.8",
 ]
 
 [project.optional-dependencies]
