@@ -1,16 +1,12 @@
 """Free functions for analysing QUBO solutions.
 
-Convert one or more [`qubosolver.Solution`][] objects into a unified
-`pandas.DataFrame` and provides filtering, statistical, and plotting helpers
-for comparing solver outputs.
+Converts one or more [`qubosolver.Solution`][] objects into a unified
+`pandas.DataFrame`, for filtering, comparing, and summarizing solver outputs.
 
-Typical usage:
-
-```python
-df = to_dataframe([sol_a, sol_b], labels=["classical", "quantum"])
-df = _add_gaps(df, opt_cost=-42.0)
-_plot(df, x_axis="bitstrings", y_axis="costs", top_percent=0.1)
-```
+Example:
+    ```python
+    df = to_dataframe([sol_a, sol_b], labels=["classical", "quantum"])
+    ```
 """
 
 from __future__ import annotations
@@ -40,8 +36,8 @@ def _solution_to_dataframe(solution: Solution, solution_label: str) -> pd.DataFr
         solution_label: The label associated with this solution.
 
     Returns:
-        pd.DataFrame: A `DataFrame` containing the solution's bitstrings, costs,
-                      counts, and probabilities.
+        A `DataFrame` containing the solution's bitstrings, costs,
+            counts, and probabilities.
     """
     solution.check_consistency(instance=None, throw=True)
 
@@ -72,7 +68,7 @@ def to_dataframe(
             `DataFrame`. Defaults to ``"0"``, ``"1"``, … when ``"auto"``.
 
     Returns:
-        pd.DataFrame: The concatenated `DataFrame` containing all solutions.
+        The concatenated `DataFrame` containing all solutions.
 
     Raises:
         ValueError: If the number of labels does not match the number of solutions.
@@ -113,13 +109,13 @@ def _filter_by_percentage(
         order: Either "ascending" or "descending", see above.
 
     Returns:
-        pd.DataFrame: The filtered `DataFrame` containing, for each solution
+        The filtered `DataFrame` containing, for each solution
             group, the bitstrings whose cumulative probability (`_PROBS`)
             reaches the specified `top_percent` threshold.
 
     Raises:
         ValueError: If the specified column is not in the `DataFrame`,
-                    or if top_percent is not in (0, 1].
+            or if top_percent is not in (0, 1].
     """
     if column not in df.columns:
         raise ValueError(f"{column} data is not available. \
@@ -145,8 +141,8 @@ def _average_cost(df: pd.DataFrame, *, top_percent: float = 1.0) -> pd.DataFrame
             of lowest-cost bitstrings to consider.
 
     Returns:
-        pd.DataFrame: A `DataFrame` with each solution label, the average cost over the
-                      best top_percent bitstrings, and the count of bitstrings used.
+        A `DataFrame` with each solution label, the average cost over the
+            best top_percent bitstrings, and the count of bitstrings used.
     """
     df_top = _filter_by_percentage(df, top_percent=top_percent)
     results = []
@@ -172,8 +168,8 @@ def _best_bitstrings(df: pd.DataFrame, *, atol: float = 0.0, rtol: float = 0.0) 
         rtol: Relative tolerance used when comparing costs to the minimum.
 
     Returns:
-        pd.DataFrame: A `DataFrame` with all unique rows per solution (solution_label)
-                      that have the best (lowest) cost.
+        A `DataFrame` with all unique rows per solution (solution_label)
+            that have the best (lowest) cost.
     """
     best_list = []
     for _, sol in df.groupby(_LABELS):
@@ -197,7 +193,7 @@ def _add_gaps(df: pd.DataFrame, *, opt_cost: float) -> pd.DataFrame:
         opt_cost: The known optimal cost used to compute the gap.
 
     Returns:
-        pd.DataFrame: A new `DataFrame` including the gaps column.
+        A new `DataFrame` including the gaps column.
     """
     df = df.copy()
     df[_GAPS] = abs((df[_COSTS] - opt_cost) / opt_cost)
@@ -224,7 +220,7 @@ def _plot_vs_bitstrings(
         context: Seaborn plotting context (e.g. "notebook", "talk").
 
     Returns:
-        sns.axisgrid.FacetGrid: The resulting plot.
+        The resulting plot.
     """
     # Check if the y_axis is available
     if y_axis not in df.columns:
@@ -295,8 +291,8 @@ def _plot_no_bitstrings(
         context: Seaborn plotting context (e.g. ``"notebook"``, ``"talk"``).
 
     Returns:
-        sns.axisgrid.FacetGrid: The resulting grouped bar chart, one bar
-        group per unique x-axis value with hue mapped to solution labels.
+        The resulting grouped bar chart, one bar
+            group per unique x-axis value with hue mapped to solution labels.
 
     Raises:
         ValueError: If *x_axis* or *y_axis* is not a column in *df*, or if
@@ -381,7 +377,7 @@ def _plot(
         context: Seaborn plotting context (e.g. "notebook", "talk").
 
     Returns:
-        sns.axisgrid.FacetGrid: The resulting plot.
+        The resulting plot.
 
     Raises:
         ValueError: If `x_axis` is not a column in `df`.
