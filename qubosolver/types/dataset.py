@@ -27,25 +27,20 @@ class Dataset():
     optimization objective is $x^T Q x$, where $x$ is a binary vector.
 
     Args:
-        matrices (torch.Tensor):
-            Matrices of shape ``(size, size, num_instances)``.
+        matrices: Matrices of shape ``(size, size, num_instances)``.
             ``matrices[:, :, i]`` is the ``i``-th QUBO matrix.
-        solutions (list[Solution]):
-            Ground-truth solutions, one per instance.  Pass an empty list
+        solutions: Ground-truth solutions, one per instance.  Pass an empty list
             (default) when solutions are unknown.
-        copy (bool):
-            Whether to deep-copy ``matrices`` and ``solutions`` on
+        copy: Whether to deep-copy ``matrices`` and ``solutions`` on
             construction.  Pass ``False`` to store the
             given values directly (no copy), e.g. when the caller already
             owns them exclusively.
 
     Attributes:
-        matrices (torch.Tensor):
-            Matrices stored as a 3-D tensor of shape
+        matrices: Matrices stored as a 3-D tensor of shape
             ``(size, size, num_instances)``.  The third axis indexes individual
             problem instances.
-        solutions (list[Solution]):
-            Known solutions for each instance.  Empty when the dataset was
+        solutions: Known solutions for each instance.  Empty when the dataset was
             created without ground-truth solutions (e.g. via [`from_random`][]).
 
     Note:
@@ -250,7 +245,15 @@ class Dataset():
 
         Args:
             file_like: Destination file path or writable binary file object.
-            dataset (Dataset): The dataset to serialise.
+            dataset: The dataset to serialise.
+
+        Example:
+            ```python
+            from pathlib import Path
+
+            with Path("dataset.bin").open("wb") as f:
+                Dataset.save(f, dataset)
+            ```
         """
         with io_utils.open(file_like, "wb") as f:
             buffer = io.BytesIO()
@@ -270,6 +273,14 @@ class Dataset():
 
         Returns:
             The deserialised dataset, including solutions if they were present when the file was saved.
+
+        Example:
+            ```python
+            from pathlib import Path
+
+            with Path("dataset.bin").open("rb") as f:
+                dataset = Dataset.load(f)
+            ```
         """
         with io_utils.open(file_like, "rb") as f:
             # torch.load might consume too much of the src buffer.
@@ -294,14 +305,14 @@ def _generate_symmetric_mask(
     where ``x`` is the number of selected diagonal entries.
 
     Args:
-        size (int): Side length of the square mask (``size × size``).
-        target (int): Exact number of ``True`` entries in the returned mask.
-        device (str): Torch device string (e.g. ``"cpu"``, ``"cuda"``).
-        rng (torch.Generator): Random number generator for reproducible sampling.
+        size: Side length of the square mask (``size × size``).
+        target: Exact number of ``True`` entries in the returned mask.
+        device: Torch device string (e.g. ``"cpu"``, ``"cuda"``).
+        rng: Random number generator for reproducible sampling.
 
     Returns:
-        torch.Tensor: Boolean tensor of shape ``(size, size)`` with exactly
-        *target* ``True`` values and perfect symmetry (``mask == mask.T``).
+        Boolean tensor of shape ``(size, size)`` with exactly *target*
+            ``True`` values and perfect symmetry (``mask == mask.T``).
     """
     possible_x = []
     for x in range(1, min(size, target) + 1):
