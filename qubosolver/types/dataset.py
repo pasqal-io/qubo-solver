@@ -1,6 +1,6 @@
 """Dataset container for batches of QUBO problem instances.
 
-Provides [`Dataset`][qubosolver.Dataset], a PyTorch-style dataset of QUBO
+Provides [`Dataset`][qubosolver.Dataset], a dataset of QUBO
 coefficient matrices paired with optional ground-truth solutions, along with
 random dataset generation and binary (de)serialization helpers.
 """
@@ -21,7 +21,7 @@ from qubosolver._io import utils as io_utils
 
 
 class Dataset():
-    """A PyTorch ``Dataset`` of QUBO (Quadratic Unconstrained Binary Optimization) instances.
+    """A dataset of QUBO instances.
 
     Each instance is represented by a square coefficient matrix ``Q`` such that the
     optimization objective is ``x^T Q x``, where ``x`` is a binary vector.

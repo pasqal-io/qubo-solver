@@ -20,7 +20,7 @@ from qubosolver._io import utils as io_utils
 
 @debug_runtime_typecheck
 class Instance:
-    """A single QUBO (Quadratic Unconstrained Binary Optimization) problem instance.
+    """A single QUBO problem instance.
 
     Wraps a symmetric square coefficient matrix ``Q`` and exposes helpers for
     evaluation, serialisation, and introspection.  The objective to minimise is:
