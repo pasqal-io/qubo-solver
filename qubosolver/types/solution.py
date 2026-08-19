@@ -39,11 +39,11 @@ class SingleSolution:
         bitstring: Binary vector of shape ``(n,)`` with values in
             $\\{0, 1\\}^n$ (``int8``).
         cost: Objective value $x^T Q x$.  Defaults to $+\\infty$ when
-            costs have not been computed yet.
+            constructed without one.
         count: Number of times this bitstring was sampled.  Defaults
-            to ``0`` when counts are unavailable.
+            to ``0`` when constructed without one.
         probability: Sampling probability of this bitstring.  Defaults
-            to ``0.0`` when probabilities are unavailable.
+            to ``0.0`` when constructed without one.
     """
 
     bitstring: Bitstring
@@ -162,9 +162,8 @@ class Solution:
     def _sort_by_cost(self) -> Self:
         """Sort all fields in-place by ascending cost.
 
-        Reorders `bitstrings`, `costs`, and — when non-empty —
-        `counts` and `probabilities`, so that the lowest-cost
-        candidate appears first.
+        Reorders `bitstrings`, `costs`, `counts`, and `probabilities`
+        so that the lowest-cost candidate appears first.
 
         Returns:
             The same [`Solution`][] instance, allowing method chaining.
@@ -199,11 +198,14 @@ class Solution:
     def truncate(self, k: int) -> Self:
         """Keep only the first `k` candidates in-place.
 
-        Slices `bitstrings`, `costs`, `counts`, and `probabilities`
-        (whichever are non-empty) down to their first `k` rows. Does not
-        sort or deduplicate first; combine with `_sort_by_cost` /
-        `deduplicate` as needed, e.g. ``solution._sort_by_cost().truncate(1)``
-        to keep the best candidate.
+        Recomputes `probabilities` so they still sum to 1. Does not sort
+        first; assumes `solution` is already sorted by ascending cost.
+
+        Example:
+            ```python
+            # Keep only the best candidate (lowest cost).
+            solution.truncate(1)
+            ```
 
         Args:
             k: Number of candidates to keep. When ``k >= len(self)``, this
@@ -213,24 +215,17 @@ class Solution:
             The same [`Solution`][] instance, allowing method chaining.
 
         Raises:
-            ValueError: If `probabilities` is non-empty while
-                `counts` is empty.
-
-        Note:
-            When both are populated, `probabilities` are recomputed
-            from the truncated `counts` (via `_compute_probabilities`)
-            rather than merely sliced, so they still sum to 1.
+            AssertionError: If this solution is non-empty and `costs`,
+                `counts`, or `probabilities` is not populated (checked
+                via `check_consistency(full=False)`).
         """
-        if self.probabilities.numel() > 0 and self.counts.numel() == 0:
-            raise ValueError("Solution.truncate() requires counts when probabilities is populated")
+        self.check_consistency(throw=True, full=False)
 
         self.bitstrings = self.bitstrings[:k]
-        if self.costs.numel() > 0:
-            self.costs = self.costs[:k]
-        if self.counts.numel() > 0:
-            self.counts = self.counts[:k]
-            if self.probabilities.numel() > 0:
-                self._compute_probabilities()
+        self.costs = self.costs[:k]
+        self.counts = self.counts[:k]
+        self._compute_probabilities()
+
         return self
 
     def deduplicate(self) -> Self:
@@ -241,43 +236,43 @@ class Solution:
         `probabilities` are recomputed from the new totals. The result
         is sorted by cost.
 
-        When `counts` is empty (not yet populated), count-summing and
-        probability recomputation are skipped, and `counts` /
-        `probabilities` remain empty on the result. Likewise, when
-        `costs` is empty, cost reduction and cost-based sorting are
-        skipped, and `costs` remains empty on the result.
-
         Returns:
             The same [`Solution`][] instance, allowing method chaining.
 
+        Raises:
+            AssertionError: If this solution is non-empty and `costs`,
+                `counts`, or `probabilities` is not populated (checked
+                via `check_consistency(full=False)`).
+
         Note:
-            When several rows share a bitstring, the minimum of their
-            `costs` is kept. This is only meaningful if those costs
-            were all computed from the same QUBO instance (same
-            `matrix` passed to `_compute_costs`); the caller is
-            responsible for ensuring that, since this method does not
-            verify it.
+            Rows sharing a bitstring are expected to also share the same
+            `cost`, since they represent the same candidate — but this
+            is not checked. The minimum of their `costs` is kept as a
+            conservative choice in case that expectation doesn't hold.
+            Use ``solution.check_consistency(instance=instance, full=True)``
+            (see [`check_consistency`][qubosolver.types.solution.Solution.check_consistency])
+            to check the result against that instance — this check is
+            expensive, so prefer it in tests / debugging rather than
+            on every call.
         """
         if not self:
             return self
+
+        self.check_consistency(throw=True, full=False)
 
         unique_bitstrings, inverse = self.bitstrings.unique(dim=0, return_inverse=True)
         n = unique_bitstrings.shape[0]
         self.bitstrings = unique_bitstrings
 
-        if self.counts.numel() > 0:
-            self.counts = vectori.zeros(n).scatter_reduce(
-                dim=0, index=inverse, src=self.counts, reduce="sum", include_self=False
-            )
+        self.counts = vectori.zeros(n).scatter_reduce(
+            dim=0, index=inverse, src=self.counts, reduce="sum", include_self=False
+        )
 
-        if self.costs.numel() > 0:
-            self.costs = vector.zeros(n).scatter_reduce(
-                dim=0, index=inverse, src=self.costs, reduce="amin", include_self=False
-            )
-            self._sort_by_cost()
+        self.costs = vector.zeros(n).scatter_reduce(
+            dim=0, index=inverse, src=self.costs, reduce="amin", include_self=False
+        )
 
-        if self.counts.numel() > 0:
-            self._compute_probabilities()
+        self._sort_by_cost()._compute_probabilities()
 
         return self
 
@@ -288,67 +283,58 @@ class Solution:
         Concatenates `bitstrings`, `costs`, `counts`, and
         `probabilities` from every solution in `solutions`. Duplicate
         bitstrings, if any, are kept as separate rows — call
-        `deduplicate` on the result to collapse them:
-
-        ```python
-        merged = Solution.concat([a, b]).deduplicate()
-        ```
+        `deduplicate` on the result to collapse them.
 
         Args:
             solutions: Solutions to concatenate. Empty solutions (no
-                bitstrings) are skipped. Among the remaining solutions,
-                each of `costs`, `counts`, and `probabilities` must be
-                either populated on all of them or empty on all of them
-                — mixing populated and empty for the same field raises
-                `ValueError`.
+                bitstrings) are skipped. Each remaining solution must have
+                `costs`, `counts`, and `probabilities` populated (checked
+                via `check_consistency(full=False)`, which raises
+                `AssertionError` otherwise).
             unit_counts: When ``True``, set `counts` to ``1`` for every
                 concatenated candidate instead of concatenating their
                 original counts — useful when each candidate should count
-                as a single vote once merged, e.g.
-                ``Solution.concat(solutions, unit_counts=True).deduplicate()``.
-                `probabilities`, if populated, are recomputed from the
-                resulting `counts` rather than concatenated, so they
-                still sum to 1.
+                as a single vote once merged. `probabilities` are always
+                recomputed from the resulting `counts` rather than
+                concatenated, so they still sum to 1.
 
         Returns:
             A new [`Solution`][] containing every candidate from every
-                solution, or an empty [`Solution`][] if `solutions` is empty
-                or contains only empty solutions.
+                solution, sorted by ascending cost with `probabilities`
+                recomputed from `counts`, or an empty [`Solution`][] if
+                `solutions` is empty or contains only empty solutions.
+
+        Example:
+            ```python
+            # Chain with deduplicate() to merge
+            merged = Solution.concat([a, b]).deduplicate()
+
+            # Alternative merge with unit_counts
+            merged = Solution.concat([a, b], unit_counts=True).deduplicate()
+            ```
         """
         non_empty = [solution for solution in solutions if solution]
         if not non_empty:
             return Solution()
 
-        for field in ("costs", "counts", "probabilities"):
-            populated = [getattr(s, field).numel() > 0 for s in non_empty]
-            if any(populated) and not all(populated):
-                raise ValueError(
-                    f"Solution.concat() requires {field} to be either populated on "
-                    f"every solution or empty on every solution, not a mix of both"
-                )
+        for s in non_empty:
+            s.check_consistency(instance=None, throw=True, full=False)
 
         bitstrings = torch.cat([s.bitstrings for s in non_empty], dim=0)
-        probabilities_populated = non_empty[0].probabilities.numel() > 0
         if unit_counts:
             counts = vectori.zeros(bitstrings.shape[0]).fill_(1)
         else:
             counts = torch.cat([s.counts for s in non_empty], dim=0)
 
-        result = Solution(
+        return Solution(
             bitstrings=bitstrings,
             costs=torch.cat([s.costs for s in non_empty], dim=0),
             counts=counts,
-        )
-        if probabilities_populated:
-            result._compute_probabilities()
-        return result
+        )._sort_by_cost()._compute_probabilities()
 
     @staticmethod
     def from_results(results: Results, *, instance: Instance) -> Solution:
         """Build a [`Solution`][] from Pulser quantum-simulation results.
-
-        `bitstrings` and `counts` are read from `results`; `costs` and
-        `probabilities` are then derived via `_update`.
 
         Args:
             results: Pulser results object
@@ -381,12 +367,6 @@ class Solution:
     def save(file_like: io_utils.FileLike[bytes], solution: Solution) -> None:
         """Serialise `solution` to `file_like` using `torch.save`.
 
-        All four tensor fields are packed into a single dict and written into
-        an internal `io.BytesIO` buffer, then flushed to `file_like` using
-        `io_utils.save_sized_buffer`, which prefixes the payload with its
-        byte length. This framing allows multiple objects to be stored
-        contiguously in the same stream.
-
         Args:
             file_like: Destination — a file path (`str` or `os.PathLike`),
                 or a binary-writable `typing.IO` stream.
@@ -415,12 +395,7 @@ class Solution:
 
     @staticmethod
     def load(file_like: io_utils.FileLike[bytes]) -> Solution:
-        """Deserialise a `Solution` previously saved with `save`.
-
-        Reads a length-prefixed byte block from `file_like` into a dedicated
-        `io.BytesIO` buffer before calling `torch.load`. The isolated
-        buffer prevents `torch.load` from over-consuming the source stream
-        when multiple objects are packed together.
+        """Deserialize a [`Solution`][] previously saved with `save`.
 
         Args:
             file_like: Source — a file path (`str` or `os.PathLike`),
@@ -444,7 +419,7 @@ class Solution:
         """
         with io_utils.open(file_like, "rb") as f:
             # torch.load might consume too much of the src buffer.
-            #  Use a dedicated limited buffer
+            # Use a dedicated limited buffer
             buffer = io.BytesIO(io_utils.load_sized_buffer(f))
             data = torch.load(buffer, weights_only=True)
 
@@ -455,7 +430,7 @@ class Solution:
             probabilities=data["probabilities"],
         )
 
-    def check_consistency(self, *, instance: Instance | None, throw: bool = False, full: bool = True) -> bool:
+    def check_consistency(self, *, instance: Instance | None = None, throw: bool = False, full: bool = True) -> bool:
         """Check internal consistency of this solution against a QUBO instance.
 
         Recomputes costs from `bitstrings` and `instance.matrix` and checks
