@@ -48,11 +48,11 @@ def _get_backend_type(
     """Get the backend type for a given backend ID and execution mode.
 
     Args:
-        backend_id (Literal["qutip", "emu_sv", "emu_mps"]): Backend identifier.
-        remote (bool): Whether to get a remote or local backend type.
+        backend_id: Backend identifier.
+        remote: Whether to get a remote or local backend type.
 
     Returns:
-        Type[EmulatorBackend] | Type[RemoteEmulatorBackend]: The backend class for the specified ID and execution mode.
+        The backend class for the specified ID and execution mode.
 
     Raises:
         ValueError: If the backend_id is not recognized.
@@ -80,13 +80,12 @@ def _select_backend_type(
     """Select the appropriate backend class based on the number of qubits.
 
     Args:
-        n_qubits (int): Number of qubits in the quantum register.
-        remote (bool): Whether to select a remote or local backend.
+        n_qubits: Number of qubits in the quantum register.
+        remote: Whether to select a remote or local backend.
 
     Returns:
-        Type[EmulatorBackend] | Type[RemoteEmulatorBackend]: The selected backend class
-        appropriate for the given problem size. QutipBackendV2/RemoteEmuFreeBackend become
-        intractable beyond 15 qubits.
+        The selected backend class appropriate for the given problem size.
+            `QutipBackendV2`/`RemoteEmuFreeBackend` become intractable beyond 15 qubits.
     """
     if n_qubits >= _MPS_THRESHOLD:
         return _get_backend_type("emu_mps", remote)
@@ -115,12 +114,13 @@ class AutoLocalEmulatorBackend(EmulatorBackend):
         """Create a local emulator backend selected from the sequence size.
 
         Args:
-            sequence (pulser.Sequence): The pulse sequence to simulate.
+            sequence: The pulse sequence to simulate.
             *args: Additional positional arguments passed to the selected backend.
             **kwargs: Additional keyword arguments passed to the selected backend.
 
         Returns:
-            EmulatorBackend: An instance of the automatically selected backend (`MPSBackend`, `SVBackend`, or `QutipBackendV2`).
+            An instance of the automatically selected backend (`MPSBackend`, `SVBackend`,
+                or `QutipBackendV2`).
 
         Note:
             Required by `qoolqit.LocalEmulator` which expects backend_type to pass
@@ -151,12 +151,13 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
         """Create a remote emulator backend selected from the sequence size.
 
         Args:
-            sequence (pulser.Sequence): The pulse sequence to simulate.
+            sequence: The pulse sequence to simulate.
             *args: Additional positional arguments passed to the selected backend.
             **kwargs: Additional keyword arguments passed to the selected backend.
 
         Returns:
-            RemoteEmulatorBackend: An instance of the automatically selected remote backend (`RemoteMPSBackend`, `RemoteSVBackend`, or `RemoteEmuFreeBackend`).
+            An instance of the automatically selected remote backend (`RemoteMPSBackend`,
+                `RemoteSVBackend`, or `RemoteEmuFreeBackend`).
 
         Note:
             Required by `qoolqit.RemoteLocalEmulator` which expects backend_type to pass
@@ -177,8 +178,8 @@ def _warn_suboptimal_backend(
     """Warn if using a suboptimal backend for the given problem size.
 
     Args:
-        backend_type: The currently selected backend type
-        n_qubits: Number of qubits in the quantum program
+        backend_type: The currently selected backend type.
+        n_qubits: Number of qubits in the quantum program.
     """
     if backend_type in [AutoLocalEmulatorBackend, AutoRemoteEmulatorBackend]:
         return
@@ -217,9 +218,8 @@ class LocalEmulator(QoolqitLocalEmulator):
     - Large problems (≥ 26 qubits): `MPSBackend`
 
     Args:
-        backend_type (type, optional): Backend type to use. Defaults to
-            `AutoLocalEmulatorBackend` for automatic selection.
-        **kwargs: Additional keyword arguments passed to the base LocalEmulator.
+        backend_type: Backend type to use.
+        **kwargs: Additional keyword arguments passed to the base `qoolqit.LocalEmulator`.
 
     Example:
         ```python
@@ -235,15 +235,15 @@ class LocalEmulator(QoolqitLocalEmulator):
         super().__init__(backend_type=backend_type, **kwargs)
 
     def run(self, program: qoolqit.QuantumProgram, *args: Any, **kwargs: Any) -> Any:
-        """Run the quantum program with backend tractability warning.
+        """Run the quantum program on the selected backend.
 
         Args:
-            program: The quantum program to execute
-            *args: Additional positional arguments
-            **kwargs: Additional keyword arguments
+            program: The quantum program to execute.
+            *args: Additional positional arguments from `qoolqit.LocalEmulator`.
+            **kwargs: Additional keyword arguments from `qoolqit.LocalEmulator`.
 
         Returns:
-            The execution results from the local backend
+            The execution results from the local backend.
         """
         _warn_suboptimal_backend(self._backend_type, program.register.n_qubits)
         return super().run(program, *args, **kwargs)
@@ -286,15 +286,15 @@ class RemoteEmulator(QoolqitRemoteEmulator):
         super().__init__(backend_type=backend_type, **kwargs)
 
     def run(self, program: qoolqit.QuantumProgram, *args: Any, **kwargs: Any) -> Any:
-        """Run the quantum program with backend tractability warning.
+        """Run the quantum program on the selected backend.
 
         Args:
-            program: The quantum program to execute
-            *args: Additional positional arguments
-            **kwargs: Additional keyword arguments
+            program: The quantum program to execute.
+            *args: Additional positional arguments for `qoolqit.RemoteEmulator`.
+            **kwargs: Additional keyword arguments for `qoolqit.RemoteEmulator`.
 
         Returns:
-            The execution results from the remote backend
+            The execution results from the remote backend.
         """
         _warn_suboptimal_backend(self._backend_type, program.register.n_qubits)
         return super().run(program, *args, **kwargs)
