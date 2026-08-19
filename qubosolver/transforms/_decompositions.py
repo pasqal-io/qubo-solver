@@ -251,14 +251,9 @@ def update(qubo: Instance, subqubo: SubQUBOInstance, subsolution: Solution) -> S
         return Solution()
 
     # Probabilities and counts are ignored as we return one solution
-    solution = (
-        Solution(
-            bitstrings=qubo._global_solution.unsqueeze(0),
-            counts=vectori.tensor([1]),
-        )
-        ._compute_costs(qubo.matrix)
-        ._sort_by_cost()
-        ._compute_probabilities()
-    )
+    solution = Solution(
+        bitstrings=qubo._global_solution.unsqueeze(0),
+        counts=vectori.tensor([1]),
+    )._update(qubo)
 
     return solution

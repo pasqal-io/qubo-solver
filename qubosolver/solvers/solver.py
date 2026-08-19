@@ -243,7 +243,7 @@ class _QuboSolverQuantum(BaseSolver):
         solution = self._post_process_fixation(solution)
         solution = self._post_process(solution)
 
-        solution._compute_costs(self.instance.matrix)._sort_by_cost()._compute_probabilities()
+        solution._update(self.instance)
 
         return solution
 

@@ -182,6 +182,20 @@ class Solution:
             self.probabilities = self.probabilities[sorted_indices]
         return self
 
+    def _update(self, instance: Instance) -> Self:
+        """Recompute costs, sort by cost, and recompute probabilities, in that order.
+
+        Equivalent to
+        ``self._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()``.
+
+        Args:
+            instance: The QUBO instance whose matrix is passed to `_compute_costs`.
+
+        Returns:
+            The same [`Solution`][] instance, allowing method chaining.
+        """
+        return self._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
+
     def truncate(self, k: int) -> Self:
         """Keep only the first `k` candidates in-place.
 
@@ -333,20 +347,18 @@ class Solution:
     def from_results(results: Results, *, instance: Instance) -> Solution:
         """Build a [`Solution`][] from Pulser quantum-simulation results.
 
-        Only `bitstrings` and `counts` are populated; call
-        `_compute_costs` and `_compute_probabilities` afterwards to
-        derive the remaining fields.
+        `bitstrings` and `counts` are read from `results`; `costs` and
+        `probabilities` are then derived via `_update`.
 
         Args:
             results: Pulser results object
                 whose ``final_bitstrings`` attribute is a ``dict[str, int]``.
+            instance: The QUBO instance whose matrix is used to compute
+                `costs`.
 
         Returns:
-            A new solution with:
-
-                * ``bitstrings`` — ``int8`` tensor of shape ``(num_solutions, n)``.
-                * ``counts``     — ``int64`` tensor of shape ``(num_solutions,)``.
-                * ``costs`` / ``probabilities`` — empty (not yet computed).
+            A new solution with all four fields populated, sorted by
+                ascending cost.
 
         Note:
             When ``final_bitstrings`` is empty (no samples recorded),
@@ -361,10 +373,7 @@ class Solution:
             bitstrings = _bitstrings.zeros(0, 0)
         counts = vectori.tensor(list(map(int, list(counter.values()))))
 
-        solution = Solution(
-            bitstrings=bitstrings,
-            counts=counts,
-        )._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
+        solution = Solution(bitstrings=bitstrings, counts=counts)._update(instance)
 
         return solution
 

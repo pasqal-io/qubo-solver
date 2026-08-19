@@ -542,6 +542,27 @@ def test_truncate_probabilities_without_counts_raises() -> None:
         solution.truncate(2)
 
 
+def test_update_computes_costs_sorts_and_computes_probabilities(instance: Instance) -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
+        counts=vectori.tensor([1, 3]),
+    )
+    solution._update(instance)
+    _assert_valid(solution, instance)
+
+    s0 = solution[0]
+    check.equal(s0.string, "10")
+    check.equal(s0.cost, 1.0)
+    check.equal(s0.count, 3)
+    check.equal(s0.probability, 0.75)
+
+    s1 = solution[1]
+    check.equal(s1.string, "01")
+    check.equal(s1.cost, 2.0)
+    check.equal(s1.count, 1)
+    check.equal(s1.probability, 0.25)
+
+
 def test_deepcopy_is_independent_of_original() -> None:
     solution = Solution(
         bitstrings=bitstrings.tensor([[1, 0], [0, 1]]),
