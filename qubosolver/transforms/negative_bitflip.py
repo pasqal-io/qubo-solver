@@ -9,7 +9,7 @@ weight as possible is an integer linear program solved here with GLPK.
 [`apply`][qubosolver.transforms.negative_bitflip.apply] solves the ILP and
 applies the optimal bit flips to the matrix, returning a wrapper `Instance` that
 records the flip vector so the solution can later be mapped back with
-[`unapply`][qubosolver.transforms.negative_bitflip.unapply].  When bit flips
+[`lift`][qubosolver.transforms.negative_bitflip.lift].  When bit flips
 cannot remove *every* negative off-diagonal coefficient, the remaining ones can
 be dropped with
 [`qubosolver.transforms.zeroing.apply`][qubosolver.transforms.zeroing.apply].
@@ -21,7 +21,7 @@ import qubosolver.transforms.negative_bitflip as bitflip
 
 reduced = bitflip.apply(qubo_instance, time_limit_s=60.0)
 solution = solver.solve(reduced)
-full = bitflip.unapply(solution, reduced)
+full = bitflip.lift(solution, reduced)
 ```
 """
 
@@ -362,7 +362,7 @@ class Instance(qubosolver.Instance):
     Wraps a parent [`qubosolver.Instance`][] whose off-diagonal coefficients may
     contain negative interactions.  Applying [`apply`][] solves the bit-flip ILP,
     stores the flip vector here, and exposes the transformed matrix so it can be
-    embedded and solved.  [`unapply`][] uses the stored state to map a solution
+    embedded and solved.  [`lift`][] uses the stored state to map a solution
     back onto the original variables.
     """
 
@@ -442,7 +442,7 @@ def apply(
     return instance
 
 
-def unapply(flipped_solution: Solution, flipped_qubo: Instance) -> Solution:
+def lift(flipped_solution: Solution, flipped_qubo: Instance) -> Solution:
     """Map a solution of the bit-flipped QUBO back onto the original variables.
 
     Undoes the flips recorded on *flipped_qubo* (``y_i -> x_i``) and recomputes
@@ -463,7 +463,7 @@ def unapply(flipped_solution: Solution, flipped_qubo: Instance) -> Solution:
     solution = Solution()
     solution.bitstrings = _apply_bitflips(flipped_solution.bitstrings, flipped_qubo.flips)
     solution.costs = vector.tensor(
-        [flipped_qubo._parent_instance.evaluate_solution(b) for b in solution.bitstrings]
+        [flipped_qubo._parent_instance.cost(b) for b in solution.bitstrings]
     )
     solution.counts = flipped_solution.counts
     solution.probabilities = flipped_solution.probabilities

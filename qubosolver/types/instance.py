@@ -6,7 +6,7 @@ import io
 from ._checks import debug_runtime_typecheck
 from . import matrix
 from .linalg import Matrix, Bitstring
-from .enums import DensityType
+from ._enums import _DensityType
 from qubosolver._io import utils as io_utils
 
 
@@ -82,20 +82,7 @@ class Instance:
             )
         return off_diag.max().item()
 
-    @property
-    def _normalized_matrix(self) -> torch.Tensor:
-        """Coefficient matrix scaled so that the largest off-diagonal entry equals 1.
-
-        Divides every element of [`matrix`][] by [`_max_off_diag`][].
-        Used to bring coefficients into a hardware-friendly range before
-        embedding.  If [`size`][] is less than 2, there is nothing to
-        normalise and [`matrix`][] is returned unchanged.
-        """
-        if self.size < 2:
-            return self.matrix
-        return self.matrix / self._max_off_diag
-
-    def evaluate_solution(self, solution: Bitstring) -> float:
+    def cost(self, solution: Bitstring) -> float:
         """Compute the QUBO objective ``x^T Q x`` for a candidate solution *x*.
 
         Args:
@@ -127,7 +114,7 @@ class Instance:
             quotes, so the return value includes surrounding single quotes.
         """
         density = _calculate_density(self.matrix)
-        return repr(f"Instance of size = {self.size}," f"density = {round(density, 2)},")
+        return repr(f"Instance of size = {self.size}, density = {round(density, 2)}")
 
     @staticmethod
     def save(file_like: io_utils.FileLike[bytes], instance: Instance) -> None:
@@ -190,8 +177,8 @@ _MEDIUM_THRESHOLD: tuple[float, float] = (0.3, 0.7)  # [0.3, 0.7)
 _HIGH_THRESHOLD: tuple[float, float] = (0.7, 1.0)  # [0.7, 1.0]
 
 
-def _classify_density(density: float) -> DensityType:
-    """Map a density value to a :class:`~.DensityType` category.
+def _classify_density(density: float) -> _DensityType:
+    """Map a density value to a :class:`~._DensityType` category.
 
     The boundaries follow half-open intervals so that every value in
     ``[0.0, 1.0]`` maps to exactly one category:
@@ -211,18 +198,18 @@ def _classify_density(density: float) -> DensityType:
             `_calculate_density`.
 
     Returns:
-        DensityType: Corresponding :class:`~.DensityType` member.
+        _DensityType: Corresponding :class:`~._DensityType` member.
 
     Raises:
         ValueError: If *density* falls outside ``[0.0, 1.0]`` (e.g. negative
             values or values greater than 1).
     """
     if _SPARSE_THRESHOLD[0] <= density < _SPARSE_THRESHOLD[1]:
-        return DensityType.SPARSE
+        return _DensityType.SPARSE
     elif _MEDIUM_THRESHOLD[0] <= density < _MEDIUM_THRESHOLD[1]:
-        return DensityType.MEDIUM
+        return _DensityType.MEDIUM
     elif _HIGH_THRESHOLD[0] <= density <= _HIGH_THRESHOLD[1]:
-        return DensityType.HIGH
+        return _DensityType.HIGH
     else:
         raise ValueError(f"Density {density} is outside the defined thresholds.")
 

@@ -18,21 +18,15 @@ from mock.connection import MockConnection
 from qubosolver import (
     Instance,
     Solution,
-    Analyzer,
-    EmbedderType,
-    LayoutType,
-    DriveType,
+    drive_shaping,
+    embedding,
     bitstrings,
     vector,
     vectori,
     matrix,
     Matrix,
-    SolverConfig,
-    EmbeddingConfig,
-    DriveShapingConfig,
     LocalEmulator,
 )
-
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     """
@@ -76,26 +70,6 @@ def basic_solution() -> Solution:
     )
 
 
-@pytest.fixture
-def analyzer(basic_solution: Solution) -> Analyzer:
-    return Analyzer(solutions=[basic_solution], labels=["sol1"])
-
-
-@pytest.fixture
-def empty_config() -> SolverConfig:
-    return SolverConfig()
-
-
-@pytest.fixture
-def name_config() -> SolverConfig:
-    return SolverConfig(config_name="my_config")
-
-
-@pytest.fixture
-def classical_solver_config() -> SolverConfig:
-    return SolverConfig(use_quantum=False)
-
-
 locals_bkds: list[LocalEmulator] = [
     LocalEmulator(backend_type=btype, num_shots=500)
     for btype in [
@@ -131,51 +105,17 @@ def local_device(request: pytest.FixtureRequest) -> qoolqit.Device:
 
 @pytest.fixture(
     params=[
-        EmbedderType.GREEDY,
-        EmbedderType.BLADE,
+        embedding.Algorithm.GREEDY,
+        embedding.Algorithm.BLADE,
     ]
 )
-def embedding_method(request: pytest.FixtureRequest) -> EmbedderType:
+def embedding_algorithm(request: pytest.FixtureRequest) -> embedding.Algorithm:
     return request.param  # type: ignore[no-any-return]
 
 
 @pytest.fixture
-def qutip_solver_config() -> SolverConfig:
-    return SolverConfig(
-        use_quantum=True,
-        backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=500),
-    )
-
-
-@pytest.fixture
-def blade_config() -> SolverConfig:
-    embed_method = EmbeddingConfig(embedding_method="blade", blade_dimensions=[2])
-    return SolverConfig(
-        embedding=embed_method,
-    )
-
-
-@pytest.fixture
-def bayesian_search_drive_shaping() -> DriveShapingConfig:
-    return DriveShapingConfig(drive_shaping_method=DriveType.BAYESIAN_SEARCH)
-
-
-@pytest.fixture
-def blade_clear_dimensions_config() -> SolverConfig:
-    embed_method = EmbeddingConfig(blade_dimensions=[6, 5, 4, 3, 2])
-    return SolverConfig(embedding=embed_method)
-
-
-@pytest.fixture
-def greedy_embedding_config() -> SolverConfig:
-    embed_method = EmbeddingConfig(
-        embedding_method="greedy",
-        greedy_layout=LayoutType.SQUARE,
-        greedy_traps=10,
-    )
-    return SolverConfig(
-        embedding=embed_method,
-    )
+def bayesian_search_drive_shaping() -> drive_shaping.Config:
+    return drive_shaping.Config(algorithm=drive_shaping.Algorithm.BAYESIAN_SEARCH)
 
 
 @pytest.fixture

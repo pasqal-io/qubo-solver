@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import io
 
 import pytest
 import pytest_check as check
@@ -16,14 +17,14 @@ def instance() -> Instance:
 
 
 def _assert_valid(solution: Solution, instance: Instance) -> None:
-    check.is_true(solution.check_consistency(instance))
-    check.is_true(solution.check_consistency(instance, throw=True))
+    check.is_true(solution.check_consistency(instance=instance))
+    check.is_true(solution.check_consistency(instance=instance, throw=True))
 
 
 def _assert_invalid(solution: Solution, instance: Instance) -> None:
-    check.is_false(solution.check_consistency(instance))
+    check.is_false(solution.check_consistency(instance=instance))
     with pytest.raises(AssertionError):
-        solution.check_consistency(instance, throw=True)
+        solution.check_consistency(instance=instance, throw=True)
 
 
 def test_valid_solution_passes(instance: Instance) -> None:
@@ -559,6 +560,25 @@ def test_deepcopy_is_independent_of_original() -> None:
     check.equal(solution[0].cost, 1.0)
     check.equal(solution[0].count, 3)
     check.equal(solution[0].probability, 0.75)
+
+
+def test_save_load() -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[1, 0], [0, 1]]),
+        costs=vector.tensor([1.0, 2.0]),
+        counts=vectori.tensor([3, 1]),
+        probabilities=vector.tensor([0.75, 0.25]),
+    )
+
+    buffer = io.BytesIO()
+    Solution.save(buffer, solution)
+    buffer.seek(0)
+
+    loaded = Solution.load(buffer)
+    check.is_true(torch.equal(loaded.bitstrings, solution.bitstrings))
+    check.is_true(torch.allclose(loaded.costs, solution.costs))
+    check.is_true(torch.equal(loaded.counts, solution.counts))
+    check.is_true(torch.allclose(loaded.probabilities, solution.probabilities))
 
 
 def test_concat_mixed_populated_and_empty_counts_raises() -> None:

@@ -53,8 +53,8 @@ def random_sampling(
             costs=costs_,
             counts=counts,
         )
-        .sort_by_cost()
-        .compute_probabilities()
+        ._sort_by_cost()
+        ._compute_probabilities()
     )
 
     return solution

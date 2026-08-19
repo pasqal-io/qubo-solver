@@ -5,8 +5,8 @@ from abc import ABC, abstractmethod
 from qoolqit.execution import job
 
 from qubosolver.types import Instance, Solution
-from qubosolver.config import SolverConfig
 from qubosolver import solvers, transforms
+from .config import Config
 
 
 from typing import TYPE_CHECKING
@@ -28,29 +28,24 @@ class BaseSolver(ABC):
     ``BaseSolver`` also provides shared infrastructure used by all concrete
     solvers:
 
-    * `submit` / `execute` — compile and run a quantum program.
-    * `preprocess` / `post_process_fixation` — variable-fixing
+    * `_submit` / `_execute` — compile and run a quantum program.
+    * `_preprocess` / `_post_process_fixation` — variable-fixing
       pre- and post-processing to reduce problem size.
-    * `post_process` — iterative bit-flip local search to improve solutions.
-    * `draw_sequence` — visualise the compiled pulse sequence.
-    * `save` / `load` — partial serialisation for deferred
-      post-processing.
+    * `_post_process` — iterative bit-flip local search to improve solutions.
+    * `_draw_sequence` — visualise the compiled pulse sequence.
     """
 
-    def __init__(self, instance: Instance, config: SolverConfig = SolverConfig()):
+    def __init__(self, instance: Instance, config: Config = Config()):
         """Initialise the solver with a QUBO instance and configuration.
 
         Args:
             instance: The QUBO problem to solve.
             config: Configuration settings for the solver (backend, device,
                 embedding, drive-shaping, pre/post-processing flags, etc.).
-                Defaults to a default-constructed `SolverConfig`.
+                Defaults to a default-constructed `Config`.
         """
         self.instance: Instance = instance
         self.config = config
-
-        self.backend = self.config.backend
-        self.device = self.config.device
 
     @abstractmethod
     def solve(self) -> Solution:
@@ -63,7 +58,7 @@ class BaseSolver(ABC):
         pass
 
     @abstractmethod
-    def embedding(self) -> Register:
+    def _embedding(self) -> Register:
         """
         Generate or retrieve an embedding for the QUBO instance.
 
@@ -73,7 +68,7 @@ class BaseSolver(ABC):
         pass
 
     @abstractmethod
-    def drive(self, embedding: Register) -> tuple[Drive, Solution]:
+    def _drive(self, embedding: Register) -> tuple[Drive, Solution]:
         """Generate a pulse drive for the quantum device based on the embedding.
 
         Args:
@@ -88,7 +83,7 @@ class BaseSolver(ABC):
         """
         pass
 
-    def submit(
+    def _submit(
         self,
         drive: Drive,
         embedding: Register,
@@ -107,15 +102,16 @@ class BaseSolver(ABC):
         Returns:
             A job handle for the submitted execution.
         """
+        assert isinstance(self.config.solving, solvers.QuantumConfig)
         return solvers.analog_quantum_sampling(
             embedding,
             drive,
-            self.backend,
-            self.device,
-            default_sequence_duration=self.config.drive_shaping.default_sequence_duration,
+            self.config.solving.backend,
+            self.config.solving.device,
+            default_sequence_duration=self.config.solving.drive_shaping.default_sequence_duration,
         )
 
-    def execute(self, drive: Drive, embedding: Register) -> Solution:
+    def _execute(self, drive: Drive, embedding: Register) -> Solution:
         """
         Execute the drive schedule on the backend and retrieve the solution.
 
@@ -126,14 +122,14 @@ class BaseSolver(ABC):
         Returns:
             Solution: The solution built from execution results.
         """
-        job = self.submit(drive, embedding)
+        job = self._submit(drive, embedding)
         return Solution.from_results(job.results())
 
-    def draw_sequence(self, drive: Drive, embedding: Register) -> None:
+    def _draw_sequence(self, drive: Drive, embedding: Register) -> None:
         """Draw the compiled pulse sequence of the quantum program.
 
         Builds the same `qoolqit.QuantumProgram` that would be
-        submitted by `submit`, compiles it, and renders the compiled
+        submitted by `_submit`, compiles it, and renders the compiled
         sequence inline.
 
         This method is a no-op when ``config.use_quantum`` is ``False``
@@ -143,12 +139,14 @@ class BaseSolver(ABC):
             drive: The pulse drive schedule to visualise.
             embedding: The atom register the program is defined over.
         """
-        if self.config.use_quantum:
+        if self.config.solving_mode == "quantum":
+            quantum_config = self.config.solving
+            assert isinstance(quantum_config, solvers.QuantumConfig)
             program = solvers.quantum._quantum_program(
                 embedding,
                 drive,
-                self.device,
-                default_sequence_duration=self.config.drive_shaping.default_sequence_duration,
+                quantum_config.device,
+                default_sequence_duration=quantum_config.drive_shaping.default_sequence_duration,
             )
             program.draw(compiled=True)
 
@@ -179,7 +177,7 @@ class BaseSolver(ABC):
             assert isinstance(_solver, BaseSolver)  # nosec B101
             _solver.instance = self.instance
 
-    def preprocess(self) -> None:
+    def _preprocess(self) -> None:
         """Apply preprocessing to reduce the problem size and handle negative interactions.
 
         Runs variable-fixing first, then GLPK bit-flip preprocessing
@@ -195,10 +193,10 @@ class BaseSolver(ABC):
         assert isinstance(instance, transforms.negative_bitflip.Instance)
         self._update_instance(instance)
 
-    def post_process_fixation(self, solution: Solution) -> Solution:
+    def _post_process_fixation(self, solution: Solution) -> Solution:
         """Restore fixed variables and recover a solution over the original QUBO.
 
-        Reverses the preprocessing applied by [`preprocess`][]: first undoes any
+        Reverses the preprocessing applied by [`_preprocess`][]: first undoes any
         bit flips, then re-inserts the fixed variable values into *solution*.
 
         Returns *solution* unchanged when ``config.do_preprocessing`` is
@@ -220,16 +218,16 @@ class BaseSolver(ABC):
         # variable fixing. Bit-flip and fixing each remap the solution.
         assert isinstance(self.instance, transforms.negative_bitflip.Instance)  # nosec B101
         flipped_instance = self.instance
-        solution = transforms.negative_bitflip.unapply(solution, flipped_instance)
+        solution = transforms.negative_bitflip.lift(solution, flipped_instance)
         self._update_instance(flipped_instance._parent_instance)
 
         assert isinstance(self.instance, transforms.variable_fixing.Instance)  # nosec B101
-        new_solution = transforms.variable_fixing.unapply(solution, self.instance)
+        new_solution = transforms.variable_fixing.lift(solution, self.instance)
         self._update_instance(self.instance._parent_instance)
 
         return new_solution
 
-    def post_process(self, solution: Solution) -> Solution:
+    def _post_process(self, solution: Solution) -> Solution:
         """Improve a solution with iterative bit-flip local search.
 
         When ``config.do_postprocessing`` is ``True``, applies
@@ -242,7 +240,7 @@ class BaseSolver(ABC):
 
         Args:
             solution: The raw solution to improve, typically the output of
-                `execute` or `drive`.
+                `_execute` or `_drive`.
 
         Returns:
             The improved [`qubosolver.Solution`][], or the

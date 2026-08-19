@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import cast
 
 import torch
 
@@ -13,8 +12,9 @@ from . import (
     local_energy_scale,
     bayesian_search,
 )
-from qubosolver.types import Instance, Solution, DriveType, protocols
-from qubosolver.config import SolverConfig
+from .enums import Algorithm
+from qubosolver.types import Instance, Solution, protocols
+from qubosolver import solvers
 
 
 class _BaseDriveShaper(ABC):
@@ -27,23 +27,23 @@ class _BaseDriveShaper(ABC):
 
     Attributes:
         instance (Instance): The QUBO problem instance.
-        config (SolverConfig): The solver configuration.
+        config (solvers.Config): The solver configuration.
         backend (Backend): Backend to use.
         device (Device): Device from backend.
 
     """
 
-    def __init__(self, instance: Instance, config: SolverConfig, backend: protocols.Backend):
+    def __init__(self, instance: Instance, config: solvers.QuantumConfig, backend: protocols.Backend):
         """
         Initialize the drive shaping module with a QUBO instance.
 
         Args:
             instance (Instance): The QUBO problem instance.
-            config (SolverConfig): The solver configuration.
+            config (solvers.Config): The solver configuration.
             backend (Backend): Backend to use.
         """
         self.instance: Instance = instance
-        self.config: SolverConfig = config
+        self.config: solvers.QuantumConfig = config
         self.backend = backend
         self.device = self.config.device
 
@@ -160,16 +160,7 @@ class LocalEnergyScaleDriveShaper(_BaseDriveShaper):
         dmm = self.config.drive_shaping.dmm
         kappa = self.config.drive_shaping.local_energy_scale_kappa
 
-        return (
-            local_energy_scale.build_drive(
-                self.instance,
-                register,
-                device=device,
-                dmm=dmm,
-                kappa=kappa,
-            ),
-            Solution(),
-        )
+        return local_energy_scale.build_drive(self.instance, register, device=device, dmm=dmm, kappa=kappa), Solution()
 
 
 class BayesianSearchDriveShaper(_BaseDriveShaper):
@@ -181,14 +172,14 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
     def __init__(
         self,
         instance: Instance,
-        config: SolverConfig,
+        config: solvers.QuantumConfig,
         backend: protocols.Backend,
     ):
         """Instantiate a `BayesianSearchDriveShaper`.
 
         Args:
             instance (Instance): Qubo instance.
-            config (SolverConfig): Configuration for solving.
+            config (solvers.Config): Configuration for solving.
             backend (Backend): Backend to use during optimization.
 
         """
@@ -218,8 +209,8 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
         return bayesian_search.build_drive(
             self.instance,
             register,
-            self.backend,
-            self.device,
+            backend=self.backend,
+            device=self.device,
             dmm=self.dmm,
             config=config,
         )
@@ -227,60 +218,37 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
 
 def _get_drive_shaper(
     instance: Instance,
-    config: SolverConfig,
+    config: solvers.QuantumConfig,
     backend: protocols.Backend,
 ) -> _BaseDriveShaper:
     """Return the appropriate drive shaper for the given configuration.
 
     Selects and instantiates a :class:`_BaseDriveShaper` subclass based on
-    ``config.drive_shaping.drive_shaping_method``. Supports the built-in
+    ``config.drive_shaping.algorithm``. Supports the built-in
     :class:`ProportionalDiagonalDriveShaper`,
     :class:`LocalEnergyScaleDriveShaper`, and
-    :class:`BayesianSearchDriveShaper`, as well as any custom subclass of
-    :class:`_BaseDriveShaper` passed directly in the config.
+    :class:`BayesianSearchDriveShaper`.
 
     Args:
-        instance: The QUBO problem to solve.
-        config: The solver configuration.
-        backend: Backend used during drive shaping.
+        instance (Instance): The QUBO problem to solve.
+        config (solvers.Config): The solver configuration used.
+        backend (Backend): Backend to extract device from or to use
+            during drive shaping.
 
     Returns:
         The instantiated drive shaper.
 
     Raises:
         NotImplementedError: If the configured method is not a recognized
-            :class:`DriveType` or a custom :class:`_BaseDriveShaper`
-            subclass.
+            :class:`Algorithm`.
     """
-    if config.drive_shaping.drive_shaping_method == DriveType.PROPORTIONAL_DIAGONAL:
-        return ProportionalDiagonalDriveShaper(
-            instance,
-            config,
-            backend,
-        )
-    elif config.drive_shaping.drive_shaping_method == DriveType.LOCAL_ENERGY_SCALE:
-        return LocalEnergyScaleDriveShaper(
-            instance,
-            config,
-            backend,
-        )
-    elif config.drive_shaping.drive_shaping_method == DriveType.BAYESIAN_SEARCH:
-        return BayesianSearchDriveShaper(
-            instance,
-            config,
-            backend,
-        )
-    elif issubclass(
-        config.drive_shaping.drive_shaping_method,
-        _BaseDriveShaper,
-    ):
-        return cast(
-            _BaseDriveShaper,
-            config.drive_shaping.drive_shaping_method(
-                instance,
-                config,
-                backend,
-            ),
-        )
-    else:
-        raise NotImplementedError
+    algorithm = config.drive_shaping.algorithm
+    match algorithm:
+        case Algorithm.PROPORTIONAL_DIAGONAL:
+            return ProportionalDiagonalDriveShaper(instance, config, backend)
+        case Algorithm.LOCAL_ENERGY_SCALE:
+            return LocalEnergyScaleDriveShaper(instance, config, backend)
+        case Algorithm.BAYESIAN_SEARCH:
+            return BayesianSearchDriveShaper(instance, config, backend)
+        case _:
+            raise NotImplementedError(f"Unsupported drive shaping method: {algorithm!r}")

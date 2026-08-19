@@ -17,9 +17,8 @@ from qubosolver import (
     Instance,
     SingleSolution,
     Solution,
-    SolverConfig,
-    DriveShapingConfig,
-    Analyzer,
+    solvers,
+    drive_shaping,
     matrix,
     tensor,
     bitstring,
@@ -27,7 +26,7 @@ from qubosolver import (
     Matrix,
     LocalEmulator,
 )
-from qubosolver.utils import _costs
+from qubosolver.utils import _costs, analysis
 
 
 def interaction_matrix_from_vertices(vertices: Tensor) -> Matrix:
@@ -103,18 +102,17 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
 
     register = Register.from_coordinates(vertices.tolist())
 
-    ds_config = DriveShapingConfig(drive_shaping_method="bayesian_search")
+    ds_config = drive_shaping.Config(algorithm="bayesian_search")
     if use_probability_based_objective:
         ds_config.bayesian_search_custom_objective = probability_based_ojective
     ds_config.bayesian_search_n_calls = 11
     ds_config.bayesian_search_seed = seed
-    config = SolverConfig(device=AnalogDevice(), drive_shaping=ds_config)
+    config = solvers.QuantumConfig(device=AnalogDevice(), drive_shaping=ds_config)
 
     drive_shaper = BayesianSearchDriveShaper(Instance(Q), config, config.backend)
     drive, qubo_solution = drive_shaper.generate(register)
-    qubo_solution.sort_by_cost()
-    analyzer = Analyzer([qubo_solution])
-    print(f"{analyzer.df}")
+    qubo_solution._sort_by_cost()
+    print(f"{analysis.to_dataframe([qubo_solution])}")
 
     assert isinstance(qubo_solution.probabilities, torch.Tensor)
     optimal_solutions = gather_optimal_solutions(qubo_solution)
@@ -175,20 +173,19 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
 
     register = Register.from_coordinates(vertices.tolist())
 
-    ds_config = DriveShapingConfig(drive_shaping_method="bayesian_search")
+    ds_config = drive_shaping.Config(algorithm="bayesian_search")
     if use_probability_based_objective:
         ds_config.bayesian_search_custom_objective = probability_based_ojective
     ds_config.bayesian_search_n_calls = 20
     ds_config.bayesian_search_seed = seed
-    config = SolverConfig(
+    config = solvers.QuantumConfig(
         device=AnalogDevice(), drive_shaping=ds_config, backend=LocalEmulator(num_shots=500)
     )
 
     drive_shaper = BayesianSearchDriveShaper(Instance(Q), config, config.backend)
     drive, qubo_solution = drive_shaper.generate(register)
-    qubo_solution.sort_by_cost()
-    analyzer = Analyzer([qubo_solution])
-    print(f"{analyzer.df}")
+    qubo_solution._sort_by_cost()
+    print(f"{analysis.to_dataframe([qubo_solution])}")
 
     assert isinstance(qubo_solution.probabilities, torch.Tensor)
     optimal_solutions = gather_optimal_solutions(qubo_solution)
@@ -236,11 +233,11 @@ def test_errors(raise_exception: bool) -> None:
     mock_error = MagicMock(wraps=error)
     mock_callback = MagicMock(wraps=bayesian_search_callback_objective)
 
-    ds_config = DriveShapingConfig()
+    ds_config = drive_shaping.Config()
     ds_config.bayesian_search_custom_objective = mock_error
     ds_config.bayesian_search_callback_objective = mock_callback
     ds_config.bayesian_search_n_calls = 11
-    config = SolverConfig(
+    config = solvers.QuantumConfig(
         device=AnalogDeviceWithDMM(),
         drive_shaping=ds_config,
     )
@@ -266,9 +263,9 @@ def test_failed_simulation() -> None:
 
     register = Register.from_coordinates(vertices.tolist())
 
-    ds_config = DriveShapingConfig()
+    ds_config = drive_shaping.Config()
     ds_config.bayesian_search_n_calls = 11
-    config = SolverConfig(
+    config = solvers.QuantumConfig(
         device=AnalogDeviceWithDMM(),
         drive_shaping=ds_config,
     )
@@ -292,9 +289,9 @@ def test_failed_simulation_2() -> None:
 
     register = Register.from_coordinates(vertices.tolist())
 
-    ds_config = DriveShapingConfig()
+    ds_config = drive_shaping.Config()
     ds_config.bayesian_search_n_calls = 11
-    config = SolverConfig(
+    config = solvers.QuantumConfig(
         device=AnalogDeviceWithDMM(),
         drive_shaping=ds_config,
     )
@@ -304,8 +301,8 @@ def test_failed_simulation_2() -> None:
         "qubosolver.drive_shaping.bayesian_search._run_simulation",
         return_value=Solution(),
     ):
-        drive, qubo_solution = drive_shaper.generate(register)
-        check.is_true(qubo_solution.empty())
+        _, qubo_solution = drive_shaper.generate(register)
+        check.is_false(qubo_solution)
 
 
 def test_failed_skopt() -> None:
@@ -322,9 +319,9 @@ def test_failed_skopt() -> None:
 
     register = Register.from_coordinates(vertices.tolist())
 
-    ds_config = DriveShapingConfig()
+    ds_config = drive_shaping.Config()
     ds_config.bayesian_search_n_calls = 11
-    config = SolverConfig(
+    config = solvers.QuantumConfig(
         device=AnalogDeviceWithDMM(),
         drive_shaping=ds_config,
     )
@@ -332,7 +329,7 @@ def test_failed_skopt() -> None:
     drive_shaper = BayesianSearchDriveShaper(Instance(Q), config, config.backend)
 
     with patch("qubosolver.drive_shaping.bayesian_search.gp_minimize", return_value=None):
-        drive, qubo_solution = drive_shaper.generate(register)
+        _, qubo_solution = drive_shaper.generate(register)
         # Falls back to the default x0 parameters, which are now clamped to
         # stay compilable on the device, so the simulation succeeds.
-        check.is_false(qubo_solution.empty())
+        check.is_true(qubo_solution)

@@ -67,7 +67,7 @@ After the final round of optimization, the following attributes are populated:
 ```python exec="on" source="material-block" html="1"
 import torch
 
-from qubosolver import Instance, SolverConfig, DriveShapingConfig, Solver, DriveType
+from qubosolver import Instance, SolverConfig, DriveShapingConfig, Solver, drive_shaping
 
 
 Q = torch.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
@@ -75,7 +75,7 @@ Q = torch.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
 instance = Instance(Q)
 
 default_config = SolverConfig(
-    use_quantum = True, drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.BAYESIAN_SEARCH, bayesian_search_n_calls = 25),
+    use_quantum = True, drive_shaping=DriveShapingConfig(drive_shaping_method=drive_shaping.Algorithm.BAYESIAN_SEARCH, bayesian_search_n_calls = 25),
 )
 solver = Solver(instance, default_config)
 

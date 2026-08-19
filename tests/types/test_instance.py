@@ -8,7 +8,7 @@ import pytest
 import pytest_check as check
 import torch
 
-from qubosolver import Instance, Solver, SolverConfig, matrix
+from qubosolver import Instance, Solver, solvers, matrix
 
 
 def test_valid_qubo_passes_without_error() -> None:
@@ -39,11 +39,11 @@ def test_size_exceeds_limit_triggers_system_exit() -> None:
 
     qi = Instance(matrix.tensor(coeffs))
     # Expect SystemExit to be raised when setting oversized coefficients
-    solver = Solver(qi, SolverConfig(use_quantum=False))
+    solver = Solver(qi, solvers.Config(solving=solvers.ClassicalConfig()))
     assert solver.instance.size == 81
     match_msg = "QUBO size 81×81 exceeds the maximum supported size of 80×80"
     with pytest.raises(ValueError, match=match_msg):
-        Solver(qi, SolverConfig(use_quantum=True))
+        Solver(qi, solvers.Config(solving=solvers.QuantumConfig()))
 
 
 @pytest.mark.parametrize("size", [0, 1])
@@ -51,12 +51,6 @@ def test_max_off_diag_no_off_diag_entries(size: int) -> None:
     qi = Instance(matrix.zeros(size))
     with pytest.raises(RuntimeError, match="undefined"):
         qi._max_off_diag
-
-
-@pytest.mark.parametrize("size", [0, 1])
-def test_normalized_matrix_no_off_diag_entries(size: int) -> None:
-    qi = Instance(matrix.zeros(size))
-    torch.testing.assert_close(qi._normalized_matrix, qi.matrix)
 
 
 def test_save_load(simple_qubo_instance: Instance) -> None:

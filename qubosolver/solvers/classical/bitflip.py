@@ -258,16 +258,13 @@ def iterative_bitflip_local_search(
     if not solution:
         return solution
 
-    # Define an objective function that uses the existing evaluate_solution method.
+    # Define an objective function that uses the existing cost method.
     def qubo_objective(s_arr: Bitstring) -> float:
         # Convert the solution array to a list of integers
-        return instance.evaluate_solution(s_arr)
+        return instance.cost(s_arr)
 
     if solution.costs.numel() == 0:
-        solution.compute_costs(instance.matrix).sort_by_cost()
-
-    improved_bitstrings = solution.bitstrings.detach().clone()
-    improved_costs = solution.costs.detach().clone()
+        solution._compute_costs(instance.matrix)._sort_by_cost()
 
     search_fn = _STRATEGIES[strategy]
     deadline = time.monotonic() + time_limit
@@ -281,21 +278,10 @@ def iterative_bitflip_local_search(
             break
 
         # Apply bit-flip local search to improve the solution.
-        improved_bitstrings[i, :], improved_costs[i] = search_fn(
+        solution.bitstrings[i, :], solution.bitstrings[i] = search_fn(
             qubo_objective, s_orig, rng=None, max_iterations=max_iterations, time_limit=time_limit
         )
 
-    unique_bitstrings, inverse = torch.unique(improved_bitstrings, dim=0, return_inverse=True)
-    n = unique_bitstrings.shape[0]
-
-    # Update the solution object.
-    solution.bitstrings = unique_bitstrings
-    solution.costs = vector.zeros(n).scatter_reduce(
-        dim=0, index=inverse, src=improved_costs, reduce="amin", include_self=False
-    )
-    solution.counts = vectori.zeros(n).scatter_reduce(
-        dim=0, index=inverse, src=solution.counts, reduce="sum", include_self=False
-    )
-    solution.compute_probabilities().sort_by_cost()
+    solution.deduplicate()
 
     return solution

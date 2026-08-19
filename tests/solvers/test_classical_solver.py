@@ -11,14 +11,13 @@ import numpy as np
 from qubosolver import (
     Instance,
     Solution,
-    ClassicalSolverType,
-    ClassicalConfig,
-    SolverConfig,
+    solvers,
     Solver,
     matrix,
     bitstring,
     torch_rng,
 )
+from qubosolver.solvers import ClassicalAlgorithm
 from qubosolver.solvers.classical._solver import (
     get_classical_solver,
     SimulatedAnnealingSolver,
@@ -28,8 +27,8 @@ from qubosolver.solvers.classical._solver import (
 from qubosolver.utils import _costs
 
 class_solvers = {
-    ClassicalSolverType.SIMULATED_ANNEALING: SimulatedAnnealingSolver,
-    ClassicalSolverType.TABU_SEARCH: TabuSearchSolver,
+    ClassicalAlgorithm.SIMULATED_ANNEALING: SimulatedAnnealingSolver,
+    ClassicalAlgorithm.TABU_SEARCH: TabuSearchSolver,
 }
 
 
@@ -44,21 +43,21 @@ def manual_seed(seed: int) -> torch.Generator:
 @pytest.mark.parametrize("classical_method", list(class_solvers.keys()))
 @pytest.mark.parametrize("max_bitstrings", [1, 3])
 def test_qubo_solver_sa_or_tabu(
-    simple_qubo_instance: Instance, classical_method: ClassicalSolverType, max_bitstrings: int
+    simple_qubo_instance: Instance, classical_method: ClassicalAlgorithm, max_bitstrings: int
 ) -> None:
 
     seed = 1567
     manual_seed(seed)
 
-    # Create a SolverConfig object with classical solver options.
-    classical_config = ClassicalConfig(
-        classical_solver_type=classical_method,
+    # Create a solvers.Config object with classical solver options.
+    classical_config = solvers.ClassicalConfig(
+        algorithm=classical_method,
         max_bitstrings=max_bitstrings,
         sa_seed=seed,
     )
 
-    config = SolverConfig(
-        use_quantum=False, classical=classical_config, activate_trivial_solutions=False
+    config = solvers.Config(
+        solving=classical_config, activate_trivial_solutions=False
     )
 
     # insure get_classical_solver works properly
@@ -92,10 +91,10 @@ def test_random() -> None:
     Q = matrix.tensor([[1.0, 0.0], [0.0, 1.0]])
     instance = Instance(matrix=Q)
 
-    # Create a SolverConfig object with classical solver options.
-    classical_config = ClassicalConfig(classical_solver_type="random", max_bitstrings=3)
-    config = SolverConfig(
-        use_quantum=False, classical=classical_config, activate_trivial_solutions=False
+    # Create a solvers.Config object with classical solver options.
+    classical_config = solvers.ClassicalConfig(algorithm="random", max_bitstrings=3)
+    config = solvers.Config(
+        solving=classical_config, activate_trivial_solutions=False
     )
 
     # insure get_classical_solver works properly
@@ -120,18 +119,18 @@ def test_random() -> None:
 
 @pytest.mark.parametrize(
     "classical_methods",
-    [ClassicalSolverType.SIMULATED_ANNEALING],
+    [ClassicalAlgorithm.SIMULATED_ANNEALING],
 )
 @pytest.mark.parametrize("max_bitstrings", [1])
 def test_sa_cost(
-    simple_qubo_instance: Instance, classical_methods: ClassicalSolverType, max_bitstrings: int
+    simple_qubo_instance: Instance, classical_methods: ClassicalAlgorithm, max_bitstrings: int
 ) -> None:
-    classical_config = ClassicalConfig(
-        classical_solver_type=classical_methods, max_bitstrings=max_bitstrings, sa_seed=42
+    classical_config = solvers.ClassicalConfig(
+        algorithm=classical_methods, max_bitstrings=max_bitstrings, sa_seed=42
     )
 
-    config = SolverConfig(
-        use_quantum=False, classical=classical_config, activate_trivial_solutions=False
+    config = solvers.Config(
+        solving=classical_config, activate_trivial_solutions=False
     )
 
     check.is_instance(
@@ -170,17 +169,16 @@ def test_sa_cost(
 def test_tabu_time_limit(simple_qubo_instance: Instance) -> None:
     # Set max_iter and max_no_improve to very large values to ensure that
     # the solver is stopped by tabu_time_limit, not by another stop criterion.
-    classical_config = ClassicalConfig(
-        classical_solver_type=ClassicalSolverType.TABU_SEARCH,
+    classical_config = solvers.ClassicalConfig(
+        algorithm=ClassicalAlgorithm.TABU_SEARCH,
         max_bitstrings=1,
         max_iter=100_000_000,
         tabu_max_no_improve=100_000_000,
         tabu_time_limit=0.01,
     )
 
-    config = SolverConfig(
-        use_quantum=False,
-        classical=classical_config,
+    config = solvers.Config(
+        solving=classical_config,
         activate_trivial_solutions=False,
     )
 
@@ -200,16 +198,15 @@ def test_tabu_time_limit(simple_qubo_instance: Instance) -> None:
 def test_sa_time_limit(simple_qubo_instance: Instance) -> None:
     # Use a very large iteration limit so that the solver is stopped
     # by the time limit rather than by max_iter.
-    classical_config = ClassicalConfig(
-        classical_solver_type=ClassicalSolverType.SIMULATED_ANNEALING,
+    classical_config = solvers.ClassicalConfig(
+        algorithm=ClassicalAlgorithm.SIMULATED_ANNEALING,
         max_bitstrings=1,
         max_iter=100_000_000,
         sa_time_limit=0.01,
     )
 
-    config = SolverConfig(
-        use_quantum=False,
-        classical=classical_config,
+    config = solvers.Config(
+        solving=classical_config,
         activate_trivial_solutions=False,
     )
 
@@ -230,25 +227,24 @@ def test_sa_time_limit(simple_qubo_instance: Instance) -> None:
 @pytest.mark.parametrize(
     "classical_method",
     [
-        ClassicalSolverType.SIMULATED_ANNEALING,
-        ClassicalSolverType.CPLEX,
-        ClassicalSolverType.TABU_SEARCH,
+        ClassicalAlgorithm.SIMULATED_ANNEALING,
+        ClassicalAlgorithm.CPLEX,
+        ClassicalAlgorithm.TABU_SEARCH,
     ],
 )
-def test_empty_qubo_after_preprocessing(classical_method: ClassicalSolverType) -> None:
+def test_empty_qubo_after_preprocessing(classical_method: ClassicalAlgorithm) -> None:
 
     seed = 1846
     manual_seed(seed)
 
     # Use a very large iteration limit so that the solver is stopped
     # by the time limit rather than by max_iter.
-    classical_config = ClassicalConfig(
-        classical_solver_type=classical_method,
+    classical_config = solvers.ClassicalConfig(
+        algorithm=classical_method,
         sa_seed=seed,
     )
-    config = SolverConfig(
-        use_quantum=False,
-        classical=classical_config,
+    config = solvers.Config(
+        solving=classical_config,
         do_preprocessing=True,
         activate_trivial_solutions=False,
     )
@@ -257,7 +253,7 @@ def test_empty_qubo_after_preprocessing(classical_method: ClassicalSolverType) -
     classical_solver = Solver(instance, config)
 
     solution = classical_solver.solve()
-    solution.sort_by_cost()
+    solution._sort_by_cost()
 
     best_bitstring = bitstring.to_string(solution.bitstrings[0])
     check.equal(best_bitstring, "00")

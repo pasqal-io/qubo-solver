@@ -83,7 +83,7 @@ def test_empty_when_nothing_to_zero() -> None:
     torch.testing.assert_close(zeroed.zeroed_edges, torch.zeros(0, 2, dtype=vectori.dtype()))
 
 
-def test_unapply_keeps_bitstrings_and_recomputes_costs_against_pre_zeroing() -> None:
+def test_lift_keeps_bitstrings_and_recomputes_costs_against_pre_zeroing() -> None:
     instance = non_bipartisable_negative_qubo()
     zeroed = transforms.zeroing.apply(instance)
 
@@ -92,29 +92,29 @@ def test_unapply_keeps_bitstrings_and_recomputes_costs_against_pre_zeroing() -> 
         counts=vectori.tensor([3, 2]),
     )
 
-    restored = transforms.zeroing.unapply(solution, zeroed)
+    restored = transforms.zeroing.lift(solution, zeroed)
 
     # Bitstrings pass through unchanged (zeroing does not permute variables).
     torch.testing.assert_close(restored.bitstrings, solution.bitstrings)
     torch.testing.assert_close(restored.counts, solution.counts)
     # Costs are evaluated against the pre-zeroing matrix, not the zeroed one.
     for sol in restored:
-        expected_cost = instance.evaluate_solution(sol.bitstring)
+        expected_cost = instance.cost(sol.bitstring)
         check.almost_equal(sol.cost, expected_cost)
 
 
-def test_unapply_is_identity_when_nothing_zeroed() -> None:
+def test_lift_is_identity_when_nothing_zeroed() -> None:
     zeroed = transforms.zeroing.apply(positive_qubo())
 
     sol = Solution(bitstrings=bitstrings.from_strings(["101"]), counts=vectori.tensor([1]))
-    restored = transforms.zeroing.unapply(sol, zeroed)
+    restored = transforms.zeroing.lift(sol, zeroed)
 
     torch.testing.assert_close(restored.bitstrings, sol.bitstrings)
 
 
 def test_apply_does_not_alias_the_parent_instance() -> None:
     # _parent_instance must be an independent copy: mutating the caller's
-    # instance after apply() must not change what unapply() evaluates costs
+    # instance after apply() must not change what lift() evaluates costs
     # against, or costs silently drift from the true pre-zeroing objective.
     instance = non_bipartisable_negative_qubo()
     zeroed = transforms.zeroing.apply(instance)
@@ -122,9 +122,9 @@ def test_apply_does_not_alias_the_parent_instance() -> None:
     instance._matrix.fill_(0.0)
 
     sol = Solution(bitstrings=bitstrings.from_strings(["1111"]), counts=vectori.tensor([1]))
-    restored = transforms.zeroing.unapply(sol, zeroed)
+    restored = transforms.zeroing.lift(sol, zeroed)
 
     check.not_equal(restored[0].cost, 0.0)
     check.almost_equal(
-        restored[0].cost, zeroed._parent_instance.evaluate_solution(sol[0].bitstring)
+        restored[0].cost, zeroed._parent_instance.cost(sol[0].bitstring)
     )

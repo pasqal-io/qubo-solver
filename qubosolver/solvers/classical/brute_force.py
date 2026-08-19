@@ -17,6 +17,8 @@ directly.
 
 from __future__ import annotations
 
+import logging
+import math
 import time
 
 import torch
@@ -24,9 +26,15 @@ import torch
 from qubosolver.types import Bitstrings, Instance, Solution, Vectori, bitstrings, vector, vectori
 from qubosolver.utils import _costs
 
+logger = logging.getLogger(__name__)
+
 # Number of assignments evaluated per batch. Caps peak memory at roughly
 # _BATCH_SIZE * n bytes for the bit matrix regardless of the total 2^n space.
 _BATCH_SIZE = 1 << 16
+
+# Above this instance size, an unbounded time_limit risks an effectively
+# unbounded run, since the search space grows as 2^n.
+_LARGE_INSTANCE_SIZE = 20
 
 
 def _decode_bits(indices: Vectori, n: int) -> Bitstrings:
@@ -64,7 +72,7 @@ def brute_force(
             may contain fewer when ``2^n < max_bitstrings``.
         time_limit: Wall-clock budget in seconds.  Enumeration stops between
             batches once the budget is exhausted and returns the best solutions
-            found so far.  Defaults to ``float("inf")`` (no limit).
+            found so far.  Use ``float("inf")`` for no limit.
 
     Returns:
         A solution with up to ``max_bitstrings`` bitstrings, their QUBO costs,
@@ -74,6 +82,14 @@ def brute_force(
     n: int = instance.size
     if n == 0:
         return Solution()
+
+    if n > _LARGE_INSTANCE_SIZE and math.isinf(time_limit):
+        logger.warning(
+            f"brute_force: no time_limit set for a {n}-variable instance; "
+            f"exhaustively enumerating {1 << n:,} assignments with no time limit "
+            "may run for an impractically long time. Consider passing a finite "
+            "time_limit."
+        )
 
     Q = instance.matrix
     total = 1 << n
@@ -108,4 +124,4 @@ def brute_force(
         costs=best_costs,
         counts=vectori.tensor([1] * best_bits.shape[0]),
     )
-    return solution.sort_by_cost().compute_probabilities()
+    return solution._sort_by_cost()._compute_probabilities()

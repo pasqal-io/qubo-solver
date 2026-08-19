@@ -11,7 +11,7 @@ solution within the given time limit.
     raise :exc:`ModuleNotFoundError` at import time.
 
 Typical usage goes through :class:`~qubosolver.solvers.CplexSolver`, which
-reads :class:`~qubosolver.config.ClassicalConfig` parameters and calls
+reads :class:`~qubosolver.solvers.config.ClassicalConfig` parameters and calls
 `cplex` directly.
 """
 
@@ -116,7 +116,7 @@ def _to_solution(cplex_solution: CPLEX.SolutionInterface) -> Solution:
 
     solution = Solution(
         bitstrings=bitstring_tensor, counts=counts, costs=cost_tensor
-    ).compute_probabilities()
+    )._compute_probabilities()
     return solution
 
 

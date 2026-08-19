@@ -22,47 +22,31 @@ from qubosolver.types import (
     # Classes
     Solution,
     SingleSolution,
-    Analyzer,
     Instance,
     Dataset,
     LocalEmulator,
     RemoteEmulator,
     AutoLocalEmulatorBackend,
     AutoRemoteEmulatorBackend,
-    # Enums
-    EmbedderType,
-    DriveType,
-    LayoutType,
-    DensityType,
-    ClassicalSolverType,
     # Functions
     torch_rng,
     # Qubo* TypeAliases
     QuboSolution,
     QuboSingleSolution,
-    QuboAnalyzer,
     QuboInstance,
     QuboDataset,
     # Deprecated QUBO* classes
     QUBOSolution,
-    QUBOAnalyzer,
     QUBOInstance,
     QUBODataset,
 )
-from qubosolver.config import (
-    SolverConfig,
-    EmbeddingConfig,
-    DriveShapingConfig,
-    ClassicalConfig,
-    DecompositionConfig,
-)
-
-from qubosolver.utils import extract_qubo
+from qubosolver.utils import extract_qubo, analysis
 
 from importlib.metadata import version
 from pulser.sequence import store_package_version_metadata
 
-from qubosolver import solvers, transforms, drive_shaping, embedding
+from qubosolver import transforms, drive_shaping, embedding, solvers
+
 from qubosolver.solvers import Solver, QuboSolver
 
 __all__ = [
@@ -79,6 +63,7 @@ __all__ = [
     "transforms",
     "embedding",
     "drive_shaping",
+    "analysis",
     # Type Aliases
     "Bitstring",
     "Bitstrings",
@@ -89,7 +74,6 @@ __all__ = [
     # Classes
     "Solution",
     "SingleSolution",
-    "Analyzer",
     "Instance",
     "Solver",
     "Dataset",
@@ -97,31 +81,17 @@ __all__ = [
     "RemoteEmulator",
     "AutoLocalEmulatorBackend",
     "AutoRemoteEmulatorBackend",
-    # Enums
-    "EmbedderType",
-    "DriveType",
-    "LayoutType",
-    "DensityType",
-    "ClassicalSolverType",
-    # Configs
-    "SolverConfig",
-    "EmbeddingConfig",
-    "DriveShapingConfig",
-    "ClassicalConfig",
-    "DecompositionConfig",
     # Functions
     "torch_rng",
     "extract_qubo",
     # Qubo* TypeAliases
     "QuboSolution",
     "QuboSingleSolution",
-    "QuboAnalyzer",
     "QuboInstance",
     "QuboDataset",
     "QuboSolver",
     # Deprecated QUBO* classes
     "QUBOSolution",
-    "QUBOAnalyzer",
     "QUBOInstance",
     "QUBODataset",
 ]

@@ -144,7 +144,7 @@ def test_simulated_annealing_costs_match_bitstrings(instance: Instance) -> None:
         rng=rng,
     )
 
-    true_solution = copy.deepcopy(solution).compute_costs(instance.matrix)
+    true_solution = copy.deepcopy(solution)._compute_costs(instance.matrix)
 
     torch.testing.assert_close(solution.costs, true_solution.costs)
     torch.testing.assert_close(
@@ -170,7 +170,7 @@ def test_simulated_annealing_solution_is_internally_consistent(instance: Instanc
         rng=rng,
     )
 
-    check.is_true(solution.check_consistency(instance, throw=True))
+    check.is_true(solution.check_consistency(instance=instance, throw=True))
 
 
 @pytest.mark.parametrize("instance", instances, ids=instance_ids)
@@ -305,7 +305,7 @@ def test_simulated_annealing_explicit_cooling_rate_used(instance: Instance) -> N
         rng=rng,
     )
 
-    check.is_true(solution.check_consistency(instance, throw=True))
+    check.is_true(solution.check_consistency(instance=instance, throw=True))
 
 
 @pytest.mark.parametrize(
@@ -352,7 +352,7 @@ def test_simulated_annealing_merge_false_returns_one_solution_per_start(
 
     check.equal(len(solutions), 3)
     for solution in solutions:
-        check.is_true(solution.check_consistency(instance, throw=True))
+        check.is_true(solution.check_consistency(instance=instance, throw=True))
 
 
 @pytest.mark.parametrize("instance", instances, ids=instance_ids)
@@ -386,7 +386,7 @@ def test_simulated_annealing_merge_true_matches_manual_concat_and_deduplicate(
     )
     manually_merged = Solution.concat(solutions).deduplicate()
 
-    check.is_true(merged_solution.check_consistency(instance, throw=True))
+    check.is_true(merged_solution.check_consistency(instance=instance, throw=True))
     torch.testing.assert_close(merged_solution.bitstrings, manually_merged.bitstrings)
     torch.testing.assert_close(merged_solution.costs, manually_merged.costs, atol=0.0, rtol=0.0)
     torch.testing.assert_close(merged_solution.counts, manually_merged.counts)

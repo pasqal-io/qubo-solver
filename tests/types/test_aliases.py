@@ -7,18 +7,15 @@ from qubosolver import (
     # Canonical classes
     Solution,
     SingleSolution,
-    Analyzer,
     Instance,
     Dataset,
     # Qubo* aliases
     QuboSolution,
     QuboSingleSolution,
-    QuboAnalyzer,
     QuboInstance,
     QuboDataset,
     # Deprecated QUBO* classes
     QUBOSolution,
-    QUBOAnalyzer,
     QUBOInstance,
     QUBODataset,
 )
@@ -33,14 +30,12 @@ from qubosolver import (
     [
         (QuboSolution, Solution),
         (QuboSingleSolution, SingleSolution),
-        (QuboAnalyzer, Analyzer),
         (QuboInstance, Instance),
         (QuboDataset, Dataset),
     ],
     ids=[
         "QuboSolution",
         "QuboSingleSolution",
-        "QuboAnalyzer",
         "QuboInstance",
         "QuboDataset",
     ],
@@ -68,13 +63,6 @@ def test_deprecated_class_warns(deprecated_cls: type, canonical: type, match_msg
     with pytest.warns(DeprecationWarning, match=match_msg):
         obj = deprecated_cls()
     check.is_instance(obj, canonical)
-
-
-def test_qubo_analyzer_wrong_case_deprecation() -> None:
-    """QUBOAnalyzer requires a solutions argument and must emit a DeprecationWarning."""
-    with pytest.warns(DeprecationWarning, match="Use `qubosolver.Analyzer` instead"):
-        analyzer = QUBOAnalyzer(Solution())
-    check.is_instance(analyzer, Analyzer)
 
 
 def test_qubo_dataset_wrong_case_deprecation() -> None:

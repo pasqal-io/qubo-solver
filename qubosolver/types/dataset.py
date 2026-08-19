@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-from typing import Any, Iterator
+from copy import deepcopy
+from typing import Iterator
 
 import torch
-from torch.utils.data import Dataset as TorchDataset
-from pathlib import Path
+import io
 
 from .solution import Solution
+from .instance import Instance
 from . import matrix
 from .random import torch_rng
+from qubosolver._io import utils as io_utils
 
 
-class Dataset(TorchDataset):
+class Dataset():
     """A PyTorch ``Dataset`` of QUBO (Quadratic Unconstrained Binary Optimization) instances.
 
     Each instance is represented by a square coefficient matrix ``Q`` such that the
@@ -24,6 +26,11 @@ class Dataset(TorchDataset):
         solutions (list[Solution]):
             Ground-truth solutions, one per instance.  Pass an empty list
             (default) when solutions are unknown.
+        copy (bool):
+            Whether to deep-copy ``matrices`` and ``solutions`` on
+            construction.  Defaults to ``True``.  Pass ``False`` to store the
+            given values directly (no copy), e.g. when the caller already
+            owns them exclusively.
 
     Attributes:
         matrix (torch.Tensor):
@@ -35,19 +42,25 @@ class Dataset(TorchDataset):
             created without ground-truth solutions (e.g. via [`from_random`][]).
 
     Note:
-        ``coefficients`` is stored directly (no copy).  Mutating the tensor
-        after construction will affect the dataset.
+        ``coefficients`` and ``solutions`` are deep-copied on construction by
+        default.  Mutating the values passed in afterwards will not affect
+        the dataset, unless ``copy=False`` was given.
     """
 
-    def __init__(self, coefficients: torch.Tensor, solutions: list[Solution] = []):
-        self.matrix = coefficients
-        self.solutions = solutions or []
+    def __init__(
+        self, matrices: torch.Tensor, solutions: list[Solution] = [], *, copy: bool = True
+    ):
+        if copy:
+            matrices = matrices.detach().clone()
+            solutions = deepcopy(solutions)
+        self.matrices = matrices
+        self.solutions = solutions
 
     def __len__(self) -> int:
         """Return the number of QUBO instances in the dataset (``num_instances``)."""
-        return int(self.matrix.shape[2])
+        return int(self.matrices.shape[2])
 
-    def __getitem__(self, idx: int) -> tuple[torch.Tensor, Solution]:
+    def __getitem__(self, idx: int) -> tuple[Instance, Solution]:
         """Return the coefficient matrix and solution for instance *idx*.
 
         Args:
@@ -58,11 +71,12 @@ class Dataset(TorchDataset):
                 When no solutions were provided, ``solution`` is an empty
                 [`Solution`][].
         """
+        instance = Instance(self.matrices[:, :, idx])
         if self.solutions:
-            return self.matrix[:, :, idx], self.solutions[idx]
-        return self.matrix[:, :, idx], Solution()
+            return instance, self.solutions[idx]
+        return instance, Solution()
 
-    def __iter__(self) -> Iterator[tuple[torch.Tensor, Solution]]:
+    def __iter__(self) -> Iterator[tuple[Instance, Solution]]:
         """Iterate over all ``(coefficient_matrix, solution)`` pairs in order.
 
         Yields:
@@ -231,10 +245,11 @@ class Dataset(TorchDataset):
                 coefficients[:, :, idx] = coeff
 
         # Step 4: Return the dataset.
-        return cls(coefficients=coefficients)
+        return cls(matrices=coefficients, copy=False)
+
 
     @staticmethod
-    def save(dataset: Dataset, filepath: Path) -> None:
+    def save(file_like: io_utils.FileLike[bytes], dataset: Dataset) -> None:
         """Persist a dataset to disk using `torch.save`.
 
         Args:
@@ -242,10 +257,16 @@ class Dataset(TorchDataset):
             filepath (Path): Destination file path.  The file is created or
                 overwritten.  Use a ``.pt`` or ``.pth`` extension by convention.
         """
-        return _save_qubo_dataset(dataset, filepath)
+        with io_utils.open(file_like, "wb") as f:
+            buffer = io.BytesIO()
+            torch.save(dataset.matrices, buffer)
+            io_utils.save_sized_buffer(f, buffer.getbuffer())
+            io_utils.save(f, ">I", len(dataset.solutions))
+            for s in dataset.solutions:
+                Solution.save(file_like, s)
 
     @staticmethod
-    def load(filepath: Path) -> Dataset:
+    def load(file_like: io_utils.FileLike[bytes]) -> Dataset:
         """Load a dataset previously saved with [`save`][].
 
         Args:
@@ -254,63 +275,15 @@ class Dataset(TorchDataset):
         Returns:
             The deserialised dataset, including solutions if they were present when the file was saved.
         """
-        return _load_qubo_dataset(filepath)
+        with io_utils.open(file_like, "rb") as f:
+            # torch.load might consume too much of the src buffer.
+            #  Use a dedicated limited buffer
+            buffer = io.BytesIO(io_utils.load_sized_buffer(f))
+            matrices = torch.load(buffer, weights_only=True)
+            n = io_utils.load(f, ">I")
+            solutions = [ Solution.load(f) for _ in range(n) ]
 
-
-def _save_qubo_dataset(dataset: Dataset, filepath: Path) -> None:
-    """Serialise *dataset* to *filepath* via `torch.save`.
-
-    The file stores a dict with two keys:
-
-    * ``"coefficients"`` — the raw ``(size, size, num_instances)`` tensor.
-    * ``"solutions"`` — ``None`` when no solutions exist, otherwise a list of
-      dicts each containing ``bitstrings``, ``counts``, ``probabilities``, and
-      ``costs`` as returned by the corresponding :class:`~.Solution`
-      attributes.
-
-    Args:
-        dataset (Dataset): Dataset to serialise.
-        filepath (Path): Destination file path (created or overwritten).
-    """
-    data: dict[str, Any] = {"coefficients": dataset.matrix, "solutions": None}
-    if dataset.solutions is not None:
-        data["solutions"] = [
-            {
-                "bitstrings": solution.bitstrings,
-                "counts": solution.counts,
-                "probabilities": solution.probabilities,
-                "costs": solution.costs,
-            }
-            for solution in dataset.solutions
-        ]
-    torch.save(data, filepath)
-
-
-def _load_qubo_dataset(filepath: Path) -> Dataset:
-    """Deserialise a :class:`Dataset` from *filepath*.
-
-    The file must have been produced by `_save_qubo_dataset`.
-
-    Args:
-        filepath (Path): Path to the serialised dataset file.
-
-    Returns:
-        Dataset: Restored dataset, with solutions populated when they were
-        present in the file.
-    """
-    data = torch.load(filepath)
-    solutions = []
-    if data["solutions"] is not None:
-        solutions = [
-            Solution(
-                bitstrings=solution["bitstrings"],
-                counts=solution["counts"],
-                probabilities=solution["probabilities"],
-                costs=solution["costs"],
-            )
-            for solution in data["solutions"]
-        ]
-    return Dataset(coefficients=data["coefficients"], solutions=solutions)
+        return Dataset(matrices, solutions, copy=False)
 
 
 def _generate_symmetric_mask(

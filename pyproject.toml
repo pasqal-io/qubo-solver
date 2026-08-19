@@ -42,7 +42,6 @@ dependencies = [
   "scikit-optimize",
   "cplex",
   "swiglpk>=5.0.13",
-  "pydantic>=2",
   "qoolqit[extras]>=1.3.0", # The version in .pre-commit-config.yaml must match
   "shapely",
 ]

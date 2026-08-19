@@ -8,8 +8,18 @@ import numpy.typing as npt
 import torch
 from scipy.optimize import OptimizeResult, minimize
 from shapely.geometry import Point, Polygon, MultiPolygon
+import qoolqit
 from qubosolver import matrix, Matrix, Bitstring, Vector, vector
 from qubosolver.types._checks import no_runtime_typecheck
+
+
+# Find a better way to compute this ?
+# Choose better than 50 ?
+def _clamp_max_radial_distance(max_radial_distance: float) -> float:
+    if np.isfinite(max_radial_distance).all():
+        return max_radial_distance
+    else:
+        return 50.0
 
 VertexToPlace = TypedDict(
     "VertexToPlace",
@@ -551,7 +561,7 @@ def check_limit_zone(final_point: Point, max_radial_distance: float) -> bool:
     """
 
     center_poly = Point(0, 0)
-    limit_zone = center_poly.buffer(max_radial_distance)
+    limit_zone = center_poly.buffer(_clamp_max_radial_distance(max_radial_distance))
     return bool(limit_zone.contains(final_point))
 
 
@@ -612,7 +622,7 @@ def test_placing_vertex(
     ]
 
     center_poly = Point(0, 0)
-    final_intersection = center_poly.buffer(max_radial_distance)
+    final_intersection = center_poly.buffer(_clamp_max_radial_distance(max_radial_distance))
 
     final_intersection = zone_intersection(
         final_intersection, blockings, placed_vertices, "blocking_zone"

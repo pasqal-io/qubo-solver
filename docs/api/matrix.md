@@ -1,1 +1,2 @@
+::: qubosolver.Matrix
 ::: qubosolver.matrix

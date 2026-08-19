@@ -13,7 +13,6 @@ from qubosolver import (
     Instance,
     Solution,
     SingleSolution,
-    Analyzer,
     solvers,
     transforms,
     embedding,
@@ -26,6 +25,7 @@ from qubosolver import (
     Tensor,
     Matrix,
 )
+from qubosolver.utils import analysis
 
 
 def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
@@ -63,7 +63,7 @@ def simple_qubo() -> tuple[Instance, list[SingleSolution]]:
     solutions = Solution()
     solutions.bitstrings = bitstrings.tensor(list(itertools.product([0, 1], repeat=n_qubits)))
     solutions.counts = vectori.zeros(solutions.bitstrings.shape[0]).fill_(1)
-    solutions.compute_costs(Q).sort_by_cost().compute_probabilities()
+    solutions._compute_costs(Q)._sort_by_cost()._compute_probabilities()
 
     # Get all bitstrings with minimum cost
     expected_optimal_solutions = gather_optimal_solutions(solutions)
@@ -93,8 +93,7 @@ def check_solution(
     # Solutions are not duplicated
     check.equal(solutions.bitstrings.unique(dim=0).shape[0], solutions.bitstrings.shape[0])
 
-    analyzer = Analyzer([solutions])
-    print(f"{analyzer.df}")
+    print(f"{analysis.to_dataframe([solutions])}")
 
     assert isinstance(solutions.probabilities, torch.Tensor)
     optimal_solutions = gather_optimal_solutions(solutions)
@@ -148,8 +147,8 @@ def test_quantum_solve(
         blade_config = embedding.blade.Config(device=device)
         register = embedding.blade.embed(effective_qubo, config=blade_config)
     elif embedding_method == "greedy":
-        greedy_config = embedding.greedy.Config(traps=100)
-        register = embedding.greedy.embed(effective_qubo, device, config=greedy_config)
+        greedy_config = embedding.greedy_layout.Config(traps=100)
+        register = embedding.greedy_layout.embed(effective_qubo, device=device, config=greedy_config)
     else:
         raise ValueError(f"Invalid embedding method: {embedding_method}")
     print(f"Register: {register.qubits}")
@@ -165,8 +164,8 @@ def test_quantum_solve(
         drive, _ = drive_shaping.bayesian_search.build_drive(
             effective_qubo,
             register,
-            emulator,
-            device,
+            backend=emulator,
+            device=device,
             dmm=False,
             config=drive_shaping.bayesian_search.Config(n_calls=11, seed=seed),
         )
@@ -179,12 +178,12 @@ def test_quantum_solve(
     # Post-process fixations of the preprocessing and restore the original QUBO
     if preprocessing:
         assert isinstance(effective_qubo, transforms.variable_fixing.Instance)
-        solution = transforms.variable_fixing.unapply(solution, effective_qubo)
+        solution = transforms.variable_fixing.lift(solution, effective_qubo)
 
     if postprocessing:
         solution = solvers.iterative_bitflip_local_search(qubo, solution)
 
-    solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
+    solution._compute_costs(qubo.matrix)._sort_by_cost()._compute_probabilities()
 
     expected_optimal_probability = 0.75
     if drive_shaping_method in ["bayesian_search"]:
@@ -242,12 +241,12 @@ def test_classical_solve(
 
     if preprocessing:
         assert isinstance(effective_qubo, transforms.variable_fixing.Instance)
-        solution = transforms.variable_fixing.unapply(solution, effective_qubo)
+        solution = transforms.variable_fixing.lift(solution, effective_qubo)
 
     if postprocessing:
         solution = solvers.iterative_bitflip_local_search(qubo, solution)
 
-    solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
+    solution._compute_costs(qubo.matrix)._sort_by_cost()._compute_probabilities()
 
     expected_optimal_probability = 0.75
     if solving_method in ["random"]:

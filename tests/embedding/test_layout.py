@@ -5,12 +5,12 @@ import torch
 import scipy
 
 from pulser.register.special_layouts import SquareLatticeLayout
-from qubosolver import LayoutType
+from qubosolver import embedding
 from qubosolver.embedding._algorithms.greedy.layout import get_layout
 
 
-@pytest.fixture(params=[LayoutType.TRIANGULAR, LayoutType.SQUARE], ids=["triangular", "square"])
-def layout_type(request: pytest.FixtureRequest) -> LayoutType:
+@pytest.fixture(params=[embedding.Layout.TRIANGULAR, embedding.Layout.SQUARE], ids=["triangular", "square"])
+def layout_type(request: pytest.FixtureRequest) -> embedding.Layout:
     return request.param  # type: ignore
 
 
@@ -19,7 +19,7 @@ def n_traps(request: pytest.FixtureRequest) -> int:
     return request.param  # type: ignore
 
 
-def test_get_layout_returns_tensor_shape(layout_type: LayoutType, n_traps: int) -> None:
+def test_get_layout_returns_tensor_shape(layout_type: embedding.Layout, n_traps: int) -> None:
     coords = get_layout(layout_type=layout_type, n_traps=n_traps)
     assert isinstance(coords, torch.Tensor)
     assert coords.ndim == 2
@@ -43,7 +43,7 @@ def test_get_layout_accepts_case_insensitive_strings(layout_str: str) -> None:
 
 @pytest.mark.parametrize("n_traps", [2, 5, 10, 50])
 def test_get_layout_square_spacing_is_one(n_traps: int) -> None:
-    coords = get_layout(layout_type=LayoutType.SQUARE, n_traps=n_traps)
+    coords = get_layout(layout_type=embedding.Layout.SQUARE, n_traps=n_traps)
     assert torch.allclose(coords, coords.round())
     d = torch.cdist(coords, coords)
     d.fill_diagonal_(float("inf"))
@@ -52,7 +52,7 @@ def test_get_layout_square_spacing_is_one(n_traps: int) -> None:
 
 @pytest.mark.parametrize("n_traps", [1, 2, 3, 5, 10, 37, 100])
 def test_get_layout_square_is_compact(n_traps: int) -> None:
-    coords = get_layout(layout_type=LayoutType.SQUARE, n_traps=n_traps)
+    coords = get_layout(layout_type=embedding.Layout.SQUARE, n_traps=n_traps)
     n = int(math.ceil(math.sqrt(2 * n_traps)))
     candidates = torch.tensor(SquareLatticeLayout(n, n, spacing=1).coords, dtype=coords.dtype)
     cand_set = {tuple(p.tolist()) for p in candidates}
@@ -67,6 +67,6 @@ def test_get_layout_square_is_compact(n_traps: int) -> None:
     assert closer_set.issubset(sel_set)
 
 
-def test_empty_layout(layout_type: LayoutType) -> None:
+def test_empty_layout(layout_type: embedding.Layout) -> None:
     coords = get_layout(layout_type=layout_type, n_traps=0)
     check.equal(coords.size(), (0, 2))

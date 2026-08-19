@@ -7,8 +7,8 @@ from qoolqit.devices.device import BaseDevice
 from qoolqit import AnalogDeviceWithDMM
 
 from qubosolver.embedding._algorithms.greedy import Greedy
-from qubosolver.embedding.greedy import _resolve_max_possible_term
-from qubosolver import LayoutType, Dataset, embedding, Instance, matrix
+from qubosolver.embedding.greedy_layout import _resolve_max_possible_term
+from qubosolver import Dataset, embedding, Instance, matrix
 import pytest
 import pytest_check as check
 
@@ -79,7 +79,7 @@ def test_triangular_qubo(traps: int, relative_noise: float, max_min_dist_ratio: 
     spacing = 7.0
 
     parameters = {
-        "layout": LayoutType.TRIANGULAR,
+        "layout": embedding.Layout.TRIANGULAR,
         "traps": traps,
         "spacing": spacing,
     }
@@ -129,10 +129,10 @@ def test_triangular_qubo(traps: int, relative_noise: float, max_min_dist_ratio: 
 
 
 @pytest.mark.parametrize("traps", [1, 2, 6, 9])
-@pytest.mark.parametrize("layout", [LayoutType.SQUARE, "square"])
+@pytest.mark.parametrize("layout", [embedding.Layout.SQUARE, "square"])
 @pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
 def test_square_qubo(
-    traps: int, layout: LayoutType | str, relative_noise: float, max_min_dist_ratio: float
+    traps: int, layout: embedding.Layout | str, relative_noise: float, max_min_dist_ratio: float
 ) -> None:
 
     spacing = 7.0
@@ -194,7 +194,7 @@ def test_too_large_spacing(
 ) -> None:
     # A square layout of size 25 is composed of two concentric squares of side
     # 2*spacing and 4*spacing, plus the origin.
-    layout = LayoutType.SQUARE
+    layout = embedding.Layout.SQUARE
     traps = 25
 
     assert isinstance(device.max_radial_distance, int)
@@ -301,7 +301,7 @@ def test_max_distance_constraint() -> None:
     # A square layout of size 9 is composed of a square of side 2*spacing, plus the origin.
     # With a large enough spacing, the outer corners should be out of range, and thus a
     # qubo of size 9 should not be embeddable.
-    layout = LayoutType.SQUARE
+    layout = embedding.Layout.SQUARE
     traps = 9
     assert isinstance(device.max_radial_distance, int)
     spacing = 0.99 * device.max_radial_distance
@@ -321,15 +321,15 @@ def test_max_distance_constraint() -> None:
 
 
 def test_empty_embedding() -> None:
-    config = embedding.greedy.Config(traps=0)
+    config = embedding.greedy_layout.Config(traps=0)
     with pytest.raises(ValueError, match="empty instance"):
-        embedding.greedy.embed(Instance(), AnalogDeviceWithDMM(), config=config)
+        embedding.greedy_layout.embed(Instance(), device=AnalogDeviceWithDMM(), config=config)
 
 
 def test_single_atom_embedding() -> None:
-    config = embedding.greedy.Config(traps=1)
+    config = embedding.greedy_layout.Config(traps=1)
     instance = Instance(matrix.zeros(1))
-    register = embedding.greedy.embed(instance, AnalogDeviceWithDMM(), config=config)
+    register = embedding.greedy_layout.embed(instance, device=AnalogDeviceWithDMM(), config=config)
     check.equal(len(register), 1)
 
 

@@ -296,8 +296,9 @@ def simulated_annealing(
             counts=counts,
         )
 
-        solutions.append(solution.sort_by_cost().compute_probabilities())
+        solutions.append(solution._sort_by_cost()._compute_probabilities())
 
     if merge:
         return Solution.concat(solutions).deduplicate()
+
     return solutions

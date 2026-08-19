@@ -8,8 +8,6 @@ import torch
 from qubosolver import (
     Instance,
     Solution,
-    ClassicalConfig,
-    SolverConfig,
     Solver,
     matrix,
     solvers,
@@ -64,13 +62,13 @@ def test_qubo_solver_classical_cplex() -> None:
     Q = matrix.tensor([[1.0, 0.0], [0.0, 1.0]])
     instance = Instance(matrix=Q)
 
-    # Create a SolverConfig object with classical solver options.
-    classical_config = ClassicalConfig(
-        classical_solver_type="cplex",
+    # Create a solvers.Config object with classical solver options.
+    classical_config = solvers.ClassicalConfig(
+        algorithm="cplex",
         cplex_maxtime=10.0,
         cplex_log_path="test_solver.log",
     )
-    config = SolverConfig(use_quantum=False, classical=classical_config)
+    config = solvers.Config(solving=classical_config)
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
     classical_solver = Solver(instance, config)
@@ -243,9 +241,9 @@ def test_rounding() -> None:
     instance = _build_rounding_matrix()
     solution = solvers.cplex(instance, maxtime=60.0)
 
-    check.is_true(solution.check_consistency(instance))
+    check.is_true(solution.check_consistency(instance=instance))
 
     best_cost = solution[0].cost
-    expected_best_cost = solution.compute_costs(instance.matrix)[0].cost
+    expected_best_cost = solution._compute_costs(instance.matrix)[0].cost
 
     check.equal(best_cost, expected_best_cost)

@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing_extensions import deprecated, TypeAlias
 
 from .solution import Solution, SingleSolution
-from .analyzer import Analyzer
 from .instance import Instance
 from .dataset import Dataset
 
@@ -19,16 +18,6 @@ class QUBOSolution(Solution):
     !!! warning "Deprecated"
         This class is deprecated and will be removed in a future version.
         Use [`qubosolver.Solution`][] instead.
-    """
-
-
-@deprecated("Use `qubosolver.Analyzer` instead")
-class QUBOAnalyzer(Analyzer):
-    """Legacy solution analyser class.
-
-    !!! warning "Deprecated"
-        This class is deprecated and will be removed in a future version.
-        Use [`qubosolver.Analyzer`][] instead.
     """
 
 
@@ -62,10 +51,6 @@ QuboSolution: TypeAlias = Solution
 
 QuboSingleSolution: TypeAlias = SingleSolution
 """Alias for [`SingleSolution`][qubosolver.SingleSolution]."""
-
-
-QuboAnalyzer: TypeAlias = Analyzer
-"""Alias for [`Analyzer`][qubosolver.Analyzer]."""
 
 
 QuboInstance: TypeAlias = Instance

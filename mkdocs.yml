@@ -45,14 +45,12 @@ nav:
 
   - API:
     - qubosolver: api/qubosolver.md
+    - qubosolver.analysis: api/analysis.md
     - qubosolver.drive_shaping: api/drive_shaping.md
     - qubosolver.embedding: api/embedding.md
+    - qubosolver.protocols: api/protocols.md
     - qubosolver.solvers: api/solvers.md
     - qubosolver.transforms: api/transforms.md
-    - Configuration:
-      - qubosolver.config: api/config.md
-    - Enums:
-      - qubosolver.types.enums: api/enums.md
     - Tensors:
       - qubosolver.bitstring: api/bitstring.md
       - qubosolver.bitstrings: api/bitstrings.md

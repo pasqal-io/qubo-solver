@@ -7,9 +7,9 @@ import warnings
 import torch
 from qoolqit import Register
 
-from . import blade, greedy
-from qubosolver.types import Instance, EmbedderType, protocols
-from qubosolver.config import SolverConfig
+from . import blade, greedy_layout
+from qubosolver.types import Instance, protocols
+from qubosolver import solvers, embedding
 
 warnings.filterwarnings("ignore", module="pulser")
 
@@ -23,7 +23,7 @@ class _BaseEmbedder(ABC):
     2-D trap layout.
     """
 
-    def __init__(self, instance: Instance, config: SolverConfig, backend: protocols.Backend):
+    def __init__(self, instance: Instance, config: solvers.QuantumConfig, backend: protocols.Backend):
         """
         Args:
             instance: The QUBO problem to embed.
@@ -34,7 +34,7 @@ class _BaseEmbedder(ABC):
                 need backend-specific information during placement.
         """
         self.instance: Instance = instance
-        self.config: SolverConfig = config
+        self.config: solvers.QuantumConfig = config
         self.register: Register | None = None
         self.backend = backend
 
@@ -115,20 +115,20 @@ class GreedyEmbedder(_BaseEmbedder):
         Returns:
             The atom register with positions determined by the greedy placer.
         """
-        config = greedy.Config.from_embedding_config(self.config.embedding)
-        return greedy.embed(self.instance, self.config.device, config=config)
+        config = embedding.greedy_layout.Config._from_embedding_config(self.config.embedding)
+        return  embedding.greedy_layout.embed(self.instance, device=self.config.device, config=config)
 
 
 def _get_embedder(
-    instance: Instance, config: SolverConfig, backend: protocols.Backend
+    instance: Instance, config: solvers.QuantumConfig, backend: protocols.Backend
 ) -> _BaseEmbedder:
     """Return the appropriate embedder instance for the given configuration.
 
     Inspects ``config.embedding.embedding_method`` and constructs the matching
     :class:`_BaseEmbedder` subclass:
 
-    * :class:`BLaDEmbedder` — when the method is :attr:`EmbedderType.BLADE`.
-    * :class:`GreedyEmbedder` — when the method is :attr:`EmbedderType.GREEDY`.
+    * :class:`BLaDEmbedder` — when the method is :attr:`embedding.Algorithm.BLADE`.
+    * :class:`GreedyEmbedder` — when the method is :attr:`embedding.Algorithm.GREEDY`.
     * A user-supplied subclass of :class:`_BaseEmbedder` — when the method is
       a class (not a string enum value) that is a subclass of
       :class:`_BaseEmbedder`.
@@ -144,17 +144,13 @@ def _get_embedder(
 
     Raises:
         NotImplementedError: If ``config.embedding.embedding_method`` is not a
-            recognised :class:`EmbedderType` value and is not a subclass of
+            recognised :class:`embedding.Algorithm` value and is not a subclass of
             :class:`_BaseEmbedder`.
     """
 
-    if config.embedding.embedding_method == EmbedderType.BLADE:
+    if config.embedding.algorithm == embedding.Algorithm.BLADE:
         return BLaDEmbedder(instance, config, backend)
-    elif config.embedding.embedding_method == EmbedderType.GREEDY:
+    elif config.embedding.algorithm == embedding.Algorithm.GREEDY:
         return GreedyEmbedder(instance, config, backend)
-    elif issubclass(config.embedding.embedding_method, _BaseEmbedder):
-        return typing.cast(
-            _BaseEmbedder, config.embedding.embedding_method(instance, config, backend)
-        )
     else:
         raise NotImplementedError

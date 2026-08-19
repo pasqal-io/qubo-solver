@@ -37,7 +37,7 @@ def trivial_solution_search(instance: Instance) -> Solution:
         raw = bitstring.zeros(n)
         # always make a batch of one: shape (1, n)
         batch = raw.unsqueeze(0)
-        cost = instance.evaluate_solution(raw)
+        cost = instance.cost(raw)
         return Solution(
             bitstrings=batch,
             counts=vectori.tensor([1]),
@@ -49,7 +49,7 @@ def trivial_solution_search(instance: Instance) -> Solution:
         raw = torch.ones(n, dtype=bitstring.dtype())
         # always make a batch of one: shape (1, n)
         batch = raw.unsqueeze(0)
-        cost = instance.evaluate_solution(raw)
+        cost = instance.cost(raw)
         return Solution(
             bitstrings=batch,
             counts=vectori.tensor([1]),
@@ -61,7 +61,7 @@ def trivial_solution_search(instance: Instance) -> Solution:
     diagonal = torch.diag(coeffs)
     if (torch.diag(diagonal) == coeffs).all():
         raw = (diagonal < 0).to(bitstring.dtype())
-        cost = instance.evaluate_solution(raw)
+        cost = instance.cost(raw)
         batch = raw.unsqueeze(0)
         return Solution(
             bitstrings=batch,

@@ -92,7 +92,7 @@ def apply(instance: qubosolver.Instance) -> Instance:
     return zeroed_instance
 
 
-def unapply(zeroed_solution: Solution, zeroed_qubo: Instance) -> Solution:
+def lift(zeroed_solution: Solution, zeroed_qubo: Instance) -> Solution:
     """Map a solution of the zeroed QUBO back onto the pre-zeroing problem.
 
     Zeroing only drops coefficients; it does not rename or remove variables, so
@@ -114,7 +114,7 @@ def unapply(zeroed_solution: Solution, zeroed_qubo: Instance) -> Solution:
     solution = Solution()
     solution.bitstrings = zeroed_solution.bitstrings
     solution.costs = vector.tensor(
-        [zeroed_qubo._parent_instance.evaluate_solution(b) for b in solution.bitstrings]
+        [zeroed_qubo._parent_instance.cost(b) for b in solution.bitstrings]
     )
     solution.counts = zeroed_solution.counts
     solution.probabilities = zeroed_solution.probabilities

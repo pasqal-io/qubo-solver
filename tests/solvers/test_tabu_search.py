@@ -27,7 +27,7 @@ def test_tabu_search_costs_match_bitstrings() -> None:
 
     solution = solvers.tabu_search(instance, start, max_iter=200)
 
-    true_solution = copy.deepcopy(solution).compute_costs(instance.matrix)
+    true_solution = copy.deepcopy(solution)._compute_costs(instance.matrix)
 
     torch.testing.assert_close(solution.costs, true_solution.costs)
     torch.testing.assert_close(

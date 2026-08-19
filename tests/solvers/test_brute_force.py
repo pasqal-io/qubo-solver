@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 
+import pytest
 import pytest_check as check
 import torch
 
@@ -11,7 +12,7 @@ from qubosolver import Instance, solvers, bitstrings, matrix, torch_rng, SingleS
 def _reference_sorted(instance: Instance) -> list[SingleSolution]:
     """All candidate solutions sorted by ascending cost, by exhaustive search."""
     solutions = [
-        SingleSolution(bitstring=b, cost=instance.evaluate_solution(b))
+        SingleSolution(bitstring=b, cost=instance.cost(b))
         for b in bitstrings.tensor(list(itertools.product([0, 1], repeat=instance.size)))
     ]
     solutions.sort(key=lambda s: s.cost)
@@ -41,7 +42,7 @@ def test_returns_global_optimum() -> None:
     check.equal(solution[0].cost, optimum.cost)
     # optimum may be degenerate; assert on cost, not the exact bitstring.
     best = solution[0].bitstring
-    check.equal(instance.evaluate_solution(best), optimum.cost)
+    check.equal(instance.cost(best), optimum.cost)
 
 
 def test_top_k_sorted_matches_reference() -> None:
@@ -88,4 +89,37 @@ def test_time_limit_returns_best_so_far_without_enumerating_all() -> None:
     check.equal(len(solution), 2)
     # Costs are consistent with the instance (sanity: finite, correctly evaluated).
     for b in solution.bitstrings:
-        check.is_true(torch.isfinite(torch.tensor(instance.evaluate_solution(b))))
+        check.is_true(torch.isfinite(torch.tensor(instance.cost(b))))
+
+
+def test_large_instance_with_no_time_limit_logs_warning(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    # 21 variables exceeds the 20-variable threshold; 2^21 assignments still
+    # completes quickly enough for a test.
+    instance = Instance(matrix.from_torch(torch.randn(21, 21, generator=torch_rng(1))))
+
+    with caplog.at_level("WARNING", logger="qubosolver.solvers.classical.brute_force"):
+        solvers.brute_force(instance, max_bitstrings=1, time_limit=float("inf"))
+
+    check.is_true(any("time_limit" in record.message for record in caplog.records))
+
+
+def test_large_instance_with_finite_time_limit_does_not_log_warning(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    instance = Instance(matrix.from_torch(torch.randn(21, 21, generator=torch_rng(1))))
+
+    with caplog.at_level("WARNING", logger="qubosolver.solvers.classical.brute_force"):
+        solvers.brute_force(instance, max_bitstrings=1, time_limit=5.0)
+
+    check.equal(len(caplog.records), 0)
+
+
+def test_small_instance_with_no_time_limit_does_not_log_warning(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    with caplog.at_level("WARNING", logger="qubosolver.solvers.classical.brute_force"):
+        solvers.brute_force(sample_qubo(), max_bitstrings=1, time_limit=float("inf"))
+
+    check.equal(len(caplog.records), 0)

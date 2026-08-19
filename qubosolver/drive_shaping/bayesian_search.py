@@ -19,7 +19,8 @@ from qubosolver.types import (
     protocols,
     tensor,
 )
-from qubosolver import solvers, utils, DriveShapingConfig
+from qubosolver.utils import _costs
+from .config import Config as DriveShapingConfig
 from ._device_specs import max_virtual_amplitude, detuning_amplitude_ratio
 from ._waveforms import constant_weighted_dmm
 
@@ -64,7 +65,7 @@ class Config:
     )
     n_calls: int = 20
     seed: int | None = None
-    qubo_cost: Callable[[Bitstring, Matrix], float] = utils._costs.quadratic_cost
+    qubo_cost: Callable[[Bitstring, Matrix], float] = _costs.quadratic_cost
     objective: Callable[[Solution], float] = _default_objective
     callback_objective: Callable[[_CallbackObjectiveInput], None] = lambda data: None
     default_sequence_duration: int = 50000
@@ -229,6 +230,7 @@ def _run_simulation(
         ``probabilities``, and ``counts`` populated and sorted by ascending
         cost.  Returns an empty :class:`Solution` on any failure.
     """
+    from qubosolver import solvers
     try:
         job = solvers.analog_quantum_sampling(
             register,
@@ -240,7 +242,7 @@ def _run_simulation(
         solution = Solution.from_results(job.results())
         costs = [config.qubo_cost(b, Q) for b in solution.bitstrings]
         solution.costs = tensor.tensor(costs)
-        solution.sort_by_cost().compute_probabilities()
+        solution._sort_by_cost()._compute_probabilities()
         return solution
     except Exception as e:
         print(f"Simulation failed: {e}")
@@ -250,9 +252,9 @@ def _run_simulation(
 def build_drive(
     instance: Instance,
     register: qoolqit.Register,
+    *,
     backend: protocols.Backend,
     device: qoolqit.Device,
-    *,
     dmm: bool = False,
     config: Config = Config(),
 ) -> tuple[qoolqit.Drive, Solution]:

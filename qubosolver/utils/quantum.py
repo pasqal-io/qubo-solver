@@ -45,18 +45,9 @@ def extract_qubo(register: qoolqit.Register, drive: qoolqit.Drive) -> Instance:
     Returns:
         The reconstructed QUBO instance.
     """
-    qubit_ids = register.qubits_ids
-    index = {qubit_id: i for i, qubit_id in enumerate(qubit_ids)}
-    n = register.n_qubits
+    Q = matrix.tensor(register.interaction_matrix())
 
-    Q = matrix.zeros(n)
-
-    for (u, v), value in register.interactions().items():
-        i, j = index[u], index[v]
-        Q[i, j] = value
-        Q[j, i] = value
-
-    delta = _detuning(drive, drive.duration, n=n, qubit_ids=qubit_ids)
+    delta = _detuning(drive, drive.duration, n=len(register), qubit_ids=register.qubits_ids)
     Q += torch.diag(-2 * delta)
 
     return Instance(Q)

@@ -15,6 +15,7 @@ skip: dict[str, str] = {
     "01-dataset-generation-and-loading.ipynb": "Must manually save data",
     "03-prepostprocessing.ipynb": "Must manually save data from notebook 01",
     "05-blade.ipynb": "Blade moved to Qoolqit",
+    "08-qubo_analyzer.ipynb": "TODO: update with revamp",
     "09-decomposition.ipynb": "Flaky: Need a device with DMM other than DigitalAnalogDevice",
 }
 

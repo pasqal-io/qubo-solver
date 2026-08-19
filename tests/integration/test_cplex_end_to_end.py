@@ -5,12 +5,13 @@ import pytest
 import pytest_check as check
 
 from qubosolver import (
-    Analyzer,
     Instance,
     Solution,
     SingleSolution,
     solvers,
 )
+
+from qubosolver.utils import analysis
 
 from qubos import QUBOS
 
@@ -29,8 +30,7 @@ def check_solution(
     # Solutions are not duplicated
     check.equal(solution.bitstrings.unique(dim=0).shape[0], len(solution))
 
-    analyzer = Analyzer(solution)
-    print(f"\n{analyzer.df}")
+    print(f"\n{analysis.to_dataframe([solution])}")
 
     optimal_solutions = gather_optimal_solutions(solution)
     check.is_not(optimal_solutions, [])

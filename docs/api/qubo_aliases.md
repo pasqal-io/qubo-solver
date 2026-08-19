@@ -1,5 +1,3 @@
-::: qubosolver.QuboAnalyzer
-
 ::: qubosolver.QuboDataset
 
 ::: qubosolver.QuboInstance

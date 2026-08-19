@@ -34,7 +34,7 @@ def postprocess(self, solution: Solution) -> Solution
    Defines an inner function:
    ```python
    def qubo_objective(s_arr: np.ndarray) -> float:
-       return self.instance.evaluate_solution(s_arr.tolist())
+       return self.instance.cost(s_arr.tolist())
    ```
    to compute the cost of any candidate bitstring via the original QUBO instance.
 

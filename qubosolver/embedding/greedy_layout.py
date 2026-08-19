@@ -20,7 +20,9 @@ import pathlib
 import qoolqit
 
 from ._algorithms import greedy
-from qubosolver import Instance, LayoutType, EmbeddingConfig, tensor
+from qubosolver import Instance, tensor
+from .enums import Layout
+from .config import Config as EmbeddingConfig
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
 
@@ -48,7 +50,7 @@ class Config:
 
     traps: int | Literal["device"] = "device"
     max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
-    layout: LayoutType = LayoutType.TRIANGULAR
+    layout: Layout = Layout.TRIANGULAR
     draw_steps: bool = False
     animation_save_path: pathlib.Path | None = None
     max_min_dist_ratio: float | Literal["device"] = "device"
@@ -81,11 +83,11 @@ class Config:
                 self.max_min_dist_ratio = float("inf")
 
     @staticmethod
-    def from_embedding_config(config: EmbeddingConfig) -> Config:
+    def _from_embedding_config(config: EmbeddingConfig) -> Config:
         """Create a [`Config`][] from a user-facing [`EmbeddingConfig`][].
 
         Maps the ``greedy_*`` fields of *config* onto the corresponding
-        `Config` attributes. Sentinel values (``-1`` for ``greedy_traps``,
+        `Config` attributes. Sentinel values (``"device"`` for ``greedy_traps``,
         ``"device"`` for ``max_min_dist_ratio``) are carried through as
         ``"device"`` and only resolved later, by `update_from_device`.
 
@@ -96,7 +98,7 @@ class Config:
             A configuration fully populated from the ``greedy_*`` embedding settings of *config*.
         """
         cfg = Config()
-        cfg.traps = config.greedy_traps if config.greedy_traps != -1 else "device"
+        cfg.traps = config.greedy_traps
         cfg.max_possible_term = config.greedy_max_possible_term
 
         cfg.layout = EmbeddingConfig._normalize_layout(config.greedy_layout)
@@ -174,8 +176,8 @@ def _number_of_traps_from_device(device: qoolqit.Device) -> int:
 
 def embed(
     instance: Instance,
-    device: qoolqit.Device,
     *,
+    device: qoolqit.Device,
     config: Config = Config(),
 ) -> qoolqit.Register:
     """Embed a QUBO instance using the greedy algorithm.
