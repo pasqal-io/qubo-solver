@@ -1,3 +1,9 @@
+"""Random number generation utilities for QUBO solvers.
+
+Provides a helper for creating `torch.Generator` instances on the globally
+configured torch device.
+"""
+
 from __future__ import annotations
 
 import torch

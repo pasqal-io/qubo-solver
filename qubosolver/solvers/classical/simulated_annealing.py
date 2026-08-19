@@ -1,8 +1,8 @@
 """Simulated Annealing solver for QUBO problems.
 
 Implements a bit-flip annealer that minimises the quadratic objective
-E(x) = xᵀ Q x over binary vectors x ∈ {0,1}ⁿ, run independently from each
-of a batch of starting points and merged into a single solution.
+$E(x) = x^T Q x$ over binary vectors $x \\in \\{0,1\\}^n$, run independently from
+each of a batch of starting points and merged into a single solution.
 
 The public entry point is `simulated_annealing`.  It is called by
 :class:`~qubosolver.solvers.SimulatedAnnealingSolver`.
@@ -122,7 +122,7 @@ def simulated_annealing(
 
     For each starting bitstring, at each of `max_iter` steps a random bit is
     proposed for flipping.  The flip is always accepted when it reduces the
-    energy; otherwise it is accepted with probability ``exp(-ΔE / T)``.
+    energy; otherwise it is accepted with probability $\\exp(-\\Delta E / T)$.
     Energy updates are computed incrementally in O(n) per step using the
     cached matrix-vector product ``Qx``.
 
@@ -161,16 +161,17 @@ def simulated_annealing(
         top_k: Maximum number of unique best solutions to keep per run,
             ordered by ascending energy. Defaults to ``1``.
         max_iter: Number of bit-flip proposals to perform.
-        initial_temp: Starting temperature T₀.  Higher values increase the
+        initial_temp: Starting temperature $T_0$.  Higher values increase the
             probability of accepting uphill moves early in the search.
             Defaults to ``5.0``.
-        final_temp: Target temperature T_f at the end of the schedule, used
+        final_temp: Target temperature $T_f$ at the end of the schedule, used
             to derive the cooling rate when `cooling_rate` is ``None``.
             Ignored when `cooling_rate` is provided explicitly.
-        cooling_rate: Geometric cooling factor α ∈ (0, 1) such that
-            T ← α·T at each step.  When ``None`` (default), α is derived
-            automatically from `initial_temp`, `final_temp`, and `max_iter`
-            so that the temperature reaches `final_temp` after `max_iter` steps.
+        cooling_rate: Geometric cooling factor $\\alpha \\in (0, 1)$ such that
+            $T \\leftarrow \\alpha T$ at each step.  When ``None`` (default),
+            $\\alpha$ is derived automatically from `initial_temp`,
+            `final_temp`, and `max_iter` so that the temperature reaches
+            `final_temp` after `max_iter` steps.
         time_limit: Wall-clock budget in seconds.  The algorithm stops early
             when either `max_iter` steps or the time limit is reached,
             whichever comes first.  Defaults to ``float("inf")`` (no limit).

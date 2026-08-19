@@ -278,7 +278,7 @@ def iterative_bitflip_local_search(
             break
 
         # Apply bit-flip local search to improve the solution.
-        solution.bitstrings[i, :], solution.bitstrings[i] = search_fn(
+        solution.bitstrings[i, :], solution.costs[i] = search_fn(
             qubo_objective, s_orig, rng=None, max_iterations=max_iterations, time_limit=time_limit
         )
 

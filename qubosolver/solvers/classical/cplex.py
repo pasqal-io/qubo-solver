@@ -28,9 +28,9 @@ def _qubo_instance_to_sparsepairs(
 ) -> list[CPLEX.SparsePair]:
     """Convert a :class:`Instance` coefficient matrix to CPLEX sparse-pair format.
 
-    CPLEX evaluates quadratic objectives as ``½ · xᵀ Q_cplex x``, so each
-    coefficient must be pre-multiplied by 2 to recover the standard QUBO
-    objective ``xᵀ Q x``.
+    CPLEX evaluates quadratic objectives as $\\frac{1}{2} x^T Q_{cplex} x$, so
+    each coefficient must be pre-multiplied by 2 to recover the standard QUBO
+    objective $x^T Q x$.
 
     Near-zero coefficients (``|coeff * 2| <= tol``) are dropped to keep the
     sparse representation compact and avoid numerical noise.

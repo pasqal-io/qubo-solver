@@ -1,3 +1,11 @@
+"""Core data types for the QUBO solver: tensors, aliases, solutions, and backends.
+
+This subpackage re-exports the tensor submodules (`bitstring`, `bitstrings`,
+`matrix`, `tensor`, `vector`, `vectori`, `linalg`), the container classes
+(`Solution`, `SingleSolution`, `Instance`, `Dataset`), the emulator backend
+wrappers, and the `Qubo*`/`QUBO*` type aliases used throughout the public API.
+"""
+
 from __future__ import annotations
 
 from qubosolver.types import (

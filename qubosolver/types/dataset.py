@@ -1,3 +1,10 @@
+"""Dataset container for batches of QUBO problem instances.
+
+Provides [`Dataset`][qubosolver.Dataset], a PyTorch-style dataset of QUBO
+coefficient matrices paired with optional ground-truth solutions, along with
+random dataset generation and binary (de)serialization helpers.
+"""
+
 from __future__ import annotations
 
 from copy import deepcopy
@@ -20,9 +27,9 @@ class Dataset():
     optimization objective is ``x^T Q x``, where ``x`` is a binary vector.
 
     Args:
-        coefficients (torch.Tensor):
+        matrices (torch.Tensor):
             Coefficient matrices of shape ``(size, size, num_instances)``.
-            ``coefficients[:, :, i]`` is the ``i``-th QUBO matrix.
+            ``matrices[:, :, i]`` is the ``i``-th QUBO matrix.
         solutions (list[Solution]):
             Ground-truth solutions, one per instance.  Pass an empty list
             (default) when solutions are unknown.
@@ -33,7 +40,7 @@ class Dataset():
             owns them exclusively.
 
     Attributes:
-        matrix (torch.Tensor):
+        matrices (torch.Tensor):
             Coefficient matrices stored as a 3-D tensor of shape
             ``(size, size, num_instances)``.  The third axis indexes individual
             problem instances.
@@ -42,7 +49,7 @@ class Dataset():
             created without ground-truth solutions (e.g. via [`from_random`][]).
 
     Note:
-        ``coefficients`` and ``solutions`` are deep-copied on construction by
+        ``matrices`` and ``solutions`` are deep-copied on construction by
         default.  Mutating the values passed in afterwards will not affect
         the dataset, unless ``copy=False`` was given.
     """
@@ -97,28 +104,15 @@ class Dataset():
         rng: torch.Generator = torch_rng(),
         negative_offdiag_rate: float = 0.0,
     ) -> Dataset:
-        """
-        Generates a Dataset with random QUBO coefficient matrices.
+        """Generates a Dataset of random, symmetric QUBO coefficient matrices.
 
-        Generation Steps:
-
-        1. Initialize a reproducible random generator.
-        2. Create a storage tensor for coefficients.
-        3. For each density:
-
-            1. Compute the exact target number of non-zero elements.
-            2. For each instance:
-
-                1.  Generate a symmetric boolean mask with an exact number of True elements.
-                2. Generate random values within the coefficient_bounds.
-                3. Apply the mask to zero out unselected elements.
-                4. Symmetrize the matrix by mirroring the upper triangle onto the lower triangle.
-                5. Force all off-diagonal coefficients to be positive.
-                6. Ensure that at least one diagonal element is negative.
-                7. Ensure at least one coefficient equals the upper bound, excluding
-                any diagonal already at the lower bound.
-
-        4. Return a Dataset instance containing the generated matrices.
+        For each requested density, `n_matrices` symmetric matrices of shape
+        ``(matrix_dim, matrix_dim)`` are generated with (approximately) that
+        fraction of non-zero entries. Off-diagonal coefficients are positive
+        (unless flipped negative by `negative_offdiag_rate`), each matrix is
+        guaranteed at least one negative diagonal element and at least one
+        coefficient equal to `coefficient_bounds[1]`, so that the resulting
+        instances are non-trivial to solve.
 
         Args:
             n_matrices (int): Number of QUBO matrices to generate for each density.
@@ -128,12 +122,16 @@ class Dataset():
             coefficient_bounds (tuple[float, float], optional): Range (min, max) of
                 random values for the coefficients. Defaults to (-10.0, 10.0).
             dtype (torch.dtype, optional): Data type for the coefficient tensors.
-                Defaults to torch.float32.
-            negative_offdiag_rate (float, optional): off-diagonal negative coefficients rate.
-                Defaults to None, meaning no off-diagonal coefficient will be present.
+                Defaults to `matrix.dtype()` (``torch.float32``).
+            rng (torch.Generator, optional): Random number generator controlling
+                the sampling. Defaults to `torch_rng()`.
+            negative_offdiag_rate (float, optional): Fraction of the non-zero
+                off-diagonal coefficients to flip negative. Defaults to ``0.0``,
+                meaning no off-diagonal coefficient is negative.
 
         Returns:
-            A dataset containing the generated coefficient matrices.
+            A dataset containing ``n_matrices * len(densities)`` generated
+            coefficient matrices, with no associated solutions.
         """
         # Step 1: Initialize a reproducible random generator.
         device = rng.device.type
@@ -253,9 +251,8 @@ class Dataset():
         """Persist a dataset to disk using `torch.save`.
 
         Args:
+            file_like: Destination file path or writable binary file object.
             dataset (Dataset): The dataset to serialise.
-            filepath (Path): Destination file path.  The file is created or
-                overwritten.  Use a ``.pt`` or ``.pth`` extension by convention.
         """
         with io_utils.open(file_like, "wb") as f:
             buffer = io.BytesIO()
@@ -270,7 +267,8 @@ class Dataset():
         """Load a dataset previously saved with [`save`][].
 
         Args:
-            filepath (Path): Path to the file produced by [`save`][].
+            file_like: Source file path or readable binary file object,
+                as produced by [`save`][].
 
         Returns:
             The deserialised dataset, including solutions if they were present when the file was saved.

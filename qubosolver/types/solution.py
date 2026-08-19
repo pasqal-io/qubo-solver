@@ -1,3 +1,11 @@
+"""QUBO solution containers.
+
+Defines [`Solution`][qubosolver.types.solution.Solution], a collection of candidate
+bitstrings together with their costs, sample counts, and probabilities, and
+[`SingleSolution`][qubosolver.types.solution.SingleSolution], a single candidate
+extracted from it.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -30,8 +38,10 @@ class SingleSolution:
     Attributes:
         bitstring (Bitstring): Binary vector of shape ``(n,)`` with values in
             ``{0, 1}`` (``int8``).
-        cost (float): Objective value ``x^T Q x``.  Defaults to ``+inf`` when
+        cost (float): Objective value $x^T Q x$.  Defaults to ``+inf`` when
             costs have not been computed yet.
+        count (int): Number of times this bitstring was sampled.  Defaults
+            to ``0`` when counts are unavailable.
         probability (float): Sampling probability of this bitstring.  Defaults
             to ``0.0`` when probabilities are unavailable.
     """
@@ -66,7 +76,7 @@ class Solution:
             binary vectors (values in ``{0, 1}``).
         costs (Vector):
             Float tensor of shape ``(num_solutions,)`` with the QUBO objective
-            ``x^T Q x`` for each bitstring.  Empty until `_compute_costs`
+            $x^T Q x$ for each bitstring.  Empty until `_compute_costs`
             is called.
         counts (Vectori):
             ``int64`` tensor of shape ``(num_solutions,)`` with the number of
@@ -115,7 +125,7 @@ class Solution:
             yield self[i]
 
     def _compute_costs(self, matrix: Matrix) -> Self:
-        """Compute and store the QUBO objective ``x^T Q x`` for every bitstring.
+        """Compute and store the QUBO objective $x^T Q x$ for every bitstring.
 
         Casts `bitstrings` to the dtype of *matrix* before calling the
         batched cost kernel to avoid dtype mismatches.  The result overwrites
@@ -185,8 +195,8 @@ class Solution:
 
         Slices `bitstrings`, `costs`, `counts`, and `probabilities`
         (whichever are non-empty) down to their first *k* rows. Does not
-        sort or deduplicate first; combine with `sort_by_cost` /
-        `deduplicate` as needed, e.g. ``solution.sort_by_cost().truncate(1)``
+        sort or deduplicate first; combine with `_sort_by_cost` /
+        `deduplicate` as needed, e.g. ``solution._sort_by_cost().truncate(1)``
         to keep the best candidate.
 
         Args:
@@ -202,7 +212,7 @@ class Solution:
 
         Note:
             When both are populated, `probabilities` are recomputed
-            from the truncated `counts` (via `compute_probabilities`)
+            from the truncated `counts` (via `_compute_probabilities`)
             rather than merely sliced, so they still sum to 1.
         """
         if self.probabilities.numel() > 0 and self.counts.numel() == 0:
@@ -238,7 +248,7 @@ class Solution:
             When several rows share a bitstring, the minimum of their
             `costs` is kept. This is only meaningful if those costs
             were all computed from the same QUBO instance (same
-            `matrix` passed to `compute_costs`); the caller is
+            `matrix` passed to `_compute_costs`); the caller is
             responsible for ensuring that, since this method does not
             verify it.
         """
@@ -447,11 +457,13 @@ class Solution:
 
         Verifies that:
 
-        * `bitstrings` has ``instance.size`` columns.
+        * `bitstrings` has ``instance.size`` columns (when *instance* is given;
+          otherwise this check is skipped).
         * `costs`, `counts`, and `probabilities` each have exactly
           `len(self)` elements (i.e. none of them is empty).
-        * `costs` matches ``x^T Q x`` for every bitstring, computed from
-          ``instance.matrix``.
+        * `costs` matches $x^T Q x$ for every bitstring, computed from
+          ``instance.matrix`` (when *instance* is given; otherwise this
+          check is skipped).
         * `costs` is sorted in non-decreasing order.
         * `probabilities` matches `counts` normalised by their sum.
         * `counts` are strictly positive integers.

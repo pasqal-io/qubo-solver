@@ -1,3 +1,5 @@
+"""Reconstruct QUBO instances from quantum register and drive parameters."""
+
 from __future__ import annotations
 
 import torch

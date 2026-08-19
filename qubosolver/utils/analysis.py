@@ -1,14 +1,16 @@
 """Free functions for analysing QUBO solutions.
 
-Convert one or more :class:`~qubosolver.types.solution.Solution` objects into
-a unified :class:`~pandas.DataFrame` and provides filtering, statistical, and
-plotting helpers for comparing solver outputs.
+Convert one or more [`qubosolver.Solution`][] objects into a unified
+`pandas.DataFrame` and provides filtering, statistical, and plotting helpers
+for comparing solver outputs.
 
 Typical usage:
 
-    df = to_dataframe([sol_a, sol_b], labels=["classical", "quantum"])
-    df = _add_gaps(df, opt_cost=-42.0)
-    _plot(df, x_axis="bitstrings", y_axis="costs", top_percent=0.1)
+```python
+df = to_dataframe([sol_a, sol_b], labels=["classical", "quantum"])
+df = _add_gaps(df, opt_cost=-42.0)
+_plot(df, x_axis="bitstrings", y_axis="costs", top_percent=0.1)
+```
 """
 
 from __future__ import annotations
@@ -29,17 +31,17 @@ _GAPS = "gaps"
 
 
 def _solution_to_dataframe(solution: Solution, solution_label: str) -> pd.DataFrame:
-    """
-    Converts a single Solution into a pandas `DataFrame`.
-    For better readability, each bitstring is converted to a string representation.
+    """Convert a single `Solution` into a pandas `DataFrame`.
+
+    Each bitstring is converted to a string representation for readability.
 
     Args:
-        solution (Solution): The Solution to convert.
-        solution_label (str): The label associated with this solution.
+        solution: The Solution to convert.
+        solution_label: The label associated with this solution.
 
     Returns:
-        pd.DataFrame: A `DataFrame` containing the solution's bitstrings, cost,
-                      and optionally counts and probabilities.
+        pd.DataFrame: A `DataFrame` containing the solution's bitstrings, costs,
+                      counts, and probabilities.
     """
     solution.check_consistency(instance=None, throw=True)
 
@@ -60,9 +62,9 @@ def to_dataframe(
     *,
     labels: Sequence[str] | Literal["auto"] = "auto",
 ) -> pd.DataFrame:
-    """
-    Converts one or more Solutions into a single, unified `DataFrame`.
-    This `DataFrame` can be used for filtering, sorting, and analysis.
+    """Convert one or more Solutions into a single, unified `DataFrame`.
+
+    The resulting `DataFrame` can be used for filtering, sorting, and analysis.
 
     Args:
         solutions: A list of [`qubosolver.Solution`][].
@@ -94,34 +96,26 @@ def _filter_by_percentage(
     column: str = _COSTS,
     order: Literal["ascending", "descending"] = "ascending",
 ) -> pd.DataFrame:
-    """
-    Returns a `DataFrame` limited to the best bitstrings
-    in a given column for each solution group,
-    where "best" means that the cumulative probability (_PROBS)
-    of the selected rows reaches at least
-    top_percent. The sorting order is controlled by the
-    `order` parameter: if "ascending", the group is sorted
-    in ascending order (lower values are considered better);
-    if "descending", sorted in descending order.
+    """Return the best-ranked rows of each solution group up to a cumulative probability.
+
+    Rows in each solution group (grouped by label) are sorted by `column`
+    (ascending if `order` is "ascending", i.e. lower values are better;
+    descending otherwise) and kept until the cumulative probability of the
+    selected rows would reach `top_percent`.
 
     Args:
-        df (pd.DataFrame): `DataFrame` to filter.
-        top_percent (float): A threshold between 0 and 1 representing
-                             the fraction of cumulative probability.
-                             For example, 0.1 means select bitstrings
-                             until their cumulative probability is ≥ 10%.
-        column (str): The key (column) by which to sort the rows
-                                (e.g. _COSTS, _GAPS, or _PROBS).
-                                Defaults to _COSTS.
-        order (str): Either "ascending" or "descending". If "ascending",
-                     rows are sorted in ascending order (lower values are better).
-                     If "descending", rows are sorted in descending order
-                     (higher values are better).
+        df: `DataFrame` to filter.
+        top_percent: A threshold between 0 and 1 representing the fraction of
+            cumulative probability. For example, 0.1 means select bitstrings
+            until their cumulative probability is >= 10%.
+        column: The column by which to sort the rows (e.g. `_COSTS`, `_GAPS`,
+            or `_PROBS`). Defaults to `_COSTS`.
+        order: Either "ascending" or "descending", see above.
 
     Returns:
-        pd.DataFrame: The filtered `DataFrame` containing, for each solution group, the bitstrings
-                      whose cumulative probability (_PROBS)
-                    reaches the specified top_percent threshold.
+        pd.DataFrame: The filtered `DataFrame` containing, for each solution
+            group, the bitstrings whose cumulative probability (`_PROBS`)
+            reaches the specified `top_percent` threshold.
 
     Raises:
         ValueError: If the specified column is not in the `DataFrame`,
@@ -143,14 +137,12 @@ def _filter_by_percentage(
 
 
 def _average_cost(df: pd.DataFrame, *, top_percent: float = 1.0) -> pd.DataFrame:
-    """
-    Calculates the average cost for the best top_percent of bitstrings (lowest cost)
-    for each solution.
+    """Compute the average cost over the best `top_percent` bitstrings of each solution.
 
     Args:
-        df (pd.DataFrame): `DataFrame` to compute over.
-        top_percent (float): A fraction between 0 and 1 representing the percentage
-                             of lowest cost bitstrings to consider.
+        df: `DataFrame` to compute over.
+        top_percent: A fraction between 0 and 1 representing the fraction
+            of lowest-cost bitstrings to consider.
 
     Returns:
         pd.DataFrame: A `DataFrame` with each solution label, the average cost over the
@@ -172,13 +164,12 @@ def _average_cost(df: pd.DataFrame, *, top_percent: float = 1.0) -> pd.DataFrame
 
 
 def _best_bitstrings(df: pd.DataFrame, *, atol: float = 0.0, rtol: float = 0.0) -> pd.DataFrame:
-    """
-    Finds all unique bitstrings (with the best cost) in each solution's `DataFrame`.
+    """Find all unique bitstrings with the best (lowest) cost in each solution group.
 
     Args:
-        df (pd.DataFrame): `DataFrame` to compute over.
-        atol (float): Absolute tolerance used when comparing costs to the minimum.
-        rtol (float): Relative tolerance used when comparing costs to the minimum.
+        df: `DataFrame` to compute over.
+        atol: Absolute tolerance used when comparing costs to the minimum.
+        rtol: Relative tolerance used when comparing costs to the minimum.
 
     Returns:
         pd.DataFrame: A `DataFrame` with all unique rows per solution (solution_label)
@@ -195,16 +186,15 @@ def _best_bitstrings(df: pd.DataFrame, *, atol: float = 0.0, rtol: float = 0.0) 
     best_rows = pd.concat(best_list, ignore_index=True)
     return best_rows
 
-def _add_gaps(df: pd.DataFrame, *, opt_cost: float) -> pd.DataFrame:
-    """
-    Calculates the gaps for each bitstring using the provided optimal cost.
 
-    The computed gaps are added as the ``gaps`` column in the returned `DataFrame`.
+def _add_gaps(df: pd.DataFrame, *, opt_cost: float) -> pd.DataFrame:
+    """Compute the optimality gap for each bitstring and add it as a `gaps` column.
+
+    The gap is computed as $|cost - c^*| / |c^*|$, where $c^*$ is `opt_cost`.
 
     Args:
         df: `DataFrame` to update.
-        opt_cost (float): The known optimal cost used to compute
-            ``|cost - opt_cost| / |opt_cost|``.
+        opt_cost: The known optimal cost used to compute the gap.
 
     Returns:
         pd.DataFrame: A new `DataFrame` including the gaps column.
@@ -222,17 +212,16 @@ def _plot_vs_bitstrings(
     sort_order: str = "descending",
     context: str = "notebook",
 ) -> sns.axisgrid.FacetGrid:
-    """
-    Plots a bar chart of costs, counts, or probabilities as a function of bitstrings.
+    """Plot a bar chart of costs, counts, or probabilities as a function of bitstrings.
 
     Args:
-        df (pd.DataFrame): The `DataFrame` to plot.
-        y_axis (str): The column name to be plotted on the y-axis.
-        sort_by (str | None): Defines the column by which to sort the bitstrings.
-                                 If None, no sorting is done.
-        sort_order (str): Defines the sorting order. Accepts 'ascending' or 'descending'.
-                          Default is 'descending'. Ignored if ``sort_by`` is None.
-        context (str): Seaborn plotting context (e.g. ``"notebook"``, ``"talk"``).
+        df: The `DataFrame` to plot.
+        y_axis: The column name to be plotted on the y-axis.
+        sort_by: The column by which to sort the bitstrings. If None, no
+            sorting is done.
+        sort_order: Either "ascending" or "descending". Default is
+            "descending". Ignored if `sort_by` is None.
+        context: Seaborn plotting context (e.g. "notebook", "talk").
 
     Returns:
         sns.axisgrid.FacetGrid: The resulting plot.
@@ -293,8 +282,7 @@ def _plot_no_bitstrings(
     sort_order: str = "ascending",
     context: str = "notebook",
 ) -> sns.axisgrid.FacetGrid:
-    """
-    Plots a bar chart of probabilities or counts as a function of cost.
+    """Plot a bar chart of probabilities or counts as a function of cost.
 
     Args:
         df: The `DataFrame` to plot.
@@ -369,9 +357,34 @@ def _plot(
     top_percent: float | None = None,
     context: str = "notebook",
 ) -> sns.axisgrid.FacetGrid:
-    """
-    A wrapper function that chooses between plotting costs, counts, or probabilities
-    as a function of bitstrings or as a function of cost.
+    """Plot costs, counts, or probabilities as a function of bitstrings or of cost.
+
+    Filters `df` by `labels`, `probability_threshold`, `cost_threshold`, and
+    `top_percent` (each applied only if not None), then dispatches to
+    `_plot_vs_bitstrings` when `x_axis` is `_BITSTRINGS`, or to
+    `_plot_no_bitstrings` otherwise.
+
+    Args:
+        df: The `DataFrame` to plot.
+        x_axis: Column name for the x-axis.
+        y_axis: Column name for the y-axis.
+        labels: If given, restrict the plot to these solution labels.
+        sort_by: Column by which to sort before plotting. Forwarded to the
+            underlying plot function.
+        sort_order: Either "ascending" or "descending". Default is "ascending".
+        probability_threshold: If given, keep only rows with probability
+            strictly greater than this value.
+        cost_threshold: If given, keep only rows with cost strictly lower
+            than this value.
+        top_percent: If given, keep only the best rows per group up to this
+            cumulative probability (see `_filter_by_percentage`).
+        context: Seaborn plotting context (e.g. "notebook", "talk").
+
+    Returns:
+        sns.axisgrid.FacetGrid: The resulting plot.
+
+    Raises:
+        ValueError: If `x_axis` is not a column in `df`.
     """
     df = df.copy()
 

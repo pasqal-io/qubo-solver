@@ -1,3 +1,10 @@
+"""QUBO Solver: a library for building, solving, and analysing QUBO instances.
+
+Exposes the core data types (`Instance`, `Solution`, `Dataset`, ...), the
+`Solver` entry point, and the `transforms`, `embedding`, `drive_shaping`, and
+`solvers` submodules used to build and run quantum and classical QUBO solvers.
+"""
+
 from __future__ import annotations
 
 from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING

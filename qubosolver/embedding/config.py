@@ -14,13 +14,13 @@ class Config():
         part of a `SolverConfig`.
 
     Attributes:
-        embedding_method (str | embedding.Algorithm | type[BaseEmbedder], optional): The type of
-            embedding method used to place atoms on the register according to the QUBO problem.
-            Defaults to `embedding.Algorithm.GREEDY`.
-        greedy_layout (embedding.Layout | str, optional): embedding.Layout type for the
-            greedy embedder method. Defaults to `embedding.Layout.TRIANGULAR`.
-        greedy_traps (int, optional): The number of traps on the register.
-            Defaults to ``-1``, i.e. automatically set to match the selected device capacity.
+        algorithm (str | Algorithm, optional): The type of embedding method used to
+            place atoms on the register according to the QUBO problem.
+            Defaults to `Algorithm.GREEDY`.
+        greedy_layout (Layout | str, optional): Layout type for the
+            greedy embedder method. Defaults to `Layout.TRIANGULAR`.
+        greedy_traps (int | Literal["device"], optional): The number of traps on the register.
+            Defaults to ``"device"``, i.e. automatically set to match the selected device capacity.
             A too high value will impede computational efficiency.
         greedy_max_possible_term (float | tuple[Literal['factor'], float]):
             If a float, it corresponds to the maximum representable quadratic

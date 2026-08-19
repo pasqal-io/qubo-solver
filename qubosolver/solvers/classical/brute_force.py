@@ -1,7 +1,7 @@
 """Exact brute-force QUBO solver by exhaustive enumeration.
 
 Enumerates the ``2^n`` binary assignments of an ``n``-variable QUBO, evaluates
-``x^T Q x`` for each, and returns the ``max_bitstrings`` lowest-cost ones.  This
+$x^T Q x$ for each, and returns the ``max_bitstrings`` lowest-cost ones.  This
 is exact but scales exponentially in ``n``; it is meant for small instances,
 validation, and as a ground-truth reference for other solvers.
 

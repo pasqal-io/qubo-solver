@@ -22,25 +22,25 @@ class Config():
             after optimization. Defaults to False.
         bayesian_search_n_calls (int, optional): Number of calls for the optimization process.
             Defaults to 20. Note the optimizer accepts a minimal value of 12.
-        bayesian_search_initial_omega_parameters (list[float], optional): Default initial omega parameters
-            for the drive. Defaults to Omega = (1, 2, 1).
-        bayesian_search_initial_detuning_parameters (list[float], optional): Default initial detuning parameters
-            for the drive. Defaults to delta = (-2, 0, 2).
-        bayesian_search_custom_qubo_cost (Callable[[str, torch.Tensor], float], optional): Apply a different
-            qubo cost evaluation
-            than the default QUBO evaluation defined in
-            `qubosolver/pipeline/drive.py:BayesianSearchDriveShaper.compute_qubo_cost`.
+        bayesian_search_initial_omega_parameters (list[float], optional): Initial guess for the
+            three normalized amplitude waveform knots, each in ``[0, 1]``.
+            Defaults to ``[0.5, 0.9, 0.5]``.
+        bayesian_search_initial_detuning_parameters (list[float], optional): Initial guess for the
+            three normalized detuning waveform knots, each in ``[-1, 1]``.
+            Defaults to ``[-0.8, 0.0, 0.8]``.
+        bayesian_search_custom_qubo_cost (Callable[[Bitstring, Matrix], float], optional): Apply a
+            different QUBO cost evaluation than the default defined in
+            `qubosolver.utils._costs.quadratic_cost`.
             Must be defined as:
-            `def bayesian_search_custom_qubo_cost(bitstring: str, QUBO: torch.Tensor) -> float`.
+            `def bayesian_search_custom_qubo_cost(bitstring: Bitstring, QUBO: Matrix) -> float`.
             Defaults to None, meaning we use the default QUBO evaluation.
-        bayesian_search_custom_objective (Callable[[list, list, list, list, float, str], float], optional):
-            For bayesian optimization, one can change the output of
-            `qubosolver/pipeline/drive.py:BayesianSearchDriveShaper.run_simulation`
-            to optimize differently. Instead of using the best cost
-            out of the samples, one can change the objective for an average,
-            or any function out of the form
-            `cost_eval = bayesian_search_custom_objective(bitstrings,
-                counts, probabilities, costs, best_cost, best_bitstring)`
+        bayesian_search_custom_objective (Callable[[Solution], float], optional):
+            For bayesian optimization, one can change the scalar objective
+            computed from each evaluation's `Solution` (bitstrings, counts,
+            probabilities, and costs) to optimize differently. Instead of using
+            the best cost out of the samples, one can change the objective for
+            an average, or any function of the form
+            `def bayesian_search_custom_objective(solution: Solution) -> float`.
             Defaults to None, which means we optimize using the best cost
             out of the samples.
         bayesian_search_callback_objective (Callable[..., None], optional): Apply a callback

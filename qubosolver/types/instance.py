@@ -1,3 +1,11 @@
+"""QUBO problem instances.
+
+An [`Instance`][qubosolver.types.instance.Instance] wraps a symmetric square coefficient matrix
+``Q`` and defines the QUBO objective to minimise:
+
+$$\\text{cost}(x) = x^T Q x, \\quad x \\in \\{0, 1\\}^n$$
+"""
+
 from __future__ import annotations
 
 import torch
@@ -17,7 +25,7 @@ class Instance:
     Wraps a symmetric square coefficient matrix ``Q`` and exposes helpers for
     evaluation, serialisation, and introspection.  The objective to minimise is:
 
-        cost(x) = x^T Q x,   x ∈ {0, 1}^n
+    $$\\text{cost}(x) = x^T Q x, \\quad x \\in \\{0, 1\\}^n$$
 
     Attributes:
         matrix (Matrix):
@@ -83,7 +91,7 @@ class Instance:
         return off_diag.max().item()
 
     def cost(self, solution: Bitstring) -> float:
-        """Compute the QUBO objective ``x^T Q x`` for a candidate solution *x*.
+        """Compute the QUBO objective $x^T Q x$ for a candidate solution *x*.
 
         Args:
             solution (Bitstring):

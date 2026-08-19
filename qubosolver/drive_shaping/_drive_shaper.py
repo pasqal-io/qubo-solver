@@ -18,28 +18,26 @@ from qubosolver import solvers
 
 
 class _BaseDriveShaper(ABC):
-    """
-    Abstract base class for generating Qoolqit drives based on a QUBO problem.
+    """Abstract base class for generating Qoolqit drives based on a QUBO problem.
 
-    This class transforms the structure of a Instance into a quantum
-    waveform sequence or drive that can be applied to a physical register. The register
-    is passed at the time of drive generation, not during initialization.
+    This class transforms the structure of an `Instance` into a quantum
+    waveform sequence or drive that can be applied to a physical register. The
+    register is passed at the time of drive generation, not during
+    initialization.
 
     Attributes:
         instance (Instance): The QUBO problem instance.
-        config (solvers.Config): The solver configuration.
+        config (solvers.QuantumConfig): The solver configuration.
         backend (Backend): Backend to use.
         device (Device): Device from backend.
-
     """
 
     def __init__(self, instance: Instance, config: solvers.QuantumConfig, backend: protocols.Backend):
-        """
-        Initialize the drive shaping module with a QUBO instance.
+        """Initialize the drive shaping module with a QUBO instance.
 
         Args:
             instance (Instance): The QUBO problem instance.
-            config (solvers.Config): The solver configuration.
+            config (solvers.QuantumConfig): The solver configuration.
             backend (Backend): Backend to use.
         """
         self.instance: Instance = instance
@@ -75,31 +73,25 @@ class _BaseDriveShaper(ABC):
 
 
 class ProportionalDiagonalDriveShaper(_BaseDriveShaper):
-    """
-    Proportional-diagonal schedule drive shaper.
+    r"""Proportional-diagonal schedule drive shaper.
 
-    With DMM:
-        Final target encoding:
-            d_i = -alpha * Q_ii
+    With DMM, the final target encoding is $d_i = -\alpha Q_{ii}$. Since the
+    DMM convention in this stack requires the weighted-detuning waveform to
+    stay $\le 0$, the local final detuning is encoded as
 
-        DMM convention in this stack:
-            WeightedDetuning waveform must be <= 0
+    $$\delta_i(T) = \delta_g(T) + \delta_{\text{dmm}}(T) \cdot w_i$$
 
-        Hence we encode the local final detuning as:
-            delta_i(T) = delta_g(T) + delta_dmm(T) * w_i
+    with
 
-        with:
-            delta_g(T)   = d_max
-            delta_dmm(T) = -(d_max - d_min) <= 0
-            w_i          = (d_max - d_i) / (d_max - d_min) in [0, 1]
+    $$\delta_g(T) = d_{\max}, \quad
+    \delta_{\text{dmm}}(T) = -(d_{\max} - d_{\min}) \le 0, \quad
+    w_i = \frac{d_{\max} - d_i}{d_{\max} - d_{\min}} \in [0, 1]$$
 
-        so that:
-            delta_i(T) = d_i
+    so that $\delta_i(T) = d_i$.
 
-    Without DMM:
-        Only a global detuning is available, so the final detuning is chosen as:
-            delta_g(T) = mean(d_i)
-        and no weighted detunings are declared.
+    Without DMM, only a global detuning is available, so the final detuning
+    is chosen as $\delta_g(T) = \text{mean}(d_i)$ and no weighted detunings
+    are declared.
     """
 
     def generate(self, register: qoolqit.Register) -> tuple[qoolqit.Drive, Solution]:
@@ -129,16 +121,16 @@ class ProportionalDiagonalDriveShaper(_BaseDriveShaper):
 
 
 class LocalEnergyScaleDriveShaper(_BaseDriveShaper):
-    """Local-energy-scale heuristic drive shaper.
+    r"""Local-energy-scale heuristic drive shaper.
 
     The peak Rabi frequency is proportional to the average local physical
     energy scale,
 
-        E_i = |delta_i(T)| + sum_{j != i} |V_ij|,
+    $$E_i = |\delta_i(T)| + \sum_{j \neq i} |V_{ij}|,$$
 
     according to
 
-        omega_max = kappa * mean_i(E_i).
+    $$\omega_{\max} = \kappa \cdot \text{mean}_i(E_i).$$
 
     No numerical pulse optimization is performed.
     """
@@ -164,9 +156,11 @@ class LocalEnergyScaleDriveShaper(_BaseDriveShaper):
 
 
 class BayesianSearchDriveShaper(_BaseDriveShaper):
-    """
-    qoolqit.Drive shaper that uses Bayesian search to find the best drive parameters for solving QUBOs.
-    Returns an optimized drive, the bitstrings, their counts, probabilities, and costs.
+    """Drive shaper that uses Bayesian search to find the best drive parameters for solving QUBOs.
+
+    Generating a drive runs a Bayesian optimization loop over the QUBO cost
+    and returns the optimized drive together with a `Solution` holding the
+    sampled bitstrings, their counts, probabilities, and costs.
     """
 
     def __init__(

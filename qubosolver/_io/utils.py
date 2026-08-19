@@ -23,11 +23,7 @@ if TYPE_CHECKING:
 
 
 def read_exact(src: IO[bytes], length: int) -> bytes:
-    """Read exactly the specified number of bytes from a binary stream.
-
-    This function ensures that exactly the requested number of bytes are read
-    from the source stream. If fewer bytes are available than requested, an
-    EOFError is raised.
+    """Read exactly `length` bytes from a binary stream.
 
     Args:
         src: A binary input stream to read from.
@@ -50,11 +46,7 @@ def read_exact(src: IO[bytes], length: int) -> bytes:
 
 
 def save(output: IO[bytes], format: str, data: Any) -> None:
-    """Save data to a binary stream using struct format.
-
-    This function packs data according to the specified struct format and writes
-    it to the output stream. The format string follows Python's struct module
-    conventions for binary data serialization.
+    """Pack `data` with `struct.pack` and write it to a binary stream.
 
     Args:
         output: A binary output stream to write the packed data to.
@@ -62,19 +54,15 @@ def save(output: IO[bytes], format: str, data: Any) -> None:
                (e.g., '>I' for big-endian unsigned int, 'f' for float).
         data: The data value to be packed and written. Must be compatible
               with the specified format.
-
-    Returns:
-        None
     """
     output.write(struct.pack(format, data))
 
 
 def load(src: IO[bytes], format: str) -> Any:
-    """Load and unpack a single value from a binary stream using struct format.
+    """Read and unpack a single value from a binary stream with `struct`.
 
-    This function reads the exact number of bytes required by the specified
-    struct format from the source stream, unpacks the binary data according
-    to the format, and returns the first (and typically only) unpacked value.
+    Reads exactly the number of bytes required by `format` and returns the
+    first (and typically only) unpacked value.
 
     Args:
         src: A binary input stream to read the packed data from.
@@ -95,20 +83,15 @@ def load(src: IO[bytes], format: str) -> Any:
 
 
 def save_sized_buffer(output: IO[bytes], buffer: Buffer) -> None:
-    """Save a buffer to a binary stream with its size prefix.
+    """Write a buffer to a binary stream, prefixed with its length.
 
-    This function writes a buffer to the output stream by first writing the
-    buffer's length as a 4-byte big-endian unsigned integer, followed by the
-    buffer's contents. This format allows the buffer to be read back later
-    using load_sized_buffer().
+    The length is written as a 4-byte big-endian unsigned integer, followed
+    by the buffer's contents, so it can be read back with `load_sized_buffer`.
 
     Args:
         output: A binary output stream to write the sized buffer to.
         buffer: A buffer object (bytes-like) that supports len() to be written.
                Must implement the Buffer protocol and be Sized.
-
-    Returns:
-        None
 
     Raises:
         AssertionError: If the buffer is not an instance of Sized.
@@ -120,12 +103,7 @@ def save_sized_buffer(output: IO[bytes], buffer: Buffer) -> None:
 
 
 def load_sized_buffer(src: IO[bytes]) -> bytes:
-    """Load a buffer from a binary stream that was saved with a size prefix.
-
-    This function reads a buffer from the source stream that was previously
-    written using save_sized_buffer(). It first reads a 4-byte big-endian
-    unsigned integer representing the buffer length, then reads exactly that
-    many bytes and returns them.
+    """Read a length-prefixed buffer previously written by `save_sized_buffer`.
 
     Args:
         src: A binary input stream to read the sized buffer from.
@@ -144,21 +122,16 @@ def load_sized_buffer(src: IO[bytes]) -> bytes:
 
 
 def save_string(output: IO[bytes], string: str, *, encoding: str = "utf-8") -> None:
-    """Save a string to a binary stream with size prefix and encoding.
+    """Encode a string and write it to a binary stream with a length prefix.
 
-    This function encodes a string using the specified encoding and saves it
-    to the output stream using save_sized_buffer(), which prefixes the encoded
-    string with its byte length. This allows the string to be read back later
-    using load_string().
+    Uses `save_sized_buffer` internally, so it can be read back with
+    `load_string`.
 
     Args:
         output: A binary output stream to write the encoded string to.
         string: The string to be encoded and written to the stream.
         encoding: The character encoding to use when converting the string
                  to bytes. Defaults to "utf-8".
-
-    Returns:
-        None
 
     Raises:
         UnicodeEncodeError: If the string cannot be encoded using the
@@ -170,12 +143,7 @@ def save_string(output: IO[bytes], string: str, *, encoding: str = "utf-8") -> N
 
 
 def load_string(src: IO[bytes], *, encoding: str = "utf-8") -> str:
-    """Load a string from a binary stream that was saved with size prefix and encoding.
-
-    This function reads a string from the source stream that was previously
-    written using save_string(). It first loads the sized buffer containing
-    the encoded string bytes, then decodes those bytes back to a string using
-    the specified encoding.
+    """Read a length-prefixed, encoded string previously written by `save_string`.
 
     Args:
         src: A binary input stream to read the encoded string from.
@@ -198,25 +166,7 @@ def load_string(src: IO[bytes], *, encoding: str = "utf-8") -> str:
 
 @overload
 def open(file_like: FileLike[bytes]) -> AbstractContextManager[IO[bytes]]:
-    """Open a binary file-like object with default write mode.
-
-    This overload handles binary file operations for file-like objects that work
-    with bytes, using the default "wb" (write binary) mode. It provides a context
-    manager for safe file handling with automatic resource cleanup.
-
-    Args:
-        file_like: A file-like object that works with bytes. Can be a file path
-                  (str or PathLike) or an existing binary IO object.
-
-    Returns:
-        AbstractContextManager[IO[bytes]]: A context manager that yields a binary
-        IO object when entered. The context manager handles proper resource cleanup.
-
-    Raises:
-        TypeError: If file_like is not a valid binary file-like object when it's
-                  not a path.
-        OSError: If the file cannot be opened (when file_like is a path).
-    """
+    """Open a binary file-like object, defaulting to write ("wb") mode."""
     ...  # pragma: no cover # fmt: skip
 
 
@@ -224,53 +174,13 @@ def open(file_like: FileLike[bytes]) -> AbstractContextManager[IO[bytes]]:
 def open(
     file_like: FileLike[bytes], mode: Literal["rb", "wb"]
 ) -> AbstractContextManager[IO[bytes]]:
-    """Open a binary file-like object with specified mode.
-
-    This overload handles binary file operations for file-like objects that work
-    with bytes. It provides a context manager for safe file handling with automatic
-    resource cleanup.
-
-    Args:
-        file_like: A file-like object that works with bytes. Can be a file path
-                  (str or PathLike) or an existing binary IO object.
-        mode: The file access mode. Must be either "rb" for reading binary data
-              or "wb" for writing binary data.
-
-    Returns:
-        AbstractContextManager[IO[bytes]]: A context manager that yields a binary
-        IO object when entered. The context manager handles proper resource cleanup.
-
-    Raises:
-        TypeError: If file_like is not a valid binary file-like object when it's
-                  not a path.
-        OSError: If the file cannot be opened (when file_like is a path).
-    """
+    """Open a binary file-like object with an explicit "rb" or "wb" mode."""
     ...  # pragma: no cover # fmt: skip
 
 
 @overload
 def open(file_like: FileLike[str], mode: Literal["r", "w"]) -> AbstractContextManager[IO[str]]:
-    """Open a text file-like object with specified mode.
-
-    This overload handles text file operations for file-like objects that work
-    with strings. It provides a context manager for safe file handling with automatic
-    resource cleanup.
-
-    Args:
-        file_like: A file-like object that works with strings. Can be a file path
-                  (str or PathLike) or an existing text IO object.
-        mode: The file access mode. Must be either "r" for reading text data
-              or "w" for writing text data.
-
-    Returns:
-        AbstractContextManager[IO[str]]: A context manager that yields a text
-        IO object when entered. The context manager handles proper resource cleanup.
-
-    Raises:
-        TypeError: If file_like is not a valid text file-like object when it's
-                  not a path.
-        OSError: If the file cannot be opened (when file_like is a path).
-    """
+    """Open a text file-like object with an explicit "r" or "w" mode."""
     ...  # pragma: no cover # fmt: skip
 
 
