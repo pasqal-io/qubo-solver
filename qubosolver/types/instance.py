@@ -22,19 +22,13 @@ from qubosolver._io import utils as io_utils
 class Instance:
     """A single QUBO problem instance.
 
-    Wraps a symmetric square matrix ``Q`` and exposes helpers for
+    Wraps a symmetric square matrix $Q$ and exposes helpers for
     evaluation, serialisation, and introspection.  The objective to minimise is:
 
     $$\\text{cost}(x) = x^T Q x, \\quad x \\in \\{0, 1\\}^n$$
 
-    Attributes:
-        matrix (Matrix):
-            Read-only property returning the ``(size, size)`` coefficient tensor.
-            Asserts squareness on every access (see [`matrix`][]).
-
     Args:
-        matrix (Matrix):
-            Square coefficient matrix ``Q`` of shape ``(n, n)``.
+        matrix: Symmetric matrix $Q$ of shape ``(n, n)``.
             Defaults to an empty ``(0, 0)`` zero matrix, which represents
             a trivial problem with no variables.
     """
@@ -47,7 +41,7 @@ class Instance:
 
     @property
     def size(self) -> int:
-        """Number of binary variables in the QUBO problem (side length of ``Q``)."""
+        """Number of binary variables in the QUBO problem."""
         return self.matrix.shape[0]
 
     def __len__(self) -> int:
@@ -55,11 +49,11 @@ class Instance:
         return self.size
 
     @property
-    def matrix(self) -> torch.Tensor:
-        """The ``(size, size)`` QUBO coefficient matrix.
+    def matrix(self) -> Matrix:
+        """The QUBO symmetric matrix.
 
         Returns:
-            Coefficient matrix of shape ``(size, size)``.
+             QUBO symmetric matrix of shape ``(size, size)``.
 
         Raises:
             AssertionError: If the internal tensor is not 2-D or not square.
@@ -91,18 +85,13 @@ class Instance:
         return off_diag.max().item()
 
     def cost(self, solution: Bitstring) -> float:
-        """Compute the QUBO objective $x^T Q x$ for a candidate solution *x*.
+        """Compute the QUBO objective $x^T Q x$ for a candidate solution $x$.
 
         Args:
-            solution (Bitstring):
-                Binary vector ``x`` of shape ``(size,)`` with values in ``{0, 1}``.
+            solution: Binary vector $x$ of shape ``(size,)``.
 
         Returns:
-            float: Scalar cost value.  Lower is better for minimisation problems.
-
-        Note:
-            The result type is asserted to be a plain ``float`` (not a tensor
-            or numpy scalar) before returning.
+            Scalar cost value.
         """
         # Import here to avoid circular imports
         from qubosolver.utils import _costs
@@ -111,37 +100,29 @@ class Instance:
         assert type(cost) is float  # nosec B101
         return cost
 
-    def __repr__(self) -> str:
-        """Human-readable summary of the instance.
-
-        Returns:
-            str: A quoted string of the form ``"Instance of size = <n>,density = <d>,"`` where *d* is rounded to two decimal places.
-
-        Note:
-            The outer `repr` call intentionally wraps the f-string in
-            quotes, so the return value includes surrounding single quotes.
-        """
-        density = _calculate_density(self.matrix)
-        return repr(f"Instance of size = {self.size}, density = {round(density, 2)}")
-
     @staticmethod
     def save(file_like: io_utils.FileLike[bytes], instance: Instance) -> None:
-        """Serialise *instance* to *file_like* using `torch.save`.
-
-        The coefficient matrix is written into an internal
-        `io.BytesIO` buffer and then flushed to *file_like* using
-        `io_utils.save_sized_buffer`, which prefixes the payload with its
-        byte length.  This framing allows multiple objects to be stored
-        contiguously in the same stream.
+        """Serialise instance to ``file_like`` using `torch.save`.
 
         Args:
-            file_like (io_utils.FileLike[bytes]):
-                Destination — a file path (`str` or `os.PathLike`),
+            file_like: Destination — a file path (`str` or `os.PathLike`),
                 or a binary-writable `typing.IO` stream.
-            instance (Instance):
-                The instance to serialise.  Only [`matrix`][] is persisted;
-                any derived state is recomputed on load.
+            instance: The instance to serialise. Only [`matrix`][] is
+                persisted; any derived state is recomputed on load.
+
+        Example:
+            ```python
+            from pathlib import Path
+
+            with Path("instance.bin").open("wb") as f:
+                Instance.save(f, instance)
+            ```
         """
+        # The coefficient matrix is written into an internal
+        # `io.BytesIO` buffer and then flushed to *file_like* using
+        # `io_utils.save_sized_buffer`, which prefixes the payload with its
+        # byte length. This framing allows multiple objects to be stored
+        # contiguously in the same stream.
         with io_utils.open(file_like, "wb") as f:
             buffer = io.BytesIO()
             torch.save(instance.matrix, buffer)
@@ -151,25 +132,31 @@ class Instance:
     def load(file_like: io_utils.FileLike[bytes]) -> Instance:
         """Deserialise a `Instance` previously saved with `save`.
 
-        Reads a length-prefixed byte block from *file_like* into a dedicated
-        `io.BytesIO` buffer before calling `torch.load`.  The
-        isolated buffer prevents `torch.load` from over-consuming the source
-        stream when multiple objects are packed together.
-
         Args:
-            file_like (io_utils.FileLike[bytes]):
-                Source — a file path (`str` or `os.PathLike`),
-                or a binary-readable `typing.IO` stream.  Must contain
-                data written by `save`.
+            file_like: Source file path or readable binary file object,
+                as produced by [`save`][].
 
         Returns:
-            A new instance whose `matrix` is the deserialised coefficient tensor.
+            A new instance whose `matrix` is the deserialised coefficient
+                tensor.
 
         Note:
             `torch.load` is called with `weights_only=True` to prevent
             arbitrary code execution from untrusted checkpoint files.
+
+        Example:
+            ```python
+            from pathlib import Path
+
+            with Path("instance.bin").open("rb") as f:
+                instance = Instance.load(f)
+            ```
         """
         with io_utils.open(file_like, "rb") as f:
+            # Reads a length-prefixed byte block from *file_like* into a dedicated
+            # `io.BytesIO` buffer before calling `torch.load`. The isolated buffer
+            # prevents `torch.load` from over-consuming the source stream when
+            # multiple objects are packed together.
             # torch.load might consume too much of the src buffer.
             #  Use a dedicated limited buffer
             buffer = io.BytesIO(io_utils.load_sized_buffer(f))
@@ -202,11 +189,11 @@ def _classify_density(density: float) -> _DensityType:
     +-----------+------------------+
 
     Args:
-        density (float): Non-zero ratio in ``[0.0, 1.0]`` as returned by
+        density: Non-zero ratio in ``[0.0, 1.0]`` as returned by
             `_calculate_density`.
 
     Returns:
-        _DensityType: Corresponding :class:`~._DensityType` member.
+        Corresponding :class:`~._DensityType` member.
 
     Raises:
         ValueError: If *density* falls outside ``[0.0, 1.0]`` (e.g. negative
@@ -226,12 +213,12 @@ def _calculate_density(m: Matrix) -> float:
     """Compute the fraction of non-zero entries in a coefficient matrix.
 
     Args:
-        m (Matrix): QUBO coefficient matrix of any shape.
+        m: QUBO coefficient matrix of any shape.
 
     Returns:
-        float: Value in ``[0.0, 1.0]`` where ``0.0`` means all entries are zero
-        and ``1.0`` means no entry is zero.  Returns ``0.0`` for empty matrices
-        (``m.numel() == 0``) to avoid division by zero.
+        Value in ``[0.0, 1.0]`` where ``0.0`` means all entries are zero
+            and ``1.0`` means no entry is zero. Returns ``0.0`` for empty
+            matrices (``m.numel() == 0``) to avoid division by zero.
     """
     if m.numel() == 0:
         return 0.0
