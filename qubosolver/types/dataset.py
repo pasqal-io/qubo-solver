@@ -23,25 +23,25 @@ from qubosolver._io import utils as io_utils
 class Dataset():
     """A dataset of QUBO instances.
 
-    Each instance is represented by a square coefficient matrix ``Q`` such that the
-    optimization objective is ``x^T Q x``, where ``x`` is a binary vector.
+    Each instance is represented by a square matrix $Q$ such that the
+    optimization objective is $x^T Q x$, where $x$ is a binary vector.
 
     Args:
         matrices (torch.Tensor):
-            Coefficient matrices of shape ``(size, size, num_instances)``.
+            Matrices of shape ``(size, size, num_instances)``.
             ``matrices[:, :, i]`` is the ``i``-th QUBO matrix.
         solutions (list[Solution]):
             Ground-truth solutions, one per instance.  Pass an empty list
             (default) when solutions are unknown.
         copy (bool):
             Whether to deep-copy ``matrices`` and ``solutions`` on
-            construction.  Defaults to ``True``.  Pass ``False`` to store the
+            construction.  Pass ``False`` to store the
             given values directly (no copy), e.g. when the caller already
             owns them exclusively.
 
     Attributes:
         matrices (torch.Tensor):
-            Coefficient matrices stored as a 3-D tensor of shape
+            Matrices stored as a 3-D tensor of shape
             ``(size, size, num_instances)``.  The third axis indexes individual
             problem instances.
         solutions (list[Solution]):
@@ -64,17 +64,17 @@ class Dataset():
         self.solutions = solutions
 
     def __len__(self) -> int:
-        """Return the number of QUBO instances in the dataset (``num_instances``)."""
+        """Return the number of QUBO instances in the dataset."""
         return int(self.matrices.shape[2])
 
     def __getitem__(self, idx: int) -> tuple[Instance, Solution]:
-        """Return the coefficient matrix and solution for instance *idx*.
+        """Return the matrix and solution for instance *idx*.
 
         Args:
-            idx (int): Zero-based index of the instance.
+            idx: Zero-based index of the instance.
 
         Returns:
-            A matrix and a solution ``(Q, solution)`` where ``Q`` has shape ``(size, size)``.
+            A symmetric matrix and a solution ``(Q, solution)``.
                 When no solutions were provided, ``solution`` is an empty
                 [`Solution`][].
         """
@@ -84,7 +84,7 @@ class Dataset():
         return instance, Solution()
 
     def __iter__(self) -> Iterator[tuple[Instance, Solution]]:
-        """Iterate over all ``(coefficient_matrix, solution)`` pairs in order.
+        """Iterate over all ``(matrix, solution)`` pairs in order.
 
         Yields:
             A matrix and a solution.
@@ -115,23 +115,21 @@ class Dataset():
         instances are non-trivial to solve.
 
         Args:
-            n_matrices (int): Number of QUBO matrices to generate for each density.
-            matrix_dim (int): The dimension of each QUBO matrix.
-            densities (list[float], optional): List of densities (ratio of non-zero elements).
-                Defaults to [0.5].
-            coefficient_bounds (tuple[float, float], optional): Range (min, max) of
-                random values for the coefficients. Defaults to (-10.0, 10.0).
-            dtype (torch.dtype, optional): Data type for the coefficient tensors.
-                Defaults to `matrix.dtype()` (``torch.float32``).
-            rng (torch.Generator, optional): Random number generator controlling
-                the sampling. Defaults to `torch_rng()`.
-            negative_offdiag_rate (float, optional): Fraction of the non-zero
-                off-diagonal coefficients to flip negative. Defaults to ``0.0``,
-                meaning no off-diagonal coefficient is negative.
+            n_matrices: Number of QUBO matrices to generate for each density.
+            matrix_dim: The dimension of each QUBO matrix.
+            densities: List of densities (ratio of non-zero elements).
+            coefficient_bounds: Range (min, max) of
+                random values for the coefficients.
+            dtype: Data type for the coefficient tensors.
+            rng: Random number generator controlling
+                the sampling.
+            negative_offdiag_rate: Fraction of the non-zero
+                off-diagonal coefficients to flip negative.
+                A value of 0 means that no off-diagonal coefficient is negative.
 
         Returns:
             A dataset containing ``n_matrices * len(densities)`` generated
-            coefficient matrices, with no associated solutions.
+                coefficient matrices, with no associated solutions.
         """
         # Step 1: Initialize a reproducible random generator.
         device = rng.device.type

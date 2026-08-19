@@ -22,7 +22,7 @@ from qubosolver._io import utils as io_utils
 class Instance:
     """A single QUBO problem instance.
 
-    Wraps a symmetric square coefficient matrix ``Q`` and exposes helpers for
+    Wraps a symmetric square matrix ``Q`` and exposes helpers for
     evaluation, serialisation, and introspection.  The objective to minimise is:
 
     $$\\text{cost}(x) = x^T Q x, \\quad x \\in \\{0, 1\\}^n$$

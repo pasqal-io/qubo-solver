@@ -109,9 +109,6 @@ class AutoLocalEmulatorBackend(EmulatorBackend):
     Note:
         This class acts as a factory and never instantiates itself.
         The `__new__` method directly returns instances of the selected backend type.
-
-    Required by `qoolqit.LocalEmulator` which expects backend_type to pass
-    `issubclass(backend_type, EmulatorBackend)` checks.
     """
 
     def __new__(cls, sequence: pulser.Sequence, *args: Any, **kwargs: Any) -> EmulatorBackend:  # type: ignore[misc]
@@ -126,6 +123,8 @@ class AutoLocalEmulatorBackend(EmulatorBackend):
             EmulatorBackend: An instance of the automatically selected backend (`MPSBackend`, `SVBackend`, or `QutipBackendV2`).
 
         Note:
+            Required by `qoolqit.LocalEmulator` which expects backend_type to pass
+            `issubclass(backend_type, EmulatorBackend)` checks.
             Type checking is suppressed (`type: ignore[misc]`) because this factory pattern,
             where `__new__` returns an instance of a different class, confuses static analyzers.
         """
@@ -160,6 +159,8 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
             RemoteEmulatorBackend: An instance of the automatically selected remote backend (`RemoteMPSBackend`, `RemoteSVBackend`, or `RemoteEmuFreeBackend`).
 
         Note:
+            Required by `qoolqit.RemoteLocalEmulator` which expects backend_type to pass
+            `issubclass(backend_type, EmulatorBackend)` checks.
             Type checking is suppressed (`type: ignore[misc]`) because this factory pattern,
             where `__new__` returns an instance of a different class, confuses static analyzers.
         """
