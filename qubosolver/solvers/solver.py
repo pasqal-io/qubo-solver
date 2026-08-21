@@ -4,7 +4,7 @@ This module provides three internal solver classes and the public
 [`Solver`][qubosolver.Solver]:
 
 * [`Solver`][qubosolver.Solver] — public entry point.  Its concrete solving
-  strategy is chosen from [`solvers.Config`][] at construction time, from
+  strategy is chosen from [`Config`][] at construction time, from
   the three solvers below.
 * `_QuboSolverQuantum` — runs the full quantum pipeline: embedding →
   drive shaping → analog quantum sampling → postprocessing.
@@ -27,13 +27,14 @@ from copy import deepcopy
 
 import qoolqit
 
-from qubosolver import Solution, Instance, transforms, torch_rng, solvers
+from qubosolver import Solution, Instance, transforms, torch_rng
 from .config import DecompositionConfig
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from ._basesolver import BaseSolver
 from .classical._solver import get_classical_solver
 from qubosolver.embedding._embedder import _get_embedder
 from qubosolver.drive_shaping._drive_shaper import _get_drive_shaper
+from .config import Config, ClassicalConfig
 
 logger = logging.getLogger(__name__)
 
@@ -42,20 +43,20 @@ class Solver(BaseSolver):
     """A QUBO solver.
 
     Its concrete solving strategy (quantum, classical, or decomposition)
-    is chosen from [`solvers.Config`][] at construction time.
+    is chosen from [`Config`][] at construction time.
 
     Example:
         ```python
         from qubosolver import Instance, Solver, solvers
 
         instance = Instance(matrix)
-        config = solvers.Config()
+        config = Config()
         solver = Solver(instance, config)
         solution = solver.solve()
         ```
     """
 
-    def __init__(self, instance: Instance, config: solvers.Config = solvers.Config()):
+    def __init__(self, instance: Instance, config: Config = Config()):
         """Initialise the solver.
 
         Args:
@@ -123,7 +124,7 @@ class _QuboSolverQuantum(BaseSolver):
     * Problem size is capped at 80 variables (device atom-number limit).
     """
 
-    def __init__(self, instance: Instance, config: solvers.Config = solvers.Config()):
+    def __init__(self, instance: Instance, config: Config = Config()):
         """Initialise the quantum solver.
 
         Args:
@@ -137,7 +138,6 @@ class _QuboSolverQuantum(BaseSolver):
         Raises:
             ValueError: If ``instance.size > 80``.
         """
-        assert isinstance(config.solving, solvers.QuantumConfig)
 
         super().__init__(instance, config or Config())
 
@@ -150,11 +150,10 @@ class _QuboSolverQuantum(BaseSolver):
             )
 
         self._check_size_limit()
-        assert isinstance(self.config.solving, solvers.QuantumConfig)
 
-        self.backend = self.config.solving.backend
-        self.embedder = _get_embedder(self.instance, self.config.solving, self.backend)
-        self.drive_shaper = _get_drive_shaper(self.instance, self.config.solving, self.backend)
+        self.backend = self.config.quantum.backend
+        self.embedder = _get_embedder(self.instance, self.config.quantum, self.backend)
+        self.drive_shaper = _get_drive_shaper(self.instance, self.config.quantum, self.backend)
 
         self._cached_register: qoolqit.Register | None = None
         self._cached_drive: qoolqit.Drive | None = None
@@ -216,7 +215,7 @@ class _QuboSolverQuantum(BaseSolver):
             The final [`Solution`][qubosolver.Solution], sorted by
                 ascending cost with probabilities computed.
         """
-        assert isinstance(self.config.solving, solvers.QuantumConfig)
+        assert self.config.solving_mode == "quantum"
 
         # 1) try trivial else delegate to quantum solver
         if self.config.activate_trivial_solutions:
@@ -240,7 +239,7 @@ class _QuboSolverQuantum(BaseSolver):
 
         drive, solution = self._drive(embedding)
 
-        if not solution or self.config.solving.drive_shaping.bayesian_search_re_execute_opt_drive:
+        if not solution or self.config.quantum.drive_shaping.bayesian_search_re_execute_opt_drive:
             solution = self._execute(drive, embedding)
 
         if isinstance(self.instance, transforms.zeroing.Instance):
@@ -267,7 +266,7 @@ class _QuboSolverClassical(BaseSolver):
     both methods are no-ops that return ``None``.
     """
 
-    def __init__(self, instance: Instance, config: solvers.Config = solvers.Config()):
+    def __init__(self, instance: Instance, config: Config = Config()):
         super().__init__(instance, config)
 
     def _embedding(self) -> qoolqit.Register:
@@ -292,8 +291,6 @@ class _QuboSolverClassical(BaseSolver):
         Returns:
             The final [`Solution`][qubosolver.Solution].
         """
-        assert isinstance(self.config.solving, solvers.ClassicalConfig)
-
         # 1) try trivial
         if self.config.activate_trivial_solutions:
             trivial = self._trivial_solution()
@@ -305,7 +302,7 @@ class _QuboSolverClassical(BaseSolver):
         solution = Solution()
 
         if self.instance.size != 0:
-            classical_solver = get_classical_solver(self.instance, self.config.solving)
+            classical_solver = get_classical_solver(self.instance, self.config.classical)
             solution = (
                 classical_solver.solve()
             )  # This is a reduced solution if pre-procesing is applied
@@ -338,8 +335,8 @@ class _DecomposeQuboSolver(BaseSolver):
     def __init__(
         self,
         instance: Instance,
-        config: solvers.Config | None,
-        solver_factory: Callable[[Instance, solvers.Config], BaseSolver],
+        config: Config | None,
+        solver_factory: Callable[[Instance, Config], BaseSolver],
     ):
         """Initialise the decomposition solver.
 
@@ -364,7 +361,7 @@ class _DecomposeQuboSolver(BaseSolver):
         # default is a quantum solver as we apply device-dependent decomposition
         super().__init__(
             Instance(instance.matrix),
-            config or solvers.Config(),
+            config or Config(),
         )
         self._solver_factory = solver_factory
 
@@ -409,7 +406,7 @@ class _DecomposeQuboSolver(BaseSolver):
         if self.instance.size <= self.decomposition_config.decompose_stop_number:
             solver = _QuboSolverClassical(
                 self.instance,
-                solvers.Config(solving=solvers.ClassicalConfig(), decompose=None),
+                Config(solving=ClassicalConfig(), decompose=None),
             )
             return solver.solve()
 
@@ -417,8 +414,7 @@ class _DecomposeQuboSolver(BaseSolver):
             from qubosolver.transforms import _decompositions
 
             if self.config.solving_mode == "quantum":
-                assert isinstance(self.config.solving, solvers.QuantumConfig)
-                max_min_dist_ratio = self.config.solving.max_min_dist_ratio
+                max_min_dist_ratio = self.config.quantum.max_min_dist_ratio
             else:
                 max_min_dist_ratio = self.decomposition_config.classical_max_min_dist_ratio
 
@@ -453,7 +449,7 @@ class _DecomposeQuboSolver(BaseSolver):
             if subqubo.size != 0:
                 lastsolver = _QuboSolverClassical(
                     subqubo,
-                    solvers.Config(solving=solvers.ClassicalConfig(), decompose=None),
+                    Config(solving=ClassicalConfig(), decompose=None),
                 )
                 subsolution = lastsolver.solve()._compute_costs(subqubo.matrix)._sort_by_cost()
                 solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)
