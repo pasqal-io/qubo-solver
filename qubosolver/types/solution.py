@@ -333,7 +333,7 @@ class Solution:
         )._sort_by_cost()._compute_probabilities()
 
     @staticmethod
-    def from_results(results: Results, *, instance: Instance) -> Solution:
+    def from_results(results: Results, instance: Instance) -> Solution:
         """Build a [`Solution`][] from Pulser quantum-simulation results.
 
         Args:
