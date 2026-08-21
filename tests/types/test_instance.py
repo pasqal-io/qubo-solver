@@ -8,7 +8,7 @@ import pytest
 import pytest_check as check
 import torch
 
-from qubosolver import Instance, Solver, solvers, matrix
+from qubosolver import Instance, Solver, solvers, matrix, transforms
 
 
 def test_valid_qubo_passes_without_error() -> None:
@@ -51,6 +51,45 @@ def test_max_off_diag_no_off_diag_entries(size: int) -> None:
     qi = Instance(matrix.zeros(size))
     with pytest.raises(RuntimeError, match="undefined"):
         qi._max_off_diag
+
+
+def test_variable_fixing_property_raises_for_plain_instance() -> None:
+    instance = Instance()
+    check.is_not_instance(instance, transforms.variable_fixing.Instance)
+    with pytest.raises(TypeError):
+        instance.variable_fixing
+
+
+def test_variable_fixing_property_returns_self_for_variable_fixing_instance() -> None:
+    instance = transforms.variable_fixing.Instance(Instance())
+    check.is_instance(instance, transforms.variable_fixing.Instance)
+    check.is_(instance, instance.variable_fixing)
+
+
+def test_zeroing_property_raises_for_plain_instance() -> None:
+    instance = Instance()
+    check.is_not_instance(instance, transforms.zeroing.Instance)
+    with pytest.raises(TypeError):
+        instance.zeroing
+
+
+def test_zeroing_property_returns_self_for_zeroing_instance() -> None:
+    instance = transforms.zeroing.Instance(Instance())
+    check.is_instance(instance, transforms.zeroing.Instance)
+    check.is_(instance, instance.zeroing)
+
+
+def test_negative_bitflip_property_raises_for_plain_instance() -> None:
+    instance = Instance()
+    check.is_not_instance(instance, transforms.negative_bitflip.Instance)
+    with pytest.raises(TypeError):
+        instance.negative_bitflip
+
+
+def test_negative_bitflip_property_returns_self_for_negative_bitflip_instance() -> None:
+    instance = transforms.negative_bitflip.Instance(Instance())
+    check.is_instance(instance, transforms.negative_bitflip.Instance)
+    check.is_(instance, instance.negative_bitflip)
 
 
 def test_save_load(simple_qubo_instance: Instance) -> None:

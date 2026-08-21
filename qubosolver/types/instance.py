@@ -10,12 +10,16 @@ from __future__ import annotations
 
 import torch
 import io
+from typing import TYPE_CHECKING
 
 from ._checks import debug_runtime_typecheck
 from . import matrix
 from .linalg import Matrix, Bitstring
 from ._enums import _DensityType
 from qubosolver._io import utils as io_utils
+
+if TYPE_CHECKING:
+    from qubosolver.transforms import negative_bitflip, variable_fixing, zeroing
 
 
 @debug_runtime_typecheck
@@ -163,6 +167,79 @@ class Instance:
             Q = torch.load(buffer, weights_only=True)
 
         return Instance(Q)
+
+    @property
+    def variable_fixing(self) -> variable_fixing.Instance:
+        """View of this instance as a variable-fixing [`Instance`][qubosolver.transforms.variable_fixing.Instance].
+
+        Convenience property to avoid the boilerplate of
+        ``assert isinstance(instance, variable_fixing.Instance)`` before calling
+        a method specific to that subclass. It exists purely to satisfy static
+        type checkers (mypy) and enable IDE code completion — the runtime
+        `isinstance` check and the `TypeError` below just mirror the guarantee
+        that the `assert` would otherwise provide.
+
+        Returns:
+            This instance, narrowed to the variable-fixing subclass.
+
+        Raises:
+            TypeError: If this instance is not a
+                [`variable_fixing.Instance`][qubosolver.transforms.variable_fixing.Instance].
+        """
+        from qubosolver.transforms import variable_fixing
+
+        if not isinstance(self, variable_fixing.Instance):
+            raise TypeError(f"Expected a variable_fixing.Instance, got {type(self).__name__}.")
+        return self
+
+    @property
+    def zeroing(self) -> zeroing.Instance:
+        """View of this instance as a zeroing [`Instance`][qubosolver.transforms.zeroing.Instance].
+
+        Convenience property to avoid the boilerplate of
+        ``assert isinstance(instance, zeroing.Instance)`` before calling
+        a method specific to that subclass. It exists purely to satisfy static
+        type checkers (mypy) and enable IDE code completion — the runtime
+        `isinstance` check and the `TypeError` below just mirror the guarantee
+        that the `assert` would otherwise provide.
+
+        Returns:
+            This instance, narrowed to the zeroing subclass.
+
+        Raises:
+            TypeError: If this instance is not a
+                [`zeroing.Instance`][qubosolver.transforms.zeroing.Instance].
+        """
+        from qubosolver.transforms import zeroing
+
+        if not isinstance(self, zeroing.Instance):
+            raise TypeError(f"Expected a zeroing.Instance, got {type(self).__name__}.")
+        return self
+
+    @property
+    def negative_bitflip(self) -> negative_bitflip.Instance:
+        """View of this instance as a negative-bitflip [`Instance`][qubosolver.transforms.negative_bitflip.Instance].
+
+        Convenience property to avoid the boilerplate of
+        ``assert isinstance(instance, negative_bitflip.Instance)`` before calling
+        a method specific to that subclass. It exists purely to satisfy static
+        type checkers (mypy) and enable IDE code completion — the runtime
+        `isinstance` check and the `TypeError` below just mirror the guarantee
+        that the `assert` would otherwise provide.
+
+        Returns:
+            This instance, narrowed to the negative-bitflip subclass.
+
+        Raises:
+            TypeError: If this instance is not a
+                [`negative_bitflip.Instance`][qubosolver.transforms.negative_bitflip.Instance].
+        """
+        from qubosolver.transforms import negative_bitflip
+
+        if not isinstance(self, negative_bitflip.Instance):
+            raise TypeError(f"Expected a negative_bitflip.Instance, got {type(self).__name__}.")
+        return self
+
 
 
 # Density classification thresholds — half-open intervals [lo, hi).
