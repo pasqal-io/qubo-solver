@@ -57,18 +57,6 @@ def tensor(data: Any, *, device: torch.device = device(), **kwargs: Any) -> Bits
     return vector.tensor(data, dtype=dtype(), device=device, **kwargs)
 
 
-def from_torch(tensor: torch.Tensor) -> Bitstring:
-    """Converts an existing torch tensor to a bitstring (``int8``, on the global device).
-
-    Args:
-        tensor: Source tensor to convert.
-
-    Returns:
-        The tensor cast to ``int8`` on the global device.
-    """
-    return tensor.to(dtype=dtype(), device=device())
-
-
 def from_string(s: str, *, device: torch.device = device()) -> Bitstring:
     """Creates a bitstring tensor from a string of '0' and '1' characters.
 

@@ -9,7 +9,7 @@ Typical usage:
 
     t = tensor.zeros(2, 3)                   # 2×3 zero tensor
     t = tensor.tensor([[1.0, 0.0], [0.0, 1.0]])  # from nested list
-    t = tensor.from_torch(some_tensor)       # cast existing tensor
+    t = tensor.as_tensor(some_tensor)        # cast existing tensor, no copy when possible
 
 For rank-specific aliases see [`qubosolver.vector`][qubosolver.vector] (1-D) and
 [`qubosolver.matrix`][qubosolver.matrix] (2-D square).
@@ -74,13 +74,20 @@ def tensor(
     return torch.tensor(data, dtype=dtype, device=device, **kwargs)
 
 
-def from_torch(tensor: torch.Tensor) -> Tensor:
-    """Converts an existing torch tensor to the global float dtype and device.
+def as_tensor(data: Any) -> Tensor:
+    """Convenience wrapper for `torch.as_tensor` that converts data to a tensor,
+    avoiding a copy when possible.
+
+    If *data* is already a tensor with the right dtype and on the right device, it is
+    returned as-is, sharing the same underlying memory. A numpy array is also shared
+    rather than copied if it already has the global float dtype and the global device
+    is ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a
+    copy). Lists, tuples, and other array-like inputs are always copied.
 
     Args:
-        tensor: Source tensor to convert.
+        data: Input data (tensor, numpy array, list, tuple, etc.).
 
     Returns:
-        The tensor cast to the global float dtype and device.
+        A tensor on the global dtype and device.
     """
-    return tensor.to(dtype=dtype(), device=device())
+    return torch.as_tensor(data, dtype=dtype(), device=device())

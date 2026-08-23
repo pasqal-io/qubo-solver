@@ -9,7 +9,7 @@ Typical usage:
 
     v = vector.zeros(4)                      # 1-D zero vector of length 4
     v = vector.tensor([1.0, 0.5, -1.0])     # from a list
-    v = vector.from_torch(some_tensor)       # cast existing tensor
+    v = vector.as_tensor(some_tensor)        # cast existing tensor, no copy when possible
 
 For higher-rank variants see [`qubosolver.matrix`][qubosolver.matrix] (2-D square) and
 [`qubosolver.tensor`][qubosolver.tensor] (arbitrary rank).
@@ -68,13 +68,20 @@ def tensor(
     return torch.tensor(data, dtype=dtype, device=device, **kwargs)
 
 
-def from_torch(tensor: torch.Tensor) -> Vector:
-    """Converts an existing torch tensor to a vector with the global dtype and device.
+def as_tensor(data: Any) -> Vector:
+    """Convenience wrapper for `torch.as_tensor` that converts data to a vector
+    tensor, avoiding a copy when possible.
+
+    If *data* is already a tensor with the right dtype and on the right device, it is
+    returned as-is, sharing the same underlying memory. A numpy array is also shared
+    rather than copied if it already has the global float dtype and the global device
+    is ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a
+    copy). Lists, tuples, and other array-like inputs are always copied.
 
     Args:
-        tensor: Source tensor to convert.
+        data: Input data (tensor, numpy array, list, tuple, etc.).
 
     Returns:
-        The tensor cast to the global float dtype and device.
+        A 1-D tensor on the global dtype and device.
     """
-    return tensor.to(dtype=dtype(), device=device())
+    return torch.as_tensor(data, dtype=dtype(), device=device())
