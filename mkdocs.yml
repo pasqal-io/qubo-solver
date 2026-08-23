@@ -128,6 +128,9 @@ plugins:
     handlers:
       python:
         paths: [qubosolver]
+        inventories:
+        - url: https://pasqal-io.github.io/qoolqit/latest/objects.inv
+          base_url: https://docs.pasqal.com/qoolqit/
         options:
           docstring_options:
             ignore_init_summary: true

@@ -75,7 +75,7 @@ class Config:
 
     @staticmethod
     def from_drive_shaping_config(config: drive_shaping.Config) -> Config:
-        """Create a `Config` from a user-facing [`drive_shaping.Config`][].
+        """Create a [`Config`][] from a user-facing [`drive_shaping.Config`][].
 
         Args:
             config: The drive-shaping configuration to convert.
@@ -108,7 +108,7 @@ def _compute_norm_weights(instance: Instance) -> list[float]:
     whose diagonal coefficient equals the maximum gets weight 0 (fully
     penalized) and a qubit with a zero diagonal coefficient gets weight 1
     (unrestricted).  These weights are passed to the
-    :class:`~qoolqit.drive.DetuningMapModulator` to modulate the local
+    [`qoolqit.drive.DetuningMapModulator`][] to modulate the local
     detuning per qubit.
 
     Args:
@@ -135,18 +135,18 @@ def _build_drive(
     device: qoolqit.Device,
     register: qoolqit.Register,
 ) -> qoolqit.Drive:
-    """Build a :class:`~qoolqit.Drive` from a flat parameter vector.
+    """Build a [`qoolqit.Drive`][] from a flat parameter vector.
 
     The first three values in *params* control the amplitude waveform and the
     remaining three control the detuning waveform.  Both are represented as
-    :class:`~qoolqit.InterpolatedWaveform` waveforms over the full sequence duration.
+    [`qoolqit.InterpolatedWaveform`][] waveforms over the full sequence duration.
     Raw parameters are normalized in ``[0, 1]`` or ``[-1, 1]`` and are scaled
     so that the amplitude waveform stays within what the compiler can realize
     on `device` for `register`, and the detuning waveform stays within the
     detuning budget available for that (realized) amplitude.
 
     When *dmm* is enabled **and** the final detuning value is positive, a
-    :class:`~qoolqit.drive.DetuningMapModulator` is added with
+    [`qoolqit.drive.DetuningMapModulator`][] is added with
     per-qubit weights derived from the diagonal of the QUBO matrix (see
     `_compute_norm_weights`).
 
@@ -158,13 +158,13 @@ def _build_drive(
             ``params[3:]`` are the three detuning knots.  Both ends of the
             amplitude waveform are pinned to zero.
         dmm: If ``True``, attach a constant weighted
-            :class:`~qoolqit.drive.DetuningMapModulator` when the final
+            [`qoolqit.drive.DetuningMapModulator`][] when the final
             detuning is positive.
         device: Target quantum device.
         register: The physical register the drive will run on.
 
     Returns:
-        A fully configured :class:`~qoolqit.Drive` ready for simulation.
+        A fully configured [`qoolqit.Drive`][] ready for simulation.
     """
     max_seq_duration: float = device.specs["max_duration"] or 1e3
     max_amplitude = max_virtual_amplitude(device, register)
@@ -215,7 +215,7 @@ def _run_simulation(
     results by cost and computes sampling probabilities in-place.
 
     If the simulation or post-processing raises any exception the error is
-    printed and an empty :class:`Solution` is returned, so callers must
+    printed and an empty [`Solution`][] is returned, so callers must
     treat an empty solution as a failure signal.
 
     Args:
@@ -229,9 +229,9 @@ def _run_simulation(
             fallback sequence duration for devices without a native cap.
 
     Returns:
-        A :class:`Solution` with ``costs``, ``bitstrings``,
+        A [`Solution`][] with ``costs``, ``bitstrings``,
         ``probabilities``, and ``counts`` populated and sorted by ascending
-        cost.  Returns an empty :class:`Solution` on any failure.
+        cost.  Returns an empty [`Solution`][] on any failure.
     """
     from qubosolver import solvers
     try:
@@ -276,7 +276,7 @@ def build_drive(
         config: Optimization parameters (initial guess, number of calls, etc.).
 
     Returns:
-        A tuple of the best `qoolqit.Drive` found and the corresponding
+        A tuple of the best [`qoolqit.Drive`][] found and the corresponding
             [`Solution`][].
     """
     n_amp = 3
