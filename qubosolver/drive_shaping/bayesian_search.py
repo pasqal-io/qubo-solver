@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 import numpy as np
 from skopt import gp_minimize
 from collections.abc import Callable, Sequence
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 import torch
 
 import qoolqit
@@ -20,9 +20,11 @@ from qubosolver.types import (
     tensor,
 )
 from qubosolver.utils import _costs
-from .config import Config as DriveShapingConfig
 from ._device_specs import max_virtual_amplitude, detuning_amplitude_ratio
 from ._waveforms import constant_weighted_dmm
+
+if TYPE_CHECKING:
+    from qubosolver import drive_shaping
 
 
 def _default_objective(solution: Solution) -> float:
@@ -31,7 +33,7 @@ def _default_objective(solution: Solution) -> float:
 
 
 class _CallbackObjectiveInput(TypedDict):
-    """Input dictionary passed to the optimisation callback."""
+    """Input dictionary passed to the optimization callback."""
 
     x: Sequence[float]
     cost_eval: float
@@ -39,15 +41,16 @@ class _CallbackObjectiveInput(TypedDict):
 
 @dataclass
 class Config:
-    """Configuration for the Bayesian-optimisation drive shaper.
+    """Configuration for the Bayesian-optimization drive shaper.
 
     Attributes:
         x0: Initial guess for the waveform parameters (3 amplitude + 3 detuning).
-        n_calls: Number of Bayesian optimisation evaluations.
+        n_calls: Number of Bayesian optimization evaluations.
         seed: Random seed for reproducibility.
-        qubo_cost: Callable used to evaluate bitstring cost against the QUBO matrix.
-        objective: Callable that maps a `Solution` to a scalar
-            objective (lower is better).
+        qubo_cost: Callable used to evaluate a
+            [`Bitstring`][]'s cost against the QUBO
+            [`Matrix`][].
+        objective: Callable that maps a [`Solution`][] to a scalar objective (lower is better).
         callback_objective: Optional callback invoked after each evaluation.
         default_sequence_duration: Fallback maximum sequence duration (ns)
             injected when the target device has no `max_duration` cap.
@@ -71,8 +74,8 @@ class Config:
     default_sequence_duration: int = 50000
 
     @staticmethod
-    def from_drive_shaping_config(config: DriveShapingConfig) -> Config:
-        """Create a `Config` from a user-facing [`DriveShapingConfig`][].
+    def from_drive_shaping_config(config: drive_shaping.Config) -> Config:
+        """Create a `Config` from a user-facing [`drive_shaping.Config`][].
 
         Args:
             config: The drive-shaping configuration to convert.
@@ -99,11 +102,11 @@ class Config:
 
 
 def _compute_norm_weights(instance: Instance) -> list[float]:
-    """Compute per-qubit normalised weights from the diagonal of the QUBO matrix.
+    """Compute per-qubit normalized weights from the diagonal of the QUBO matrix.
 
     Each weight is defined as ``1 - |Q_ii| / max_j(|Q_jj|)``, so a qubit
     whose diagonal coefficient equals the maximum gets weight 0 (fully
-    penalised) and a qubit with a zero diagonal coefficient gets weight 1
+    penalized) and a qubit with a zero diagonal coefficient gets weight 1
     (unrestricted).  These weights are passed to the
     :class:`~qoolqit.drive.DetuningMapModulator` to modulate the local
     detuning per qubit.
@@ -113,7 +116,7 @@ def _compute_norm_weights(instance: Instance) -> list[float]:
 
     Returns:
         A list of floats in ``[0, 1]``, one per qubit, representing the
-        normalised DMM weights.  Returns all-zeros when every diagonal
+        normalized DMM weights.  Returns all-zeros when every diagonal
         entry is zero.
     """
     weights_list = torch.abs(torch.diag(instance.matrix)).tolist()
@@ -137,7 +140,7 @@ def _build_drive(
     The first three values in *params* control the amplitude waveform and the
     remaining three control the detuning waveform.  Both are represented as
     :class:`~qoolqit.InterpolatedWaveform` waveforms over the full sequence duration.
-    Raw parameters are normalised in ``[0, 1]`` or ``[-1, 1]`` and are scaled
+    Raw parameters are normalized in ``[0, 1]`` or ``[-1, 1]`` and are scaled
     so that the amplitude waveform stays within what the compiler can realize
     on `device` for `register`, and the detuning waveform stays within the
     detuning budget available for that (realized) amplitude.
@@ -150,7 +153,7 @@ def _build_drive(
     Args:
         instance: The QUBO instance, used to compute DMM weights when *dmm* is
             ``True``.
-        params: Flat sequence of 6 normalised parameters —
+        params: Flat sequence of 6 normalized parameters —
             ``params[:3]`` are the three interior amplitude knots and
             ``params[3:]`` are the three detuning knots.  Both ends of the
             amplitude waveform are pinned to zero.
@@ -221,7 +224,7 @@ def _run_simulation(
         drive: The drive sequence to apply during the simulation.
         device: Target quantum device that defines hardware constraints.
         backend: Execution backend used to run the quantum program.
-        config: Optimisation configuration supplying the ``qubo_cost``
+        config: Optimization configuration supplying the ``qubo_cost``
             callable used to evaluate each returned bitstring and the
             fallback sequence duration for devices without a native cap.
 
@@ -258,22 +261,23 @@ def build_drive(
     dmm: bool = False,
     config: Config = Config(),
 ) -> tuple[qoolqit.Drive, Solution]:
-    """Generate a drive schedule via Bayesian optimisation.
+    """Generate a drive schedule via Bayesian optimization.
 
-    Uses ``skopt.gp_minimize`` to search over waveform parameters,
-    running quantum simulations at each evaluation to minimise the
+    Uses `skopt.gp_minimize` to search over waveform parameters,
+    running quantum simulations at each evaluation to minimize the
     QUBO cost.
 
     Args:
-        instance: The QUBO instance to solve.
+        instance: The QUBO [`Instance`][] to solve.
         register: The physical atom register.
-        backend: Execution backend for running simulations during optimisation.
+        backend: Execution backend for running simulations during optimization.
         device: Target quantum device.
         dmm: Whether to use the Detuning Map Modulator.
-        config: Optimisation parameters (initial guess, number of calls, etc.).
+        config: Optimization parameters (initial guess, number of calls, etc.).
 
     Returns:
-        A tuple of the best `qoolqit.Drive` found and the corresponding `Solution`.
+        A tuple of the best `qoolqit.Drive` found and the corresponding
+            [`Solution`][].
     """
     n_amp = 3
     n_det = 3
