@@ -9,6 +9,7 @@ import pytest_check as check
 from unittest.mock import MagicMock, patch
 from typing import Iterable, Any
 
+import qoolqit
 from qoolqit.devices.device import AnalogDeviceWithDMM, AnalogDevice
 from qoolqit.register import Register
 
@@ -19,6 +20,7 @@ from qubosolver import (
     Solution,
     solvers,
     drive_shaping,
+    vector,
     matrix,
     tensor,
     bitstring,
@@ -333,3 +335,22 @@ def test_failed_skopt() -> None:
         # Falls back to the default x0 parameters, which are now clamped to
         # stay compilable on the device, so the simulation succeeds.
         check.is_true(qubo_solution)
+
+def test_dmm_labels_are_ints() -> None:
+
+    vertices = tensor.tensor([[0.0, 0.0], [1.0, 0.0]])
+    register = qoolqit.Register.from_coordinates(vertices)
+    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+    instance = Instance(Q)
+
+    check.is_instance(register.qubits_ids[0], int)
+
+    device = qoolqit.AnalogDeviceWithDMM()
+    drive, _ = drive_shaping.bayesian_search.build_drive(instance, register, dmm=True, device=device, backend=LocalEmulator())
+
+    assert drive.dmm is not None
+    for k, v in drive.dmm.weights.items():
+        check.is_instance(k, int)
+        check.is_instance(v, float)
+    # check that compilation doesn't throw
+    qoolqit.QuantumProgram(register, drive).compile_to(device, profile="max_energy", device_max_duration_ratio=0.999)

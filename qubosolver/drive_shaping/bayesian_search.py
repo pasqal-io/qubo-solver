@@ -239,7 +239,7 @@ def _run_simulation(
             device,
             default_sequence_duration=config.default_sequence_duration,
         )
-        solution = Solution.from_results(job.results())
+        solution = Solution.from_results(job.results(), Instance(Q))
         costs = [config.qubo_cost(b, Q) for b in solution.bitstrings]
         solution.costs = tensor.tensor(costs)
         solution._sort_by_cost()._compute_probabilities()

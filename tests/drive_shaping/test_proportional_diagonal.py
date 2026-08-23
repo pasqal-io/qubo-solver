@@ -183,3 +183,23 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
     )
     assert detuning_match is not None
     check.almost_equal(float(detuning_match.group(2)), max_detuning, rel=1e-2)
+
+
+def test_dmm_labels_are_ints() -> None:
+
+    vertices = tensor.tensor([[0.0, 0.0], [1.0, 0.0]])
+    register = qoolqit.Register.from_coordinates(vertices)
+    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+    instance = Instance(Q)
+
+    check.is_instance(register.qubits_ids[0], int)
+
+    device = qoolqit.AnalogDeviceWithDMM()
+    drive = drive_shaping.proportional_diagonal.build_drive(instance, register, dmm=True, device=device)
+
+    assert drive.dmm is not None
+    for k, v in drive.dmm.weights.items():
+        check.is_instance(k, int)
+        check.is_instance(v, float)
+    # check that compilation doesn't throw
+    qoolqit.QuantumProgram(register, drive).compile_to(device, profile="max_energy", device_max_duration_ratio=0.999)
