@@ -7,7 +7,7 @@ import math
 import pytest
 import pytest_check as check
 from unittest.mock import MagicMock, patch
-from typing import Iterable, Any
+from typing import Iterable
 
 import qoolqit
 from qoolqit.devices.device import AnalogDeviceWithDMM, AnalogDevice
@@ -229,15 +229,10 @@ def test_errors(raise_exception: bool) -> None:
             raise RuntimeError("Error occurred")
         return float("inf")
 
-    def bayesian_search_callback_objective(d: dict[Any, Any]) -> None:
-        check.almost_equal(d["cost_eval"], 1e4)
-
     mock_error = MagicMock(wraps=error)
-    mock_callback = MagicMock(wraps=bayesian_search_callback_objective)
 
     ds_config = drive_shaping.Config()
     ds_config.bayesian_search_custom_objective = mock_error
-    ds_config.bayesian_search_callback_objective = mock_callback
     ds_config.bayesian_search_n_calls = 11
     config = solvers.QuantumConfig(
         device=AnalogDeviceWithDMM(),
@@ -248,7 +243,6 @@ def test_errors(raise_exception: bool) -> None:
     drive, qubo_solution = drive_shaper.generate(register)
 
     check.equal(mock_error.call_count, 11)
-    check.equal(mock_callback.call_count, 11)
 
 
 def test_failed_simulation() -> None:

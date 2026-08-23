@@ -101,15 +101,9 @@ def test_generate_bayesian_search_drive_shaper(
     def custom_ojective(solution: Solution) -> float:
         return float(1e4)
 
-    opt_res = []
-
-    def callback_fn(d: dict) -> None:
-        opt_res.append(d)
-
     custom_fn_ps = drive_shaping.Config(
         algorithm=default_config.drive_shaping.algorithm,
         bayesian_search_custom_objective=custom_ojective,
-        bayesian_search_callback_objective=callback_fn,
     )
     backend = default_config.backend
     shaper = _get_drive_shaper(
@@ -119,8 +113,6 @@ def test_generate_bayesian_search_drive_shaper(
     )
     assert isinstance(shaper, BayesianSearchDriveShaper)
     drive, solution = shaper.generate(dummy_register)
-    assert len(opt_res) > 0
-    assert opt_res[-1]["cost_eval"] == float(1e4)
 
 
 @pytest.mark.priority(25)

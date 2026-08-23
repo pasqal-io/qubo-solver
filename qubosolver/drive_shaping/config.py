@@ -37,12 +37,6 @@ class Config():
             `def bayesian_search_custom_objective(solution: Solution) -> float`.
             Defaults to None, which means we optimize using the best cost
             out of the samples.
-        bayesian_search_callback_objective (Callable[..., None], optional): Apply a callback
-            during bayesian optimization. Only accepts one input dictionary
-            created during optimization `d = {"x": x, "cost_eval": cost_eval}`
-            hence should be defined as:
-            `def callback_fn(d: dict) -> None:`
-            Defaults to None, which means no callback is applied.
         bayesian_search_seed (int | None): Random seed for the Bayesian optimiser.
             Defaults to None.
         proportional_diagonal_kappa (float): Scaling coefficient for the Omega waveform in
@@ -68,7 +62,6 @@ class Config():
         ]
     )  # ---> default initial drive parameters: delta = (-2, 0, 2)
     bayesian_search_custom_objective: Callable[[Solution], float] | None = None
-    bayesian_search_callback_objective: Callable[..., None] | None = None
     bayesian_search_seed: int | None = None
     bayesian_search_re_execute_opt_drive: bool = False
 

@@ -1,4 +1,4 @@
-"""Bayesian-optimised drive schedule generation for QUBO solving."""
+"""Bayesian-optimized drive schedule generation for QUBO solving."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 import numpy as np
 from skopt import gp_minimize
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING
 import torch
 
 import qoolqit
@@ -28,8 +28,9 @@ def _default_objective(solution: Solution) -> float:
     return solution.costs[0].item() if solution else float("inf")
 
 
-class _CallbackObjectiveInput(TypedDict):
-    """Input dictionary passed to the optimization callback."""
+@dataclass
+class CallbackInfo:
+    """Data passed to the optimization callback after each evaluation."""
 
     x: Sequence[float]
     cost_eval: float
@@ -46,8 +47,11 @@ class Config:
             three knots, each normalized in `[-1, 1]`.
         n_evaluations: Number of Bayesian optimization evaluations.
         seed: Random seed for reproducibility.
-        objective_fn: Callable that maps a [`Solution`][] to a scalar objective (lower is better).
-        callback_fn: Optional callback invoked after each evaluation.
+        objective_fn: Callable that maps a [`Solution`][] to a scalar objective (lower is
+            better). Defaults to the best (lowest) cost among the sampled bitstrings; override
+            to optimize a different aggregate, e.g. the average cost across samples.
+        callback_fn: Optional callback invoked after each evaluation with a
+            [`CallbackInfo`][], e.g. to log or track optimization progress.
         default_sequence_duration: Fallback maximum sequence duration (ns)
             injected when the target device has no `max_duration` cap.
     """
@@ -57,7 +61,7 @@ class Config:
     n_evaluations: int = 20
     seed: int | None = None
     objective_fn: Callable[[Solution], float] = _default_objective
-    callback_fn: Callable[[_CallbackObjectiveInput], None] = lambda data: None
+    _callback_fn: Callable[[CallbackInfo], None] = lambda data: None
     default_sequence_duration: int = 50000
 
     @staticmethod
@@ -78,8 +82,6 @@ class Config:
         cfg.default_sequence_duration = config.default_sequence_duration
         if config.bayesian_search_custom_objective is not None:
             cfg.objective_fn = config.bayesian_search_custom_objective
-        if config.bayesian_search_callback_objective is not None:
-            cfg.callback_fn = config.bayesian_search_callback_objective
 
         return cfg
 
@@ -241,9 +243,9 @@ def build_drive(
 ) -> tuple[qoolqit.Drive, Solution]:
     """Generate a drive schedule via Bayesian optimization.
 
-    Uses `skopt.gp_minimize` to search over waveform parameters,
-    running quantum simulations at each evaluation to minimize the
-    QUBO cost.
+    Uses `skopt.gp_minimize` to search over waveform parameters, running a
+    quantum simulation at each evaluation and minimizing `config.objective_fn`
+    of the resulting [`Solution`][].
 
     Args:
         instance: The QUBO [`Instance`][] to solve.
@@ -251,7 +253,8 @@ def build_drive(
         backend: Execution backend for running simulations during optimization.
         device: Target quantum device.
         dmm: Whether to use the Detuning Map Modulator.
-        config: Optimization parameters (initial guess, number of calls, etc.).
+        config: Optimization parameters, including the initial waveform knots,
+            number of evaluations, and objective function.
 
     Returns:
         A tuple of the best [`qoolqit.Drive`][] found and the corresponding
@@ -303,7 +306,7 @@ def build_drive(
 
     def objective(x: list[float]) -> float:
         cost_eval, _, _ = run(x)
-        config.callback_fn({"x": x, "cost_eval": cost_eval})
+        config._callback_fn(CallbackInfo(x=x, cost_eval=cost_eval))
 
         return cost_eval
 
