@@ -14,6 +14,7 @@ from qoolqit.devices.device import AnalogDeviceWithDMM, AnalogDevice
 from qoolqit.register import Register
 
 from qubosolver.drive_shaping._drive_shaper import BayesianSearchDriveShaper
+from qubosolver.drive_shaping import bayesian_search
 from qubosolver import (
     Instance,
     SingleSolution,
@@ -243,6 +244,43 @@ def test_errors(raise_exception: bool) -> None:
     drive, qubo_solution = drive_shaper.generate(register)
 
     check.equal(mock_error.call_count, 11)
+
+
+def test_callback_fn() -> None:
+    """`_callback_fn` is private/experimental: set it by attribute after construction."""
+
+    # Set a Register and compute the associated QUBO
+    vertices = tensor.tensor(
+        [
+            [0.0, 0.5],
+            [-0.8, -0.4],
+            [0.2, -0.15],
+        ],
+    )
+    register = Register.from_coordinates(vertices)
+    Q = matrix.as_tensor(register.interaction_matrix()) - matrix.as_tensor(torch.eye(3))
+
+    device = AnalogDeviceWithDMM()
+    backend = LocalEmulator()
+
+    seen: list[bayesian_search._CallbackInfo] = []
+
+    def callback(info: bayesian_search._CallbackInfo) -> None:
+        seen.append(info)
+
+    bs_config = bayesian_search.Config(n_evaluations=11)
+    bs_config._callback_fn = callback
+
+    bayesian_search.build_drive(
+        Instance(Q),
+        register,
+        backend=backend,
+        device=device,
+        config=bs_config,
+    )
+
+    check.equal(len(seen), 11)
+    check.is_instance(seen[0], bayesian_search._CallbackInfo)
 
 
 def test_failed_simulation() -> None:

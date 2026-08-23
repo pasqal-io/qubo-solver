@@ -29,7 +29,7 @@ def _default_objective(solution: Solution) -> float:
 
 
 @dataclass
-class CallbackInfo:
+class _CallbackInfo:
     """Data passed to the optimization callback after each evaluation."""
 
     x: Sequence[float]
@@ -47,11 +47,9 @@ class Config:
             three knots, each normalized in `[-1, 1]`.
         n_evaluations: Number of Bayesian optimization evaluations.
         seed: Random seed for reproducibility.
-        objective_fn: Callable that maps a [`Solution`][] to a scalar objective (lower is
-            better). Defaults to the best (lowest) cost among the sampled bitstrings; override
-            to optimize a different aggregate, e.g. the average cost across samples.
-        callback_fn: Optional callback invoked after each evaluation with a
-            [`CallbackInfo`][], e.g. to log or track optimization progress.
+        objective_fn: Function to minimize: takes a [`Solution`][] and returns a number.
+            Defaults to the minimum cost among the sampled bitstrings; override to
+            minimize something else, e.g. the average cost.
         default_sequence_duration: Fallback maximum sequence duration (ns)
             injected when the target device has no `max_duration` cap.
     """
@@ -61,12 +59,14 @@ class Config:
     n_evaluations: int = 20
     seed: int | None = None
     objective_fn: Callable[[Solution], float] = _default_objective
-    _callback_fn: Callable[[CallbackInfo], None] = lambda data: None
+    _callback_fn: Callable[[_CallbackInfo], None] = field(
+        default=lambda data: None, init=False
+    )
     default_sequence_duration: int = 50000
 
     @staticmethod
     def from_drive_shaping_config(config: drive_shaping.Config) -> Config:
-        """Create a [`Config`][] from a user-facing [`drive_shaping.Config`][].
+        """Create a [`Config`][] from a higher-level [`drive_shaping.Config`][].
 
         Args:
             config: The drive-shaping configuration to convert.
@@ -306,7 +306,7 @@ def build_drive(
 
     def objective(x: list[float]) -> float:
         cost_eval, _, _ = run(x)
-        config._callback_fn(CallbackInfo(x=x, cost_eval=cost_eval))
+        config._callback_fn(_CallbackInfo(x=x, cost_eval=cost_eval))
 
         return cost_eval
 
