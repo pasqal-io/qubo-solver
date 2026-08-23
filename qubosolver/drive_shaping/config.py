@@ -4,7 +4,7 @@ import inspect
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from qubosolver.types import Bitstring, Matrix, Solution
+from qubosolver.types import Solution
 from .enums import Algorithm
 
 
@@ -28,12 +28,6 @@ class Config():
         bayesian_search_initial_detuning_parameters (list[float], optional): Initial guess for the
             three normalized detuning waveform knots, each in ``[-1, 1]``.
             Defaults to ``[-0.8, 0.0, 0.8]``.
-        bayesian_search_custom_qubo_cost (Callable[[Bitstring, Matrix], float], optional): Apply a
-            different QUBO cost evaluation than the default defined in
-            `qubosolver.utils._costs.quadratic_cost`.
-            Must be defined as:
-            `def bayesian_search_custom_qubo_cost(bitstring: Bitstring, QUBO: Matrix) -> float`.
-            Defaults to None, meaning we use the default QUBO evaluation.
         bayesian_search_custom_objective (Callable[[Solution], float], optional):
             For bayesian optimization, one can change the scalar objective
             computed from each evaluation's `Solution` (bitstrings, counts,
@@ -73,7 +67,6 @@ class Config():
             0.8,
         ]
     )  # ---> default initial drive parameters: delta = (-2, 0, 2)
-    bayesian_search_custom_qubo_cost: Callable[[Bitstring, Matrix], float] | None = None
     bayesian_search_custom_objective: Callable[[Solution], float] | None = None
     bayesian_search_callback_objective: Callable[..., None] | None = None
     bayesian_search_seed: int | None = None

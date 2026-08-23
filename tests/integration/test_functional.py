@@ -167,7 +167,7 @@ def test_quantum_solve(
             backend=emulator,
             device=device,
             dmm=False,
-            config=drive_shaping.bayesian_search.Config(n_calls=11, seed=seed),
+            config=drive_shaping.bayesian_search.Config(n_evaluations=11, seed=seed),
         )
     else:
         raise ValueError(f"Invalid drive shaping method: {drive_shaping_method}")

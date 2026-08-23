@@ -15,7 +15,6 @@ from qubosolver import (
     embedding,
     drive_shaping,
     solvers,
-    Bitstring,
     matrix,
 )
 from qubosolver.drive_shaping._drive_shaper import (
@@ -107,14 +106,10 @@ def test_generate_bayesian_search_drive_shaper(
     def callback_fn(d: dict) -> None:
         opt_res.append(d)
 
-    def custom_qubo(bitstring: Bitstring, QUBO: torch.Tensor) -> float:
-        return 1.0
-
     custom_fn_ps = drive_shaping.Config(
         algorithm=default_config.drive_shaping.algorithm,
         bayesian_search_custom_objective=custom_ojective,
         bayesian_search_callback_objective=callback_fn,
-        bayesian_search_custom_qubo_cost=custom_qubo,
     )
     backend = default_config.backend
     shaper = _get_drive_shaper(

@@ -14,12 +14,8 @@ import qoolqit
 from qubosolver.types import (
     Instance,
     Solution,
-    Bitstring,
-    Matrix,
     protocols,
-    tensor,
 )
-from qubosolver.utils import _costs
 from ._device_specs import max_virtual_amplitude, detuning_amplitude_ratio
 from ._waveforms import constant_weighted_dmm
 
@@ -44,33 +40,24 @@ class Config:
     """Configuration for the Bayesian-optimization drive shaper.
 
     Attributes:
-        x0: Initial guess for the waveform parameters (3 amplitude + 3 detuning).
-        n_calls: Number of Bayesian optimization evaluations.
+        initial_amplitude_knots: Initial guess for the amplitude waveform's
+            three interior knots, each normalized in `[0, 1]`.
+        initial_detuning_knots: Initial guess for the detuning waveform's
+            three knots, each normalized in `[-1, 1]`.
+        n_evaluations: Number of Bayesian optimization evaluations.
         seed: Random seed for reproducibility.
-        qubo_cost: Callable used to evaluate a
-            [`Bitstring`][]'s cost against the QUBO
-            [`Matrix`][].
-        objective: Callable that maps a [`Solution`][] to a scalar objective (lower is better).
-        callback_objective: Optional callback invoked after each evaluation.
+        objective_fn: Callable that maps a [`Solution`][] to a scalar objective (lower is better).
+        callback_fn: Optional callback invoked after each evaluation.
         default_sequence_duration: Fallback maximum sequence duration (ns)
             injected when the target device has no `max_duration` cap.
     """
 
-    x0: list[float] = field(
-        default_factory=lambda: [
-            0.5,
-            0.9,
-            0.5,
-            -0.8,
-            0.0,
-            0.8,
-        ]
-    )
-    n_calls: int = 20
+    initial_amplitude_knots: list[float] = field(default_factory=lambda: [0.5, 0.9, 0.5])
+    initial_detuning_knots: list[float] = field(default_factory=lambda: [-0.8, 0.0, 0.8])
+    n_evaluations: int = 20
     seed: int | None = None
-    qubo_cost: Callable[[Bitstring, Matrix], float] = _costs.quadratic_cost
-    objective: Callable[[Solution], float] = _default_objective
-    callback_objective: Callable[[_CallbackObjectiveInput], None] = lambda data: None
+    objective_fn: Callable[[Solution], float] = _default_objective
+    callback_fn: Callable[[_CallbackObjectiveInput], None] = lambda data: None
     default_sequence_duration: int = 50000
 
     @staticmethod
@@ -84,19 +71,15 @@ class Config:
             A configuration populated from the drive-shaping settings.
         """
         cfg = Config()
-        cfg.x0 = (
-            config.bayesian_search_initial_omega_parameters
-            + config.bayesian_search_initial_detuning_parameters
-        )
-        cfg.n_calls = config.bayesian_search_n_calls
+        cfg.initial_amplitude_knots = config.bayesian_search_initial_omega_parameters
+        cfg.initial_detuning_knots = config.bayesian_search_initial_detuning_parameters
+        cfg.n_evaluations = config.bayesian_search_n_calls
         cfg.seed = config.bayesian_search_seed
         cfg.default_sequence_duration = config.default_sequence_duration
-        if config.bayesian_search_custom_qubo_cost is not None:
-            cfg.qubo_cost = config.bayesian_search_custom_qubo_cost
         if config.bayesian_search_custom_objective is not None:
-            cfg.objective = config.bayesian_search_custom_objective
+            cfg.objective_fn = config.bayesian_search_custom_objective
         if config.bayesian_search_callback_objective is not None:
-            cfg.callback_objective = config.bayesian_search_callback_objective
+            cfg.callback_fn = config.bayesian_search_callback_objective
 
         return cfg
 
@@ -210,9 +193,7 @@ def _run_simulation(
 
     Submits an analog quantum sampling job via
     `~qubosolver.solvers.analog_quantum_sampling` using the
-    ``MAX_ENERGY`` compiler profile (the default), evaluates the QUBO cost
-    for every returned bitstring with ``config.qubo_cost``, then sorts
-    results by cost and computes sampling probabilities in-place.
+    ``MAX_ENERGY`` compiler profile (the default).
 
     If the simulation or post-processing raises any exception the error is
     printed and an empty [`Solution`][] is returned, so callers must
@@ -224,8 +205,7 @@ def _run_simulation(
         drive: The drive sequence to apply during the simulation.
         device: Target quantum device that defines hardware constraints.
         backend: Execution backend used to run the quantum program.
-        config: Optimization configuration supplying the ``qubo_cost``
-            callable used to evaluate each returned bitstring and the
+        config: Optimization configuration supplying the
             fallback sequence duration for devices without a native cap.
 
     Returns:
@@ -243,9 +223,7 @@ def _run_simulation(
             default_sequence_duration=config.default_sequence_duration,
         )
         solution = Solution.from_results(job.results(), Instance(Q))
-        costs = [config.qubo_cost(b, Q) for b in solution.bitstrings]
-        solution.costs = tensor.tensor(costs)
-        solution._sort_by_cost()._compute_probabilities()
+        solution.check_consistency(throw=True, full=False)
         return solution
     except Exception as e:
         print(f"Simulation failed: {e}")
@@ -288,6 +266,8 @@ def build_drive(
 
     bounds = [(zero, one)] * n_amp + [(-one, -zero)] + [(-one, one)] * (n_det - 2) + [(zero, one)]
 
+    initial_params = config.initial_amplitude_knots + config.initial_detuning_knots
+
     def run(x: list[float], eval: bool = True) -> tuple[float, Solution, qoolqit.Drive]:
 
         solution = Solution()
@@ -309,7 +289,7 @@ def build_drive(
                 config,
             )
             if eval:
-                cost_eval = config.objective(solution)
+                cost_eval = config.objective_fn(solution)
                 if not np.isfinite(cost_eval):
                     print(f"[Warning] Non-finite cost encountered: {cost_eval} at x={x}")
                     cost_eval = 1e4
@@ -323,19 +303,19 @@ def build_drive(
 
     def objective(x: list[float]) -> float:
         cost_eval, _, _ = run(x)
-        config.callback_objective({"x": x, "cost_eval": cost_eval})
+        config.callback_fn({"x": x, "cost_eval": cost_eval})
 
         return cost_eval
 
     opt_result = gp_minimize(
         objective,
         bounds,
-        x0=config.x0,
-        n_calls=config.n_calls,
+        x0=initial_params,
+        n_calls=config.n_evaluations,
         random_state=config.seed,
     )
 
-    best_params = opt_result.x if opt_result else config.x0
+    best_params = opt_result.x if opt_result else initial_params
     _, solution, drive = run(best_params, eval=False)
 
     return drive, solution
