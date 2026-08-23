@@ -243,7 +243,8 @@ def build_drive(
 ) -> tuple[qoolqit.Drive, Solution]:
     """Generate a drive schedule via Bayesian optimization.
 
-    Uses `skopt.gp_minimize` to search over waveform parameters, running a
+    Uses [`skopt.gp_minimize`](https://scikit-optimize.github.io/stable/modules/generated/skopt.gp_minimize.html)
+    to search over waveform parameters, running a
     quantum simulation at each evaluation and minimizing `config.objective_fn`
     of the resulting [`Solution`][].
 
