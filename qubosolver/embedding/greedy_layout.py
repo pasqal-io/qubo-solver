@@ -41,8 +41,6 @@ class Config:
             spacing is ``max_possible_term ** (-1 / 6)``, since interactions
             scale as ``1 / distance ** 6``.
         layout: Lattice layout type (square or triangular).
-        draw_steps: If ``True``, collect per-step data for animation.
-        animation_save_path: Optional path to save the embedding animation.
         max_min_dist_ratio: Maximum allowed ratio between the largest and
             the smallest inter-atom distance in the resulting register.
             ``"device"`` means it is derived from the device.
@@ -51,9 +49,9 @@ class Config:
     traps: int | Literal["device"] = "device"
     max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
     layout: Layout = Layout.TRIANGULAR
-    draw_steps: bool = False
-    animation_save_path: pathlib.Path | None = None
     max_min_dist_ratio: float | Literal["device"] = "device"
+    _draw_steps: bool = False
+    _animation_save_path: pathlib.Path | None = None
 
     def _update_from_device(self, device: qoolqit.Device) -> None:
         """Resolve the ``"device"`` sentinels in-place from device constraints.
