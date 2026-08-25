@@ -21,7 +21,7 @@ import qoolqit
 
 from ._algorithms import greedy
 from qubosolver import Instance, tensor
-from .enums import Layout
+from .enums import Lattice
 from .config import Config as EmbeddingConfig
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
@@ -40,7 +40,7 @@ class Config:
             instance's largest off-diagonal coefficient. The corresponding
             spacing is ``max_possible_term ** (-1 / 6)``, since interactions
             scale as ``1 / distance ** 6``.
-        layout: Lattice layout type (square or triangular).
+        lattice: Lattice pattern (square or triangular).
         max_min_dist_ratio: Maximum allowed ratio between the largest and
             the smallest inter-atom distance in the resulting register.
             ``"device"`` means it is derived from the device.
@@ -48,7 +48,7 @@ class Config:
 
     traps: int | Literal["device"] = "device"
     max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
-    layout: Layout = Layout.TRIANGULAR
+    lattice: Lattice = Lattice.TRIANGULAR
     max_min_dist_ratio: float | Literal["device"] = "device"
 
     def __post_init__(self):

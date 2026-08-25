@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 import torch
 
-from .enums import Algorithm, Layout
+from .enums import Algorithm, Lattice
 
 
 @dataclass
@@ -16,9 +16,9 @@ class Config():
         algorithm: The type of embedding method used to
             place atoms on the register according to the QUBO problem.
             Defaults to `Algorithm.GREEDY`.
-        greedy_layout: Layout type for the
-            greedy embedder method. Defaults to `Layout.TRIANGULAR`.
-        greedy_traps: The number of traps on the register.
+        greedy_layout_lattice: Lattice type for the
+            greedy layout embedder method. Defaults to `Lattice.TRIANGULAR`.
+        greedy_layout_traps: The number of traps on the register.
             Defaults to ``"device"``, i.e. automatically set to match the selected device capacity.
             A too high value will impede computational efficiency.
         greedy_max_possible_term:
@@ -32,8 +32,6 @@ class Config():
             resolution to represent the terms. Setting it to a lower value
             decreases the resolution and allows traps to be set farther to
             potentially represent smaller terms.
-        greedy_density: The estimated density of the QUBO matrix.
-            Defaults to `None`.
         blade_steps_per_round: Maps directly to `steps_per_round` in [`qoolqit.embedding.BladeConfig`][]
         blade_starting_positions: Maps directly to `starting_positions` in [`qoolqit.embedding.BladeConfig`][]
         blade_dimensions: Maps directly to `dimensions` in [`qoolqit.embedding.BladeConfig`][]
@@ -45,15 +43,12 @@ class Config():
 
     algorithm: Algorithm | str = Algorithm.GREEDY
 
-    greedy_layout: Layout | str = Layout.TRIANGULAR
-    greedy_traps: int | Literal["device"] = "device"
-    greedy_max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
-    greedy_density: float | None = None
+    greedy_layout_layout: Lattice | str = Lattice.TRIANGULAR
+    greedy_layout_traps: int | Literal["device"] = "device"
+    greedy_layout_max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
     blade_steps_per_round: int | None = 200
     blade_starting_positions: torch.Tensor | None = None
     blade_dimensions: list[int] = field(default_factory=lambda: [5, 4, 3, 2, 2, 2])
-    draw_steps: bool = False
-    animation_save_path: str | None = None
     max_min_dist_ratio: float | Literal["device"] = "device"
 
     def __post_init__(self) -> None:
@@ -74,15 +69,15 @@ class Config():
             raise TypeError("Invalid embedding method type.")
 
     @staticmethod
-    def _normalize_layout(val: str | Layout) -> Layout:
-        """Normalize the layout attribute."""
-        if isinstance(val, Layout):
+    def _normalize_lattice(val: str | Lattice) -> Lattice:
+        """Normalize the lattice attribute."""
+        if isinstance(val, Lattice):
             return val
         elif isinstance(val, str):
             try:
-                return Layout[val.upper()]
+                return Lattice[val.upper()]
             except KeyError:
-                raise ValueError(f"Invalid layout '{val}'.")
+                raise ValueError(f"Invalid lattice '{val}'.")
         else:
-            raise TypeError("Invalid layout type.")
+            raise TypeError("Invalid lattice type.")
 

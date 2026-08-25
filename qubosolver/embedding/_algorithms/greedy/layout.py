@@ -5,11 +5,11 @@ from __future__ import annotations
 import torch
 
 from qubosolver import tensor, Tensor
-from qubosolver.embedding.enums import Layout
+from qubosolver.embedding.enums import Lattice
 from pulser.register.special_layouts import SquareLatticeLayout, TriangularLatticeLayout
 
 
-def get_layout(*, layout_type: Layout | str = Layout.TRIANGULAR, n_traps: int) -> Tensor:
+def get_layout(*, layout_type: Lattice | str = Lattice.TRIANGULAR, n_traps: int) -> Tensor:
     """Build a lattice of `n_traps` unit-spacing trap coordinates.
 
     For a square lattice, builds a grid large enough to contain `n_traps`
@@ -19,8 +19,8 @@ def get_layout(*, layout_type: Layout | str = Layout.TRIANGULAR, n_traps: int) -
     arbitrary corner block of the grid.
 
     Args:
-        layout_type: Lattice type, `Layout.TRIANGULAR`/`Layout.SQUARE`
-            or their lowercase string names. Defaults to `Layout.TRIANGULAR`.
+        layout_type: Lattice type, `Lattice.TRIANGULAR`/`Lattice.SQUARE`
+            or their lowercase string names. Defaults to `Lattice.TRIANGULAR`.
         n_traps: Number of trap sites to return.
 
     Returns:
@@ -33,9 +33,9 @@ def get_layout(*, layout_type: Layout | str = Layout.TRIANGULAR, n_traps: int) -
         layout_type = layout_type.lower()
 
     if layout_type not in [
-        Layout.TRIANGULAR,
+        Lattice.TRIANGULAR,
         "triangular",
-        Layout.SQUARE,
+        Lattice.SQUARE,
         "square",
     ]:
         raise ValueError(f"Unsupported layout_type: {layout_type!r}")
@@ -44,10 +44,10 @@ def get_layout(*, layout_type: Layout | str = Layout.TRIANGULAR, n_traps: int) -
         return tensor.zeros(0, 2)
 
     match layout_type:
-        case Layout.TRIANGULAR | "triangular":
+        case Lattice.TRIANGULAR | "triangular":
             return tensor.tensor(TriangularLatticeLayout(n_traps, spacing=1).coords)
 
-        case Layout.SQUARE | "square":
+        case Lattice.SQUARE | "square":
             n = int(torch.ceil(torch.sqrt(2 * torch.tensor(n_traps))).item())
             coords = torch.tensor(SquareLatticeLayout(n, n, spacing=1).coords)
             squared_distances = coords.square().sum(dim=1)
