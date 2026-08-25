@@ -50,8 +50,10 @@ class Config:
     max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
     layout: Layout = Layout.TRIANGULAR
     max_min_dist_ratio: float | Literal["device"] = "device"
-    _draw_steps: bool = False
-    _animation_save_path: pathlib.Path | None = None
+
+    def __post_init__(self):
+        self._draw_steps: bool = False
+        self._animation_save_path: pathlib.Path | None = None
 
     def _update_from_device(self, device: qoolqit.Device) -> None:
         """Resolve the ``"device"`` sentinels in-place from device constraints.
@@ -100,9 +102,6 @@ class Config:
         cfg.max_possible_term = config.greedy_max_possible_term
 
         cfg.layout = EmbeddingConfig._normalize_layout(config.greedy_layout)
-        cfg.draw_steps = config.draw_steps
-        path = config.animation_save_path
-        cfg.animation_save_path = pathlib.Path(path) if path else None
         cfg.max_min_dist_ratio = config.max_min_dist_ratio
 
         return cfg
@@ -235,9 +234,9 @@ def embed(
         "traps": config.traps,
         "spacing": spacing,
         # animation controls (all read by Greedy)
-        "draw_steps": config.draw_steps,  # collect per-step data
-        "animation": config.draw_steps,  # render animation after run
-        "animation_save_path": config.animation_save_path,  # optional export
+        "draw_steps": config._draw_steps,  # collect per-step data
+        "animation": config._draw_steps,  # render animation after run
+        "animation_save_path": config._animation_save_path,  # optional export
     }
 
     # --- Call Greedy (unchanged public signature)

@@ -37,10 +37,6 @@ class Config():
         blade_steps_per_round: Maps directly to `steps_per_round` in [`qoolqit.embedding.BladeConfig`][]
         blade_starting_positions: Maps directly to `starting_positions` in [`qoolqit.embedding.BladeConfig`][]
         blade_dimensions: Maps directly to `dimensions` in [`qoolqit.embedding.BladeConfig`][]
-        draw_steps: Show generated graph at each step of the optimization.
-            Defaults to `False`.
-        animation_save_path: If provided, path to save animation.
-            Defaults to None.
         max_min_dist_ratio: Maximum allowed ratio
             between the largest and the smallest inter-atom distance in the resulting
             register. When ``"device"``, it is derived from the configured device's
