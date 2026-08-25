@@ -10,7 +10,7 @@ from .enums import Algorithm
 
 @dataclass
 class Config():
-    """A module-level [`drive_shaping.Config`][] that defines the drive shaping part of a [`solvers.Config`][].
+    """A module-level [`drive_shaping.Config`][] that defines the drive shaping part of a [`solvers.QuantumConfig`][].
 
     Attributes:
         algorithm: Drive shaping method used. Defaults to [`Algorithm.PROPORTIONAL_DIAGONAL`][].
