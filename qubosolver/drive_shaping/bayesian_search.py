@@ -80,8 +80,6 @@ class Config:
         cfg.n_evaluations = config.bayesian_search_n_calls
         cfg.seed = config.bayesian_search_seed
         cfg.default_sequence_duration = config.default_sequence_duration
-        if config.bayesian_search_custom_objective is not None:
-            cfg.objective_fn = config.bayesian_search_custom_objective
 
         return cfg
 
