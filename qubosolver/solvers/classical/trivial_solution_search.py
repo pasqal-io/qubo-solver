@@ -12,7 +12,7 @@ import torch
 from qubosolver import Instance, Solution, bitstring, vector, vectori
 
 
-def trivial_solution_search(instance: Instance) -> Solution:
+def solve(instance: Instance) -> Solution:
     """Solve a QUBO when the coefficient structure is trivial.
 
     Three patterns are recognised:

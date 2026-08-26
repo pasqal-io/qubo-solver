@@ -104,7 +104,7 @@ def simulated_annealing(
 
 
 @torch.no_grad()
-def simulated_annealing(
+def solve(
     instance: Instance,
     start: Bitstrings,
     *,

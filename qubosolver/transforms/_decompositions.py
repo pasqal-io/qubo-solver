@@ -59,7 +59,7 @@ class Config:
     max_min_dist_ratio: float = float("inf")
 
     @staticmethod
-    def from_decomposition_config(
+    def _from_decomposition_config(
         config: DecompositionConfig, *, max_min_dist_ratio: float
     ) -> Config:
         """Create a :class:`Config` from a user-facing :class:`DecompositionConfig`."""

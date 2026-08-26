@@ -79,7 +79,7 @@ def _quantum_program(
     return program
 
 
-def analog_quantum_sampling(
+def solve(
     register: qoolqit.Register,
     drive: qoolqit.Drive,
     backend: protocols.Backend,

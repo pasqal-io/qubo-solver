@@ -13,7 +13,7 @@ from qubosolver.types import Instance, Solution, bitstring, torch_rng
 from qubosolver.utils import _costs
 
 
-def random_sampling(
+def solve(
     instance: Instance,
     *,
     max_bitstrings: int = 1,

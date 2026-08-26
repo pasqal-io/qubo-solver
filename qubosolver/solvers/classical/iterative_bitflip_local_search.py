@@ -210,7 +210,7 @@ _STRATEGIES: dict[str, Callable[..., tuple[Bitstring, float]]] = {
 }
 
 
-def iterative_bitflip_local_search(
+def solve(
     instance: Instance,
     solution: Solution,
     *,

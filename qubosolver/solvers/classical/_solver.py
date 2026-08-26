@@ -193,7 +193,7 @@ class RandomSolver(BaseClassicalSolver):
             their corresponding QUBO costs.
         """
         rng = torch_rng().set_state(torch.get_rng_state())
-        return solvers.random_sampling(
+        return solvers.classical.random_sampling.solve(
             self.instance, rng=rng, max_bitstrings=self.config.max_bitstrings
         )
 

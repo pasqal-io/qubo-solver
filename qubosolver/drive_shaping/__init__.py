@@ -10,7 +10,6 @@ from __future__ import annotations
 from qubosolver.drive_shaping import (
     proportional_diagonal,
     local_energy_scale,
-    bayesian_search,
 )
 from qubosolver.drive_shaping.enums import Algorithm
 from qubosolver.drive_shaping.config import Config
@@ -18,7 +17,6 @@ from qubosolver.drive_shaping.config import Config
 __all__ = [
     "proportional_diagonal",
     "local_energy_scale",
-    "bayesian_search",
     "Algorithm",
     "Config",
 ]

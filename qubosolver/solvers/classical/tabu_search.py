@@ -14,7 +14,7 @@ from qubosolver.types import Instance, Solution, Bitstrings, bitstrings
 from qubosolver.utils import _costs
 
 
-def tabu_search(
+def solve(
     qubo: Instance,
     start: Bitstrings,
     *,

@@ -120,7 +120,7 @@ def _to_solution(cplex_solution: CPLEX.SolutionInterface) -> Solution:
     return solution
 
 
-def cplex(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> Solution:
+def solve(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> Solution:
     """Solve a QUBO instance to optimality (or time limit) using IBM CPLEX.
 
     Args:

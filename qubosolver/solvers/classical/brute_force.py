@@ -54,7 +54,7 @@ def _decode_bits(indices: Vectori, n: int) -> Bitstrings:
     return bitstrings.from_torch((indices.unsqueeze(1) >> shifts) & 1)
 
 
-def brute_force(
+def solve(
     instance: Instance,
     *,
     max_bitstrings: int = 1,

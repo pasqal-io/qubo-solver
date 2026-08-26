@@ -10,7 +10,6 @@ import qoolqit
 from . import (
     proportional_diagonal,
     local_energy_scale,
-    bayesian_search,
 )
 from .enums import Algorithm
 from qubosolver.types import Instance, Solution, protocols
@@ -198,9 +197,9 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
             probabilities from the final simulation run.
         """
 
-        config = bayesian_search.Config.from_drive_shaping_config(self.config.drive_shaping)
+        config = solvers.drive_bayesian_search.Config._from_drive_shaping_config(self.config.drive_shaping)
 
-        return bayesian_search.build_drive(
+        solution, drive = solvers.drive_bayesian_search(
             self.instance,
             register,
             backend=self.backend,

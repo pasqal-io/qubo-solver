@@ -65,7 +65,7 @@ class Config:
     default_sequence_duration: int = 50000
 
     @staticmethod
-    def from_drive_shaping_config(config: drive_shaping.Config) -> Config:
+    def _from_drive_shaping_config(config: drive_shaping.Config) -> Config:
         """Create a [`Config`][] from a higher-level [`drive_shaping.Config`][].
 
         Args:
@@ -230,7 +230,7 @@ def _run_simulation(
         return Solution()
 
 
-def build_drive(
+def solve(
     instance: Instance,
     register: qoolqit.Register,
     *,
@@ -238,7 +238,7 @@ def build_drive(
     device: qoolqit.Device,
     dmm: bool = False,
     config: Config = Config(),
-) -> tuple[qoolqit.Drive, Solution]:
+) -> tuple[Solution, qoolqit.Drive]:
     """Generate a drive schedule via Bayesian optimization.
 
     Uses [`skopt.gp_minimize`](https://scikit-optimize.github.io/stable/modules/generated/skopt.gp_minimize.html)
@@ -320,4 +320,4 @@ def build_drive(
     best_params = opt_result.x if opt_result else initial_params
     _, solution, drive = run(best_params, eval=False)
 
-    return drive, solution
+    return solution, drive
