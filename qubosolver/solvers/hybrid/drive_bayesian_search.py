@@ -16,8 +16,8 @@ from qubosolver.types import (
     Solution,
     protocols,
 )
-from ._device_specs import max_virtual_amplitude, detuning_amplitude_ratio
-from ._waveforms import constant_weighted_dmm
+from qubosolver.drive_shaping._device_specs import max_virtual_amplitude, detuning_amplitude_ratio
+from qubosolver.drive_shaping._waveforms import constant_weighted_dmm
 
 if TYPE_CHECKING:
     from qubosolver import drive_shaping

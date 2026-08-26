@@ -70,7 +70,7 @@ _default_rng = torch_rng()
 
 
 @overload
-def simulated_annealing(
+def solve(
     instance: Instance,
     start: Bitstrings,
     *,
@@ -87,7 +87,7 @@ def simulated_annealing(
 
 
 @overload
-def simulated_annealing(
+def solve(
     instance: Instance,
     start: Bitstrings,
     *,
@@ -292,7 +292,7 @@ def solve(
 
         unique_bits = torch.stack([_from_key(key) for key in visited_solutions.keys()])
         solution = Solution(
-            bitstrings=bitstrings.from_torch(unique_bits),
+            bitstrings=bitstrings.as_tensor(unique_bits),
             costs=vector.tensor([s.energy for s in visited_solutions.values()]),
             counts=counts,
         )

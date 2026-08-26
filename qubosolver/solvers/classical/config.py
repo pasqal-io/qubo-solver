@@ -11,7 +11,7 @@ class Config():
     """A `ClassicalConfig` instance defines the classical part of a `SolverConfig`.
 
     Attributes:
-        classical_solver_type (solvers.ClassicalAlgorithm, optional): Classical solver type. Defaults to
+        classical_solver_type (solvers.classical.Algorithm, optional): Classical solver type. Defaults to
             `"tabu_search"`.
         cplex_maxtime (float, optional): CPLEX maximum runtime in seconds. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
@@ -32,7 +32,7 @@ class Config():
             in seconds. Defaults to `float("inf")`, meaning no time limit.
     """
 
-    algorithm: str | ClassicalAlgorithm = "tabu_search"
+    algorithm: Algorithm | str = Algorithm.TABU_SEARCH
 
     cplex_maxtime: float = 600.0
     cplex_log_path: str = ""
@@ -57,14 +57,14 @@ class Config():
 
     @staticmethod
     def _normalize_classical_solver_type(
-        val: str | ClassicalAlgorithm,
-    ) -> ClassicalAlgorithm:
+        val: str | Algorithm,
+    ) -> Algorithm:
         """Normalize the classical_solver_type attribute."""
-        if isinstance(val, ClassicalAlgorithm):
+        if isinstance(val, Algorithm):
             return val
         elif isinstance(val, str):
             try:
-                return ClassicalAlgorithm[val.upper()]
+                return Algorithm[val.upper()]
             except KeyError:
                 raise ValueError(f"Invalid classical algorithm '{val}'.")
         else:

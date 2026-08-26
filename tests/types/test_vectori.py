@@ -84,17 +84,17 @@ def test_tensor_propagates_kwargs_to_vector_tensor() -> None:
         check.is_false(call_kwargs.kwargs.get("requires_grad"))
 
 
-def test_from_torch_converts_dtype_and_device() -> None:
+def test_as_tensor_converts_dtype_and_device() -> None:
     source = torch.tensor([1, 2, 3], dtype=torch.int32)
-    result = vectori.from_torch(source)
+    result = vectori.as_tensor(source)
     check.equal(result.dtype, torch.int64)
     check.equal(result.device, linalg.device())
     torch.testing.assert_close(result, torch.tensor([1, 2, 3], dtype=torch.int64))
 
 
-def test_from_torch_preserves_values() -> None:
+def test_as_tensor_preserves_values() -> None:
     source = torch.tensor([4.0, 5.0, 6.0], dtype=torch.float32)
-    result = vectori.from_torch(source)
+    result = vectori.as_tensor(source)
     check.equal(result.dtype, torch.int64)
     torch.testing.assert_close(result, torch.tensor([4, 5, 6], dtype=torch.int64))
 

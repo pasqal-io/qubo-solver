@@ -109,7 +109,7 @@ def solve(
 
     solution = (
         Solution(
-            bitstrings=bitstrings.from_torch(uniq),
+            bitstrings=bitstrings.as_tensor(uniq),
             costs=costs,
             counts=counts,
         )

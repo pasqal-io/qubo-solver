@@ -6,7 +6,6 @@ used as post-processing steps to refine an existing solution.
 
 from __future__ import annotations
 
-from qubosolver.solvers.enums import ClassicalAlgorithm
 from qubosolver.solvers.classical import (
     brute_force,
     cplex,
@@ -20,13 +19,12 @@ from qubosolver.solvers.hybrid import drive_bayesian_search
 from qubosolver.solvers.quantum import analog_quantum_sampling
 from qubosolver.solvers import classical, hybrid, quantum
 from qubosolver.solvers.solver import Solver, QuboSolver
-from qubosolver.solvers.config import Config, ClassicalConfig, DecompositionConfig, QuantumConfig
+from qubosolver.solvers.config import Config, DecompositionConfig
 
 __all__ = [
     "classical",
     "hybrid",
     "quantum",
-    "ClassicalAlgorithm",
     "iterative_bitflip_local_search",
     "analog_quantum_sampling",
     "drive_bayesian_search",
@@ -39,7 +37,5 @@ __all__ = [
     "Solver",
     "QuboSolver",
     "Config",
-    "QuantumConfig",
-    "ClassicalConfig",
     "DecompositionConfig",
 ]

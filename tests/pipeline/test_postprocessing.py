@@ -19,7 +19,7 @@ from qubosolver import (
     utils,
     torch_rng,
 )
-from qubosolver.solvers.classical.bitflip import _best_improvement_search
+from qubosolver.solvers.classical.iterative_bitflip_local_search import _best_improvement_search
 from qubosolver.utils import analysis
 
 
@@ -73,7 +73,7 @@ def test_basic_qubo_2d() -> None:
         probabilities=vector.tensor([1.0]),
     )
 
-    pp_solution = solvers.iterative_bitflip_local_search(instance, solution)
+    pp_solution = solvers.iterative_bitflip_local_search.solve(instance, solution)
     pp_solution._sort_by_cost()
 
     torch.testing.assert_close(pp_solution.bitstrings[0, :], bitstring.tensor([1, 1]))
@@ -102,7 +102,7 @@ def test_random_qubos(density: float) -> None:
                 counts=vectori.tensor([1]),
                 probabilities=vector.tensor([1.0]),
             )
-            pp_solution = solvers.iterative_bitflip_local_search(instance, solution)
+            pp_solution = solvers.iterative_bitflip_local_search.solve(instance, solution)
             pp_solution._sort_by_cost()
 
             df = analysis.to_dataframe([pp_solution])
@@ -124,7 +124,7 @@ def test_no_solution() -> None:
     check.equal(solution.bitstrings.numel(), 0)
 
     # Bitflip doesn't find new solutions if there were none to begin with
-    pp_solution = solvers.iterative_bitflip_local_search(instance, solution)
+    pp_solution = solvers.iterative_bitflip_local_search.solve(instance, solution)
     check.equal(pp_solution.bitstrings.numel(), 0)
 
 

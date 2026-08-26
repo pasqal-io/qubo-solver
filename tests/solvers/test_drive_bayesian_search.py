@@ -14,7 +14,7 @@ from qoolqit.devices.device import AnalogDeviceWithDMM, AnalogDevice
 from qoolqit.register import Register
 
 from qubosolver.drive_shaping._drive_shaper import BayesianSearchDriveShaper
-from qubosolver.drive_shaping import bayesian_search
+from qubosolver.solvers.hybrid import drive_bayesian_search
 from qubosolver import (
     Instance,
     SingleSolution,
@@ -87,7 +87,7 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
     # Choose scaling factor so that coefficients and costs are in a human readable range (~10)
     Q = 10.0 * interaction_matrix_from_vertices(vertices)
     # Choose diagonal coefficients so that the solutions are 011, 101 and 110
-    Q = Q - 2.5 * matrix.from_torch(torch.eye(3)) * Q[0, 1]
+    Q = Q - 2.5 * matrix.as_tensor(torch.eye(3)) * Q[0, 1]
 
     results = []
     for bits in itertools.product([0, 1], repeat=3):
@@ -110,7 +110,7 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
         ds_config.bayesian_search_custom_objective = probability_based_ojective
     ds_config.bayesian_search_n_calls = 11
     ds_config.bayesian_search_seed = seed
-    config = solvers.QuantumConfig(device=AnalogDevice(), drive_shaping=ds_config)
+    config = solvers.quantum.Config(device=AnalogDevice(), drive_shaping=ds_config)
 
     drive_shaper = BayesianSearchDriveShaper(Instance(Q), config, config.backend)
     drive, qubo_solution = drive_shaper.generate(register)
@@ -158,7 +158,7 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
     # Choose scaling factor so that coefficients and costs are in a human readable range (~10)
     Q = 400.0 * interaction_matrix_from_vertices(vertices)
     # Choose diagonal coefficients so that the solution is 110
-    Q = Q - 2.5 * matrix.from_torch(torch.eye(3)) * Q[0, 1]
+    Q = Q - 2.5 * matrix.as_tensor(torch.eye(3)) * Q[0, 1]
 
     results = []
     for bits in itertools.product([0, 1], repeat=3):
@@ -221,7 +221,7 @@ def test_errors(raise_exception: bool) -> None:
             [0.2, -0.15],
         ],
     )
-    Q = interaction_matrix_from_vertices(vertices) - matrix.from_torch(torch.eye(3))
+    Q = interaction_matrix_from_vertices(vertices) - matrix.as_tensor(torch.eye(3))
 
     register = Register.from_coordinates(vertices.tolist())
 
@@ -293,7 +293,7 @@ def test_failed_simulation() -> None:
             [0.2, -0.15],
         ],
     )
-    Q = interaction_matrix_from_vertices(vertices) - matrix.from_torch(torch.eye(3))
+    Q = interaction_matrix_from_vertices(vertices) - matrix.as_tensor(torch.eye(3))
 
     register = Register.from_coordinates(vertices.tolist())
 
@@ -319,7 +319,7 @@ def test_failed_simulation_2() -> None:
             [0.2, -0.15],
         ],
     )
-    Q = interaction_matrix_from_vertices(vertices) - matrix.from_torch(torch.eye(3))
+    Q = interaction_matrix_from_vertices(vertices) - matrix.as_tensor(torch.eye(3))
 
     register = Register.from_coordinates(vertices.tolist())
 
@@ -349,7 +349,7 @@ def test_failed_skopt() -> None:
             [0.2, -0.15],
         ],
     )
-    Q = interaction_matrix_from_vertices(vertices) - matrix.from_torch(torch.eye(3))
+    Q = interaction_matrix_from_vertices(vertices) - matrix.as_tensor(torch.eye(3))
 
     register = Register.from_coordinates(vertices.tolist())
 

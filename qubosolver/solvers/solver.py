@@ -27,14 +27,15 @@ from copy import deepcopy
 
 import qoolqit
 
-from qubosolver import Solution, Instance, transforms, torch_rng
+from qubosolver import Solution, Instance, transforms, torch_rng, drive_shaping
 from .config import DecompositionConfig
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from ._basesolver import BaseSolver
 from .classical._solver import get_classical_solver
 from qubosolver.embedding._embedder import _get_embedder
 from qubosolver.drive_shaping._drive_shaper import _get_drive_shaper
-from .config import Config, ClassicalConfig
+from .config import Config
+from . import classical
 
 logger = logging.getLogger(__name__)
 
@@ -236,8 +237,10 @@ class _QuboSolverQuantum(BaseSolver):
             self._update_instance(self.instance)
 
         embedding = self._embedding()
-        drive, _ = self._drive(embedding)
-        solution = self._execute(drive, embedding)
+        drive, solution = self._drive(embedding)
+
+        if not solution or self.config.quantum.drive_shaping.algorithm != drive_shaping.Algorithm.BAYESIAN_SEARCH:
+            solution = self._execute(drive, embedding)
 
         if isinstance(self.instance, transforms.zeroing.Instance):
             solution = transforms.zeroing.lift(solution, self.instance)
@@ -403,7 +406,7 @@ class _DecomposeQuboSolver(BaseSolver):
         if self.instance.size <= self.decomposition_config.decompose_stop_number:
             solver = _QuboSolverClassical(
                 self.instance,
-                Config(solving=ClassicalConfig(), decompose=None),
+                Config(solving=classical.Config(), decompose=None),
             )
             return solver.solve()
 
@@ -415,7 +418,7 @@ class _DecomposeQuboSolver(BaseSolver):
             else:
                 max_min_dist_ratio = self.decomposition_config.classical_max_min_dist_ratio
 
-            config = _decompositions.Config.from_decomposition_config(
+            config = _decompositions.Config._from_decomposition_config(
                 self.decomposition_config, max_min_dist_ratio=max_min_dist_ratio
             )
             decomposed_qubo = _decompositions.Instance(self.instance, config=config)
@@ -446,7 +449,7 @@ class _DecomposeQuboSolver(BaseSolver):
             if subqubo.size != 0:
                 lastsolver = _QuboSolverClassical(
                     subqubo,
-                    Config(solving=ClassicalConfig(), decompose=None),
+                    Config(solving=classical.Config(), decompose=None),
                 )
                 subsolution = lastsolver.solve()._compute_costs(subqubo.matrix)._sort_by_cost()
                 solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)

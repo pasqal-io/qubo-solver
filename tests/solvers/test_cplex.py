@@ -229,7 +229,7 @@ def _build_rounding_matrix() -> Instance:
     Q = _ROUNDING_DIAGONAL.diag()
     i, j, w = _ROUNDING_COUPLINGS.unbind(dim=1)
     Q[i, j] = Q[j, i] = w
-    return Instance(matrix.from_torch(Q))
+    return Instance(matrix.as_tensor(Q))
 
 
 def test_rounding() -> None:

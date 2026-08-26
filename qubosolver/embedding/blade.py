@@ -69,7 +69,5 @@ def embed(
 
     _blade = Blade(config)
     graph = _blade.embed(instance.matrix.numpy())
-
-    register = Register({str(i): coord for (i, coord) in enumerate(graph.coords.values())})
-
+    register = Register.from_graph(graph)
     return register

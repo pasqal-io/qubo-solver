@@ -128,7 +128,7 @@ def _get_embedder(
     :class:`_BaseEmbedder` subclass:
 
     * :class:`BLaDEmbedder` — when the method is :attr:`embedding.Algorithm.BLADE`.
-    * :class:`GreedyEmbedder` — when the method is :attr:`embedding.Algorithm.GREEDY`.
+    * :class:`GreedyEmbedder` — when the method is :attr:`embedding.Algorithm.GREEDY_LAYOUT`.
     * A user-supplied subclass of :class:`_BaseEmbedder` — when the method is
       a class (not a string enum value) that is a subclass of
       :class:`_BaseEmbedder`.
@@ -150,7 +150,7 @@ def _get_embedder(
 
     if config.embedding.algorithm == embedding.Algorithm.BLADE:
         return BLaDEmbedder(instance, config, backend)
-    elif config.embedding.algorithm == embedding.Algorithm.GREEDY:
+    elif config.embedding.algorithm == embedding.Algorithm.GREEDY_LAYOUT:
         return GreedyEmbedder(instance, config, backend)
     else:
         raise NotImplementedError

@@ -32,7 +32,7 @@ class BaseClassicalSolver(ABC):
     subclasses directly.
     """
 
-    def __init__(self, instance: Instance, config: solvers.ClassicalConfig):
+    def __init__(self, instance: Instance, config: solvers.classical.Config):
         """Initialise the solver with a QUBO instance and configuration.
 
         Args:
@@ -84,7 +84,7 @@ class CplexSolver(BaseClassicalSolver):
         log_path: str = self.config.cplex_log_path
         maxtime: float = self.config.cplex_maxtime
 
-        return cplex(self.instance, maxtime=maxtime, log_path=log_path)
+        return cplex.solve(self.instance, maxtime=maxtime, log_path=log_path)
 
 
 class SimulatedAnnealingSolver(BaseClassicalSolver):
@@ -114,12 +114,12 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
         """
         rng = torch_rng(self.config.sa_seed)
         if self.config.sa_start is None:
-            random_solution = solvers.random_sampling(self.instance, rng=rng, max_bitstrings=1)
+            random_solution = solvers.random_sampling.solve(self.instance, rng=rng, max_bitstrings=1)
             start = random_solution.bitstrings[0]
         else:
             start = self.config.sa_start
 
-        return solvers.simulated_annealing(
+        return solvers.simulated_annealing.solve(
             instance=self.instance,
             top_k=self.config.max_bitstrings,
             max_iter=self.config.max_iter,
@@ -159,13 +159,13 @@ class TabuSearchSolver(BaseClassicalSolver):
         if self.config.tabu_x0 is None:
             assert self.instance.size
             rng = torch_rng().set_state(torch.get_rng_state())
-            random_solution = solvers.random_sampling(
+            random_solution = solvers.random_sampling.solve(
                 self.instance, rng=rng, max_bitstrings=self.config.max_bitstrings
             )
             x0 = random_solution.bitstrings
         else:
             x0 = self.config.tabu_x0
-        tabu_search_solution = solvers.tabu_search(
+        tabu_search_solution = solvers.tabu_search.solve(
             qubo=self.instance,
             start=x0,
             max_iter=self.config.max_iter,
@@ -198,7 +198,7 @@ class RandomSolver(BaseClassicalSolver):
         )
 
 
-def get_classical_solver(instance: Instance, config: solvers.ClassicalConfig) -> BaseClassicalSolver:
+def get_classical_solver(instance: Instance, config: solvers.classical.Config) -> BaseClassicalSolver:
     """Return the appropriate classical solver for the given configuration.
 
     Dispatches on ``config.classical_solver_type`` (case-insensitive) to one
@@ -221,18 +221,18 @@ def get_classical_solver(instance: Instance, config: solvers.ClassicalConfig) ->
 
     Raises:
         ValueError: If ``config.classical_solver_type`` does not match any
-            known :class:`~qubosolver.solvers.enums.ClassicalAlgorithm` value.
+            known :class:`~qubosolver.solvers.classical.Algorithm` value.
     """
     solver_type = config.algorithm
     solver_type = solver_type.lower()
 
-    if solver_type == solvers.ClassicalAlgorithm.CPLEX:
+    if solver_type == solvers.classical.Algorithm.CPLEX:
         return CplexSolver(instance, config)
-    if solver_type == solvers.ClassicalAlgorithm.SIMULATED_ANNEALING:
+    if solver_type == solvers.classical.Algorithm.SIMULATED_ANNEALING:
         return SimulatedAnnealingSolver(instance, config)
-    if solver_type == solvers.ClassicalAlgorithm.TABU_SEARCH:
+    if solver_type == solvers.classical.Algorithm.TABU_SEARCH:
         return TabuSearchSolver(instance, config)
-    if solver_type == solvers.ClassicalAlgorithm.RANDOM:
+    if solver_type == solvers.classical.Algorithm.RANDOM_SAMPLING:
         return RandomSolver(instance, config)
 
     raise ValueError(f"Solver type not supported: {solver_type}")

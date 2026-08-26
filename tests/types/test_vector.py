@@ -89,17 +89,17 @@ def test_tensor_with_custom_dtype() -> None:
     torch.testing.assert_close(result, torch.tensor(data, dtype=torch.float64))
 
 
-def test_from_torch_converts_dtype_and_device() -> None:
+def test_as_tensor_converts_dtype_and_device() -> None:
     source = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
-    result = vector.from_torch(source)
+    result = vector.as_tensor(source)
     check.equal(result.dtype, linalg.dtype())
     check.equal(result.device, linalg.device())
     torch.testing.assert_close(result, torch.tensor([1.0, 2.0, 3.0], dtype=linalg.dtype()))
 
 
-def test_from_torch_preserves_values() -> None:
+def test_as_tensor_preserves_values() -> None:
     source = torch.tensor([4, 5, 6], dtype=torch.int32)
-    result = vector.from_torch(source)
+    result = vector.as_tensor(source)
     check.equal(result.dtype, linalg.dtype())
     torch.testing.assert_close(result, torch.tensor([4.0, 5.0, 6.0], dtype=linalg.dtype()))
 

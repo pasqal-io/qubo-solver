@@ -26,7 +26,6 @@ from qubosolver import (
     torch_rng,
 )
 from qubosolver.utils import analysis
-from qubosolver.solvers import ClassicalAlgorithm
 from qubosolver.drive_shaping import Algorithm
 
 
@@ -139,8 +138,8 @@ def test_quantum_solve(
         embedding_config = embedding.Config(algorithm=embedding.Algorithm.BLADE)
     elif embedding_method == "greedy":
         embedding_config = embedding.Config(
-            algorithm=embedding.Algorithm.GREEDY,
-            greedy_traps=100,
+            algorithm=embedding.Algorithm.GREEDY_LAYOUT,
+            greedy_layout_traps=100,
         )
     else:
         raise ValueError(f"Invalid embedding method: {embedding_method}")
@@ -162,7 +161,7 @@ def test_quantum_solve(
         raise ValueError(f"Invalid drive shaping method: {drive_shaping_method}")
 
     config = solvers.Config(
-        solving=solvers.QuantumConfig(
+        solving=solvers.quantum.Config(
             embedding=embedding_config,
             drive_shaping=drive_shaping_config,
             device=qoolqit.AnalogDevice(),
@@ -205,13 +204,13 @@ def test_classical_solve(
     qubo, expected_optimal_solutions = simple_qubo()
 
     classical_solvers = {
-        "cplex": ClassicalAlgorithm.CPLEX,
-        "tabu": ClassicalAlgorithm.TABU_SEARCH,
-        "sa": ClassicalAlgorithm.SIMULATED_ANNEALING,
-        "random": ClassicalAlgorithm.RANDOM,
+        "cplex": solvers.classical.Algorithm.CPLEX,
+        "tabu": solvers.classical.Algorithm.TABU_SEARCH,
+        "sa": solvers.classical.Algorithm.SIMULATED_ANNEALING,
+        "random": solvers.classical.Algorithm.RANDOM_SAMPLING,
     }
 
-    classical_config = solvers.ClassicalConfig(
+    classical_config = solvers.classical.Config(
         algorithm=classical_solvers[solving_method],
         max_bitstrings=1,
         sa_seed=seed,

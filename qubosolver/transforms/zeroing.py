@@ -62,7 +62,7 @@ class Instance(qubosolver.Instance):
         zeroed off-diagonal interactions.
         """
         upper = torch.triu(self.negative_matrix != 0, diagonal=1)
-        return vectori.from_torch(upper.nonzero())
+        return vectori.as_tensor(upper.nonzero())
 
 
 def apply(instance: qubosolver.Instance) -> Instance:

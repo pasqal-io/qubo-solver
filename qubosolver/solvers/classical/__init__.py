@@ -7,6 +7,7 @@ brute-force solvers.
 from __future__ import annotations
 
 from qubosolver.solvers.classical.config import Config
+from qubosolver.solvers.classical.enums import Algorithm
 from qubosolver.solvers.classical import (
     brute_force,
     cplex,
@@ -18,6 +19,7 @@ from qubosolver.solvers.classical import (
 )
 
 __all__ = [
+    "Algorithm",
     "Config",
     "brute_force",
     "cplex",

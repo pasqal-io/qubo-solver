@@ -79,7 +79,7 @@ def test_triangular_qubo(traps: int, relative_noise: float, max_min_dist_ratio: 
     spacing = 7.0
 
     parameters = {
-        "layout": embedding.Layout.TRIANGULAR,
+        "layout": embedding.Lattice.TRIANGULAR,
         "traps": traps,
         "spacing": spacing,
     }
@@ -129,10 +129,10 @@ def test_triangular_qubo(traps: int, relative_noise: float, max_min_dist_ratio: 
 
 
 @pytest.mark.parametrize("traps", [1, 2, 6, 9])
-@pytest.mark.parametrize("layout", [embedding.Layout.SQUARE, "square"])
+@pytest.mark.parametrize("layout", [embedding.Lattice.SQUARE, "square"])
 @pytest.mark.parametrize("relative_noise", [0.0, 0.01, 0.05, -0.01, -0.05])
 def test_square_qubo(
-    traps: int, layout: embedding.Layout | str, relative_noise: float, max_min_dist_ratio: float
+    traps: int, layout: embedding.Lattice | str, relative_noise: float, max_min_dist_ratio: float
 ) -> None:
 
     spacing = 7.0
@@ -194,7 +194,7 @@ def test_too_large_spacing(
 ) -> None:
     # A square layout of size 25 is composed of two concentric squares of side
     # 2*spacing and 4*spacing, plus the origin.
-    layout = embedding.Layout.SQUARE
+    layout = embedding.Lattice.SQUARE
     traps = 25
 
     assert isinstance(device.max_radial_distance, int)
@@ -301,7 +301,7 @@ def test_max_distance_constraint() -> None:
     # A square layout of size 9 is composed of a square of side 2*spacing, plus the origin.
     # With a large enough spacing, the outer corners should be out of range, and thus a
     # qubo of size 9 should not be embeddable.
-    layout = embedding.Layout.SQUARE
+    layout = embedding.Lattice.SQUARE
     traps = 9
     assert isinstance(device.max_radial_distance, int)
     spacing = 0.99 * device.max_radial_distance
@@ -317,7 +317,7 @@ def test_max_distance_constraint() -> None:
     }
 
     with pytest.raises(ValueError):
-        Greedy().launch_greedy(Q=Q, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
+        Greedy().launch_greedy(Q=Q.matrix, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
 
 
 def test_empty_embedding() -> None:
@@ -334,17 +334,17 @@ def test_single_atom_embedding() -> None:
 
 
 def test_resolve_max_possible_term_float() -> None:
-    instance = Instance(matrix.from_torch(triangular_qubo()))
+    instance = Instance(matrix.as_tensor(triangular_qubo()))
     check.equal(_resolve_max_possible_term(2.5, instance), 2.5)
 
 
 def test_resolve_max_possible_term_factor() -> None:
-    instance = Instance(matrix.from_torch(triangular_qubo()))
+    instance = Instance(matrix.as_tensor(triangular_qubo()))
     check.almost_equal(_resolve_max_possible_term(("factor", 2.0), instance), 2.0)
 
 
 def test_resolve_max_possible_term_invalid_kind() -> None:
-    instance = Instance(matrix.from_torch(triangular_qubo()))
+    instance = Instance(matrix.as_tensor(triangular_qubo()))
     with pytest.raises(ValueError, match="must be 'factor'"):
         _resolve_max_possible_term(("bogus", 2.0), instance)  # type: ignore[arg-type]
 

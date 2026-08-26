@@ -114,7 +114,7 @@ def test_extract_qubo_round_trip_through_greedy_embedding_and_drive_shaping() ->
     Q = triangle.interaction_matrix()
     assert isinstance(Q, torch.Tensor)
     # qoolqit forces float64
-    Q = matrix.from_torch(Q)
+    Q = matrix.as_tensor(Q)
     Q.diagonal().copy_(vector.tensor([-1.0, -0.5, -1.1]))
 
     original = Instance(matrix=Q)

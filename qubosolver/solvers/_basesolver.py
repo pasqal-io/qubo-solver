@@ -102,13 +102,12 @@ class BaseSolver(ABC):
         Returns:
             A job handle for the submitted execution.
         """
-        assert isinstance(self.config.solving, solvers.QuantumConfig)
-        return solvers.analog_quantum_sampling(
+        return solvers.analog_quantum_sampling.solve(
             embedding,
             drive,
-            self.config.solving.backend,
-            self.config.solving.device,
-            default_sequence_duration=self.config.solving.drive_shaping.default_sequence_duration,
+            self.config.quantum.backend,
+            self.config.quantum.device,
+            default_sequence_duration=self.config.quantum.drive_shaping.default_sequence_duration,
         )
 
     def _execute(self, drive: Drive, embedding: Register) -> Solution:
@@ -123,7 +122,7 @@ class BaseSolver(ABC):
             Solution: The solution built from execution results.
         """
         job = self._submit(drive, embedding)
-        return Solution.from_results(job.results())
+        return Solution.from_results(job.results(), self.instance)
 
     def _draw_sequence(self, drive: Drive, embedding: Register) -> None:
         """Draw the compiled pulse sequence of the quantum program.
@@ -140,9 +139,8 @@ class BaseSolver(ABC):
             embedding: The atom register the program is defined over.
         """
         if self.config.solving_mode == "quantum":
-            quantum_config = self.config.solving
-            assert isinstance(quantum_config, solvers.QuantumConfig)
-            program = solvers.quantum._quantum_program(
+            quantum_config = self.config.quantum
+            program = solvers.quantum.analog_quantum_sampling._quantum_program(
                 embedding,
                 drive,
                 quantum_config.device,
@@ -158,7 +156,7 @@ class BaseSolver(ABC):
         Returns:
             A `Solution`. The solution is empty if no trivial optimum is found.
         """
-        return solvers.trivial_solution_search(self.instance)
+        return solvers.trivial_solution_search.solve(self.instance)
 
     def _update_instance(self, instance: Instance) -> None:
         """Replace the active QUBO instance on this solver and any inner solver.
@@ -249,7 +247,7 @@ class BaseSolver(ABC):
         if not self.config.do_postprocessing:
             return solution
 
-        return solvers.iterative_bitflip_local_search(
+        return solvers.iterative_bitflip_local_search.solve(
             self.instance,
             solution,
             strategy="greedy_sweep",

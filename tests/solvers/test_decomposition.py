@@ -61,12 +61,12 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
 
     if use_quantum:
         config = solvers.Config(
-            solving=solvers.QuantumConfig(device=DigitalAnalogDevice()),
+            solving=solvers.quantum.Config(device=DigitalAnalogDevice()),
             decompose=decompose_config,
         )
     else:
         config = solvers.Config(
-            solving=solvers.ClassicalConfig(),
+            solving=solvers.classical.Config(),
             decompose=decompose_config,
         )
     solver = Solver(decomposable_qubo, config)
@@ -88,7 +88,7 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
         )
 
     # check that the initial transfer does not affect the length of the dictionary.
-    solution = bitstring.from_torch(torch.full((size,), -1))
+    solution = bitstring.as_tensor(torch.full((size,), -1))
     transfer_edge_values(current_vertices_dict, dict(), solution, qubo_mat)
     positive_vertices_update(current_vertices_dict, solution)
     assert len(current_vertices_dict) == size
@@ -99,7 +99,7 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
     first_vertex = 0
 
     if use_quantum:
-        assert isinstance(solver._solver.config.solving, solvers.QuantumConfig)
+        assert isinstance(solver._solver.config.solving, solvers.quantum.Config)
         pulser_device = solver._solver.config.solving.device._pulser_device
         assert pulser_device.max_radial_distance is not None
         min_distance, max_radial_distance = compute_min_max_distances(
@@ -157,12 +157,12 @@ def test_decomp_solver(decomposable_qubo: Instance, use_quantum: bool) -> None:
 
     if use_quantum:
         config = solvers.Config(
-            solving=solvers.QuantumConfig(device=DigitalAnalogDevice()),
+            solving=solvers.quantum.Config(device=DigitalAnalogDevice()),
             decompose=solvers.DecompositionConfig(),
         )
     else:
         config = solvers.Config(
-            solving=solvers.ClassicalConfig(),
+            solving=solvers.classical.Config(),
             decompose=solvers.DecompositionConfig(),
         )
     solver = Solver(decomposable_qubo, config)
@@ -187,13 +187,13 @@ def test_small_qubo_solver(simple_qubo_instance: Instance) -> None:
     # assert that the decomposition falls back to not being used as qubo is small
     simple_solver = Solver(
         simple_qubo_instance,
-        solvers.Config(solving=solvers.ClassicalConfig(), decompose=None),
+        solvers.Config(solving=solvers.classical.Config(), decompose=None),
     )
     solutions1 = simple_solver.solve()
 
     decompose_solver = Solver(
         simple_qubo_instance,
-        solvers.Config(solving=solvers.ClassicalConfig(), decompose=solvers.DecompositionConfig()),
+        solvers.Config(solving=solvers.classical.Config(), decompose=solvers.DecompositionConfig()),
     )
     solutions2 = decompose_solver.solve()
     assert isinstance(decompose_solver._solver, _DecomposeQuboSolver)
@@ -204,7 +204,7 @@ def test_small_qubo_solver(simple_qubo_instance: Instance) -> None:
 
 def test_scope(decomposable_qubo: Instance) -> None:
 
-    config = solvers.Config(solving=solvers.ClassicalConfig(), decompose=solvers.DecompositionConfig())
+    config = solvers.Config(solving=solvers.classical.Config(), decompose=solvers.DecompositionConfig())
 
     # check negative off-diagonal are not supported
     coeffs = decomposable_qubo.matrix
@@ -301,7 +301,7 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
                 [2, 2, -1],
             ],
         )
-        Q2 = matrix.from_torch(
+        Q2 = matrix.as_tensor(
             Dataset.from_random(
                 n_matrices=1,
                 matrix_dim=dims[0],
@@ -315,7 +315,7 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
     else:
         N = np.sum(dims)
         blocks = [
-            matrix.from_torch(
+            matrix.as_tensor(
                 Dataset.from_random(
                     n_matrices=1,
                     matrix_dim=n,
@@ -354,7 +354,7 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
     qubo_instance = Instance(Q)
 
     config = solvers.Config(
-        solving=solvers.ClassicalConfig(),
+        solving=solvers.classical.Config(),
         decompose=solvers.DecompositionConfig(decompose_stop_number=2, decompose_break_placement=0),
     )
     solver = Solver(qubo_instance, config)
@@ -440,7 +440,7 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
 
 def test_decompose_embedding() -> None:
 
-    qubo_instance = Instance(matrix.from_torch(torch.eye(2)))
+    qubo_instance = Instance(matrix.as_tensor(torch.eye(2)))
 
     config = solvers.Config(decompose=solvers.DecompositionConfig())
     solver = Solver(qubo_instance, config)
@@ -450,7 +450,7 @@ def test_decompose_embedding() -> None:
 
 def test_decompose_drive() -> None:
 
-    qubo_instance = Instance(matrix.from_torch(torch.eye(2)))
+    qubo_instance = Instance(matrix.as_tensor(torch.eye(2)))
 
     config = solvers.Config(decompose=solvers.DecompositionConfig())
     solver = Solver(qubo_instance, config)

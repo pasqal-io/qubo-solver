@@ -15,7 +15,7 @@ class Config():
     Attributes:
         algorithm: The type of embedding method used to
             place atoms on the register according to the QUBO problem.
-            Defaults to `Algorithm.GREEDY`.
+            Defaults to `Algorithm.GREEDY_LAYOUT`.
         greedy_layout_lattice: Lattice type for the
             greedy layout embedder method. Defaults to `Lattice.TRIANGULAR`.
         greedy_layout_traps: The number of traps on the register.
@@ -41,9 +41,9 @@ class Config():
             ``max_radial_distance`` / ``min_distance`` specs. Defaults to ``"device"``.
     """
 
-    algorithm: Algorithm | str = Algorithm.GREEDY
+    algorithm: Algorithm | str = Algorithm.GREEDY_LAYOUT
 
-    greedy_layout_layout: Lattice | str = Lattice.TRIANGULAR
+    greedy_layout_lattice: Lattice | str = Lattice.TRIANGULAR
     greedy_layout_traps: int | Literal["device"] = "device"
     greedy_layout_max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
     blade_steps_per_round: int | None = 200
@@ -53,7 +53,7 @@ class Config():
 
     def __post_init__(self) -> None:
         self.algorithm = self._normalize_algorithm(self.algorithm)
-        self.greedy_layout = self._normalize_layout(self.greedy_layout)
+        self.greedy_layout_lattice = self._normalize_lattice(self.greedy_layout_lattice)
 
     @staticmethod
     def _normalize_algorithm(val: str | Algorithm) -> Algorithm:

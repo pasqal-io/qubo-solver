@@ -51,7 +51,7 @@ def _decode_bits(indices: Vectori, n: int) -> Bitstrings:
         A ``(len(indices), n)`` bitstrings tensor.
     """
     shifts = torch.arange(n - 1, -1, -1, device=indices.device)
-    return bitstrings.from_torch((indices.unsqueeze(1) >> shifts) & 1)
+    return bitstrings.as_tensor((indices.unsqueeze(1) >> shifts) & 1)
 
 
 def solve(
@@ -103,7 +103,7 @@ def solve(
 
     for start in range(0, total, _BATCH_SIZE):
         stop = min(start + _BATCH_SIZE, total)
-        indices = vectori.from_torch(torch.arange(start, stop, device=Q.device))
+        indices = vectori.as_tensor(torch.arange(start, stop, device=Q.device))
         bits = _decode_bits(indices, n).to(Q.dtype)
         costs = _costs.batched_quadratic_cost(bits, Q)
 
@@ -120,7 +120,7 @@ def solve(
             break
 
     solution = Solution(
-        bitstrings=bitstrings.from_torch(best_bits),
+        bitstrings=bitstrings.as_tensor(best_bits),
         costs=best_costs,
         counts=vectori.tensor([1] * best_bits.shape[0]),
     )

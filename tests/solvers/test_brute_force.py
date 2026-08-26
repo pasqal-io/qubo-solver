@@ -82,7 +82,7 @@ def test_empty_instance_returns_empty_solution() -> None:
 def test_time_limit_returns_best_so_far_without_enumerating_all() -> None:
     # 24 variables => ~1.6e7 assignments. A tiny budget must return promptly with
     # the requested number of bitstrings rather than hang or exhaust memory.
-    instance = Instance(matrix.from_torch(torch.randn(24, 24, generator=torch_rng(26))))
+    instance = Instance(matrix.as_tensor(torch.randn(24, 24, generator=torch_rng(26))))
 
     solution = solvers.brute_force(instance, max_bitstrings=2, time_limit=0.05)
 
@@ -97,7 +97,7 @@ def test_large_instance_with_no_time_limit_logs_warning(
 ) -> None:
     # 21 variables exceeds the 20-variable threshold; 2^21 assignments still
     # completes quickly enough for a test.
-    instance = Instance(matrix.from_torch(torch.randn(21, 21, generator=torch_rng(1))))
+    instance = Instance(matrix.as_tensor(torch.randn(21, 21, generator=torch_rng(1))))
 
     with caplog.at_level("WARNING", logger="qubosolver.solvers.classical.brute_force"):
         solvers.brute_force(instance, max_bitstrings=1, time_limit=float("inf"))
@@ -108,7 +108,7 @@ def test_large_instance_with_no_time_limit_logs_warning(
 def test_large_instance_with_finite_time_limit_does_not_log_warning(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    instance = Instance(matrix.from_torch(torch.randn(21, 21, generator=torch_rng(1))))
+    instance = Instance(matrix.as_tensor(torch.randn(21, 21, generator=torch_rng(1))))
 
     with caplog.at_level("WARNING", logger="qubosolver.solvers.classical.brute_force"):
         solvers.brute_force(instance, max_bitstrings=1, time_limit=5.0)

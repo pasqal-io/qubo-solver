@@ -83,17 +83,17 @@ def test_tensor_creates_int8_tensor_on_specified_device() -> None:
     torch.testing.assert_close(result, torch.tensor(data, dtype=torch.int8, device=custom_device))
 
 
-def test_from_torch_converts_dtype_and_device() -> None:
+def test_as_tensor_converts_dtype_and_device() -> None:
     source = torch.tensor([[1, 0], [0, 1]], dtype=torch.int32)
-    result = bitstrings.from_torch(source)
+    result = bitstrings.as_tensor(source)
     check.equal(result.dtype, torch.int8)
     check.equal(result.device, bitstrings.device())
     torch.testing.assert_close(result, torch.tensor([[1, 0], [0, 1]], dtype=torch.int8))
 
 
-def test_from_torch_preserves_values() -> None:
+def test_as_tensor_preserves_values() -> None:
     source = torch.tensor([[0, 1, 1], [1, 0, 1]], dtype=torch.float32)
-    result = bitstrings.from_torch(source)
+    result = bitstrings.as_tensor(source)
     check.equal(result.dtype, torch.int8)
     torch.testing.assert_close(result, torch.tensor([[0, 1, 1], [1, 0, 1]], dtype=torch.int8))
 
@@ -194,9 +194,9 @@ def test_to_strings_length_matches_number_of_rows() -> None:
     check.equal(len(result), 4)
 
 
-def test_to_strings_from_torch_converts_correctly() -> None:
+def test_to_strings_as_tensor_converts_correctly() -> None:
     source = torch.tensor([[1, 0, 1], [0, 1, 0]], dtype=torch.int32)
-    bs = bitstrings.from_torch(source)
+    bs = bitstrings.as_tensor(source)
     result = bitstrings.to_strings(bs)
     check.equal(result, ["101", "010"])
 

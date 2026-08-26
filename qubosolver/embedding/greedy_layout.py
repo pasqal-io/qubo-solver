@@ -98,10 +98,10 @@ class Config:
             A configuration fully populated from the ``greedy_*`` embedding settings of *config*.
         """
         cfg = Config()
-        cfg.traps = config.greedy_traps
-        cfg.max_possible_term = config.greedy_max_possible_term
+        cfg.traps = config.greedy_layout_traps
+        cfg.max_possible_term = config.greedy_layout_max_possible_term
 
-        cfg.layout = EmbeddingConfig._normalize_layout(config.greedy_layout)
+        cfg.lattice = EmbeddingConfig._normalize_lattice(config.greedy_layout_lattice)
         cfg.max_min_dist_ratio = config.max_min_dist_ratio
 
         return cfg
@@ -230,7 +230,7 @@ def embed(
 
     # build params for the Greedy algorithm
     params = {
-        "layout": config.layout,
+        "layout": config.lattice,
         "traps": config.traps,
         "spacing": spacing,
         # animation controls (all read by Greedy)
@@ -245,8 +245,5 @@ def embed(
         max_min_dist_ratio=config.max_min_dist_ratio,
         params=params,
     )
-
-    # build the register (unchanged)
-    qubits = {str(i): coord for i, coord in enumerate(coords)}
-    register = qoolqit.Register(qubits)
+    register = qoolqit.Register.from_coordinates(coords)
     return register

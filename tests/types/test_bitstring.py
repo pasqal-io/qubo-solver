@@ -86,17 +86,17 @@ def test_tensor_propagates_kwargs_to_vector_tensor() -> None:
         check.is_false(call_kwargs.kwargs.get("requires_grad"))
 
 
-def test_from_torch_converts_dtype_and_device() -> None:
+def test_as_tensor_converts_dtype_and_device() -> None:
     source = torch.tensor([1, 0, 1, 0], dtype=torch.int32)
-    result = bitstring.from_torch(source)
+    result = bitstring.as_tensor(source)
     check.equal(result.dtype, torch.int8)
     check.equal(result.device, linalg.device())
     torch.testing.assert_close(result, torch.tensor([1, 0, 1, 0], dtype=torch.int8))
 
 
-def test_from_torch_preserves_values() -> None:
+def test_as_tensor_preserves_values() -> None:
     source = torch.tensor([0, 1, 1, 0, 1], dtype=torch.float32)
-    result = bitstring.from_torch(source)
+    result = bitstring.as_tensor(source)
     check.equal(result.dtype, torch.int8)
     torch.testing.assert_close(result, torch.tensor([0, 1, 1, 0, 1], dtype=torch.int8))
 
@@ -195,9 +195,9 @@ def test_to_string_converts_bitstring_tensor_to_string() -> None:
     check.equal(result, "10011")
 
 
-def test_to_string_converts_from_torch_bitstring_to_string() -> None:
+def test_to_string_converts_as_tensor_bitstring_to_string() -> None:
     source = torch.tensor([1, 0, 1, 1, 0], dtype=torch.int32)
-    bs = bitstring.from_torch(source)
+    bs = bitstring.as_tensor(source)
     result = bitstring.to_string(bs)
     check.equal(result, "10110")
 

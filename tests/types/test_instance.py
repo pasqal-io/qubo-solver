@@ -13,7 +13,7 @@ from qubosolver import Instance, Solver, solvers, matrix, transforms
 
 def test_valid_qubo_passes_without_error() -> None:
     # A 5×5 QUBO with all coefficients >= 0 (identity matrix)
-    coeffs = matrix.from_torch(torch.eye(5))
+    coeffs = matrix.as_tensor(torch.eye(5))
     qi = Instance(coeffs)
     assert qi.size == 5
     # Verify that the tensor is stored correctly
@@ -21,7 +21,7 @@ def test_valid_qubo_passes_without_error() -> None:
 
 
 def test_len_matches_size() -> None:
-    qi = Instance(matrix.from_torch(torch.eye(5)))
+    qi = Instance(matrix.as_tensor(torch.eye(5)))
     check.equal(len(qi), 5)
     check.is_true(bool(qi))
 

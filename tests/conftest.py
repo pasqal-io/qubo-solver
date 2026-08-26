@@ -105,7 +105,7 @@ def local_device(request: pytest.FixtureRequest) -> qoolqit.Device:
 
 @pytest.fixture(
     params=[
-        embedding.Algorithm.GREEDY,
+        embedding.Algorithm.GREEDY_LAYOUT,
         embedding.Algorithm.BLADE,
     ]
 )

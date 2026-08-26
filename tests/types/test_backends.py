@@ -193,7 +193,7 @@ def test_emulator_backend_selection(
     expected_type: type,
 ) -> None:
     """Test that emulators select the correct backend based on problem size and configuration."""
-    Q = matrix.from_torch(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
+    Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
     instance = Instance(Q)
 
     backend, results = backend_and_results
@@ -230,7 +230,7 @@ def test_default_remote_emulator_backend() -> None:
 def test_remote_emulator_warning() -> None:
     """Test that RemoteEmulator warns when using suboptimal backend."""
     size = 2
-    Q = matrix.from_torch(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
+    Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
     instance = Instance(Q)
     mock_connection, mock_results = mock_connection_and_results()
     attach_bitstring(mock_results, size)
@@ -252,7 +252,7 @@ def test_remote_emulator_warning() -> None:
 def test_local_emulator_warning() -> None:
     """Test that LocalEmulator warns when using suboptimal backend."""
     size = 2
-    Q = matrix.from_torch(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
+    Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
     instance = Instance(Q)
     config = solvers.Config(
         solving=solvers.QuantumConfig(
