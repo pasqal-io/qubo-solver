@@ -93,23 +93,23 @@ def test_quantum_remote_job(
                 instance, register, device=device, dmm=dmm
             )
         else:
-            drive, _ = drive_shaping.bayesian_search.build_drive(
-                instance, register, backend, device, dmm=dmm
+            _, drive = solvers.drive_bayesian_search.solve(
+                instance, register, backend=backend, device=device, dmm=dmm
             )
 
-        job = solvers.analog_quantum_sampling(register, drive, backend, device)
+        job = solvers.analog_quantum_sampling.solve(register, drive, backend, device)
 
         return job, instance
 
     def post(job: job.Job[Results], instance: Instance) -> Solution:
-        solution = Solution.from_results(job.results())
+        solution = Solution.from_results(job.results(), instance)
 
         # Post-process fixations of the preprocessing and restore the original QUBO
         if preprocessing:
             assert isinstance(instance, transforms.variable_fixing.Instance)
             solution = transforms.variable_fixing.lift(solution, instance)
             instance = instance._parent_instance
-        solution = solvers.iterative_bitflip_local_search(instance, solution)
+        solution = solvers.iterative_bitflip_local_search.solve(instance, solution)
 
         solution._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
 

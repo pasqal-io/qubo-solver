@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 import pytest_check as check
 from qubosolver import (
+    analysis,
     Solver,
     Solution,
     solvers,
@@ -20,7 +21,7 @@ from qubosolver import (
     torch_rng,
 )
 from qubosolver.solvers.classical.iterative_bitflip_local_search import _best_improvement_search
-from qubosolver.utils import analysis
+from qubosolver.utils import _costs
 
 
 @pytest.mark.parametrize("postprocessing", [True, False])
@@ -92,8 +93,7 @@ def test_random_qubos(density: float) -> None:
     for seed in [545, 87, 89993]:
         dataset = Dataset.from_random(1, size, densities=[density], rng=torch_rng(seed))
         torch.manual_seed(seed)
-        for Q, _ in dataset:
-            instance = Instance(matrix=Q)
+        for instance, _ in dataset:
             bitstring_ = (torch.rand(size) > 0.5).to(bitstring.dtype())
             cost = instance.cost(bitstring_)
             solution = Solution(
@@ -138,7 +138,7 @@ def test_best_improvement_search_basic(shuffle: bool) -> None:
     ])
     # fmt: on
     def cost_function(b: Bitstring) -> float:
-        return utils._costs.quadratic_cost(b, Q)
+        return _costs.quadratic_cost(b, Q)
 
     s = bitstring.zeros(2)
     initial_cost = cost_function(s)
@@ -162,10 +162,10 @@ def test_best_improvement_search_randoms(shuffle: bool, density: float) -> None:
         dataset = Dataset.from_random(1, size, densities=[density], rng=rng)
         s = bitstring.zeros(size)
 
-        for Q, _ in dataset:
+        for instance, _ in dataset:
 
             def cost_function(b: Bitstring) -> float:
-                return utils._costs.quadratic_cost(b, Q)
+                return _costs.quadratic_cost(b, instance.matrix)
 
             initial_cost = cost_function(s)
             _, best_cost = _best_improvement_search(cost_function, s, rng=rng if shuffle else None)

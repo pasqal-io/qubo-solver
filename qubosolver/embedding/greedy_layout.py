@@ -87,7 +87,7 @@ class Config:
         """Create a [`Config`][] from a user-facing [`EmbeddingConfig`][].
 
         Maps the ``greedy_*`` fields of *config* onto the corresponding
-        `Config` attributes. Sentinel values (``"device"`` for ``greedy_traps``,
+        `Config` attributes. Sentinel values (``"device"`` for ``greedy_layout_traps``,
         ``"device"`` for ``max_min_dist_ratio``) are carried through as
         ``"device"`` and only resolved later, by `update_from_device`.
 

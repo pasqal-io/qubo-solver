@@ -60,7 +60,7 @@ class Config:
     seed: int | None = None
     objective_fn: Callable[[Solution], float] = _default_objective
     _callback_fn: Callable[[_CallbackInfo], None] = field(
-        default=lambda data: None, init=False
+        default_factory=lambda: (lambda data: None), init=False
     )
     default_sequence_duration: int = 50000
 
@@ -215,7 +215,7 @@ def _run_simulation(
     """
     from qubosolver import solvers
     try:
-        job = solvers.analog_quantum_sampling(
+        job = solvers.analog_quantum_sampling.solve(
             register,
             drive,
             backend,

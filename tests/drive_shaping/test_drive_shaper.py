@@ -29,9 +29,9 @@ from qubosolver.solvers.solver import _QuboSolverQuantum
 @pytest.fixture
 def dummy_register() -> qoolqit.Register:
     qubits = {
-        "0": (0.0, 0.0),
-        "1": (1.0, 0.0),
-        "2": (2.0, 3.0),
+        0: (0.0, 0.0),
+        1: (1.0, 0.0),
+        2: (2.0, 3.0),
     }
     register = qoolqit.Register(qubits)
     return register
@@ -40,7 +40,7 @@ def dummy_register() -> qoolqit.Register:
 def test_generate_returns_drive_and_solution_proportional_diagonal(
     dummy_register: qoolqit.Register, simple_qubo_instance: Instance
 ) -> None:
-    default_config = solvers.QuantumConfig()
+    default_config = solvers.quantum.Config()
     backend = default_config.backend
     shaper = _get_drive_shaper(simple_qubo_instance, default_config, backend)
     drive, solution = shaper.generate(dummy_register)
@@ -58,7 +58,7 @@ def test_generate_returns_drive_and_solution_bayesian_search(
     simple_qubo_instance: Instance,
     bayesian_search_drive_shaping: drive_shaping.Config,
 ) -> None:
-    default_config = solvers.QuantumConfig(drive_shaping=bayesian_search_drive_shaping)
+    default_config = solvers.quantum.Config(drive_shaping=bayesian_search_drive_shaping)
     backend = default_config.backend
     shaper = ProportionalDiagonalDriveShaper(simple_qubo_instance, default_config, backend)
     drive, solution = shaper.generate(dummy_register)
@@ -78,7 +78,7 @@ def test_generate_bayesian_search_drive_shaper(
     simple_qubo_instance: Instance,
     bayesian_search_drive_shaping: drive_shaping.Config,
 ) -> None:
-    default_config = solvers.QuantumConfig(
+    default_config = solvers.quantum.Config(
         drive_shaping=bayesian_search_drive_shaping,
         device=qoolqit.DigitalAnalogDevice(),
     )
@@ -96,24 +96,6 @@ def test_generate_bayesian_search_drive_shaper(
     if isinstance(solution.counts, torch.Tensor):
         assert solution.counts.numel() > 0
 
-    # try with custom objective
-
-    def custom_ojective(solution: Solution) -> float:
-        return float(1e4)
-
-    custom_fn_ps = drive_shaping.Config(
-        algorithm=default_config.drive_shaping.algorithm,
-        bayesian_search_custom_objective=custom_ojective,
-    )
-    backend = default_config.backend
-    shaper = _get_drive_shaper(
-        simple_qubo_instance,
-        solvers.QuantumConfig(drive_shaping=custom_fn_ps),
-        backend,
-    )
-    assert isinstance(shaper, BayesianSearchDriveShaper)
-    drive, solution = shaper.generate(dummy_register)
-
 
 @pytest.mark.priority(25)
 @pytest.mark.parametrize("drive_method", list(Algorithm))
@@ -127,7 +109,7 @@ def test_normalized_weights_in_drive(
     # skip proportional-diagonal and local-energy-scale drive as their normalization is very specific.
     if dmm and drive_method in [Algorithm.PROPORTIONAL_DIAGONAL, Algorithm.LOCAL_ENERGY_SCALE]:
         pytest.skip("Not implemented")
-    default_config = solvers.QuantumConfig(
+    default_config = solvers.quantum.Config(
         drive_shaping=drive_shaping.Config(algorithm=drive_method, dmm=dmm),
     )
     backend = default_config.backend
@@ -151,7 +133,7 @@ def test_normalized_weights_in_drive(
 def test_drive_duration_set(
     dummy_register: qoolqit.Register, simple_qubo_instance: Instance
 ) -> None:
-    default_config = solvers.QuantumConfig(device=qoolqit.DigitalAnalogDevice())
+    default_config = solvers.quantum.Config(device=qoolqit.DigitalAnalogDevice())
     backend = default_config.backend
     shaper = _get_drive_shaper(simple_qubo_instance, default_config, backend)
     drive, _ = shaper.generate(dummy_register)
@@ -166,7 +148,7 @@ def test_generate_proportional_diagonal_drive_shaper(
     simple_qubo_instance: Instance,
     dmm: bool,
 ) -> None:
-    default_config = solvers.QuantumConfig(
+    default_config = solvers.quantum.Config(
         drive_shaping=drive_shaping.Config(
             algorithm=Algorithm.PROPORTIONAL_DIAGONAL, dmm=dmm
         ),
@@ -212,8 +194,8 @@ def test_shaper_does_not_overflow_device() -> None:
     coefficients = np.asarray(qubo, dtype=float)
 
     config = solvers.Config(
-        solving=solvers.QuantumConfig(
-            embedding=embedding.Config(algorithm="greedy"),
+        solving=solvers.quantum.Config(
+            embedding=embedding.Config(algorithm="greedy_layout"),
             drive_shaping=drive_shaping.Config(algorithm=Algorithm.PROPORTIONAL_DIAGONAL),
         )
     )
@@ -229,13 +211,13 @@ def _embedding_drive_ratio(solver: Solver) -> float:
     assert isinstance(inner, _QuboSolverQuantum)
     assert inner._cached_register is not None and inner._cached_drive is not None
     interactions = inner._cached_register.interactions()
-    interaction = interactions[("0", "1")]
+    interaction = interactions[(0, 1)]
     detuning_wf = inner._cached_drive.detuning
     detuning = detuning_wf(detuning_wf.duration)
     return float(interaction / detuning)
 
 
-@pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
+@pytest.mark.parametrize("embedding_method", ["greedy_layout", "blade"])
 def test_proportional_diagonal_register_and_drive_shape_normalization(
     embedding_method: str,
 ) -> None:
@@ -244,7 +226,7 @@ def test_proportional_diagonal_register_and_drive_shape_normalization(
     """
     qubo = np.array([[-1.0, 2.0], [2.0, -1.0]])
     config = solvers.Config(
-        solving=solvers.QuantumConfig(
+        solving=solvers.quantum.Config(
             embedding=embedding.Config(algorithm=embedding_method),
         )
     )

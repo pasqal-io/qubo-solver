@@ -13,13 +13,13 @@ from qubosolver.embedding._embedder import GreedyEmbedder, _get_embedder
 
 
 @pytest.mark.priority(40)
-@pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
+@pytest.mark.parametrize("embedding_method", ["greedy_layout", "blade"])
 def test_embeddings_different_devices(
     qubo_for_testing_many_devices: Instance, local_device: Device, embedding_method: str
 ) -> None:
     config = solvers.Config(
-        solving=solvers.QuantumConfig(
-            embedding=embedding.Config(algorithm=embedding_method, greedy_traps="device"),
+        solving=solvers.quantum.Config(
+            embedding=embedding.Config(algorithm=embedding_method, greedy_layout_traps="device"),
             device=local_device,
         ),
         do_postprocessing=False,

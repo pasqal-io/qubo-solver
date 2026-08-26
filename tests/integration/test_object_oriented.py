@@ -120,7 +120,7 @@ def check_solution(
 
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("drive_shaping_method", ["proportional_diagonal", "bayesian_search"])
-@pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
+@pytest.mark.parametrize("embedding_method", ["greedy_layout", "blade"])
 @pytest.mark.parametrize("postprocessing", [True, False], ids=["post", "no-post"])
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no-pre"])
 def test_quantum_solve(
@@ -136,7 +136,7 @@ def test_quantum_solve(
 
     if embedding_method == "blade":
         embedding_config = embedding.Config(algorithm=embedding.Algorithm.BLADE)
-    elif embedding_method == "greedy":
+    elif embedding_method == "greedy_layout":
         embedding_config = embedding.Config(
             algorithm=embedding.Algorithm.GREEDY_LAYOUT,
             greedy_layout_traps=100,

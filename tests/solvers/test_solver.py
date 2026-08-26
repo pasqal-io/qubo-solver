@@ -315,7 +315,7 @@ def _triangular_register_qubo() -> np.ndarray:
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("algorithm", ["greedy", "blade"])
+@pytest.mark.parametrize("algorithm", ["greedy_layout", "blade"])
 def test_quantum_matches_classical_triangular(algorithm: str) -> None:
     qubo = _triangular_register_qubo()
     instance = Instance(matrix.tensor(qubo))

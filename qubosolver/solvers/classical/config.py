@@ -8,7 +8,7 @@ from .enums import Algorithm
 
 @dataclass
 class Config():
-    """A `ClassicalConfig` instance defines the classical part of a `SolverConfig`.
+    """A `classical.Config` instance defines the classical part of a `SolverConfig`.
 
     Attributes:
         classical_solver_type (solvers.classical.Algorithm, optional): Classical solver type. Defaults to

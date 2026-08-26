@@ -27,7 +27,7 @@ def _toy_qubo() -> torch.Tensor:
 def _base_params(n: int) -> dict[str, Any]:
     # Paramètres de base, sans animation par défaut
     return {
-        "layout": embedding.Layout.TRIANGULAR,
+        "layout": embedding.Lattice.TRIANGULAR,
         "traps": n + 4,
         "spacing": 5.0,
         "max_min_dist_ratio": 12.5,

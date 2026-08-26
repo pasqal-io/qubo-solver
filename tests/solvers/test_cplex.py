@@ -63,7 +63,7 @@ def test_qubo_solver_classical_cplex() -> None:
     instance = Instance(matrix=Q)
 
     # Create a solvers.Config object with classical solver options.
-    classical_config = solvers.ClassicalConfig(
+    classical_config = solvers.classical.Config(
         algorithm="cplex",
         cplex_maxtime=10.0,
         cplex_log_path="test_solver.log",

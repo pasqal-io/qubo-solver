@@ -26,21 +26,21 @@ class _BaseDriveShaper(ABC):
 
     Attributes:
         instance (Instance): The QUBO problem instance.
-        config (solvers.QuantumConfig): The solver configuration.
+        config (solvers.quantum.Config): The solver configuration.
         backend (Backend): Backend to use.
         device (Device): Device from backend.
     """
 
-    def __init__(self, instance: Instance, config: solvers.QuantumConfig, backend: protocols.Backend):
+    def __init__(self, instance: Instance, config: solvers.quantum.Config, backend: protocols.Backend):
         """Initialize the drive shaping module with a QUBO instance.
 
         Args:
             instance (Instance): The QUBO problem instance.
-            config (solvers.QuantumConfig): The solver configuration.
+            config (solvers.quantum.Config): The solver configuration.
             backend (Backend): Backend to use.
         """
         self.instance: Instance = instance
-        self.config: solvers.QuantumConfig = config
+        self.config: solvers.quantum.Config = config
         self.backend = backend
         self.device = self.config.device
 
@@ -165,7 +165,7 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
     def __init__(
         self,
         instance: Instance,
-        config: solvers.QuantumConfig,
+        config: solvers.quantum.Config,
         backend: protocols.Backend,
     ):
         """Instantiate a `BayesianSearchDriveShaper`.
@@ -199,7 +199,7 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
 
         config = solvers.drive_bayesian_search.Config._from_drive_shaping_config(self.config.drive_shaping)
 
-        solution, drive = solvers.drive_bayesian_search(
+        solution, drive = solvers.drive_bayesian_search.solve(
             self.instance,
             register,
             backend=self.backend,
@@ -208,10 +208,12 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
             config=config,
         )
 
+        return drive, solution
+
 
 def _get_drive_shaper(
     instance: Instance,
-    config: solvers.QuantumConfig,
+    config: solvers.quantum.Config,
     backend: protocols.Backend,
 ) -> _BaseDriveShaper:
     """Return the appropriate drive shaper for the given configuration.

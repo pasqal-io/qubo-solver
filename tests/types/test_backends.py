@@ -200,7 +200,7 @@ def test_emulator_backend_selection(
     attach_bitstring(results, size)
 
     solver_config = solvers.Config(
-        solving=solvers.QuantumConfig(
+        solving=solvers.quantum.Config(
             backend=backend,
             embedding=embedding.Config(algorithm="blade"),
         ),
@@ -216,7 +216,7 @@ def test_emulator_backend_selection(
 def test_default_config_backend() -> None:
     """Test that default solvers.Config uses AutoLocalEmulatorBackend."""
     config = solvers.Config()
-    assert isinstance(config.solving, solvers.QuantumConfig)
+    assert isinstance(config.solving, solvers.quantum.Config)
     check.is_(config.solving.backend._backend_type, AutoLocalEmulatorBackend)
 
 
@@ -235,7 +235,7 @@ def test_remote_emulator_warning() -> None:
     mock_connection, mock_results = mock_connection_and_results()
     attach_bitstring(mock_results, size)
     config = solvers.Config(
-        solving=solvers.QuantumConfig(
+        solving=solvers.quantum.Config(
             backend=RemoteEmulator(backend_type=RemoteSVBackend, connection=mock_connection),
             embedding=embedding.Config(algorithm="blade"),
         ),
@@ -255,7 +255,7 @@ def test_local_emulator_warning() -> None:
     Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
     instance = Instance(Q)
     config = solvers.Config(
-        solving=solvers.QuantumConfig(
+        solving=solvers.quantum.Config(
             backend=LocalEmulator(backend_type=SVBackend),
             embedding=embedding.Config(algorithm="blade"),
         ),

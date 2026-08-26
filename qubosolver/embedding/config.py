@@ -10,7 +10,7 @@ from .enums import Algorithm, Lattice
 
 @dataclass
 class Config():
-    """A module-level [`embedding.Config`][] that defines the embedding part of a [`solvers.QuantumConfig`][].
+    """A module-level [`embedding.Config`][] that defines the embedding part of a [`solvers.quantum.Config`][].
 
     Attributes:
         algorithm: The type of embedding method used to
@@ -21,7 +21,7 @@ class Config():
         greedy_layout_traps: The number of traps on the register.
             Defaults to ``"device"``, i.e. automatically set to match the selected device capacity.
             A too high value will impede computational efficiency.
-        greedy_max_possible_term:
+        greedy_layout_max_possible_term:
             If a `float`, it corresponds to the maximum representable quadratic
             term. If a `tuple`, the first element should be `'factor'`, and the
             second element is a multiplier on the QUBO's maximum quadratic term

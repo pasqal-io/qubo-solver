@@ -181,7 +181,7 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
         ds_config.bayesian_search_custom_objective = probability_based_ojective
     ds_config.bayesian_search_n_calls = 20
     ds_config.bayesian_search_seed = seed
-    config = solvers.QuantumConfig(
+    config = solvers.quantum.Config(
         device=AnalogDevice(), drive_shaping=ds_config, backend=LocalEmulator(num_shots=500)
     )
 
@@ -235,7 +235,7 @@ def test_errors(raise_exception: bool) -> None:
     ds_config = drive_shaping.Config()
     ds_config.bayesian_search_custom_objective = mock_error
     ds_config.bayesian_search_n_calls = 11
-    config = solvers.QuantumConfig(
+    config = solvers.quantum.Config(
         device=AnalogDeviceWithDMM(),
         drive_shaping=ds_config,
     )
@@ -299,7 +299,7 @@ def test_failed_simulation() -> None:
 
     ds_config = drive_shaping.Config()
     ds_config.bayesian_search_n_calls = 11
-    config = solvers.QuantumConfig(
+    config = solvers.quantum.Config(
         device=AnalogDeviceWithDMM(),
         drive_shaping=ds_config,
     )
@@ -325,7 +325,7 @@ def test_failed_simulation_2() -> None:
 
     ds_config = drive_shaping.Config()
     ds_config.bayesian_search_n_calls = 11
-    config = solvers.QuantumConfig(
+    config = solvers.quantum.Config(
         device=AnalogDeviceWithDMM(),
         drive_shaping=ds_config,
     )
@@ -355,7 +355,7 @@ def test_failed_skopt() -> None:
 
     ds_config = drive_shaping.Config()
     ds_config.bayesian_search_n_calls = 11
-    config = solvers.QuantumConfig(
+    config = solvers.quantum.Config(
         device=AnalogDeviceWithDMM(),
         drive_shaping=ds_config,
     )

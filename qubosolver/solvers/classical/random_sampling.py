@@ -42,7 +42,7 @@ def solve(
     Returns:
         A solution with unique bitstrings, their QUBO costs, draw counts, and probabilities.
     """
-    bitstrings_ = bitstring.from_torch(
+    bitstrings_ = bitstring.as_tensor(
         torch.randint(0, 2, size=(max_bitstrings, instance.size), generator=rng)
     )
     unique_bits, counts = torch.unique(bitstrings_, dim=0, return_counts=True)

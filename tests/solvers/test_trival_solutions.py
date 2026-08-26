@@ -13,7 +13,7 @@ def test_classical_all_positive_trivial() -> None:
     """
     coeffs = matrix.tensor([[1.0, 0.5], [0.5, 2.0]])
     instance = Instance(matrix=coeffs)
-    config = solvers.Config(solving=solvers.ClassicalConfig())
+    config = solvers.Config(solving=solvers.classical.Config())
 
     solver = Solver(instance, config)
     sol = solver.solve()
@@ -28,7 +28,7 @@ def test_quantum_all_negative_trivial(local_backend: LocalEmulator) -> None:
     should return a batch of one all-one bitstring
     with solution_status 'trivial-one'.
     """
-    config = solvers.Config(solving=solvers.QuantumConfig(backend=local_backend))
+    config = solvers.Config(solving=solvers.quantum.Config(backend=local_backend))
     coeffs = matrix.tensor([[-1.0, 0.0], [0.0, -3.0]])
     instance = Instance(matrix=coeffs)
 
@@ -42,7 +42,7 @@ def test_quantum_all_negative_trivial(local_backend: LocalEmulator) -> None:
 def test_diagonal_trivial(local_backend: LocalEmulator) -> None:
     coeffs = matrix.tensor([[-1.0, 0.0], [0.0, 3.0]])
     instance = Instance(matrix=coeffs)
-    config = solvers.Config(solving=solvers.QuantumConfig(backend=local_backend))
+    config = solvers.Config(solving=solvers.quantum.Config(backend=local_backend))
 
     solver = Solver(instance, config)
     sol = solver.solve()

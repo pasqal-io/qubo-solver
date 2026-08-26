@@ -109,7 +109,7 @@ def test_extract_qubo_round_trip_through_greedy_embedding_and_drive_shaping() ->
     # A register of 3 atoms sitting on qoolqit's triangular lattice layout
     # (the grid greedy embedding places atoms on), picked non-adjacent so
     # the resulting triangle is scalene rather than equilateral.
-    coords = get_layout(layout_type=embedding.Layout.TRIANGULAR, n_traps=12)
+    coords = get_layout(layout_type=embedding.Lattice.TRIANGULAR, n_traps=12)
     triangle = qoolqit.Register.from_coordinates(coords[(5, 1, 10), :])
     Q = triangle.interaction_matrix()
     assert isinstance(Q, torch.Tensor)

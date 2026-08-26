@@ -141,7 +141,7 @@ def test_blade_clear_dimensions_config() -> None:
 def test_greedy_embedding_config() -> None:
 
     embedding_config = embedding.Config(
-        algorithm="greedy",
+        algorithm="greedy_layout",
         greedy_layout_lattice=embedding.Lattice.SQUARE,
         greedy_layout_traps=10,
     )

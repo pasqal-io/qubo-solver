@@ -120,7 +120,7 @@ def test_quantum_preprocessing_falls_back_to_zeroing_when_bitflip_is_not_enough(
     check.is_true(transforms.negative_bitflip._has_negative_offdiagonal(flipped.matrix))
 
     config = solvers.Config(
-        solving=solvers.QuantumConfig(),
+        solving=solvers.quantum.Config(),
         do_preprocessing=True,
         activate_trivial_solutions=False,
         do_postprocessing=False,
@@ -146,7 +146,7 @@ def test_quantum_preprocessing(qubo_instance_for_preprocessing: Instance) -> Non
     Test instance using quantum with preprocessing.
     """
     quantum_preprocessing_config = solvers.Config(
-        solving=solvers.QuantumConfig(), do_preprocessing=True, do_postprocessing=False
+        solving=solvers.quantum.Config(), do_preprocessing=True, do_postprocessing=False
     )
     solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
@@ -158,7 +158,7 @@ def test_quantum_postprocessing(qubo_instance_for_preprocessing: Instance) -> No
     Test instance using quantum with postprocessing.
     """
     quantum_preprocessing_config = solvers.Config(
-        solving=solvers.QuantumConfig(), do_preprocessing=False, do_postprocessing=True
+        solving=solvers.quantum.Config(), do_preprocessing=False, do_postprocessing=True
     )
     solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
@@ -172,7 +172,7 @@ def test_quantum_prepostprocessing(
     Test instance using quantum with both preprocessing and postprocessing.
     """
     quantum_preprocessing_config = solvers.Config(
-        solving=solvers.QuantumConfig(), do_preprocessing=True, do_postprocessing=True
+        solving=solvers.quantum.Config(), do_preprocessing=True, do_postprocessing=True
     )
     solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
@@ -184,7 +184,7 @@ def test_classical_preprocessing(qubo_instance_for_preprocessing: Instance) -> N
     Test instance using classical with preprocessing.
     """
     quantum_preprocessing_config = solvers.Config(
-        solving=solvers.ClassicalConfig(), do_preprocessing=True, do_postprocessing=False
+        solving=solvers.classical.Config(), do_preprocessing=True, do_postprocessing=False
     )
     solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
@@ -198,7 +198,7 @@ def test_classical_postprocessing(
     Test instance using classical with postprocessing.
     """
     quantum_preprocessing_config = solvers.Config(
-        solving=solvers.ClassicalConfig(), do_preprocessing=False, do_postprocessing=True
+        solving=solvers.classical.Config(), do_preprocessing=False, do_postprocessing=True
     )
     solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
@@ -212,7 +212,7 @@ def test_classical_prepostprocessing(
     Test instance using classical with preprocessing and postprocessing.
     """
     quantum_preprocessing_config = solvers.Config(
-        solving=solvers.ClassicalConfig(), do_preprocessing=True, do_postprocessing=True
+        solving=solvers.classical.Config(), do_preprocessing=True, do_postprocessing=True
     )
     solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
@@ -279,10 +279,10 @@ def test_quantum_prepostprocessing_2(
     instance = Instance(Q)
 
     config = solvers.Config(
-        solving=solvers.QuantumConfig(
+        solving=solvers.quantum.Config(
             embedding.Config(
                 algorithm=embedding_method,
-                greedy_traps=500,
+                greedy_layout_traps=500,
             ),
             drive_shaping=drive_shaping.Config(dmm=dmm),
             device=DigitalAnalogDevice(),

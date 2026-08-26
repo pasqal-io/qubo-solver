@@ -72,7 +72,7 @@ def test_with_perfect_embedding(
     instance = Instance(matrix=Q)
 
     # Get all bitstrings with minimum cost
-    bf_solution = solvers.brute_force(instance, max_bitstrings=10)
+    bf_solution = solvers.brute_force.solve(instance, max_bitstrings=10)
     expected_optimal_solutions = gather_optimal_solutions(bf_solution)
     check.is_not(expected_optimal_solutions, [])
 
@@ -82,9 +82,9 @@ def test_with_perfect_embedding(
 
 
     embed_cfg = embedding.Config(
-        algorithm="greedy",
-        greedy_traps=100,
-        greedy_max_possible_term=1.0,
+        algorithm="greedy_layout",
+        greedy_layout_traps=100,
+        greedy_layout_max_possible_term=1.0,
     )
 
     drive_cfg = drive_shaping.Config(
@@ -94,7 +94,7 @@ def test_with_perfect_embedding(
     )
 
     config = solvers.Config(
-        solving=solvers.QuantumConfig(
+        solving=solvers.quantum.Config(
             embedding=embed_cfg,
             drive_shaping=drive_cfg,
             device=device_type(),

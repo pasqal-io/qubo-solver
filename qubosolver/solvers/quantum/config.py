@@ -12,7 +12,7 @@ from qubosolver import embedding, drive_shaping
 
 @dataclass
 class Config():
-    """A `QuantumConfig` instance defines the quantum part of a `SolverConfig`.
+    """A `quantum.Config` instance defines the quantum part of a `SolverConfig`.
 
     Attributes:
         embedding (embedding.Config, optional): Embedding part configuration of the solver.

@@ -13,6 +13,7 @@ import qoolqit
 from qoolqit import AnalogDevice, DigitalAnalogDevice
 
 from qubosolver import (
+    analysis,
     Instance,
     Solution,
     Solver,
@@ -22,6 +23,7 @@ from qubosolver import (
     SingleSolution,
     solvers,
     drive_shaping,
+    embedding,
 )
 
 
@@ -73,7 +75,7 @@ def test_with_perfect_embedding(
     qubo /= qubo.max()
     instance = Instance(matrix=qubo)
 
-    bf_solutions = solvers.brute_force(instance, max_bitstrings=-1)
+    bf_solutions = solvers.brute_force.solve(instance, max_bitstrings=-1)
     expected_optimal_solutions = gather_optimal_solutions(bf_solutions)
     check.is_not(expected_optimal_solutions, [])
 
@@ -81,35 +83,36 @@ def test_with_perfect_embedding(
     expected_bitstrings = [solution.string for solution in expected_optimal_solutions]
     print(f"Expected optimal bitstrings: {expected_bitstrings}")
 
-    embedding_config = EmbeddingConfig(
-        embedding_method="greedy",
-        greedy_traps=100,
-        greedy_max_possible_term=1,
+    embedding_config = embedding.Config(
+        algorithm="greedy_layout",
+        greedy_layout_traps=100,
+        greedy_layout_max_possible_term=1.0,
     )
 
-    drive_shaping_config = DriveShapingConfig(
-        drive_shaping_method="local_energy_scale",
+    drive_shaping_config = drive_shaping.Config(
+        algorithm="local_energy_scale",
         dmm=dmm,
         local_energy_scale_kappa=0.25,
     )
 
-    config = SolverConfig(
-        use_quantum=True,
+    solving_config = solvers.quantum.Config(
         embedding=embedding_config,
         drive_shaping=drive_shaping_config,
         device=device_type(),
     )
 
-    solver = Solver(instance, config)
-    qubo_solution = solver.solve().sort_by_cost()
-    analyzer = Analyzer([qubo_solution])
-    print(analyzer.df)
+    config = solvers.Config(solving=solving_config)
 
-    register = solver.embedding()
+    solver = Solver(instance, config)
+    solution = solver.solve()
+    df = analysis.to_dataframe([solution])
+    print(df)
+
+    register = solver._embedding()
     print(f"Register: {register.qubits}")
     print(f"Distances: {register.distances()}")
 
-    sampled_optimal_solutions = gather_optimal_solutions(qubo_solution)
+    sampled_optimal_solutions = gather_optimal_solutions(solution)
     check.is_not(sampled_optimal_solutions, [])
 
     minimum_sampled_cost = sampled_optimal_solutions[0].cost

@@ -23,7 +23,7 @@ class _BaseEmbedder(ABC):
     2-D trap layout.
     """
 
-    def __init__(self, instance: Instance, config: solvers.QuantumConfig, backend: protocols.Backend):
+    def __init__(self, instance: Instance, config: solvers.quantum.Config, backend: protocols.Backend):
         """
         Args:
             instance: The QUBO problem to embed.
@@ -34,7 +34,7 @@ class _BaseEmbedder(ABC):
                 need backend-specific information during placement.
         """
         self.instance: Instance = instance
-        self.config: solvers.QuantumConfig = config
+        self.config: solvers.quantum.Config = config
         self.register: Register | None = None
         self.backend = backend
 
@@ -120,7 +120,7 @@ class GreedyEmbedder(_BaseEmbedder):
 
 
 def _get_embedder(
-    instance: Instance, config: solvers.QuantumConfig, backend: protocols.Backend
+    instance: Instance, config: solvers.quantum.Config, backend: protocols.Backend
 ) -> _BaseEmbedder:
     """Return the appropriate embedder instance for the given configuration.
 

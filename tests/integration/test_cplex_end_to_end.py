@@ -45,7 +45,7 @@ def check_solution(
         return 0.0
 
     expected_optimal_solutions = gather_optimal_solutions(
-        solvers.brute_force(qubo, max_bitstrings=-1)
+        solvers.brute_force.solve(qubo, max_bitstrings=-1)
     )
     check.almost_equal(min_cost, expected_optimal_solutions[0].cost)
     expected_optimal_bitstrings = [s.string for s in expected_optimal_solutions]
@@ -69,5 +69,5 @@ def test_cplex(
 ) -> None:
     instance = QUBOS[qubo_id]
 
-    solution = solvers.cplex(instance)
+    solution = solvers.cplex.solve(instance)
     check_solution(solution, instance)
