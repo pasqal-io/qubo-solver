@@ -1,8 +1,5 @@
 ::: qubosolver.solvers
     options:
-      show_submodules: false
-      summary:
-        modules: true
       filters:
         - "!^Solver$"
         - "!^QuboSolver$"
@@ -15,17 +12,11 @@
 ::: qubosolver.solvers.quantum
     options:
       show_submodules: true
-      summary:
-        modules: true
 
 ::: qubosolver.solvers.hybrid
     options:
       show_submodules: true
-      summary:
-        modules: true
 
 ::: qubosolver.solvers.classical
     options:
       show_submodules: true
-      summary:
-        modules: true
