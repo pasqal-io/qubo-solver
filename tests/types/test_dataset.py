@@ -84,7 +84,7 @@ def test_dataset_generation(negative_offdiag_rate: float) -> None:
 
     # test also save and load
     file_path = Path(__file__).parent / "qubo_dataset_test.pt"
-    Dataset.save(dataset, file_path)
+    Dataset.save(file_path, dataset)
     assert os.path.exists(file_path)
     loaded_data = Dataset.load(file_path)
     assert len(loaded_data) == num_instances
@@ -94,14 +94,14 @@ def test_dataset_generation(negative_offdiag_rate: float) -> None:
     off_diag = ~torch.eye(size, dtype=torch.bool)
 
     for qubo, _ in dataset:
-        assert qubo.shape[0] == size
-        assert np.isclose(_calculate_density(qubo), density, atol=1e-1)
-        assert torch.all(qubo >= coefficient_bounds[0])
-        assert torch.all(qubo <= coefficient_bounds[1])
+        assert qubo.matrix.shape[0] == size
+        assert np.isclose(_calculate_density(qubo.matrix), density, atol=1e-1)
+        assert torch.all(qubo.matrix >= coefficient_bounds[0])
+        assert torch.all(qubo.matrix <= coefficient_bounds[1])
         if negative_offdiag_rate:
-            negative_off_diag = qubo[off_diag] < 0
-            assert torch.any(negative_off_diag) or torch.all(qubo[off_diag] == 0)
+            negative_off_diag = qubo.matrix[off_diag] < 0
+            assert torch.any(negative_off_diag) or torch.all(qubo.matrix[off_diag] == 0)
             if torch.any(negative_off_diag):
                 assert negative_off_diag.sum().item() == int(negative_offdiag_rate * size) * 2
         else:
-            assert torch.all(qubo[off_diag] >= 0)
+            assert torch.all(qubo.matrix[off_diag] >= 0)

@@ -25,7 +25,7 @@ def test_tabu_search_costs_match_bitstrings() -> None:
     """Every reported cost must correspond to x^T Q x of its own bitstring."""
     start = bitstrings.zeros(3, instance.size)
 
-    solution = solvers.tabu_search(instance, start, max_iter=200)
+    solution = solvers.tabu_search.solve(instance, start, max_iter=200)
 
     true_solution = copy.deepcopy(solution)._compute_costs(instance.matrix)
 
@@ -45,7 +45,7 @@ def test_tabu_search_runs_start_from_given_bitstrings() -> None:
     """
     start = bitstrings.from_strings(["000000", "111111", "101010", "000000"])
 
-    solution = solvers.tabu_search(instance, start, max_iter=0)
+    solution = solvers.tabu_search.solve(instance, start, max_iter=0)
 
     expected_bitstrings = bitstrings.from_strings(["101010", "111111", "000000"])
     expected_counts = vectori.tensor([1, 1, 2])
@@ -58,8 +58,8 @@ def test_tabu_search_runs_start_from_given_bitstrings() -> None:
 def test_tabu_search_is_deterministic_given_same_start() -> None:
     start = bitstrings.from_strings(["000000", "111111"])
 
-    solution_a = solvers.tabu_search(instance, start, max_iter=100)
-    solution_b = solvers.tabu_search(instance, start, max_iter=100)
+    solution_a = solvers.tabu_search.solve(instance, start, max_iter=100)
+    solution_b = solvers.tabu_search.solve(instance, start, max_iter=100)
 
     torch.testing.assert_close(solution_a.bitstrings, solution_b.bitstrings)
     torch.testing.assert_close(solution_a.costs, solution_b.costs)

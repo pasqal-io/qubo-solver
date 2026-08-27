@@ -74,7 +74,7 @@ def test_unknown_strategy_raises() -> None:
     solution._update(instance)
 
     with pytest.raises(ValueError):
-        solvers.iterative_bitflip_local_search(instance, solution, strategy="does_not_exist")  # type: ignore[arg-type]
+        solvers.iterative_bitflip_local_search.solve(instance, solution, strategy="does_not_exist")  # type: ignore[arg-type]
 
 
 def test_max_iterations_limits_progress() -> None:

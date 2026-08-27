@@ -132,7 +132,7 @@ def test_parse_results() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"001": 10, "110": 5, "010": 3}
 
-    solution = Solution.from_results(mock_result, Instance())
+    solution = Solution.from_results(mock_result, Instance(matrix.zeros(3)))
 
     expected_bitstrings = bitstrings.tensor([[0, 0, 1], [1, 1, 0], [0, 1, 0]])
     expected_counts = vectori.tensor([10, 5, 3])
@@ -159,7 +159,7 @@ def test_parse_results_binary_string_conversion() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"0101": 8, "1010": 12, "1111": 4}
 
-    solution = Solution.from_results(mock_result, Instance())
+    solution = Solution.from_results(mock_result, Instance(matrix.zeros(4)))
 
     expected_bitstrings = bitstrings.tensor([[0, 1, 0, 1], [1, 0, 1, 0], [1, 1, 1, 1]])
     expected_counts = vectori.tensor([8, 12, 4])
@@ -173,7 +173,7 @@ def test_parse_results_single_bitstring() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"101": 25}
 
-    solution = Solution.from_results(mock_result, Instance())
+    solution = Solution.from_results(mock_result, Instance(matrix.zeros(3)))
 
     expected_bitstrings = bitstrings.tensor([[1, 0, 1]])
     expected_counts = vectori.tensor([25])
@@ -187,7 +187,7 @@ def test_parse_results_string_counts_to_integer_tensor() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"101": "15", "010": "8", "111": "12"}
 
-    solution = Solution.from_results(mock_result, Instance())
+    solution = Solution.from_results(mock_result, Instance(matrix.zeros(3)))
 
     expected_bitstrings = bitstrings.tensor([[1, 0, 1], [0, 1, 0], [1, 1, 1]])
     expected_counts = vectori.tensor([15, 8, 12])

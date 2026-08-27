@@ -332,7 +332,7 @@ def test_failed_simulation_2() -> None:
         n_evaluations=11,
     )
     with patch(
-        "qubosolver.drive_shaping.bayesian_search._run_simulation",
+        "qubosolver.solvers.drive_bayesian_search._run_simulation",
         return_value=Solution(),
     ):
         solution, _ = solvers.drive_bayesian_search.solve(
@@ -355,21 +355,21 @@ def test_failed_skopt() -> None:
             [0.2, -0.15],
         ],
     )
-    Q = interaction_matrix_from_vertices(vertices) - matrix.as_tensor(torch.eye(3))
+    register = Register.from_coordinates(vertices)
+    Q = matrix.as_tensor(register.interaction_matrix()) - matrix.as_tensor(torch.eye(3))
 
-    register = Register.from_coordinates(vertices.tolist())
-
-    ds_config = drive_shaping.Config()
-    ds_config.bayesian_search_n_calls = 11
-    config = solvers.quantum.Config(
-        device=AnalogDeviceWithDMM(),
-        drive_shaping=ds_config,
+    config = solvers.drive_bayesian_search.Config(
+        n_evaluations=11,
     )
 
-    drive_shaper = BayesianSearchDriveShaper(Instance(Q), config, config.backend)
-
-    with patch("qubosolver.drive_shaping.bayesian_search.gp_minimize", return_value=None):
-        _, qubo_solution = drive_shaper.generate(register)
+    with patch("qubosolver.solvers.drive_bayesian_search.gp_minimize", return_value=None):
+        qubo_solution, _ = solvers.drive_bayesian_search.solve(
+            Instance(Q),
+            register,
+            backend=LocalEmulator(),
+            device=AnalogDeviceWithDMM(),
+            config=config,
+        )
         # Falls back to the default x0 parameters, which are now clamped to
         # stay compilable on the device, so the simulation succeeds.
         check.is_true(qubo_solution)

@@ -28,7 +28,7 @@ def test_default_config() -> None:
 def test_default_classical_config() -> None:
     default_classical = solvers.classical.Config()
     check.equal(default_classical.algorithm, solvers.classical.Algorithm.TABU_SEARCH)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         solvers.classical.Config(algorithm=1)  # type: ignore[arg-type]
 
 
