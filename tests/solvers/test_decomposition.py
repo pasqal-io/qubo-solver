@@ -18,6 +18,11 @@ from qubosolver import (
     matrix,
     bitstring,
     torch_rng,
+    SingleSolution,
+    Solution,
+    analysis,
+    vector,
+    vectori,
 )
 from qubosolver.solvers.solver import _DecomposeQuboSolver
 from qubosolver.transforms._algorithms.decompose import compute_distance_interaction_matrix
@@ -301,55 +306,63 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
                 [2, 2, -1],
             ],
         )
-        Q2 = matrix.as_tensor(
-            Dataset.from_random(
+        Q2 = Dataset.from_random(
                 n_matrices=1,
                 matrix_dim=dims[0],
                 densities=[1.0],
                 dtype=torch.float64,
                 rng=rng,
-            )[0][0]
-        )
+            )[0][0].matrix
         blocks = [Q1, Q2]
         N = Q1.shape[0] + dims[0]
     else:
         N = np.sum(dims)
         blocks = [
-            matrix.as_tensor(
-                Dataset.from_random(
-                    n_matrices=1,
-                    matrix_dim=n,
-                    densities=[1.0],
-                    dtype=torch.float64,
-                    rng=rng,
-                )[0][0]
-            )
+            Dataset.from_random(
+                n_matrices=1,
+                matrix_dim=n,
+                densities=[1.0],
+                dtype=torch.float64,
+                rng=rng,
+            )[0][0].matrix
             for n in dims
         ]
     Q = torch.block_diag(*blocks)
     check.equal(Q.shape, (N, N))
     print(f"Qubo matrix:\n{Q}")
 
-    subpb_optimal_bitstrings = []
+    print("Sub-problems optimal solutions:")
+    subpb_optimal_solutions = []
     for q in blocks:
-        results = dict()
-        for bits in itertools.product([0, 1], repeat=q.shape[0]):
-            z = torch.tensor(bits, dtype=q.dtype)
-            cost = (z @ q @ z).item()
-            results["".join(str(int(b)) for b in z.flatten())] = cost
-        min_cost = min(c for c in results.values())
-        subpb_optimal_bitstrings.append(
-            {b: c for b, c in results.items() if np.allclose(c, min_cost)}
-        )
-    print(f"Sub-problems optimal bitstrings: {subpb_optimal_bitstrings}")
+        bf_solution = solvers.brute_force.solve(Instance(q), max_bitstrings=-1)
+        mask = torch.isclose(bf_solution.costs, bf_solution.costs[0])
 
-    subpb_optimal_bitstrings_list = [list(d.items()) for d in subpb_optimal_bitstrings]
-    optimal_bitstrings = {
-        "".join(b for b, _ in sub_results): sum(c for _, c in sub_results)
-        for sub_results in itertools.product(*subpb_optimal_bitstrings_list)
-    }
+        bf_solution.bitstrings = bf_solution.bitstrings[mask]
+        bf_solution.costs = bf_solution.costs[mask]
+        bf_solution.counts = bf_solution.counts[mask]
+        bf_solution.probabilities = bf_solution.probabilities[mask]
+        bf_solution._compute_probabilities()
 
-    print(f"Global optimal bitstrings: {optimal_bitstrings}")
+        df = analysis.to_dataframe([bf_solution])
+        print(df)
+
+        subpb_optimal_solutions.append(bf_solution)
+
+    optimal_solutions_list = []
+    for subpb_solutions in itertools.product(*subpb_optimal_solutions):
+        b = torch.cat([s.bitstring for s in subpb_solutions])
+        cost = sum(s.cost for s in subpb_solutions)
+        solution = SingleSolution(b, cost, 1)
+        optimal_solutions_list.append(solution)
+
+    optimal_solutions = Solution(
+        bitstrings=torch.stack([s.bitstring for s in optimal_solutions_list]),
+        costs=vector.as_tensor([s.cost for s in optimal_solutions_list]),
+        counts=vectori.zeros(len(optimal_solutions_list)).fill_(1),
+    )
+    optimal_solutions._compute_probabilities()._sort_by_cost()
+
+    print(f"\nGlobal optimal solutions:\n{analysis.to_dataframe([optimal_solutions])}")
 
     qubo_instance = Instance(Q)
 
@@ -361,14 +374,12 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
     assert isinstance(solver._solver, _DecomposeQuboSolver)
 
     solution = solver.solve()
-    print(f"Solution {solution}")
-    solution._sort_by_cost()
-    print(f"Solution: {solution}")
+    print(f"\nSolution:\n{analysis.to_dataframe([solution])}")
     best_solution = solution[0].string
     min_cost = solution[0].cost
 
     decomposition = solver._solver._decomposition
-    print(f"Decomposition: {decomposition}")
+    print(f"\nDecomposition: {decomposition}")
     sorted_decomposition = sorted([sorted(d) for d in decomposition])
     print(f"Sorted decomposition: {sorted_decomposition}")
     block_decomposition = []
@@ -430,12 +441,12 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
 
     if (seed, dims) in non_optimal_cases:
         check.not_equal(sorted_decomposition, block_decomposition)
-        check.is_not_in(best_solution, optimal_bitstrings.keys())
-        check.greater(min_cost, min(optimal_bitstrings.values()))
+        check.is_not_in(best_solution, [s.string for s in optimal_solutions])
+        check.greater(min_cost, optimal_solutions[0].cost)
         pytest.xfail("The decomposition is not perfect")
 
-    check.is_in(best_solution, optimal_bitstrings.keys())
-    check.almost_equal(min_cost, optimal_bitstrings[best_solution])
+    check.is_in(best_solution, [s.string for s in optimal_solutions])
+    check.almost_equal(min_cost, optimal_solutions[0].cost)
 
 
 def test_decompose_embedding() -> None:

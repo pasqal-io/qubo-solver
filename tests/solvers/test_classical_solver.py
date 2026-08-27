@@ -92,7 +92,7 @@ def test_random() -> None:
     instance = Instance(matrix=Q)
 
     # Create a solvers.Config object with classical solver options.
-    classical_config = solvers.classical.Config(algorithm="random", max_bitstrings=3)
+    classical_config = solvers.classical.Config(algorithm="random_sampling", max_bitstrings=3)
     config = solvers.Config(
         solving=classical_config, activate_trivial_solutions=False
     )

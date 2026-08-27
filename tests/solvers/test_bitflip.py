@@ -16,6 +16,7 @@ from qubosolver import (
     torch_rng,
     Bitstring,
 )
+from qubosolver.solvers.classical import iterative_bitflip_local_search
 
 
 @pytest.mark.parametrize("strategy", ["best_improvement", "first_improvement", "greedy_sweep"])
@@ -116,29 +117,29 @@ def test_time_limit_is_global_and_skips_remaining_batch(monkeypatch: pytest.Monk
     # deterministically instead of depending on wall-clock timing.
     time_limit = 3.0
     clock = 0.0
-    monkeypatch.setattr(bitflip.time, "monotonic", lambda: clock)
+    monkeypatch.setattr(iterative_bitflip_local_search.time, "monotonic", lambda: clock)
 
     batch = 10
     solution = Solution(bitstrings.zeros(batch, n), counts=vectori.zeros(batch).fill_(1))
     solution._update(instance)
 
-    original_eval = instance.evaluate_solution
+    original_cost = instance.cost
     eval_count = 0
 
-    def ticking_eval(s: Bitstring) -> float:
+    def ticking_cost(s: Bitstring) -> float:
         # Advance the clock by more than the whole budget on every evaluation. The
         # first row's search still gets to try its first flip (its own inner deadline
         # is computed only *after* the initial evaluation has already ticked the
         # clock forward), finds an improving flip on the first try, and applies it -
         # but by then the global deadline (fixed before the batch loop started) is
         # long past, so every subsequent row is skipped by the batch-level check
-        # before it ever reaches evaluate_solution.
+        # before it ever reaches cost.
         nonlocal clock, eval_count
         eval_count += 1
         clock += time_limit + 1.0
-        return original_eval(s)
+        return original_cost(s)
 
-    monkeypatch.setattr(instance, "evaluate_solution", ticking_eval)
+    monkeypatch.setattr(instance, "cost", ticking_cost)
 
     result = solvers.iterative_bitflip_local_search.solve(
         instance, solution, strategy="first_improvement", time_limit=time_limit
