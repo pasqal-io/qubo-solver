@@ -1,9 +1,10 @@
 """QUBO Solver: a library for solving Quadratic Unconstrained Binary Optimization (QUBO) problems using
 classical, quantum, and hybrid algorithms, including on Pasqal neutral-atom QPUs.
 
-Exposes the core data types (`Instance`, `Solution`, `Dataset`, ...), the
-`Solver` entry point, and the `transforms`, `embedding`, `drive_shaping`, and
-`solvers` submodules used to build and run quantum and classical QUBO solvers.
+Exposes the core data types ([`Instance`][], [`Solution`][], [`Dataset`][], ...), the
+[`Solver`][] entry point, and the [`transforms`][], [`embedding`][],
+[`drive_shaping`][], and [`solvers`][] submodules used to build and run quantum,
+hybrid, and classical QUBO solvers.
 """
 
 from __future__ import annotations
