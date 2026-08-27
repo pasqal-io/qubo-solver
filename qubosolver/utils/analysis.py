@@ -1,7 +1,7 @@
 """Free functions for analysing QUBO solutions.
 
-Converts one or more [`qubosolver.Solution`][] objects into a unified
-`pandas.DataFrame`, for filtering, comparing, and summarizing solver outputs.
+Converts one or more [`Solution`][] objects into a unified
+[`pandas.DataFrame`][], for filtering, comparing, and summarizing solver outputs.
 
 Example:
     ```python
@@ -58,17 +58,17 @@ def to_dataframe(
     *,
     labels: Sequence[str] | Literal["auto"] = "auto",
 ) -> pd.DataFrame:
-    """Convert one or more Solutions into a single, unified `DataFrame`.
+    """Convert one or more [`Solution`][] into a single, unified [`pandas.DataFrame`][].
 
-    The resulting `DataFrame` can be used for filtering, sorting, and analysis.
+    The resulting [`pandas.DataFrame`][] can be used for filtering, sorting, and analysis.
 
     Args:
-        solutions: A list of [`qubosolver.Solution`][].
+        solutions: A list of [`Solution`][].
         labels: One label per solution used to identify each group in the
-            `DataFrame`. Defaults to ``"0"``, ``"1"``, … when ``"auto"``.
+            [`pandas.DataFrame`][]. Defaults to ``"0"``, ``"1"``, … when ``"auto"``.
 
     Returns:
-        The concatenated `DataFrame` containing all solutions.
+        The concatenated [`pandas.DataFrame`][] containing all solutions.
 
     Raises:
         ValueError: If the number of labels does not match the number of solutions.

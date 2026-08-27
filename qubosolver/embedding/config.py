@@ -15,9 +15,9 @@ class Config():
     Attributes:
         algorithm: The type of embedding method used to
             place atoms on the register according to the QUBO problem.
-            Defaults to `Algorithm.GREEDY_LAYOUT`.
+            Defaults to [`Algorithm.GREEDY_LAYOUT`][].
         greedy_layout_lattice: Lattice type for the
-            greedy layout embedder method. Defaults to `Lattice.TRIANGULAR`.
+            greedy layout embedder method. Defaults to [`Lattice.TRIANGULAR`][].
         greedy_layout_traps: The number of traps on the register.
             Defaults to ``"device"``, i.e. automatically set to match the selected device capacity.
             A too high value will impede computational efficiency.

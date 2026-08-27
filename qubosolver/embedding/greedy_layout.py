@@ -2,7 +2,7 @@
 
 This module wraps the internal greedy embedding and exposes a single `embed`
 entry point that accepts a [`qubosolver.Instance`][] and returns a
-`qoolqit.Register` ready for use in a quantum program.
+[`qoolqit.Register`][] ready for use in a quantum program.
 
 The greedy algorithm places logical QUBO nodes one at a time onto trap sites
 of a pre-defined lattice (triangular or square), choosing at each step the

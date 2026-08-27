@@ -1,8 +1,8 @@
 """BLaDE (Balanced Layout and Distance Embedding) adapter for QUBO instances.
 
-This module is a thin wrapper around `qoolqit.embedding.Blade` that
-exposes a single `embed` entry point accepting a
-[`qubosolver.Instance`][] and returning a `qoolqit.Register` ready for use
+This module is a thin wrapper around [`qoolqit.embedding.Blade`][] that
+exposes a single `embed` entry point accepting an
+[`Instance`][] and returning a [`qoolqit.Register`][] ready for use
 in a quantum program.
 
 BLaDE maps the QUBO coefficient matrix onto a 2-D (or higher-dimensional)
@@ -28,7 +28,7 @@ from qoolqit.embedding import Blade, BladeConfig
 # refer to ``blade.Config`` without importing from qoolqit directly.
 # TODO: Replace TypeAlias with the ``type`` statement when Python >= 3.12.
 Config: TypeAlias = BladeConfig
-"""Alias for `qoolqit.BladeConfig`."""
+"""Alias for [`qoolqit.embedding.BladeConfig`][]."""
 
 
 def embed(
@@ -39,7 +39,7 @@ def embed(
     """Embed a QUBO instance using the BLaDE algorithm.
 
     Runs the BLaDE optimisation on the QUBO coefficient matrix and converts
-    the resulting graph coordinates into a `qoolqit.Register`.  Atom
+    the resulting graph coordinates into a [`qoolqit.Register`][].  Atom
     labels are assigned as stringified integer indices (``"0"``, ``"1"``, …)
     matching the variable ordering of the QUBO matrix.
 
