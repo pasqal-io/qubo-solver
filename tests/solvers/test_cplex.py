@@ -239,7 +239,7 @@ def test_rounding() -> None:
     # must report the actual cost of its own bitstring, not CPLEX's internal
     # (possibly rounded) objective value.
     instance = _build_rounding_matrix()
-    solution = solvers.cplex(instance, maxtime=60.0)
+    solution = solvers.cplex.solve(instance, maxtime=60.0)
 
     check.is_true(solution.check_consistency(instance=instance))
 
