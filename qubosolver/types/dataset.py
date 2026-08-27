@@ -241,7 +241,7 @@ class Dataset():
 
     @staticmethod
     def save(file_like: io_utils.FileLike[bytes], dataset: Dataset) -> None:
-        """Persist a dataset to disk using `torch.save`.
+        """Persist a dataset to disk using [`torch.save`][].
 
         Args:
             file_like: Destination file path or writable binary file object.

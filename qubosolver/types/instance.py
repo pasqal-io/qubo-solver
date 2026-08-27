@@ -108,7 +108,7 @@ class Instance:
 
     @staticmethod
     def save(file_like: io_utils.FileLike[bytes], instance: Instance) -> None:
-        """Serialise instance to ``file_like`` using `torch.save`.
+        """Serialise instance to ``file_like`` using [`torch.save`][].
 
         Args:
             file_like: Destination — a file path (`str` or `os.PathLike`),
@@ -136,18 +136,18 @@ class Instance:
 
     @staticmethod
     def load(file_like: io_utils.FileLike[bytes]) -> Instance:
-        """Deserialise a `Instance` previously saved with `save`.
+        """Deserialise an [`Instance`][] previously saved with [`save`][].
 
         Args:
             file_like: Source file path or readable binary file object,
                 as produced by [`save`][].
 
         Returns:
-            A new instance whose `matrix` is the deserialised coefficient
+            A new instance whose [`matrix`][] is the deserialised coefficient
                 tensor.
 
         Note:
-            `torch.load` is called with `weights_only=True` to prevent
+            [`torch.load`][] is called with `weights_only=True` to prevent
             arbitrary code execution from untrusted checkpoint files.
 
         Example:

@@ -101,9 +101,9 @@ class AutoLocalEmulatorBackend(EmulatorBackend):
     This factory uses `__new__` to return instances of different backend types
     based on quantum register size for optimal performance:
 
-    - `MPSBackend` for large problems (≥26 qubits)
-    - `SVBackend` for medium problems (15-25 qubits)
-    - `QutipBackendV2` for small problems (<15 qubits)
+    - [`MPSBackend`](https://pasqal-io.github.io/emulators/latest/emu_mps/api/#mpsbackend) for large problems (≥26 qubits)
+    - [`SVBackend`](https://pasqal-io.github.io/emulators/latest/emu_sv/api/#svbackend) for medium problems (15-25 qubits)
+    - [`QutipBackendV2`](https://docs.pasqal.com/pulser/apidoc/_autosummary/pulser_simulation.QutipBackendV2) for small problems (<15 qubits)
 
     Note:
         This class acts as a factory and never instantiates itself.
@@ -138,9 +138,9 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
     This factory uses `__new__` to return instances of different remote backend types
     based on quantum register size for optimal performance:
 
-    - `RemoteMPSBackend` for large problems (≥26 qubits)
-    - `RemoteSVBackend` for medium problems (15-25 qubits)
-    - `RemoteEmuFreeBackend` for small problems (<15 qubits)
+    - [`RemoteMPSBackend`](https://docs.pasqal.com/cloud/pasqal-cloud/reference/backends/#pasqal_cloud.backends.RemoteMPSBackend) for large problems (≥26 qubits)
+    - [`RemoteSVBackend`](https://docs.pasqal.com/cloud/pasqal-cloud/reference/backends/#pasqal_cloud.backends.RemoteSVBackend) for medium problems (15-25 qubits)
+    - [`RemoteEmuFreeBackend`](https://docs.pasqal.com/cloud/pasqal-cloud/reference/backends/#pasqal_cloud.backends.RemoteEmuFreeBackend) for small problems (<15 qubits)
 
     Note:
         This class acts as a factory and never instantiates itself.
@@ -202,24 +202,23 @@ def _warn_suboptimal_backend(
 
     warnings.warn(warning_msg, UserWarning, stacklevel=2)
 
-
 class LocalEmulator(QoolqitLocalEmulator):
     """Local quantum emulator with automatic backend selection.
 
-    This class wraps qoolqit.LocalEmulator and automatically selects
+    This class wraps [`qoolqit.execution.LocalEmulator`][] and automatically selects
     the optimal local backend based on the quantum register size.
-    It provides the same interface as the base LocalEmulator but with
+    It provides the same interface as the base [`qoolqit.execution.LocalEmulator`][] but with
     improved performance through intelligent backend selection.
 
     The optimal backend selection follows these guidelines:
 
-    - Small problems (< 15 qubits): `QutipBackendV2`
-    - Medium problems (15-25 qubits): `SVBackend`
-    - Large problems (≥ 26 qubits): `MPSBackend`
+    - Small problems (< 15 qubits): [`QutipBackendV2`](https://docs.pasqal.com/pulser/apidoc/_autosummary/pulser_simulation.QutipBackendV2)
+    - Medium problems (15-25 qubits): [`SVBackend`](https://pasqal-io.github.io/emulators/latest/emu_sv/api/#svbackend)
+    - Large problems (≥ 26 qubits): [`MPSBackend`](https://pasqal-io.github.io/emulators/latest/emu_mps/api/#mpsbackend)
 
     Args:
         backend_type: Backend type to use.
-        **kwargs: Additional keyword arguments passed to the base `qoolqit.LocalEmulator`.
+        **kwargs: Additional keyword arguments passed to the base [`qoolqit.execution.LocalEmulator`][].
 
     Example:
         ```python
@@ -239,8 +238,8 @@ class LocalEmulator(QoolqitLocalEmulator):
 
         Args:
             program: The quantum program to execute.
-            *args: Additional positional arguments from `qoolqit.LocalEmulator`.
-            **kwargs: Additional keyword arguments from `qoolqit.LocalEmulator`.
+            *args: Additional positional arguments from [`qoolqit.execution.LocalEmulator`][].
+            **kwargs: Additional keyword arguments from [`qoolqit.execution.LocalEmulator`][].
 
         Returns:
             The execution results from the local backend.
@@ -248,18 +247,17 @@ class LocalEmulator(QoolqitLocalEmulator):
         _warn_suboptimal_backend(self._backend_type, program.register.n_qubits)
         return super().run(program, *args, **kwargs)
 
-
 class RemoteEmulator(QoolqitRemoteEmulator):
     """Remote quantum emulator with automatic backend selection.
 
-    This class wraps `qoolqit.RemoteEmulator` and provides backend selection
+    This class wraps [`qoolqit.execution.RemoteEmulator`][] and provides backend selection
     recommendations based on quantum register size and tractability constraints.
 
     Backend selection guidelines based on computational tractability:
 
-    - Small problems (< 15 qubits): `RemoteEmuFreeBackend` (default)
-    - Medium problems (15-25 qubits): `RemoteSVBackend`
-    - Large problems (≥ 26 qubits): `RemoteMPSBackend`
+    - Small problems (< 15 qubits): [`RemoteEmuFreeBackend`](https://docs.pasqal.com/cloud/pasqal-cloud/reference/backends/#pasqal_cloud.backends.RemoteEmuFreeBackend) (default)
+    - Medium problems (15-25 qubits): [`RemoteSVBackend`](https://docs.pasqal.com/cloud/pasqal-cloud/reference/backends/#pasqal_cloud.backends.RemoteSVBackend)
+    - Large problems (≥ 26 qubits): [`RemoteMPSBackend`](https://docs.pasqal.com/cloud/pasqal-cloud/reference/backends/#pasqal_cloud.backends.RemoteMPSBackend)
 
     Note:
         `RemoteEmuFreeBackend` becomes intractable beyond ~15 qubits, similar to its
@@ -268,7 +266,7 @@ class RemoteEmulator(QoolqitRemoteEmulator):
 
     Args:
         backend_type: Backend type to use.
-        **kwargs: Additional keyword arguments passed to the base `qoolqit.RemoteEmulator`.
+        **kwargs: Additional keyword arguments passed to the base [`qoolqit.execution.RemoteEmulator`][].
 
     Example:
         ```python
@@ -290,8 +288,8 @@ class RemoteEmulator(QoolqitRemoteEmulator):
 
         Args:
             program: The quantum program to execute.
-            *args: Additional positional arguments for `qoolqit.RemoteEmulator`.
-            **kwargs: Additional keyword arguments for `qoolqit.RemoteEmulator`.
+            *args: Additional positional arguments for [`qoolqit.execution.RemoteEmulator`][].
+            **kwargs: Additional keyword arguments for [`qoolqit.execution.RemoteEmulator`][].
 
         Returns:
             The execution results from the remote backend.

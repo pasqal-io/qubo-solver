@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 @debug_runtime_typecheck
 @dataclass
 class SingleSolution:
-    """A single candidate solution extracted from a [Solution][].
+    """A single candidate solution extracted from a [`Solution`][].
 
     Instances are normally obtained via [`Solution.__getitem__`][] rather
     than constructed directly.
@@ -217,7 +217,7 @@ class Solution:
         Raises:
             AssertionError: If this solution is non-empty and `costs`,
                 `counts`, or `probabilities` is not populated (checked
-                via `check_consistency(full=False)`).
+                via [`check_consistency(full=False)`][check_consistency]).
         """
         self.check_consistency(throw=True, full=False)
 
@@ -242,7 +242,7 @@ class Solution:
         Raises:
             AssertionError: If this solution is non-empty and `costs`,
                 `counts`, or `probabilities` is not populated (checked
-                via `check_consistency(full=False)`).
+                via [`check_consistency(full=False)`][check_consistency]).
 
         Note:
             Rows sharing a bitstring are expected to also share the same
@@ -289,7 +289,7 @@ class Solution:
             solutions: Solutions to concatenate. Empty solutions (no
                 bitstrings) are skipped. Each remaining solution must have
                 `costs`, `counts`, and `probabilities` populated (checked
-                via `check_consistency(full=False)`, which raises
+                via [`check_consistency(full=False)`][check_consistency], which raises
                 `AssertionError` otherwise).
             unit_counts: When ``True``, set `counts` to ``1`` for every
                 concatenated candidate instead of concatenating their
@@ -395,18 +395,18 @@ class Solution:
 
     @staticmethod
     def load(file_like: io_utils.FileLike[bytes]) -> Solution:
-        """Deserialize a [`Solution`][] previously saved with `save`.
+        """Deserialize a [`Solution`][] previously saved with [`save`][].
 
         Args:
             file_like: Source — a file path (`str` or `os.PathLike`),
                 or a binary-readable `typing.IO` stream. Must contain
-                data written by `save`.
+                data written by [`save`][].
 
         Returns:
             A new solution with the tensor fields deserialised from `file_like`.
 
         Note:
-            `torch.load` is called with `weights_only=True` to prevent
+            [`torch.load`][] is called with `weights_only=True` to prevent
             arbitrary code execution from untrusted checkpoint files.
 
         Example:

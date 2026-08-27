@@ -13,7 +13,7 @@ from . import linalg
 
 
 def torch_rng(seed: int | None = None) -> torch.Generator:
-    """Creates a `torch.Generator` compatible with qubosolver's torch typing.
+    """Creates a [`torch.Generator`][] compatible with [`qubosolver`][]'s torch typing.
 
     Args:
         seed: Optional seed for reproducibility. If ``None``, the generator

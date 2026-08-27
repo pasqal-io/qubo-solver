@@ -131,6 +131,7 @@ plugins:
         inventories:
         - url: https://pasqal-io.github.io/qoolqit/latest/objects.inv
           base_url: https://docs.pasqal.com/qoolqit/
+        - url: https://pytorch.org/docs/stable/objects.inv
         options:
           docstring_options:
             ignore_init_summary: true
