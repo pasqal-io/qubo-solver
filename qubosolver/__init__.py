@@ -45,7 +45,7 @@ from qubosolver.utils import extract_qubo, analysis
 from importlib.metadata import version
 from pulser.sequence import store_package_version_metadata
 
-from qubosolver import transforms, drive_shaping, embedding, solvers
+from qubosolver import transforms, drive_shaping, embedding, solving
 
 from qubosolver.solver import (
     Solver,
@@ -76,7 +76,7 @@ __all__ = [
     "vectori",
     "linalg",
     "protocols",
-    "solvers",
+    "solving",
     "transforms",
     "embedding",
     "drive_shaping",

@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import typing
 from abc import ABC, abstractmethod
 import warnings
 
 import torch
 from qoolqit import Register
 
-from . import blade, greedy_layout
 from qubosolver.types import Instance, protocols
-from qubosolver import solvers, embedding
+from qubosolver import embedding
+from .config import QuantumSolvingConfig
 
 warnings.filterwarnings("ignore", module="pulser")
 
@@ -23,7 +22,7 @@ class _BaseEmbedder(ABC):
     2-D trap layout.
     """
 
-    def __init__(self, instance: Instance, config: solvers.quantum.Config, backend: protocols.Backend):
+    def __init__(self, instance: Instance, config: QuantumSolvingConfig, backend: protocols.Backend):
         """
         Args:
             instance: The QUBO problem to embed.
@@ -34,7 +33,7 @@ class _BaseEmbedder(ABC):
                 need backend-specific information during placement.
         """
         self.instance: Instance = instance
-        self.config: solvers.quantum.Config = config
+        self.config: QuantumSolvingConfig = config
         self.register: Register | None = None
         self.backend = backend
 
@@ -73,7 +72,7 @@ class BLaDEmbedder(_BaseEmbedder):
             The atom register with positions determined by BLaDE.
         """
         embed_config = self.config.embedding
-        default = blade.Config()
+        default = embedding.blade.Config()
         step_per_round = embed_config.blade_steps_per_round
         if step_per_round is None:
             step_per_round = default.steps_per_round
@@ -86,13 +85,13 @@ class BLaDEmbedder(_BaseEmbedder):
         if max_min_dist_ratio == torch.inf:
             max_min_dist_ratio = None
 
-        config = blade.Config(
+        config = embedding.blade.Config(
             steps_per_round=step_per_round,
             starting_positions=starting_positions,
             dimensions=tuple(embed_config.blade_dimensions),
             max_min_dist_ratio=max_min_dist_ratio,
         )
-        return blade.embed(self.instance, config=config)
+        return embedding.blade.embed(self.instance, config=config)
 
 
 class GreedyEmbedder(_BaseEmbedder):
@@ -120,18 +119,15 @@ class GreedyEmbedder(_BaseEmbedder):
 
 
 def _get_embedder(
-    instance: Instance, config: solvers.quantum.Config, backend: protocols.Backend
+    instance: Instance, config: QuantumSolvingConfig, backend: protocols.Backend
 ) -> _BaseEmbedder:
     """Return the appropriate embedder instance for the given configuration.
 
-    Inspects ``config.embedding.embedding_method`` and constructs the matching
+    Inspects ``config.embedding.algorithm`` and constructs the matching
     :class:`_BaseEmbedder` subclass:
 
-    * :class:`BLaDEmbedder` — when the method is :attr:`embedding.Algorithm.BLADE`.
-    * :class:`GreedyEmbedder` — when the method is :attr:`embedding.Algorithm.GREEDY_LAYOUT`.
-    * A user-supplied subclass of :class:`_BaseEmbedder` — when the method is
-      a class (not a string enum value) that is a subclass of
-      :class:`_BaseEmbedder`.
+    * :class:`BLaDEmbedder` — when the method is ``"blade"``.
+    * :class:`GreedyEmbedder` — when the method is ``"greedy_layout"``.
 
     Args:
         instance: The QUBO problem to embed.
@@ -143,14 +139,13 @@ def _get_embedder(
         A concrete :class:`_BaseEmbedder` ready to have :meth:`~_BaseEmbedder.embed` called.
 
     Raises:
-        NotImplementedError: If ``config.embedding.embedding_method`` is not a
-            recognised :class:`embedding.Algorithm` value and is not a subclass of
-            :class:`_BaseEmbedder`.
+        NotImplementedError: If ``config.embedding.algorithm`` is not a
+            recognised :class:`~qubosolver.solver.config.embedding.EmbeddingAlgorithm` value.
     """
-
-    if config.embedding.algorithm == embedding.Algorithm.BLADE:
-        return BLaDEmbedder(instance, config, backend)
-    elif config.embedding.algorithm == embedding.Algorithm.GREEDY_LAYOUT:
-        return GreedyEmbedder(instance, config, backend)
-    else:
-        raise NotImplementedError
+    match config.embedding.algorithm:
+        case "blade":
+            return BLaDEmbedder(instance, config, backend)
+        case "greedy_layout":
+            return GreedyEmbedder(instance, config, backend)
+        case _:
+            raise NotImplementedError

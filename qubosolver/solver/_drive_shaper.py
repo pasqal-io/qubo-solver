@@ -6,14 +6,9 @@ import torch
 
 import qoolqit
 
-
-from . import (
-    proportional_diagonal,
-    local_energy_scale,
-)
-from .enums import Algorithm
+from qubosolver import drive_shaping, solving
 from qubosolver.types import Instance, Solution, protocols
-from qubosolver import solvers
+from .config import QuantumSolvingConfig
 
 
 class _BaseDriveShaper(ABC):
@@ -26,21 +21,21 @@ class _BaseDriveShaper(ABC):
 
     Attributes:
         instance (Instance): The QUBO problem instance.
-        config (solvers.quantum.Config): The solver configuration.
+        config (QuantumSolvingConfig): The solver configuration.
         backend (Backend): Backend to use.
         device (Device): Device from backend.
     """
 
-    def __init__(self, instance: Instance, config: solvers.quantum.Config, backend: protocols.Backend):
+    def __init__(self, instance: Instance, config: QuantumSolvingConfig, backend: protocols.Backend):
         """Initialize the drive shaping module with a QUBO instance.
 
         Args:
             instance (Instance): The QUBO problem instance.
-            config (solvers.quantum.Config): The solver configuration.
+            config (QuantumSolvingConfig): The solver configuration.
             backend (Backend): Backend to use.
         """
         self.instance: Instance = instance
-        self.config: solvers.quantum.Config = config
+        self.config: QuantumSolvingConfig = config
         self.backend = backend
         self.device = self.config.device
 
@@ -112,7 +107,7 @@ class ProportionalDiagonalDriveShaper(_BaseDriveShaper):
         # Proportional-diagonal coefficient for omega
         kappa = self.config.drive_shaping.proportional_diagonal_kappa
         return (
-            proportional_diagonal.build_drive(
+            drive_shaping.proportional_diagonal.build_drive(
                 self.instance, register, device=device, dmm=dmm, kappa=kappa
             ),
             Solution(),
@@ -151,7 +146,7 @@ class LocalEnergyScaleDriveShaper(_BaseDriveShaper):
         dmm = self.config.drive_shaping.dmm
         kappa = self.config.drive_shaping.local_energy_scale_kappa
 
-        return local_energy_scale.build_drive(self.instance, register, device=device, dmm=dmm, kappa=kappa), Solution()
+        return drive_shaping.local_energy_scale.build_drive(self.instance, register, device=device, dmm=dmm, kappa=kappa), Solution()
 
 
 class BayesianSearchDriveShaper(_BaseDriveShaper):
@@ -165,7 +160,7 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
     def __init__(
         self,
         instance: Instance,
-        config: solvers.quantum.Config,
+        config: QuantumSolvingConfig,
         backend: protocols.Backend,
     ):
         """Instantiate a `BayesianSearchDriveShaper`.
@@ -197,9 +192,9 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
             probabilities from the final simulation run.
         """
 
-        config = solvers.drive_bayesian_search.Config._from_drive_shaping_config(self.config.drive_shaping)
+        config = solving.drive_bayesian_search.Config._from_drive_shaping_config(self.config.drive_shaping)
 
-        solution, drive = solvers.drive_bayesian_search.solve(
+        solution, drive = solving.drive_bayesian_search.solve(
             self.instance,
             register,
             backend=self.backend,
@@ -213,7 +208,7 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
 
 def _get_drive_shaper(
     instance: Instance,
-    config: solvers.quantum.Config,
+    config: QuantumSolvingConfig,
     backend: protocols.Backend,
 ) -> _BaseDriveShaper:
     """Return the appropriate drive shaper for the given configuration.
@@ -235,15 +230,15 @@ def _get_drive_shaper(
 
     Raises:
         NotImplementedError: If the configured method is not a recognized
-            :class:`Algorithm`.
+            :class:`~qubosolver.solver.config.drive_shaping.DriveShapingAlgorithm`.
     """
     algorithm = config.drive_shaping.algorithm
     match algorithm:
-        case Algorithm.PROPORTIONAL_DIAGONAL:
+        case "proportional_diagonal":
             return ProportionalDiagonalDriveShaper(instance, config, backend)
-        case Algorithm.LOCAL_ENERGY_SCALE:
+        case "local_energy_scale":
             return LocalEnergyScaleDriveShaper(instance, config, backend)
-        case Algorithm.BAYESIAN_SEARCH:
+        case "bayesian_search":
             return BayesianSearchDriveShaper(instance, config, backend)
         case _:
             raise NotImplementedError(f"Unsupported drive shaping method: {algorithm!r}")

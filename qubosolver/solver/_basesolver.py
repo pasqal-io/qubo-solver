@@ -4,9 +4,9 @@ from abc import ABC, abstractmethod
 
 from qoolqit.execution import job
 
+from .config import SolverConfig
 from qubosolver.types import Instance, Solution
-from qubosolver import solvers, transforms
-from .config import Config
+from qubosolver import solving, transforms
 
 
 from typing import TYPE_CHECKING
@@ -35,7 +35,7 @@ class BaseSolver(ABC):
     * `_draw_sequence` — visualise the compiled pulse sequence.
     """
 
-    def __init__(self, instance: Instance, config: Config = Config()):
+    def __init__(self, instance: Instance, config: SolverConfig = SolverConfig()):
         """Initialise the solver with a QUBO instance and configuration.
 
         Args:
@@ -102,7 +102,7 @@ class BaseSolver(ABC):
         Returns:
             A job handle for the submitted execution.
         """
-        return solvers.analog_quantum_sampling.solve(
+        return solving.analog_quantum_sampling.solve(
             embedding,
             drive,
             self.config.quantum.backend,
@@ -140,7 +140,7 @@ class BaseSolver(ABC):
         """
         if self.config.solving_mode == "quantum":
             quantum_config = self.config.quantum
-            program = solvers.quantum.analog_quantum_sampling._quantum_program(
+            program = solving.quantum.analog_quantum_sampling._quantum_program(
                 embedding,
                 drive,
                 quantum_config.device,
@@ -156,7 +156,7 @@ class BaseSolver(ABC):
         Returns:
             A `Solution`. The solution is empty if no trivial optimum is found.
         """
-        return solvers.trivial_solution_search.solve(self.instance)
+        return solving.trivial_solution_search.solve(self.instance)
 
     def _update_instance(self, instance: Instance) -> None:
         """Replace the active QUBO instance on this solver and any inner solver.
@@ -247,7 +247,7 @@ class BaseSolver(ABC):
         if not self.config.do_postprocessing:
             return solution
 
-        return solvers.iterative_bitflip_local_search.solve(
+        return solving.iterative_bitflip_local_search.solve(
             self.instance,
             solution,
             strategy="greedy_sweep",

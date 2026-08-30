@@ -28,14 +28,12 @@ from copy import deepcopy
 import qoolqit
 
 from qubosolver import Solution, Instance, transforms, torch_rng, drive_shaping
-from .config import DecompositionConfig
+from .config import DecompositionConfig, SolverConfig, ClassicalSolvingConfig
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from ._basesolver import BaseSolver
-from .classical._solver import get_classical_solver
-from qubosolver.embedding._embedder import _get_embedder
-from qubosolver.drive_shaping._drive_shaper import _get_drive_shaper
-from .config import Config
-from . import classical
+from ._classical_solver import get_classical_solver
+from ._embedder import _get_embedder
+from ._drive_shaper import _get_drive_shaper
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +55,7 @@ class Solver(BaseSolver):
         ```
     """
 
-    def __init__(self, instance: Instance, config: Config = Config()):
+    def __init__(self, instance: Instance, config: SolverConfig = SolverConfig()):
         """Initialise the solver.
 
         Args:
@@ -125,7 +123,7 @@ class _QuboSolverQuantum(BaseSolver):
     * Problem size is capped at 80 variables (device atom-number limit).
     """
 
-    def __init__(self, instance: Instance, config: Config = Config()):
+    def __init__(self, instance: Instance, config: SolverConfig = SolverConfig()):
         """Initialise the quantum solver.
 
         Args:
@@ -266,7 +264,7 @@ class _QuboSolverClassical(BaseSolver):
     both methods are no-ops that return ``None``.
     """
 
-    def __init__(self, instance: Instance, config: Config = Config()):
+    def __init__(self, instance: Instance, config: SolverConfig = SolverConfig()):
         super().__init__(instance, config)
 
     def _embedding(self) -> qoolqit.Register:
@@ -335,8 +333,8 @@ class _DecomposeQuboSolver(BaseSolver):
     def __init__(
         self,
         instance: Instance,
-        config: Config | None,
-        solver_factory: Callable[[Instance, Config], BaseSolver],
+        config: SolverConfig | None,
+        solver_factory: Callable[[Instance, SolverConfig], BaseSolver],
     ):
         """Initialise the decomposition solver.
 
@@ -361,7 +359,7 @@ class _DecomposeQuboSolver(BaseSolver):
         # default is a quantum solver as we apply device-dependent decomposition
         super().__init__(
             Instance(instance.matrix),
-            config or Config(),
+            config or SolverConfig(),
         )
         self._solver_factory = solver_factory
 
@@ -406,7 +404,7 @@ class _DecomposeQuboSolver(BaseSolver):
         if self.instance.size <= self.decomposition_config.decompose_stop_number:
             solver = _QuboSolverClassical(
                 self.instance,
-                Config(solving=classical.Config(), decompose=None),
+                SolverConfig(solving=ClassicalSolvingConfig(), decompose=None),
             )
             return solver.solve()
 
@@ -449,7 +447,7 @@ class _DecomposeQuboSolver(BaseSolver):
             if subqubo.size != 0:
                 lastsolver = _QuboSolverClassical(
                     subqubo,
-                    Config(solving=classical.Config(), decompose=None),
+                    SolverConfig(solving=ClassicalSolvingConfig(), decompose=None),
                 )
                 subsolution = lastsolver.solve()._compute_costs(subqubo.matrix)._sort_by_cost()
                 solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)

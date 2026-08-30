@@ -6,7 +6,7 @@ used as post-processing steps to refine an existing solution.
 
 from __future__ import annotations
 
-from qubosolver.solvers.classical import (
+from qubosolver.solving.classical import (
     brute_force,
     cplex,
     iterative_bitflip_local_search,
@@ -15,11 +15,9 @@ from qubosolver.solvers.classical import (
     tabu_search,
     trivial_solution_search,
 )
-from qubosolver.solvers.hybrid import drive_bayesian_search
-from qubosolver.solvers.quantum import analog_quantum_sampling
-from qubosolver.solvers import classical, hybrid, quantum
-from qubosolver.solvers.solver import Solver, QuboSolver
-from qubosolver.solvers.config import Config, DecompositionConfig
+from qubosolver.solving.hybrid import drive_bayesian_search
+from qubosolver.solving.quantum import analog_quantum_sampling
+from qubosolver.solving import classical, hybrid, quantum
 
 __all__ = [
     "classical",
@@ -34,8 +32,4 @@ __all__ = [
     "simulated_annealing",
     "random_sampling",
     "brute_force",
-    "Solver",
-    "QuboSolver",
-    "Config",
-    "DecompositionConfig",
 ]

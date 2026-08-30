@@ -1,8 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import torch
 from typing import Literal, get_args
+
+import qoolqit
+
+from .embedding import Config as EmbeddingConfig
+from .drive_shaping import Config as DriveShapingConfig
+from qubosolver.types.backends import LocalEmulator, RemoteEmulator
+
+
 
 ClassicalAlgorithm = Literal["tabu_search", "simulated_annealing", "cplex", "random_sampling"]
 
@@ -82,10 +90,10 @@ class QuantumConfig():
         device (Device, optional): The quantum device specification. Defaults to `AnalogDeviceWithDMM`.
     """
 
-    embedding: embedding.Config = field(default_factory=embedding.Config)
-    drive_shaping: drive_shaping.Config = field(default_factory=drive_shaping.Config)
-    backend: LocalEmulator | RemoteEmulator | QPU = field(default_factory=LocalEmulator)
-    device: Device = field(default_factory=AnalogDeviceWithDMM)
+    embedding: EmbeddingConfig = field(default_factory=EmbeddingConfig)
+    drive_shaping: DriveShapingConfig = field(default_factory=DriveShapingConfig)
+    backend: LocalEmulator | RemoteEmulator | qoolqit.execution.QPU = field(default_factory=LocalEmulator)
+    device: qoolqit.Device = field(default_factory=qoolqit.AnalogDeviceWithDMM)
 
     @property
     def max_min_dist_ratio(self) -> float:
