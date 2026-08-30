@@ -74,7 +74,7 @@ def apply(instance: qubosolver.Instance) -> Instance:
     holds the removed coefficients (an all-zero matrix when nothing was zeroed).
 
     Args:
-        qubo: The QUBO instance to zero.
+        instance: The QUBO instance to zero.
 
     Returns:
         A zeroing [`Instance`][qubosolver.transforms.zeroing.Instance].

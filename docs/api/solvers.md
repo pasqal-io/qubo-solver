@@ -12,6 +12,9 @@
 ::: qubosolver.solvers.quantum
     options:
       show_submodules: true
+      filters:
+        - "!^config$"
+        - "!^_[^_]"
 
 ::: qubosolver.solvers.hybrid
     options:

@@ -1,3 +1,5 @@
+"""Quantum solvers based on analog sampling on Pasqal devices."""
+
 from __future__ import annotations
 
 from qubosolver.solvers.quantum.config import Config
