@@ -102,7 +102,17 @@ class Config:
         cfg.traps = config.greedy_layout_traps
         cfg.max_possible_term = config.greedy_layout_max_possible_term
 
-        cfg.lattice = EmbeddingConfig._normalize_lattice(config.greedy_layout_lattice)
+        match config.greedy_layout_lattice:
+            case "triangular":
+                cfg.lattice = Lattice.TRIANGULAR
+            case "square":
+                cfg.lattice = Lattice.SQUARE
+            case _:
+                raise ValueError(
+                    f"Unknown lattice type: {config.greedy_layout_lattice!r}. "
+                    f"Expected 'triangular' or 'square'."
+                )
+
         cfg.max_min_dist_ratio = config.max_min_dist_ratio
 
         return cfg

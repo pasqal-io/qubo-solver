@@ -13,17 +13,20 @@ import qoolqit
 from qoolqit import AnalogDevice, DigitalAnalogDevice
 
 from qubosolver import (
+    Solver,
+    EmbeddingConfig,
+    DriveShapingConfig,
+    QuantumSolvingConfig,
+    SolverConfig,
     analysis,
     Instance,
     Solution,
-    Solver,
     matrix,
     tensor,
     vector,
     SingleSolution,
     solving,
     drive_shaping,
-    embedding,
 )
 
 
@@ -83,25 +86,25 @@ def test_with_perfect_embedding(
     expected_bitstrings = [solution.string for solution in expected_optimal_solutions]
     print(f"Expected optimal bitstrings: {expected_bitstrings}")
 
-    embedding_config = embedding.Config(
+    embedding_config = EmbeddingConfig(
         algorithm="greedy_layout",
         greedy_layout_traps=100,
         greedy_layout_max_possible_term=1.0,
     )
 
-    drive_shaping_config = drive_shaping.Config(
+    drive_shaping_config = DriveShapingConfig(
         algorithm="local_energy_scale",
         dmm=dmm,
         local_energy_scale_kappa=0.25,
     )
 
-    solving_config = solving.quantum.Config(
+    solving_config = QuantumSolvingConfig(
         embedding=embedding_config,
         drive_shaping=drive_shaping_config,
         device=device_type(),
     )
 
-    config = solving.Config(solving=solving_config)
+    config = SolverConfig(solving=solving_config)
 
     solver = Solver(instance, config)
     solution = solver.solve()

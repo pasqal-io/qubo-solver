@@ -12,9 +12,12 @@ import pytest_check as check
 import random
 
 from qubosolver import (
+    EmbeddingConfig,
+    DriveShapingConfig,
+    QuantumSolvingConfig,
+    SolverConfig,
     Instance,
     Solver,
-    embedding,
     solving,
     tensor,
     vector,
@@ -81,20 +84,20 @@ def test_with_perfect_embedding(
     print(f"Number of expected optimal solutions: {len(expected_optimal_solutions)}\n")
 
 
-    embed_cfg = embedding.Config(
+    embed_cfg = EmbeddingConfig(
         algorithm="greedy_layout",
         greedy_layout_traps=100,
         greedy_layout_max_possible_term=1.0,
     )
 
-    drive_cfg = drive_shaping.Config(
+    drive_cfg = DriveShapingConfig(
         algorithm="proportional_diagonal",
         dmm=dmm,
         proportional_diagonal_kappa=0.5,
     )
 
-    config = solving.Config(
-        solving=solving.quantum.Config(
+    config = SolverConfig(
+        solving=QuantumSolvingConfig(
             embedding=embed_cfg,
             drive_shaping=drive_cfg,
             device=device_type(),

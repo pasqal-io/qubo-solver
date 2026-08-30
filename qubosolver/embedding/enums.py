@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from enum import Enum
 
-class Lattice():
+class Lattice(Enum):
     """Type of lattice used by the greedy embedding method."""
 
     SQUARE = "square"
