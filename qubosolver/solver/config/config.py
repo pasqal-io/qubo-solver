@@ -5,6 +5,7 @@ from typing import Literal
 
 from .. import solvers
 
+
 @dataclass
 class DecompositionConfig():
     """The configuration parameters when using a decomposition method
@@ -35,7 +36,7 @@ class DecompositionConfig():
 
 
 @dataclass
-class Config():
+class SolverConfig():
     """A configuration instance that defines how a QUBO problem should be solved.
 
     We specify whether to use a quantum or classical approach, which backend

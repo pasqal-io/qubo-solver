@@ -39,15 +39,6 @@ from qubosolver.types import (
     AutoRemoteEmulatorBackend,
     # Functions
     torch_rng,
-    # Qubo* TypeAliases
-    QuboSolution,
-    QuboSingleSolution,
-    QuboInstance,
-    QuboDataset,
-    # Deprecated QUBO* classes
-    QUBOSolution,
-    QUBOInstance,
-    QUBODataset,
 )
 from qubosolver.utils import extract_qubo, analysis
 
@@ -56,9 +47,26 @@ from pulser.sequence import store_package_version_metadata
 
 from qubosolver import transforms, drive_shaping, embedding, solvers
 
-from qubosolver.solvers import Solver, QuboSolver
+from qubosolver.solver import (
+    Solver,
+    SolverConfig,
+    DecompositionConfig,
+    DriveShapingConfig,
+    EmbeddingConfig,
+    ClassicalSolvingConfig,
+    QuantumSolvingConfig,
+)
+
 
 __all__ = [
+    # Config-based API
+    "Solver",
+    "SolverConfig",
+    "DecompositionConfig",
+    "DriveShapingConfig",
+    "EmbeddingConfig",
+    "ClassicalSolvingConfig",
+    "QuantumSolvingConfig",
     # Submodules
     "bitstring",
     "bitstrings",
@@ -84,7 +92,6 @@ __all__ = [
     "Solution",
     "SingleSolution",
     "Instance",
-    "Solver",
     "Dataset",
     "LocalEmulator",
     "RemoteEmulator",
@@ -93,16 +100,6 @@ __all__ = [
     # Functions
     "torch_rng",
     "extract_qubo",
-    # Qubo* TypeAliases
-    "QuboSolution",
-    "QuboSingleSolution",
-    "QuboInstance",
-    "QuboDataset",
-    "QuboSolver",
-    # Deprecated QUBO* classes
-    "QUBOSolution",
-    "QUBOInstance",
-    "QUBODataset",
 ]
 
 __version__ = version("qubo-solver")
