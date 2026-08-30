@@ -24,7 +24,7 @@ import qoolqit
 
 from qubosolver import (
     Instance,
-    solvers,
+    solving,
     embedding,
     AutoLocalEmulatorBackend,
     AutoRemoteEmulatorBackend,
@@ -140,7 +140,7 @@ def local_auto_backend() -> tuple[LocalEmulator, pulser.backend.Results]:
 @pytest.fixture
 def local_default_config() -> tuple[LocalEmulator, pulser.backend.Results]:
     results = MagicMock(spec=pulser.backend.Results)
-    backend = solvers.Config().quantum.backend
+    backend = solving.Config().quantum.backend
     assert isinstance(backend, LocalEmulator)
     return backend, results
 
@@ -199,8 +199,8 @@ def test_emulator_backend_selection(
     backend, results = backend_and_results
     attach_bitstring(results, size)
 
-    solver_config = solvers.Config(
-        solving=solvers.quantum.Config(
+    solver_config = solving.Config(
+        solving=solving.quantum.Config(
             backend=backend,
             embedding=embedding.Config(algorithm="blade"),
         ),
@@ -214,9 +214,9 @@ def test_emulator_backend_selection(
 
 
 def test_default_config_backend() -> None:
-    """Test that default solvers.Config uses AutoLocalEmulatorBackend."""
-    config = solvers.Config()
-    assert isinstance(config.solving, solvers.quantum.Config)
+    """Test that default solving.Config uses AutoLocalEmulatorBackend."""
+    config = solving.Config()
+    assert isinstance(config.solving, solving.quantum.Config)
     check.is_(config.solving.backend._backend_type, AutoLocalEmulatorBackend)
 
 
@@ -234,8 +234,8 @@ def test_remote_emulator_warning() -> None:
     instance = Instance(Q)
     mock_connection, mock_results = mock_connection_and_results()
     attach_bitstring(mock_results, size)
-    config = solvers.Config(
-        solving=solvers.quantum.Config(
+    config = solving.Config(
+        solving=solving.quantum.Config(
             backend=RemoteEmulator(backend_type=RemoteSVBackend, connection=mock_connection),
             embedding=embedding.Config(algorithm="blade"),
         ),
@@ -254,8 +254,8 @@ def test_local_emulator_warning() -> None:
     size = 2
     Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
     instance = Instance(Q)
-    config = solvers.Config(
-        solving=solvers.quantum.Config(
+    config = solving.Config(
+        solving=solving.quantum.Config(
             backend=LocalEmulator(backend_type=SVBackend),
             embedding=embedding.Config(algorithm="blade"),
         ),

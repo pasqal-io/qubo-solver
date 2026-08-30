@@ -13,7 +13,7 @@ coefficient matrix and the physical interaction matrix (∝ 1/‖rᵢ − rⱼ�
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, TYPE_CHECKING
 import numpy as np
 import pathlib
 
@@ -22,9 +22,10 @@ import qoolqit
 from ._algorithms import greedy
 from qubosolver import Instance, tensor
 from .enums import Lattice
-from .config import Config as EmbeddingConfig
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
+if TYPE_CHECKING:
+    from qubosolver import EmbeddingConfig
 
 @dataclass
 class Config:

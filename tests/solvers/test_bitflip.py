@@ -9,14 +9,14 @@ import torch
 from qubosolver import (
     Solution,
     Instance,
-    solvers,
+    solving,
     bitstrings,
     vectori,
     matrix,
     torch_rng,
     Bitstring,
 )
-from qubosolver.solvers.classical import iterative_bitflip_local_search
+from qubosolver.solving.classical import iterative_bitflip_local_search
 
 
 @pytest.mark.parametrize("strategy", ["best_improvement", "first_improvement", "greedy_sweep"])
@@ -31,7 +31,7 @@ def test_solution_not_mutated(
     check.equal(len(solution), 1)
     check.equal(solution[0].string, "00")
 
-    new_solution = solvers.iterative_bitflip_local_search.solve(instance, solution, strategy=strategy)
+    new_solution = solving.iterative_bitflip_local_search.solve(instance, solution, strategy=strategy)
     check.equal(len(solution), 1)
     check.equal(solution[0].string, "00")
     check.equal(len(new_solution), 1)
@@ -41,7 +41,7 @@ def test_solution_not_mutated(
         check.equal(new_solution[0].string, "10")
     check.is_not(new_solution, solution)
 
-    new_solution2 = solvers.iterative_bitflip_local_search.solve(
+    new_solution2 = solving.iterative_bitflip_local_search.solve(
         instance, new_solution, strategy=strategy
     )
     check.equal(len(new_solution2), 1)
@@ -61,7 +61,7 @@ def test_strategy_selection_improves_solution(
     solution = Solution(bitstrings.zeros(1, 2), counts=vectori.tensor([1]))
     solution._update(instance)
 
-    new_solution = solvers.iterative_bitflip_local_search.solve(instance, solution, strategy=strategy)
+    new_solution = solving.iterative_bitflip_local_search.solve(instance, solution, strategy=strategy)
 
     check.equal(new_solution[0].string, "11")
     check.less_equal(new_solution[0].cost, solution[0].cost)
@@ -74,7 +74,7 @@ def test_unknown_strategy_raises() -> None:
     solution._update(instance)
 
     with pytest.raises(ValueError):
-        solvers.iterative_bitflip_local_search.solve(instance, solution, strategy="does_not_exist")  # type: ignore[arg-type]
+        solving.iterative_bitflip_local_search.solve(instance, solution, strategy="does_not_exist")  # type: ignore[arg-type]
 
 
 def test_max_iterations_limits_progress() -> None:
@@ -90,13 +90,13 @@ def test_max_iterations_limits_progress() -> None:
     solution = Solution(bitstrings.zeros(1, 3), counts=vectori.tensor([1]))
     solution._update(instance)
 
-    limited = solvers.iterative_bitflip_local_search.solve(
+    limited = solving.iterative_bitflip_local_search.solve(
         instance,
         solution,
         strategy="best_improvement",
         max_iterations=1,
     )
-    unlimited = solvers.iterative_bitflip_local_search.solve(
+    unlimited = solving.iterative_bitflip_local_search.solve(
         instance,
         solution,
         strategy="best_improvement",
@@ -141,7 +141,7 @@ def test_time_limit_is_global_and_skips_remaining_batch(monkeypatch: pytest.Monk
 
     monkeypatch.setattr(instance, "cost", ticking_cost)
 
-    result = solvers.iterative_bitflip_local_search.solve(
+    result = solving.iterative_bitflip_local_search.solve(
         instance, solution, strategy="first_improvement", time_limit=time_limit
     )
 

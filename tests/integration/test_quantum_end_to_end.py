@@ -11,7 +11,7 @@ from qubosolver import (
     Instance,
     Solution,
     SingleSolution,
-    solvers,
+    solving,
     embedding,
     drive_shaping,
     torch_rng,
@@ -59,7 +59,7 @@ def check_solution(
         return 0.0
 
     expected_optimal_solutions = gather_optimal_solutions(
-        solvers.brute_force.solve(qubo, max_bitstrings=-1)
+        solving.brute_force.solve(qubo, max_bitstrings=-1)
     )
     check.almost_equal(min_cost, expected_optimal_solutions[0].cost)
     expected_optimal_bitstrings = [s.string for s in expected_optimal_solutions]
@@ -146,7 +146,7 @@ def test_quantum_solve_blade_proportional_diagonal(
         dmm=True,
     )
 
-    job = solvers.analog_quantum_sampling.solve(register, drive, emulator, device)
+    job = solving.analog_quantum_sampling.solve(register, drive, emulator, device)
     solution = Solution.from_results(job.results(), instance)
     solution._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
 
@@ -203,7 +203,7 @@ def test_quantum_solve_greedy_proportional_diagonal(
         dmm=True,
     )
 
-    job = solvers.analog_quantum_sampling.solve(register, drive, emulator, device)
+    job = solving.analog_quantum_sampling.solve(register, drive, emulator, device)
     solution = Solution.from_results(job.results(), instance)
     solution._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
 

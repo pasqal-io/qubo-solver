@@ -10,12 +10,12 @@ from qubosolver import (
     Solution,
     Solver,
     matrix,
-    solvers,
+    solving,
     vectori,
     tensor,
     torch_rng,
 )
-from qubosolver.solvers.classical.cplex import _to_solution
+from qubosolver.solving.classical.cplex import _to_solution
 
 
 def test_to_solution_without_incumbent() -> None:
@@ -62,13 +62,13 @@ def test_qubo_solver_classical_cplex() -> None:
     Q = matrix.tensor([[1.0, 0.0], [0.0, 1.0]])
     instance = Instance(matrix=Q)
 
-    # Create a solvers.Config object with classical solver options.
-    classical_config = solvers.classical.Config(
+    # Create a solving.Config object with classical solver options.
+    classical_config = solving.classical.Config(
         algorithm="cplex",
         cplex_maxtime=10.0,
         cplex_log_path="test_solver.log",
     )
-    config = solvers.Config(solving=classical_config)
+    config = solving.Config(solving=classical_config)
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
     classical_solver = Solver(instance, config)
@@ -239,7 +239,7 @@ def test_rounding() -> None:
     # must report the actual cost of its own bitstring, not CPLEX's internal
     # (possibly rounded) objective value.
     instance = _build_rounding_matrix()
-    solution = solvers.cplex.solve(instance, maxtime=60.0)
+    solution = solving.cplex.solve(instance, maxtime=60.0)
 
     check.is_true(solution.check_consistency(instance=instance))
 

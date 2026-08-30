@@ -12,7 +12,7 @@ import qoolqit
 from qubosolver import (
     Instance,
     Solver,
-    solvers,
+    solving,
     embedding,
     drive_shaping,
     SingleSolution,
@@ -160,8 +160,8 @@ def test_quantum_solve(
     else:
         raise ValueError(f"Invalid drive shaping method: {drive_shaping_method}")
 
-    config = solvers.Config(
-        solving=solvers.quantum.Config(
+    config = solving.Config(
+        solving=solving.quantum.Config(
             embedding=embedding_config,
             drive_shaping=drive_shaping_config,
             device=qoolqit.AnalogDevice(),
@@ -204,19 +204,19 @@ def test_classical_solve(
     qubo, expected_optimal_solutions = simple_qubo()
 
     classical_solvers = {
-        "cplex": solvers.classical.Algorithm.CPLEX,
-        "tabu": solvers.classical.Algorithm.TABU_SEARCH,
-        "sa": solvers.classical.Algorithm.SIMULATED_ANNEALING,
-        "random": solvers.classical.Algorithm.RANDOM_SAMPLING,
+        "cplex": solving.classical.Algorithm.CPLEX,
+        "tabu": solving.classical.Algorithm.TABU_SEARCH,
+        "sa": solving.classical.Algorithm.SIMULATED_ANNEALING,
+        "random": solving.classical.Algorithm.RANDOM_SAMPLING,
     }
 
-    classical_config = solvers.classical.Config(
+    classical_config = solving.classical.Config(
         algorithm=classical_solvers[solving_method],
         max_bitstrings=1,
         sa_seed=seed,
     )
 
-    config = solvers.Config(
+    config = solving.Config(
         solving=classical_config,
         do_postprocessing=postprocessing,
         do_preprocessing=preprocessing,

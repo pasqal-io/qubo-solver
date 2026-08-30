@@ -13,7 +13,7 @@ from qubosolver import (
     Instance,
     Solution,
     SingleSolution,
-    solvers,
+    solving,
     transforms,
     embedding,
     drive_shaping,
@@ -136,7 +136,7 @@ def test_quantum_solve(
     device = qoolqit.AnalogDevice()
 
     # Try trivial solution (none here)
-    trivial_solution = solvers.trivial_solution_search.solve(qubo)
+    trivial_solution = solving.trivial_solution_search.solve(qubo)
     check.is_false(trivial_solution)
 
     effective_qubo = qubo
@@ -163,18 +163,18 @@ def test_quantum_solve(
     elif drive_shaping_method == "bayesian_search":
         # Drive Bayesian Search is a hybrid solver that finds a solution and the
         # associated drive. Hence, it can be used as both a solver and a drive shaper
-        _, drive = solvers.drive_bayesian_search.solve(
+        _, drive = solving.drive_bayesian_search.solve(
             effective_qubo,
             register,
             backend=emulator,
             device=device,
             dmm=False,
-            config=solvers.drive_bayesian_search.Config(n_evaluations=11, seed=seed),
+            config=solving.drive_bayesian_search.Config(n_evaluations=11, seed=seed),
         )
     else:
         raise ValueError(f"Invalid drive shaping method: {drive_shaping_method}")
 
-    job = solvers.analog_quantum_sampling.solve(register, drive, emulator, device)
+    job = solving.analog_quantum_sampling.solve(register, drive, emulator, device)
     solution = Solution.from_results(job.results(), effective_qubo)
 
     # Post-process fixations of the preprocessing and restore the original QUBO
@@ -183,7 +183,7 @@ def test_quantum_solve(
         solution = transforms.variable_fixing.lift(solution, effective_qubo)
 
     if postprocessing:
-        solution = solvers.iterative_bitflip_local_search.solve(qubo, solution)
+        solution = solving.iterative_bitflip_local_search.solve(qubo, solution)
 
     expected_optimal_probability = 0.75
     if drive_shaping_method in ["bayesian_search"]:
@@ -211,7 +211,7 @@ def test_classical_solve(
     qubo, expected_optimal_solutions = simple_qubo()
 
     # Try trivial solution (none here)
-    trivial_solution = solvers.trivial_solution_search.solve(qubo)
+    trivial_solution = solving.trivial_solution_search.solve(qubo)
     check.is_false(trivial_solution)
 
     effective_qubo = qubo
@@ -219,23 +219,23 @@ def test_classical_solve(
         effective_qubo = transforms.variable_fixing.apply_recursively(qubo)
 
     if solving_method == "cplex":
-        solution = solvers.cplex.solve(effective_qubo)
+        solution = solving.cplex.solve(effective_qubo)
     elif solving_method == "tabu":
-        solution = solvers.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=3)
-        solution = solvers.tabu_search.solve(effective_qubo, solution.bitstrings)
+        solution = solving.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=3)
+        solution = solving.tabu_search.solve(effective_qubo, solution.bitstrings)
     elif solving_method == "sa":
-        solution = solvers.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=1)
-        solution = solvers.simulated_annealing.solve(
+        solution = solving.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=1)
+        solution = solving.simulated_annealing.solve(
             effective_qubo, solution[0].bitstring.unsqueeze(0), top_k=1
         )
     elif solving_method == "sa+tabu":
-        solution = solvers.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=1)
-        solution = solvers.simulated_annealing.solve(
+        solution = solving.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=1)
+        solution = solving.simulated_annealing.solve(
             effective_qubo, solution[0].bitstring.unsqueeze(0), top_k=1
         )
-        solution = solvers.tabu_search.solve(effective_qubo, solution.bitstrings)
+        solution = solving.tabu_search.solve(effective_qubo, solution.bitstrings)
     elif solving_method == "random":
-        solution = solvers.random_sampling.solve(effective_qubo, rng=rng)
+        solution = solving.random_sampling.solve(effective_qubo, rng=rng)
     else:
         raise ValueError(f"Invalid solving method: {solving_method}")
 
@@ -244,7 +244,7 @@ def test_classical_solve(
         solution = transforms.variable_fixing.lift(solution, effective_qubo)
 
     if postprocessing:
-        solution = solvers.iterative_bitflip_local_search.solve(qubo, solution)
+        solution = solving.iterative_bitflip_local_search.solve(qubo, solution)
 
     expected_optimal_probability = 0.75
     if solving_method in ["random"]:

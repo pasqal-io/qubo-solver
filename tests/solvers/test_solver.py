@@ -20,7 +20,7 @@ from qubosolver import (
     Solver,
     Solution,
     embedding,
-    solvers,
+    solving,
     drive_shaping,
     vectori,
     bitstrings,
@@ -29,7 +29,7 @@ from qubosolver import (
     RemoteEmulator,
 )
 from qubosolver.utils import analysis
-from qubosolver.solvers.solver import _QuboSolverQuantum
+from qubosolver.solving.solver import _QuboSolverQuantum
 from qubosolver.drive_shaping import Algorithm
 from mock.connection import MockConnection
 
@@ -61,8 +61,8 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
 
     default_solver = Solver(
         simple_qubo_instance,
-        solvers.Config(
-            solving=solvers.quantum.Config(
+        solving.Config(
+            solving=solving.quantum.Config(
                 backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=500)
             )
         ),
@@ -72,8 +72,8 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
 
     lessshots_solver = Solver(
         simple_qubo_instance,
-        solvers.Config(
-            solving=solvers.quantum.Config(
+        solving.Config(
+            solving=solving.quantum.Config(
                 backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=100)
             )
         ),
@@ -87,8 +87,8 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
 def test_run_local_backends(simple_qubo_instance: Instance, local_backend: LocalEmulator) -> None:
     solver = Solver(
         simple_qubo_instance,
-        solvers.Config(
-            solving=solvers.quantum.Config(
+        solving.Config(
+            solving=solving.quantum.Config(
                 backend=local_backend,
                 embedding=embedding.Config(algorithm=embedding.Algorithm.BLADE),
             )
@@ -107,7 +107,7 @@ def test_solver_different_devices(
     embedding_algorithm: embedding.Algorithm,
 ) -> None:
 
-    quantum_config = solvers.quantum.Config(
+    quantum_config = solving.quantum.Config(
         drive_shaping=drive_shaping.Config(algorithm="proportional_diagonal"),
         embedding=embedding.Config(
             algorithm=embedding_algorithm,
@@ -117,7 +117,7 @@ def test_solver_different_devices(
         backend=LocalEmulator(backend_type=SVBackend),
 
     )
-    config = solvers.Config(
+    config = solving.Config(
         solving=quantum_config,
         do_postprocessing=False,
         do_preprocessing=False,
@@ -212,8 +212,8 @@ def trivial_triangular_qubo(connection: Optional[RemoteConnection] = None) -> So
         if connection is None
         else RemoteEmulator(connection=connection, num_shots=num_shots)
     )
-    config = solvers.Config(
-        solving=solvers.quantum.Config(
+    config = solving.Config(
+        solving=solving.quantum.Config(
             embedding=embedding.Config(algorithm="blade"),
             backend=backend,
         ),
@@ -289,7 +289,7 @@ def test_respects_total_bottom_detuning(caplog: pytest.LogCaptureFixture) -> Non
             Q[i, j] = Q[j, i] = 1.0
 
     instance = Instance(Q)
-    config = solvers.Config(solving=solvers.quantum.Config(drive_shaping=drive_shaping.Config(dmm=True)))
+    config = solving.Config(solving=solving.quantum.Config(drive_shaping=drive_shaping.Config(dmm=True)))
 
     with caplog.at_level(logging.INFO):
         solution = Solver(instance, config).solve()
@@ -320,8 +320,8 @@ def test_quantum_matches_classical_triangular(algorithm: str) -> None:
     qubo = _triangular_register_qubo()
     instance = Instance(matrix.tensor(qubo))
 
-    quantum_config = solvers.Config(
-        solving=solvers.quantum.Config(
+    quantum_config = solving.Config(
+        solving=solving.quantum.Config(
             embedding=embedding.Config(algorithm=algorithm),
             drive_shaping=drive_shaping.Config(algorithm=Algorithm.PROPORTIONAL_DIAGONAL),
         ),
@@ -331,8 +331,8 @@ def test_quantum_matches_classical_triangular(algorithm: str) -> None:
     quantum_solution = Solver(instance, quantum_config).solve()
     quantum_solution._sort_by_cost()
 
-    classical_config = solvers.Config(
-        solving=solvers.classical.Config(max_bitstrings=4),
+    classical_config = solving.Config(
+        solving=solving.classical.Config(max_bitstrings=4),
     )
     classical_solution = Solver(instance, classical_config).solve()
     classical_solution._sort_by_cost()

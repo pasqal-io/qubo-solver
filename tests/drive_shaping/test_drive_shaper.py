@@ -14,7 +14,7 @@ from qubosolver import (
     Solver,
     embedding,
     drive_shaping,
-    solvers,
+    solving,
     matrix,
 )
 from qubosolver.drive_shaping._drive_shaper import (

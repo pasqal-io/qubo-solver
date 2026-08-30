@@ -213,9 +213,9 @@ def _run_simulation(
         ``probabilities``, and ``counts`` populated and sorted by ascending
         cost.  Returns an empty [`Solution`][] on any failure.
     """
-    from qubosolver import solvers
+    from qubosolver import solving
     try:
-        job = solvers.analog_quantum_sampling.solve(
+        job = solving.analog_quantum_sampling.solve(
             register,
             drive,
             backend,

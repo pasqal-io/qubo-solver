@@ -11,14 +11,14 @@ import numpy as np
 from qubosolver import (
     Instance,
     Solution,
-    solvers,
+    solving,
     Solver,
     matrix,
     bitstring,
     torch_rng,
 )
-from qubosolver.solvers import classical
-from qubosolver.solvers.classical._solver import (
+from qubosolver.solving import classical
+from qubosolver.solving.classical._solver import (
     get_classical_solver,
     SimulatedAnnealingSolver,
     TabuSearchSolver,
@@ -49,14 +49,14 @@ def test_qubo_solver_sa_or_tabu(
     seed = 1567
     manual_seed(seed)
 
-    # Create a solvers.Config object with classical solver options.
-    classical_config = solvers.classical.Config(
+    # Create a solving.Config object with classical solver options.
+    classical_config = solving.classical.Config(
         algorithm=classical_method,
         max_bitstrings=max_bitstrings,
         sa_seed=seed,
     )
 
-    config = solvers.Config(
+    config = solving.Config(
         solving=classical_config, activate_trivial_solutions=False
     )
 
@@ -91,9 +91,9 @@ def test_random() -> None:
     Q = matrix.tensor([[1.0, 0.0], [0.0, 1.0]])
     instance = Instance(matrix=Q)
 
-    # Create a solvers.Config object with classical solver options.
-    classical_config = solvers.classical.Config(algorithm="random_sampling", max_bitstrings=3)
-    config = solvers.Config(
+    # Create a solving.Config object with classical solver options.
+    classical_config = solving.classical.Config(algorithm="random_sampling", max_bitstrings=3)
+    config = solving.Config(
         solving=classical_config, activate_trivial_solutions=False
     )
 
@@ -125,11 +125,11 @@ def test_random() -> None:
 def test_sa_cost(
     simple_qubo_instance: Instance, classical_methods: classical.Algorithm, max_bitstrings: int
 ) -> None:
-    classical_config = solvers.classical.Config(
+    classical_config = solving.classical.Config(
         algorithm=classical_methods, max_bitstrings=max_bitstrings, sa_seed=42
     )
 
-    config = solvers.Config(
+    config = solving.Config(
         solving=classical_config, activate_trivial_solutions=False
     )
 
@@ -169,7 +169,7 @@ def test_sa_cost(
 def test_tabu_time_limit(simple_qubo_instance: Instance) -> None:
     # Set max_iter and max_no_improve to very large values to ensure that
     # the solver is stopped by tabu_time_limit, not by another stop criterion.
-    classical_config = solvers.classical.Config(
+    classical_config = solving.classical.Config(
         algorithm=classical.Algorithm.TABU_SEARCH,
         max_bitstrings=1,
         max_iter=100_000_000,
@@ -177,7 +177,7 @@ def test_tabu_time_limit(simple_qubo_instance: Instance) -> None:
         tabu_time_limit=0.01,
     )
 
-    config = solvers.Config(
+    config = solving.Config(
         solving=classical_config,
         activate_trivial_solutions=False,
     )
@@ -198,14 +198,14 @@ def test_tabu_time_limit(simple_qubo_instance: Instance) -> None:
 def test_sa_time_limit(simple_qubo_instance: Instance) -> None:
     # Use a very large iteration limit so that the solver is stopped
     # by the time limit rather than by max_iter.
-    classical_config = solvers.classical.Config(
+    classical_config = solving.classical.Config(
         algorithm=classical.Algorithm.SIMULATED_ANNEALING,
         max_bitstrings=1,
         max_iter=100_000_000,
         sa_time_limit=0.01,
     )
 
-    config = solvers.Config(
+    config = solving.Config(
         solving=classical_config,
         activate_trivial_solutions=False,
     )
@@ -239,11 +239,11 @@ def test_empty_qubo_after_preprocessing(classical_method: classical.Algorithm) -
 
     # Use a very large iteration limit so that the solver is stopped
     # by the time limit rather than by max_iter.
-    classical_config = solvers.classical.Config(
+    classical_config = solving.classical.Config(
         algorithm=classical_method,
         sa_seed=seed,
     )
-    config = solvers.Config(
+    config = solving.Config(
         solving=classical_config,
         do_preprocessing=True,
         activate_trivial_solutions=False,

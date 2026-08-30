@@ -15,7 +15,7 @@ from qubosolver import (
     Instance,
     Solver,
     embedding,
-    solvers,
+    solving,
     tensor,
     vector,
     matrix,
@@ -72,7 +72,7 @@ def test_with_perfect_embedding(
     instance = Instance(matrix=Q)
 
     # Get all bitstrings with minimum cost
-    bf_solution = solvers.brute_force.solve(instance, max_bitstrings=10)
+    bf_solution = solving.brute_force.solve(instance, max_bitstrings=10)
     expected_optimal_solutions = gather_optimal_solutions(bf_solution)
     check.is_not(expected_optimal_solutions, [])
 
@@ -93,8 +93,8 @@ def test_with_perfect_embedding(
         proportional_diagonal_kappa=0.5,
     )
 
-    config = solvers.Config(
-        solving=solvers.quantum.Config(
+    config = solving.Config(
+        solving=solving.quantum.Config(
             embedding=embed_cfg,
             drive_shaping=drive_cfg,
             device=device_type(),

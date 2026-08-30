@@ -21,7 +21,7 @@ from qubosolver import (
     tensor,
     vector,
     SingleSolution,
-    solvers,
+    solving,
     drive_shaping,
     embedding,
 )
@@ -75,7 +75,7 @@ def test_with_perfect_embedding(
     qubo /= qubo.max()
     instance = Instance(matrix=qubo)
 
-    bf_solutions = solvers.brute_force.solve(instance, max_bitstrings=-1)
+    bf_solutions = solving.brute_force.solve(instance, max_bitstrings=-1)
     expected_optimal_solutions = gather_optimal_solutions(bf_solutions)
     check.is_not(expected_optimal_solutions, [])
 
@@ -95,13 +95,13 @@ def test_with_perfect_embedding(
         local_energy_scale_kappa=0.25,
     )
 
-    solving_config = solvers.quantum.Config(
+    solving_config = solving.quantum.Config(
         embedding=embedding_config,
         drive_shaping=drive_shaping_config,
         device=device_type(),
     )
 
-    config = solvers.Config(solving=solving_config)
+    config = solving.Config(solving=solving_config)
 
     solver = Solver(instance, config)
     solution = solver.solve()

@@ -26,6 +26,7 @@ from qubosolver import (
     matrix,
     Matrix,
     LocalEmulator,
+    DriveShapingConfig,
 )
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
@@ -105,17 +106,17 @@ def local_device(request: pytest.FixtureRequest) -> qoolqit.Device:
 
 @pytest.fixture(
     params=[
-        embedding.Algorithm.GREEDY_LAYOUT,
-        embedding.Algorithm.BLADE,
+        "greedy_layout",
+        "blade",
     ]
 )
-def embedding_algorithm(request: pytest.FixtureRequest) -> embedding.Algorithm:
+def embedding_algorithm(request: pytest.FixtureRequest) -> str:
     return request.param  # type: ignore[no-any-return]
 
 
 @pytest.fixture
-def bayesian_search_drive_shaping() -> drive_shaping.Config:
-    return drive_shaping.Config(algorithm=drive_shaping.Algorithm.BAYESIAN_SEARCH)
+def bayesian_search_drive_shaping() -> DriveShapingConfig:
+    return DriveShapingConfig(algorithm="bayesian_search")
 
 
 @pytest.fixture

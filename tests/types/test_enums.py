@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest_check as check
 
-from qubosolver.solvers import classical
+from qubosolver.solving import classical
 
 
 def test_str_enum_type() -> None:

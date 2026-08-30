@@ -7,7 +7,7 @@ from qubosolver import (
     Solver,
     Instance,
     embedding,
-    solvers,
+    solving,
 )
 from qubosolver.embedding._embedder import GreedyEmbedder, _get_embedder
 
@@ -17,8 +17,8 @@ from qubosolver.embedding._embedder import GreedyEmbedder, _get_embedder
 def test_embeddings_different_devices(
     qubo_for_testing_many_devices: Instance, local_device: Device, embedding_method: str
 ) -> None:
-    config = solvers.Config(
-        solving=solvers.quantum.Config(
+    config = solving.Config(
+        solving=solving.quantum.Config(
             embedding=embedding.Config(algorithm=embedding_method, greedy_layout_traps="device"),
             device=local_device,
         ),

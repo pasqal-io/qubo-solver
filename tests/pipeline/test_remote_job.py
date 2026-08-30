@@ -19,7 +19,7 @@ from qubosolver import (
     LocalEmulator,
     RemoteEmulator,
     drive_shaping,
-    solvers,
+    solving,
     transforms,
 )
 import qubosolver._io.utils as io_utils
@@ -93,11 +93,11 @@ def test_quantum_remote_job(
                 instance, register, device=device, dmm=dmm
             )
         else:
-            _, drive = solvers.drive_bayesian_search.solve(
+            _, drive = solving.drive_bayesian_search.solve(
                 instance, register, backend=backend, device=device, dmm=dmm
             )
 
-        job = solvers.analog_quantum_sampling.solve(register, drive, backend, device)
+        job = solving.analog_quantum_sampling.solve(register, drive, backend, device)
 
         return job, instance
 
@@ -109,7 +109,7 @@ def test_quantum_remote_job(
             assert isinstance(instance, transforms.variable_fixing.Instance)
             solution = transforms.variable_fixing.lift(solution, instance)
             instance = instance._parent_instance
-        solution = solvers.iterative_bitflip_local_search.solve(instance, solution)
+        solution = solving.iterative_bitflip_local_search.solve(instance, solution)
 
         solution._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
 

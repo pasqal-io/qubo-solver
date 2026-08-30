@@ -6,7 +6,7 @@ import pytest_check as check
 from pulser_simulation import QutipBackendV2
 from qoolqit import AnalogDevice, AnalogDeviceWithDMM
 from qubosolver import (
-    solvers,
+    solving,
     drive_shaping,
     embedding,
     LocalEmulator,

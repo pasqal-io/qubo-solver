@@ -13,7 +13,7 @@ from qubosolver import (
     bitstrings,
     matrix,
     bitstring,
-    solvers,
+    solving,
 )
 from qubosolver.utils._costs import quadratic_cost
 from qubosolver.transforms.negative_bitflip import (
@@ -128,10 +128,10 @@ def test_bitflip_apply_is_noop_without_negative_coefficients() -> None:
 
 def test_bitflip_lift_restores_original_variables() -> None:
     instance, _ = bipartisable_negative_qubo()
-    solution = solvers.brute_force.solve(instance)
+    solution = solving.brute_force.solve(instance)
 
     flipped_instance = transforms.negative_bitflip.apply(instance)
-    flipped_solution = solvers.brute_force.solve(flipped_instance)
+    flipped_solution = solving.brute_force.solve(flipped_instance)
 
     restored = transforms.negative_bitflip.lift(flipped_solution, flipped_instance)
 
@@ -212,11 +212,11 @@ def test_metrics_reflect_the_original_matrix_not_the_flipped_one() -> None:
 
 def test_bitflip_lift_restores_original_variables_for_a_batch() -> None:
     instance, _ = bipartisable_negative_qubo()
-    solution = solvers.brute_force.solve(instance, max_bitstrings=4)
+    solution = solving.brute_force.solve(instance, max_bitstrings=4)
     solution._sort_by_cost()
 
     flipped_instance = transforms.negative_bitflip.apply(instance)
-    flipped_solution = solvers.brute_force.solve(flipped_instance, max_bitstrings=4)
+    flipped_solution = solving.brute_force.solve(flipped_instance, max_bitstrings=4)
 
     restored = transforms.negative_bitflip.lift(flipped_solution, flipped_instance)
     restored._sort_by_cost()

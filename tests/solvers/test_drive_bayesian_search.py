@@ -14,12 +14,12 @@ from qoolqit.devices.device import AnalogDeviceWithDMM, AnalogDevice
 from qoolqit.register import Register
 
 from qubosolver.drive_shaping._drive_shaper import BayesianSearchDriveShaper
-from qubosolver.solvers.hybrid import drive_bayesian_search
+from qubosolver.solving.hybrid import drive_bayesian_search
 from qubosolver import (
     Instance,
     SingleSolution,
     Solution,
-    solvers,
+    solving,
     drive_shaping,
     vector,
     matrix,
@@ -92,7 +92,7 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
 
     instance = Instance(Q)
 
-    bf_solution = solvers.brute_force.solve(instance, max_bitstrings=-1)
+    bf_solution = solving.brute_force.solve(instance, max_bitstrings=-1)
     # Get all bitstrings with minimum cost
     expected_optimal_solutions = gather_optimal_solutions(bf_solution)
     check.is_not(expected_optimal_solutions, [])
@@ -101,14 +101,14 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
     print(f"All expected optimal bitstrings: {[s.string for s in expected_optimal_solutions]}")
     print(f"Number of expected optimal solutions: {len(expected_optimal_solutions)}\n")
 
-    config = solvers.drive_bayesian_search.Config(
+    config = solving.drive_bayesian_search.Config(
         n_evaluations=11,
         seed=seed,
     )
     if use_probability_based_objective:
         config.objective_fn = probability_based_ojective
 
-    qubo_solution, _ = solvers.drive_bayesian_search.solve(
+    qubo_solution, _ = solving.drive_bayesian_search.solve(
         instance,
         register,
         backend=LocalEmulator(),
@@ -166,7 +166,7 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
 
     instance = Instance(Q)
 
-    bf_solution = solvers.brute_force.solve(instance, max_bitstrings=-1)
+    bf_solution = solving.brute_force.solve(instance, max_bitstrings=-1)
 
     # Get all bitstrings with minimum cost
     expected_optimal_solutions = gather_optimal_solutions(bf_solution)
@@ -177,14 +177,14 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
     print(f"Number of expected optimal solutions: {len(expected_optimal_solutions)}\n")
 
 
-    config = solvers.drive_bayesian_search.Config(
+    config = solving.drive_bayesian_search.Config(
         n_evaluations=20,
         seed=seed,
     )
     if use_probability_based_objective:
         config.objective_fn = probability_based_ojective
 
-    qubo_solution, _ = solvers.drive_bayesian_search.solve(
+    qubo_solution, _ = solving.drive_bayesian_search.solve(
         instance,
         register,
         backend=LocalEmulator(num_shots=500),
@@ -236,12 +236,12 @@ def test_errors(raise_exception: bool) -> None:
 
     mock_error = MagicMock(wraps=error)
 
-    config = solvers.drive_bayesian_search.Config(
+    config = solving.drive_bayesian_search.Config(
         n_evaluations=11,
         objective_fn=mock_error,
     )
 
-    _, _ = solvers.drive_bayesian_search.solve(
+    _, _ = solving.drive_bayesian_search.solve(
         instance,
         register,
         backend=LocalEmulator(),
@@ -268,15 +268,15 @@ def test_callback_fn() -> None:
     device = AnalogDeviceWithDMM()
     backend = LocalEmulator()
 
-    seen: list[solvers.drive_bayesian_search._CallbackInfo] = []
+    seen: list[solving.drive_bayesian_search._CallbackInfo] = []
 
-    def callback(info: solvers.drive_bayesian_search._CallbackInfo) -> None:
+    def callback(info: solving.drive_bayesian_search._CallbackInfo) -> None:
         seen.append(info)
 
-    bs_config = solvers.drive_bayesian_search.Config(n_evaluations=11)
+    bs_config = solving.drive_bayesian_search.Config(n_evaluations=11)
     bs_config._callback_fn = callback
 
-    solvers.drive_bayesian_search.solve(
+    solving.drive_bayesian_search.solve(
         Instance(Q),
         register,
         backend=backend,
@@ -285,7 +285,7 @@ def test_callback_fn() -> None:
     )
 
     check.equal(len(seen), 11)
-    check.is_instance(seen[0], solvers.drive_bayesian_search._CallbackInfo)
+    check.is_instance(seen[0], solving.drive_bayesian_search._CallbackInfo)
 
 
 def test_failed_simulation() -> None:
@@ -301,12 +301,12 @@ def test_failed_simulation() -> None:
     register = Register.from_coordinates(vertices)
     Q = matrix.as_tensor(register.interaction_matrix()) - matrix.as_tensor(torch.eye(3))
 
-    config = solvers.drive_bayesian_search.Config(
+    config = solving.drive_bayesian_search.Config(
         n_evaluations=11,
     )
 
     with patch("qoolqit.QuantumProgram.compile_to", side_effect=RuntimeError()):
-        _, _ = solvers.drive_bayesian_search.solve(
+        _, _ = solving.drive_bayesian_search.solve(
             Instance(Q),
             register,
             backend=LocalEmulator(),
@@ -328,14 +328,14 @@ def test_failed_simulation_2() -> None:
     register = Register.from_coordinates(vertices)
     Q = matrix.as_tensor(register.interaction_matrix()) - matrix.as_tensor(torch.eye(3))
 
-    config = solvers.drive_bayesian_search.Config(
+    config = solving.drive_bayesian_search.Config(
         n_evaluations=11,
     )
     with patch(
-        "qubosolver.solvers.drive_bayesian_search._run_simulation",
+        "qubosolver.solving.drive_bayesian_search._run_simulation",
         return_value=Solution(),
     ):
-        solution, _ = solvers.drive_bayesian_search.solve(
+        solution, _ = solving.drive_bayesian_search.solve(
             Instance(Q),
             register,
             backend=LocalEmulator(),
@@ -358,12 +358,12 @@ def test_failed_skopt() -> None:
     register = Register.from_coordinates(vertices)
     Q = matrix.as_tensor(register.interaction_matrix()) - matrix.as_tensor(torch.eye(3))
 
-    config = solvers.drive_bayesian_search.Config(
+    config = solving.drive_bayesian_search.Config(
         n_evaluations=11,
     )
 
-    with patch("qubosolver.solvers.drive_bayesian_search.gp_minimize", return_value=None):
-        qubo_solution, _ = solvers.drive_bayesian_search.solve(
+    with patch("qubosolver.solving.drive_bayesian_search.gp_minimize", return_value=None):
+        qubo_solution, _ = solving.drive_bayesian_search.solve(
             Instance(Q),
             register,
             backend=LocalEmulator(),
@@ -384,7 +384,7 @@ def test_dmm_labels_are_ints() -> None:
     check.is_instance(register.qubits_ids[0], int)
 
     device = qoolqit.AnalogDeviceWithDMM()
-    _, drive = solvers.drive_bayesian_search.solve(instance, register, dmm=True, device=device, backend=LocalEmulator())
+    _, drive = solving.drive_bayesian_search.solve(instance, register, dmm=True, device=device, backend=LocalEmulator())
 
     assert drive.dmm is not None
     for k, v in drive.dmm.weights.items():

@@ -13,12 +13,12 @@ from qubosolver import (
     Solution,
     bitstring,
     torch_rng,
-    solvers,
+    solving,
     matrix,
     bitstrings,
     vectori,
 )
-from qubosolver.solvers.classical.simulated_annealing import (
+from qubosolver.solving.classical.simulated_annealing import (
     _Data,
     _to_key,
     _from_key,
@@ -133,7 +133,7 @@ def test_simulated_annealing_costs_match_bitstrings(instance: Instance) -> None:
     start = bitstrings.zeros(1, instance.size)
     rng = torch_rng(0)
 
-    solution = solvers.simulated_annealing.solve(
+    solution = solving.simulated_annealing.solve(
         instance,
         start,
         top_k=5,
@@ -159,7 +159,7 @@ def test_simulated_annealing_solution_is_internally_consistent(instance: Instanc
     start = bitstrings.zeros(1, instance.size)
     rng = torch_rng(0)
 
-    solution = solvers.simulated_annealing.solve(
+    solution = solving.simulated_annealing.solve(
         instance,
         start,
         top_k=5,
@@ -179,7 +179,7 @@ def test_simulated_annealing_counts_sum_to_visits(instance: Instance) -> None:
     start = bitstrings.zeros(1, instance.size)
     rng = torch_rng(0)
 
-    solution = solvers.simulated_annealing.solve(
+    solution = solving.simulated_annealing.solve(
         instance,
         start,
         top_k=3,
@@ -199,7 +199,7 @@ def test_simulated_annealing_respects_top_k(instance: Instance) -> None:
     start = bitstrings.zeros(1, instance.size)
     rng = torch_rng(0)
 
-    solution = solvers.simulated_annealing.solve(
+    solution = solving.simulated_annealing.solve(
         instance,
         start,
         top_k=2,
@@ -217,7 +217,7 @@ def test_simulated_annealing_deterministic_with_seeded_rng(instance: Instance) -
     """Two runs with the same seed must produce identical solutions."""
     start = bitstrings.zeros(1, instance.size)
 
-    solution_a = solvers.simulated_annealing.solve(
+    solution_a = solving.simulated_annealing.solve(
         instance,
         start,
         top_k=4,
@@ -226,7 +226,7 @@ def test_simulated_annealing_deterministic_with_seeded_rng(instance: Instance) -
         final_temp=0.05,
         rng=torch_rng(565111),
     )
-    solution_b = solvers.simulated_annealing.solve(
+    solution_b = solving.simulated_annealing.solve(
         instance,
         start,
         top_k=4,
@@ -250,7 +250,7 @@ def test_simulated_annealing_zero_max_iter_returns_start(instance: Instance) -> 
     start = bitstrings.zeros(1, instance.size)
     rng = torch_rng(0)
 
-    solution = solvers.simulated_annealing.solve(
+    solution = solving.simulated_annealing.solve(
         instance,
         start,
         top_k=5,
@@ -271,7 +271,7 @@ def test_simulated_annealing_zero_time_limit_returns_start(instance: Instance) -
     start = bitstrings.zeros(1, instance.size)
     rng = torch_rng(0)
 
-    solution = solvers.simulated_annealing.solve(
+    solution = solving.simulated_annealing.solve(
         instance,
         start,
         top_k=5,
@@ -293,7 +293,7 @@ def test_simulated_annealing_explicit_cooling_rate_used(instance: Instance) -> N
     start = bitstrings.zeros(1, instance.size)
     rng = torch_rng(0)
 
-    solution = solvers.simulated_annealing.solve(
+    solution = solving.simulated_annealing.solve(
         instance,
         start,
         top_k=3,
@@ -326,7 +326,7 @@ def test_simulated_annealing_raises_on_invalid_arguments(kwargs: dict, match: st
     start = bitstrings.zeros(1, instance_symmetric.size)
 
     with pytest.raises(ValueError, match=match):
-        solvers.simulated_annealing.solve(instance_symmetric, start, rng=torch_rng(658), **kwargs)
+        solving.simulated_annealing.solve(instance_symmetric, start, rng=torch_rng(658), **kwargs)
 
 
 @pytest.mark.parametrize("instance", instances, ids=instance_ids)
@@ -338,7 +338,7 @@ def test_simulated_annealing_merge_false_returns_one_solution_per_start(
     start = bitstrings.zeros(3, instance.size)
     rng = torch_rng(0)
 
-    solutions = solvers.simulated_annealing.solve(
+    solutions = solving.simulated_annealing.solve(
         instance,
         start,
         merge=False,
@@ -364,7 +364,7 @@ def test_simulated_annealing_merge_true_matches_manual_concat_and_deduplicate(
     start = bitstrings.rand(4, instance.size, rng=torch_rng(574))
     top_k = 3
 
-    merged_solution = solvers.simulated_annealing.solve(
+    merged_solution = solving.simulated_annealing.solve(
         instance,
         start,
         top_k=top_k,
@@ -373,7 +373,7 @@ def test_simulated_annealing_merge_true_matches_manual_concat_and_deduplicate(
         final_temp=0.05,
         rng=torch_rng(7874),
     )
-    solutions = solvers.simulated_annealing.solve(
+    solutions = solving.simulated_annealing.solve(
         instance,
         start,
         merge=False,
@@ -396,7 +396,7 @@ def test_simulated_annealing_empty_start_merge_false_returns_empty_list() -> Non
     performed, when merge=False."""
     start = bitstrings.zeros(0, instance_symmetric.size)
 
-    solutions = solvers.simulated_annealing.solve(
+    solutions = solving.simulated_annealing.solve(
         instance_symmetric, start, merge=False, rng=torch_rng(0)
     )
 
@@ -408,7 +408,7 @@ def test_simulated_annealing_empty_start_merge_true_returns_empty_solution() -> 
     performed, when merge=True (the default)."""
     start = bitstrings.zeros(0, instance_symmetric.size)
 
-    solution = solvers.simulated_annealing.solve(instance_symmetric, start, rng=torch_rng(0))
+    solution = solving.simulated_annealing.solve(instance_symmetric, start, rng=torch_rng(0))
 
     check.is_false(solution)
 
@@ -426,7 +426,7 @@ def test_simulated_annealing_stats_per_run_sets_single_run_counts_to_one(
     start = bitstrings.zeros(1, instance.size)
     rng = torch_rng(0)
 
-    solution = solvers.simulated_annealing.solve(
+    solution = solving.simulated_annealing.solve(
         instance,
         start,
         top_k=3,
@@ -447,7 +447,7 @@ def test_simulated_annealing_stats_per_run_merged_counts_reflect_run_agreement()
     always 1 nor uniform across bitstrings."""
     start = bitstrings.rand(8, instance_symmetric.size, rng=torch_rng(11))
 
-    solution = solvers.simulated_annealing.solve(
+    solution = solving.simulated_annealing.solve(
         instance_symmetric,
         start,
         top_k=1,
@@ -476,7 +476,7 @@ def test_simulated_annealing_stats_per_run_top_k_one_merge_true_matches_manual_e
     needed."""
     start = bitstrings.rand(8, instance_symmetric.size, rng=torch_rng(1350))
 
-    per_run_solution = solvers.simulated_annealing.solve(
+    per_run_solution = solving.simulated_annealing.solve(
         instance_symmetric,
         start,
         max_iter=300,
@@ -485,7 +485,7 @@ def test_simulated_annealing_stats_per_run_top_k_one_merge_true_matches_manual_e
         rng=torch_rng(0),
     )
 
-    solutions = solvers.simulated_annealing.solve(
+    solutions = solving.simulated_annealing.solve(
         instance_symmetric,
         start,
         merge=False,
@@ -515,7 +515,7 @@ def test_simulated_annealing_stats_per_run_is_default(instance: Instance) -> Non
     """Omitting stats must be equivalent to passing stats='per_run' explicitly."""
     start = bitstrings.zeros(1, instance.size)
 
-    default_solution = solvers.simulated_annealing.solve(
+    default_solution = solving.simulated_annealing.solve(
         instance,
         start,
         top_k=3,
@@ -524,7 +524,7 @@ def test_simulated_annealing_stats_per_run_is_default(instance: Instance) -> Non
         final_temp=0.05,
         rng=torch_rng(23),
     )
-    explicit_per_run_solution = solvers.simulated_annealing.solve(
+    explicit_per_run_solution = solving.simulated_annealing.solve(
         instance,
         start,
         top_k=3,
@@ -545,8 +545,8 @@ def test_simulated_annealing_stats_per_run_top_k_above_one_logs_info(
     merged counts won't simply be 1 per run."""
     start = bitstrings.zeros(1, instance_symmetric.size)
 
-    with caplog.at_level("INFO", logger="qubosolver.solvers.classical.simulated_annealing"):
-        solvers.simulated_annealing.solve(
+    with caplog.at_level("INFO", logger="qubosolver.solving.classical.simulated_annealing"):
+        solving.simulated_annealing.solve(
             instance_symmetric,
             start,
             top_k=2,
@@ -567,8 +567,8 @@ def test_simulated_annealing_stats_per_run_top_k_one_does_not_log(
     not emit the top_k > 1 caveat log."""
     start = bitstrings.zeros(1, instance_symmetric.size)
 
-    with caplog.at_level("INFO", logger="qubosolver.solvers.classical.simulated_annealing"):
-        solvers.simulated_annealing.solve(
+    with caplog.at_level("INFO", logger="qubosolver.solving.classical.simulated_annealing"):
+        solving.simulated_annealing.solve(
             instance_symmetric,
             start,
             top_k=1,
@@ -593,7 +593,7 @@ def test_simulated_annealing_overloads_match_implementation_signature() -> None:
     select that overload), unlike the impl and the merge=True overload
     where it defaults to True.
     """
-    from qubosolver.solvers.classical.simulated_annealing import solve
+    from qubosolver.solving.classical.simulated_annealing import solve
     impl_params = inspect.signature(solve).parameters
     overloads = get_overloads(solve)
 
@@ -624,11 +624,11 @@ def test_simulated_annealing_overload_return_types_are_statically_correct() -> N
     assert_type is a no-op there -- its only purpose is to be type-checked."""
     start = bitstrings.zeros(1, instance_symmetric.size)
 
-    default_result = solvers.simulated_annealing.solve(instance_symmetric, start)
+    default_result = solving.simulated_annealing.solve(instance_symmetric, start)
     assert_type(default_result, Solution)
 
-    explicit_merge_result = solvers.simulated_annealing.solve(instance_symmetric, start, merge=True)
+    explicit_merge_result = solving.simulated_annealing.solve(instance_symmetric, start, merge=True)
     assert_type(explicit_merge_result, Solution)
 
-    unmerged_result = solvers.simulated_annealing.solve(instance_symmetric, start, merge=False)
+    unmerged_result = solving.simulated_annealing.solve(instance_symmetric, start, merge=False)
     assert_type(unmerged_result, list[Solution])

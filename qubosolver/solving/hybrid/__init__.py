@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from qubosolver.solvers.hybrid import (
+from qubosolver.solving.hybrid import (
     drive_bayesian_search,
 )
 
