@@ -11,12 +11,8 @@ from qubosolver.drive_shaping import (
     proportional_diagonal,
     local_energy_scale,
 )
-from qubosolver.drive_shaping.enums import Algorithm
-from qubosolver.drive_shaping.config import Config
 
 __all__ = [
     "proportional_diagonal",
     "local_energy_scale",
-    "Algorithm",
-    "Config",
 ]

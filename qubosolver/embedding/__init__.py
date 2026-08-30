@@ -6,13 +6,10 @@ Provides BLaDE and greedy embedding strategies.
 from __future__ import annotations
 
 from qubosolver.embedding import blade, greedy_layout
-from qubosolver.embedding.enums import Algorithm, Lattice
-from qubosolver.embedding.config import Config
+from qubosolver.embedding.enums import Lattice
 
 __all__ = [
     "blade",
     "greedy_layout",
-    "Algorithm",
     "Lattice",
-    "Config",
 ]

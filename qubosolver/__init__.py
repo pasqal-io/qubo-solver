@@ -59,14 +59,6 @@ from qubosolver.solver import (
 
 
 __all__ = [
-    # Config-based API
-    "Solver",
-    "SolverConfig",
-    "DecompositionConfig",
-    "DriveShapingConfig",
-    "EmbeddingConfig",
-    "ClassicalSolvingConfig",
-    "QuantumSolvingConfig",
     # Submodules
     "bitstring",
     "bitstrings",
@@ -100,6 +92,14 @@ __all__ = [
     # Functions
     "torch_rng",
     "extract_qubo",
+    # Config-based API
+    "Solver",
+    "SolverConfig",
+    "DecompositionConfig",
+    "DriveShapingConfig",
+    "EmbeddingConfig",
+    "ClassicalSolvingConfig",
+    "QuantumSolvingConfig",
 ]
 
 __version__ = version("qubo-solver")
