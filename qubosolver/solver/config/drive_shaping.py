@@ -3,9 +3,11 @@ from __future__ import annotations
 import inspect
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Literal, get_args
 
 from qubosolver.types import Solution
-from .enums import Algorithm
+
+DriveShapingAlgorithm = Literal["bayesian_search", "proportional_diagonal", "local_energy_scale"]
 
 
 @dataclass
@@ -13,7 +15,16 @@ class Config():
     """A module-level [`drive_shaping.Config`][] that defines the drive shaping part of a [`solvers.quantum.Config`][].
 
     Attributes:
-        algorithm: Drive shaping method used. Defaults to [`Algorithm.PROPORTIONAL_DIAGONAL`][].
+        algorithm (DriveShapingAlgorithm, optional): Drive shaping method used. One of:
+
+            - `"bayesian_search"`: Drive whose parameters are found via Bayesian search that
+              minimizes the cost function via pulse optimization.
+            - `"proportional_diagonal"`: Drive whose amplitude/detuning scale proportionally to
+              the QUBO diagonal; no numerical optimization.
+            - `"local_energy_scale"`: Drive whose peak Rabi frequency scales with the average
+              local physical energy scale; no numerical optimization.
+
+            Defaults to `"proportional_diagonal"`.
         dmm: Whether to use a detuning map when applying drive shaping or not.
             This adds a [`qoolqit.drive.DetuningMapModulator`][] to the output drive.
             Defaults to `True`, which applies DMM.
@@ -36,7 +47,7 @@ class Config():
             Defaults to `50000` ns.
     """
 
-    algorithm: Algorithm | str = Algorithm.PROPORTIONAL_DIAGONAL
+    algorithm: DriveShapingAlgorithm = "proportional_diagonal"
     dmm: bool = True
     bayesian_search_n_calls: int = 20
     bayesian_search_initial_omega_parameters: list[float] = field(
@@ -56,7 +67,8 @@ class Config():
     default_sequence_duration: int = 50000
 
     def __post_init__(self) -> None:
-        self.algorithm = self._normalize_drive_shaping_method(self.algorithm)
+        if self.algorithm not in get_args(DriveShapingAlgorithm):
+            raise ValueError(f"Invalid drive shaping method '{self.algorithm}'.")
         if len(self.bayesian_search_initial_omega_parameters) != 3:
             raise ValueError(
                 "`bayesian_search_initial_omega_parameters` should be a list of 3 numbers."
@@ -65,16 +77,3 @@ class Config():
             raise ValueError(
                 "`bayesian_search_initial_detuning_parameters` should be a list of 3 numbers."
             )
-
-    @staticmethod
-    def _normalize_drive_shaping_method(val: str | Algorithm) -> Algorithm:
-        """Normalize the `drive_shaping_method` attribute."""
-        if isinstance(val, Algorithm):
-            return val
-        elif isinstance(val, str):
-            try:
-                return Algorithm[val.upper()]
-            except KeyError:
-                raise ValueError(f"Invalid drive shaping method '{val}'.")
-        else:
-            raise TypeError("Invalid drive shaping method type.")

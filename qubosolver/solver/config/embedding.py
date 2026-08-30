@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, get_args
 from dataclasses import dataclass, field
 
 import torch
 
-from .enums import Algorithm, Lattice
+EmbeddingAlgorithm = Literal["greedy_layout", "blade"]
+GreedyLayoutLattice = Literal["square", "triangular"]
 
 
 @dataclass
@@ -13,11 +14,17 @@ class Config():
     """A module-level [`embedding.Config`][] that defines the embedding part of a [`solvers.quantum.Config`][].
 
     Attributes:
-        algorithm: The type of embedding method used to
-            place atoms on the register according to the QUBO problem.
-            Defaults to [`Algorithm.GREEDY_LAYOUT`][].
-        greedy_layout_lattice: Lattice type for the
-            greedy layout embedder method. Defaults to [`Lattice.TRIANGULAR`][].
+        algorithm (EmbeddingAlgorithm, optional): The type of embedding method used to
+            place atoms on the register according to the QUBO problem. One of:
+
+            - `"greedy_layout"`: Greedy layout-based embedder that places qubits on a
+              regular lattice.
+            - `"blade"`: BLADE embedder using graph-theoretic optimization for qubit placement.
+
+            Defaults to `"greedy_layout"`.
+        greedy_layout_lattice (GreedyLayoutLattice, optional): Lattice type for the
+            greedy layout embedder method. One of `"square"` or `"triangular"`.
+            Defaults to `"triangular"`.
         greedy_layout_traps: The number of traps on the register.
             Defaults to ``"device"``, i.e. automatically set to match the selected device capacity.
             A too high value will impede computational efficiency.
@@ -41,9 +48,9 @@ class Config():
             ``max_radial_distance`` / ``min_distance`` specs. Defaults to ``"device"``.
     """
 
-    algorithm: Algorithm | str = Algorithm.GREEDY_LAYOUT
+    algorithm: EmbeddingAlgorithm = "greedy_layout"
 
-    greedy_layout_lattice: Lattice | str = Lattice.TRIANGULAR
+    greedy_layout_lattice: GreedyLayoutLattice = "triangular"
     greedy_layout_traps: int | Literal["device"] = "device"
     greedy_layout_max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
     blade_steps_per_round: int | None = 200
@@ -52,32 +59,8 @@ class Config():
     max_min_dist_ratio: float | Literal["device"] = "device"
 
     def __post_init__(self) -> None:
-        self.algorithm = self._normalize_algorithm(self.algorithm)
-        self.greedy_layout_lattice = self._normalize_lattice(self.greedy_layout_lattice)
-
-    @staticmethod
-    def _normalize_algorithm(val: str | Algorithm) -> Algorithm:
-        """Normalize the embedded attribute."""
-        if isinstance(val, Algorithm):
-            return val
-        elif isinstance(val, str):
-            try:
-                return Algorithm[val.upper()]
-            except KeyError:
-                raise ValueError(f"Invalid str embedding method '{val}'.")
-        else:
-            raise TypeError("Invalid embedding method type.")
-
-    @staticmethod
-    def _normalize_lattice(val: str | Lattice) -> Lattice:
-        """Normalize the lattice attribute."""
-        if isinstance(val, Lattice):
-            return val
-        elif isinstance(val, str):
-            try:
-                return Lattice[val.upper()]
-            except KeyError:
-                raise ValueError(f"Invalid lattice '{val}'.")
-        else:
-            raise TypeError("Invalid lattice type.")
+        if self.algorithm not in get_args(EmbeddingAlgorithm):
+            raise ValueError(f"Invalid embedding method '{self.algorithm}'.")
+        if self.greedy_layout_lattice not in get_args(GreedyLayoutLattice):
+            raise ValueError(f"Invalid lattice '{self.greedy_layout_lattice}'.")
 

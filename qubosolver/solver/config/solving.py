@@ -1,13 +1,26 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+import torch
+from typing import Literal, get_args
+
+ClassicalAlgorithm = Literal["tabu_search", "simulated_annealing", "cplex", "random_sampling"]
+
 
 @dataclass
 class ClassicalConfig():
     """A `classical.Config` instance defines the classical part of a `SolverConfig`.
 
     Attributes:
-        classical_solver_type (solvers.classical.Algorithm, optional): Classical solver type. Defaults to
-            `"tabu_search"`.
+        algorithm (ClassicalAlgorithm, optional): Classical solver type. One of:
+
+            - `"tabu_search"`: Tabu search metaheuristic that avoids recently visited solutions.
+            - `"simulated_annealing"`: Simulated annealing algorithm that probabilistically
+              accepts worse solutions to escape local minima.
+            - `"cplex"`: IBM CPLEX exact solver; requires a valid CPLEX installation and licence.
+            - `"random_sampling"`: Randomly samples solutions; useful as a baseline or for testing.
+
+            Defaults to `"tabu_search"`.
         cplex_maxtime (float, optional): CPLEX maximum runtime in seconds. Defaults to 600s.
         cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
         max_iter (int, optional): Maximum number of iterations to perform for simulated annealing or tabu search.
@@ -27,7 +40,7 @@ class ClassicalConfig():
             in seconds. Defaults to `float("inf")`, meaning no time limit.
     """
 
-    algorithm: Algorithm | str = Algorithm.TABU_SEARCH
+    algorithm: ClassicalAlgorithm = "tabu_search"
 
     cplex_maxtime: float = 600.0
     cplex_log_path: str = ""
@@ -48,22 +61,8 @@ class ClassicalConfig():
     tabu_time_limit: float = float("inf")
 
     def __post_init__(self) -> None:
-        self.algorithm = self._normalize_classical_solver_type(self.algorithm)
-
-    @staticmethod
-    def _normalize_classical_solver_type(
-        val: str | Algorithm,
-    ) -> Algorithm:
-        """Normalize the classical_solver_type attribute."""
-        if isinstance(val, Algorithm):
-            return val
-        elif isinstance(val, str):
-            try:
-                return Algorithm[val.upper()]
-            except KeyError:
-                raise ValueError(f"Invalid classical algorithm '{val}'.")
-        else:
-            raise TypeError("Invalid classical algorithm type.")
+        if self.algorithm not in get_args(ClassicalAlgorithm):
+            raise ValueError(f"Invalid classical algorithm '{self.algorithm}'.")
 
 
 @dataclass

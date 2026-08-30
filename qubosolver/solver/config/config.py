@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-from .. import solvers
+from .solving import ClassicalConfig as ClassicalSolvingConfig
+from .solving import QuantumConfig as QuantumSolvingConfig
 
 
 @dataclass
@@ -45,9 +46,9 @@ class SolverConfig():
     Attributes:
         config_name: The name of the current configuration.
             Defaults to `""`.
-        solving: Whether to solve using a quantum approach ([`quantum.Config`][])
-            or a classical approach ([`classical.Config`][]), together with
-            the configuration of that approach. Defaults to a `quantum.Config`.
+        solving: Whether to solve using a quantum approach ([`QuantumSolvingConfig`][])
+            or a classical approach ([`ClassicalSolvingConfig`][]), together with
+            the configuration of that approach. Defaults to a `QuantumSolvingConfig`.
         do_postprocessing: Whether we apply post-processing (`True`) or not
             (`False`). Defaults to `False`.
         do_preprocessing: Whether we apply pre-processing (`True`) or not
@@ -62,7 +63,7 @@ class SolverConfig():
     """
 
     config_name: str = ""
-    solving: solvers.quantum.Config | solvers.classical.Config = field(default_factory=solvers.quantum.Config)
+    solving: QuantumSolvingConfig | ClassicalSolvingConfig = field(default_factory=QuantumSolvingConfig)
     do_postprocessing: bool = False
     do_preprocessing: bool = False
     activate_trivial_solutions: bool = True
@@ -76,23 +77,23 @@ class SolverConfig():
     def solving_mode(self) -> Literal["quantum", "classical"]:
         """
         Returns:
-            `"quantum"` if [`solving`][] is a [`quantum.Config`][], or
-                `"classical"` if it is a [`classical.Config`][].
+            `"quantum"` if [`solving`][] is a [`QuantumSolvingConfig`][], or
+                `"classical"` if it is a [`ClassicalSolvingConfig`][].
 
         Raises:
-            ValueError: If `solving` is neither a [`quantum.Config`][] nor a
-                [`classical.Config`][].
+            ValueError: If `solving` is neither a [`QuantumSolvingConfig`][] nor a
+                [`ClassicalSolvingConfig`][].
         """
         match self.solving:
-            case solvers.quantum.Config():
+            case QuantumSolvingConfig():
                 return "quantum"
-            case solvers.classical.Config():
+            case ClassicalSolvingConfig():
                 return "classical"
             case _:
                 raise ValueError(f"Invalid solving config '{self.solving!r}'.")
 
     @property
-    def quantum(self) -> solvers.quantum.Config:
+    def quantum(self) -> QuantumSolvingConfig:
         """Access the quantum solving configuration directly, without checking
         [`solving_mode`][] yourself — this also lets type-checkers narrow the type
         without an explicit [`isinstance`][] check or [`cast`][typing.cast] at the call site.
@@ -105,11 +106,11 @@ class SolverConfig():
         """
         if self.solving_mode != "quantum":
             raise ValueError(f"Config '{self.config_name}' is not configured for quantum solving.")
-        assert isinstance(self.solving, solvers.quantum.Config)
+        assert isinstance(self.solving, QuantumSolvingConfig)
         return self.solving
 
     @property
-    def classical(self) -> solvers.classical.Config:
+    def classical(self) -> ClassicalSolvingConfig:
         """Access the classical solving configuration directly, without checking
         [`solving_mode`][] yourself — this also lets type-checkers narrow the type
         without an explicit [`isinstance`][] check or [`cast`][typing.cast] at the call site.
@@ -122,5 +123,5 @@ class SolverConfig():
         """
         if self.solving_mode != "classical":
             raise ValueError(f"Config '{self.config_name}' is not configured for classical solving.")
-        assert isinstance(self.solving, solvers.classical.Config)
+        assert isinstance(self.solving, ClassicalSolvingConfig)
         return self.solving
