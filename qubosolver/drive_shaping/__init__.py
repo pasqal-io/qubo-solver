@@ -1,7 +1,6 @@
-"""Drive shaping methods for generating quantum drive schedules.
+"""Drive shaping algorithms for generating quantum drive schedules.
 
-Provides proportional-diagonal, local-energy-scale, and Bayesian-search
-strategies for constructing amplitude and detuning waveforms used to solve
+Provides several algorithms for constructing amplitude and detuning waveforms used to solve
 QUBO problems on neutral-atom hardware.
 """
 

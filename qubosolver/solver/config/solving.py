@@ -17,7 +17,7 @@ _ClassicalAlgorithm = Literal["tabu_search", "simulated_annealing", "cplex", "ra
 
 @dataclass
 class ClassicalConfig():
-    """A configuration that defines the classical solving part of a [`SolverConfig`][].
+    """A configuration that defines the classical-solving part of a [`SolverConfig`][].
 
     Attributes:
         algorithm: Classical solver algorithm. One of:
@@ -75,19 +75,14 @@ class ClassicalConfig():
 
 @dataclass
 class QuantumConfig():
-    """A `quantum.Config` instance defines the quantum part of a `SolverConfig`.
+    """A configuration defines the quantum-solving part of a [`SolverConfig`][].
 
     Attributes:
-        embedding (embedding.Config, optional): Embedding part configuration of the solver.
-        drive_shaping (drive_shaping.Config, optional): Drive-shaping part configuration
+        embedding: Embedding part configuration of the solver.
+        drive_shaping: Drive-shaping part configuration
             of the solver.
-        backend (LocalEmulator | RemoteEmulator | QPU, optional): backend
-            for running quantum programs. Note that parameters
-            such as `dt` are directly set when creating LocalEmulator | RemoteEmulator | QPU,
-            hence they are deprecated compared to previous qubo-solver versions.
-            Also the number of shots is set there as well.
-            Defaults to a LocalEmulator using qutip.
-        device (Device, optional): The quantum device specification. Defaults to `AnalogDeviceWithDMM`.
+        backend: backend for running quantum programs. Defaults to a [`LocalEmulator`][].
+        device: The quantum device specification. Defaults to [`qoolqit.AnalogDeviceWithDMM`][].
     """
 
     embedding: EmbeddingConfig = field(default_factory=EmbeddingConfig)

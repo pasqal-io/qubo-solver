@@ -42,14 +42,14 @@ class Solver(BaseSolver):
     """A QUBO solver.
 
     Its concrete solving strategy (quantum, classical, or decomposition)
-    is chosen from [`Config`][] at construction time.
+    is chosen from [`SolverConfig`][] at construction time.
 
     Example:
         ```python
-        from qubosolver import Instance, Solver, solvers
+        from qubosolver import Instance, Solver, SolverConfig
 
         instance = Instance(matrix)
-        config = Config()
+        config = SolverConfig()
         solver = Solver(instance, config)
         solution = solver.solve()
         ```
@@ -104,10 +104,6 @@ class Solver(BaseSolver):
             The solution.
         """
         return self._solver.solve()
-
-
-QuboSolver: TypeAlias = Solver
-"""Alias for [`Solver`][qubosolver.Solver]."""
 
 
 class _QuboSolverQuantum(BaseSolver):

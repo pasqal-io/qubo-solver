@@ -12,10 +12,10 @@ _DriveShapingAlgorithm = Literal["bayesian_search", "proportional_diagonal", "lo
 
 @dataclass
 class Config():
-    """A module-level [`drive_shaping.Config`][] that defines the drive shaping part of a [`solvers.quantum.Config`][].
+    """A configuration that defines the drive shaping part of a [`QuantumSolvingConfig`][].
 
     Attributes:
-        algorithm (_DriveShapingAlgorithm, optional): Drive shaping method used. One of:
+        algorithm: Drive shaping method used. One of:
 
             - `"bayesian_search"`: Drive whose parameters are found via Bayesian search that
               minimizes the cost function via pulse optimization.
@@ -29,7 +29,7 @@ class Config():
             This adds a [`qoolqit.drive.DetuningMapModulator`][] to the output drive.
             Defaults to `True`, which applies DMM.
         bayesian_search_n_calls: Number of calls for the optimization process.
-            Defaults to 20. Note the optimizer accepts a minimal value of 12.
+            Defaults to `20`. Note the optimizer accepts a minimal value of `12`.
         bayesian_search_initial_omega_parameters: Initial guess for the
             three normalized amplitude waveform knots, each in ``[0, 1]``.
             Defaults to ``[0.5, 0.9, 0.5]``.

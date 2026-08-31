@@ -1,10 +1,7 @@
 """Analog quantum sampling solver.
 
-The public entry point of this module is `analog_quantum_sampling` — the
-primary quantum solving primitive that compiles a pulse program and runs it on
-a backend to sample bitstrings from the quantum state.  It is exported via
-:mod:`qubosolver.solvers` and called by
-:class:`~qubosolver.solvers.BaseSolver`.
+The primary quantum solving primitive that compiles a pulse program and runs it on
+a backend to sample bitstrings from the quantum state.
 """
 
 from __future__ import annotations
@@ -98,13 +95,11 @@ def solve(
         drive: Pulse drive schedule encoding the quantum operations.
         backend: Execution backend.
         device: Target quantum device used for compilation constraints.
-        compiler_profile: Compilation strategy forwarded to
-            `_quantum_program`.  Defaults to ``MAX_ENERGY``.
-        default_sequence_duration: Fallback maximum sequence duration (ns)
-            forwarded to `_quantum_program`.
+        compiler_profile: Compilation strategy.
+        default_sequence_duration: Fallback maximum sequence duration (ns).
 
     Returns:
-        A job handle for the submitted execution.  Call ``.results()`` to retrieve the measurement outcomes once the job completes.
+        A job handle for the submitted execution.  Call [`.results()`][qoolqit.execution.job.Job.results] to retrieve the measurement outcomes once the job completes.
     """
     program = _quantum_program(
         register,

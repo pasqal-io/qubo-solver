@@ -1,12 +1,8 @@
-"""Greedy embedding algorithm adapter for QUBO instances.
-
-This module wraps the internal greedy embedding and exposes a single `embed`
-entry point that accepts a [`qubosolver.Instance`][] and returns a
-[`qoolqit.Register`][] ready for use in a quantum program.
+"""Greedy layout-based embedding algorithm for QUBO instances.
 
 The greedy algorithm places logical QUBO nodes one at a time onto trap sites
 of a pre-defined lattice (triangular or square), choosing at each step the
-(node, trap) pair that minimises the incremental mismatch between the QUBO
+(node, trap) pair that minimizes the incremental mismatch between the QUBO
 coefficient matrix and the physical interaction matrix (∝ 1/‖rᵢ − rⱼ‖⁶).
 """
 
@@ -29,7 +25,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class Config:
-    """Configuration for the greedy embedding algorithm.
+    """Configuration for the greedy layout embedding algorithm.
 
     Attributes:
         traps: Number of trap sites in the layout. ``"device"`` means
@@ -188,9 +184,9 @@ def embed(
     device: qoolqit.Device,
     config: Config = Config(),
 ) -> qoolqit.Register:
-    """Embed a QUBO instance using the greedy algorithm.
+    """Embed a QUBO instance using the greedy layout-based algorithm.
 
-    The greedy algorithm operates entirely in adimensional units (interactions
+    The algorithm operates entirely in adimensional units (interactions
     scale as ``1 / distance ** 6``), so the coordinates it returns are already
     final and require no post-hoc rescaling.
 
@@ -208,7 +204,7 @@ def embed(
         A register mapping each atom to a 2-D position.
 
     Raises:
-        ValueError: If *instance* has no variables (``size == 0``), since a
+        ValueError: If `instance` has no variables (``size == 0``), since a
             register must contain at least one qubit. If the resolved trap
             count is less than ``instance.size`` (i.e. there are not enough
             trap sites for all QUBO variables).

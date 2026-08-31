@@ -1,4 +1,4 @@
-"""Solvers for QUBO problems.
+"""Solving algorithms for QUBO problems.
 
 This module provides quantum, hybrid and classical solvers. Some of them can also be
 used as post-processing steps to refine an existing solution.

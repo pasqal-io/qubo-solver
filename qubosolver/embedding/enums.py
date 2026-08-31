@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import Enum
 
 class Lattice(Enum):
-    """Type of lattice used by the greedy embedding method."""
+    """Type of lattice used by the [`greedy_layout`][] embedding algorithm."""
 
     SQUARE = "square"
     """Arrange qubits on a square lattice grid."""

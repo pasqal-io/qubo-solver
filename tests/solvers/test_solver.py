@@ -32,7 +32,7 @@ from qubosolver import (
 )
 from qubosolver.utils import analysis
 from qubosolver.solver.solver import _QuboSolverQuantum
-from qubosolver.solver.config.embedding import EmbeddingAlgorithm
+from qubosolver.solver.config.embedding import _EmbeddingAlgorithm
 from mock.connection import MockConnection
 
 from pulser.backend.remote import (
@@ -106,7 +106,7 @@ def test_solver_different_devices(
     request: pytest.FixtureRequest,
     qubo_for_testing_many_devices: Instance,
     local_device: Device,
-    embedding_algorithm: EmbeddingAlgorithm,
+    embedding_algorithm: _EmbeddingAlgorithm,
 ) -> None:
 
     quantum_config = QuantumSolvingConfig(
@@ -318,7 +318,7 @@ def _triangular_register_qubo() -> np.ndarray:
 
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("algorithm", ["greedy_layout", "blade"])
-def test_quantum_matches_classical_triangular(algorithm: EmbeddingAlgorithm) -> None:
+def test_quantum_matches_classical_triangular(algorithm: _EmbeddingAlgorithm) -> None:
     qubo = _triangular_register_qubo()
     instance = Instance(matrix.tensor(qubo))
 

@@ -5,16 +5,16 @@ from dataclasses import dataclass, field
 
 import torch
 
-EmbeddingAlgorithm = Literal["greedy_layout", "blade"]
-GreedyLayoutLattice = Literal["square", "triangular"]
+_EmbeddingAlgorithm = Literal["greedy_layout", "blade"]
+_GreedyLayoutLattice = Literal["square", "triangular"]
 
 
 @dataclass
 class Config():
-    """A module-level [`embedding.Config`][] that defines the embedding part of a [`solvers.quantum.Config`][].
+    """A configuration that defines the embedding part of a [`QuantumSolvingConfig`][].
 
     Attributes:
-        algorithm (EmbeddingAlgorithm, optional): The type of embedding method used to
+        algorithm: The type of embedding method used to
             place atoms on the register according to the QUBO problem. One of:
 
             - `"greedy_layout"`: Greedy layout-based embedder that places qubits on a
@@ -22,7 +22,7 @@ class Config():
             - `"blade"`: BLADE embedder using graph-theoretic optimization for qubit placement.
 
             Defaults to `"greedy_layout"`.
-        greedy_layout_lattice (GreedyLayoutLattice, optional): Lattice type for the
+        greedy_layout_lattice: Lattice type for the
             greedy layout embedder method. One of `"square"` or `"triangular"`.
             Defaults to `"triangular"`.
         greedy_layout_traps: The number of traps on the register.
@@ -48,9 +48,9 @@ class Config():
             ``max_radial_distance`` / ``min_distance`` specs. Defaults to ``"device"``.
     """
 
-    algorithm: EmbeddingAlgorithm = "greedy_layout"
+    algorithm: Literal["greedy_layout", "blade"] = "greedy_layout"
 
-    greedy_layout_lattice: GreedyLayoutLattice = "triangular"
+    greedy_layout_lattice: Literal["square", "triangular"] = "triangular"
     greedy_layout_traps: int | Literal["device"] = "device"
     greedy_layout_max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
     blade_steps_per_round: int | None = 200
@@ -59,8 +59,8 @@ class Config():
     max_min_dist_ratio: float | Literal["device"] = "device"
 
     def __post_init__(self) -> None:
-        if self.algorithm not in get_args(EmbeddingAlgorithm):
+        if self.algorithm not in get_args(_EmbeddingAlgorithm):
             raise ValueError(f"Invalid embedding method '{self.algorithm}'.")
-        if self.greedy_layout_lattice not in get_args(GreedyLayoutLattice):
+        if self.greedy_layout_lattice not in get_args(_GreedyLayoutLattice):
             raise ValueError(f"Invalid lattice '{self.greedy_layout_lattice}'.")
 
