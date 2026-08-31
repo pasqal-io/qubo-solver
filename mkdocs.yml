@@ -51,6 +51,9 @@ nav:
     - qubosolver.embedding: api/embedding.md
     - qubosolver.protocols: api/protocols.md
     - qubosolver.solving: api/solving.md
+    - qubosolver.solving.classical: api/classical_solving.md
+    - qubosolver.solving.hybrid: api/hybrid_solving.md
+    - qubosolver.solving.quantum: api/quantum_solving.md
     - qubosolver.transforms: api/transforms.md
     - Tensors:
       - qubosolver.bitstring: api/bitstring.md
