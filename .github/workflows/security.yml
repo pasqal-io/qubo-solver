@@ -85,7 +85,7 @@ jobs:
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         continue-on-error: ${{ github.ref }} != 'refs/heads/main'
         with:
-          version: v0.72.0
+          version: v0.74.0
           scan-type: fs
           scan-ref: .
           format: table
@@ -95,7 +95,7 @@ jobs:
       - name: Run Trivy scan for upload # Never fails so the SARIF file is always available
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.72.0
+          version: v0.74.0
           scan-type: fs
           scan-ref: .
           format: sarif
@@ -111,7 +111,7 @@ jobs:
       - name: Generate SBOM (CycloneDX)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.72.0
+          version: v0.74.0
           scan-type: fs
           scan-ref: .
           format: cyclonedx
@@ -128,7 +128,7 @@ jobs:
       - name: Submit Dependency Snapshot to GitHub Dependency Graph
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.72.0
+          version: v0.74.0
           scan-type: fs
           scan-ref: .
           format: github
