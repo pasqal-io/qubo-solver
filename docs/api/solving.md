@@ -1,4 +1,4 @@
-::: qubosolver.solvers
+::: qubosolver.solving
     options:
       filters:
         - "!^Solver$"
@@ -9,17 +9,17 @@
         - "^classical$"
         - "!^_[^_]"
 
-::: qubosolver.solvers.quantum
+::: qubosolver.solving.quantum
     options:
       show_submodules: true
       filters:
         - "!^config$"
         - "!^_[^_]"
 
-::: qubosolver.solvers.hybrid
+::: qubosolver.solving.hybrid
     options:
       show_submodules: true
 
-::: qubosolver.solvers.classical
+::: qubosolver.solving.classical
     options:
       show_submodules: true

@@ -11,7 +11,7 @@ from qubosolver import (
     ClassicalSolvingConfig,
     QuantumSolvingConfig,
 )
-from qubosolver.solver.config.solving import ClassicalAlgorithm
+from qubosolver.solver.config.solving import _ClassicalAlgorithm
 from qubosolver.utils import analysis
 
 
@@ -76,8 +76,8 @@ def test_calculate_gaps(basic_solution: Solution) -> None:
     assert "gaps" in df.columns
 
 
-@pytest.mark.parametrize("classical_method", get_args(ClassicalAlgorithm))
-def test_analyzer_classical(simple_qubo_instance: Instance, classical_method: ClassicalAlgorithm) -> None:
+@pytest.mark.parametrize("classical_method", get_args(_ClassicalAlgorithm))
+def test_analyzer_classical(simple_qubo_instance: Instance, classical_method: _ClassicalAlgorithm) -> None:
     config = SolverConfig(
         solving=ClassicalSolvingConfig(algorithm=classical_method),
     )
@@ -101,9 +101,9 @@ def test_analyzer_quantum(simple_qubo_instance: Instance) -> None:
     assert "counts" in df.columns
 
 
-@pytest.mark.parametrize("classical_method", get_args(ClassicalAlgorithm))
+@pytest.mark.parametrize("classical_method", get_args(_ClassicalAlgorithm))
 def test_analyzer_quantum_and_classical(
-    simple_qubo_instance: Instance, classical_method: ClassicalAlgorithm
+    simple_qubo_instance: Instance, classical_method: _ClassicalAlgorithm
 ) -> None:
     config = SolverConfig(
         solving=ClassicalSolvingConfig(algorithm=classical_method),

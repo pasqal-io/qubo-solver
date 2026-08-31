@@ -24,7 +24,7 @@ from qubosolver.solver._classical_solver import (
     TabuSearchSolver,
     RandomSolver,
 )
-from qubosolver.solver.config.solving import ClassicalAlgorithm
+from qubosolver.solver.config.solving import _ClassicalAlgorithm
 from qubosolver.utils import _costs
 
 class_solvers = {
@@ -44,7 +44,7 @@ def manual_seed(seed: int) -> torch.Generator:
 @pytest.mark.parametrize("classical_method", list(class_solvers.keys()))
 @pytest.mark.parametrize("max_bitstrings", [1, 3])
 def test_qubo_solver_sa_or_tabu(
-    simple_qubo_instance: Instance, classical_method: ClassicalAlgorithm, max_bitstrings: int
+    simple_qubo_instance: Instance, classical_method: _ClassicalAlgorithm, max_bitstrings: int
 ) -> None:
 
     seed = 1567
@@ -124,7 +124,7 @@ def test_random() -> None:
 )
 @pytest.mark.parametrize("max_bitstrings", [1])
 def test_sa_cost(
-    simple_qubo_instance: Instance, classical_methods: ClassicalAlgorithm, max_bitstrings: int
+    simple_qubo_instance: Instance, classical_methods: _ClassicalAlgorithm, max_bitstrings: int
 ) -> None:
     classical_config = ClassicalSolvingConfig(
         algorithm=classical_methods, max_bitstrings=max_bitstrings, sa_seed=42
@@ -233,7 +233,7 @@ def test_sa_time_limit(simple_qubo_instance: Instance) -> None:
         "tabu_search",
     ],
 )
-def test_empty_qubo_after_preprocessing(classical_method: ClassicalAlgorithm) -> None:
+def test_empty_qubo_after_preprocessing(classical_method: _ClassicalAlgorithm) -> None:
 
     seed = 1846
     manual_seed(seed)

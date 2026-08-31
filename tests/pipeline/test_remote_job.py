@@ -26,7 +26,7 @@ from qubosolver import (
 import qubosolver._io.utils as io_utils
 from qubosolver.utils import analysis
 from qubosolver.types import protocols
-from qubosolver.solver.config.drive_shaping import DriveShapingAlgorithm
+from qubosolver.solver.config.drive_shaping import _DriveShapingAlgorithm
 from qubosolver.solver.config.embedding import EmbeddingAlgorithm
 
 from qoolqit import AnalogDeviceWithDMM
@@ -40,13 +40,13 @@ from mock.connection import MockConnection
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("drive_method", get_args(DriveShapingAlgorithm))
+@pytest.mark.parametrize("drive_method", get_args(_DriveShapingAlgorithm))
 @pytest.mark.parametrize("embedding_method", get_args(EmbeddingAlgorithm))
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no_pre"])
 @pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
 def test_quantum_remote_job(
     make_mock_connection: type[MockConnection],
-    drive_method: DriveShapingAlgorithm,
+    drive_method: _DriveShapingAlgorithm,
     embedding_method: EmbeddingAlgorithm,
     preprocessing: bool,
     dmm: bool,

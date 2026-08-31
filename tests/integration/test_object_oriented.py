@@ -31,7 +31,7 @@ from qubosolver import (
     EmbeddingConfig,
 )
 from qubosolver.utils import analysis
-from qubosolver.solver.config.solving import ClassicalAlgorithm
+from qubosolver.solver.config.solving import _ClassicalAlgorithm
 
 
 def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
@@ -208,7 +208,7 @@ def test_classical_solve(
     manual_seed(seed)
     qubo, expected_optimal_solutions = simple_qubo()
 
-    classical_solvers: dict[str, ClassicalAlgorithm] = {
+    classical_solvers: dict[str, _ClassicalAlgorithm] = {
         "cplex": "cplex",
         "tabu": "tabu_search",
         "sa": "simulated_annealing",

@@ -7,7 +7,7 @@ from typing import Literal, get_args
 
 from qubosolver.types import Solution
 
-DriveShapingAlgorithm = Literal["bayesian_search", "proportional_diagonal", "local_energy_scale"]
+_DriveShapingAlgorithm = Literal["bayesian_search", "proportional_diagonal", "local_energy_scale"]
 
 
 @dataclass
@@ -15,7 +15,7 @@ class Config():
     """A module-level [`drive_shaping.Config`][] that defines the drive shaping part of a [`solvers.quantum.Config`][].
 
     Attributes:
-        algorithm (DriveShapingAlgorithm, optional): Drive shaping method used. One of:
+        algorithm (_DriveShapingAlgorithm, optional): Drive shaping method used. One of:
 
             - `"bayesian_search"`: Drive whose parameters are found via Bayesian search that
               minimizes the cost function via pulse optimization.
@@ -47,7 +47,7 @@ class Config():
             Defaults to `50000` ns.
     """
 
-    algorithm: DriveShapingAlgorithm = "proportional_diagonal"
+    algorithm: Literal["bayesian_search", "proportional_diagonal", "local_energy_scale"] = "proportional_diagonal"
     dmm: bool = True
     bayesian_search_n_calls: int = 20
     bayesian_search_initial_omega_parameters: list[float] = field(
@@ -67,7 +67,7 @@ class Config():
     default_sequence_duration: int = 50000
 
     def __post_init__(self) -> None:
-        if self.algorithm not in get_args(DriveShapingAlgorithm):
+        if self.algorithm not in get_args(_DriveShapingAlgorithm):
             raise ValueError(f"Invalid drive shaping method '{self.algorithm}'.")
         if len(self.bayesian_search_initial_omega_parameters) != 3:
             raise ValueError(

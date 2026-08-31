@@ -12,15 +12,15 @@ from qubosolver.types.backends import LocalEmulator, RemoteEmulator
 
 
 
-ClassicalAlgorithm = Literal["tabu_search", "simulated_annealing", "cplex", "random_sampling"]
+_ClassicalAlgorithm = Literal["tabu_search", "simulated_annealing", "cplex", "random_sampling"]
 
 
 @dataclass
 class ClassicalConfig():
-    """A `classical.Config` instance defines the classical part of a `SolverConfig`.
+    """A configuration that defines the classical solving part of a [`SolverConfig`][].
 
     Attributes:
-        algorithm (ClassicalAlgorithm, optional): Classical solver type. One of:
+        algorithm: Classical solver algorithm. One of:
 
             - `"tabu_search"`: Tabu search metaheuristic that avoids recently visited solutions.
             - `"simulated_annealing"`: Simulated annealing algorithm that probabilistically
@@ -29,26 +29,26 @@ class ClassicalConfig():
             - `"random_sampling"`: Randomly samples solutions; useful as a baseline or for testing.
 
             Defaults to `"tabu_search"`.
-        cplex_maxtime (float, optional): CPLEX maximum runtime in seconds. Defaults to 600s.
-        cplex_log_path (str, optional): CPLEX log path. Default to `solver.log`.
-        max_iter (int, optional): Maximum number of iterations to perform for simulated annealing or tabu search.
-        max_bitstrings (int, optional): Maximal number of bitstrings returned as solutions.
-        sa_initial_temp (float, optional): Starting temperature (controls exploration).
-        sa_final_temp (float, optional): Minimum temperature threshold for stopping.
-        sa_cooling_rate (float, optional): Cooling rate - should be slightly below 1 (e.g., 0.95–0.99).
-        sa_seed (int, optional): Random seed for reproducibility.
-        sa_start (torch.Tensor | None, optional): Optional initial bitstring of shape (n,).
-        sa_time_limit (float): Maximum runtime in seconds for simulated annealing.
+        cplex_maxtime: CPLEX maximum runtime in seconds. Defaults to 600s.
+        cplex_log_path: CPLEX log path. Default to `solver.log`.
+        max_iter: Maximum number of iterations to perform for simulated annealing or tabu search.
+        max_bitstrings: Maximal number of bitstrings returned as solutions.
+        sa_initial_temp: Starting temperature (controls exploration).
+        sa_final_temp: Minimum temperature threshold for stopping.
+        sa_cooling_rate: Cooling rate - should be slightly below 1 (e.g., 0.95–0.99).
+        sa_seed: Random seed for reproducibility.
+        sa_start: Optional initial bitstring of shape (n,).
+        sa_time_limit: Maximum runtime in seconds for simulated annealing.
             Defaults to `float("inf")`, meaning no time limit.
-        tabu_x0 (torch.Tensor | None, optional): The initial binary solution tensor of shape (n,).
-        tabu_tenure (int, optional): Number of iterations a move (bit flip) remains tabu.
-        tabu_max_no_improve (int, optional): Maximum number of consecutive iterations
+        tabu_x0: The initial binary solution tensor of shape (n,).
+        tabu_tenure: Number of iterations a move (bit flip) remains tabu.
+        tabu_max_no_improve: Maximum number of consecutive iterations
             without improvement before termination.
-        tabu_time_limit (float): Maximum execution time for tabu search,
+        tabu_time_limit: Maximum execution time for tabu search,
             in seconds. Defaults to `float("inf")`, meaning no time limit.
     """
 
-    algorithm: ClassicalAlgorithm = "tabu_search"
+    algorithm: Literal["tabu_search", "simulated_annealing", "cplex", "random_sampling"] = "tabu_search"
 
     cplex_maxtime: float = 600.0
     cplex_log_path: str = ""
@@ -69,7 +69,7 @@ class ClassicalConfig():
     tabu_time_limit: float = float("inf")
 
     def __post_init__(self) -> None:
-        if self.algorithm not in get_args(ClassicalAlgorithm):
+        if self.algorithm not in get_args(_ClassicalAlgorithm):
             raise ValueError(f"Invalid classical algorithm '{self.algorithm}'.")
 
 

@@ -24,7 +24,7 @@ from qubosolver.solver._drive_shaper import (
     BayesianSearchDriveShaper,
     ProportionalDiagonalDriveShaper,
 )
-from qubosolver.solver.config.drive_shaping import DriveShapingAlgorithm
+from qubosolver.solver.config.drive_shaping import _DriveShapingAlgorithm
 from qubosolver.solver.solver import _QuboSolverQuantum
 
 
@@ -100,10 +100,10 @@ def test_generate_bayesian_search_drive_shaper(
 
 
 @pytest.mark.priority(25)
-@pytest.mark.parametrize("drive_method", get_args(DriveShapingAlgorithm))
+@pytest.mark.parametrize("drive_method", get_args(_DriveShapingAlgorithm))
 @pytest.mark.parametrize("dmm", [True, False])
 def test_normalized_weights_in_drive(
-    drive_method: DriveShapingAlgorithm,
+    drive_method: _DriveShapingAlgorithm,
     dmm: bool,
     dummy_register: qoolqit.Register,
     simple_qubo_instance: Instance,
