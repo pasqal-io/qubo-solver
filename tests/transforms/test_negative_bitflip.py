@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import itertools
 from typing import Any
 
@@ -316,6 +317,51 @@ def test_apply_keeps_flips_that_reduce_negative_weight(
     check.equal(flipped_instance.status, "OPTIMAL")
     check.is_true(flipped_instance.flips.any())
     torch.testing.assert_close(flipped_instance.matrix, expected_matrix)
+
+
+def test_save_load_roundtrips_bitflip_state() -> None:
+    # save/load must persist the bit-flip specific state (flips, metrics,
+    # status, offset, parent instance), not just the matrix inherited from
+    # the base Instance.save/load.
+    instance, _ = non_bipartisable_negative_qubo()
+    flipped_instance = transforms.negative_bitflip.apply(instance)
+
+    buffer = io.BytesIO()
+    transforms.negative_bitflip.Instance.save(buffer, flipped_instance)
+    buffer.seek(0)
+    loaded_instance = transforms.negative_bitflip.Instance.load(buffer)
+
+    check.is_instance(loaded_instance, transforms.negative_bitflip.Instance)
+    torch.testing.assert_close(loaded_instance.matrix, flipped_instance.matrix)
+    torch.testing.assert_close(loaded_instance.flips, flipped_instance.flips)
+    check.equal(loaded_instance.status, flipped_instance.status)
+    check.equal(loaded_instance.offset, flipped_instance.offset)
+    check.equal(loaded_instance.metrics, flipped_instance.metrics)
+    torch.testing.assert_close(
+        loaded_instance._parent_instance.matrix, flipped_instance._parent_instance.matrix
+    )
+
+
+def test_load_of_saved_bitflip_instance_can_be_lifted() -> None:
+    # A round-tripped instance must remain usable end-to-end: lift() needs
+    # _parent_instance and flips to be restored correctly.
+    instance, _ = bipartisable_negative_qubo()
+    flipped_instance = transforms.negative_bitflip.apply(instance)
+    flipped_solution = solving.brute_force.solve(flipped_instance)
+
+    buffer = io.BytesIO()
+    transforms.negative_bitflip.Instance.save(buffer, flipped_instance)
+    buffer.seek(0)
+    loaded_instance = transforms.negative_bitflip.Instance.load(buffer)
+
+    restored_solution = transforms.negative_bitflip.lift(flipped_solution, loaded_instance)
+    expected_solution = transforms.negative_bitflip.lift(flipped_solution, flipped_instance)
+
+    for restored, expected in zip(restored_solution, expected_solution):
+        check.equal(restored.string, expected.string)
+        check.equal(restored.count, expected.count)
+        check.almost_equal(restored.cost, expected.cost)
+        check.almost_equal(restored.probability, expected.probability)
 
 
 def test_glpk_solve_survives_internal_exception(monkeypatch: pytest.MonkeyPatch) -> None:

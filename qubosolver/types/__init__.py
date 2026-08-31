@@ -1,9 +1,9 @@
-"""Core data types for the QUBO solver: tensors, aliases, solutions, and backends.
+"""Core data types for the QUBO solver: tensors, solutions, and backends.
 
 This subpackage re-exports the tensor submodules (`bitstring`, `bitstrings`,
 `matrix`, `tensor`, `vector`, `vectori`, `linalg`), the container classes
-(`Solution`, `SingleSolution`, `Instance`, `Dataset`), the emulator backend
-wrappers, and the `Qubo*`/`QUBO*` type aliases used throughout the public API.
+(`Solution`, `SingleSolution`, `Instance`, `Dataset`), and the emulator backend
+wrappers used throughout the public API.
 """
 
 from __future__ import annotations
@@ -29,17 +29,6 @@ from qubosolver.types.backends import (
     AutoRemoteEmulatorBackend,
 )
 from qubosolver.types.random import torch_rng
-from qubosolver.types.aliases import (
-    # Deprecated QUBO* classes
-    QUBOSolution,
-    QUBOInstance,
-    QUBODataset,
-    # Qubo* TypeAliases
-    QuboSolution,
-    QuboSingleSolution,
-    QuboInstance,
-    QuboDataset,
-)
 
 __all__ = [
     # Submodules
@@ -69,13 +58,4 @@ __all__ = [
     "AutoRemoteEmulatorBackend",
     # Functions
     "torch_rng",
-    # Qubo* TypeAliases
-    "QuboSolution",
-    "QuboSingleSolution",
-    "QuboInstance",
-    "QuboDataset",
-    # Deprecated QUBO* classes
-    "QUBOSolution",
-    "QUBOInstance",
-    "QUBODataset",
 ]

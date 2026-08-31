@@ -28,6 +28,8 @@ solution = negative_bitflip.lift(flipped_solution, flipped_instance)
 from __future__ import annotations
 
 import copy
+import io
+import json
 import logging
 from dataclasses import dataclass
 from typing import Any
@@ -36,6 +38,7 @@ import torch
 
 import qubosolver
 from qubosolver.types import Solution, vector, Matrix, Bitstrings, Bitstring, bitstring
+from qubosolver._io import utils as io_utils
 
 logger = logging.getLogger(__name__)
 
@@ -387,6 +390,60 @@ class Instance(qubosolver.Instance):
 
         self.offset: float = 0.0
         """Constant term relating the flipped and original QUBO costs, $x^T Q x = y^T Q_{flipped} y + offset$."""
+
+    @staticmethod
+    def save(file_like: io_utils.FileLike[bytes], instance: qubosolver.Instance) -> None:
+        """Serialize a negative-bitflip [`Instance`][negative_bitflip.Instance] (including flip state) to `file_like`.
+
+        Args:
+            file_like: Binary-writable file-like object or path.
+            instance: The instance to save.
+
+        Raises:
+            TypeError: If `instance` is not a negative-bitflip [`Instance`][negative_bitflip.Instance].
+        """
+        if not isinstance(instance, Instance):
+            raise TypeError("Input must be an instance of negative_bitflip.Instance.")
+
+        with io_utils.open(file_like, "wb") as f:
+            qubosolver.Instance.save(f, instance)
+            qubosolver.Instance.save(f, instance._parent_instance)
+
+            buffer = io.BytesIO()
+            torch.save(instance.flips, buffer)
+            io_utils.save_sized_buffer(f, buffer.getbuffer())
+
+            state_json = json.dumps(
+                {"status": instance.status, "offset": instance.offset, "metrics": instance.metrics}
+            )
+            io_utils.save_string(f, state_json)
+
+    @staticmethod
+    def load(file_like: io_utils.FileLike[bytes]) -> Instance:
+        """Deserialize a negative-bitflip [`Instance`][negative_bitflip.Instance] (including flip state) from `file_like`.
+
+        Args:
+            file_like: Binary-readable file-like object or path produced by `save`.
+
+        Returns:
+            The reconstructed instance.
+        """
+        with io_utils.open(file_like, "rb") as f:
+            base_instance = qubosolver.Instance.load(f)
+            parent_instance = qubosolver.Instance.load(f)
+
+            instance = Instance(parent_instance)
+            instance._matrix = base_instance.matrix
+
+            buffer = io.BytesIO(io_utils.load_sized_buffer(f))
+            instance.flips = torch.load(buffer, weights_only=True)
+
+            state = json.loads(io_utils.load_string(f))
+            instance.status = state["status"]
+            instance.offset = state["offset"]
+            instance.metrics = state["metrics"]
+
+        return instance
 
 
 def apply(
