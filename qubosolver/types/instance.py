@@ -111,8 +111,8 @@ class Instance:
         """Serialise instance to ``file_like`` using [`torch.save`][].
 
         Args:
-            file_like: Destination — a file path (`str` or `os.PathLike`),
-                or a binary-writable `typing.IO` stream.
+            file_like: Destination — a file path ([`str`][] or [`os.PathLike`][]),
+                or a binary-writable [`typing.IO`][] stream.
             instance: The instance to serialise. Only [`matrix`][] is
                 persisted; any derived state is recomputed on load.
 
@@ -196,8 +196,8 @@ class Instance:
         ``assert isinstance(instance, variable_fixing.Instance)`` before calling
         a method specific to that subclass. It exists purely to satisfy static
         type checkers (mypy) and enable IDE code completion — the runtime
-        `isinstance` check and the `TypeError` below just mirror the guarantee
-        that the `assert` would otherwise provide.
+        [`isinstance`][] check and the [`TypeError`][] below just mirror the guarantee
+        that the [`assert`](https://docs.python.org/3/reference/simple_stmts.html#index-18) would otherwise provide.
 
         Returns:
             This instance, narrowed to the variable-fixing subclass.
@@ -218,8 +218,8 @@ class Instance:
         ``assert isinstance(instance, zeroing.Instance)`` before calling
         a method specific to that subclass. It exists purely to satisfy static
         type checkers (mypy) and enable IDE code completion — the runtime
-        `isinstance` check and the `TypeError` below just mirror the guarantee
-        that the `assert` would otherwise provide.
+        [`isinstance`][] check and the [`TypeError`][] below just mirror the guarantee
+        that the [`assert`](https://docs.python.org/3/reference/simple_stmts.html#index-18) would otherwise provide.
 
         Returns:
             This instance, narrowed to the zeroing subclass.
@@ -240,8 +240,8 @@ class Instance:
         ``assert isinstance(instance, negative_bitflip.Instance)`` before calling
         a method specific to that subclass. It exists purely to satisfy static
         type checkers (mypy) and enable IDE code completion — the runtime
-        `isinstance` check and the `TypeError` below just mirror the guarantee
-        that the `assert` would otherwise provide.
+        [`isinstance`][] check and the [`TypeError`][] below just mirror the guarantee
+        that the [`assert`](https://docs.python.org/3/reference/simple_stmts.html#index-18) would otherwise provide.
 
         Returns:
             This instance, narrowed to the negative-bitflip subclass.

@@ -1,21 +1,20 @@
 """Zeroing fallback for QUBO negative off-diagonal coefficients.
 
 Bit-flip preprocessing (see
-[`qubosolver.transforms.negative_bitflip`][]) removes as much negative
+[`transforms.negative_bitflip`][qubosolver.transforms.negative_bitflip]) removes as much negative
 off-diagonal weight as possible, but some negative coefficients may remain when
-the problem is not fully bipartisable.  Quantum (Rydberg) solvers cannot embed
+the problem is not fully bipartisable. Quantum (Rydberg) solvers cannot embed
 such coefficients, so this module offers a last-resort approximation:
-[`apply`][qubosolver.transforms.zeroing.apply] sets every remaining negative
-off-diagonal coefficient to zero and records which positions were zeroed on a
-[`Instance`][qubosolver.transforms.zeroing.Instance].
+[`apply`][] sets every remaining negative
+off-diagonal coefficient to zero and records which positions were zeroed in a
+zeroing [`Instance`][qubosolver.transforms.zeroing.Instance].
 
 ```python
-import qubosolver.transforms.negative_bitflip as bitflip
-import qubosolver.transforms.zeroing as zeroing
+from qubosolver.transforms import negative_bitflip, zeroing
 
-reduced = bitflip.apply(qubo_instance, time_limit_s=60.0)
-reduced = zeroing.apply(reduced)  # drop any negative coefficient bit flips could not remove
-print(reduced.zeroed_edges)       # (N, 2) tensor of zeroed (i, j) index pairs
+reduced_instance = negative_bitflip.apply(instance, time_limit_s=60.0)
+zeroed_instance = zeroing.apply(reduced_instance)  # drop any negative coefficient bit flips could not remove
+print(zeroed_instance.zeroed_edges)       # (N, 2) tensor of zeroed (i, j) index pairs
 ```
 """
 
@@ -34,10 +33,10 @@ class Instance(qubosolver.Instance):
 
     Records *which* off-diagonal coefficients were set to zero by
     [`apply`][qubosolver.transforms.zeroing.apply] by keeping the matrix of the
-    removed negative coefficients (``negative_matrix``) rather than a single
+    removed negative coefficients ([`negative_matrix`][]) rather than a single
     flag.  Because the QUBO matrix is symmetric, each zeroed interaction appears
-    twice in ``negative_matrix`` but once in
-    [`zeroed_edges`][qubosolver.transforms.zeroing.Instance.zeroed_edges].
+    twice in [`negative_matrix`][] but once in
+    [`zeroed_edges`][].
     """
 
     def __init__(self, parent_instance: qubosolver.Instance):
@@ -45,14 +44,12 @@ class Instance(qubosolver.Instance):
 
         Args:
             parent_instance: The QUBO instance to extend with zeroing state.
-                Kept as ``_parent_instance`` so a solution can be mapped back
-                through any earlier preprocessing (e.g. bit flips).
         """
         super().__init__(parent_instance.matrix.detach().clone())
         self._parent_instance = copy.deepcopy(parent_instance)
-        # Matrix of removed negative coefficients: same (symmetric) shape as the
-        # QUBO matrix, holding the original values at zeroed positions and 0 elsewhere.
         self.negative_matrix: Matrix = torch.zeros_like(self._matrix)
+        """Matrix of removed negative coefficients: same (symmetric) shape as the
+        QUBO matrix, holding the original values at zeroed positions and 0 elsewhere."""
 
     @property
     def zeroed_edges(self) -> Vectori:
@@ -70,14 +67,14 @@ def apply(instance: qubosolver.Instance) -> Instance:
 
     Approximates the QUBO by dropping any negative off-diagonal coefficient that
     bit flips could not remove, so a quantum solver can embed it.  Returns a
-    [`Instance`][qubosolver.transforms.zeroing.Instance] whose ``negative_matrix``
+    [`Instance`][qubosolver.transforms.zeroing.Instance] whose [`negative_matrix`][qubosolver.transforms.zeroing.Instance.negative_matrix]
     holds the removed coefficients (an all-zero matrix when nothing was zeroed).
 
     Args:
         instance: The QUBO instance to zero.
 
     Returns:
-        A zeroing [`Instance`][qubosolver.transforms.zeroing.Instance].
+        A zeroing instance.
     """
     zeroed_instance = Instance(instance)
 
@@ -92,29 +89,29 @@ def apply(instance: qubosolver.Instance) -> Instance:
     return zeroed_instance
 
 
-def lift(zeroed_solution: Solution, zeroed_qubo: Instance) -> Solution:
+def lift(zeroed_solution: Solution, zeroed_instance: Instance) -> Solution:
     """Map a solution of the zeroed QUBO back onto the pre-zeroing problem.
 
     Zeroing only drops coefficients; it does not rename or remove variables, so
     the bitstrings are carried over unchanged.  Costs are recomputed against the
     pre-zeroing matrix (``_parent_instance``) so they reflect the true, non-
     approximated objective rather than the zeroed one.  When nothing was zeroed,
-    returns a deep copy of *zeroed_solution* unchanged.
+    returns a deep copy of `zeroed_solution` unchanged.
 
     Args:
         zeroed_solution: Solution obtained on the zeroed QUBO.
-        zeroed_qubo: The zeroing [`Instance`][] produced by [`apply`][].
+        zeroed_instance: The zeroed instance produced by [`apply`][].
 
     Returns:
         A new solution with costs evaluated against the pre-zeroing matrix.
     """
-    if not zeroed_qubo.zeroed_edges.numel():
+    if not zeroed_instance.zeroed_edges.numel():
         return copy.deepcopy(zeroed_solution)
 
     solution = Solution()
     solution.bitstrings = zeroed_solution.bitstrings
     solution.costs = vector.tensor(
-        [zeroed_qubo._parent_instance.cost(b) for b in solution.bitstrings]
+        [zeroed_instance._parent_instance.cost(b) for b in solution.bitstrings]
     )
     solution.counts = zeroed_solution.counts
     solution.probabilities = zeroed_solution.probabilities
