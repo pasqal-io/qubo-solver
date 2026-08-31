@@ -1,4 +1,11 @@
-"""Bayesian-optimized drive schedule generation for QUBO solving."""
+"""Hybrid quantum-classical QUBO solver using Bayesian optimization of drive schedules.
+
+Runs a Bayesian search (via [`skopt.gp_minimize`](https://scikit-optimize.github.io/stable/modules/generated/skopt.gp_minimize.html)) over analog drive
+waveform parameters, executing a quantum simulation at each evaluation
+and minimizing a configurable objective of the resulting solution. Can
+be used as a standalone hybrid solving algorithm, or as a drive-shaping
+method to produce a tuned [`qoolqit.Drive`][] for another solver.
+"""
 
 from __future__ import annotations
 
@@ -20,7 +27,7 @@ from qubosolver.drive_shaping._device_specs import max_virtual_amplitude, detuni
 from qubosolver.drive_shaping._waveforms import constant_weighted_dmm
 
 if TYPE_CHECKING:
-    from qubosolver import drive_shaping
+    from qubosolver import DriveShapingConfig
 
 
 def _default_objective(solution: Solution) -> float:
@@ -38,7 +45,7 @@ class _CallbackInfo:
 
 @dataclass
 class Config:
-    """Configuration for the Bayesian-optimization drive shaper.
+    """Configuration for the Bayesian-optimization hybrid solver / drive shaper.
 
     Attributes:
         initial_amplitude_knots: Initial guess for the amplitude waveform's
@@ -65,7 +72,7 @@ class Config:
     default_sequence_duration: int = 50000
 
     @staticmethod
-    def _from_drive_shaping_config(config: drive_shaping.Config) -> Config:
+    def _from_drive_shaping_config(config: DriveShapingConfig) -> Config:
         """Create a [`Config`][] from a higher-level [`drive_shaping.Config`][].
 
         Args:
@@ -239,12 +246,14 @@ def solve(
     dmm: bool = False,
     config: Config = Config(),
 ) -> tuple[Solution, qoolqit.Drive]:
-    """Generate a drive schedule via Bayesian optimization.
+    """Solve a QUBO instance via Bayesian optimization of a drive schedule.
 
     Uses [`skopt.gp_minimize`](https://scikit-optimize.github.io/stable/modules/generated/skopt.gp_minimize.html)
     to search over waveform parameters, running a
-    quantum simulation at each evaluation and minimizing `config.objective_fn`
-    of the resulting [`Solution`][].
+    quantum simulation at each evaluation and minimizing [`config.objective_fn`][Config]
+    of the resulting [`Solution`][]. This is a hybrid quantum-classical solving
+    algorithm in its own right, and its returned drive can also be reused as
+    the output of a drive-shaping step for another solver.
 
     Args:
         instance: The QUBO [`Instance`][] to solve.

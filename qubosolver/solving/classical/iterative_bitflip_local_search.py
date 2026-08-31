@@ -1,14 +1,13 @@
 """Bit-flip local search for QUBO solutions.
 
 This module provides greedy single-bit-flip local search strategies that
-improve an existing :class:`~qubosolver.types.Solution` by iteratively
-flipping bits, stopping when no flip improves the objective, a maximum
-number of iterations is reached, or a shared time budget is exhausted.
+improve an existing [`Solution`][] by iteratively flipping bits, stopping
+when no flip improves the objective, a maximum number of iterations is
+reached, or a shared time budget is exhausted.
 
-The main public entry point is `iterative_bitflip_local_search`, which
-applies the selected strategy independently to every bitstring in a solution
-and is used as the post-processing step in
-:class:`~qubosolver.solvers.BaseSolver`.
+The main public entry point is [`solve`][], which applies the selected strategy
+independently to every bitstring in a solution. It is used as a
+post-processing step in [`Solver`][].
 """
 
 from __future__ import annotations
@@ -38,30 +37,29 @@ def _best_improvement_search(
     """Improve a single bitstring via best-improvement bit-flip search.
 
     At each iteration, evaluates all *n* single-bit flips and applies the one
-    with the lowest resulting objective value.  Repeats until no flip
-    improves the cost (a local minimum is reached), ``max_iterations`` is
-    reached, or ``time_limit`` has elapsed.
+    with the lowest resulting objective value. Repeats until no flip
+    improves the cost (a local minimum is reached), `max_iterations` is
+    reached, or `time_limit` has elapsed.
 
     Args:
-        qubo_func: Callable that maps a :class:`~qubosolver.types.Bitstring`
-            to a scalar cost (lower is better).
+        qubo_func: Callable that maps a `Bitstring` to a scalar cost (lower
+            is better).
         s: Binary tensor of shape ``(n,)`` representing the starting solution.
             The tensor is cloned internally; the original is not modified.
-        rng: Optional :class:`torch.Generator` used to randomise the order in
-            which bit positions are evaluated at each iteration.  When
-            provided, positions are visited in a random permutation, which
-            can help escape ties and improve diversity.  When ``None``,
-            positions are visited in index order ``0, 1, …, n-1``.
+        rng: Optional [`torch.Generator`](https://docs.pytorch.org/docs/stable/generated/torch.Generator.html)
+            used to randomize the order in which bit positions are evaluated
+            at each iteration. When provided, positions are visited in a
+            random permutation, which can help escape ties and improve
+            diversity. When ``None``, positions are visited in index order
+            ``0, 1, …, n-1``.
         max_iterations: Maximum number of accepted flips. Defaults to no limit.
         time_limit: Maximum time in seconds the search may run, checked once
             per iteration. Defaults to no limit.
 
     Returns:
-        A 2-tuple of:
-
-        * **improved bitstring** — a :class:`~qubosolver.types.Bitstring` of
-          shape ``(n,)`` at a local minimum of *qubo_func*.
-        * **cost** — the scalar objective value at that local minimum.
+        A 2-tuple of the improved bitstring — a `Bitstring` of shape ``(n,)``
+            at a local minimum of `qubo_func` — and the scalar cost at that
+            local minimum.
     """
     s_current = s.detach().clone()
     current_objective = qubo_func(s_current)
@@ -106,8 +104,8 @@ def _first_improvement_search(
 
     At each iteration, applies the first single-bit flip found that reduces
     the objective, instead of scanning all flips for the best one. Repeats
-    until no flip improves the cost, ``max_iterations`` is reached, or
-    ``time_limit`` has elapsed.
+    until no flip improves the cost, `max_iterations` is reached, or
+    `time_limit` has elapsed.
 
     Args:
         qubo_func: See `_best_improvement_search`.
@@ -158,11 +156,11 @@ def _greedy_sweep_search(
 ) -> tuple[Bitstring, float]:
     """Improve a single bitstring via greedy-sweep bit-flip search.
 
-    At each iteration, applies every single-bit flip found to improve the
-    objective (relative to the state at the start of that sweep), instead of
-    stopping at the first or the single best one. Repeats until a sweep makes
-    no improvement, ``max_iterations`` is reached, or ``time_limit`` has
-    elapsed.
+    At each iteration, sweeps through every bit position and applies every
+    flip found to improve the objective relative to the current state at the
+    time it is evaluated, instead of stopping at the first or the single best
+    one. Repeats until a sweep makes no improvement, `max_iterations` is
+    reached, or `time_limit` has elapsed.
 
     Args:
         qubo_func: See `_best_improvement_search`.
@@ -220,31 +218,26 @@ def solve(
 ) -> Solution:
     """Improve every bitstring in `solution` via single-bit-flip local search.
 
-    After refinement, duplicate bitstrings that were driven to
-    the same local minimum are merged: their counts are summed, the minimum
-    cost is retained, and sampling probabilities are recomputed from the merged
-    counts.
+    Bitstrings driven to the same local minimum are merged afterwards via
+    [`deduplicate`][qubosolver.Solution.deduplicate].
 
-    ``time_limit`` is a *global* budget shared by the whole batch of
-    bitstrings in *solution*, not a per-bitstring limit: a `deadline` is
-    computed once before iterating over the batch, and every bitstring's
-    search shares it. Once the deadline passes, remaining bitstrings in the
-    batch are returned unchanged (with their original cost) instead of being
-    searched.
+    `time_limit` is a *global* budget for the whole batch of bitstrings in
+    `solution`, not a per-bitstring limit. Once it is exhausted, any
+    remaining bitstrings are left unchanged, with their original cost.
 
     Args:
         instance: The instance used to evaluate bitstring costs.
         solution: The solution to refine.
         strategy: Which local-search strategy to use: ``"best_improvement"``,
-            ``"first_improvement"``, or ``"greedy_sweep"``. Defaults to
-            ``"greedy_sweep"``.
+            ``"first_improvement"``, or ``"greedy_sweep"``.
         max_iterations: Maximum number of accepted flips per bitstring.
-            Defaults to no limit.
+            Defaults to `-1`, i.e. no limit.
         time_limit: Maximum total time in seconds for the whole batch.
-            Defaults to no limit.
+            Defaults to `float('inf')`, i.e. no limit.
 
     Returns:
-        A new solution with updated `bitstrings`, `costs`, `counts`, and `probabilities` reflecting the locally optimal results.
+        A new solution with updated `bitstrings`, `costs`, `counts`,
+            and `probabilities` reflecting the locally optimal results.
 
     Raises:
         ValueError: If `strategy` is not one of the supported strategies.

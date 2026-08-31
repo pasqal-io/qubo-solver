@@ -1,6 +1,6 @@
 """Tabu Search solver for QUBO problems.
 
-Provides `tabu_search`, a single-neighbourhood tabu search that
+A single-neighborhood tabu search that
 explores bit-flip moves in parallel across multiple starting points.
 """
 
@@ -15,7 +15,7 @@ from qubosolver.utils import _costs
 
 
 def solve(
-    qubo: Instance,
+    instance: Instance,
     start: Bitstrings,
     *,
     max_iter: int = 100,
@@ -26,29 +26,28 @@ def solve(
     """Perform Tabu Search on a QUBO instance to find low-cost bitstrings.
 
     Runs one independent search per row of ``start``, each exploring
-    single-bit-flip neighbours from its own starting point.  A tabu list
+    single-bit-flip neighbors from its own starting point.  A tabu list
     prevents revisiting recently flipped bits; aspiration overrides the tabu
     restriction whenever a move yields a new global best.  All independent
     runs share the same stopping criteria and are deduplicated before being
     returned.
 
     Args:
-        qubo (Instance): The QUBO instance providing the cost matrix.
-        start (Bitstrings): Initial binary solutions, one row per independent
+        instance: The QUBO instance providing the cost matrix.
+        start: Initial binary solutions, one row per independent
             run, each of length ``n``.
-        max_iter (int): Maximum number of search iterations. Defaults to 100.
-        tabu_tenure (int): Number of iterations a bit-flip move stays tabu.
-            Defaults to 7.
-        max_no_improve (int): Maximum consecutive iterations without improvement
+        max_iter: Maximum number of search iterations.
+        tabu_tenure: Number of iterations a bit-flip move stays tabu.
+        max_no_improve: Maximum consecutive iterations without improvement
             before a run is considered stagnated.  Search stops early when
-            **all** independent runs have stagnated. Defaults to 20.
-        time_limit (float): Wall-clock time budget in seconds.  Defaults to
+            **all** independent runs have stagnated.
+        time_limit: Wall-clock time budget in seconds. Defaults to
             ``float('inf')`` (no limit).
 
     Returns:
-        Deduplicated best bitstrings found across all runs, together with their objective values and occurrence counts.
+        Deduplicated best bitstrings found across all runs, together with their objective values and occurrence counts, shared by ascending costs.
     """
-    Q = qubo.matrix
+    Q = instance.matrix
     device = Q.device
     n_bitstrings, n = start.shape
 

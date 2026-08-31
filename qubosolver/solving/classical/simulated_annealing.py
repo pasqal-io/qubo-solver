@@ -3,9 +3,6 @@
 Implements a bit-flip annealer that minimises the quadratic objective
 $E(x) = x^T Q x$ over binary vectors $x \\in \\{0,1\\}^n$, run independently from
 each of a batch of starting points and merged into a single solution.
-
-The public entry point is `simulated_annealing`.  It is called by
-:class:`~qubosolver.solvers.SimulatedAnnealingSolver`.
 """
 
 from __future__ import annotations
@@ -123,19 +120,17 @@ def solve(
     For each starting bitstring, at each of `max_iter` steps a random bit is
     proposed for flipping.  The flip is always accepted when it reduces the
     energy; otherwise it is accepted with probability $\\exp(-\\Delta E / T)$.
-    Energy updates are computed incrementally in O(n) per step using the
-    cached matrix-vector product ``Qx``.
 
     Up to `top_k` unique lowest-energy bitstrings encountered during each run
     are retained, along with how many iterations were spent at each one
     (whether or not the proposed flip at that iteration was accepted). The
     runs are independent.  By default (``merge=True``) the per-start results
-    are merged into a single `Solution` via ``Solution.concat(...).deduplicate()``;
-    pass ``merge=False`` to instead get back the unmerged, one-per-start list.
+    are merged into a single [`Solution`][]. Pass ``merge=False`` to instead
+    get back the unmerged, one-per-start list.
 
     Example:
         Running a single start requires promoting it to a batch of size 1
-        first, via ``unsqueeze``:
+        first, via [`torch.unsqueeze`][]:
 
         ```python
         solution = simulated_annealing(instance, start.unsqueeze(0))
@@ -155,15 +150,13 @@ def solve(
             ``(k, n)`` with values in ``{0, 1}``.  One independent run is
             performed per row.
         merge: When ``True`` (default), merge the per-start results into a
-            single `Solution` via ``Solution.concat(...).deduplicate()``.
-            When ``False``, return the unmerged list of one `Solution` per
+            single [`Solution`][]. When ``False``, return the unmerged list of one [`Solution`][] per
             starting point (same order as `start`).
         top_k: Maximum number of unique best solutions to keep per run,
-            ordered by ascending energy. Defaults to ``1``.
+            ordered by ascending energy.
         max_iter: Number of bit-flip proposals to perform.
         initial_temp: Starting temperature $T_0$.  Higher values increase the
             probability of accepting uphill moves early in the search.
-            Defaults to ``5.0``.
         final_temp: Target temperature $T_f$ at the end of the schedule, used
             to derive the cooling rate when `cooling_rate` is ``None``.
             Ignored when `cooling_rate` is provided explicitly.
@@ -185,7 +178,7 @@ def solve(
             ``top_k=1`` together with ``merge=True``, where the merged count
             directly reflects how many of the runs converged on each
             bitstring. With ``merge=True`` and ``top_k > 1``, or whenever a
-            bitstring is retained by more than one run, `deduplicate` sums
+            bitstring is retained by more than one run, [`deduplicate`][Solution.deduplicate] sums
             those per-run ``1``s, so counts on the merged result are
             generally neither ``1`` nor uniform. When ``"full"``, counts
             instead reflect how many iterations were spent at each
@@ -193,10 +186,10 @@ def solve(
 
     Returns:
         When ``merge=True``, a single [`Solution`][] merging every start's
-        results.  When ``merge=False``, one [`Solution`][] per starting
-        point (same order as `start`).  Either way, each `Solution`
-        contains up to `top_k` unique bitstrings sorted by ascending energy,
-        with their costs, counts (see `stats`), and probabilities.
+            results.  When ``merge=False``, one [`Solution`][] per starting
+            point (same order as `start`).  Either way, each [`Solution`][]
+            contains up to `top_k` unique bitstrings sorted by ascending energy,
+            with their costs, counts (see `stats`), and probabilities.
 
     Raises:
         ValueError: If ``top_k < 1``.

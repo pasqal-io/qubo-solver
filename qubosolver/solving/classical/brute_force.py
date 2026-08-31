@@ -9,10 +9,6 @@ Enumeration proceeds in fixed-size batches so peak memory stays bounded and a
 wall-clock ``time_limit`` can interrupt it between batches.  When the limit is
 reached the best assignments found so far are returned, so the result is a valid
 (possibly non-optimal) solution rather than an error.
-
-This solver is intentionally **not** wired into the object-oriented
-[`Solver`][qubosolver.solvers.Solver] dispatcher; call `brute_force`
-directly.
 """
 
 from __future__ import annotations
@@ -68,16 +64,15 @@ def solve(
 
     Args:
         instance: The QUBO instance to solve.
-        max_bitstrings: Number of lowest-cost bitstrings to return.  The result
-            may contain fewer when ``2^n < max_bitstrings``.
+        max_bitstrings: Number of lowest-cost bitstrings to return.  If
+            ``max_bitstrings > 2^n``, only ``2^n`` bitstrings are returned.
         time_limit: Wall-clock budget in seconds.  Enumeration stops between
             batches once the budget is exhausted and returns the best solutions
             found so far.  Use ``float("inf")`` for no limit.
 
     Returns:
         A solution with up to ``max_bitstrings`` bitstrings, their QUBO costs,
-        and probabilities, sorted by ascending cost.  Empty for a zero-variable
-        instance.
+            and probabilities, sorted by ascending cost.
     """
     n: int = instance.size
     if n == 0:

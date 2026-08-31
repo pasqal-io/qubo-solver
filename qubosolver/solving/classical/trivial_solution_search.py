@@ -1,7 +1,6 @@
 """Trivial QUBO solution detection.
 
-Provides `trivial_solution_search`, which recognises coefficient
-patterns whose optimal solution can be read off analytically without any
+Recognises coefficient patterns whose optimal solution can be read off analytically without any
 search.
 """
 
@@ -20,7 +19,7 @@ def solve(instance: Instance) -> Solution:
     1. **All coefficients ≥ 0** — the all-zeros bitstring ``0^n`` is optimal.
     2. **All coefficients ≤ 0** — the all-ones bitstring ``1^n`` is optimal.
     3. **Diagonal matrix** — each variable is independent; bits with a
-       negative diagonal entry are set to 1, the rest to 0.
+       negative diagonal entry are set to `1`, the rest to `0`.
 
     Args:
         instance: The QUBO problem whose matrix is inspected.

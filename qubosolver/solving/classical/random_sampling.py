@@ -1,8 +1,4 @@
 """Uniform random bitstring sampler for QUBO instances.
-
-This module provides `random_sampling`, which samples uniformly random
-binary vectors, evaluates their QUBO cost, and returns a deduplicated
-`qubosolver.Solution` sorted by ascending cost.
 """
 
 from __future__ import annotations

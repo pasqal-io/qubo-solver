@@ -4,15 +4,9 @@ Formulates the QUBO problem as a Binary Quadratic Program (BQP) and solves it
 with IBM CPLEX's branch-and-bound MIP engine, which guarantees an optimal
 solution within the given time limit.
 
-.. note::
+Note:
     This module requires the ``cplex`` Python package (part of IBM CPLEX
-    Optimization Studio) to be installed.  It is an optional dependency; the
-    rest of ``qubosolver`` works without it.  A missing ``cplex`` package will
-    raise :exc:`ModuleNotFoundError` at import time.
-
-Typical usage goes through :class:`~qubosolver.solvers.CplexSolver`, which
-reads :class:`~qubosolver.solvers.config.classical.Config` parameters and calls
-`cplex` directly.
+    Optimization Studio) to be installed.
 """
 
 from __future__ import annotations
@@ -26,7 +20,7 @@ from qubosolver import Instance, Solution, bitstrings, vector, vectori
 def _qubo_instance_to_sparsepairs(
     instance: Instance, *, tol: float = 1e-8
 ) -> list[CPLEX.SparsePair]:
-    """Convert a :class:`Instance` coefficient matrix to CPLEX sparse-pair format.
+    """Convert an [`Instance`][] coefficient matrix to CPLEX sparse-pair format.
 
     CPLEX evaluates quadratic objectives as $\\frac{1}{2} x^T Q_{cplex} x$, so
     each coefficient must be pre-multiplied by 2 to recover the standard QUBO
@@ -39,13 +33,13 @@ def _qubo_instance_to_sparsepairs(
         instance: The QUBO instance whose coefficient matrix is converted.
             The matrix is moved to CPU and cast to a NumPy array before
             processing.
-        tol: Absolute threshold for dropping small coefficients after the ×2
-            scaling.  Defaults to ``1e-8``.
+        tol: Absolute threshold for dropping small coefficients after the
+            ×2 scaling.
 
     Returns:
-        A list of :class:`cplex.SparsePair` of length ``instance.size``,
-        where element *i* encodes the non-zero scaled coefficients in row *i*
-        of the QUBO matrix.
+        A list of `cplex.SparsePair` of length ``instance.size``, where
+            element *i* encodes the non-zero scaled coefficients in row *i* of
+            the QUBO matrix.
     """
     size = instance.size
     sparsepairs: list[CPLEX.SparsePair] = []
@@ -65,12 +59,22 @@ def _qubo_instance_to_sparsepairs(
 
 
 def _to_cplex(instance: Instance, *, log_file: Any = None) -> CPLEX.Cplex:
-    """Build the minimal CPLEX problem translating a QUBO symmetric matrix.
+    """Build the minimal CPLEX problem representing a QUBO instance.
 
     Sets only what is needed to represent the QUBO instance as a CPLEX
     problem (binary variables, minimization sense, quadratic objective), plus
     logging streams as the sole exception. Every other parameter, including
     the time limit, must be set by the caller on the returned problem.
+
+    Args:
+        instance: The QUBO instance to translate into a CPLEX problem.
+        log_file: File-like object (or `None`) passed to CPLEX's log, error,
+            warning, and results streams.
+
+    Returns:
+        A `cplex.Cplex` problem with binary variables, minimization sense,
+            and the quadratic objective set, ready for the caller to
+            configure further (e.g. time limit) and solve.
     """
     # Convert the coefficient matrix into CPLEX sparse pairs format using the conversion tool.
     sparsepairs: list[CPLEX.SparsePair] = _qubo_instance_to_sparsepairs(instance)
@@ -95,7 +99,15 @@ def _to_cplex(instance: Instance, *, log_file: Any = None) -> CPLEX.Cplex:
 
 
 def _to_solution(cplex_solution: CPLEX.SolutionInterface) -> Solution:
-    """Extract a :class:`Solution` from a solved CPLEX solution interface.
+    """Extract a [`Solution`][] from a solved CPLEX solution interface.
+
+    Args:
+        cplex_solution: The solution interface of a CPLEX problem that has
+            already been solved.
+
+    Returns:
+        A [`Solution`][] holding the single incumbent bitstring, its cost,
+            and a count of 1, with probabilities computed.
 
     Raises:
         RuntimeError: If CPLEX has no incumbent to report (e.g. the time or
@@ -125,15 +137,17 @@ def solve(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> 
 
     Args:
         instance: The QUBO instance to solve.
-        maxtime: Wall-clock time limit for CPLEX in seconds.  CPLEX returns
-            the best feasible solution found so far when the limit is reached.
+        maxtime: Wall-clock time limit for CPLEX in seconds. CPLEX returns
+            the best feasible solution found so far when the limit is
+            reached.
         log_path: File path where CPLEX log output (progress, warnings,
             errors) is written, opened in write mode (``"w"``), so any
-            existing file is overwritten.  When empty (the default), logging
+            existing file is overwritten. When empty (the default), logging
             is suppressed and no file is created.
 
     Returns:
-        A solution containing exactly one bitstring — the best (or optimal) solution found by CPLEX.
+        A solution containing exactly one bitstring — the best (or
+            optimal) solution found by CPLEX.
     """
     # If there are no variables, return an empty solution.
     if not instance:
