@@ -194,8 +194,8 @@ def embed(
         instance: The QUBO instance to embed.  Its ``matrix`` attribute drives
             the greedy cost function.
         device: Target quantum device.
-        config: Greedy embedding parameters.  ``update_from_device`` is called
-            on this object before the algorithm runs, so device constraints
+        config: Greedy embedding parameters.  Its device-dependent fields are
+            resolved against `device` before the algorithm runs, so device constraints
             are always respected. ``max_min_dist_ratio`` bounds the ratio
             between the largest and the smallest inter-atom distance in the
             resulting register.

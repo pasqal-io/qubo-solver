@@ -365,12 +365,12 @@ class Solution:
 
     @staticmethod
     def save(file_like: io_utils.FileLike[bytes], solution: Solution) -> None:
-        """Serialise `solution` to `file_like` using `torch.save`.
+        """Serialize `solution` to `file_like` using `torch.save`.
 
         Args:
             file_like: Destination — a file path (`str` or `os.PathLike`),
                 or a binary-writable `typing.IO` stream.
-            solution: The solution to serialise.
+            solution: The solution to serialize.
 
         Example:
             ```python
@@ -403,7 +403,7 @@ class Solution:
                 data written by [`save`][].
 
         Returns:
-            A new solution with the tensor fields deserialised from `file_like`.
+            A new solution with the tensor fields deserialized from `file_like`.
 
         Note:
             [`torch.load`][] is called with `weights_only=True` to prevent
@@ -449,7 +449,7 @@ class Solution:
           ``instance.matrix`` (when `instance` is given; otherwise this
           check is skipped).
         * `costs` is sorted in non-decreasing order.
-        * `probabilities` matches `counts` normalised by their sum.
+        * `probabilities` matches `counts` normalized by their sum.
         * `counts` are strictly positive integers.
         * `bitstrings` contains no duplicate rows.
         * `bitstrings` entries are all ``0`` or ``1``.

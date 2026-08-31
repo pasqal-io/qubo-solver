@@ -8,9 +8,9 @@ This module provides three internal solver classes and the public
   the three solvers below.
 * `_QuboSolverQuantum` — runs the full quantum pipeline: embedding →
   drive shaping → analog quantum sampling → postprocessing.
-* `_QuboSolverClassical` — solves using a classical optimiser
+* `_QuboSolverClassical` — solves using a classical optimizer
   (CPLEX, Simulated Annealing, Tabu Search, …) via
-  `~qubosolver.solvers.get_classical_solver`.
+  `~qubosolver.solver.get_classical_solver`.
 * `_DecomposeQuboSolver` — recursively decomposes a large QUBO into
   device-sized subproblems, solves each with a sub-solver, and merges the
   partial solutions.
@@ -56,7 +56,7 @@ class Solver(BaseSolver):
     """
 
     def __init__(self, instance: Instance, config: SolverConfig = SolverConfig()):
-        """Initialise the solver.
+        """Initialize the solver.
 
         Args:
             instance: The QUBO problem to solve.

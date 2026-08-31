@@ -25,17 +25,19 @@ class ClassicalConfig():
             - `"tabu_search"`: Tabu search metaheuristic that avoids recently visited solutions.
             - `"simulated_annealing"`: Simulated annealing algorithm that probabilistically
               accepts worse solutions to escape local minima.
-            - `"cplex"`: IBM CPLEX exact solver; requires a valid CPLEX installation and licence.
+            - `"cplex"`: IBM CPLEX exact solver; requires a valid CPLEX installation and license.
             - `"random_sampling"`: Randomly samples solutions; useful as a baseline or for testing.
 
             Defaults to `"tabu_search"`.
         cplex_maxtime: CPLEX maximum runtime in seconds. Defaults to 600s.
-        cplex_log_path: CPLEX log path. Default to `solver.log`.
+        cplex_log_path: CPLEX log path. Defaults to `""`, meaning no log file is written.
         max_iter: Maximum number of iterations to perform for simulated annealing or tabu search.
         max_bitstrings: Maximal number of bitstrings returned as solutions.
         sa_initial_temp: Starting temperature (controls exploration).
         sa_final_temp: Minimum temperature threshold for stopping.
         sa_cooling_rate: Cooling rate - should be slightly below 1 (e.g., 0.95–0.99).
+            Defaults to `None`, in which case it is derived automatically from
+            `sa_initial_temp`, `sa_final_temp`, and `max_iter`.
         sa_seed: Random seed for reproducibility.
         sa_start: Optional initial bitstring of shape (n,).
         sa_time_limit: Maximum runtime in seconds for simulated annealing.
@@ -100,7 +102,7 @@ class QuantumConfig():
         (or ``inf`` when the device imposes no such limits).
 
         Returns:
-            float: The resolved maximum min/max distance ratio.
+            The resolved maximum min/max distance ratio.
         """
         if self.embedding.max_min_dist_ratio != "device":
             return self.embedding.max_min_dist_ratio

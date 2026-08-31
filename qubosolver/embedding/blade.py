@@ -35,13 +35,13 @@ def embed(
 ) -> qoolqit.Register:
     """Embed a QUBO instance using the BLaDE algorithm.
 
-    Runs the BLaDE optimisation on the QUBO coefficient matrix. Atom
+    Runs the BLaDE optimization on the QUBO coefficient matrix. Atom
     labels are assigned as integer indices (``0``, ``1``, …)
     matching the variable ordering of the QUBO matrix.
 
     Args:
         instance: The QUBO instance to embed.
-        config: BLaDE configuration controlling the optimisation (number of
+        config: BLaDE configuration controlling the optimization (number of
             steps per round, initial atom positions, dimension sequence,
             maximum allowed ratio of radial to minimum distance, etc.).
 
@@ -51,6 +51,8 @@ def embed(
     Raises:
         ValueError: If `instance` has no variables (``size == 0``), since a
             register must contain at least one qubit.
+        ValueError: If the QUBO coefficient matrix has negative off-diagonal
+            coefficients, since BLaDE cannot embed such instances.
     """
     if not instance:
         raise ValueError("Cannot embed an empty instance (size=0): nothing to place.")

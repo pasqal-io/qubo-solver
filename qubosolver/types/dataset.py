@@ -115,7 +115,7 @@ class Dataset():
             densities: List of densities (ratio of non-zero elements).
             coefficient_bounds: Range (min, max) of
                 random values for the coefficients.
-            dtype: Data type for the coefficient tensors.
+            dtype: Data type for the coefficient matrices.
             rng: Random number generator controlling
                 the sampling.
             negative_offdiag_rate: Fraction of the non-zero
@@ -245,7 +245,7 @@ class Dataset():
 
         Args:
             file_like: Destination file path or writable binary file object.
-            dataset: The dataset to serialise.
+            dataset: The dataset to serialize.
 
         Example:
             ```python
@@ -272,7 +272,7 @@ class Dataset():
                 as produced by [`save`][].
 
         Returns:
-            The deserialised dataset, including solutions if they were present when the file was saved.
+            The deserialized dataset, including solutions if they were present when the file was saved.
 
         Example:
             ```python

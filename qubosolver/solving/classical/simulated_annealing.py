@@ -1,6 +1,6 @@
 """Simulated Annealing solver for QUBO problems.
 
-Implements a bit-flip annealer that minimises the quadratic objective
+Implements a bit-flip annealer that minimizes the quadratic objective
 $E(x) = x^T Q x$ over binary vectors $x \\in \\{0,1\\}^n$, run independently from
 each of a batch of starting points and merged into a single solution.
 """

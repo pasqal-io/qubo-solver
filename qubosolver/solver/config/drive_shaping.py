@@ -36,7 +36,7 @@ class Config():
         bayesian_search_initial_detuning_parameters: Initial guess for the
             three normalized detuning waveform knots, each in ``[-1, 1]``.
             Defaults to ``[-0.8, 0.0, 0.8]``.
-        bayesian_search_seed: Random seed for the Bayesian optimiser.
+        bayesian_search_seed: Random seed for the Bayesian optimizer.
             Defaults to `None`.
         proportional_diagonal_kappa: Scaling coefficient for the Omega waveform in
             the proportional-diagonal drive shaper. Defaults to `0.25`.

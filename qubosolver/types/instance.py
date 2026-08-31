@@ -1,7 +1,7 @@
 """QUBO problem instances.
 
 An [`Instance`][qubosolver.types.instance.Instance] wraps a symmetric square coefficient matrix
-``Q`` and defines the QUBO objective to minimise:
+``Q`` and defines the QUBO objective to minimize:
 
 $$\\text{cost}(x) = x^T Q x, \\quad x \\in \\{0, 1\\}^n$$
 """
@@ -29,7 +29,7 @@ class Instance:
     """A single QUBO problem instance.
 
     Wraps a symmetric square matrix $Q$ and exposes helpers for
-    evaluation, serialisation, and introspection.  The objective to minimise is:
+    evaluation, serialization, and introspection.  The objective to minimize is:
 
     $$\\text{cost}(x) = x^T Q x, \\quad x \\in \\{0, 1\\}^n$$
 
@@ -108,12 +108,12 @@ class Instance:
 
     @staticmethod
     def save(file_like: io_utils.FileLike[bytes], instance: Instance) -> None:
-        """Serialise instance to ``file_like`` using [`torch.save`][].
+        """Serialize instance to ``file_like`` using [`torch.save`][].
 
         Args:
             file_like: Destination — a file path ([`str`][] or [`os.PathLike`][]),
                 or a binary-writable [`typing.IO`][] stream.
-            instance: The instance to serialise. Only [`matrix`][] is
+            instance: The instance to serialize. Only [`matrix`][] is
                 persisted; any derived state is recomputed on load.
 
         Example:
@@ -136,14 +136,14 @@ class Instance:
 
     @staticmethod
     def load(file_like: io_utils.FileLike[bytes]) -> Instance:
-        """Deserialise an [`Instance`][] previously saved with [`save`][].
+        """Deserialize an [`Instance`][] previously saved with [`save`][].
 
         Args:
             file_like: Source file path or readable binary file object,
                 as produced by [`save`][].
 
         Returns:
-            A new instance whose [`matrix`][] is the deserialised coefficient
+            A new instance whose [`matrix`][] is the deserialized coefficient
                 tensor.
 
         Note:

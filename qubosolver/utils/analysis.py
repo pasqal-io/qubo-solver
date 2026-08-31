@@ -63,7 +63,7 @@ def to_dataframe(
     The resulting [`pandas.DataFrame`][] can be used for filtering, sorting, and analysis.
 
     Args:
-        solutions: A list of [`Solution`][].
+        solutions: A sequence of [`Solution`][].
         labels: One label per solution used to identify each group in the
             [`pandas.DataFrame`][]. Defaults to ``"0"``, ``"1"``, … when ``"auto"``.
 

@@ -45,7 +45,7 @@ def solve(
             ``float('inf')`` (no limit).
 
     Returns:
-        Deduplicated best bitstrings found across all runs, together with their objective values and occurrence counts, shared by ascending costs.
+        Deduplicated best bitstrings found across all runs, together with their objective values and occurrence counts, sorted by ascending cost.
     """
     Q = instance.matrix
     device = Q.device

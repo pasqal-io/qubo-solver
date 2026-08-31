@@ -1,6 +1,6 @@
 """Trivial QUBO solution detection.
 
-Recognises coefficient patterns whose optimal solution can be read off analytically without any
+Recognizes coefficient patterns whose optimal solution can be read off analytically without any
 search.
 """
 

@@ -104,7 +104,7 @@ class Instance(qubosolver.Instance):
 
     @staticmethod
     def save(file_like: io_utils.FileLike[bytes], instance: qubosolver.Instance) -> None:
-        """Serialise a variable-fixing [`Instance`][variable_fixing.Instance] (including fixation history) to `file_like`.
+        """Serialize a variable-fixing [`Instance`][variable_fixing.Instance] (including fixation history) to `file_like`.
 
         Args:
             file_like: Binary-writable file-like object or path.
@@ -124,7 +124,7 @@ class Instance(qubosolver.Instance):
 
     @staticmethod
     def load(file_like: io_utils.FileLike[bytes]) -> Instance:
-        """Deserialise a variable-fixing [`Instance`][variable_fixing.Instance] (including fixation history) from `file_like`.
+        """Deserialize a variable-fixing [`Instance`][variable_fixing.Instance] (including fixation history) from `file_like`.
 
         Args:
             file_like: Binary-readable file-like object or path produced by `save`.
