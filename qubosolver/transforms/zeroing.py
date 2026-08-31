@@ -21,11 +21,13 @@ print(zeroed_instance.zeroed_edges)       # (N, 2) tensor of zeroed (i, j) index
 from __future__ import annotations
 
 import copy
+import io
 
 import torch
 
 import qubosolver
 from qubosolver.types import Matrix, Solution, Vectori, vector, vectori
+from qubosolver._io import utils as io_utils
 
 
 class Instance(qubosolver.Instance):
@@ -50,6 +52,50 @@ class Instance(qubosolver.Instance):
         self.negative_matrix: Matrix = torch.zeros_like(self._matrix)
         """Matrix of removed negative coefficients: same (symmetric) shape as the
         QUBO matrix, holding the original values at zeroed positions and 0 elsewhere."""
+
+    @staticmethod
+    def save(file_like: io_utils.FileLike[bytes], instance: qubosolver.Instance) -> None:
+        """Serialize a zeroing [`Instance`][zeroing.Instance] (including the removed coefficients) to `file_like`.
+
+        Args:
+            file_like: Binary-writable file-like object or path.
+            instance: The instance to save.
+
+        Raises:
+            TypeError: If `instance` is not a [`zeroing.Instance`][].
+        """
+        if not isinstance(instance, Instance):
+            raise TypeError("Input must be an instance of zeroing.Instance.")
+
+        with io_utils.open(file_like, "wb") as f:
+            qubosolver.Instance.save(f, instance)
+            qubosolver.Instance.save(f, instance._parent_instance)
+
+            buffer = io.BytesIO()
+            torch.save(instance.negative_matrix, buffer)
+            io_utils.save_sized_buffer(f, buffer.getbuffer())
+
+    @staticmethod
+    def load(file_like: io_utils.FileLike[bytes]) -> Instance:
+        """Deserialize a zeroing [`Instance`][zeroing.Instance] (including the removed coefficients) from `file_like`.
+
+        Args:
+            file_like: Binary-readable file-like object or path produced by `save`.
+
+        Returns:
+            The reconstructed instance.
+        """
+        with io_utils.open(file_like, "rb") as f:
+            base_instance = qubosolver.Instance.load(f)
+            parent_instance = qubosolver.Instance.load(f)
+
+            instance = Instance(parent_instance)
+            instance._matrix = base_instance.matrix
+
+            buffer = io.BytesIO(io_utils.load_sized_buffer(f))
+            instance.negative_matrix = torch.load(buffer, weights_only=True)
+
+        return instance
 
     @property
     def zeroed_edges(self) -> Vectori:

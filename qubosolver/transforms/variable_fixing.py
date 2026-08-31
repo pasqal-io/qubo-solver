@@ -111,7 +111,7 @@ class Instance(qubosolver.Instance):
             instance: The instance to save.
 
         Raises:
-            TypeError: If `instance` is not a variable-fixing [`Instance`][variable_fixing.Instance].
+            TypeError: If `instance` is not a [`variable_fixing.Instance`][].
         """
         _check_QUBOInstance(instance)
         assert isinstance(instance, Instance)  # nosec B101

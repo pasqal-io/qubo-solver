@@ -400,7 +400,7 @@ class Instance(qubosolver.Instance):
             instance: The instance to save.
 
         Raises:
-            TypeError: If `instance` is not a negative-bitflip [`Instance`][negative_bitflip.Instance].
+            TypeError: If `instance` is not a [`negative_bitflip.Instance`][].
         """
         if not isinstance(instance, Instance):
             raise TypeError("Input must be an instance of negative_bitflip.Instance.")

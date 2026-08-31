@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import io
+
 import pytest_check as check
 import torch
 
@@ -110,6 +112,45 @@ def test_lift_is_identity_when_nothing_zeroed() -> None:
     restored = transforms.zeroing.lift(sol, zeroed)
 
     torch.testing.assert_close(restored.bitstrings, sol.bitstrings)
+
+
+def test_save_load_roundtrips_zeroing_state() -> None:
+    # save/load must persist the zeroing-specific state (negative_matrix,
+    # parent instance), not just the matrix inherited from the base
+    # Instance.save/load.
+    instance = non_bipartisable_negative_qubo()
+    zeroed = transforms.zeroing.apply(instance)
+
+    buffer = io.BytesIO()
+    transforms.zeroing.Instance.save(buffer, zeroed)
+    buffer.seek(0)
+    loaded = transforms.zeroing.Instance.load(buffer)
+
+    check.is_instance(loaded, transforms.zeroing.Instance)
+    torch.testing.assert_close(loaded.matrix, zeroed.matrix)
+    torch.testing.assert_close(loaded.negative_matrix, zeroed.negative_matrix)
+    torch.testing.assert_close(loaded._parent_instance.matrix, zeroed._parent_instance.matrix)
+
+
+def test_load_of_saved_zeroing_instance_can_be_lifted() -> None:
+    # A round-tripped instance must remain usable end-to-end: lift() needs
+    # _parent_instance and zeroed_edges to be restored correctly.
+    instance = non_bipartisable_negative_qubo()
+    zeroed = transforms.zeroing.apply(instance)
+
+    buffer = io.BytesIO()
+    transforms.zeroing.Instance.save(buffer, zeroed)
+    buffer.seek(0)
+    loaded = transforms.zeroing.Instance.load(buffer)
+
+    sol = Solution(bitstrings=bitstrings.from_strings(["1111", "0101"]), counts=vectori.tensor([3, 2]))
+    restored = transforms.zeroing.lift(sol, loaded)
+    expected = transforms.zeroing.lift(sol, zeroed)
+
+    torch.testing.assert_close(restored.bitstrings, expected.bitstrings)
+    torch.testing.assert_close(restored.costs, expected.costs)
+    torch.testing.assert_close(restored.counts, expected.counts)
+    torch.testing.assert_close(restored.probabilities, expected.probabilities)
 
 
 def test_apply_does_not_alias_the_parent_instance() -> None:
