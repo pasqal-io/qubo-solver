@@ -237,7 +237,7 @@ class _QuboSolverQuantum(BaseSolver):
         embedding = self._embedding()
         drive, solution = self._drive(embedding)
 
-        if not solution or self.config.quantum.drive_shaping.algorithm != drive_shaping.Algorithm.BAYESIAN_SEARCH:
+        if not solution or self.config.quantum.drive_shaping.algorithm != "bayesian_search":
             solution = self._execute(drive, embedding)
 
         if isinstance(self.instance, transforms.zeroing.Instance):

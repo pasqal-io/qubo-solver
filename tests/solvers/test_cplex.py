@@ -14,6 +14,8 @@ from qubosolver import (
     vectori,
     tensor,
     torch_rng,
+    SolverConfig,
+    ClassicalSolvingConfig,
 )
 from qubosolver.solving.classical.cplex import _to_solution
 
@@ -63,12 +65,12 @@ def test_qubo_solver_classical_cplex() -> None:
     instance = Instance(matrix=Q)
 
     # Create a solving.Config object with classical solver options.
-    classical_config = solving.classical.Config(
+    classical_config = ClassicalSolvingConfig(
         algorithm="cplex",
         cplex_maxtime=10.0,
         cplex_log_path="test_solver.log",
     )
-    config = solving.Config(solving=classical_config)
+    config = SolverConfig(solving=classical_config)
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
     classical_solver = Solver(instance, config)

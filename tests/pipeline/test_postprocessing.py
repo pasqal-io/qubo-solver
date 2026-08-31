@@ -19,6 +19,7 @@ from qubosolver import (
     vectori,
     utils,
     torch_rng,
+    SolverConfig,
 )
 from qubosolver.solving.classical.iterative_bitflip_local_search import _best_improvement_search
 from qubosolver.utils import _costs
@@ -35,7 +36,7 @@ def test_basic_qubo_2d_integration(postprocessing: bool) -> None:
     # fmt: on
 
     instance = Instance(matrix=Q)
-    solver = Solver(instance, solving.Config(do_postprocessing=postprocessing))
+    solver = Solver(instance, SolverConfig(do_postprocessing=postprocessing))
     solution = Solution(
         bitstrings=bitstrings.tensor([[0, 0]]),
         costs=vector.tensor([0.0]),

@@ -6,6 +6,7 @@ import pytest_check as check
 import numpy as np
 import random
 import torch
+from typing import get_args
 
 
 from pulser.backend.remote import RemoteConnection
@@ -25,6 +26,8 @@ from qubosolver import (
 import qubosolver._io.utils as io_utils
 from qubosolver.utils import analysis
 from qubosolver.types import protocols
+from qubosolver.solver.config.drive_shaping import DriveShapingAlgorithm
+from qubosolver.solver.config.embedding import EmbeddingAlgorithm
 
 from qoolqit import AnalogDeviceWithDMM
 from qoolqit.execution import (
@@ -37,18 +40,18 @@ from mock.connection import MockConnection
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("drive_method", list(drive_shaping.Algorithm))
-@pytest.mark.parametrize("embedding_method", list(embedding.Algorithm))
+@pytest.mark.parametrize("drive_method", get_args(DriveShapingAlgorithm))
+@pytest.mark.parametrize("embedding_method", get_args(EmbeddingAlgorithm))
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no_pre"])
 @pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
 def test_quantum_remote_job(
     make_mock_connection: type[MockConnection],
-    drive_method: str,
-    embedding_method: str,
+    drive_method: DriveShapingAlgorithm,
+    embedding_method: EmbeddingAlgorithm,
     preprocessing: bool,
     dmm: bool,
 ) -> None:
-    if drive_method == drive_shaping.Algorithm.BAYESIAN_SEARCH:
+    if drive_method == "bayesian_search":
         pytest.skip(reason="Does not work with the Bayesian-search drive shaping method")
 
     seed = 7979
@@ -75,7 +78,7 @@ def test_quantum_remote_job(
         if preprocessing:
             instance = transforms.variable_fixing.apply_recursively(instance)
 
-        if embedding_method == embedding.Algorithm.BLADE:
+        if embedding_method == "blade":
             register = embedding.blade.embed(instance)
         else:
             config = embedding.greedy_layout.Config(traps=100)
@@ -88,7 +91,7 @@ def test_quantum_remote_job(
         else:
             backend = RemoteEmulator(connection=connection, num_shots=num_shots)
 
-        if drive_method == drive_shaping.Algorithm.PROPORTIONAL_DIAGONAL:
+        if drive_method == "proportional_diagonal":
             drive = drive_shaping.proportional_diagonal.build_drive(
                 instance, register, device=device, dmm=dmm
             )

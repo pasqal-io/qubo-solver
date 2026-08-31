@@ -13,7 +13,7 @@ import qoolqit
 from qoolqit.devices.device import AnalogDeviceWithDMM, AnalogDevice
 from qoolqit.register import Register
 
-from qubosolver.drive_shaping._drive_shaper import BayesianSearchDriveShaper
+from qubosolver.solver._drive_shaper import BayesianSearchDriveShaper
 from qubosolver.solving.hybrid import drive_bayesian_search
 from qubosolver import (
     Instance,

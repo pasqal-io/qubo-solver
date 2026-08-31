@@ -8,7 +8,7 @@ import pytest
 import pytest_check as check
 import torch
 
-from qubosolver import Instance, Solver, solving, matrix, transforms
+from qubosolver import Instance, Solver, solving, matrix, transforms, SolverConfig, ClassicalSolvingConfig, QuantumSolvingConfig
 
 
 def test_valid_qubo_passes_without_error() -> None:
@@ -39,11 +39,11 @@ def test_size_exceeds_limit_triggers_system_exit() -> None:
 
     qi = Instance(matrix.tensor(coeffs))
     # Expect SystemExit to be raised when setting oversized coefficients
-    solver = Solver(qi, solving.Config(solving=solving.classical.Config()))
+    solver = Solver(qi, SolverConfig(solving=ClassicalSolvingConfig()))
     assert solver.instance.size == 81
     match_msg = "QUBO size 81×81 exceeds the maximum supported size of 80×80"
     with pytest.raises(ValueError, match=match_msg):
-        Solver(qi, solving.Config(solving=solving.quantum.Config()))
+        Solver(qi, SolverConfig(solving=QuantumSolvingConfig()))
 
 
 @pytest.mark.parametrize("size", [0, 1])

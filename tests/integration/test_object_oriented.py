@@ -24,9 +24,14 @@ from qubosolver import (
     Tensor,
     Matrix,
     torch_rng,
+    SolverConfig,
+    QuantumSolvingConfig,
+    ClassicalSolvingConfig,
+    DriveShapingConfig,
+    EmbeddingConfig,
 )
 from qubosolver.utils import analysis
-from qubosolver.drive_shaping import Algorithm
+from qubosolver.solver.config.solving import ClassicalAlgorithm
 
 
 def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
@@ -135,33 +140,33 @@ def test_quantum_solve(
     qubo, expected_optimal_solutions = simple_qubo()
 
     if embedding_method == "blade":
-        embedding_config = embedding.Config(algorithm=embedding.Algorithm.BLADE)
+        embedding_config = EmbeddingConfig(algorithm="blade")
     elif embedding_method == "greedy_layout":
-        embedding_config = embedding.Config(
-            algorithm=embedding.Algorithm.GREEDY_LAYOUT,
+        embedding_config = EmbeddingConfig(
+            algorithm="greedy_layout",
             greedy_layout_traps=100,
         )
     else:
         raise ValueError(f"Invalid embedding method: {embedding_method}")
 
     if drive_shaping_method == "bayesian_search":
-        drive_shaping_config = drive_shaping.Config(
-            algorithm=Algorithm.BAYESIAN_SEARCH,
+        drive_shaping_config = DriveShapingConfig(
+            algorithm="bayesian_search",
             bayesian_search_n_calls=11,
             bayesian_search_seed=seed,
             dmm=False,
         )
     elif drive_shaping_method == "proportional_diagonal":
-        drive_shaping_config = drive_shaping.Config(
-            algorithm=Algorithm.PROPORTIONAL_DIAGONAL,
+        drive_shaping_config = DriveShapingConfig(
+            algorithm="proportional_diagonal",
             proportional_diagonal_kappa=0.25,
             dmm=False,
         )
     else:
         raise ValueError(f"Invalid drive shaping method: {drive_shaping_method}")
 
-    config = solving.Config(
-        solving=solving.quantum.Config(
+    config = SolverConfig(
+        solving=QuantumSolvingConfig(
             embedding=embedding_config,
             drive_shaping=drive_shaping_config,
             device=qoolqit.AnalogDevice(),
@@ -203,20 +208,20 @@ def test_classical_solve(
     manual_seed(seed)
     qubo, expected_optimal_solutions = simple_qubo()
 
-    classical_solvers = {
-        "cplex": solving.classical.Algorithm.CPLEX,
-        "tabu": solving.classical.Algorithm.TABU_SEARCH,
-        "sa": solving.classical.Algorithm.SIMULATED_ANNEALING,
-        "random": solving.classical.Algorithm.RANDOM_SAMPLING,
+    classical_solvers: dict[str, ClassicalAlgorithm] = {
+        "cplex": "cplex",
+        "tabu": "tabu_search",
+        "sa": "simulated_annealing",
+        "random": "random_sampling",
     }
 
-    classical_config = solving.classical.Config(
+    classical_config = ClassicalSolvingConfig(
         algorithm=classical_solvers[solving_method],
         max_bitstrings=1,
         sa_seed=seed,
     )
 
-    config = solving.Config(
+    config = SolverConfig(
         solving=classical_config,
         do_postprocessing=postprocessing,
         do_preprocessing=preprocessing,

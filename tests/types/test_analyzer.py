@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import pytest
+from typing import get_args
 
 from qubosolver import (
     Instance,
     Solution,
-    solving,
     Solver,
+    SolverConfig,
+    ClassicalSolvingConfig,
+    QuantumSolvingConfig,
 )
-from qubosolver.solving import classical
+from qubosolver.solver.config.solving import ClassicalAlgorithm
 from qubosolver.utils import analysis
 
 
@@ -73,10 +76,10 @@ def test_calculate_gaps(basic_solution: Solution) -> None:
     assert "gaps" in df.columns
 
 
-@pytest.mark.parametrize("classical_method", [c.value for c in classical.Algorithm])
-def test_analyzer_classical(simple_qubo_instance: Instance, classical_method: str) -> None:
-    config = solving.Config(
-        solving=solving.classical.Config(algorithm=classical_method),
+@pytest.mark.parametrize("classical_method", get_args(ClassicalAlgorithm))
+def test_analyzer_classical(simple_qubo_instance: Instance, classical_method: ClassicalAlgorithm) -> None:
+    config = SolverConfig(
+        solving=ClassicalSolvingConfig(algorithm=classical_method),
     )
     solver = Solver(simple_qubo_instance, config)
     solution = solver.solve()
@@ -88,7 +91,7 @@ def test_analyzer_classical(simple_qubo_instance: Instance, classical_method: st
 
 
 def test_analyzer_quantum(simple_qubo_instance: Instance) -> None:
-    config = solving.Config(solving=solving.quantum.Config())
+    config = SolverConfig(solving=QuantumSolvingConfig())
     solver = Solver(simple_qubo_instance, config)
     solution = solver.solve()
     df = analysis.to_dataframe([solution], labels=["sol1"])
@@ -98,17 +101,17 @@ def test_analyzer_quantum(simple_qubo_instance: Instance) -> None:
     assert "counts" in df.columns
 
 
-@pytest.mark.parametrize("classical_method", [c.value for c in classical.Algorithm])
+@pytest.mark.parametrize("classical_method", get_args(ClassicalAlgorithm))
 def test_analyzer_quantum_and_classical(
-    simple_qubo_instance: Instance, classical_method: str
+    simple_qubo_instance: Instance, classical_method: ClassicalAlgorithm
 ) -> None:
-    config = solving.Config(
-        solving=solving.classical.Config(algorithm=classical_method),
+    config = SolverConfig(
+        solving=ClassicalSolvingConfig(algorithm=classical_method),
     )
     solver = Solver(simple_qubo_instance, config)
     solution = solver.solve()
 
-    quantumsolver = Solver(simple_qubo_instance, solving.Config(solving=solving.quantum.Config()))
+    quantumsolver = Solver(simple_qubo_instance, SolverConfig(solving=QuantumSolvingConfig()))
     quantumsolution = quantumsolver.solve()
     df = analysis.to_dataframe([solution, quantumsolution], labels=["sol1", "sol2"])
 

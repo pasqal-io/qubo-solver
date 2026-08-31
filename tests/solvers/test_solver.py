@@ -19,18 +19,20 @@ from qubosolver import (
     Instance,
     Solver,
     Solution,
-    embedding,
-    solving,
-    drive_shaping,
     vectori,
     bitstrings,
     matrix,
     LocalEmulator,
     RemoteEmulator,
+    SolverConfig,
+    QuantumSolvingConfig,
+    ClassicalSolvingConfig,
+    EmbeddingConfig,
+    DriveShapingConfig,
 )
 from qubosolver.utils import analysis
-from qubosolver.solving.solver import _QuboSolverQuantum
-from qubosolver.drive_shaping import Algorithm
+from qubosolver.solver.solver import _QuboSolverQuantum
+from qubosolver.solver.config.embedding import EmbeddingAlgorithm
 from mock.connection import MockConnection
 
 from pulser.backend.remote import (
@@ -61,8 +63,8 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
 
     default_solver = Solver(
         simple_qubo_instance,
-        solving.Config(
-            solving=solving.quantum.Config(
+        SolverConfig(
+            solving=QuantumSolvingConfig(
                 backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=500)
             )
         ),
@@ -72,8 +74,8 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
 
     lessshots_solver = Solver(
         simple_qubo_instance,
-        solving.Config(
-            solving=solving.quantum.Config(
+        SolverConfig(
+            solving=QuantumSolvingConfig(
                 backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=100)
             )
         ),
@@ -87,10 +89,10 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
 def test_run_local_backends(simple_qubo_instance: Instance, local_backend: LocalEmulator) -> None:
     solver = Solver(
         simple_qubo_instance,
-        solving.Config(
-            solving=solving.quantum.Config(
+        SolverConfig(
+            solving=QuantumSolvingConfig(
                 backend=local_backend,
-                embedding=embedding.Config(algorithm=embedding.Algorithm.BLADE),
+                embedding=EmbeddingConfig(algorithm="blade"),
             )
         ),
     )
@@ -104,12 +106,12 @@ def test_solver_different_devices(
     request: pytest.FixtureRequest,
     qubo_for_testing_many_devices: Instance,
     local_device: Device,
-    embedding_algorithm: embedding.Algorithm,
+    embedding_algorithm: EmbeddingAlgorithm,
 ) -> None:
 
-    quantum_config = solving.quantum.Config(
-        drive_shaping=drive_shaping.Config(algorithm="proportional_diagonal"),
-        embedding=embedding.Config(
+    quantum_config = QuantumSolvingConfig(
+        drive_shaping=DriveShapingConfig(algorithm="proportional_diagonal"),
+        embedding=EmbeddingConfig(
             algorithm=embedding_algorithm,
             greedy_layout_traps=qubo_for_testing_many_devices.size,
         ),
@@ -117,7 +119,7 @@ def test_solver_different_devices(
         backend=LocalEmulator(backend_type=SVBackend),
 
     )
-    config = solving.Config(
+    config = SolverConfig(
         solving=quantum_config,
         do_postprocessing=False,
         do_preprocessing=False,
@@ -212,9 +214,9 @@ def trivial_triangular_qubo(connection: Optional[RemoteConnection] = None) -> So
         if connection is None
         else RemoteEmulator(connection=connection, num_shots=num_shots)
     )
-    config = solving.Config(
-        solving=solving.quantum.Config(
-            embedding=embedding.Config(algorithm="blade"),
+    config = SolverConfig(
+        solving=QuantumSolvingConfig(
+            embedding=EmbeddingConfig(algorithm="blade"),
             backend=backend,
         ),
         do_preprocessing=False,
@@ -289,7 +291,7 @@ def test_respects_total_bottom_detuning(caplog: pytest.LogCaptureFixture) -> Non
             Q[i, j] = Q[j, i] = 1.0
 
     instance = Instance(Q)
-    config = solving.Config(solving=solving.quantum.Config(drive_shaping=drive_shaping.Config(dmm=True)))
+    config = SolverConfig(solving=QuantumSolvingConfig(drive_shaping=DriveShapingConfig(dmm=True)))
 
     with caplog.at_level(logging.INFO):
         solution = Solver(instance, config).solve()
@@ -316,14 +318,14 @@ def _triangular_register_qubo() -> np.ndarray:
 
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("algorithm", ["greedy_layout", "blade"])
-def test_quantum_matches_classical_triangular(algorithm: str) -> None:
+def test_quantum_matches_classical_triangular(algorithm: EmbeddingAlgorithm) -> None:
     qubo = _triangular_register_qubo()
     instance = Instance(matrix.tensor(qubo))
 
-    quantum_config = solving.Config(
-        solving=solving.quantum.Config(
-            embedding=embedding.Config(algorithm=algorithm),
-            drive_shaping=drive_shaping.Config(algorithm=Algorithm.PROPORTIONAL_DIAGONAL),
+    quantum_config = SolverConfig(
+        solving=QuantumSolvingConfig(
+            embedding=EmbeddingConfig(algorithm=algorithm),
+            drive_shaping=DriveShapingConfig(algorithm="proportional_diagonal"),
         ),
         do_preprocessing=False,
         do_postprocessing=False,
@@ -331,8 +333,8 @@ def test_quantum_matches_classical_triangular(algorithm: str) -> None:
     quantum_solution = Solver(instance, quantum_config).solve()
     quantum_solution._sort_by_cost()
 
-    classical_config = solving.Config(
-        solving=solving.classical.Config(max_bitstrings=4),
+    classical_config = SolverConfig(
+        solving=ClassicalSolvingConfig(max_bitstrings=4),
     )
     classical_solution = Solver(instance, classical_config).solve()
     classical_solution._sort_by_cost()
