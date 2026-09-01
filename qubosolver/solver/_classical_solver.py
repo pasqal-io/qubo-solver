@@ -167,7 +167,7 @@ class TabuSearchSolver(BaseClassicalSolver):
         else:
             x0 = self.config.tabu_x0
         tabu_search_solution = solving.tabu_search.solve(
-            qubo=self.instance,
+            instance=self.instance,
             start=x0,
             max_iter=self.config.max_iter,
             tabu_tenure=self.config.tabu_tenure,
