@@ -127,6 +127,19 @@ def test_bitflip_apply_is_noop_without_negative_coefficients() -> None:
     torch.testing.assert_close(flipped_instance.matrix, instance.matrix)
 
 
+def test_init_preserves_the_parent_instance_type() -> None:
+    # __init__ deep-copies parent_instance into _parent_instance; if that
+    # parent is itself a transform subclass (e.g. zeroing.Instance), the copy
+    # must keep that concrete type, not collapse to the base
+    # qubosolver.Instance.
+    instance, _ = bipartisable_negative_qubo()
+    zeroed_parent = transforms.zeroing.apply(instance)
+
+    wrapped = transforms.negative_bitflip.Instance(zeroed_parent)
+
+    check.is_instance(wrapped._parent_instance, transforms.zeroing.Instance)
+
+
 def test_bitflip_lift_restores_original_variables() -> None:
     instance, _ = bipartisable_negative_qubo()
     solution = solving.brute_force.solve(instance)

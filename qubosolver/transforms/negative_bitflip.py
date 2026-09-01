@@ -411,7 +411,6 @@ class Instance(qubosolver.Instance):
             if with_tag:
                 io_utils.save_string(f, Instance._tag())
             qubosolver.Instance._save(f, instance, with_tag=False)
-            type(instance._parent_instance).save(f, instance._parent_instance)
 
             buffer = io.BytesIO()
             torch.save(instance.flips, buffer)
@@ -421,6 +420,7 @@ class Instance(qubosolver.Instance):
                 {"status": instance.status, "offset": instance.offset, "metrics": instance.metrics}
             )
             io_utils.save_string(f, state_json)
+            type(instance._parent_instance).save(f, instance._parent_instance)
 
     @staticmethod
     def _load(file_like: io_utils.FileLike[bytes], *, with_tag: bool) -> Instance:
@@ -444,11 +444,8 @@ class Instance(qubosolver.Instance):
                     raise ValueError(
                         f"Cannot load negative_bitflip.Instance: expected tag {Instance._tag()!r}, got {tag!r}."
                     )
-            base_instance = qubosolver.Instance._load(f, with_tag=False)
-            parent_instance = _load_by_tag(f)
 
-            instance = Instance(parent_instance)
-            instance._matrix = base_instance.matrix
+            instance = Instance(qubosolver.Instance._load(f, with_tag=False))
 
             buffer = io.BytesIO(io_utils.load_sized_buffer(f))
             instance.flips = torch.load(buffer, weights_only=True)
@@ -457,6 +454,8 @@ class Instance(qubosolver.Instance):
             instance.status = state["status"]
             instance.offset = state["offset"]
             instance.metrics = state["metrics"]
+
+            instance._parent_instance = _load_by_tag(f)
 
         return instance
 

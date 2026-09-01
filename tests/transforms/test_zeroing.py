@@ -50,6 +50,19 @@ def positive_qubo() -> Instance:
     )
 
 
+def test_init_preserves_the_parent_instance_type() -> None:
+    # __init__ deep-copies parent_instance into _parent_instance; if that
+    # parent is itself a transform subclass (e.g. negative_bitflip.Instance),
+    # the copy must keep that concrete type, not collapse to the base
+    # qubosolver.Instance.
+    instance = non_bipartisable_negative_qubo_for_bitflip()
+    flipped_parent = transforms.negative_bitflip.apply(instance)
+
+    wrapped = transforms.zeroing.Instance(flipped_parent)
+
+    check.is_instance(wrapped._parent_instance, transforms.negative_bitflip.Instance)
+
+
 def test_apply_removes_all_negative_offdiagonals() -> None:
     instance = non_bipartisable_negative_qubo()
     check.is_true(_has_negative_offdiagonal(instance.matrix))

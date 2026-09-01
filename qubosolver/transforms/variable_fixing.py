@@ -122,9 +122,9 @@ class Instance(qubosolver.Instance):
             if with_tag:
                 io_utils.save_string(f, Instance._tag())
             qubosolver.Instance._save(f, instance, with_tag=False)
-            type(instance._parent_instance).save(f, instance._parent_instance)
             fixed_var_json = json.dumps(instance._fixed_indices)
             io_utils.save_string(f, fixed_var_json)
+            type(instance._parent_instance).save(f, instance._parent_instance)
 
     @staticmethod
     def _load(file_like: io_utils.FileLike[bytes], *, with_tag: bool) -> Instance:
@@ -153,9 +153,9 @@ class Instance(qubosolver.Instance):
                         f"Cannot load variable_fixing.Instance: expected tag {Instance._tag()!r}, got {tag!r}."
                     )
             instance = Instance(qubosolver.Instance._load(f, with_tag=False))
-            instance._parent_instance = _load_by_tag(f)
             fixed_var_json = io_utils.load_string(f)
             instance._fixed_indices = json.loads(fixed_var_json, object_hook=decode_int_keys)
+            instance._parent_instance = _load_by_tag(f)
 
         return instance
 
