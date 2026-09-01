@@ -27,6 +27,7 @@ import torch
 
 import qubosolver
 from qubosolver.types import Matrix, Solution, Vectori, vector, vectori
+from qubosolver.types.instance import _load_by_tag
 from qubosolver._io import utils as io_utils
 
 
@@ -54,6 +55,64 @@ class Instance(qubosolver.Instance):
         QUBO matrix, holding the original values at zeroed positions and 0 elsewhere."""
 
     @staticmethod
+    def _save(file_like: io_utils.FileLike[bytes], instance: qubosolver.Instance, *, with_tag: bool) -> None:
+        """Serialize a zeroing [`Instance`][zeroing.Instance] (including the removed coefficients) to `file_like`.
+
+        Args:
+            file_like: Binary-writable file-like object or path.
+            instance: The instance to save.
+            with_tag: Whether to write [`_tag`][] before the rest of the state.
+
+        Raises:
+            TypeError: If `instance` is not a [`zeroing.Instance`][].
+        """
+        if not isinstance(instance, Instance):
+            raise TypeError("Input must be an instance of zeroing.Instance.")
+
+        with io_utils.open(file_like, "wb") as f:
+            if with_tag:
+                io_utils.save_string(f, Instance._tag())
+            qubosolver.Instance._save(f, instance, with_tag=False)
+            type(instance._parent_instance).save(f, instance._parent_instance)
+
+            buffer = io.BytesIO()
+            torch.save(instance.negative_matrix, buffer)
+            io_utils.save_sized_buffer(f, buffer.getbuffer())
+
+    @staticmethod
+    def _load(file_like: io_utils.FileLike[bytes], *, with_tag: bool) -> Instance:
+        """Deserialize a zeroing [`Instance`][zeroing.Instance] (including the removed coefficients) from `file_like`.
+
+        Args:
+            file_like: Binary-readable file-like object or path produced by `save`.
+            with_tag: Whether to read and validate [`_tag`][] before the rest of the state.
+
+        Returns:
+            The reconstructed instance.
+
+        Raises:
+            ValueError: If `with_tag` is set and the stream's type tag does
+                not match [`_tag`][].
+        """
+        with io_utils.open(file_like, "rb") as f:
+            if with_tag:
+                tag = io_utils.load_string(f)
+                if tag != Instance._tag():
+                    raise ValueError(
+                        f"Cannot load zeroing.Instance: expected tag {Instance._tag()!r}, got {tag!r}."
+                    )
+            base_instance = qubosolver.Instance._load(f, with_tag=False)
+            parent_instance = _load_by_tag(f)
+
+            instance = Instance(parent_instance)
+            instance._matrix = base_instance.matrix
+
+            buffer = io.BytesIO(io_utils.load_sized_buffer(f))
+            instance.negative_matrix = torch.load(buffer, weights_only=True)
+
+        return instance
+
+    @staticmethod
     def save(file_like: io_utils.FileLike[bytes], instance: qubosolver.Instance) -> None:
         """Serialize a zeroing [`Instance`][zeroing.Instance] (including the removed coefficients) to `file_like`.
 
@@ -64,16 +123,7 @@ class Instance(qubosolver.Instance):
         Raises:
             TypeError: If `instance` is not a [`zeroing.Instance`][].
         """
-        if not isinstance(instance, Instance):
-            raise TypeError("Input must be an instance of zeroing.Instance.")
-
-        with io_utils.open(file_like, "wb") as f:
-            qubosolver.Instance.save(f, instance)
-            qubosolver.Instance.save(f, instance._parent_instance)
-
-            buffer = io.BytesIO()
-            torch.save(instance.negative_matrix, buffer)
-            io_utils.save_sized_buffer(f, buffer.getbuffer())
+        Instance._save(file_like, instance, with_tag=True)
 
     @staticmethod
     def load(file_like: io_utils.FileLike[bytes]) -> Instance:
@@ -84,18 +134,11 @@ class Instance(qubosolver.Instance):
 
         Returns:
             The reconstructed instance.
+
+        Raises:
+            ValueError: If the stream's type tag does not match [`_tag`][].
         """
-        with io_utils.open(file_like, "rb") as f:
-            base_instance = qubosolver.Instance.load(f)
-            parent_instance = qubosolver.Instance.load(f)
-
-            instance = Instance(parent_instance)
-            instance._matrix = base_instance.matrix
-
-            buffer = io.BytesIO(io_utils.load_sized_buffer(f))
-            instance.negative_matrix = torch.load(buffer, weights_only=True)
-
-        return instance
+        return Instance._load(file_like, with_tag=True)
 
     @property
     def zeroed_edges(self) -> Vectori:

@@ -38,6 +38,7 @@ import torch
 
 import qubosolver
 from qubosolver.types import Solution, vector, Matrix, Bitstrings, Bitstring, bitstring
+from qubosolver.types.instance import _load_by_tag
 from qubosolver._io import utils as io_utils
 
 logger = logging.getLogger(__name__)
@@ -392,12 +393,13 @@ class Instance(qubosolver.Instance):
         """Constant term relating the flipped and original QUBO costs, $x^T Q x = y^T Q_{flipped} y + offset$."""
 
     @staticmethod
-    def save(file_like: io_utils.FileLike[bytes], instance: qubosolver.Instance) -> None:
+    def _save(file_like: io_utils.FileLike[bytes], instance: qubosolver.Instance, *, with_tag: bool) -> None:
         """Serialize a negative-bitflip [`Instance`][negative_bitflip.Instance] (including flip state) to `file_like`.
 
         Args:
             file_like: Binary-writable file-like object or path.
             instance: The instance to save.
+            with_tag: Whether to write [`_tag`][] before the rest of the state.
 
         Raises:
             TypeError: If `instance` is not a [`negative_bitflip.Instance`][].
@@ -406,8 +408,10 @@ class Instance(qubosolver.Instance):
             raise TypeError("Input must be an instance of negative_bitflip.Instance.")
 
         with io_utils.open(file_like, "wb") as f:
-            qubosolver.Instance.save(f, instance)
-            qubosolver.Instance.save(f, instance._parent_instance)
+            if with_tag:
+                io_utils.save_string(f, Instance._tag())
+            qubosolver.Instance._save(f, instance, with_tag=False)
+            type(instance._parent_instance).save(f, instance._parent_instance)
 
             buffer = io.BytesIO()
             torch.save(instance.flips, buffer)
@@ -419,18 +423,29 @@ class Instance(qubosolver.Instance):
             io_utils.save_string(f, state_json)
 
     @staticmethod
-    def load(file_like: io_utils.FileLike[bytes]) -> Instance:
+    def _load(file_like: io_utils.FileLike[bytes], *, with_tag: bool) -> Instance:
         """Deserialize a negative-bitflip [`Instance`][negative_bitflip.Instance] (including flip state) from `file_like`.
 
         Args:
             file_like: Binary-readable file-like object or path produced by `save`.
+            with_tag: Whether to read and validate [`_tag`][] before the rest of the state.
 
         Returns:
             The reconstructed instance.
+
+        Raises:
+            ValueError: If `with_tag` is set and the stream's type tag does
+                not match [`_tag`][].
         """
         with io_utils.open(file_like, "rb") as f:
-            base_instance = qubosolver.Instance.load(f)
-            parent_instance = qubosolver.Instance.load(f)
+            if with_tag:
+                tag = io_utils.load_string(f)
+                if tag != Instance._tag():
+                    raise ValueError(
+                        f"Cannot load negative_bitflip.Instance: expected tag {Instance._tag()!r}, got {tag!r}."
+                    )
+            base_instance = qubosolver.Instance._load(f, with_tag=False)
+            parent_instance = _load_by_tag(f)
 
             instance = Instance(parent_instance)
             instance._matrix = base_instance.matrix
@@ -444,6 +459,34 @@ class Instance(qubosolver.Instance):
             instance.metrics = state["metrics"]
 
         return instance
+
+    @staticmethod
+    def save(file_like: io_utils.FileLike[bytes], instance: qubosolver.Instance) -> None:
+        """Serialize a negative-bitflip [`Instance`][negative_bitflip.Instance] (including flip state) to `file_like`.
+
+        Args:
+            file_like: Binary-writable file-like object or path.
+            instance: The instance to save.
+
+        Raises:
+            TypeError: If `instance` is not a [`negative_bitflip.Instance`][].
+        """
+        Instance._save(file_like, instance, with_tag=True)
+
+    @staticmethod
+    def load(file_like: io_utils.FileLike[bytes]) -> Instance:
+        """Deserialize a negative-bitflip [`Instance`][negative_bitflip.Instance] (including flip state) from `file_like`.
+
+        Args:
+            file_like: Binary-readable file-like object or path produced by `save`.
+
+        Returns:
+            The reconstructed instance.
+
+        Raises:
+            ValueError: If the stream's type tag does not match [`_tag`][].
+        """
+        return Instance._load(file_like, with_tag=True)
 
 
 def apply(

@@ -9,6 +9,20 @@ from qubosolver import Instance, Solution, transforms, bitstrings, matrix, vecto
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
 
+def non_bipartisable_negative_qubo_for_bitflip() -> Instance:
+    """QUBO where bit flips reduce but do not remove all negative coefficients."""
+    return Instance(
+        matrix.tensor(
+            [
+                [0.0, -2.0, 1.0, 1.0],
+                [-2.0, 0.0, -2.0, 1.0],
+                [1.0, -2.0, 0.0, -2.0],
+                [1.0, 1.0, -2.0, 0.0],
+            ]
+        )
+    )
+
+
 def non_bipartisable_negative_qubo() -> Instance:
     """QUBO where bit flips reduce but do not remove all negative coefficients."""
     return Instance(
@@ -151,6 +165,28 @@ def test_load_of_saved_zeroing_instance_can_be_lifted() -> None:
     torch.testing.assert_close(restored.costs, expected.costs)
     torch.testing.assert_close(restored.counts, expected.counts)
     torch.testing.assert_close(restored.probabilities, expected.probabilities)
+
+
+def test_save_load_roundtrips_zeroing_over_negative_bitflip_parent() -> None:
+    # zeroing.Instance.save/load dispatches on the parent's actual type (via
+    # type(...).save / _load_by_tag), so a parent that is itself a richer
+    # subclass (e.g. negative_bitflip.Instance) must round-trip with its own
+    # state (flips, status, offset, metrics) intact, not collapse to a plain
+    # base Instance.
+    instance = non_bipartisable_negative_qubo_for_bitflip()
+    flipped_parent = transforms.negative_bitflip.apply(instance)
+    zeroed = transforms.zeroing.apply(flipped_parent)
+
+    buffer = io.BytesIO()
+    transforms.zeroing.Instance.save(buffer, zeroed)
+    buffer.seek(0)
+    loaded = transforms.zeroing.Instance.load(buffer)
+
+    check.is_instance(loaded._parent_instance, transforms.negative_bitflip.Instance)
+    torch.testing.assert_close(loaded._parent_instance.matrix, flipped_parent.matrix)
+    torch.testing.assert_close(loaded._parent_instance.flips, flipped_parent.flips)
+    check.equal(loaded._parent_instance.status, flipped_parent.status)
+    check.equal(loaded._parent_instance.offset, flipped_parent.offset)
 
 
 def test_apply_does_not_alias_the_parent_instance() -> None:
