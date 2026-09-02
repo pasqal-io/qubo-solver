@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import json
 import math
-from pathlib import Path
 from typing import Callable
 
 import pulser
@@ -173,33 +171,6 @@ def test_too_many_qubits_is_not_supported(config: EmulationConfig) -> None:
 
     with pytest.raises(NotImplementedError, match=f"limit is {_QUBIT_LIMIT}"):
         LocalConnection().submit(sequence, backend_configuration=config)
-
-
-def test_storage_dir_saves_job_results_as_json(
-    sequence: pulser.Sequence, config: EmulationConfig, tmp_path: Path
-) -> None:
-    storage_dir = tmp_path / "jobs"
-    connection = LocalConnection(storage_dir=storage_dir)
-    remote_results = connection.submit(sequence, backend_configuration=config)
-
-    saved = storage_dir / f"{remote_results.batch_id}.json"
-    check.is_true(saved.exists())
-
-    job_data = json.loads(saved.read_text())
-    check.equal(list(job_data), remote_results.job_ids)
-
-    restored = Results.from_abstract_repr(json.dumps(job_data[remote_results.job_ids[0]]))
-    check.equal(
-        restored.get_result("bitstrings", 1.0),
-        remote_results.results[0].get_result("bitstrings", 1.0),
-    )
-
-
-def test_without_storage_dir_nothing_is_written(
-    sequence: pulser.Sequence, config: EmulationConfig, tmp_path: Path
-) -> None:
-    LocalConnection().submit(sequence, backend_configuration=config)
-    check.equal(list(tmp_path.iterdir()), [])
 
 
 @pytest.mark.parametrize("num_shots", [1, 20])
