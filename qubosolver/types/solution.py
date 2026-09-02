@@ -326,11 +326,15 @@ class Solution:
         else:
             counts = torch.cat([s.counts for s in non_empty], dim=0)
 
-        return Solution(
-            bitstrings=bitstrings,
-            costs=torch.cat([s.costs for s in non_empty], dim=0),
-            counts=counts,
-        )._sort_by_cost()._compute_probabilities()
+        return (
+            Solution(
+                bitstrings=bitstrings,
+                costs=torch.cat([s.costs for s in non_empty], dim=0),
+                counts=counts,
+            )
+            ._sort_by_cost()
+            ._compute_probabilities()
+        )
 
     @staticmethod
     def from_results(results: Results, instance: Instance) -> Solution:
@@ -352,9 +356,7 @@ class Solution:
             default shape inferred from an empty list, avoiding shape ambiguity.
         """
         counter = results.final_bitstrings
-        bitstrings = _bitstrings.tensor(
-            [list(map(int, list(b))) for b in list(counter.keys())]
-        )
+        bitstrings = _bitstrings.tensor([list(map(int, list(b))) for b in list(counter.keys())])
         if bitstrings.numel() == 0:
             bitstrings = _bitstrings.zeros(0, 0)
         counts = vectori.tensor(list(map(int, list(counter.values()))))
@@ -381,6 +383,7 @@ class Solution:
             ```
         """
         with io_utils.open(file_like, "wb") as f:
+            io_utils.save_header(f)
             buffer = io.BytesIO()
             torch.save(
                 {
@@ -405,6 +408,9 @@ class Solution:
         Returns:
             A new solution with the tensor fields deserialized from `file_like`.
 
+        Raises:
+            ValueError: If the stream is not a qubosolver file.
+
         Note:
             [`torch.load`][] is called with `weights_only=True` to prevent
             arbitrary code execution from untrusted checkpoint files.
@@ -418,6 +424,7 @@ class Solution:
             ```
         """
         with io_utils.open(file_like, "rb") as f:
+            io_utils.load_header(f)
             # torch.load might consume too much of the src buffer.
             # Use a dedicated limited buffer
             buffer = io.BytesIO(io_utils.load_sized_buffer(f))
@@ -430,7 +437,9 @@ class Solution:
             probabilities=data["probabilities"],
         )
 
-    def check_consistency(self, *, instance: Instance | None = None, throw: bool = False, full: bool = True) -> bool:
+    def check_consistency(
+        self, *, instance: Instance | None = None, throw: bool = False, full: bool = True
+    ) -> bool:
         """Check internal consistency of this solution against a QUBO instance.
 
         Recomputes costs from `bitstrings` and `instance.matrix` and checks

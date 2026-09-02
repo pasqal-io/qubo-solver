@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import pytest
 import pytest_check as check
 import torch
@@ -105,3 +106,44 @@ def test_dataset_generation(negative_offdiag_rate: float) -> None:
                 assert negative_off_diag.sum().item() == int(negative_offdiag_rate * size) * 2
         else:
             assert torch.all(qubo.matrix[off_diag] >= 0)
+
+
+def test_save_load_to_a_path_preserves_nested_solutions(tmp_path: Path) -> None:
+    # Solutions are written into the dataset's own already-open stream. Saving
+    # to a *path* previously reopened that path once per solution, truncating
+    # everything written before it.
+    dataset = Dataset(
+        matrices=torch.stack([torch.eye(2), torch.eye(2)], dim=-1),
+        solutions=[
+            Solution(
+                bitstrings=bitstrings.tensor([[1, 0]]),
+                costs=vector.tensor([1.0]),
+                counts=vectori.tensor([2]),
+                probabilities=vector.tensor([1.0]),
+            ),
+            Solution(
+                bitstrings=bitstrings.tensor([[0, 1]]),
+                costs=vector.tensor([2.0]),
+                counts=vectori.tensor([5]),
+                probabilities=vector.tensor([1.0]),
+            ),
+        ],
+    )
+
+    file_path = tmp_path / "dataset.bin"
+    Dataset.save(file_path, dataset)
+    loaded = Dataset.load(file_path)
+
+    check.equal(len(loaded), 2)
+    check.equal(len(loaded.solutions), 2)
+    for original, roundtripped in zip(dataset.solutions, loaded.solutions):
+        check.is_true(torch.equal(roundtripped.bitstrings, original.bitstrings))
+        check.is_true(torch.allclose(roundtripped.costs, original.costs))
+        check.is_true(torch.equal(roundtripped.counts, original.counts))
+
+
+def test_load_rejects_a_stream_that_is_not_a_qubosolver_file() -> None:
+    buffer = io.BytesIO(b"not a qubosolver file at all")
+
+    with pytest.raises(ValueError, match="Not a qubosolver file"):
+        Dataset.load(buffer)

@@ -182,6 +182,7 @@ class Instance:
             ```
         """
         with io_utils.open(file_like, "wb") as f:
+            io_utils.save_header(f)
             io_utils.save_string(f, self._tag())
             self._write_body(f)
 
@@ -203,7 +204,8 @@ class Instance:
             A new instance of whichever concrete type wrote the tag.
 
         Raises:
-            ValueError: If the stream's type tag is missing or unrecognized.
+            ValueError: If the stream is not a qubosolver file, or if its type
+                tag is missing or unrecognized.
             TypeError: If the loaded instance is not a `cls`.
 
         Example:
@@ -215,6 +217,7 @@ class Instance:
             ```
         """
         with io_utils.open(file_like, "rb") as f:
+            io_utils.load_header(f)
             tag = io_utils.load_string(f)
             target_cls = Instance._registry.get(tag)
             if target_cls is None:
@@ -242,7 +245,9 @@ class Instance:
             TypeError: If ``self`` is not an instance of *cls*.
         """
         if not isinstance(self, cls):
-            raise TypeError(f"Expected a {cls.__module__}.{cls.__qualname__}, got {type(self).__name__}.")
+            raise TypeError(
+                f"Expected a {cls.__module__}.{cls.__qualname__}, got {type(self).__name__}."
+            )
         return self
 
     @property

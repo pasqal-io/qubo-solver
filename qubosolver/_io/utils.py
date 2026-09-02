@@ -2,12 +2,29 @@ from __future__ import annotations
 
 import builtins
 import io
+import logging
 import os
 import struct
 from contextlib import nullcontext
+from importlib.metadata import version
 
 from typing import overload, Sized
 from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING, TYPE_CHECKING
+
+logger = logging.getLogger(__name__)
+
+_MAGIC = b"QUBOSLVR"
+"""Identifies a stream as written by this library, so a foreign or corrupt file
+fails immediately with a clear error instead of being misread as valid data."""
+
+_MAX_BUFFER_SIZE = 1 << 30
+"""Ceiling (1 GiB) on a single length-prefixed payload, checked before allocating.
+Keeps a corrupt or hostile size prefix from triggering a huge allocation."""
+
+_MAX_STRING_SIZE = 1 << 10
+"""Ceiling (1 KiB) on a length-prefixed string: ~1000 ASCII characters, fewer
+if multibyte. Strings in these formats are type tags and version numbers, the
+longest around 50 bytes."""
 
 if TYPE_CHECKING:
     from typing import Any, Union, IO, Literal, TypeVar
@@ -102,22 +119,31 @@ def save_sized_buffer(output: IO[bytes], buffer: Buffer) -> None:
     output.write(buffer)
 
 
-def load_sized_buffer(src: IO[bytes]) -> bytes:
+def load_sized_buffer(src: IO[bytes], *, max_size: int = _MAX_BUFFER_SIZE) -> bytes:
     """Read a length-prefixed buffer previously written by `save_sized_buffer`.
 
     Args:
         src: A binary input stream to read the sized buffer from.
+        max_size: Reject a size prefix larger than this, before reading. Guards
+            against a corrupt or hostile prefix causing a huge allocation.
 
     Returns:
         bytes: The buffer data that was read from the stream.
 
     Raises:
+        ValueError: If the size prefix exceeds `max_size`.
         EOFError: If fewer bytes are available than required by the size prefix
                  or if the stream ends before the complete buffer is read.
         struct.error: If the size prefix cannot be unpacked as an unsigned int.
     """
     size_fmt = ">I"
     length = struct.unpack(size_fmt, read_exact(src, struct.calcsize(size_fmt)))[0]
+    # Checked before `read_exact` so an implausible prefix is rejected rather
+    # than allocated.
+    if length > max_size:
+        raise ValueError(
+            f"Refusing to read a {length}-byte payload: exceeds the {max_size}-byte limit."
+        )
     return read_exact(src, length)
 
 
@@ -142,7 +168,9 @@ def save_string(output: IO[bytes], string: str, *, encoding: str = "utf-8") -> N
     save_sized_buffer(output, string.encode(encoding))
 
 
-def load_string(src: IO[bytes], *, encoding: str = "utf-8") -> str:
+def load_string(
+    src: IO[bytes], *, encoding: str = "utf-8", max_size: int = _MAX_STRING_SIZE
+) -> str:
     """Read a length-prefixed, encoded string previously written by `save_string`.
 
     Args:
@@ -150,18 +178,80 @@ def load_string(src: IO[bytes], *, encoding: str = "utf-8") -> str:
         encoding: The character encoding to use when converting the bytes
                  back to a string. Defaults to "utf-8". Must match the
                  encoding used when the string was saved.
+        max_size: Reject a size prefix larger than this, before reading.
 
     Returns:
         str: The decoded string that was read from the stream.
 
     Raises:
+        ValueError: If the size prefix exceeds `max_size`.
         EOFError: If fewer bytes are available than required by the size prefix
                  or if the stream ends before the complete string is read.
         UnicodeDecodeError: If the bytes cannot be decoded using the
                            specified encoding.
         struct.error: If the size prefix cannot be unpacked as an unsigned int.
     """
-    return load_sized_buffer(src).decode(encoding)
+    return load_sized_buffer(src, max_size=max_size).decode(encoding)
+
+
+def _package_version() -> str:
+    """Version of this package, as written into file headers by `save_header`.
+
+    Read from the installed distribution metadata rather than
+    `qubosolver.__version__`, because `qubosolver/__init__.py` imports this
+    module transitively and importing it back would be circular.
+    """
+    return version("qubo-solver")
+
+
+def save_header(output: IO[bytes]) -> None:
+    """Write the format header: magic bytes followed by this package's version.
+
+    Written once at the start of a file by the outermost `save`. Nested
+    objects (e.g. a `Solution` inside a `Dataset`) do not carry their own
+    header.
+
+    Args:
+        output: A binary output stream to write the header to.
+    """
+    output.write(_MAGIC)
+    save_string(output, _package_version())
+
+
+def load_header(src: IO[bytes]) -> str:
+    """Read and validate a header written by `save_header`.
+
+    A wrong magic is a hard error: the stream is not one of ours, so reading
+    on would misinterpret arbitrary bytes. A version mismatch is only a
+    warning — these formats are deliberately not versioned, so the writer's
+    version is recorded purely to make a later failure easier to diagnose.
+
+    Args:
+        src: A binary input stream positioned at the start of the header.
+
+    Returns:
+        str: The version of the package that wrote the stream.
+
+    Raises:
+        ValueError: If the magic bytes are missing or do not match.
+        EOFError: If the stream ends inside the header.
+    """
+    magic = read_exact(src, len(_MAGIC))
+    if magic != _MAGIC:
+        raise ValueError(f"Not a qubosolver file: expected magic {_MAGIC!r}, got {magic!r}.")
+    writer_version = load_string(src)
+    current_version = _package_version()
+    # Compared by equality only. Ordering PEP 440 strings would imply a
+    # compatibility guarantee that these formats do not offer.
+    if writer_version != current_version:
+        logger.warning(
+            "Reading a file written by qubosolver %s using qubosolver %s. "
+            "This format is not versioned, so a mismatch may surface as a "
+            "confusing error or as wrong values.",
+            writer_version,
+            current_version,
+        )
+    return writer_version
 
 
 @overload

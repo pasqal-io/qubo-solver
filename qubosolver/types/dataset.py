@@ -20,7 +20,7 @@ from .random import torch_rng
 from qubosolver._io import utils as io_utils
 
 
-class Dataset():
+class Dataset:
     """A dataset of QUBO instances.
 
     Each instance is represented by a square matrix $Q$ such that the
@@ -238,7 +238,6 @@ class Dataset():
         # Step 4: Return the dataset.
         return cls(matrices=coefficients, copy=False)
 
-
     @staticmethod
     def save(file_like: io_utils.FileLike[bytes], dataset: Dataset) -> None:
         """Persist a dataset to disk using [`torch.save`][].
@@ -256,12 +255,15 @@ class Dataset():
             ```
         """
         with io_utils.open(file_like, "wb") as f:
+            io_utils.save_header(f)
             buffer = io.BytesIO()
             torch.save(dataset.matrices, buffer)
             io_utils.save_sized_buffer(f, buffer.getbuffer())
             io_utils.save(f, ">I", len(dataset.solutions))
+            # Written into the already-open stream *f*, not into `file_like`:
+            # re-opening a path here would truncate everything written above.
             for s in dataset.solutions:
-                Solution.save(file_like, s)
+                Solution.save(f, s)
 
     @staticmethod
     def load(file_like: io_utils.FileLike[bytes]) -> Dataset:
@@ -274,6 +276,9 @@ class Dataset():
         Returns:
             The deserialized dataset, including solutions if they were present when the file was saved.
 
+        Raises:
+            ValueError: If the stream is not a qubosolver file.
+
         Example:
             ```python
             from pathlib import Path
@@ -283,12 +288,13 @@ class Dataset():
             ```
         """
         with io_utils.open(file_like, "rb") as f:
+            io_utils.load_header(f)
             # torch.load might consume too much of the src buffer.
             #  Use a dedicated limited buffer
             buffer = io.BytesIO(io_utils.load_sized_buffer(f))
             matrices = torch.load(buffer, weights_only=True)
             n = io_utils.load(f, ">I")
-            solutions = [ Solution.load(f) for _ in range(n) ]
+            solutions = [Solution.load(f) for _ in range(n)]
 
         return Dataset(matrices, solutions, copy=False)
 

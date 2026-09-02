@@ -586,6 +586,13 @@ def test_save_load() -> None:
     check.is_true(torch.allclose(loaded.probabilities, solution.probabilities))
 
 
+def test_load_rejects_a_stream_that_is_not_a_qubosolver_file() -> None:
+    buffer = io.BytesIO(b"not a qubosolver file at all")
+
+    with pytest.raises(ValueError, match="Not a qubosolver file"):
+        Solution.load(buffer)
+
+
 def test_concat_mixed_populated_and_empty_counts_raises() -> None:
     a = Solution(
         bitstrings=bitstrings.tensor([[1, 0]]),
