@@ -246,7 +246,7 @@ def test_empty_qubo_after_preprocessing(classical_method: _ClassicalAlgorithm) -
     )
     config = SolverConfig(
         solving=classical_config,
-        do_preprocessing=True,
+        preprocessing=True,
         activate_trivial_solutions=False,
     )
 

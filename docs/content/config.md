@@ -37,8 +37,8 @@ We can also apply preprocessing of the QUBO instance (to reduce it to another sm
 
 | Field         | Type          | Description |
 |---------------|---------------|-------------|
-| `do_postprocessing`    | `bool` | Whether we apply post-processing (`True`) or not (`False`). |
-| `do_preprocessing`    | `bool` | Whether we apply pre-processing (`True`) or not (`False`). |
+| `postprocessing`    | `bool` | Whether we apply post-processing (`True`) or not (`False`). |
+| `preprocessing`    | `bool` | Whether we apply pre-processing (`True`) or not (`False`). |
 
 ---
 

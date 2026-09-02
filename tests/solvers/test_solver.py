@@ -121,8 +121,8 @@ def test_solver_different_devices(
     )
     config = SolverConfig(
         solving=quantum_config,
-        do_postprocessing=False,
-        do_preprocessing=False,
+        postprocessing=False,
+        preprocessing=False,
     )
     solver = Solver(qubo_for_testing_many_devices, config)
     solution = solver.solve()
@@ -219,7 +219,7 @@ def trivial_triangular_qubo(connection: Optional[RemoteConnection] = None) -> So
             embedding=EmbeddingConfig(algorithm="blade"),
             backend=backend,
         ),
-        do_preprocessing=False,
+        preprocessing=False,
     )
 
     solver = Solver(qubo, config)
@@ -327,8 +327,8 @@ def test_quantum_matches_classical_triangular(algorithm: _EmbeddingAlgorithm) ->
             embedding=EmbeddingConfig(algorithm=algorithm),
             drive_shaping=DriveShapingConfig(algorithm="proportional_diagonal"),
         ),
-        do_preprocessing=False,
-        do_postprocessing=False,
+        preprocessing=False,
+        postprocessing=False,
     )
     quantum_solution = Solver(instance, quantum_config).solve()
     quantum_solution._sort_by_cost()

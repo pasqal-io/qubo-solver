@@ -171,8 +171,8 @@ def test_quantum_solve(
             drive_shaping=drive_shaping_config,
             device=qoolqit.AnalogDevice(),
         ),
-        do_postprocessing=postprocessing,
-        do_preprocessing=preprocessing,
+        postprocessing=postprocessing,
+        preprocessing=preprocessing,
     )
 
     solver = Solver(qubo, config)
@@ -223,8 +223,8 @@ def test_classical_solve(
 
     config = SolverConfig(
         solving=classical_config,
-        do_postprocessing=postprocessing,
-        do_preprocessing=preprocessing,
+        postprocessing=postprocessing,
+        preprocessing=preprocessing,
     )
 
     solver = Solver(qubo, config)

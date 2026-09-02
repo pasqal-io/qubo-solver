@@ -49,9 +49,9 @@ class SolverConfig():
         solving: Whether to solve using a quantum approach ([`QuantumSolvingConfig`][])
             or a classical approach ([`ClassicalSolvingConfig`][]), together with
             the configuration of that approach. Defaults to a `QuantumSolvingConfig`.
-        do_postprocessing: Whether we apply post-processing (`True`) or not
+        postprocessing: Whether we apply post-processing (`True`) or not
             (`False`). Defaults to `False`.
-        do_preprocessing: Whether we apply pre-processing (`True`) or not
+        preprocessing: Whether we apply pre-processing (`True`) or not
             (`False`). Defaults to `False`.
         activate_trivial_solutions: Whether to calculate trivial solutions
             (`True`) or not (`False`). Defaults to `True`.
@@ -64,8 +64,8 @@ class SolverConfig():
 
     config_name: str = ""
     solving: QuantumSolvingConfig | ClassicalSolvingConfig = field(default_factory=QuantumSolvingConfig)
-    do_postprocessing: bool = False
-    do_preprocessing: bool = False
+    postprocessing: bool = False
+    preprocessing: bool = False
     activate_trivial_solutions: bool = True
     decompose: DecompositionConfig | None = None
     postprocessing_time_limit: float = float("inf")

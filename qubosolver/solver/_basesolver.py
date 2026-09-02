@@ -181,9 +181,9 @@ class BaseSolver(ABC):
         Runs variable-fixing first, then GLPK bit-flip preprocessing
         to remove negative off-diagonal coefficients.
 
-        This method is a no-op when ``config.do_preprocessing`` is ``False``.
+        This method is a no-op when ``config.preprocessing`` is ``False``.
         """
-        if not self.config.do_preprocessing:
+        if not self.config.preprocessing:
             return
 
         instance: Instance = transforms.variable_fixing.apply_recursively(self.instance)
@@ -197,7 +197,7 @@ class BaseSolver(ABC):
         Reverses the preprocessing applied by [`_preprocess`][]: first undoes any
         bit flips, then re-inserts the fixed variable values into *solution*.
 
-        Returns *solution* unchanged when ``config.do_preprocessing`` is
+        Returns *solution* unchanged when ``config.preprocessing`` is
         ``False``.
 
         Args:
@@ -209,7 +209,7 @@ class BaseSolver(ABC):
             preprocessing was not applied.
         """
         # Means that preprocessing was not applied
-        if not self.config.do_preprocessing:
+        if not self.config.preprocessing:
             return solution
 
         # Unwind the preprocessing layers in reverse: bit flips, then
@@ -228,12 +228,12 @@ class BaseSolver(ABC):
     def _post_process(self, solution: Solution) -> Solution:
         """Improve a solution with iterative bit-flip local search.
 
-        When ``config.do_postprocessing`` is ``True``, applies
+        When ``config.postprocessing`` is ``True``, applies
         [`qubosolver.solvers.iterative_bitflip_local_search`][] to *solution*,
         which flips individual bits one at a time and accepts changes that
         reduce the QUBO cost.
 
-        Returns *solution* unchanged when ``config.do_postprocessing`` is
+        Returns *solution* unchanged when ``config.postprocessing`` is
         ``False``.
 
         Args:
@@ -244,7 +244,7 @@ class BaseSolver(ABC):
             The improved [`qubosolver.Solution`][], or the
             original *solution* if postprocessing is disabled.
         """
-        if not self.config.do_postprocessing:
+        if not self.config.postprocessing:
             return solution
 
         return solving.iterative_bitflip_local_search.solve(

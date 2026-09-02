@@ -136,11 +136,11 @@ class _QuboSolverQuantum(BaseSolver):
 
         super().__init__(instance, config or Config())
 
-        if _has_negative_offdiagonal(instance.matrix) and not self.config.do_preprocessing:
+        if _has_negative_offdiagonal(instance.matrix) and not self.config.preprocessing:
             logger.warning(
                 "Negative off-diagonal coefficients detected. Without preprocessing, this "
                 "instance will be embedded via automatic zeroing (an approximation). Set "
-                "config.do_preprocessing=True to try bit-flip preprocessing instead, which "
+                "config.preprocessing=True to try bit-flip preprocessing instead, which "
                 "is likely to give better results."
             )
 

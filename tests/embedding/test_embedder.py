@@ -23,8 +23,8 @@ def test_embeddings_different_devices(
             embedding=EmbeddingConfig(algorithm=embedding_method, greedy_layout_traps="device"),
             device=local_device,
         ),
-        do_postprocessing=False,
-        do_preprocessing=False,
+        postprocessing=False,
+        preprocessing=False,
     )
     solver = Solver(qubo_for_testing_many_devices, config)
     assert solver._embedding()

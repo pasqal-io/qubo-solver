@@ -36,7 +36,7 @@ def test_basic_qubo_2d_integration(postprocessing: bool) -> None:
     # fmt: on
 
     instance = Instance(matrix=Q)
-    solver = Solver(instance, SolverConfig(do_postprocessing=postprocessing))
+    solver = Solver(instance, SolverConfig(postprocessing=postprocessing))
     solution = Solution(
         bitstrings=bitstrings.tensor([[0, 0]]),
         costs=vector.tensor([0.0]),
