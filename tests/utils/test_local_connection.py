@@ -2,34 +2,31 @@ from __future__ import annotations
 
 import math
 from typing import Callable
+import torch
 
-import pulser
 import pytest
 import pytest_check as check
-import qoolqit
-import torch
+
+import pulser
 from pulser.backend import EmulationConfig
 from pulser.backend.default_observables import BitStrings
 from pulser.backend.remote import BatchStatus, JobStatus, RemoteResults, RemoteResultsError
 from pulser.backend.results import Results
 
-from qubosolver import Instance, RemoteEmulator, drive_shaping, matrix, vector
+import qoolqit
+from qoolqit.execution import Job, JobStatus, retrieve_remote_job, get_batch_id
+
+from qubosolver import Instance, RemoteEmulator, drive_shaping, matrix, vector, Solution, embedding, solving, analysis
 from qubosolver.utils._local_connection import _QUBIT_LIMIT, LocalConnection
 
 NUM_SHOTS = 50
 
 
 def _program(n_qubits: int) -> qoolqit.QuantumProgram:
-    """Build a compiled program on a compact square grid of `n_qubits` atoms."""
-    side = math.ceil(math.sqrt(n_qubits))
-    coordinates = matrix.tensor(
-        [[float(i % side), float(i // side)] for i in range(n_qubits)]
-    )
-    register = qoolqit.Register.from_coordinates(coordinates)
-    instance = Instance(
-        matrix.as_tensor(register.interaction_matrix())
-        + torch.diag(vector.tensor([-1.0] * n_qubits))
-    )
+    """Build a compiled program of `n_qubits` atoms."""
+    register = qoolqit.Register.circle(n_qubits)
+    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.zeros(n_qubits).fill_(-1.0))
+    instance = Instance(Q)
     device = qoolqit.AnalogDevice()
     drive = drive_shaping.proportional_diagonal.build_drive(
         instance, register, dmm=False, device=device
@@ -119,6 +116,29 @@ def test_unknown_batch_reports_error_status() -> None:
     check.equal(LocalConnection()._get_batch_status("unknown"), BatchStatus.ERROR)
 
 
+def test_job_params_are_ignored(sequence: pulser.Sequence, config: EmulationConfig) -> None:
+    """Document that `job_params` is dropped, unlike on a real connection.
+
+    A real connection runs one job per `job_params` entry, each sampled
+    `runs` times. Here the shot count comes from the emulation config only,
+    and a batch always holds a single job. Reachable by driving a pulser
+    remote backend directly, but not through [`RemoteEmulator`][], which
+    never sets `job_params`.
+    """
+    connection = LocalConnection()
+    remote_results = connection.submit(
+        sequence, job_params=[{"runs": 7}, {"runs": 7}], backend_configuration=config
+    )
+
+    # `runs` is dropped: NUM_SHOTS from the config is used instead of 7.
+    counts = remote_results.results[0].get_result("bitstrings", 1.0)
+    check.equal(sum(counts.values()), NUM_SHOTS)
+
+    # The second job is dropped too, rather than being executed.
+    check.equal(len(remote_results.job_ids), 1)
+    check.equal(len(remote_results.results), 1)
+
+
 @pytest.mark.parametrize(
     "lookup",
     [
@@ -181,3 +201,36 @@ def test_runs_through_remote_emulator(num_shots: int) -> None:
 
     counts = results.get_result(results.get_result_tags()[0], 1.0)
     check.equal(sum(counts.values()), num_shots)
+
+def test_end_to_end() -> None:
+
+    Q = matrix.tensor([
+        [-0.2, 0.0, 1.0],
+        [ 0.0, 0.0, 1.5],
+        [ 1.0, 1.5, 0.0],
+    ])
+    instance = Instance(Q)
+    connection = LocalConnection()
+    device = qoolqit.AnalogDevice()
+    backend = RemoteEmulator(connection=connection)
+
+    register = embedding.blade.embed(instance)
+    drive = drive_shaping.proportional_diagonal.build_drive(instance, register, device=device)
+    job = solving.analog_quantum_sampling.solve(register, drive, backend=backend, device=device)
+    check.equal(job.get_status(), JobStatus.DONE)
+
+    solution = Solution.from_results(job.results(), instance)
+    print("\nSolution:")
+    print(analysis.to_dataframe([solution]))
+
+    reloaded_job = retrieve_remote_job(connection, job.job_id(), batch_id=get_batch_id(job))
+    check.equal(reloaded_job.get_status(), JobStatus.DONE)
+
+    reloaded_solution = Solution.from_results(reloaded_job.results(), instance)
+    print("\nReloaded Solution:")
+    print(analysis.to_dataframe([reloaded_solution]))
+
+    torch.testing.assert_close(reloaded_solution.bitstrings, solution.bitstrings)
+    torch.testing.assert_close(reloaded_solution.costs, solution.costs)
+    torch.testing.assert_close(reloaded_solution.counts, solution.counts)
+    torch.testing.assert_close(reloaded_solution.probabilities, solution.probabilities)
