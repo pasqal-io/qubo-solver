@@ -190,11 +190,10 @@ class Instance:
     def load(cls, file_like: io_utils.FileLike[bytes]) -> Instance:
         """Deserialize an [`Instance`][] previously saved with [`save`][].
 
-        Called on a subclass (e.g. `variable_fixing.Instance.load(f)`), it
-        loads whatever concrete type was saved and additionally requires that
-        type to be `cls` (or a further subclass of it) — use
-        [`Instance.load`][] itself to accept any `Instance` type, narrowing
-        afterwards with a property such as [`variable_fixing`][].
+        Called on the base class [`qubosolver.Instance`][], it loads any instance with automatic dispatch.
+
+        Called on a subclass (e.g. [`variable_fixing.Instance.load(f)`][qubosolver.transforms.variable_fixing.Instance.load]),
+        it requires the loaded `Instance` be an instance of this subclass.
 
         Args:
             file_like: Source file path or readable binary file object,
@@ -214,6 +213,23 @@ class Instance:
 
             with Path("instance.bin").open("rb") as f:
                 instance = Instance.load(f)
+            ```
+
+        Example:
+            ```python
+            from pathlib import Path
+            from qubosolver.transforms import variable_fixing
+
+            file = Path("instance.bin")
+            instance = variable_fixing.Instance(Instance())
+
+            with file.open("wb") as f:
+                instance.save(f)
+
+            with file.open("rb") as f:
+                loaded = Instance.load(f) # OK if you don't care about strong typing
+                loaded = Instance.load(f).variable_fixing # Loads and then checks typing
+                loaded = variable_fixing.Instance.load(f) # Checks typing before loading, and fails if wrong type before loading
             ```
         """
         with io_utils.open(file_like, "rb") as f:
