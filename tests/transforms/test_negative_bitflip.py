@@ -340,7 +340,7 @@ def test_save_load_roundtrips_bitflip_state() -> None:
     flipped_instance = transforms.negative_bitflip.apply(instance)
 
     buffer = io.BytesIO()
-    transforms.negative_bitflip.Instance.save(buffer, flipped_instance)
+    flipped_instance.save(buffer)
     buffer.seek(0)
     loaded_instance = transforms.negative_bitflip.Instance.load(buffer)
 
@@ -363,7 +363,7 @@ def test_load_of_saved_bitflip_instance_can_be_lifted() -> None:
     flipped_solution = solving.brute_force.solve(flipped_instance)
 
     buffer = io.BytesIO()
-    transforms.negative_bitflip.Instance.save(buffer, flipped_instance)
+    flipped_instance.save(buffer)
     buffer.seek(0)
     loaded_instance = transforms.negative_bitflip.Instance.load(buffer)
 

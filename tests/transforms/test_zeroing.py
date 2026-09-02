@@ -149,7 +149,7 @@ def test_save_load_roundtrips_zeroing_state() -> None:
     zeroed = transforms.zeroing.apply(instance)
 
     buffer = io.BytesIO()
-    transforms.zeroing.Instance.save(buffer, zeroed)
+    zeroed.save(buffer)
     buffer.seek(0)
     loaded = transforms.zeroing.Instance.load(buffer)
 
@@ -166,7 +166,7 @@ def test_load_of_saved_zeroing_instance_can_be_lifted() -> None:
     zeroed = transforms.zeroing.apply(instance)
 
     buffer = io.BytesIO()
-    transforms.zeroing.Instance.save(buffer, zeroed)
+    zeroed.save(buffer)
     buffer.seek(0)
     loaded = transforms.zeroing.Instance.load(buffer)
 
@@ -191,7 +191,7 @@ def test_save_load_roundtrips_zeroing_over_negative_bitflip_parent() -> None:
     zeroed = transforms.zeroing.apply(flipped_parent)
 
     buffer = io.BytesIO()
-    transforms.zeroing.Instance.save(buffer, zeroed)
+    zeroed.save(buffer)
     buffer.seek(0)
     loaded = transforms.zeroing.Instance.load(buffer)
 

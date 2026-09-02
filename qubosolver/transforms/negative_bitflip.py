@@ -38,7 +38,6 @@ import torch
 
 import qubosolver
 from qubosolver.types import Solution, vector, Matrix, Bitstrings, Bitstring, bitstring
-from qubosolver.types.instance import _load_by_tag
 from qubosolver._io import utils as io_utils
 
 logger = logging.getLogger(__name__)
@@ -392,100 +391,34 @@ class Instance(qubosolver.Instance):
         self.offset: float = 0.0
         """Constant term relating the flipped and original QUBO costs, $x^T Q x = y^T Q_{flipped} y + offset$."""
 
-    @staticmethod
-    def _save(file_like: io_utils.FileLike[bytes], instance: qubosolver.Instance, *, with_tag: bool) -> None:
-        """Serialize a negative-bitflip [`Instance`][negative_bitflip.Instance] (including flip state) to `file_like`.
+    def _write_body(self, f: io_utils.FileLike[bytes]) -> None:
+        """Write the matrix, flip vector, solve metadata, and parent instance to `f`."""
+        super()._write_body(f)
 
-        Args:
-            file_like: Binary-writable file-like object or path.
-            instance: The instance to save.
-            with_tag: Whether to write [`_tag`][] before the rest of the state.
+        buffer = io.BytesIO()
+        torch.save(self.flips, buffer)
+        io_utils.save_sized_buffer(f, buffer.getbuffer())  # type: ignore[arg-type]
 
-        Raises:
-            TypeError: If `instance` is not a [`negative_bitflip.Instance`][].
-        """
-        if not isinstance(instance, Instance):
-            raise TypeError("Input must be an instance of negative_bitflip.Instance.")
+        state_json = json.dumps({"status": self.status, "offset": self.offset, "metrics": self.metrics})
+        io_utils.save_string(f, state_json)  # type: ignore[arg-type]
 
-        with io_utils.open(file_like, "wb") as f:
-            if with_tag:
-                io_utils.save_string(f, Instance._tag())
-            qubosolver.Instance._save(f, instance, with_tag=False)
+        self._parent_instance.save(f)  # type: ignore[arg-type]
 
-            buffer = io.BytesIO()
-            torch.save(instance.flips, buffer)
-            io_utils.save_sized_buffer(f, buffer.getbuffer())
+    @classmethod
+    def _read_body(cls, f: io_utils.FileLike[bytes]) -> Instance:
+        """Read back a negative-bitflip instance written by [`_write_body`][]."""
+        instance = Instance(qubosolver.Instance._read_body(f))
 
-            state_json = json.dumps(
-                {"status": instance.status, "offset": instance.offset, "metrics": instance.metrics}
-            )
-            io_utils.save_string(f, state_json)
-            type(instance._parent_instance).save(f, instance._parent_instance)
+        buffer = io.BytesIO(io_utils.load_sized_buffer(f))  # type: ignore[arg-type]
+        instance.flips = torch.load(buffer, weights_only=True)
 
-    @staticmethod
-    def _load(file_like: io_utils.FileLike[bytes], *, with_tag: bool) -> Instance:
-        """Deserialize a negative-bitflip [`Instance`][negative_bitflip.Instance] (including flip state) from `file_like`.
+        state = json.loads(io_utils.load_string(f))  # type: ignore[arg-type]
+        instance.status = state["status"]
+        instance.offset = state["offset"]
+        instance.metrics = state["metrics"]
 
-        Args:
-            file_like: Binary-readable file-like object or path produced by `save`.
-            with_tag: Whether to read and validate [`_tag`][] before the rest of the state.
-
-        Returns:
-            The reconstructed instance.
-
-        Raises:
-            ValueError: If `with_tag` is set and the stream's type tag does
-                not match [`_tag`][].
-        """
-        with io_utils.open(file_like, "rb") as f:
-            if with_tag:
-                tag = io_utils.load_string(f)
-                if tag != Instance._tag():
-                    raise ValueError(
-                        f"Cannot load negative_bitflip.Instance: expected tag {Instance._tag()!r}, got {tag!r}."
-                    )
-
-            instance = Instance(qubosolver.Instance._load(f, with_tag=False))
-
-            buffer = io.BytesIO(io_utils.load_sized_buffer(f))
-            instance.flips = torch.load(buffer, weights_only=True)
-
-            state = json.loads(io_utils.load_string(f))
-            instance.status = state["status"]
-            instance.offset = state["offset"]
-            instance.metrics = state["metrics"]
-
-            instance._parent_instance = _load_by_tag(f)
-
+        instance._parent_instance = qubosolver.Instance.load(f)  # type: ignore[arg-type]
         return instance
-
-    @staticmethod
-    def save(file_like: io_utils.FileLike[bytes], instance: qubosolver.Instance) -> None:
-        """Serialize a negative-bitflip [`Instance`][negative_bitflip.Instance] (including flip state) to `file_like`.
-
-        Args:
-            file_like: Binary-writable file-like object or path.
-            instance: The instance to save.
-
-        Raises:
-            TypeError: If `instance` is not a [`negative_bitflip.Instance`][].
-        """
-        Instance._save(file_like, instance, with_tag=True)
-
-    @staticmethod
-    def load(file_like: io_utils.FileLike[bytes]) -> Instance:
-        """Deserialize a negative-bitflip [`Instance`][negative_bitflip.Instance] (including flip state) from `file_like`.
-
-        Args:
-            file_like: Binary-readable file-like object or path produced by `save`.
-
-        Returns:
-            The reconstructed instance.
-
-        Raises:
-            ValueError: If the stream's type tag does not match [`_tag`][].
-        """
-        return Instance._load(file_like, with_tag=True)
 
 
 def apply(

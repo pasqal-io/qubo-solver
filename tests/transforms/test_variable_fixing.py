@@ -156,7 +156,7 @@ def test_save_load_roundtrips_variable_fixing_state() -> None:
     reduced = transforms.variable_fixing.apply_recursively(instance)
 
     buffer = io.BytesIO()
-    transforms.variable_fixing.Instance.save(buffer, reduced)
+    reduced.save(buffer)
     buffer.seek(0)
     loaded = transforms.variable_fixing.Instance.load(buffer)
 
@@ -164,6 +164,28 @@ def test_save_load_roundtrips_variable_fixing_state() -> None:
     torch.testing.assert_close(loaded.matrix, reduced.matrix)
     check.equal(loaded.fixed_indices, reduced.fixed_indices)
     torch.testing.assert_close(loaded._parent_instance.matrix, reduced._parent_instance.matrix)
+
+
+def test_base_instance_load_dispatches_to_variable_fixing_instance() -> None:
+    # The generic Instance.load() entry point must dispatch on the tag
+    # written by save(), not on the class it's called through, so loading a
+    # variable_fixing.Instance via the base Instance.load() must still return
+    # the full subclass (with its fixing-specific state), not collapse to a
+    # plain base Instance.
+    instance = fixable_qubo()
+    reduced = transforms.variable_fixing.apply_recursively(instance)
+
+    buffer = io.BytesIO()
+    reduced.save(buffer)
+    buffer.seek(0)
+    loaded = Instance.load(buffer)
+
+    check.is_instance(loaded, transforms.variable_fixing.Instance)
+    torch.testing.assert_close(loaded.matrix, reduced.matrix)
+    check.equal(loaded.variable_fixing.fixed_indices, reduced.fixed_indices)
+    torch.testing.assert_close(
+        loaded.variable_fixing._parent_instance.matrix, reduced._parent_instance.matrix
+    )
 
 
 def test_load_of_saved_variable_fixing_instance_can_be_lifted() -> None:
@@ -174,7 +196,7 @@ def test_load_of_saved_variable_fixing_instance_can_be_lifted() -> None:
     reduced_solution = solving.brute_force.solve(reduced)
 
     buffer = io.BytesIO()
-    transforms.variable_fixing.Instance.save(buffer, reduced)
+    reduced.save(buffer)
     buffer.seek(0)
     loaded = transforms.variable_fixing.Instance.load(buffer)
 
@@ -198,7 +220,7 @@ def test_save_load_roundtrips_variable_fixing_over_negative_bitflip_parent() -> 
     reduced = transforms.variable_fixing.apply(flipped_parent)
 
     buffer = io.BytesIO()
-    transforms.variable_fixing.Instance.save(buffer, reduced)
+    reduced.save(buffer)
     buffer.seek(0)
     loaded = transforms.variable_fixing.Instance.load(buffer)
 

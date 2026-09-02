@@ -28,7 +28,6 @@ import torch
 
 import qubosolver
 from qubosolver.types import Solution, bitstrings, vector
-from qubosolver.types.instance import _load_by_tag
 from qubosolver._io import utils as io_utils
 
 # TODO: Using `type` statement when Python >= 3.12
@@ -103,89 +102,25 @@ class Instance(qubosolver.Instance):
         """Total number of variables fixed across all fixation rounds."""
         return sum([len(fixed) for fixed in self.fixed_indices])
 
-    @staticmethod
-    def _save(file_like: io_utils.FileLike[bytes], instance: qubosolver.Instance, *, with_tag: bool) -> None:
-        """Serialize a variable-fixing [`Instance`][variable_fixing.Instance] (including fixation history) to `file_like`.
+    def _write_body(self, f: io_utils.FileLike[bytes]) -> None:
+        """Write the parent matrix, fixation history, and parent instance to `f`."""
+        super()._write_body(f)
+        io_utils.save_string(f, json.dumps(self._fixed_indices))  # type: ignore[arg-type]
+        self._parent_instance.save(f)  # type: ignore[arg-type]
 
-        Args:
-            file_like: Binary-writable file-like object or path.
-            instance: The instance to save.
-            with_tag: Whether to write [`_tag`][] before the rest of the state.
-
-        Raises:
-            TypeError: If `instance` is not a [`variable_fixing.Instance`][].
-        """
-        _check_QUBOInstance(instance)
-        assert isinstance(instance, Instance)  # nosec B101
-
-        with io_utils.open(file_like, "wb") as f:
-            if with_tag:
-                io_utils.save_string(f, Instance._tag())
-            qubosolver.Instance._save(f, instance, with_tag=False)
-            fixed_var_json = json.dumps(instance._fixed_indices)
-            io_utils.save_string(f, fixed_var_json)
-            type(instance._parent_instance).save(f, instance._parent_instance)
-
-    @staticmethod
-    def _load(file_like: io_utils.FileLike[bytes], *, with_tag: bool) -> Instance:
-        """Deserialize a variable-fixing [`Instance`][variable_fixing.Instance] (including fixation history) from `file_like`.
-
-        Args:
-            file_like: Binary-readable file-like object or path produced by `save`.
-            with_tag: Whether to read and validate [`_tag`][] before the rest of the state.
-
-        Returns:
-            The reconstructed instance.
-
-        Raises:
-            ValueError: If `with_tag` is set and the stream's type tag does
-                not match [`_tag`][].
-        """
+    @classmethod
+    def _read_body(cls, f: io_utils.FileLike[bytes]) -> Instance:
+        """Read back a variable-fixing instance written by [`_write_body`][]."""
 
         def decode_int_keys(obj: dict) -> dict:
             return {int(k): v for k, v in obj.items()}
 
-        with io_utils.open(file_like, "rb") as f:
-            if with_tag:
-                tag = io_utils.load_string(f)
-                if tag != Instance._tag():
-                    raise ValueError(
-                        f"Cannot load variable_fixing.Instance: expected tag {Instance._tag()!r}, got {tag!r}."
-                    )
-            instance = Instance(qubosolver.Instance._load(f, with_tag=False))
-            fixed_var_json = io_utils.load_string(f)
-            instance._fixed_indices = json.loads(fixed_var_json, object_hook=decode_int_keys)
-            instance._parent_instance = _load_by_tag(f)
-
+        instance = Instance(qubosolver.Instance._read_body(f))
+        instance._fixed_indices = json.loads(
+            io_utils.load_string(f), object_hook=decode_int_keys  # type: ignore[arg-type]
+        )
+        instance._parent_instance = qubosolver.Instance.load(f)  # type: ignore[arg-type]
         return instance
-
-    @staticmethod
-    def save(file_like: io_utils.FileLike[bytes], instance: qubosolver.Instance) -> None:
-        """Serialize a variable-fixing [`Instance`][variable_fixing.Instance] (including fixation history) to `file_like`.
-
-        Args:
-            file_like: Binary-writable file-like object or path.
-            instance: The instance to save.
-
-        Raises:
-            TypeError: If `instance` is not a [`variable_fixing.Instance`][].
-        """
-        Instance._save(file_like, instance, with_tag=True)
-
-    @staticmethod
-    def load(file_like: io_utils.FileLike[bytes]) -> Instance:
-        """Deserialize a variable-fixing [`Instance`][variable_fixing.Instance] (including fixation history) from `file_like`.
-
-        Args:
-            file_like: Binary-readable file-like object or path produced by `save`.
-
-        Returns:
-            The reconstructed instance.
-
-        Raises:
-            ValueError: If the stream's type tag does not match [`_tag`][].
-        """
-        return Instance._load(file_like, with_tag=True)
 
 
 def _check_QUBOInstance(qubo: qubosolver.Instance) -> None:

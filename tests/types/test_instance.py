@@ -95,7 +95,7 @@ def test_negative_bitflip_property_returns_self_for_negative_bitflip_instance() 
 def test_save_load(simple_qubo_instance: Instance) -> None:
 
     file_path = Path(__file__).parent / "qubo_instance_test.pt"
-    Instance.save(file_path, simple_qubo_instance)
+    simple_qubo_instance.save(file_path)
     assert os.path.exists(file_path)
     loaded_instance = Instance.load(file_path)
     assert torch.allclose(loaded_instance.matrix, simple_qubo_instance.matrix)

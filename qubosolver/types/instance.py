@@ -118,108 +118,93 @@ class Instance:
         """
         return f"{cls.__module__}.{cls.__qualname__}"
 
-    @staticmethod
-    def _save(file_like: io_utils.FileLike[bytes], instance: Instance, *, with_tag: bool) -> None:
-        """Serialize [`matrix`][] to `file_like`, optionally preceded by [`_tag`][].
+    _registry: dict[str, type[Instance]] = {}
+    """Tag -> `Instance` subclass, populated by [`__init_subclass__`][] for [`load`][] to dispatch on."""
 
-        `with_tag=False` is for callers that already wrote (or will read) the
-        tag themselves — e.g. [`_load_by_tag`][qubosolver.types.instance._load_by_tag]'s
-        counterpart on the save side, or a subclass writing its own tag before
-        delegating here for the matrix.
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        """Register `cls` under its [`_tag`][] so [`load`][] can dispatch to it.
 
-        Args:
-            file_like: Binary-writable file-like object or path.
-            instance: The instance whose matrix to serialize.
-            with_tag: Whether to write [`_tag`][] before the matrix.
+        Automatic, so a new `Instance` subclass never needs to be added to a
+        separate registry by hand.
         """
-        with io_utils.open(file_like, "wb") as f:
-            if with_tag:
-                io_utils.save_string(f, Instance._tag())
-            # The coefficient matrix is written into an internal
-            # `io.BytesIO` buffer and then flushed to *file_like* using
-            # `io_utils.save_sized_buffer`, which prefixes the payload with its
-            # byte length. This framing allows multiple objects to be stored
-            # contiguously in the same stream.
-            buffer = io.BytesIO()
-            torch.save(instance.matrix, buffer)
-            io_utils.save_sized_buffer(f, buffer.getbuffer())
+        super().__init_subclass__(**kwargs)  # type: ignore[arg-type]
+        Instance._registry[cls._tag()] = cls
 
-    @staticmethod
-    def _load(file_like: io_utils.FileLike[bytes], *, with_tag: bool) -> Instance:
-        """Deserialize an [`Instance`][] saved with [`_save`][], optionally checking [`_tag`][] first.
+    def _write_body(self, f: io_utils.FileLike[bytes]) -> None:
+        """Write this instance's state to `f`, without any type tag.
 
-        Args:
-            file_like: Source file path or readable binary file object.
-            with_tag: Whether to read and validate [`_tag`][] before the matrix.
+        The base implementation writes only [`matrix`][]. Subclasses that
+        carry extra state override this to write that state too (typically
+        after calling `super()._write_body(f)`).
+        """
+        # The coefficient matrix is written into an internal `io.BytesIO`
+        # buffer and then flushed to *f* using `io_utils.save_sized_buffer`,
+        # which prefixes the payload with its byte length. This framing
+        # allows multiple objects to be stored contiguously in the same
+        # stream.
+        buffer = io.BytesIO()
+        torch.save(self.matrix, buffer)
+        io_utils.save_sized_buffer(f, buffer.getbuffer())  # type: ignore[arg-type]
 
-        Returns:
-            A new base [`Instance`][] whose [`matrix`][] is the deserialized
-                coefficient tensor.
+    @classmethod
+    def _read_body(cls, f: io_utils.FileLike[bytes]) -> Instance:
+        """Read an instance of `cls` back from `f`, without any type tag.
 
-        Raises:
-            ValueError: If `with_tag` is set and the stream's type tag does
-                not match [`_tag`][].
+        The base implementation reads only [`matrix`][]. Subclasses that
+        override [`_write_body`][] to write extra state override this to
+        read it back in the same order.
 
         Note:
             [`torch.load`][] is called with `weights_only=True` to prevent
             arbitrary code execution from untrusted checkpoint files.
         """
-        with io_utils.open(file_like, "rb") as f:
-            if with_tag:
-                tag = io_utils.load_string(f)
-                if tag != Instance._tag():
-                    raise ValueError(
-                        f"Cannot load Instance: expected tag {Instance._tag()!r}, got {tag!r}."
-                    )
-            # Reads a length-prefixed byte block from *file_like* into a dedicated
-            # `io.BytesIO` buffer before calling `torch.load`. The isolated buffer
-            # prevents `torch.load` from over-consuming the source stream when
-            # multiple objects are packed together.
-            # torch.load might consume too much of the src buffer.
-            #  Use a dedicated limited buffer
-            buffer = io.BytesIO(io_utils.load_sized_buffer(f))
-            Q = torch.load(buffer, weights_only=True)
-
+        # Reads a length-prefixed byte block from *f* into a dedicated
+        # `io.BytesIO` buffer before calling `torch.load`. The isolated buffer
+        # prevents `torch.load` from over-consuming the source stream when
+        # multiple objects are packed together.
+        buffer = io.BytesIO(io_utils.load_sized_buffer(f))  # type: ignore[arg-type]
+        Q = torch.load(buffer, weights_only=True)
         return Instance(Q)
 
-    @staticmethod
-    def save(file_like: io_utils.FileLike[bytes], instance: Instance) -> None:
-        """Serialize instance to ``file_like`` using [`torch.save`][], tagged with its type.
+    def save(self, file_like: io_utils.FileLike[bytes]) -> None:
+        """Serialize this instance to ``file_like``, tagged with its type.
 
         Args:
             file_like: Destination — a file path ([`str`][] or [`os.PathLike`][]),
                 or a binary-writable [`typing.IO`][] stream.
-            instance: The instance to serialize. Only [`matrix`][] is
-                persisted; any derived state is recomputed on load.
 
         Example:
             ```python
             from pathlib import Path
 
             with Path("instance.bin").open("wb") as f:
-                Instance.save(f, instance)
+                instance.save(f)
             ```
         """
-        Instance._save(file_like, instance, with_tag=True)
+        with io_utils.open(file_like, "wb") as f:
+            io_utils.save_string(f, self._tag())
+            self._write_body(f)
 
-    @staticmethod
-    def load(file_like: io_utils.FileLike[bytes]) -> Instance:
+    @classmethod
+    def load(cls, file_like: io_utils.FileLike[bytes]) -> Instance:
         """Deserialize an [`Instance`][] previously saved with [`save`][].
+
+        Called on a subclass (e.g. `variable_fixing.Instance.load(f)`), it
+        loads whatever concrete type was saved and additionally requires that
+        type to be `cls` (or a further subclass of it) — use
+        [`Instance.load`][] itself to accept any `Instance` type, narrowing
+        afterwards with a property such as [`variable_fixing`][].
 
         Args:
             file_like: Source file path or readable binary file object,
                 as produced by [`save`][].
 
         Returns:
-            A new instance whose [`matrix`][] is the deserialized coefficient
-                tensor.
-
-        Note:
-            [`torch.load`][] is called with `weights_only=True` to prevent
-            arbitrary code execution from untrusted checkpoint files.
+            A new instance of whichever concrete type wrote the tag.
 
         Raises:
-            ValueError: If the stream's type tag does not match [`_tag`][].
+            ValueError: If the stream's type tag is missing or unrecognized.
+            TypeError: If the loaded instance is not a `cls`.
 
         Example:
             ```python
@@ -229,7 +214,18 @@ class Instance:
                 instance = Instance.load(f)
             ```
         """
-        return Instance._load(file_like, with_tag=True)
+        with io_utils.open(file_like, "rb") as f:
+            tag = io_utils.load_string(f)
+            target_cls = Instance._registry.get(tag)
+            if target_cls is None:
+                raise ValueError(f"Cannot load Instance: unrecognized type tag {tag!r}.")
+            instance = target_cls._read_body(f)
+        if not isinstance(instance, cls):
+            raise TypeError(
+                f"Cannot load {cls.__module__}.{cls.__qualname__}: "
+                f"stream contains a {type(instance).__module__}.{type(instance).__qualname__}."
+            )
+        return instance
 
     def _narrow(self, cls: type[_InstanceT]) -> _InstanceT:
         """Narrow ``self`` to a transform-specific `Instance` subclass.
@@ -316,53 +312,9 @@ class Instance:
         return self._narrow(negative_bitflip.Instance)
 
 
-def _instance_tag_registry() -> dict[str, type[Instance]]:
-    """Map tag -> `Instance` subclass, for [`_load_by_tag`][].
-
-    Imported lazily (rather than at module scope) because the transform
-    modules import [`Instance`][] themselves, so importing them at module
-    scope here would be circular.
-    """
-    from qubosolver.transforms import negative_bitflip, variable_fixing, zeroing
-
-    return {
-        Instance._tag(): Instance,
-        negative_bitflip.Instance._tag(): negative_bitflip.Instance,
-        variable_fixing.Instance._tag(): variable_fixing.Instance,
-        zeroing.Instance._tag(): zeroing.Instance,
-    }
-
-
-def _load_by_tag(file_like: io_utils.FileLike[bytes]) -> Instance:
-    """Deserialize an [`Instance`][] of whichever concrete type wrote itself here.
-
-    Every `Instance.save` (base or transform subclass) writes its own type tag
-    first (see [`Instance._tag`][]). Callers that don't know in advance what
-    concrete type was saved — chiefly, a transform loading its own
-    `_parent_instance`, which may itself be any other transform's `Instance`
-    — read that tag here and dispatch to the matching class's own
-    tag-less reconstruction, instead of the plain [`Instance.load`][] (which
-    would only reconstruct a bare matrix, silently dropping the subclass's
-    extra state) or the class's own `load` (which would try to read a second,
-    nonexistent tag, since this function already consumed it).
-
-    Args:
-        file_like: Source file path or readable binary file object, produced
-            by any `Instance.save`.
-
-    Returns:
-        The reconstructed instance, narrowed to whichever concrete type wrote
-            the tag.
-
-    Raises:
-        ValueError: If the stream's type tag is missing or unrecognized.
-    """
-    with io_utils.open(file_like, "rb") as f:
-        tag = io_utils.load_string(f)
-        registry = _instance_tag_registry()
-        if tag not in registry:
-            raise ValueError(f"Cannot load Instance: unrecognized type tag {tag!r}.")
-        return registry[tag]._load(f, with_tag=False)
+# __init_subclass__ registers every subclass, but never fires for Instance
+# itself, so it must be registered here explicitly.
+Instance._registry[Instance._tag()] = Instance
 
 
 # Density classification thresholds — half-open intervals [lo, hi).
