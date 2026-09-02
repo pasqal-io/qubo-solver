@@ -26,7 +26,7 @@ def get_ipynb_files(dir: Path) -> list[Path]:
     for it in dir.iterdir():
         if it.suffix == ".ipynb" and not it.match("*.ipynb_checkpoints*"):
             files.append(it)
-        elif it.is_dir():
+        elif it.is_dir() and it.name != "retired":
             files.extend(get_ipynb_files(it))
     return files
 
@@ -50,8 +50,7 @@ for file in notebooks_files:
         notebooks.append(pytest.param(file, marks=pytest.mark.xfail(reason=reason)))
         continue
     reason = skip.get(filename)
-    # if reason is not None:
-    if True:
+    if reason is not None:
         notebooks.append(pytest.param(file, marks=pytest.mark.skip(reason=reason)))
         continue
     notebooks.append(pytest.param(file))
