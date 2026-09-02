@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 
+import pytest
 import pytest_check as check
 import torch
 
@@ -200,6 +201,39 @@ def test_save_load_roundtrips_zeroing_over_negative_bitflip_parent() -> None:
     torch.testing.assert_close(loaded._parent_instance.flips, flipped_parent.flips)
     check.equal(loaded._parent_instance.status, flipped_parent.status)
     check.equal(loaded._parent_instance.offset, flipped_parent.offset)
+
+
+def test_base_instance_load_dispatches_to_zeroing_instance() -> None:
+    # The generic Instance.load() entry point must dispatch on the tag
+    # written by save(), not on the class it's called through, so loading a
+    # zeroing.Instance via the base Instance.load() must still return the
+    # full subclass (with its zeroing-specific state), not collapse to a
+    # plain base Instance.
+    instance = non_bipartisable_negative_qubo()
+    zeroed = transforms.zeroing.apply(instance)
+
+    buffer = io.BytesIO()
+    zeroed.save(buffer)
+    buffer.seek(0)
+    loaded = Instance.load(buffer)
+
+    check.is_instance(loaded, transforms.zeroing.Instance)
+    torch.testing.assert_close(loaded.matrix, zeroed.matrix)
+    check.equal(loaded.zeroing.zeroed_edges.tolist(), zeroed.zeroed_edges.tolist())
+
+
+def test_zeroing_load_rejects_a_stream_saved_as_a_different_type() -> None:
+    # zeroing.Instance.load(f) must reject a stream that was saved as a
+    # plain (or otherwise unrelated) Instance, instead of silently returning
+    # the wrong type.
+    instance = non_bipartisable_negative_qubo()
+
+    buffer = io.BytesIO()
+    instance.save(buffer)
+    buffer.seek(0)
+
+    with pytest.raises(TypeError):
+        transforms.zeroing.Instance.load(buffer)
 
 
 def test_apply_does_not_alias_the_parent_instance() -> None:

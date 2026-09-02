@@ -1,6 +1,7 @@
 # tests/test_qubo_instance.py
 from __future__ import annotations
 
+import io
 import os
 from pathlib import Path
 import numpy as np
@@ -9,6 +10,7 @@ import pytest_check as check
 import torch
 
 from qubosolver import Instance, Solver, solving, matrix, transforms, SolverConfig, ClassicalSolvingConfig, QuantumSolvingConfig
+from qubosolver._io import utils as io_utils
 
 
 def test_valid_qubo_passes_without_error() -> None:
@@ -101,3 +103,49 @@ def test_save_load(simple_qubo_instance: Instance) -> None:
     assert torch.allclose(loaded_instance.matrix, simple_qubo_instance.matrix)
     if os.path.exists(file_path):
         os.remove(file_path)
+
+
+@pytest.mark.parametrize(
+    "make_instance",
+    [
+        lambda parent: parent,
+        lambda parent: transforms.variable_fixing.Instance(parent),
+        lambda parent: transforms.zeroing.Instance(parent),
+        lambda parent: transforms.negative_bitflip.Instance(parent),
+    ],
+    ids=["Instance", "variable_fixing", "zeroing", "negative_bitflip"],
+)
+def test_base_instance_load_dispatches_to_the_saved_type(make_instance, simple_qubo_instance: Instance) -> None:
+    # The generic Instance.load() entry point must dispatch on the tag written
+    # by save(), not on the class it's called through, so it must return
+    # whichever concrete subclass was actually saved.
+    instance = make_instance(simple_qubo_instance)
+
+    buffer = io.BytesIO()
+    instance.save(buffer)
+    buffer.seek(0)
+    loaded = Instance.load(buffer)
+
+    check.equal(type(loaded), type(instance))
+    torch.testing.assert_close(loaded.matrix, instance.matrix)
+
+
+def test_subclass_load_rejects_a_stream_saved_as_a_different_type(simple_qubo_instance: Instance) -> None:
+    # variable_fixing.Instance.load(f) must reject a stream that was saved as
+    # a plain (or otherwise unrelated) Instance, instead of silently
+    # returning the wrong type.
+    buffer = io.BytesIO()
+    simple_qubo_instance.save(buffer)
+    buffer.seek(0)
+
+    with pytest.raises(TypeError):
+        transforms.variable_fixing.Instance.load(buffer)
+
+
+def test_load_raises_on_unrecognized_tag() -> None:
+    buffer = io.BytesIO()
+    io_utils.save_string(buffer, "not.a.registered.Instance.subclass")
+    buffer.seek(0)
+
+    with pytest.raises(ValueError, match="unrecognized type tag"):
+        Instance.load(buffer)

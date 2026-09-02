@@ -377,6 +377,39 @@ def test_load_of_saved_bitflip_instance_can_be_lifted() -> None:
         check.almost_equal(restored.probability, expected.probability)
 
 
+def test_base_instance_load_dispatches_to_negative_bitflip_instance() -> None:
+    # The generic Instance.load() entry point must dispatch on the tag
+    # written by save(), not on the class it's called through, so loading a
+    # negative_bitflip.Instance via the base Instance.load() must still
+    # return the full subclass (with its flip state), not collapse to a
+    # plain base Instance.
+    instance, _ = non_bipartisable_negative_qubo()
+    flipped_instance = transforms.negative_bitflip.apply(instance)
+
+    buffer = io.BytesIO()
+    flipped_instance.save(buffer)
+    buffer.seek(0)
+    loaded = Instance.load(buffer)
+
+    check.is_instance(loaded, transforms.negative_bitflip.Instance)
+    torch.testing.assert_close(loaded.matrix, flipped_instance.matrix)
+    torch.testing.assert_close(loaded.negative_bitflip.flips, flipped_instance.flips)
+
+
+def test_negative_bitflip_load_rejects_a_stream_saved_as_a_different_type() -> None:
+    # negative_bitflip.Instance.load(f) must reject a stream that was saved
+    # as a plain (or otherwise unrelated) Instance, instead of silently
+    # returning the wrong type.
+    instance, _ = non_bipartisable_negative_qubo()
+
+    buffer = io.BytesIO()
+    instance.save(buffer)
+    buffer.seek(0)
+
+    with pytest.raises(TypeError):
+        transforms.negative_bitflip.Instance.load(buffer)
+
+
 def test_glpk_solve_survives_internal_exception(monkeypatch: pytest.MonkeyPatch) -> None:
     # If GLPK itself raises during the solve (e.g. a binding error), the
     # function must still return a usable (no-op) result instead of
