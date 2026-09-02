@@ -22,7 +22,7 @@ from qubosolver.utils._local_connection import _QUBIT_LIMIT, LocalConnection
 NUM_SHOTS = 50
 
 
-def _program(n_qubits: int) -> qoolqit.QuantumProgram:
+def _program(*, n_qubits: int) -> qoolqit.QuantumProgram:
     """Build a compiled program of `n_qubits` atoms."""
     register = qoolqit.Register.circle(n_qubits)
     Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.zeros(n_qubits).fill_(-1.0))
@@ -36,33 +36,22 @@ def _program(n_qubits: int) -> qoolqit.QuantumProgram:
     return program
 
 
-@pytest.fixture(scope="module")
-def sequence() -> pulser.Sequence:
-    """A compiled 3-qubit sequence, cheap enough to emulate repeatedly."""
-    return _program(3).compiled_sequence
+def _sequence(*, n_qubits: int) -> pulser.Sequence:
+    """Compile a sequence of `n_qubits` atoms, cheap enough to emulate."""
+    return _program(n_qubits=n_qubits).compiled_sequence
 
 
-@pytest.fixture
-def config() -> EmulationConfig:
-    """An emulation config collecting bitstrings at the end of the sequence."""
+def _config() -> EmulationConfig:
+    """Collect `NUM_SHOTS` bitstrings at the end of the sequence."""
     return EmulationConfig(
         observables=[BitStrings(num_shots=NUM_SHOTS)], default_evaluation_times=[1.0]
     )
 
 
-@pytest.fixture
-def submitted(
-    sequence: pulser.Sequence, config: EmulationConfig
-) -> tuple[LocalConnection, RemoteResults]:
-    """A connection with a single submitted batch."""
-    connection = LocalConnection()
-    return connection, connection.submit(sequence, backend_configuration=config)
-
-
-def test_submit_returns_completed_bitstring_results(
-    submitted: tuple[LocalConnection, RemoteResults],
-) -> None:
-    connection, remote_results = submitted
+def test_submit_returns_completed_bitstring_results() -> None:
+    remote_results = LocalConnection().submit(
+        _sequence(n_qubits=3), backend_configuration=_config()
+    )
 
     check.equal(remote_results.get_batch_status(), BatchStatus.DONE)
     check.equal(len(remote_results.results), 1)
@@ -76,18 +65,18 @@ def test_submit_returns_completed_bitstring_results(
     check.is_true(all(len(bitstring) == 3 for bitstring in counts))
 
 
-def test_batch_holds_a_single_job(submitted: tuple[LocalConnection, RemoteResults]) -> None:
-    connection, remote_results = submitted
+def test_batch_holds_a_single_job() -> None:
+    connection = LocalConnection()
+    remote_results = connection.submit(_sequence(n_qubits=3), backend_configuration=_config())
     batch_id = remote_results.batch_id
 
     check.equal(remote_results.job_ids, [f"{batch_id}-0"])
     check.equal(connection._get_job_ids(batch_id), [f"{batch_id}-0"])
 
 
-def test_query_job_progress_reports_done_with_results(
-    submitted: tuple[LocalConnection, RemoteResults],
-) -> None:
-    connection, remote_results = submitted
+def test_query_job_progress_reports_done_with_results() -> None:
+    connection = LocalConnection()
+    remote_results = connection.submit(_sequence(n_qubits=3), backend_configuration=_config())
     progress = connection._query_job_progress(remote_results.batch_id)
 
     check.equal(list(progress), remote_results.job_ids)
@@ -97,10 +86,9 @@ def test_query_job_progress_reports_done_with_results(
     check.equal(list(remote_results.get_available_results()), remote_results.job_ids)
 
 
-def test_each_submission_creates_its_own_batch(
-    sequence: pulser.Sequence, config: EmulationConfig
-) -> None:
+def test_each_submission_creates_its_own_batch() -> None:
     connection = LocalConnection()
+    sequence, config = _sequence(n_qubits=3), _config()
 
     first = connection.submit(sequence, backend_configuration=config)
     second = connection.submit(sequence, batch_id=first.batch_id, backend_configuration=config)
@@ -116,7 +104,7 @@ def test_unknown_batch_reports_error_status() -> None:
     check.equal(LocalConnection()._get_batch_status("unknown"), BatchStatus.ERROR)
 
 
-def test_job_params_are_ignored(sequence: pulser.Sequence, config: EmulationConfig) -> None:
+def test_job_params_are_ignored() -> None:
     """Document that `job_params` is dropped, unlike on a real connection.
 
     A real connection runs one job per `job_params` entry, each sampled
@@ -125,9 +113,10 @@ def test_job_params_are_ignored(sequence: pulser.Sequence, config: EmulationConf
     remote backend directly, but not through [`RemoteEmulator`][], which
     never sets `job_params`.
     """
-    connection = LocalConnection()
-    remote_results = connection.submit(
-        sequence, job_params=[{"runs": 7}, {"runs": 7}], backend_configuration=config
+    remote_results = LocalConnection().submit(
+        _sequence(n_qubits=3),
+        job_params=[{"runs": 7}, {"runs": 7}],
+        backend_configuration=_config(),
     )
 
     # `runs` is dropped: NUM_SHOTS from the config is used instead of 7.
@@ -155,10 +144,9 @@ def test_unknown_batch_is_rejected(lookup: Callable[[LocalConnection], object]) 
         lookup(LocalConnection())
 
 
-def test_fetch_result_accepts_the_batch_own_job(
-    submitted: tuple[LocalConnection, RemoteResults],
-) -> None:
-    connection, remote_results = submitted
+def test_fetch_result_accepts_the_batch_own_job() -> None:
+    connection = LocalConnection()
+    remote_results = connection.submit(_sequence(n_qubits=3), backend_configuration=_config())
     batch_id = remote_results.batch_id
 
     check.equal(len(connection._fetch_result(batch_id, None)), 1)
@@ -167,37 +155,34 @@ def test_fetch_result_accepts_the_batch_own_job(
 
 
 @pytest.mark.parametrize("job_ids", [["unknown"], []])
-def test_fetch_result_rejects_foreign_jobs(
-    submitted: tuple[LocalConnection, RemoteResults], job_ids: list[str]
-) -> None:
-    connection, remote_results = submitted
+def test_fetch_result_rejects_foreign_jobs(job_ids: list[str]) -> None:
+    connection = LocalConnection()
+    remote_results = connection.submit(_sequence(n_qubits=3), backend_configuration=_config())
 
     with pytest.raises(RemoteResultsError, match="does not contain jobs"):
         connection._fetch_result(remote_results.batch_id, job_ids)
 
 
-def test_open_batch_is_not_supported(
-    sequence: pulser.Sequence, config: EmulationConfig
-) -> None:
+def test_open_batch_is_not_supported() -> None:
     connection = LocalConnection()
     check.is_false(connection.supports_open_batch())
 
     with pytest.raises(NotImplementedError, match="open batches"):
-        connection.submit(sequence, open=True, backend_configuration=config)
+        connection.submit(_sequence(n_qubits=3), open=True, backend_configuration=_config())
 
 
-def test_too_many_qubits_is_not_supported(config: EmulationConfig) -> None:
-    sequence = _program(_QUBIT_LIMIT).compiled_sequence
-
+def test_too_many_qubits_is_not_supported() -> None:
     with pytest.raises(NotImplementedError, match=f"limit is {_QUBIT_LIMIT}"):
-        LocalConnection().submit(sequence, backend_configuration=config)
+        LocalConnection().submit(
+            _sequence(n_qubits=_QUBIT_LIMIT), backend_configuration=_config()
+        )
 
 
 @pytest.mark.parametrize("num_shots", [1, 20])
 def test_runs_through_remote_emulator(num_shots: int) -> None:
     """The connection drives a `RemoteEmulator` without any credentials."""
     emulator = RemoteEmulator(connection=LocalConnection(), num_shots=num_shots)
-    results = emulator.run(_program(3)).results()
+    results = emulator.run(_program(n_qubits=3)).results()
 
     counts = results.get_result(results.get_result_tags()[0], 1.0)
     check.equal(sum(counts.values()), num_shots)
