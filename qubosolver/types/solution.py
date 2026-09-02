@@ -365,21 +365,19 @@ class Solution:
 
         return solution
 
-    @staticmethod
-    def save(file_like: io_utils.FileLike[bytes], solution: Solution) -> None:
-        """Serialize `solution` to `file_like` using `torch.save`.
+    def save(self, file_like: io_utils.FileLike[bytes]) -> None:
+        """Serialize this solution to `file_like` using `torch.save`.
 
         Args:
             file_like: Destination — a file path (`str` or `os.PathLike`),
                 or a binary-writable `typing.IO` stream.
-            solution: The solution to serialize.
 
         Example:
             ```python
             from pathlib import Path
 
             with Path("solution.bin").open("wb") as f:
-                Solution.save(f, solution)
+                solution.save(f)
             ```
         """
         with io_utils.open(file_like, "wb") as f:
@@ -387,10 +385,10 @@ class Solution:
             buffer = io.BytesIO()
             torch.save(
                 {
-                    "bitstrings": solution.bitstrings,
-                    "costs": solution.costs,
-                    "counts": solution.counts,
-                    "probabilities": solution.probabilities,
+                    "bitstrings": self.bitstrings,
+                    "costs": self.costs,
+                    "counts": self.counts,
+                    "probabilities": self.probabilities,
                 },
                 buffer,
             )

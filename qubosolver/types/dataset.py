@@ -238,32 +238,30 @@ class Dataset:
         # Step 4: Return the dataset.
         return cls(matrices=coefficients, copy=False)
 
-    @staticmethod
-    def save(file_like: io_utils.FileLike[bytes], dataset: Dataset) -> None:
-        """Persist a dataset to disk using [`torch.save`][].
+    def save(self, file_like: io_utils.FileLike[bytes]) -> None:
+        """Persist this dataset to disk using [`torch.save`][].
 
         Args:
             file_like: Destination file path or writable binary file object.
-            dataset: The dataset to serialize.
 
         Example:
             ```python
             from pathlib import Path
 
             with Path("dataset.bin").open("wb") as f:
-                Dataset.save(f, dataset)
+                dataset.save(f)
             ```
         """
         with io_utils.open(file_like, "wb") as f:
             io_utils.save_header(f)
             buffer = io.BytesIO()
-            torch.save(dataset.matrices, buffer)
+            torch.save(self.matrices, buffer)
             io_utils.save_sized_buffer(f, buffer.getbuffer())
-            io_utils.save(f, ">I", len(dataset.solutions))
+            io_utils.save(f, ">I", len(self.solutions))
             # Written into the already-open stream *f*, not into `file_like`:
             # re-opening a path here would truncate everything written above.
-            for s in dataset.solutions:
-                Solution.save(f, s)
+            for s in self.solutions:
+                s.save(f)
 
     @staticmethod
     def load(file_like: io_utils.FileLike[bytes]) -> Dataset:

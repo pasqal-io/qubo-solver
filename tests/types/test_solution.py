@@ -576,7 +576,7 @@ def test_save_load() -> None:
     )
 
     buffer = io.BytesIO()
-    Solution.save(buffer, solution)
+    solution.save(buffer)
     buffer.seek(0)
 
     loaded = Solution.load(buffer)

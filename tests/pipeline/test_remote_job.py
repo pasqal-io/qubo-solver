@@ -126,7 +126,7 @@ def test_quantum_remote_job(
     assert isinstance(remote_job.results(), Results)
 
     mock_file = io.BytesIO()
-    remote_instance.save(mock_file, remote_instance)
+    remote_instance.save(mock_file)
     io_utils.save_string(mock_file, remote_job.job_id())
     io_utils.save_string(mock_file, get_batch_id(remote_job))
 

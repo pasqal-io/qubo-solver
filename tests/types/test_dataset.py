@@ -85,7 +85,7 @@ def test_dataset_generation(negative_offdiag_rate: float) -> None:
 
     # test also save and load
     file_path = Path(__file__).parent / "qubo_dataset_test.pt"
-    Dataset.save(file_path, dataset)
+    dataset.save(file_path)
     assert os.path.exists(file_path)
     loaded_data = Dataset.load(file_path)
     assert len(loaded_data) == num_instances
@@ -131,7 +131,7 @@ def test_save_load_to_a_path_preserves_nested_solutions(tmp_path: Path) -> None:
     )
 
     file_path = tmp_path / "dataset.bin"
-    Dataset.save(file_path, dataset)
+    dataset.save(file_path)
     loaded = Dataset.load(file_path)
 
     check.equal(len(loaded), 2)

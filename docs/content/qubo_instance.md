@@ -38,7 +38,7 @@ print(f"\nSolution Cost: {cost}")
 
 # Save load
 
-Instance.save("/tmp/qubo_instance.pt", instance)
+instance.save("/tmp/qubo_instance.pt")
 loaded_instance = Instance.load("/tmp/qubo_instance.pt")
 print(f"Loaded Instance: {loaded_instance}")
 ```
@@ -74,7 +74,7 @@ print(f"Coefficients: {coeffs}")
 print(f"\nDataset size: {len(dataset)}")
 
 # Save load
-Dataset.save(dataset, "/tmp/qubo_dataset.pt")
+dataset.save("/tmp/qubo_dataset.pt")
 loaded_dataset = Dataset.load("/tmp/qubo_dataset.pt")
 print(f"\nLoaded Dataset size: {len(loaded_dataset)}")
 ```
