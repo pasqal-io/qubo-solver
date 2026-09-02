@@ -193,7 +193,8 @@ class Instance:
         Called on the base class [`qubosolver.Instance`][], it loads any instance with automatic dispatch.
 
         Called on a subclass (e.g. [`variable_fixing.Instance.load(f)`][qubosolver.transforms.variable_fixing.Instance.load]),
-        it requires the loaded `Instance` be an instance of this subclass.
+        it additionally requires the loaded `Instance` to be an instance of that subclass (raising [`TypeError`][]
+        otherwise).
 
         Args:
             file_like: Source file path or readable binary file object,
@@ -205,19 +206,12 @@ class Instance:
         Raises:
             ValueError: If the stream is not a qubosolver file, or if its type
                 tag is missing or unrecognized.
-            TypeError: If the loaded instance is not a `cls`.
+            TypeError: If the loaded instance's type is not `cls` or a subclass thereof.
 
         Example:
             ```python
             from pathlib import Path
-
-            with Path("instance.bin").open("rb") as f:
-                instance = Instance.load(f)
-            ```
-
-        Example:
-            ```python
-            from pathlib import Path
+            from qubosolver import Instance
             from qubosolver.transforms import variable_fixing
 
             file = Path("instance.bin")
@@ -226,10 +220,11 @@ class Instance:
             with file.open("wb") as f:
                 instance.save(f)
 
+            # Three ways to load it back, from least to most strict:
             with file.open("rb") as f:
-                loaded = Instance.load(f) # OK if you don't care about strong typing
-                loaded = Instance.load(f).variable_fixing # Loads and then checks typing
-                loaded = variable_fixing.Instance.load(f) # Checks typing before loading, and fails if wrong type before loading
+                loaded = Instance.load(f)                  # accepts any Instance subtype
+                loaded = Instance.load(f).variable_fixing  # loads, then narrows (fails after loading)
+                loaded = variable_fixing.Instance.load(f)  # narrows first (fails before loading)
             ```
         """
         with io_utils.open(file_like, "rb") as f:
