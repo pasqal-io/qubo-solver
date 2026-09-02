@@ -123,14 +123,8 @@ class Instance(qubosolver.Instance):
         return instance
 
 
-def _check_QUBOInstance(qubo: qubosolver.Instance) -> None:
-    """Raise `TypeError` if *qubo* is not a variable-fixing `Instance`."""
-    if not isinstance(qubo, Instance):
-        raise TypeError("Input must be an instance of _QUBOInstance.")
-
-
 def _reduce_qubo(
-    qubo: qubosolver.Instance, fixed_indices: dict[int, int], *, inplace: bool = False
+    instance: qubosolver.Instance, fixed_indices: dict[int, int], *, inplace: bool = False
 ) -> Instance:
     """Reduce the QUBO matrix by fixing a set of variables.
 
@@ -139,7 +133,7 @@ def _reduce_qubo(
     Variables fixed to 0 are removed without any adjustment.
 
     Args:
-        qubo: The QUBO instance to reduce.
+        instance: The QUBO instance to reduce.
         fixed_indices: Mapping of variable index to fixed value (``0`` or ``1``).
         inplace: If ``False`` (default), wraps *qubo* in a new
             `Instance` before modifying it.
@@ -149,15 +143,14 @@ def _reduce_qubo(
         *fixed_indices* appended to its fixation history.
     """
     if not inplace:
-        qubo = Instance(qubo)
+        instance = Instance(instance)
 
-    _check_QUBOInstance(qubo)
-    assert isinstance(qubo, Instance)  # nosec B101
+    instance = instance.variable_fixing
 
     if not fixed_indices:
-        return qubo
+        return instance
 
-    Q = qubo.matrix.clone()
+    Q = instance.matrix.clone()
 
     fixed_to_0 = {i for i, v in fixed_indices.items() if v == 0}
     fixed_to_1 = {i for i, v in fixed_indices.items() if v == 1}
@@ -175,10 +168,10 @@ def _reduce_qubo(
         Q = torch.cat((Q[:i, :], Q[i + 1 :, :]), dim=0)
         Q = torch.cat((Q[:, :i], Q[:, i + 1 :]), dim=1)
 
-    qubo._matrix = Q
+    instance._matrix = Q
 
-    qubo._fixed_indices.append(fixed_indices)
-    return qubo
+    instance._fixed_indices.append(fixed_indices)
+    return instance
 
 
 def apply(
@@ -204,8 +197,7 @@ def apply(
     if not inplace:
         instance = Instance(instance)
 
-    _check_QUBOInstance(instance)
-    assert isinstance(instance, Instance)  # nosec B101
+    instance = instance.variable_fixing
 
     for rule in fixation_rules:
         fixed = rule(instance)
@@ -237,8 +229,7 @@ def apply_recursively(
     if not inplace:
         instance = Instance(instance)
 
-    _check_QUBOInstance(instance)
-    assert isinstance(instance, Instance)  # nosec B101
+    instance = instance.variable_fixing
 
     while True:
         prev_n_fixations = len(instance._fixed_indices)
