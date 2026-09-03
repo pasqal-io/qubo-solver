@@ -148,7 +148,9 @@ def test_quantum_solve(
         register = embedding.blade.embed(effective_qubo, config=blade_config)
     elif embedding_method == "greedy_layout":
         greedy_config = embedding.greedy_layout.Config(traps=100)
-        register = embedding.greedy_layout.embed(effective_qubo, device=device, config=greedy_config)
+        register = embedding.greedy_layout.embed(
+            effective_qubo, device=device, config=greedy_config
+        )
     else:
         raise ValueError(f"Invalid embedding method: {embedding_method}")
     print(f"Register: {register.qubits}")

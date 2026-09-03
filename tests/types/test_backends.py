@@ -24,8 +24,6 @@ import qoolqit
 
 from qubosolver import (
     Instance,
-    solving,
-    embedding,
     AutoLocalEmulatorBackend,
     AutoRemoteEmulatorBackend,
     LocalEmulator,
@@ -34,7 +32,6 @@ from qubosolver import (
     Solver,
     SolverConfig,
     EmbeddingConfig,
-    DriveShapingConfig,
     QuantumSolvingConfig,
 )
 from qubosolver.types.backends import (
@@ -203,7 +200,7 @@ def test_emulator_backend_selection(
     backend, results = backend_and_results
     attach_bitstring(results, size)
 
-    solver_config =SolverConfig(
+    solver_config = SolverConfig(
         solving=QuantumSolvingConfig(
             backend=backend,
             embedding=EmbeddingConfig(algorithm="blade"),

@@ -115,7 +115,9 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
         """
         rng = torch_rng(self.config.sa_seed)
         if self.config.sa_start is None:
-            random_solution = solving.random_sampling.solve(self.instance, rng=rng, max_bitstrings=1)
+            random_solution = solving.random_sampling.solve(
+                self.instance, rng=rng, max_bitstrings=1
+            )
             start = random_solution.bitstrings[0]
         else:
             start = self.config.sa_start

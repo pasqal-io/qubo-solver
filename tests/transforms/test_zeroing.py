@@ -171,7 +171,9 @@ def test_load_of_saved_zeroing_instance_can_be_lifted() -> None:
     buffer.seek(0)
     loaded = transforms.zeroing.Instance.load(buffer)
 
-    sol = Solution(bitstrings=bitstrings.from_strings(["1111", "0101"]), counts=vectori.tensor([3, 2]))
+    sol = Solution(
+        bitstrings=bitstrings.from_strings(["1111", "0101"]), counts=vectori.tensor([3, 2])
+    )
     restored = transforms.zeroing.lift(sol, loaded)
     expected = transforms.zeroing.lift(sol, zeroed)
 
@@ -249,6 +251,4 @@ def test_apply_does_not_alias_the_parent_instance() -> None:
     restored = transforms.zeroing.lift(sol, zeroed)
 
     check.not_equal(restored[0].cost, 0.0)
-    check.almost_equal(
-        restored[0].cost, zeroed._parent_instance.cost(sol[0].bitstring)
-    )
+    check.almost_equal(restored[0].cost, zeroed._parent_instance.cost(sol[0].bitstring))

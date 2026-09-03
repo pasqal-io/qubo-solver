@@ -17,7 +17,6 @@ from qubosolver import (
     matrix,
     vector,
     vectori,
-    utils,
     torch_rng,
     SolverConfig,
 )

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import torch
-import itertools
 import numpy as np
 import math
 import pytest
@@ -13,23 +12,19 @@ import qoolqit
 from qoolqit.devices.device import AnalogDeviceWithDMM, AnalogDevice
 from qoolqit.register import Register
 
-from qubosolver.solver._drive_shaper import BayesianSearchDriveShaper
-from qubosolver.solving.hybrid import drive_bayesian_search
 from qubosolver import (
     Instance,
     SingleSolution,
     Solution,
     solving,
-    drive_shaping,
     vector,
     matrix,
     tensor,
-    bitstring,
     Tensor,
     Matrix,
     LocalEmulator,
 )
-from qubosolver.utils import _costs, analysis
+from qubosolver.utils import analysis
 
 
 def interaction_matrix_from_vertices(vertices: Tensor) -> Matrix:
@@ -163,7 +158,6 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
     # Choose diagonal coefficients so that the solution is 110
     Q = Q - 2.5 * matrix.as_tensor(torch.eye(3)) * Q[0, 1]
 
-
     instance = Instance(Q)
 
     bf_solution = solving.brute_force.solve(instance, max_bitstrings=-1)
@@ -175,7 +169,6 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
     print(f"\nExpected Minimum cost: {expected_optimal_solutions[0].cost}")
     print(f"All expected optimal bitstrings: {[s.bitstring for s in expected_optimal_solutions]}")
     print(f"Number of expected optimal solutions: {len(expected_optimal_solutions)}\n")
-
 
     config = solving.drive_bayesian_search.Config(
         n_evaluations=20,
@@ -374,6 +367,7 @@ def test_failed_skopt() -> None:
         # stay compilable on the device, so the simulation succeeds.
         check.is_true(qubo_solution)
 
+
 def test_dmm_labels_are_ints() -> None:
 
     vertices = tensor.tensor([[0.0, 0.0], [1.0, 0.0]])
@@ -384,11 +378,15 @@ def test_dmm_labels_are_ints() -> None:
     check.is_instance(register.qubits_ids[0], int)
 
     device = qoolqit.AnalogDeviceWithDMM()
-    _, drive = solving.drive_bayesian_search.solve(instance, register, dmm=True, device=device, backend=LocalEmulator())
+    _, drive = solving.drive_bayesian_search.solve(
+        instance, register, dmm=True, device=device, backend=LocalEmulator()
+    )
 
     assert drive.dmm is not None
     for k, v in drive.dmm.weights.items():
         check.is_instance(k, int)
         check.is_instance(v, float)
     # check that compilation doesn't throw
-    qoolqit.QuantumProgram(register, drive).compile_to(device, profile="max_energy", device_max_duration_ratio=0.999)
+    qoolqit.QuantumProgram(register, drive).compile_to(
+        device, profile="max_energy", device_max_duration_ratio=0.999
+    )

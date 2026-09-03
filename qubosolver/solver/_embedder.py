@@ -22,7 +22,9 @@ class _BaseEmbedder(ABC):
     2-D trap layout.
     """
 
-    def __init__(self, instance: Instance, config: QuantumSolvingConfig, backend: protocols.Backend):
+    def __init__(
+        self, instance: Instance, config: QuantumSolvingConfig, backend: protocols.Backend
+    ):
         """
         Args:
             instance: The QUBO problem to embed.
@@ -115,7 +117,9 @@ class GreedyEmbedder(_BaseEmbedder):
             The atom register with positions determined by the greedy placer.
         """
         config = embedding.greedy_layout.Config._from_embedding_config(self.config.embedding)
-        return  embedding.greedy_layout.embed(self.instance, device=self.config.device, config=config)
+        return embedding.greedy_layout.embed(
+            self.instance, device=self.config.device, config=config
+        )
 
 
 def _get_embedder(

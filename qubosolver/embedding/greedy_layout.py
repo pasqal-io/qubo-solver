@@ -23,6 +23,7 @@ from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 if TYPE_CHECKING:
     from qubosolver import EmbeddingConfig
 
+
 @dataclass
 class Config:
     """Configuration for the greedy layout embedding algorithm.

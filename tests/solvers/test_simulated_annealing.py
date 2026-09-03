@@ -594,6 +594,7 @@ def test_simulated_annealing_overloads_match_implementation_signature() -> None:
     where it defaults to True.
     """
     from qubosolver.solving.classical.simulated_annealing import solve
+
     impl_params = inspect.signature(solve).parameters
     overloads = get_overloads(solve)
 

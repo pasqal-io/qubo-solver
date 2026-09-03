@@ -31,7 +31,9 @@ def test_solution_not_mutated(
     check.equal(len(solution), 1)
     check.equal(solution[0].string, "00")
 
-    new_solution = solving.iterative_bitflip_local_search.solve(instance, solution, strategy=strategy)
+    new_solution = solving.iterative_bitflip_local_search.solve(
+        instance, solution, strategy=strategy
+    )
     check.equal(len(solution), 1)
     check.equal(solution[0].string, "00")
     check.equal(len(new_solution), 1)
@@ -61,7 +63,9 @@ def test_strategy_selection_improves_solution(
     solution = Solution(bitstrings.zeros(1, 2), counts=vectori.tensor([1]))
     solution._update(instance)
 
-    new_solution = solving.iterative_bitflip_local_search.solve(instance, solution, strategy=strategy)
+    new_solution = solving.iterative_bitflip_local_search.solve(
+        instance, solution, strategy=strategy
+    )
 
     check.equal(new_solution[0].string, "11")
     check.less_equal(new_solution[0].cost, solution[0].cost)

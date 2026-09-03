@@ -46,4 +46,3 @@ class _QUBOType(_StrEnum):
     """QUBO encodes an Ising model spin-glass problem."""
     GENERAL_QUBO = "general_qubo"
     """General-purpose QUBO with no specific structural pattern."""
-

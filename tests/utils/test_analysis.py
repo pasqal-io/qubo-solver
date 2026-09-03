@@ -35,9 +35,7 @@ def _df() -> pd.DataFrame:
         (1.0, "ascending", [1, 2, 3, 4, 5]),
     ],
 )
-def test_filter_by_percentage(
-    top_percent: float, order: str, expected_costs: list[int]
-) -> None:
+def test_filter_by_percentage(top_percent: float, order: str, expected_costs: list[int]) -> None:
     result = analysis._filter_by_percentage(_df(), top_percent=top_percent, order=order)
     assert sorted(result["costs"].tolist()) == expected_costs
 

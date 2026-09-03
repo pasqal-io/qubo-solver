@@ -16,7 +16,9 @@ from qubosolver import (
 @pytest.mark.priority(40)
 @pytest.mark.parametrize("embedding_method", ["greedy_layout", "blade"])
 def test_embeddings_different_devices(
-    qubo_for_testing_many_devices: Instance, local_device: Device, embedding_method: Literal["greedy_layout", "blade"],
+    qubo_for_testing_many_devices: Instance,
+    local_device: Device,
+    embedding_method: Literal["greedy_layout", "blade"],
 ) -> None:
     config = SolverConfig(
         solving=QuantumSolvingConfig(

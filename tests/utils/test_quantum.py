@@ -8,7 +8,7 @@ import torch
 import qoolqit
 from qoolqit import ConstantWaveform
 from qoolqit import RampWaveform
-from qubosolver import Instance, matrix, vector, drive_shaping, embedding, extract_qubo, Matrix
+from qubosolver import Instance, matrix, vector, drive_shaping, embedding, extract_qubo
 from qubosolver.embedding._algorithms.greedy.layout import get_layout
 
 

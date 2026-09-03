@@ -2,7 +2,16 @@ from __future__ import annotations
 
 import torch
 
-from qubosolver import Instance, solving, Solver, matrix, bitstrings, LocalEmulator, SolverConfig, ClassicalSolvingConfig, QuantumSolvingConfig
+from qubosolver import (
+    Instance,
+    Solver,
+    matrix,
+    bitstrings,
+    LocalEmulator,
+    SolverConfig,
+    ClassicalSolvingConfig,
+    QuantumSolvingConfig,
+)
 
 
 def test_classical_all_positive_trivial() -> None:

@@ -151,9 +151,7 @@ def test_generate_proportional_diagonal_drive_shaper(
     dmm: bool,
 ) -> None:
     default_config = QuantumSolvingConfig(
-        drive_shaping=DriveShapingConfig(
-            algorithm="proportional_diagonal", dmm=dmm
-        ),
+        drive_shaping=DriveShapingConfig(algorithm="proportional_diagonal", dmm=dmm),
         device=qoolqit.DigitalAnalogDevice(),
     )
     backend = default_config.backend

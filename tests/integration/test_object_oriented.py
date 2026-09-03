@@ -12,9 +12,6 @@ import qoolqit
 from qubosolver import (
     Instance,
     Solver,
-    solving,
-    embedding,
-    drive_shaping,
     SingleSolution,
     Solution,
     bitstrings,

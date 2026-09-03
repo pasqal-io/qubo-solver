@@ -57,9 +57,7 @@ def test_qubo_solver_sa_or_tabu(
         sa_seed=seed,
     )
 
-    config = SolverConfig(
-        solving=classical_config, activate_trivial_solutions=False
-    )
+    config = SolverConfig(solving=classical_config, activate_trivial_solutions=False)
 
     # insure get_classical_solver works properly
     check.is_instance(
@@ -94,9 +92,7 @@ def test_random() -> None:
 
     # Create a SolverConfig object with classical solver options.
     classical_config = ClassicalSolvingConfig(algorithm="random_sampling", max_bitstrings=3)
-    config = SolverConfig(
-        solving=classical_config, activate_trivial_solutions=False
-    )
+    config = SolverConfig(solving=classical_config, activate_trivial_solutions=False)
 
     # insure get_classical_solver works properly
     check.is_instance(get_classical_solver(instance, config.classical), RandomSolver)
@@ -130,9 +126,7 @@ def test_sa_cost(
         algorithm=classical_methods, max_bitstrings=max_bitstrings, sa_seed=42
     )
 
-    config = SolverConfig(
-        solving=classical_config, activate_trivial_solutions=False
-    )
+    config = SolverConfig(solving=classical_config, activate_trivial_solutions=False)
 
     check.is_instance(
         get_classical_solver(simple_qubo_instance, config.classical),

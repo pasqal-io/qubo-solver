@@ -1,5 +1,4 @@
-"""Uniform random bitstring sampler for QUBO instances.
-"""
+"""Uniform random bitstring sampler for QUBO instances."""
 
 from __future__ import annotations
 

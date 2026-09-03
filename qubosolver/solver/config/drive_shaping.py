@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-import inspect
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Literal, get_args
 
-from qubosolver.types import Solution
 
 _DriveShapingAlgorithm = Literal["bayesian_search", "proportional_diagonal", "local_energy_scale"]
 
 
 @dataclass
-class Config():
+class Config:
     """A configuration that defines the drive shaping part of a [`QuantumSolvingConfig`][].
 
     Attributes:
@@ -47,7 +44,9 @@ class Config():
             Defaults to `50000` ns.
     """
 
-    algorithm: Literal["bayesian_search", "proportional_diagonal", "local_energy_scale"] = "proportional_diagonal"
+    algorithm: Literal["bayesian_search", "proportional_diagonal", "local_energy_scale"] = (
+        "proportional_diagonal"
+    )
     dmm: bool = True
     bayesian_search_n_calls: int = 20
     bayesian_search_initial_omega_parameters: list[float] = field(

@@ -248,13 +248,17 @@ def test_rand_differs_across_seeds() -> None:
 def test_as_tensor_creates_int8_tensor_from_list() -> None:
     data = [1, 0, 1, 1, 0]
     result = bitstring.as_tensor(data)
-    torch.testing.assert_close(result, torch.tensor(data, dtype=bitstring.dtype(), device=bitstring.device()))
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=bitstring.dtype(), device=bitstring.device())
+    )
 
 
 def test_as_tensor_creates_int8_tensor_from_numpy_array() -> None:
     data = np.array([0, 1, 1, 0, 1])
     result = bitstring.as_tensor(data)
-    torch.testing.assert_close(result, torch.tensor(data, dtype=bitstring.dtype(), device=bitstring.device()))
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=bitstring.dtype(), device=bitstring.device())
+    )
 
 
 def test_as_tensor_no_copy_when_input_already_matches_dtype_and_device() -> None:
@@ -301,4 +305,6 @@ def test_as_tensor_copies_when_input_is_a_list() -> None:
 def test_as_tensor_preserves_values() -> None:
     data = [0, 1, 1, 0, 1]
     result = bitstring.as_tensor(data)
-    torch.testing.assert_close(result, torch.tensor(data, dtype=bitstring.dtype(), device=bitstring.device()))
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=bitstring.dtype(), device=bitstring.device())
+    )

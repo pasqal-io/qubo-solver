@@ -57,7 +57,6 @@ from qubosolver.solver import (
     QuantumSolvingConfig,
 )
 
-
 __all__ = [
     # Submodules
     "bitstring",

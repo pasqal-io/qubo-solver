@@ -9,7 +9,9 @@ from qubosolver import embedding
 from qubosolver.embedding._algorithms.greedy.layout import get_layout
 
 
-@pytest.fixture(params=[embedding.Lattice.TRIANGULAR, embedding.Lattice.SQUARE], ids=["triangular", "square"])
+@pytest.fixture(
+    params=[embedding.Lattice.TRIANGULAR, embedding.Lattice.SQUARE], ids=["triangular", "square"]
+)
 def layout_type(request: pytest.FixtureRequest) -> embedding.Lattice:
     return request.param  # type: ignore
 

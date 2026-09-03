@@ -59,7 +59,9 @@ def test_filter_by_cost(basic_solution: Solution) -> None:
 
 def test_filter_by_percentage(basic_solution: Solution) -> None:
     df = analysis.to_dataframe([basic_solution])
-    filtered = analysis._filter_by_percentage(df, top_percent=0.5, column="probs", order="descending")
+    filtered = analysis._filter_by_percentage(
+        df, top_percent=0.5, column="probs", order="descending"
+    )
     assert filtered["probs"].sum() >= 0.5
 
 
@@ -82,7 +84,9 @@ def test_calculate_gaps(basic_solution: Solution) -> None:
 
 
 @pytest.mark.parametrize("classical_method", get_args(_ClassicalAlgorithm))
-def test_analyzer_classical(simple_qubo_instance: Instance, classical_method: _ClassicalAlgorithm) -> None:
+def test_analyzer_classical(
+    simple_qubo_instance: Instance, classical_method: _ClassicalAlgorithm
+) -> None:
     config = SolverConfig(
         solving=ClassicalSolvingConfig(algorithm=classical_method),
     )

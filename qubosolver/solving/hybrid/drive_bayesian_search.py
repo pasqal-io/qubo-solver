@@ -221,6 +221,7 @@ def _run_simulation(
         cost.  Returns an empty [`Solution`][] on any failure.
     """
     from qubosolver import solving
+
     try:
         job = solving.analog_quantum_sampling.solve(
             register,

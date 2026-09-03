@@ -10,13 +10,11 @@ from .embedding import Config as EmbeddingConfig
 from .drive_shaping import Config as DriveShapingConfig
 from qubosolver.types.backends import LocalEmulator, RemoteEmulator
 
-
-
 _ClassicalAlgorithm = Literal["tabu_search", "simulated_annealing", "cplex", "random_sampling"]
 
 
 @dataclass
-class ClassicalConfig():
+class ClassicalConfig:
     """A configuration that defines the classical-solving part of a [`SolverConfig`][].
 
     Attributes:
@@ -50,7 +48,9 @@ class ClassicalConfig():
             in seconds. Defaults to `float("inf")`, meaning no time limit.
     """
 
-    algorithm: Literal["tabu_search", "simulated_annealing", "cplex", "random_sampling"] = "tabu_search"
+    algorithm: Literal["tabu_search", "simulated_annealing", "cplex", "random_sampling"] = (
+        "tabu_search"
+    )
 
     cplex_maxtime: float = 600.0
     cplex_log_path: str = ""
@@ -76,7 +76,7 @@ class ClassicalConfig():
 
 
 @dataclass
-class QuantumConfig():
+class QuantumConfig:
     """A configuration defines the quantum-solving part of a [`SolverConfig`][].
 
     Attributes:
@@ -89,7 +89,9 @@ class QuantumConfig():
 
     embedding: EmbeddingConfig = field(default_factory=EmbeddingConfig)
     drive_shaping: DriveShapingConfig = field(default_factory=DriveShapingConfig)
-    backend: LocalEmulator | RemoteEmulator | qoolqit.execution.QPU = field(default_factory=LocalEmulator)
+    backend: LocalEmulator | RemoteEmulator | qoolqit.execution.QPU = field(
+        default_factory=LocalEmulator
+    )
     device: qoolqit.Device = field(default_factory=qoolqit.AnalogDeviceWithDMM)
 
     @property

@@ -26,7 +26,9 @@ class _BaseDriveShaper(ABC):
         device (Device): Device from backend.
     """
 
-    def __init__(self, instance: Instance, config: QuantumSolvingConfig, backend: protocols.Backend):
+    def __init__(
+        self, instance: Instance, config: QuantumSolvingConfig, backend: protocols.Backend
+    ):
         """Initialize the drive shaping module with a QUBO instance.
 
         Args:
@@ -146,7 +148,12 @@ class LocalEnergyScaleDriveShaper(_BaseDriveShaper):
         dmm = self.config.drive_shaping.dmm
         kappa = self.config.drive_shaping.local_energy_scale_kappa
 
-        return drive_shaping.local_energy_scale.build_drive(self.instance, register, device=device, dmm=dmm, kappa=kappa), Solution()
+        return (
+            drive_shaping.local_energy_scale.build_drive(
+                self.instance, register, device=device, dmm=dmm, kappa=kappa
+            ),
+            Solution(),
+        )
 
 
 class BayesianSearchDriveShaper(_BaseDriveShaper):
@@ -192,7 +199,9 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
             probabilities from the final simulation run.
         """
 
-        config = solving.drive_bayesian_search.Config._from_drive_shaping_config(self.config.drive_shaping)
+        config = solving.drive_bayesian_search.Config._from_drive_shaping_config(
+            self.config.drive_shaping
+        )
 
         solution, drive = solving.drive_bayesian_search.solve(
             self.instance,

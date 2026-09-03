@@ -20,7 +20,7 @@ from collections.abc import Callable
 from copy import deepcopy
 
 
-from qubosolver import Instance, Solution, vector, vectori, Bitstring
+from qubosolver import Instance, Solution, Bitstring
 
 
 def _iterations(n: int) -> Iterable[int]:

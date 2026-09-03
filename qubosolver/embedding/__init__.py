@@ -1,5 +1,4 @@
-"""Embedding algorithms for mapping QUBO variables onto quantum hardware registers.
-"""
+"""Embedding algorithms for mapping QUBO variables onto quantum hardware registers."""
 
 from __future__ import annotations
 

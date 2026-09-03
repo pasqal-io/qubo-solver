@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Iterable
 import torch
-import itertools
 import logging
 import re
 import numpy as np
@@ -29,6 +26,7 @@ from qubosolver import (
 from qubosolver.utils import analysis
 import qoolqit
 from qoolqit import DigitalAnalogDevice, AnalogDevice
+
 
 def gather_optimal_solutions(
     solution: Solution,
@@ -82,7 +80,6 @@ def test_with_perfect_embedding(
     print(f"\nExpected Minimum cost: {expected_optimal_solutions[0].cost}")
     print(f"All expected optimal bitstrings: {[s.string for s in expected_optimal_solutions]}")
     print(f"Number of expected optimal solutions: {len(expected_optimal_solutions)}\n")
-
 
     embed_cfg = EmbeddingConfig(
         algorithm="greedy_layout",
@@ -198,11 +195,15 @@ def test_dmm_labels_are_ints() -> None:
     check.is_instance(register.qubits_ids[0], int)
 
     device = qoolqit.AnalogDeviceWithDMM()
-    drive = drive_shaping.proportional_diagonal.build_drive(instance, register, dmm=True, device=device)
+    drive = drive_shaping.proportional_diagonal.build_drive(
+        instance, register, dmm=True, device=device
+    )
 
     assert drive.dmm is not None
     for k, v in drive.dmm.weights.items():
         check.is_instance(k, int)
         check.is_instance(v, float)
     # check that compilation doesn't throw
-    qoolqit.QuantumProgram(register, drive).compile_to(device, profile="max_energy", device_max_duration_ratio=0.999)
+    qoolqit.QuantumProgram(register, drive).compile_to(
+        device, profile="max_energy", device_max_duration_ratio=0.999
+    )

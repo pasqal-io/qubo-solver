@@ -22,12 +22,11 @@ from collections.abc import Callable
 
 import logging
 import torch
-from typing_extensions import TypeAlias
 from copy import deepcopy
 
 import qoolqit
 
-from qubosolver import Solution, Instance, transforms, torch_rng, drive_shaping
+from qubosolver import Solution, Instance, transforms, torch_rng
 from .config import DecompositionConfig, SolverConfig, ClassicalSolvingConfig
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from ._basesolver import BaseSolver

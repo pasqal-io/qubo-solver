@@ -202,6 +202,7 @@ def _warn_suboptimal_backend(
 
     warnings.warn(warning_msg, UserWarning, stacklevel=2)
 
+
 class LocalEmulator(QoolqitLocalEmulator):
     """Local quantum emulator with automatic backend selection.
 
@@ -246,6 +247,7 @@ class LocalEmulator(QoolqitLocalEmulator):
         """
         _warn_suboptimal_backend(self._backend_type, program.register.n_qubits)
         return super().run(program, *args, **kwargs)
+
 
 class RemoteEmulator(QoolqitRemoteEmulator):
     """Remote quantum emulator with automatic backend selection.

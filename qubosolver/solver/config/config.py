@@ -8,7 +8,7 @@ from .solving import QuantumConfig as QuantumSolvingConfig
 
 
 @dataclass
-class DecompositionConfig():
+class DecompositionConfig:
     """The configuration parameters when using a decomposition method
     for solving large QUBO instances.
 
@@ -37,7 +37,7 @@ class DecompositionConfig():
 
 
 @dataclass
-class SolverConfig():
+class SolverConfig:
     """A configuration instance that defines how a QUBO problem should be solved.
 
     We specify whether to use a quantum or classical approach, which backend
@@ -63,7 +63,9 @@ class SolverConfig():
     """
 
     config_name: str = ""
-    solving: QuantumSolvingConfig | ClassicalSolvingConfig = field(default_factory=QuantumSolvingConfig)
+    solving: QuantumSolvingConfig | ClassicalSolvingConfig = field(
+        default_factory=QuantumSolvingConfig
+    )
     postprocessing: bool = False
     preprocessing: bool = False
     activate_trivial_solutions: bool = True
@@ -122,6 +124,8 @@ class SolverConfig():
             ValueError: If this configuration is not configured for classical solving.
         """
         if self.solving_mode != "classical":
-            raise ValueError(f"Config '{self.config_name}' is not configured for classical solving.")
+            raise ValueError(
+                f"Config '{self.config_name}' is not configured for classical solving."
+            )
         assert isinstance(self.solving, ClassicalSolvingConfig)
         return self.solving

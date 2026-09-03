@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 from typing import Callable
 import torch
 
@@ -14,9 +13,19 @@ from pulser.backend.remote import BatchStatus, JobStatus, RemoteResults, RemoteR
 from pulser.backend.results import Results
 
 import qoolqit
-from qoolqit.execution import Job, JobStatus, retrieve_remote_job, get_batch_id
+from qoolqit.execution import JobStatus, retrieve_remote_job, get_batch_id
 
-from qubosolver import Instance, RemoteEmulator, drive_shaping, matrix, vector, Solution, embedding, solving, analysis
+from qubosolver import (
+    Instance,
+    RemoteEmulator,
+    drive_shaping,
+    matrix,
+    vector,
+    Solution,
+    embedding,
+    solving,
+    analysis,
+)
 from qubosolver.utils._local_connection import _QUBIT_LIMIT, LocalConnection
 
 NUM_SHOTS = 50
@@ -25,7 +34,9 @@ NUM_SHOTS = 50
 def _program(*, n_qubits: int) -> qoolqit.QuantumProgram:
     """Build a compiled program of `n_qubits` atoms."""
     register = qoolqit.Register.circle(n_qubits)
-    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.zeros(n_qubits).fill_(-1.0))
+    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(
+        vector.zeros(n_qubits).fill_(-1.0)
+    )
     instance = Instance(Q)
     device = qoolqit.AnalogDevice()
     drive = drive_shaping.proportional_diagonal.build_drive(
@@ -173,9 +184,7 @@ def test_open_batch_is_not_supported() -> None:
 
 def test_too_many_qubits_is_not_supported() -> None:
     with pytest.raises(NotImplementedError, match=f"limit is {_QUBIT_LIMIT}"):
-        LocalConnection().submit(
-            _sequence(n_qubits=_QUBIT_LIMIT), backend_configuration=_config()
-        )
+        LocalConnection().submit(_sequence(n_qubits=_QUBIT_LIMIT), backend_configuration=_config())
 
 
 @pytest.mark.parametrize("num_shots", [1, 20])
@@ -187,13 +196,16 @@ def test_runs_through_remote_emulator(num_shots: int) -> None:
     counts = results.get_result(results.get_result_tags()[0], 1.0)
     check.equal(sum(counts.values()), num_shots)
 
+
 def test_end_to_end() -> None:
 
-    Q = matrix.tensor([
-        [-0.2, 0.0, 1.0],
-        [ 0.0, 0.0, 1.5],
-        [ 1.0, 1.5, 0.0],
-    ])
+    Q = matrix.tensor(
+        [
+            [-0.2, 0.0, 1.0],
+            [0.0, 0.0, 1.5],
+            [1.0, 1.5, 0.0],
+        ]
+    )
     instance = Instance(Q)
     connection = LocalConnection()
     device = qoolqit.AnalogDevice()

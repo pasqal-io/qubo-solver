@@ -10,7 +10,7 @@ _GreedyLayoutLattice = Literal["square", "triangular"]
 
 
 @dataclass
-class Config():
+class Config:
     """A configuration that defines the embedding part of a [`QuantumSolvingConfig`][].
 
     Attributes:
@@ -63,4 +63,3 @@ class Config():
             raise ValueError(f"Invalid embedding method '{self.algorithm}'.")
         if self.greedy_layout_lattice not in get_args(_GreedyLayoutLattice):
             raise ValueError(f"Invalid lattice '{self.greedy_layout_lattice}'.")
-

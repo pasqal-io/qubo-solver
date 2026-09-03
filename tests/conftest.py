@@ -18,8 +18,6 @@ from mock.connection import MockConnection
 from qubosolver import (
     Instance,
     Solution,
-    drive_shaping,
-    embedding,
     bitstrings,
     vector,
     vectori,
@@ -28,6 +26,7 @@ from qubosolver import (
     LocalEmulator,
     DriveShapingConfig,
 )
+
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     """

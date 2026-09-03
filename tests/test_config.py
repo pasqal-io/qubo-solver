@@ -11,10 +11,10 @@ from qubosolver import (
     DriveShapingConfig,
     EmbeddingConfig,
     DecompositionConfig,
-    embedding,
     LocalEmulator,
     AutoLocalEmulatorBackend,
 )
+
 
 def test_default_config() -> None:
     default_config = SolverConfig()
@@ -51,7 +51,7 @@ def test_drive_shaping_config() -> None:
     )
     check.equal(
         DriveShapingConfig(algorithm="bayesian_search").algorithm,
-       "bayesian_search",
+        "bayesian_search",
     )
 
 

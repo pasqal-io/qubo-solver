@@ -8,7 +8,6 @@ import numpy.typing as npt
 import torch
 from scipy.optimize import OptimizeResult, minimize
 from shapely.geometry import Point, Polygon, MultiPolygon
-import qoolqit
 from qubosolver import matrix, Matrix, Bitstring, Vector, vector
 from qubosolver.types._checks import no_runtime_typecheck
 
@@ -20,6 +19,7 @@ def _clamp_max_radial_distance(max_radial_distance: float) -> float:
         return max_radial_distance
     else:
         return 50.0
+
 
 VertexToPlace = TypedDict(
     "VertexToPlace",

@@ -21,7 +21,6 @@ from qubosolver.solver.config import (
 
 from qubosolver.solver.solver import Solver
 
-
 __all__ = [
     "Solver",
     "SolverConfig",

@@ -117,7 +117,6 @@ def test_solver_different_devices(
         ),
         device=local_device,
         backend=LocalEmulator(backend_type=SVBackend),
-
     )
     config = SolverConfig(
         solving=quantum_config,

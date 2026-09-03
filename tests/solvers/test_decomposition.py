@@ -27,8 +27,6 @@ from qubosolver import (
     SolverConfig,
     ClassicalSolvingConfig,
     QuantumSolvingConfig,
-    EmbeddingConfig,
-    DriveShapingConfig,
 )
 from qubosolver.solver.solver import _DecomposeQuboSolver
 from qubosolver.transforms._algorithms.decompose import compute_distance_interaction_matrix
@@ -122,7 +120,6 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
         max_radial_distance = DigitalAnalogDevice()._pulser_device.max_radial_distance
         assert max_radial_distance is not None
         max_radial_distance = float(max_radial_distance)
-
 
     placed_vertices = geometric_search(
         qubo_mat,
@@ -314,12 +311,12 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
             ],
         )
         Q2 = Dataset.from_random(
-                n_matrices=1,
-                matrix_dim=dims[0],
-                densities=[1.0],
-                dtype=torch.float64,
-                rng=rng,
-            )[0][0].matrix
+            n_matrices=1,
+            matrix_dim=dims[0],
+            densities=[1.0],
+            dtype=torch.float64,
+            rng=rng,
+        )[0][0].matrix
         blocks = [Q1, Q2]
         N = Q1.shape[0] + dims[0]
     else:
@@ -410,11 +407,11 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
     non_optimal_cases: list[tuple[int, tuple[int, ...]]] = [
         (55571, (4,)),
         (1547, (3,)),
-        (1547, (3,3)),
-        (66987, (3,3)),
-        (66987, (4,3,2,3)),
+        (1547, (3, 3)),
+        (66987, (3, 3)),
+        (66987, (4, 3, 2, 3)),
         (998618750, (4,)),
-        (998618750, (4,3,2,3)),
+        (998618750, (4, 3, 2, 3)),
     ]
     failed_cases = [
         (1935225697, (3, 3)),

@@ -399,7 +399,9 @@ class Instance(qubosolver.Instance):
         torch.save(self.flips, buffer)
         io_utils.save_sized_buffer(f, buffer.getbuffer())  # type: ignore[arg-type]
 
-        state_json = json.dumps({"status": self.status, "offset": self.offset, "metrics": self.metrics})
+        state_json = json.dumps(
+            {"status": self.status, "offset": self.offset, "metrics": self.metrics}
+        )
         io_utils.save_string(f, state_json)  # type: ignore[arg-type]
 
         self._parent_instance.save(f)  # type: ignore[arg-type]
