@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal, get_args
 
-
 _DriveShapingAlgorithm = Literal["bayesian_search", "proportional_diagonal", "local_energy_scale"]
 
 

@@ -20,7 +20,7 @@ solution = variable_fixing.lift(reduced_solution, reduced_instance)
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import cast, TypeAlias
+from typing import IO, cast, TypeAlias
 
 import copy
 import json
@@ -104,24 +104,22 @@ class Instance(qubosolver.Instance):
         """Total number of variables fixed across all fixation rounds."""
         return sum([len(fixed) for fixed in self.fixed_indices])
 
-    def _write_body(self, f: io_utils.FileLike[bytes]) -> None:
+    def _write_body(self, f: IO[bytes]) -> None:
         """Write the parent matrix, fixation history, and parent instance to `f`."""
         super()._write_body(f)
-        io_utils.save_string(f, json.dumps(self._fixed_indices))  # type: ignore[arg-type]
-        self._parent_instance.save(f)  # type: ignore[arg-type]
+        io_utils.save_string(f, json.dumps(self._fixed_indices))
+        self._parent_instance.save(f)
 
     @classmethod
-    def _read_body(cls, f: io_utils.FileLike[bytes]) -> Instance:
+    def _read_body(cls, f: IO[bytes]) -> Instance:
         """Read back a variable-fixing instance written by [`_write_body`][]."""
 
         def decode_int_keys(obj: dict) -> dict:
             return {int(k): v for k, v in obj.items()}
 
         instance = Instance(qubosolver.Instance._read_body(f))
-        instance._fixed_indices = json.loads(
-            io_utils.load_string(f), object_hook=decode_int_keys  # type: ignore[arg-type]
-        )
-        instance._parent_instance = qubosolver.Instance.load(f)  # type: ignore[arg-type]
+        instance._fixed_indices = json.loads(io_utils.load_string(f), object_hook=decode_int_keys)
+        instance._parent_instance = qubosolver.Instance.load(f)
         return instance
 
 

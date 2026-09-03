@@ -32,7 +32,7 @@ import io
 import json
 import logging
 from dataclasses import dataclass
-from typing import Any
+from typing import IO, Any
 
 import torch
 
@@ -391,35 +391,35 @@ class Instance(qubosolver.Instance):
         self.offset: float = 0.0
         """Constant term relating the flipped and original QUBO costs, $x^T Q x = y^T Q_{flipped} y + offset$."""
 
-    def _write_body(self, f: io_utils.FileLike[bytes]) -> None:
+    def _write_body(self, f: IO[bytes]) -> None:
         """Write the matrix, flip vector, solve metadata, and parent instance to `f`."""
         super()._write_body(f)
 
         buffer = io.BytesIO()
         torch.save(self.flips, buffer)
-        io_utils.save_sized_buffer(f, buffer.getbuffer())  # type: ignore[arg-type]
+        io_utils.save_sized_buffer(f, buffer.getbuffer())
 
         state_json = json.dumps(
             {"status": self.status, "offset": self.offset, "metrics": self.metrics}
         )
-        io_utils.save_string(f, state_json)  # type: ignore[arg-type]
+        io_utils.save_string(f, state_json)
 
-        self._parent_instance.save(f)  # type: ignore[arg-type]
+        self._parent_instance.save(f)
 
     @classmethod
-    def _read_body(cls, f: io_utils.FileLike[bytes]) -> Instance:
+    def _read_body(cls, f: IO[bytes]) -> Instance:
         """Read back a negative-bitflip instance written by [`_write_body`][]."""
         instance = Instance(qubosolver.Instance._read_body(f))
 
-        buffer = io.BytesIO(io_utils.load_sized_buffer(f))  # type: ignore[arg-type]
+        buffer = io.BytesIO(io_utils.load_sized_buffer(f))
         instance.flips = torch.load(buffer, weights_only=True)
 
-        state = json.loads(io_utils.load_string(f))  # type: ignore[arg-type]
+        state = json.loads(io_utils.load_string(f))
         instance.status = state["status"]
         instance.offset = state["offset"]
         instance.metrics = state["metrics"]
 
-        instance._parent_instance = qubosolver.Instance.load(f)  # type: ignore[arg-type]
+        instance._parent_instance = qubosolver.Instance.load(f)
         return instance
 
 

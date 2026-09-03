@@ -53,25 +53,25 @@ class Instance(qubosolver.Instance):
         """Matrix of removed negative coefficients: same (symmetric) shape as the
         QUBO matrix, holding the original values at zeroed positions and 0 elsewhere."""
 
-    def _write_body(self, f: io_utils.FileLike[bytes]) -> None:
+    def _write_body(self, f: IO[bytes]) -> None:
         """Write the matrix, removed-coefficients matrix, and parent instance to `f`."""
         super()._write_body(f)
 
         buffer = io.BytesIO()
         torch.save(self.negative_matrix, buffer)
-        io_utils.save_sized_buffer(f, buffer.getbuffer())  # type: ignore[arg-type]
+        io_utils.save_sized_buffer(f, buffer.getbuffer())
 
-        self._parent_instance.save(f)  # type: ignore[arg-type]
+        self._parent_instance.save(f)
 
     @classmethod
-    def _read_body(cls, f: io_utils.FileLike[bytes]) -> Instance:
+    def _read_body(cls, f: IO[bytes]) -> Instance:
         """Read back a zeroing instance written by [`_write_body`][]."""
         instance = Instance(qubosolver.Instance._read_body(f))
 
-        buffer = io.BytesIO(io_utils.load_sized_buffer(f))  # type: ignore[arg-type]
+        buffer = io.BytesIO(io_utils.load_sized_buffer(f))
         instance.negative_matrix = torch.load(buffer, weights_only=True)
 
-        instance._parent_instance = qubosolver.Instance.load(f)  # type: ignore[arg-type]
+        instance._parent_instance = qubosolver.Instance.load(f)
         return instance
 
     @property

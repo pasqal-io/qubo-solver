@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import torch
 import io
-from typing import TYPE_CHECKING, TypeVar
+from typing import IO, TYPE_CHECKING, TypeVar
 
 from ._checks import debug_runtime_typecheck, no_runtime_typecheck
 from . import matrix
@@ -127,10 +127,10 @@ class Instance:
         Automatic, so a new `Instance` subclass never needs to be added to a
         separate registry by hand.
         """
-        super().__init_subclass__(**kwargs)  # type: ignore[arg-type]
+        super().__init_subclass__(**kwargs)
         Instance._registry[cls._tag()] = cls
 
-    def _write_body(self, f: io_utils.FileLike[bytes]) -> None:
+    def _write_body(self, f: IO[bytes]) -> None:
         """Write this instance's state to `f`, without any type tag.
 
         The base implementation writes only [`matrix`][]. Subclasses that
@@ -144,10 +144,10 @@ class Instance:
         # stream.
         buffer = io.BytesIO()
         torch.save(self.matrix, buffer)
-        io_utils.save_sized_buffer(f, buffer.getbuffer())  # type: ignore[arg-type]
+        io_utils.save_sized_buffer(f, buffer.getbuffer())
 
     @classmethod
-    def _read_body(cls, f: io_utils.FileLike[bytes]) -> Instance:
+    def _read_body(cls, f: IO[bytes]) -> Instance:
         """Read an instance of `cls` back from `f`, without any type tag.
 
         The base implementation reads only [`matrix`][]. Subclasses that
@@ -162,7 +162,7 @@ class Instance:
         # `io.BytesIO` buffer before calling `torch.load`. The isolated buffer
         # prevents `torch.load` from over-consuming the source stream when
         # multiple objects are packed together.
-        buffer = io.BytesIO(io_utils.load_sized_buffer(f))  # type: ignore[arg-type]
+        buffer = io.BytesIO(io_utils.load_sized_buffer(f))
         Q = torch.load(buffer, weights_only=True)
         return Instance(Q)
 
@@ -187,7 +187,7 @@ class Instance:
             self._write_body(f)
 
     @classmethod
-    def load(cls, file_like: io_utils.FileLike[bytes]) -> Instance:
+    def load(cls: type[_InstanceT], file_like: io_utils.FileLike[bytes]) -> _InstanceT:
         """Deserialize an [`Instance`][] previously saved with [`save`][].
 
         Called on the base class [`qubosolver.Instance`][], it loads any instance with automatic dispatch.
