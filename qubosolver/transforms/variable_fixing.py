@@ -29,6 +29,7 @@ import torch
 import qubosolver
 from qubosolver.types import Solution, bitstrings, vector
 from qubosolver._io import utils as io_utils
+from qubosolver.types._checks import debug_runtime_typecheck
 
 # TODO: Using `type` statement when Python >= 3.12
 Rule: TypeAlias = Callable[[qubosolver.Instance], dict[int, int]]
@@ -71,6 +72,7 @@ def hansen_fixing(instance: qubosolver.Instance) -> dict[int, int]:
     return fixed_dict
 
 
+@debug_runtime_typecheck
 class Instance(qubosolver.Instance):
     """A QUBO instance with variable-fixing history.
 

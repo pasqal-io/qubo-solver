@@ -12,7 +12,7 @@ import torch
 import io
 from typing import TYPE_CHECKING, TypeVar
 
-from ._checks import debug_runtime_typecheck
+from ._checks import debug_runtime_typecheck, no_runtime_typecheck
 from . import matrix
 from .linalg import Matrix, Bitstring
 from ._enums import _DensityType
