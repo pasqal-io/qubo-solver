@@ -48,10 +48,10 @@ def test_dataset_copy_false_aliases_input() -> None:
 
     matrices = torch.zeros(3, 3, 1)
     solution = Solution(
-        bitstrings=torch.zeros(1, 3, dtype=torch.int8),
-        costs=torch.zeros(1),
-        counts=torch.zeros(1, dtype=torch.int64),
-        probabilities=torch.zeros(1),
+        bitstrings=bitstrings.zeros(1, 3),
+        costs=vector.zeros(1),
+        counts=vectori.zeros(1),
+        probabilities=vector.zeros(1),
     )
     dataset = Dataset(matrices, [solution], copy=False)
 

@@ -8,6 +8,7 @@ import numpy as np
 import torch
 
 from qubosolver.types import torch_rng
+from qubosolver.types._checks import no_runtime_typecheck
 
 
 def manual_seed(seed: int) -> torch.Generator:
@@ -27,6 +28,7 @@ def reset_seed() -> torch.Generator:
 
 
 @contextmanager
+@no_runtime_typecheck
 def seed_context(seed: int) -> Generator[torch.Generator]:
     """Temporarily seed numpy/torch/random, restoring prior state on exit."""
     py_state = random.getstate()

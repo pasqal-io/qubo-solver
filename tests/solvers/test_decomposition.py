@@ -118,9 +118,10 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
             max_min_dist_ratio=pulser_device.max_radial_distance / pulser_device.min_atom_distance,
         )
     else:
-        min_distance = DigitalAnalogDevice()._pulser_device.min_atom_distance
+        min_distance = float(DigitalAnalogDevice()._pulser_device.min_atom_distance)
         max_radial_distance = DigitalAnalogDevice()._pulser_device.max_radial_distance
         assert max_radial_distance is not None
+        max_radial_distance = float(max_radial_distance)
 
 
     placed_vertices = geometric_search(

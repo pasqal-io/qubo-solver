@@ -101,7 +101,7 @@ def compute_min_max_distances(
             ``max_min_dist_ratio`` is infinite (no distance limits).
     """
     if max_min_dist_ratio == torch.inf:
-        return 0, torch.inf
+        return 0.0, torch.inf
     min_distance = float(np.max(np.triu(interactions, k=1)) ** (-1 / 6))
     max_radial_distance = min_distance * max_min_dist_ratio
     return min_distance, max_radial_distance

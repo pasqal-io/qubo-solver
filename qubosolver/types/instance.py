@@ -262,6 +262,7 @@ class Instance:
         return self
 
     @property
+    @no_runtime_typecheck
     def variable_fixing(self) -> variable_fixing.Instance:
         """View of this instance as a variable-fixing [`Instance`][qubosolver.transforms.variable_fixing.Instance].
 
@@ -284,6 +285,7 @@ class Instance:
         return self._narrow(variable_fixing.Instance)
 
     @property
+    @no_runtime_typecheck
     def zeroing(self) -> zeroing.Instance:
         """View of this instance as a zeroing [`Instance`][qubosolver.transforms.zeroing.Instance].
 
@@ -306,6 +308,7 @@ class Instance:
         return self._narrow(zeroing.Instance)
 
     @property
+    @no_runtime_typecheck
     def negative_bitflip(self) -> negative_bitflip.Instance:
         """View of this instance as a negative-bitflip [`Instance`][qubosolver.transforms.negative_bitflip.Instance].
 
