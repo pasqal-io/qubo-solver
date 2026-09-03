@@ -40,6 +40,11 @@ def test_solution_to_dataframe(basic_solution: Solution) -> None:
     assert len(df) == 2
 
 
+def test_to_dataframe_counts_are_stored_as_ints(basic_solution: Solution) -> None:
+    df = analysis.to_dataframe([basic_solution])
+    assert df["counts"].dtype == "int64"
+
+
 def test_filter_by_probability(basic_solution: Solution) -> None:
     df = analysis.to_dataframe([basic_solution])
     filtered = df[df["probs"] > 0.5]

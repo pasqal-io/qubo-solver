@@ -47,7 +47,7 @@ def _solution_to_dataframe(solution: Solution, solution_label: str) -> pd.DataFr
         _LABELS: [solution_label] * len(solution),
         _BITSTRINGS: bitstring_list,
         _COSTS: solution.costs.tolist(),
-        _COUNTS: solution.counts.tolist(),
+        _COUNTS: pd.Series(solution.counts.tolist(), dtype="int64"),
         _PROBS: solution.probabilities.tolist(),
     }
     return pd.DataFrame(data)
