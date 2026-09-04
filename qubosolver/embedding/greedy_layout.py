@@ -49,7 +49,7 @@ class Config:
     lattice: Lattice = Lattice.TRIANGULAR
     max_min_dist_ratio: float | Literal["device"] = "device"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._draw_steps: bool = False
         self._animation_save_path: pathlib.Path | None = None
 

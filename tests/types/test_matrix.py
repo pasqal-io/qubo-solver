@@ -164,7 +164,7 @@ def test_as_tensor_copies_when_input_is_a_list() -> None:
     check.equal(result[0][0].item(), 1.0)
 
 
-def test_as_tensor_preserves_values() -> None:
+def test_as_tensor_preserves_values_from_list() -> None:
     data = [[1.0, 2.0], [3.0, 4.0]]
     result = matrix.as_tensor(data)
     torch.testing.assert_close(

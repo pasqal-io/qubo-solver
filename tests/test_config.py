@@ -43,7 +43,7 @@ def test_drive_shaping_config() -> None:
     check.equal(len(default_drive_shaping_config.bayesian_search_initial_omega_parameters), 3)
 
     with pytest.raises(ValueError):
-        DriveShapingConfig(algorithm="dummy")
+        DriveShapingConfig(algorithm="dummy")  # type: ignore[arg-type]
 
     check.equal(
         DriveShapingConfig(algorithm="proportional_diagonal").algorithm,
@@ -62,7 +62,7 @@ def test_embdedding_config() -> None:
     check.is_true(default_embedding_config.greedy_layout_traps)
 
     with pytest.raises(ValueError):
-        EmbeddingConfig(algorithm="dummy")
+        EmbeddingConfig(algorithm="dummy")  # type: ignore[arg-type]
     with pytest.raises(ValueError):
         EmbeddingConfig(greedy_layout_lattice="dummy")  # type: ignore[arg-type]
 

@@ -24,6 +24,7 @@ import copy
 import io
 
 import torch
+from typing import IO
 
 import qubosolver
 from qubosolver.types import Matrix, Solution, Vectori, vector, vectori

@@ -198,7 +198,7 @@ def test_save_load_roundtrips_zeroing_over_negative_bitflip_parent() -> None:
     buffer.seek(0)
     loaded = transforms.zeroing.Instance.load(buffer)
 
-    check.is_instance(loaded._parent_instance, transforms.negative_bitflip.Instance)
+    assert isinstance(loaded._parent_instance, transforms.negative_bitflip.Instance)
     torch.testing.assert_close(loaded._parent_instance.matrix, flipped_parent.matrix)
     torch.testing.assert_close(loaded._parent_instance.flips, flipped_parent.flips)
     check.equal(loaded._parent_instance.status, flipped_parent.status)

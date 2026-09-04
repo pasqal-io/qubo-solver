@@ -117,9 +117,9 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
         )
     else:
         min_distance = float(DigitalAnalogDevice()._pulser_device.min_atom_distance)
-        max_radial_distance = DigitalAnalogDevice()._pulser_device.max_radial_distance
-        assert max_radial_distance is not None
-        max_radial_distance = float(max_radial_distance)
+        max_radial_distance_ = DigitalAnalogDevice()._pulser_device.max_radial_distance
+        assert max_radial_distance_ is not None
+        max_radial_distance = float(max_radial_distance_)
 
     placed_vertices = geometric_search(
         qubo_mat,
@@ -356,8 +356,7 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
     for subpb_solutions in itertools.product(*subpb_optimal_solutions):
         b = torch.cat([s.bitstring for s in subpb_solutions])
         cost = sum(s.cost for s in subpb_solutions)
-        solution = SingleSolution(b, cost, 1)
-        optimal_solutions_list.append(solution)
+        optimal_solutions_list.append(SingleSolution(b, cost, 1))
 
     optimal_solutions = Solution(
         bitstrings=torch.stack([s.bitstring for s in optimal_solutions_list]),

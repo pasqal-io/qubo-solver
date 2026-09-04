@@ -398,7 +398,7 @@ def _plot(
         df = df[df[_COSTS] < cost_threshold]
 
     if top_percent is not None:
-        df = _filter_by_percentage(df, top_percent)
+        df = _filter_by_percentage(df, top_percent=top_percent)
 
     if x_axis == _BITSTRINGS:
         g = _plot_vs_bitstrings(

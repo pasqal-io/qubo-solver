@@ -133,7 +133,7 @@ class _QuboSolverQuantum(BaseSolver):
             ValueError: If ``instance.size > 80``.
         """
 
-        super().__init__(instance, config or Config())
+        super().__init__(instance, config)
 
         if _has_negative_offdiagonal(instance.matrix) and not self.config.preprocessing:
             logger.warning(
