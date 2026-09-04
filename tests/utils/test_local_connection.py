@@ -9,7 +9,8 @@ import pytest_check as check
 import pulser
 from pulser.backend import EmulationConfig
 from pulser.backend.default_observables import BitStrings
-from pulser.backend.remote import BatchStatus, JobStatus, RemoteResults, RemoteResultsError
+from pulser.backend.remote import BatchStatus, RemoteResults, RemoteResultsError
+from pulser.backend.remote import JobStatus as PulserJobStatus
 from pulser.backend.results import Results
 
 import qoolqit
@@ -92,7 +93,7 @@ def test_query_job_progress_reports_done_with_results() -> None:
 
     check.equal(list(progress), remote_results.job_ids)
     status, results = progress[remote_results.job_ids[0]]
-    check.equal(status, JobStatus.DONE)
+    check.equal(status, PulserJobStatus.DONE)
     check.is_instance(results, Results)
     check.equal(list(remote_results.get_available_results()), remote_results.job_ids)
 

@@ -166,6 +166,7 @@ exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:", "p
 
 [tool.ruff]
 line-length = 100
+extend-exclude = ["docs/tutorial/retired"]
 
 [lint]
 extend-ignore = ["F841"]
