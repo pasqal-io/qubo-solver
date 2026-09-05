@@ -21,6 +21,7 @@ from . import bitstrings as _bitstrings
 from .linalg import Bitstrings, Vector, Vectori, Matrix, Bitstring
 from .instance import Instance
 from qubosolver._io import utils as io_utils
+from qubosolver._io.utils import FileLike
 
 from pulser.backend.results import Results
 
@@ -365,7 +366,7 @@ class Solution:
 
         return solution
 
-    def save(self, file_like: io_utils.FileLike[bytes]) -> None:
+    def save(self, file_like: FileLike[bytes]) -> None:
         """Serialize this solution to `file_like` using `torch.save`.
 
         Args:
@@ -395,7 +396,7 @@ class Solution:
             io_utils.save_sized_buffer(f, buffer.getbuffer())
 
     @staticmethod
-    def load(file_like: io_utils.FileLike[bytes]) -> Solution:
+    def load(file_like: FileLike[bytes]) -> Solution:
         """Deserialize a [`Solution`][] previously saved with [`save`][].
 
         Args:

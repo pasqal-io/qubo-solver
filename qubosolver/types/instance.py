@@ -10,13 +10,15 @@ from __future__ import annotations
 
 import torch
 import io
-from typing import IO, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 from ._checks import debug_runtime_typecheck, no_runtime_typecheck
 from . import matrix
 from .linalg import Matrix, Bitstring
 from ._enums import _DensityType
 from qubosolver._io import utils as io_utils
+from qubosolver._io.utils import Stream
+from qubosolver._io.utils import FileLike
 
 if TYPE_CHECKING:
     from qubosolver.transforms import negative_bitflip, variable_fixing, zeroing
@@ -130,7 +132,7 @@ class Instance:
         super().__init_subclass__(**kwargs)
         Instance._registry[cls._tag()] = cls
 
-    def _write_body(self, f: IO[bytes]) -> None:
+    def _write_body(self, f: Stream[bytes]) -> None:
         """Write this instance's state to `f`, without any type tag.
 
         The base implementation writes only [`matrix`][]. Subclasses that
@@ -147,7 +149,7 @@ class Instance:
         io_utils.save_sized_buffer(f, buffer.getbuffer())
 
     @classmethod
-    def _read_body(cls, f: IO[bytes]) -> Instance:
+    def _read_body(cls, f: Stream[bytes]) -> Instance:
         """Read an instance of `cls` back from `f`, without any type tag.
 
         The base implementation reads only [`matrix`][]. Subclasses that
@@ -166,7 +168,7 @@ class Instance:
         Q = torch.load(buffer, weights_only=True)
         return Instance(Q)
 
-    def save(self, file_like: io_utils.FileLike[bytes]) -> None:
+    def save(self, file_like: FileLike[bytes]) -> None:
         """Serialize this instance to ``file_like``, tagged with its type.
 
         Args:
@@ -187,7 +189,7 @@ class Instance:
             self._write_body(f)
 
     @classmethod
-    def load(cls: type[_InstanceT], file_like: io_utils.FileLike[bytes]) -> _InstanceT:
+    def load(cls: type[_InstanceT], file_like: FileLike[bytes]) -> _InstanceT:
         """Deserialize an [`Instance`][] previously saved with [`save`][].
 
         Called on the base class [`qubosolver.Instance`][], it loads any instance with automatic dispatch.

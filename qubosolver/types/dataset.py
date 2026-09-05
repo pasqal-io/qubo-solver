@@ -18,6 +18,7 @@ from .instance import Instance
 from . import matrix
 from .random import torch_rng
 from qubosolver._io import utils as io_utils
+from qubosolver._io.utils import FileLike
 
 
 class Dataset:
@@ -238,7 +239,7 @@ class Dataset:
         # Step 4: Return the dataset.
         return cls(matrices=coefficients, copy=False)
 
-    def save(self, file_like: io_utils.FileLike[bytes]) -> None:
+    def save(self, file_like: FileLike[bytes]) -> None:
         """Persist this dataset to disk using [`torch.save`][].
 
         Args:
@@ -264,7 +265,7 @@ class Dataset:
                 s.save(f)
 
     @staticmethod
-    def load(file_like: io_utils.FileLike[bytes]) -> Dataset:
+    def load(file_like: FileLike[bytes]) -> Dataset:
         """Load a dataset previously saved with [`save`][].
 
         Args:

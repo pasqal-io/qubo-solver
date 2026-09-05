@@ -8,8 +8,9 @@ import struct
 from contextlib import nullcontext
 from importlib.metadata import version
 
-from typing import overload, Sized
-from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING, TYPE_CHECKING
+from typing import IO, Union, TypeVar, overload, Sized, TYPE_CHECKING
+
+from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING
 
 logger = logging.getLogger(__name__)
 
@@ -27,19 +28,35 @@ if multibyte. Strings in these formats are type tags and version numbers, the
 longest around 50 bytes."""
 
 if TYPE_CHECKING:
-    from typing import Any, Union, IO, Literal, TypeVar
+    from typing import Any, Literal
     from typing_extensions import Buffer
-    import typing
     from contextlib import AbstractContextManager
 
-    _T = TypeVar("_T", bytes, str)
-    if _RUNTIME_TYPE_CHECKING and not typing.TYPE_CHECKING:
-        FileLike = Union[_T, Any]
-    else:
-        FileLike = Union[str, os.PathLike[str], IO[_T]]
+_T = TypeVar("_T", bytes, str)
+
+# `Stream[_T]` is an already-open binary or text stream: `io.BytesIO`, the
+# result of `open`, ...
+if TYPE_CHECKING or not _RUNTIME_TYPE_CHECKING:
+    Stream = IO[_T]
+else:
+    # Runtime-checking variant: the static hint widened with `io.IOBase`.
+    #
+    # beartype expands `IO[_T]` into a PEP 544 protocol requiring the full
+    # `typing.IO` surface, including the `mode` and `name` attributes. In-memory
+    # streams have neither, so `io.BytesIO()` is rejected while an `open()` file
+    # object passes -- a check that fails exactly the callers it should accept.
+    #
+    # The extra `io.IOBase` arm readmits every real stream while still rejecting
+    # non-streams. It gives up only the bytes/str distinction for in-memory
+    # streams, which `open` enforces anyway by raising `TypeError` on a stream
+    # of the wrong flavour. `IO[_T]` is kept so the alias stays generic.
+    Stream = Union[IO[_T], io.IOBase]  # type: ignore[misc,assignment]
+
+FileLike = Union[str, os.PathLike[str], Stream[_T]]
+"""A filesystem path or an already-open [`Stream`][], as taken by `save`/`load`."""
 
 
-def read_exact(src: IO[bytes], length: int) -> bytes:
+def read_exact(src: Stream[bytes], length: int) -> bytes:
     """Read exactly `length` bytes from a binary stream.
 
     Args:
@@ -62,7 +79,7 @@ def read_exact(src: IO[bytes], length: int) -> bytes:
     return data
 
 
-def save(output: IO[bytes], format: str, data: Any) -> None:
+def save(output: Stream[bytes], format: str, data: Any) -> None:
     """Pack `data` with `struct.pack` and write it to a binary stream.
 
     Args:
@@ -75,7 +92,7 @@ def save(output: IO[bytes], format: str, data: Any) -> None:
     output.write(struct.pack(format, data))
 
 
-def load(src: IO[bytes], format: str) -> Any:
+def load(src: Stream[bytes], format: str) -> Any:
     """Read and unpack a single value from a binary stream with `struct`.
 
     Reads exactly the number of bytes required by `format` and returns the
@@ -99,7 +116,7 @@ def load(src: IO[bytes], format: str) -> Any:
     return struct.unpack(format, read_exact(src, struct.calcsize(format)))[0]
 
 
-def save_sized_buffer(output: IO[bytes], buffer: Buffer) -> None:
+def save_sized_buffer(output: Stream[bytes], buffer: Buffer) -> None:
     """Write a buffer to a binary stream, prefixed with its length.
 
     The length is written as a 4-byte big-endian unsigned integer, followed
@@ -119,7 +136,7 @@ def save_sized_buffer(output: IO[bytes], buffer: Buffer) -> None:
     output.write(buffer)
 
 
-def load_sized_buffer(src: IO[bytes], *, max_size: int = _MAX_BUFFER_SIZE) -> bytes:
+def load_sized_buffer(src: Stream[bytes], *, max_size: int = _MAX_BUFFER_SIZE) -> bytes:
     """Read a length-prefixed buffer previously written by `save_sized_buffer`.
 
     Args:
@@ -147,7 +164,7 @@ def load_sized_buffer(src: IO[bytes], *, max_size: int = _MAX_BUFFER_SIZE) -> by
     return read_exact(src, length)
 
 
-def save_string(output: IO[bytes], string: str, *, encoding: str = "utf-8") -> None:
+def save_string(output: Stream[bytes], string: str, *, encoding: str = "utf-8") -> None:
     """Encode a string and write it to a binary stream with a length prefix.
 
     Uses `save_sized_buffer` internally, so it can be read back with
@@ -169,7 +186,7 @@ def save_string(output: IO[bytes], string: str, *, encoding: str = "utf-8") -> N
 
 
 def load_string(
-    src: IO[bytes], *, encoding: str = "utf-8", max_size: int = _MAX_STRING_SIZE
+    src: Stream[bytes], *, encoding: str = "utf-8", max_size: int = _MAX_STRING_SIZE
 ) -> str:
     """Read a length-prefixed, encoded string previously written by `save_string`.
 
@@ -204,7 +221,7 @@ def _package_version() -> str:
     return version("qubo-solver")
 
 
-def save_header(output: IO[bytes]) -> None:
+def save_header(output: Stream[bytes]) -> None:
     """Write the format header: magic bytes followed by this package's version.
 
     Written once at the start of a file by the outermost `save`. Nested
@@ -218,7 +235,7 @@ def save_header(output: IO[bytes]) -> None:
     save_string(output, _package_version())
 
 
-def load_header(src: IO[bytes]) -> str:
+def load_header(src: Stream[bytes]) -> str:
     """Read and validate a header written by `save_header`.
 
     A wrong magic is a hard error: the stream is not one of ours, so reading

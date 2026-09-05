@@ -32,13 +32,14 @@ import io
 import json
 import logging
 from dataclasses import dataclass
-from typing import IO, Any
+from typing import Any
 
 import torch
 
 import qubosolver
 from qubosolver.types import Solution, vector, Matrix, Bitstrings, Bitstring, bitstring
 from qubosolver._io import utils as io_utils
+from qubosolver._io.utils import Stream
 
 logger = logging.getLogger(__name__)
 
@@ -391,7 +392,7 @@ class Instance(qubosolver.Instance):
         self.offset: float = 0.0
         """Constant term relating the flipped and original QUBO costs, $x^T Q x = y^T Q_{flipped} y + offset$."""
 
-    def _write_body(self, f: IO[bytes]) -> None:
+    def _write_body(self, f: Stream[bytes]) -> None:
         """Write the matrix, flip vector, solve metadata, and parent instance to `f`."""
         super()._write_body(f)
 
@@ -407,7 +408,7 @@ class Instance(qubosolver.Instance):
         self._parent_instance.save(f)
 
     @classmethod
-    def _read_body(cls, f: IO[bytes]) -> Instance:
+    def _read_body(cls, f: Stream[bytes]) -> Instance:
         """Read back a negative-bitflip instance written by [`_write_body`][]."""
         instance = Instance(qubosolver.Instance._read_body(f))
 

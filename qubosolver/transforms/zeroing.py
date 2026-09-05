@@ -24,11 +24,12 @@ import copy
 import io
 
 import torch
-from typing import IO
+
 
 import qubosolver
 from qubosolver.types import Matrix, Solution, Vectori, vector, vectori
 from qubosolver._io import utils as io_utils
+from qubosolver._io.utils import Stream
 
 
 class Instance(qubosolver.Instance):
@@ -54,7 +55,7 @@ class Instance(qubosolver.Instance):
         """Matrix of removed negative coefficients: same (symmetric) shape as the
         QUBO matrix, holding the original values at zeroed positions and 0 elsewhere."""
 
-    def _write_body(self, f: IO[bytes]) -> None:
+    def _write_body(self, f: Stream[bytes]) -> None:
         """Write the matrix, removed-coefficients matrix, and parent instance to `f`."""
         super()._write_body(f)
 
@@ -65,7 +66,7 @@ class Instance(qubosolver.Instance):
         self._parent_instance.save(f)
 
     @classmethod
-    def _read_body(cls, f: IO[bytes]) -> Instance:
+    def _read_body(cls, f: Stream[bytes]) -> Instance:
         """Read back a zeroing instance written by [`_write_body`][]."""
         instance = Instance(qubosolver.Instance._read_body(f))
 

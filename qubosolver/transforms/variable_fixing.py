@@ -20,7 +20,7 @@ solution = variable_fixing.lift(reduced_solution, reduced_instance)
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import IO, cast, TypeAlias
+from typing import cast, TypeAlias
 
 import copy
 import json
@@ -29,6 +29,7 @@ import torch
 import qubosolver
 from qubosolver.types import Solution, bitstrings, vector
 from qubosolver._io import utils as io_utils
+from qubosolver._io.utils import Stream
 from qubosolver.types._checks import debug_runtime_typecheck
 
 # TODO: Using `type` statement when Python >= 3.12
@@ -104,14 +105,14 @@ class Instance(qubosolver.Instance):
         """Total number of variables fixed across all fixation rounds."""
         return sum([len(fixed) for fixed in self.fixed_indices])
 
-    def _write_body(self, f: IO[bytes]) -> None:
+    def _write_body(self, f: Stream[bytes]) -> None:
         """Write the parent matrix, fixation history, and parent instance to `f`."""
         super()._write_body(f)
         io_utils.save_string(f, json.dumps(self._fixed_indices))
         self._parent_instance.save(f)
 
     @classmethod
-    def _read_body(cls, f: IO[bytes]) -> Instance:
+    def _read_body(cls, f: Stream[bytes]) -> Instance:
         """Read back a variable-fixing instance written by [`_write_body`][]."""
 
         def decode_int_keys(obj: dict) -> dict:
