@@ -34,7 +34,7 @@ def postprocess(self, solution: Solution) -> Solution
    Defines an inner function:
    ```python
    def qubo_objective(s_arr: np.ndarray) -> float:
-       return self.instance.evaluate_solution(s_arr.tolist())
+       return self.instance.cost(s_arr.tolist())
    ```
    to compute the cost of any candidate bitstring via the original QUBO instance.
 
@@ -74,7 +74,7 @@ cplex = ClassicalConfig(classical_solver_type="cplex", cplex_log_path="solver.lo
 config = SolverConfig(
     use_quantum=False,
     classical=cplex,
-    do_postprocessing=True
+    postprocessing=True
 )
 
 # Solve with classical solver
@@ -109,7 +109,7 @@ instance = Instance(matrix=first_qubo_coefficients)
 cplex = ClassicalConfig(classical_solver_type="cplex", cplex_log_path="solver.log", cplex_maxtime=300.0,)
 config = SolverConfig(
     classical=cplex,
-    do_postprocessing=True,                  # Enable postprocessing
+    postprocessing=True,                  # Enable postprocessing
     use_quantum=False
 )
 

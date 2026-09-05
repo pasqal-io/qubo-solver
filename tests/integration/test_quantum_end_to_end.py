@@ -8,16 +8,17 @@ import torch
 import qoolqit
 
 from qubosolver import (
-    Analyzer,
     Instance,
     Solution,
     SingleSolution,
-    solvers,
+    solving,
     embedding,
     drive_shaping,
     torch_rng,
     extract_qubo,
 )
+
+from qubosolver.utils import analysis
 
 from qubos import QUBOS
 
@@ -43,8 +44,7 @@ def check_solution(
     # Solutions are not duplicated
     check.equal(solution.bitstrings.unique(dim=0).shape[0], len(solution))
 
-    analyzer = Analyzer(solution)
-    print(f"\n{analyzer.df}")
+    print(f"\n{analysis.to_dataframe([solution])}")
 
     optimal_solutions = gather_optimal_solutions(solution)
     check.is_not(optimal_solutions, [])
@@ -59,7 +59,7 @@ def check_solution(
         return 0.0
 
     expected_optimal_solutions = gather_optimal_solutions(
-        solvers.brute_force(qubo, max_bitstrings=-1)
+        solving.brute_force.solve(qubo, max_bitstrings=-1)
     )
     check.almost_equal(min_cost, expected_optimal_solutions[0].cost)
     expected_optimal_bitstrings = [s.string for s in expected_optimal_solutions]
@@ -146,9 +146,9 @@ def test_quantum_solve_blade_proportional_diagonal(
         dmm=True,
     )
 
-    job = solvers.analog_quantum_sampling(register, drive, emulator, device)
-    solution = Solution.from_results(job.results())
-    solution.compute_costs(instance.matrix).sort_by_cost().compute_probabilities()
+    job = solving.analog_quantum_sampling.solve(register, drive, emulator, device)
+    solution = Solution.from_results(job.results(), instance)
+    solution._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
 
     optimum_prob = check_solution(solution, instance)
     check.greater_equal(optimum_prob, expected_optimum_prob)
@@ -193,8 +193,8 @@ def test_quantum_solve_greedy_proportional_diagonal(
     device = qoolqit.AnalogDeviceWithDMM()
     emulator = qoolqit.execution.LocalEmulator()
 
-    greedy_config = embedding.greedy.Config(traps=100)
-    register = embedding.greedy.embed(instance, device, config=greedy_config)
+    greedy_config = embedding.greedy_layout.Config(traps=100)
+    register = embedding.greedy_layout.embed(instance, device=device, config=greedy_config)
 
     drive = drive_shaping.proportional_diagonal.build_drive(
         instance,
@@ -203,9 +203,9 @@ def test_quantum_solve_greedy_proportional_diagonal(
         dmm=True,
     )
 
-    job = solvers.analog_quantum_sampling(register, drive, emulator, device)
-    solution = Solution.from_results(job.results())
-    solution.compute_costs(instance.matrix).sort_by_cost().compute_probabilities()
+    job = solving.analog_quantum_sampling.solve(register, drive, emulator, device)
+    solution = Solution.from_results(job.results(), instance)
+    solution._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
 
     expect_optimality = expected_optimum_prob > 0.0
     optimum_prob = check_solution(solution, instance, expect_optimality)

@@ -1,3 +1,11 @@
+"""Type aliases for tensors used throughout the QUBO solver, and global precision/device config.
+
+Defines the `Vector`, `Matrix`, `Tensor`, `Bitstring`, and `Bitstrings` aliases (and their
+fixed-precision variants such as `Vectorf`/`Vectord`) used across the public API, along with
+the `dtype`/`device` accessors and `_GlobalConfig` helpers that control the globally
+configured float precision and torch device.
+"""
+
 from __future__ import annotations
 
 import os
@@ -15,10 +23,15 @@ _FLOAT_DTYPE_MAP: dict[str, torch.dtype] = {
 def _device_from_env() -> torch.device:
     """Returns the torch device based on environment variables.
 
-    Checks in order:
-    1. QUBO_SOLVER_DEVICE — explicit device string (e.g. "cpu", "cuda", "cuda:1", "mps")
-    2. USE_GPU — if set to "1" or "true", use "cuda"; otherwise "cpu"
-    3. Defaults to "cpu" if neither is set.
+    Checked in order: ``QUBO_SOLVER_DEVICE`` (explicit device string, e.g. ``"cpu"``,
+    ``"cuda"``, ``"cuda:1"``, ``"mps"``), then ``USE_GPU`` (``"cuda"`` if set to ``"1"``
+    or ``"true"``, otherwise ``"cpu"``). Defaults to ``"cpu"`` if neither is set.
+
+    Returns:
+        The configured `torch.device`.
+
+    Raises:
+        ValueError: If ``QUBO_SOLVER_DEVICE`` is set to an invalid device string.
     """
     device_str = os.getenv("QUBO_SOLVER_DEVICE")
     if device_str is not None:
@@ -37,10 +50,13 @@ def _device_from_env() -> torch.device:
 def _use_double_precision_from_env() -> bool:
     """Returns whether double precision (float64) is enabled based on environment variables.
 
-    Checks in order:
-    1. QUBO_SOLVER_FLOAT_DTYPE — if set to "float64", returns True; "float32" returns False
-    2. USE_DOUBLE_PRECISION — if set to "1" or "true", returns True; otherwise False
-    3. Defaults to False if neither is set (i.e. float32 is the default, matching PyTorch).
+    Checked in order: ``QUBO_SOLVER_FLOAT_DTYPE`` (``True`` only if set to exactly
+    ``"float64"``, ``False`` for any other value), then ``USE_DOUBLE_PRECISION``
+    (``True`` if set to ``"1"`` or ``"true"``, otherwise ``False``). Defaults to
+    ``False`` if neither is set (i.e. float32 is the default, matching PyTorch).
+
+    Returns:
+        Whether double precision is enabled.
     """
     float_dtype_str = os.getenv("QUBO_SOLVER_FLOAT_DTYPE")
     if float_dtype_str is not None:
@@ -56,10 +72,17 @@ def _use_double_precision_from_env() -> bool:
 def _float_type_from_env() -> torch.dtype:
     """Returns the float dtype based on environment variables.
 
-    Checks in order:
-    1. QUBO_SOLVER_FLOAT_DTYPE — explicit dtype name (float16, bfloat16, float32, float64)
-    2. USE_DOUBLE_PRECISION — if set to "1" or "true", use float64; otherwise float32
-    3. Defaults to float32 if neither is set (matching PyTorch default).
+    Checked in order: ``QUBO_SOLVER_FLOAT_DTYPE`` (explicit dtype name, one of
+    ``"float16"``, ``"bfloat16"``, ``"float32"``, ``"float64"``), then
+    ``USE_DOUBLE_PRECISION`` (``float64`` if set to ``"1"`` or ``"true"``, otherwise
+    ``float32``). Defaults to ``float32`` if neither is set (matching PyTorch default).
+
+    Returns:
+        The configured `torch.dtype`.
+
+    Raises:
+        ValueError: If ``QUBO_SOLVER_FLOAT_DTYPE`` is set to a value other than
+            ``"float16"``, ``"bfloat16"``, ``"float32"``, or ``"float64"``.
     """
     float_dtype_str = os.getenv("QUBO_SOLVER_FLOAT_DTYPE")
     if float_dtype_str is not None:

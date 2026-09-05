@@ -5,6 +5,7 @@ import pytest
 import torch
 import pytest_check as check
 from scipy.spatial.distance import pdist, squareform
+from typing import Literal, get_args
 
 import qoolqit
 from qoolqit.graphs import DataGraph
@@ -12,27 +13,27 @@ from qubosolver import (
     Instance,
     Solution,
     Solver,
-    EmbeddingConfig,
+    matrix,
+    QuantumSolvingConfig,
     DriveShapingConfig,
     SolverConfig,
-    DriveType,
-    Bitstring,
-    matrix,
+    EmbeddingConfig,
 )
-from qubosolver.drive_shaping._drive_shaper import (
+from qubosolver.solver._drive_shaper import (
     _get_drive_shaper,
     BayesianSearchDriveShaper,
     ProportionalDiagonalDriveShaper,
 )
-from qubosolver.solvers.solver import _QuboSolverQuantum
+from qubosolver.solver.config.drive_shaping import _DriveShapingAlgorithm
+from qubosolver.solver.solver import _QuboSolverQuantum
 
 
 @pytest.fixture
 def dummy_register() -> qoolqit.Register:
     qubits = {
-        "0": (0.0, 0.0),
-        "1": (1.0, 0.0),
-        "2": (2.0, 3.0),
+        0: (0.0, 0.0),
+        1: (1.0, 0.0),
+        2: (2.0, 3.0),
     }
     register = qoolqit.Register(qubits)
     return register
@@ -41,7 +42,7 @@ def dummy_register() -> qoolqit.Register:
 def test_generate_returns_drive_and_solution_proportional_diagonal(
     dummy_register: qoolqit.Register, simple_qubo_instance: Instance
 ) -> None:
-    default_config = SolverConfig(use_quantum=True)
+    default_config = QuantumSolvingConfig()
     backend = default_config.backend
     shaper = _get_drive_shaper(simple_qubo_instance, default_config, backend)
     drive, solution = shaper.generate(dummy_register)
@@ -59,7 +60,7 @@ def test_generate_returns_drive_and_solution_bayesian_search(
     simple_qubo_instance: Instance,
     bayesian_search_drive_shaping: DriveShapingConfig,
 ) -> None:
-    default_config = SolverConfig(use_quantum=True, drive_shaping=bayesian_search_drive_shaping)
+    default_config = QuantumSolvingConfig(drive_shaping=bayesian_search_drive_shaping)
     backend = default_config.backend
     shaper = ProportionalDiagonalDriveShaper(simple_qubo_instance, default_config, backend)
     drive, solution = shaper.generate(dummy_register)
@@ -79,8 +80,7 @@ def test_generate_bayesian_search_drive_shaper(
     simple_qubo_instance: Instance,
     bayesian_search_drive_shaping: DriveShapingConfig,
 ) -> None:
-    default_config = SolverConfig(
-        use_quantum=True,
+    default_config = QuantumSolvingConfig(
         drive_shaping=bayesian_search_drive_shaping,
         device=qoolqit.DigitalAnalogDevice(),
     )
@@ -98,52 +98,21 @@ def test_generate_bayesian_search_drive_shaper(
     if isinstance(solution.counts, torch.Tensor):
         assert solution.counts.numel() > 0
 
-    # try with custom objective
-
-    def custom_ojective(solution: Solution) -> float:
-        return float(1e4)
-
-    opt_res = []
-
-    def callback_fn(d: dict) -> None:
-        opt_res.append(d)
-
-    def custom_qubo(bitstring: Bitstring, QUBO: torch.Tensor) -> float:
-        return 1.0
-
-    custom_fn_ps = DriveShapingConfig(
-        drive_shaping_method=default_config.drive_shaping.drive_shaping_method,
-        bayesian_search_custom_objective=custom_ojective,
-        bayesian_search_callback_objective=callback_fn,
-        bayesian_search_custom_qubo_cost=custom_qubo,
-    )
-    backend = default_config.backend
-    shaper = _get_drive_shaper(
-        simple_qubo_instance,
-        SolverConfig(use_quantum=True, drive_shaping=custom_fn_ps),
-        backend,
-    )
-    assert isinstance(shaper, BayesianSearchDriveShaper)
-    drive, solution = shaper.generate(dummy_register)
-    assert len(opt_res) > 0
-    assert opt_res[-1]["cost_eval"] == float(1e4)
-
 
 @pytest.mark.priority(25)
-@pytest.mark.parametrize("drive_method", list(DriveType))
+@pytest.mark.parametrize("drive_method", get_args(_DriveShapingAlgorithm))
 @pytest.mark.parametrize("dmm", [True, False])
 def test_normalized_weights_in_drive(
-    drive_method: DriveType,
+    drive_method: _DriveShapingAlgorithm,
     dmm: bool,
     dummy_register: qoolqit.Register,
     simple_qubo_instance: Instance,
 ) -> None:
     # skip proportional-diagonal and local-energy-scale drive as their normalization is very specific.
-    if dmm and drive_method in [DriveType.PROPORTIONAL_DIAGONAL, DriveType.LOCAL_ENERGY_SCALE]:
+    if dmm and drive_method in ["proportional_diagonal", "local_energy_scale"]:
         pytest.skip("Not implemented")
-    default_config = SolverConfig(
-        use_quantum=True,
-        drive_shaping=DriveShapingConfig(drive_shaping_method=drive_method, dmm=dmm),
+    default_config = QuantumSolvingConfig(
+        drive_shaping=DriveShapingConfig(algorithm=drive_method, dmm=dmm),
     )
     backend = default_config.backend
     shaper = _get_drive_shaper(simple_qubo_instance, default_config, backend)
@@ -166,7 +135,7 @@ def test_normalized_weights_in_drive(
 def test_drive_duration_set(
     dummy_register: qoolqit.Register, simple_qubo_instance: Instance
 ) -> None:
-    default_config = SolverConfig(use_quantum=True, device=qoolqit.DigitalAnalogDevice())
+    default_config = QuantumSolvingConfig(device=qoolqit.DigitalAnalogDevice())
     backend = default_config.backend
     shaper = _get_drive_shaper(simple_qubo_instance, default_config, backend)
     drive, _ = shaper.generate(dummy_register)
@@ -175,31 +144,14 @@ def test_drive_duration_set(
     check.almost_equal(drive.duration, 1000.0)
 
 
-def test_custom_drive_shaper(simple_qubo_instance: Instance) -> None:
-
-    class MockProportionalDiagonalDriveShaper(ProportionalDiagonalDriveShaper):
-        pass
-
-    config = SolverConfig(
-        use_quantum=True,
-        drive_shaping=DriveShapingConfig(drive_shaping_method=MockProportionalDiagonalDriveShaper),
-    )
-    backend = config.backend
-    shaper = _get_drive_shaper(simple_qubo_instance, config, backend)
-    assert isinstance(shaper, MockProportionalDiagonalDriveShaper)
-
-
 @pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
 def test_generate_proportional_diagonal_drive_shaper(
     dummy_register: qoolqit.Register,
     simple_qubo_instance: Instance,
     dmm: bool,
 ) -> None:
-    default_config = SolverConfig(
-        use_quantum=True,
-        drive_shaping=DriveShapingConfig(
-            drive_shaping_method=DriveType.PROPORTIONAL_DIAGONAL, dmm=dmm
-        ),
+    default_config = QuantumSolvingConfig(
+        drive_shaping=DriveShapingConfig(algorithm="proportional_diagonal", dmm=dmm),
         device=qoolqit.DigitalAnalogDevice(),
     )
     backend = default_config.backend
@@ -242,9 +194,10 @@ def test_shaper_does_not_overflow_device() -> None:
     coefficients = np.asarray(qubo, dtype=float)
 
     config = SolverConfig(
-        use_quantum=True,
-        embedding=EmbeddingConfig(embedding_method="greedy"),
-        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.PROPORTIONAL_DIAGONAL),
+        solving=QuantumSolvingConfig(
+            embedding=EmbeddingConfig(algorithm="greedy_layout"),
+            drive_shaping=DriveShapingConfig(algorithm="proportional_diagonal"),
+        )
     )
     solver = Solver(Instance(matrix.tensor(coefficients)), config)
 
@@ -256,25 +209,26 @@ def _embedding_drive_ratio(solver: Solver) -> float:
     """Return ``interaction(q0, q1) / final_detuning`` for a solved instance."""
     inner = solver._solver
     assert isinstance(inner, _QuboSolverQuantum)
-    assert inner._register is not None and inner._drive is not None
-    interactions = inner._register.interactions()
-    interaction = interactions[("0", "1")]
-    detuning_wf = inner._drive.detuning
+    assert inner._cached_register is not None and inner._cached_drive is not None
+    interactions = inner._cached_register.interactions()
+    interaction = interactions[(0, 1)]
+    detuning_wf = inner._cached_drive.detuning
     detuning = detuning_wf(detuning_wf.duration)
     return float(interaction / detuning)
 
 
-@pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
+@pytest.mark.parametrize("embedding_method", ["greedy_layout", "blade"])
 def test_proportional_diagonal_register_and_drive_shape_normalization(
-    embedding_method: str,
+    embedding_method: Literal["greedy_layout", "blade"],
 ) -> None:
     """The proportional-diagonal drive shaper must normalize the pulse
     with the same convention as the register.
     """
     qubo = np.array([[-1.0, 2.0], [2.0, -1.0]])
     config = SolverConfig(
-        use_quantum=True,
-        embedding=EmbeddingConfig(embedding_method=embedding_method),
+        solving=QuantumSolvingConfig(
+            embedding=EmbeddingConfig(algorithm=embedding_method),
+        )
     )
     solver = Solver(Instance(matrix.tensor(qubo)), config)
     solver.solve()

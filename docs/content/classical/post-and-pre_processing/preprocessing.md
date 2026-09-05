@@ -4,7 +4,7 @@ QUBO preprocessing is an optional step that attempts to reduce the size of the p
 
 ### Activation
 
-Preprocessing is enabled by setting `do_preprocessing=True` in the solver configuration (`SolverConfig`). No additional setup is required. This mechanism is supported by all solvers.
+Preprocessing is enabled by setting `preprocessing=True` in the solver configuration (`SolverConfig`). No additional setup is required. This mechanism is supported by all solvers.
 
 ---
 
@@ -29,7 +29,7 @@ After solving the reduced QUBO, fixed variables are automatically reinserted int
 
 | Field              | Type    | Description |
 |--------------------|---------|-------------|
-| `do_preprocessing`  | `bool`  | If `True`, activates preprocessing before solving. The solver will attempt to fix variables and reduce the QUBO size. |
+| `preprocessing`  | `bool`  | If `True`, activates preprocessing before solving. The solver will attempt to fix variables and reduce the QUBO size. |
 
 ---
 
@@ -44,7 +44,7 @@ qubo = Instance(matrix=matrix.tensor([[-2.0, 1.0], [1.0, -2.0]]))
 config = SolverConfig(
     use_quantum=False,
     classical=ClassicalConfig(classical_solver_type="simulated_annealing"),
-    do_preprocessing=True
+    preprocessing=True
 )
 
 solver = Solver(qubo, config)

@@ -6,20 +6,29 @@ import torch
 import itertools
 import numpy as np
 import random
+from copy import deepcopy
 
 from qoolqit import Register, DigitalAnalogDevice
 
 from qubosolver import (
-    SolverConfig,
-    DecompositionConfig,
+    solving,
     Solver,
     Dataset,
     Instance,
     matrix,
     bitstring,
     torch_rng,
+    SingleSolution,
+    Solution,
+    analysis,
+    vector,
+    vectori,
+    DecompositionConfig,
+    SolverConfig,
+    ClassicalSolvingConfig,
+    QuantumSolvingConfig,
 )
-from qubosolver.solvers.solver import _DecomposeQuboSolver
+from qubosolver.solver.solver import _DecomposeQuboSolver
 from qubosolver.transforms._algorithms.decompose import compute_distance_interaction_matrix
 
 
@@ -58,11 +67,17 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
     qubo_mat = decomposable_qubo.matrix.clone()
 
     decompose_config = DecompositionConfig()
-    config = SolverConfig(
-        use_quantum=use_quantum,
-        decompose=decompose_config,
-        device=DigitalAnalogDevice(),
-    )
+
+    if use_quantum:
+        config = SolverConfig(
+            solving=QuantumSolvingConfig(device=DigitalAnalogDevice()),
+            decompose=decompose_config,
+        )
+    else:
+        config = SolverConfig(
+            solving=ClassicalSolvingConfig(),
+            decompose=decompose_config,
+        )
     solver = Solver(decomposable_qubo, config)
 
     ## Check the distance interaction matrix matches the qubo matrix
@@ -82,21 +97,29 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
         )
 
     # check that the initial transfer does not affect the length of the dictionary.
-    solution = bitstring.from_torch(torch.full((size,), -1))
+    solution = bitstring.as_tensor(torch.full((size,), -1))
     transfer_edge_values(current_vertices_dict, dict(), solution, qubo_mat)
     positive_vertices_update(current_vertices_dict, solution)
     assert len(current_vertices_dict) == size
 
     # try one iteration, check placed_vertices length
-    config_subproblems = config.model_copy(update={"decompose": False})
+    config_subproblems = deepcopy(config)
+    config.decompose = None
     first_vertex = 0
 
-    pulser_device = solver._solver.device._pulser_device
-    assert pulser_device.max_radial_distance is not None
-    min_distance, max_radial_distance = compute_min_max_distances(
-        qubo_mat,
-        max_min_dist_ratio=pulser_device.max_radial_distance / pulser_device.min_atom_distance,
-    )
+    if use_quantum:
+        assert isinstance(solver._solver.config.solving, QuantumSolvingConfig)
+        pulser_device = solver._solver.config.solving.device._pulser_device
+        assert pulser_device.max_radial_distance is not None
+        min_distance, max_radial_distance = compute_min_max_distances(
+            qubo_mat,
+            max_min_dist_ratio=pulser_device.max_radial_distance / pulser_device.min_atom_distance,
+        )
+    else:
+        min_distance = float(DigitalAnalogDevice()._pulser_device.min_atom_distance)
+        max_radial_distance_ = DigitalAnalogDevice()._pulser_device.max_radial_distance
+        assert max_radial_distance_ is not None
+        max_radial_distance = float(max_radial_distance_)
 
     placed_vertices = geometric_search(
         qubo_mat,
@@ -141,11 +164,16 @@ def test_decomp_solver(decomposable_qubo: Instance, use_quantum: bool) -> None:
     # Qutip backend
     manual_seed(29443)
 
-    config = SolverConfig(
-        use_quantum=use_quantum,
-        decompose=DecompositionConfig(),
-        device=DigitalAnalogDevice(),
-    )
+    if use_quantum:
+        config = SolverConfig(
+            solving=QuantumSolvingConfig(device=DigitalAnalogDevice()),
+            decompose=DecompositionConfig(),
+        )
+    else:
+        config = SolverConfig(
+            solving=ClassicalSolvingConfig(),
+            decompose=DecompositionConfig(),
+        )
     solver = Solver(decomposable_qubo, config)
 
     assert isinstance(solver._solver, _DecomposeQuboSolver)
@@ -168,13 +196,13 @@ def test_small_qubo_solver(simple_qubo_instance: Instance) -> None:
     # assert that the decomposition falls back to not being used as qubo is small
     simple_solver = Solver(
         simple_qubo_instance,
-        SolverConfig(use_quantum=False, decompose=None),
+        SolverConfig(solving=ClassicalSolvingConfig(), decompose=None),
     )
     solutions1 = simple_solver.solve()
 
     decompose_solver = Solver(
         simple_qubo_instance,
-        SolverConfig(use_quantum=False, decompose=DecompositionConfig()),
+        SolverConfig(solving=ClassicalSolvingConfig(), decompose=DecompositionConfig()),
     )
     solutions2 = decompose_solver.solve()
     assert isinstance(decompose_solver._solver, _DecomposeQuboSolver)
@@ -185,7 +213,7 @@ def test_small_qubo_solver(simple_qubo_instance: Instance) -> None:
 
 def test_scope(decomposable_qubo: Instance) -> None:
 
-    config = SolverConfig(use_quantum=False, decompose=DecompositionConfig())
+    config = SolverConfig(solving=ClassicalSolvingConfig(), decompose=DecompositionConfig())
 
     # check negative off-diagonal are not supported
     coeffs = decomposable_qubo.matrix
@@ -282,75 +310,79 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
                 [2, 2, -1],
             ],
         )
-        Q2 = matrix.from_torch(
-            Dataset.from_random(
-                n_matrices=1,
-                matrix_dim=dims[0],
-                densities=[1.0],
-                dtype=torch.float64,
-                rng=rng,
-            )[0][0]
-        )
+        Q2 = Dataset.from_random(
+            n_matrices=1,
+            matrix_dim=dims[0],
+            densities=[1.0],
+            dtype=torch.float64,
+            rng=rng,
+        )[0][0].matrix
         blocks = [Q1, Q2]
         N = Q1.shape[0] + dims[0]
     else:
         N = np.sum(dims)
         blocks = [
-            matrix.from_torch(
-                Dataset.from_random(
-                    n_matrices=1,
-                    matrix_dim=n,
-                    densities=[1.0],
-                    dtype=torch.float64,
-                    rng=rng,
-                )[0][0]
-            )
+            Dataset.from_random(
+                n_matrices=1,
+                matrix_dim=n,
+                densities=[1.0],
+                dtype=torch.float64,
+                rng=rng,
+            )[0][0].matrix
             for n in dims
         ]
     Q = torch.block_diag(*blocks)
     check.equal(Q.shape, (N, N))
     print(f"Qubo matrix:\n{Q}")
 
-    subpb_optimal_bitstrings = []
+    print("Sub-problems optimal solutions:")
+    subpb_optimal_solutions = []
     for q in blocks:
-        results = dict()
-        for bits in itertools.product([0, 1], repeat=q.shape[0]):
-            z = torch.tensor(bits, dtype=q.dtype)
-            cost = (z @ q @ z).item()
-            results["".join(str(int(b)) for b in z.flatten())] = cost
-        min_cost = min(c for c in results.values())
-        subpb_optimal_bitstrings.append(
-            {b: c for b, c in results.items() if np.allclose(c, min_cost)}
-        )
-    print(f"Sub-problems optimal bitstrings: {subpb_optimal_bitstrings}")
+        bf_solution = solving.brute_force.solve(Instance(q), max_bitstrings=-1)
+        mask = torch.isclose(bf_solution.costs, bf_solution.costs[0])
 
-    subpb_optimal_bitstrings_list = [list(d.items()) for d in subpb_optimal_bitstrings]
-    optimal_bitstrings = {
-        "".join(b for b, _ in sub_results): sum(c for _, c in sub_results)
-        for sub_results in itertools.product(*subpb_optimal_bitstrings_list)
-    }
+        bf_solution.bitstrings = bf_solution.bitstrings[mask]
+        bf_solution.costs = bf_solution.costs[mask]
+        bf_solution.counts = bf_solution.counts[mask]
+        bf_solution.probabilities = bf_solution.probabilities[mask]
+        bf_solution._compute_probabilities()
 
-    print(f"Global optimal bitstrings: {optimal_bitstrings}")
+        df = analysis.to_dataframe([bf_solution])
+        print(df)
+
+        subpb_optimal_solutions.append(bf_solution)
+
+    optimal_solutions_list = []
+    for subpb_solutions in itertools.product(*subpb_optimal_solutions):
+        b = torch.cat([s.bitstring for s in subpb_solutions])
+        cost = sum(s.cost for s in subpb_solutions)
+        optimal_solutions_list.append(SingleSolution(b, cost, 1))
+
+    optimal_solutions = Solution(
+        bitstrings=torch.stack([s.bitstring for s in optimal_solutions_list]),
+        costs=vector.as_tensor([s.cost for s in optimal_solutions_list]),
+        counts=vectori.zeros(len(optimal_solutions_list)).fill_(1),
+    )
+    optimal_solutions._compute_probabilities()._sort_by_cost()
+
+    print(f"\nGlobal optimal solutions:\n{analysis.to_dataframe([optimal_solutions])}")
 
     qubo_instance = Instance(Q)
 
     config = SolverConfig(
-        use_quantum=False,
+        solving=ClassicalSolvingConfig(),
         decompose=DecompositionConfig(decompose_stop_number=2, decompose_break_placement=0),
-        device=DigitalAnalogDevice(),
     )
     solver = Solver(qubo_instance, config)
     assert isinstance(solver._solver, _DecomposeQuboSolver)
 
     solution = solver.solve()
-    print(f"Solution {solution}")
-    solution.sort_by_cost()
-    print(f"Solution: {solution}")
+    print(f"\nSolution:\n{analysis.to_dataframe([solution])}")
     best_solution = solution[0].string
     min_cost = solution[0].cost
 
     decomposition = solver._solver._decomposition
-    print(f"Decomposition: {decomposition}")
+    print(f"\nDecomposition: {decomposition}")
     sorted_decomposition = sorted([sorted(d) for d in decomposition])
     print(f"Sorted decomposition: {sorted_decomposition}")
     block_decomposition = []
@@ -373,6 +405,12 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
     # is then not guaranteed to be optimal.
     non_optimal_cases: list[tuple[int, tuple[int, ...]]] = [
         (55571, (4,)),
+        (1547, (3,)),
+        (1547, (3, 3)),
+        (66987, (3, 3)),
+        (66987, (4, 3, 2, 3)),
+        (998618750, (4,)),
+        (998618750, (4, 3, 2, 3)),
     ]
     failed_cases = [
         (1935225697, (3, 3)),
@@ -406,29 +444,29 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
 
     if (seed, dims) in non_optimal_cases:
         check.not_equal(sorted_decomposition, block_decomposition)
-        check.is_not_in(best_solution, optimal_bitstrings.keys())
-        check.greater(min_cost, min(optimal_bitstrings.values()))
+        check.is_not_in(best_solution, [s.string for s in optimal_solutions])
+        check.greater(min_cost, optimal_solutions[0].cost)
         pytest.xfail("The decomposition is not perfect")
 
-    check.is_in(best_solution, optimal_bitstrings.keys())
-    check.almost_equal(min_cost, optimal_bitstrings[best_solution])
+    check.is_in(best_solution, [s.string for s in optimal_solutions])
+    check.almost_equal(min_cost, optimal_solutions[0].cost)
 
 
 def test_decompose_embedding() -> None:
 
-    qubo_instance = Instance(matrix.from_torch(torch.eye(2)))
+    qubo_instance = Instance(matrix.as_tensor(torch.eye(2)))
 
     config = SolverConfig(decompose=DecompositionConfig())
     solver = Solver(qubo_instance, config)
     with pytest.raises(NotImplementedError):
-        solver.embedding()
+        solver._embedding()
 
 
 def test_decompose_drive() -> None:
 
-    qubo_instance = Instance(matrix.from_torch(torch.eye(2)))
+    qubo_instance = Instance(matrix.as_tensor(torch.eye(2)))
 
     config = SolverConfig(decompose=DecompositionConfig())
     solver = Solver(qubo_instance, config)
     with pytest.raises(NotImplementedError):
-        solver.drive(Register.from_coordinates([(0, 0), (1, 1)]))
+        solver._drive(Register.from_coordinates([(0, 0), (1, 1)]))

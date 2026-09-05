@@ -19,7 +19,7 @@ import copy
 from dataclasses import dataclass
 import torch
 
-from qubosolver.config import DecompositionConfig
+from qubosolver import DecompositionConfig
 from qubosolver import Solution, Matrix, matrix, Bitstring, bitstring, vectori, torch_rng
 from qubosolver import Instance as QUBOInstanceBase
 from ._algorithms.decompose import (
@@ -59,7 +59,7 @@ class Config:
     max_min_dist_ratio: float = float("inf")
 
     @staticmethod
-    def from_decomposition_config(
+    def _from_decomposition_config(
         config: DecompositionConfig, *, max_min_dist_ratio: float
     ) -> Config:
         """Create a :class:`Config` from a user-facing :class:`DecompositionConfig`."""
@@ -251,14 +251,9 @@ def update(qubo: Instance, subqubo: SubQUBOInstance, subsolution: Solution) -> S
         return Solution()
 
     # Probabilities and counts are ignored as we return one solution
-    solution = (
-        Solution(
-            bitstrings=qubo._global_solution.unsqueeze(0),
-            counts=vectori.tensor([1]),
-        )
-        .compute_costs(qubo.matrix)
-        .sort_by_cost()
-        .compute_probabilities()
-    )
+    solution = Solution(
+        bitstrings=qubo._global_solution.unsqueeze(0),
+        counts=vectori.tensor([1]),
+    )._update(qubo)
 
     return solution

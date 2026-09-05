@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import random
 
+import numpy as np
 import pytest
 import torch
 import pytest_check as check
@@ -82,17 +83,17 @@ def test_tensor_creates_int8_tensor_on_specified_device() -> None:
     torch.testing.assert_close(result, torch.tensor(data, dtype=torch.int8, device=custom_device))
 
 
-def test_from_torch_converts_dtype_and_device() -> None:
+def test_as_tensor_converts_dtype_and_device() -> None:
     source = torch.tensor([[1, 0], [0, 1]], dtype=torch.int32)
-    result = bitstrings.from_torch(source)
+    result = bitstrings.as_tensor(source)
     check.equal(result.dtype, torch.int8)
     check.equal(result.device, bitstrings.device())
     torch.testing.assert_close(result, torch.tensor([[1, 0], [0, 1]], dtype=torch.int8))
 
 
-def test_from_torch_preserves_values() -> None:
+def test_as_tensor_preserves_values() -> None:
     source = torch.tensor([[0, 1, 1], [1, 0, 1]], dtype=torch.float32)
-    result = bitstrings.from_torch(source)
+    result = bitstrings.as_tensor(source)
     check.equal(result.dtype, torch.int8)
     torch.testing.assert_close(result, torch.tensor([[0, 1, 1], [1, 0, 1]], dtype=torch.int8))
 
@@ -193,9 +194,9 @@ def test_to_strings_length_matches_number_of_rows() -> None:
     check.equal(len(result), 4)
 
 
-def test_to_strings_from_torch_converts_correctly() -> None:
+def test_to_strings_as_tensor_converts_correctly() -> None:
     source = torch.tensor([[1, 0, 1], [0, 1, 0]], dtype=torch.int32)
-    bs = bitstrings.from_torch(source)
+    bs = bitstrings.as_tensor(source)
     result = bitstrings.to_strings(bs)
     check.equal(result, ["101", "010"])
 
@@ -245,3 +246,68 @@ def test_rand_differs_across_seeds() -> None:
 def test_rand_rows_are_independent_not_identical() -> None:
     result = bitstrings.rand(10, 30, rng=torch_rng(0))
     check.is_false(torch.all(result == result[0]).item())
+
+
+def test_as_tensor_creates_int8_tensor_from_list() -> None:
+    data = [[1, 0, 1], [1, 0, 0]]
+    result = bitstrings.as_tensor(data)
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=bitstrings.dtype(), device=bitstrings.device())
+    )
+
+
+def test_as_tensor_creates_int8_tensor_from_numpy_array() -> None:
+    data = np.array([[0, 1, 1], [0, 1, 0]])
+    result = bitstrings.as_tensor(data)
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=bitstrings.dtype(), device=bitstrings.device())
+    )
+
+
+def test_as_tensor_no_copy_when_input_already_matches_dtype_and_device() -> None:
+    source = torch.tensor([[1, 0], [1, 0]], dtype=bitstrings.dtype(), device=bitstrings.device())
+    result = bitstrings.as_tensor(source)
+    check.is_(result, source)
+    source[0][0] = 0
+    check.equal(result[0][0].item(), 0)
+
+
+def test_as_tensor_copies_when_dtype_differs() -> None:
+    source = torch.tensor([[1, 0], [1, 0]], dtype=torch.int32)
+    result = bitstrings.as_tensor(source)
+    check.equal(result.dtype, bitstrings.dtype())
+    check.is_not(result, source)
+    source[0][0] = 5
+    check.equal(result[0][0].item(), 1)
+
+
+def test_as_tensor_no_copy_when_numpy_array_already_matches_dtype_on_cpu() -> None:
+    source = np.array([[1, 0], [1, 0]], dtype=np.int8)
+    result = bitstrings.as_tensor(source)
+    check.equal(result.dtype, bitstrings.dtype())
+    source[0][0] = 5
+    check.equal(result[0][0].item(), 5)
+
+
+def test_as_tensor_copies_when_numpy_array_dtype_differs() -> None:
+    source = np.array([[1, 0], [1, 0]], dtype=np.int32)
+    result = bitstrings.as_tensor(source)
+    check.equal(result.dtype, bitstrings.dtype())
+    source[0][0] = 5
+    check.equal(result[0][0].item(), 1)
+
+
+def test_as_tensor_copies_when_input_is_a_list() -> None:
+    data = [[1, 0], [1, 0]]
+    result = bitstrings.as_tensor(data)
+    check.equal(result.dtype, bitstrings.dtype())
+    data[0][0] = 5
+    check.equal(result[0][0].item(), 1)
+
+
+def test_as_tensor_preserves_values_from_list() -> None:
+    data = [[0, 1, 1], [0, 1, 0]]
+    result = bitstrings.as_tensor(data)
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=bitstrings.dtype(), device=bitstrings.device())
+    )

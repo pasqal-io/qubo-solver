@@ -7,9 +7,9 @@ This page explains how to handle negative off-diagonal QUBO coefficients with:
 
 ## Configuration
 
-Negative coefficient preprocessing is controlled from `SolverConfig.do_preprocessing`.
+Negative coefficient preprocessing is controlled from `SolverConfig.preprocessing`.
 
-When `do_preprocessing=True`, the solver chains variable-fixing and bit-flip preprocessing
+When `preprocessing=True`, the solver chains variable-fixing and bit-flip preprocessing
 before solving. If negative off-diagonal coefficients remain afterwards, the quantum solver
 automatically zeros them out (logging a message) before embedding, since the backend cannot
 encode negative interactions. There is no configuration flag to opt out of this fallback or to
@@ -71,7 +71,7 @@ from qubosolver import Solver, SolverConfig, solvers
 
 config_without_preprocessing = SolverConfig(
     use_quantum=False,
-    do_preprocessing=False,
+    preprocessing=False,
     activate_trivial_solutions=False,
 )
 
@@ -82,7 +82,7 @@ solution_without_preprocessing = Solver(
 
 config_with_bitflip = SolverConfig(
     use_quantum=False,
-    do_preprocessing=True,
+    preprocessing=True,
     activate_trivial_solutions=False,
 )
 
@@ -147,7 +147,7 @@ from qubosolver import LocalEmulator
 
 config_quantum = SolverConfig(
     use_quantum=True,
-    do_preprocessing=True,
+    preprocessing=True,
     activate_trivial_solutions=False,
 )
 

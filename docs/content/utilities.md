@@ -37,7 +37,7 @@ coefficients = matrix.tensor[[0, 1, -2], [1, 0, 3], [-2, 3, 0]]
 instance = Instance(matrix=coefficients)
 
 # Save and load a Instance
-Instance.save("qubo_instance.pt", instance)
+instance.save("qubo_instance.pt")
 loaded_instance = Instance.load("qubo_instance.pt")
 print(loaded_instance)
 ```
@@ -47,7 +47,7 @@ from qubosolver import Dataset
 dataset = Dataset.from_random(n=5, size=4, densities=[0.3, 0.7], coefficient_bounds=(-10,10))
 
 # Save and load a Dataset
-Dataset.save(dataset, "qubo_dataset.pt")
+dataset.save("qubo_dataset.pt")
 loaded_dataset = Dataset.load("qubo_dataset.pt")
 print(f"Loaded dataset size: {len(loaded_dataset)}")
 ```

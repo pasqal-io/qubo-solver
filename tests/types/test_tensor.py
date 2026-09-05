@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import torch
 import pytest_check as check
 
@@ -107,3 +108,71 @@ def test_tensor_with_custom_dtype() -> None:
     result = tensor.tensor(data, dtype=torch.float64)
     check.equal(result.dtype, torch.float64)
     torch.testing.assert_close(result, torch.tensor(data, dtype=torch.float64))
+
+
+def test_as_tensor_creates_float_tensor_from_list() -> None:
+    data = [1.0, 2.0, 3.0]
+    result = tensor.as_tensor(data)
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=tensor.dtype(), device=tensor.device())
+    )
+
+
+def test_as_tensor_creates_float_tensor_from_numpy_array() -> None:
+    data = np.array([1.0, 2.0, 3.0])
+    result = tensor.as_tensor(data)
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=tensor.dtype(), device=tensor.device())
+    )
+
+
+def test_as_tensor_no_copy_when_input_already_matches_dtype_and_device() -> None:
+    source = torch.tensor([1.0, 2.0, 3.0], dtype=tensor.dtype(), device=tensor.device())
+    result = tensor.as_tensor(source)
+    check.is_(result, source)
+    source[0] = 0.0
+    check.equal(result[0].item(), 0.0)
+
+
+def test_as_tensor_copies_when_dtype_differs() -> None:
+    other_dtype = torch.float64 if tensor.dtype() == torch.float32 else torch.float32
+    source = torch.tensor([1.0, 2.0, 3.0], dtype=other_dtype)
+    result = tensor.as_tensor(source)
+    check.equal(result.dtype, tensor.dtype())
+    check.is_not(result, source)
+    source[0] = 5.0
+    check.equal(result[0].item(), 1.0)
+
+
+def test_as_tensor_no_copy_when_numpy_array_already_matches_dtype_on_cpu() -> None:
+    np_dtype = np.float32 if tensor.dtype() == torch.float32 else np.float64
+    source = np.array([1.0, 2.0, 3.0], dtype=np_dtype)
+    result = tensor.as_tensor(source)
+    check.equal(result.dtype, tensor.dtype())
+    source[0] = 5.0
+    check.equal(result[0].item(), 5.0)
+
+
+def test_as_tensor_copies_when_numpy_array_dtype_differs() -> None:
+    other_np_dtype = np.float64 if tensor.dtype() == torch.float32 else np.float32
+    source = np.array([1.0, 2.0, 3.0], dtype=other_np_dtype)
+    result = tensor.as_tensor(source)
+    check.equal(result.dtype, tensor.dtype())
+    source[0] = 5.0
+    check.equal(result[0].item(), 1.0)
+
+
+def test_as_tensor_copies_when_input_is_a_list() -> None:
+    data = [1.0, 2.0, 3.0]
+    result = tensor.as_tensor(data)
+    check.equal(result.dtype, tensor.dtype())
+    data[0] = 5.0
+    check.equal(result[0].item(), 1.0)
+
+
+def test_as_tensor_preserves_values() -> None:
+    data = [1.0, 2.0, 3.0]
+    result = tensor.as_tensor(data)
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=tensor.dtype(), device=tensor.device())
+    )

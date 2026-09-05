@@ -2,7 +2,16 @@ from __future__ import annotations
 
 import torch
 
-from qubosolver import Instance, SolverConfig, Solver, matrix, bitstrings, LocalEmulator
+from qubosolver import (
+    Instance,
+    Solver,
+    matrix,
+    bitstrings,
+    LocalEmulator,
+    SolverConfig,
+    ClassicalSolvingConfig,
+    QuantumSolvingConfig,
+)
 
 
 def test_classical_all_positive_trivial() -> None:
@@ -13,7 +22,7 @@ def test_classical_all_positive_trivial() -> None:
     """
     coeffs = matrix.tensor([[1.0, 0.5], [0.5, 2.0]])
     instance = Instance(matrix=coeffs)
-    config = SolverConfig(use_quantum=False)
+    config = SolverConfig(solving=ClassicalSolvingConfig())
 
     solver = Solver(instance, config)
     sol = solver.solve()
@@ -28,7 +37,7 @@ def test_quantum_all_negative_trivial(local_backend: LocalEmulator) -> None:
     should return a batch of one all-one bitstring
     with solution_status 'trivial-one'.
     """
-    config = SolverConfig(use_quantum=True, backend=local_backend)
+    config = SolverConfig(solving=QuantumSolvingConfig(backend=local_backend))
     coeffs = matrix.tensor([[-1.0, 0.0], [0.0, -3.0]])
     instance = Instance(matrix=coeffs)
 
@@ -42,7 +51,7 @@ def test_quantum_all_negative_trivial(local_backend: LocalEmulator) -> None:
 def test_diagonal_trivial(local_backend: LocalEmulator) -> None:
     coeffs = matrix.tensor([[-1.0, 0.0], [0.0, 3.0]])
     instance = Instance(matrix=coeffs)
-    config = SolverConfig(use_quantum=True, backend=local_backend)
+    config = SolverConfig(solving=QuantumSolvingConfig(backend=local_backend))
 
     solver = Solver(instance, config)
     sol = solver.solve()

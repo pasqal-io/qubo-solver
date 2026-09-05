@@ -11,15 +11,7 @@ import qoolqit
 
 from qubosolver import (
     Instance,
-    Analyzer,
     Solver,
-    SolverConfig,
-    EmbeddingConfig,
-    DriveShapingConfig,
-    ClassicalConfig,
-    ClassicalSolverType,
-    EmbedderType,
-    DriveType,
     SingleSolution,
     Solution,
     bitstrings,
@@ -29,7 +21,14 @@ from qubosolver import (
     Tensor,
     Matrix,
     torch_rng,
+    SolverConfig,
+    QuantumSolvingConfig,
+    ClassicalSolvingConfig,
+    DriveShapingConfig,
+    EmbeddingConfig,
 )
+from qubosolver.utils import analysis
+from qubosolver.solver.config.solving import _ClassicalAlgorithm
 
 
 def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
@@ -67,7 +66,7 @@ def simple_qubo() -> tuple[Instance, list[SingleSolution]]:
     solutions = Solution()
     solutions.bitstrings = bitstrings.tensor(list(itertools.product([0, 1], repeat=n_qubits)))
     solutions.counts = vectori.zeros(solutions.bitstrings.shape[0]).fill_(1)
-    solutions.compute_costs(Q).sort_by_cost().compute_probabilities()
+    solutions._compute_costs(Q)._sort_by_cost()._compute_probabilities()
 
     # Get all bitstrings with minimum cost
     expected_optimal_solutions = gather_optimal_solutions(solutions)
@@ -97,8 +96,7 @@ def check_solution(
     # Solutions are not duplicated
     check.equal(solutions.bitstrings.unique(dim=0).shape[0], solutions.bitstrings.shape[0])
 
-    analyzer = Analyzer([solutions])
-    print(f"{analyzer.df}")
+    print(f"{analysis.to_dataframe([solutions])}")
 
     assert isinstance(solutions.probabilities, torch.Tensor)
     optimal_solutions = gather_optimal_solutions(solutions)
@@ -124,7 +122,7 @@ def check_solution(
 
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("drive_shaping_method", ["proportional_diagonal", "bayesian_search"])
-@pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
+@pytest.mark.parametrize("embedding_method", ["greedy_layout", "blade"])
 @pytest.mark.parametrize("postprocessing", [True, False], ids=["post", "no-post"])
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no-pre"])
 def test_quantum_solve(
@@ -139,25 +137,25 @@ def test_quantum_solve(
     qubo, expected_optimal_solutions = simple_qubo()
 
     if embedding_method == "blade":
-        embedding_config = EmbeddingConfig(embedding_method=EmbedderType.BLADE)
-    elif embedding_method == "greedy":
+        embedding_config = EmbeddingConfig(algorithm="blade")
+    elif embedding_method == "greedy_layout":
         embedding_config = EmbeddingConfig(
-            embedding_method=EmbedderType.GREEDY,
-            greedy_traps=100,
+            algorithm="greedy_layout",
+            greedy_layout_traps=100,
         )
     else:
         raise ValueError(f"Invalid embedding method: {embedding_method}")
 
     if drive_shaping_method == "bayesian_search":
         drive_shaping_config = DriveShapingConfig(
-            drive_shaping_method=DriveType.BAYESIAN_SEARCH,
+            algorithm="bayesian_search",
             bayesian_search_n_calls=11,
             bayesian_search_seed=seed,
             dmm=False,
         )
     elif drive_shaping_method == "proportional_diagonal":
         drive_shaping_config = DriveShapingConfig(
-            drive_shaping_method=DriveType.PROPORTIONAL_DIAGONAL,
+            algorithm="proportional_diagonal",
             proportional_diagonal_kappa=0.25,
             dmm=False,
         )
@@ -165,19 +163,20 @@ def test_quantum_solve(
         raise ValueError(f"Invalid drive shaping method: {drive_shaping_method}")
 
     config = SolverConfig(
-        use_quantum=True,
-        embedding=embedding_config,
-        drive_shaping=drive_shaping_config,
-        do_postprocessing=postprocessing,
-        do_preprocessing=preprocessing,
-        device=qoolqit.AnalogDevice(),
+        solving=QuantumSolvingConfig(
+            embedding=embedding_config,
+            drive_shaping=drive_shaping_config,
+            device=qoolqit.AnalogDevice(),
+        ),
+        postprocessing=postprocessing,
+        preprocessing=preprocessing,
     )
 
     solver = Solver(qubo, config)
     solution = solver.solve()
-    solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
+    solution._compute_costs(qubo.matrix)._sort_by_cost()._compute_probabilities()
 
-    register = solver._solver.embedding()
+    register = solver._solver._embedding()
     print(f"Register: {register.qubits}")
     print(f"Distances: {register.distances()}")
 
@@ -206,29 +205,28 @@ def test_classical_solve(
     manual_seed(seed)
     qubo, expected_optimal_solutions = simple_qubo()
 
-    classical_solvers = {
-        "cplex": ClassicalSolverType.CPLEX,
-        "tabu": ClassicalSolverType.TABU_SEARCH,
-        "sa": ClassicalSolverType.SIMULATED_ANNEALING,
-        "random": ClassicalSolverType.RANDOM,
+    classical_solvers: dict[str, _ClassicalAlgorithm] = {
+        "cplex": "cplex",
+        "tabu": "tabu_search",
+        "sa": "simulated_annealing",
+        "random": "random_sampling",
     }
 
-    classical_config = ClassicalConfig(
-        classical_solver_type=classical_solvers[solving_method],
+    classical_config = ClassicalSolvingConfig(
+        algorithm=classical_solvers[solving_method],
         max_bitstrings=1,
         sa_seed=seed,
     )
 
     config = SolverConfig(
-        use_quantum=False,
-        do_postprocessing=postprocessing,
-        do_preprocessing=preprocessing,
-        classical=classical_config,
+        solving=classical_config,
+        postprocessing=postprocessing,
+        preprocessing=preprocessing,
     )
 
     solver = Solver(qubo, config)
     solution = solver.solve()
-    solution.compute_costs(qubo.matrix).sort_by_cost().compute_probabilities()
+    solution._compute_costs(qubo.matrix)._sort_by_cost()._compute_probabilities()
 
     expected_optimal_probability = 0.75
     if solving_method in ["random"]:

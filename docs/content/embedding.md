@@ -21,7 +21,7 @@ instance = Instance(coefficients)
 # define the solver with default configuration
 default_config = SolverConfig()
 solver = Solver(instance, default_config)
-register = solver.embedding()
+register = solver._embedding()
 
 # draw the register
 # register.draw()
@@ -39,7 +39,7 @@ blade_config = SolverConfig(
 )
 
 solver = Solver(instance, blade_config)
-register = solver.embedding()
+register = solver._embedding()
 
 # register.draw()
 ```
@@ -58,7 +58,7 @@ greedy_config = SolverConfig(
 )
 
 solver = Solver(instance, greedy_config)
-register = solver.embedding()
+register = solver._embedding()
 
 # register.draw()
 ```
@@ -96,7 +96,7 @@ The `embed` method `def embed(self) -> qoolqit.Register` specifies how the probl
 # )
 #
 # solver = Solver(instance, config)
-# register = solver.embedding()
+# register = solver._embedding()
 
 # register.draw()
 ```

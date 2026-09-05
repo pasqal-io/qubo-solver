@@ -37,8 +37,8 @@ We can also apply preprocessing of the QUBO instance (to reduce it to another sm
 
 | Field         | Type          | Description |
 |---------------|---------------|-------------|
-| `do_postprocessing`    | `bool` | Whether we apply post-processing (`True`) or not (`False`). |
-| `do_preprocessing`    | `bool` | Whether we apply pre-processing (`True`) or not (`False`). |
+| `postprocessing`    | `bool` | Whether we apply post-processing (`True`) or not (`False`). |
+| `preprocessing`    | `bool` | Whether we apply pre-processing (`True`) or not (`False`). |
 
 ---
 
@@ -59,7 +59,7 @@ from qubosolver import Instance, SolverConfig, EmbeddingConfig, matrix
 coefficients = matrix.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
 instance = Instance(matrix=coefficients)
 
-embedding_config = EmbeddingConfig(embedding_method="greedy", greedy_traps=-1)
+embedding_config = EmbeddingConfig(embedding_method="greedy", greedy_traps="device")
 
 config = SolverConfig(
     config_name="my_config",
@@ -80,6 +80,6 @@ config = SolverConfig.from_kwargs(
     config_name="my_config",
     use_quantum=True,
     embedding_method="greedy",
-    greedy_traps=-1
+    greedy_traps="device",
 )
 ```

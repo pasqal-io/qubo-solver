@@ -6,6 +6,7 @@ import pytest_check as check
 import numpy as np
 import random
 import torch
+from typing import get_args
 
 
 from pulser.backend.remote import RemoteConnection
@@ -14,19 +15,19 @@ from pulser.backend.results import Results
 from qubosolver import (
     Instance,
     Solution,
-    Analyzer,
-    EmbedderType,
-    DriveType,
+    embedding,
     matrix,
     LocalEmulator,
     RemoteEmulator,
-    embedding,
     drive_shaping,
-    solvers,
+    solving,
     transforms,
 )
 import qubosolver._io.utils as io_utils
+from qubosolver.utils import analysis
 from qubosolver.types import protocols
+from qubosolver.solver.config.drive_shaping import _DriveShapingAlgorithm
+from qubosolver.solver.config.embedding import _EmbeddingAlgorithm
 
 from qoolqit import AnalogDeviceWithDMM
 from qoolqit.execution import (
@@ -39,18 +40,18 @@ from mock.connection import MockConnection
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("drive_method", list(DriveType))
-@pytest.mark.parametrize("embedding_method", list(EmbedderType))
+@pytest.mark.parametrize("drive_method", get_args(_DriveShapingAlgorithm))
+@pytest.mark.parametrize("embedding_method", get_args(_EmbeddingAlgorithm))
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no_pre"])
 @pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
 def test_quantum_remote_job(
     make_mock_connection: type[MockConnection],
-    drive_method: str,
-    embedding_method: str,
+    drive_method: _DriveShapingAlgorithm,
+    embedding_method: _EmbeddingAlgorithm,
     preprocessing: bool,
     dmm: bool,
 ) -> None:
-    if drive_method == DriveType.BAYESIAN_SEARCH:
+    if drive_method == "bayesian_search":
         pytest.skip(reason="Does not work with the Bayesian-search drive shaping method")
 
     seed = 7979
@@ -77,11 +78,11 @@ def test_quantum_remote_job(
         if preprocessing:
             instance = transforms.variable_fixing.apply_recursively(instance)
 
-        if embedding_method == EmbedderType.BLADE:
+        if embedding_method == "blade":
             register = embedding.blade.embed(instance)
         else:
-            config = embedding.greedy.Config(traps=100)
-            register = embedding.greedy.embed(instance, device, config=config)
+            config = embedding.greedy_layout.Config(traps=100)
+            register = embedding.greedy_layout.embed(instance, device=device, config=config)
 
         num_shots = 50
         backend: protocols.Backend
@@ -90,30 +91,30 @@ def test_quantum_remote_job(
         else:
             backend = RemoteEmulator(connection=connection, num_shots=num_shots)
 
-        if drive_method == DriveType.PROPORTIONAL_DIAGONAL:
+        if drive_method == "proportional_diagonal":
             drive = drive_shaping.proportional_diagonal.build_drive(
                 instance, register, device=device, dmm=dmm
             )
         else:
-            drive, _ = drive_shaping.bayesian_search.build_drive(
-                instance, register, backend, device, dmm=dmm
+            _, drive = solving.drive_bayesian_search.solve(
+                instance, register, backend=backend, device=device, dmm=dmm
             )
 
-        job = solvers.analog_quantum_sampling(register, drive, backend, device)
+        job = solving.analog_quantum_sampling.solve(register, drive, backend, device)
 
         return job, instance
 
     def post(job: job.Job[Results], instance: Instance) -> Solution:
-        solution = Solution.from_results(job.results())
+        solution = Solution.from_results(job.results(), instance)
 
         # Post-process fixations of the preprocessing and restore the original QUBO
         if preprocessing:
             assert isinstance(instance, transforms.variable_fixing.Instance)
-            solution = transforms.variable_fixing.unapply(solution, instance)
+            solution = transforms.variable_fixing.lift(solution, instance)
             instance = instance._parent_instance
-        solution = solvers.iterative_bitflip_local_search(instance, solution)
+        solution = solving.iterative_bitflip_local_search.solve(instance, solution)
 
-        solution.compute_costs(instance.matrix).sort_by_cost().compute_probabilities()
+        solution._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
 
         return solution
 
@@ -125,7 +126,7 @@ def test_quantum_remote_job(
     assert isinstance(remote_job.results(), Results)
 
     mock_file = io.BytesIO()
-    remote_instance.save(mock_file, remote_instance)
+    remote_instance.save(mock_file)
     io_utils.save_string(mock_file, remote_job.job_id())
     io_utils.save_string(mock_file, get_batch_id(remote_job))
 
@@ -146,13 +147,13 @@ def test_quantum_remote_job(
     torch.testing.assert_close(remote_solution.probabilities, local_solution.probabilities)
     torch.testing.assert_close(remote_solution.counts, local_solution.counts)
 
-    analyzer = Analyzer([local_solution, remote_solution], labels=["local", "remote"])
-    print(f"\n{analyzer.df}")
+    df_all = analysis.to_dataframe([local_solution, remote_solution], labels=["local", "remote"])
+    print(f"\n{df_all}")
 
     expected_solutions = ["00111", "01011"]
 
     for label in ["local", "remote"]:
-        df = analyzer.df.query(f"labels == '{label}'")
+        df = df_all.query(f"labels == '{label}'")
 
         check.is_true(df["bitstrings"].is_unique)
 

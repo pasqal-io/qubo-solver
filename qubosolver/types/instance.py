@@ -1,32 +1,42 @@
+"""QUBO problem instances.
+
+An [`Instance`][qubosolver.types.instance.Instance] wraps a symmetric square coefficient matrix
+``Q`` and defines the QUBO objective to minimize:
+
+$$\\text{cost}(x) = x^T Q x, \\quad x \\in \\{0, 1\\}^n$$
+"""
+
 from __future__ import annotations
 
 import torch
 import io
+from typing import TYPE_CHECKING, TypeVar
 
-from ._checks import debug_runtime_typecheck
+from ._checks import debug_runtime_typecheck, no_runtime_typecheck
 from . import matrix
 from .linalg import Matrix, Bitstring
-from .enums import DensityType
+from ._enums import _DensityType
 from qubosolver._io import utils as io_utils
+from qubosolver._io.utils import Stream
+from qubosolver._io.utils import FileLike
+
+if TYPE_CHECKING:
+    from qubosolver.transforms import negative_bitflip, variable_fixing, zeroing
+
+_InstanceT = TypeVar("_InstanceT", bound="Instance")
 
 
 @debug_runtime_typecheck
 class Instance:
-    """A single QUBO (Quadratic Unconstrained Binary Optimization) problem instance.
+    """A single QUBO problem instance.
 
-    Wraps a symmetric square coefficient matrix ``Q`` and exposes helpers for
-    evaluation, serialisation, and introspection.  The objective to minimise is:
+    Wraps a symmetric square matrix $Q$ and exposes helpers for
+    evaluation, serialization, and introspection.  The objective to minimize is:
 
-        cost(x) = x^T Q x,   x ∈ {0, 1}^n
-
-    Attributes:
-        matrix (Matrix):
-            Read-only property returning the ``(size, size)`` coefficient tensor.
-            Asserts squareness on every access (see [`matrix`][]).
+    $$\\text{cost}(x) = x^T Q x, \\quad x \\in \\{0, 1\\}^n$$
 
     Args:
-        matrix (Matrix):
-            Square coefficient matrix ``Q`` of shape ``(n, n)``.
+        matrix: Symmetric matrix $Q$ of shape ``(n, n)``.
             Defaults to an empty ``(0, 0)`` zero matrix, which represents
             a trivial problem with no variables.
     """
@@ -39,7 +49,7 @@ class Instance:
 
     @property
     def size(self) -> int:
-        """Number of binary variables in the QUBO problem (side length of ``Q``)."""
+        """Number of binary variables in the QUBO problem."""
         return self.matrix.shape[0]
 
     def __len__(self) -> int:
@@ -47,11 +57,11 @@ class Instance:
         return self.size
 
     @property
-    def matrix(self) -> torch.Tensor:
-        """The ``(size, size)`` QUBO coefficient matrix.
+    def matrix(self) -> Matrix:
+        """The QUBO symmetric matrix.
 
         Returns:
-            Coefficient matrix of shape ``(size, size)``.
+             QUBO symmetric matrix of shape ``(size, size)``.
 
         Raises:
             AssertionError: If the internal tensor is not 2-D or not square.
@@ -82,32 +92,14 @@ class Instance:
             )
         return off_diag.max().item()
 
-    @property
-    def _normalized_matrix(self) -> torch.Tensor:
-        """Coefficient matrix scaled so that the largest off-diagonal entry equals 1.
-
-        Divides every element of [`matrix`][] by [`_max_off_diag`][].
-        Used to bring coefficients into a hardware-friendly range before
-        embedding.  If [`size`][] is less than 2, there is nothing to
-        normalise and [`matrix`][] is returned unchanged.
-        """
-        if self.size < 2:
-            return self.matrix
-        return self.matrix / self._max_off_diag
-
-    def evaluate_solution(self, solution: Bitstring) -> float:
-        """Compute the QUBO objective ``x^T Q x`` for a candidate solution *x*.
+    def cost(self, solution: Bitstring) -> float:
+        """Compute the QUBO objective $x^T Q x$ for a candidate solution $x$.
 
         Args:
-            solution (Bitstring):
-                Binary vector ``x`` of shape ``(size,)`` with values in ``{0, 1}``.
+            solution: Binary vector $x$ of shape ``(size,)``.
 
         Returns:
-            float: Scalar cost value.  Lower is better for minimisation problems.
-
-        Note:
-            The result type is asserted to be a plain ``float`` (not a tensor
-            or numpy scalar) before returning.
+            Scalar cost value.
         """
         # Import here to avoid circular imports
         from qubosolver.utils import _costs
@@ -116,71 +108,234 @@ class Instance:
         assert type(cost) is float  # nosec B101
         return cost
 
-    def __repr__(self) -> str:
-        """Human-readable summary of the instance.
+    @classmethod
+    def _tag(cls) -> str:
+        """Type tag written first by [`save`][] and checked first by [`load`][].
 
-        Returns:
-            str: A quoted string of the form ``"Instance of size = <n>,density = <d>,"`` where *d* is rounded to two decimal places.
+        Derived from the class's fully-qualified name, so subclasses never
+        need to hand-write a duplicate string. Lets a stream be
+        self-describing: [`load`][] fails fast with a clear error when handed
+        a stream produced by a different `Instance` subclass, instead of
+        misinterpreting its bytes as its own state.
+        """
+        return f"{cls.__module__}.{cls.__qualname__}"
+
+    _registry: dict[str, type[Instance]] = {}
+    """Tag -> `Instance` subclass, populated by [`__init_subclass__`][] for [`load`][] to dispatch on."""
+
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        """Register `cls` under its [`_tag`][] so [`load`][] can dispatch to it.
+
+        Automatic, so a new `Instance` subclass never needs to be added to a
+        separate registry by hand.
+        """
+        super().__init_subclass__(**kwargs)
+        Instance._registry[cls._tag()] = cls
+
+    def _write_body(self, f: Stream[bytes]) -> None:
+        """Write this instance's state to `f`, without any type tag.
+
+        The base implementation writes only [`matrix`][]. Subclasses that
+        carry extra state override this to write that state too (typically
+        after calling `super()._write_body(f)`).
+        """
+        # The coefficient matrix is written into an internal `io.BytesIO`
+        # buffer and then flushed to *f* using `io_utils.save_sized_buffer`,
+        # which prefixes the payload with its byte length. This framing
+        # allows multiple objects to be stored contiguously in the same
+        # stream.
+        buffer = io.BytesIO()
+        torch.save(self.matrix, buffer)
+        io_utils.save_sized_buffer(f, buffer.getbuffer())
+
+    @classmethod
+    def _read_body(cls, f: Stream[bytes]) -> Instance:
+        """Read an instance of `cls` back from `f`, without any type tag.
+
+        The base implementation reads only [`matrix`][]. Subclasses that
+        override [`_write_body`][] to write extra state override this to
+        read it back in the same order.
 
         Note:
-            The outer `repr` call intentionally wraps the f-string in
-            quotes, so the return value includes surrounding single quotes.
-        """
-        density = _calculate_density(self.matrix)
-        return repr(f"Instance of size = {self.size}," f"density = {round(density, 2)},")
-
-    @staticmethod
-    def save(file_like: io_utils.FileLike[bytes], instance: Instance) -> None:
-        """Serialise *instance* to *file_like* using `torch.save`.
-
-        The coefficient matrix is written into an internal
-        `io.BytesIO` buffer and then flushed to *file_like* using
-        `io_utils.save_sized_buffer`, which prefixes the payload with its
-        byte length.  This framing allows multiple objects to be stored
-        contiguously in the same stream.
-
-        Args:
-            file_like (io_utils.FileLike[bytes]):
-                Destination — a file path (`str` or `os.PathLike`),
-                or a binary-writable `typing.IO` stream.
-            instance (Instance):
-                The instance to serialise.  Only [`matrix`][] is persisted;
-                any derived state is recomputed on load.
-        """
-        with io_utils.open(file_like, "wb") as f:
-            buffer = io.BytesIO()
-            torch.save(instance.matrix, buffer)
-            io_utils.save_sized_buffer(f, buffer.getbuffer())
-
-    @staticmethod
-    def load(file_like: io_utils.FileLike[bytes]) -> Instance:
-        """Deserialise a `Instance` previously saved with `save`.
-
-        Reads a length-prefixed byte block from *file_like* into a dedicated
-        `io.BytesIO` buffer before calling `torch.load`.  The
-        isolated buffer prevents `torch.load` from over-consuming the source
-        stream when multiple objects are packed together.
-
-        Args:
-            file_like (io_utils.FileLike[bytes]):
-                Source — a file path (`str` or `os.PathLike`),
-                or a binary-readable `typing.IO` stream.  Must contain
-                data written by `save`.
-
-        Returns:
-            A new instance whose `matrix` is the deserialised coefficient tensor.
-
-        Note:
-            `torch.load` is called with `weights_only=True` to prevent
+            [`torch.load`][] is called with `weights_only=True` to prevent
             arbitrary code execution from untrusted checkpoint files.
         """
-        with io_utils.open(file_like, "rb") as f:
-            # torch.load might consume too much of the src buffer.
-            #  Use a dedicated limited buffer
-            buffer = io.BytesIO(io_utils.load_sized_buffer(f))
-            Q = torch.load(buffer, weights_only=True)
-
+        # Reads a length-prefixed byte block from *f* into a dedicated
+        # `io.BytesIO` buffer before calling `torch.load`. The isolated buffer
+        # prevents `torch.load` from over-consuming the source stream when
+        # multiple objects are packed together.
+        buffer = io.BytesIO(io_utils.load_sized_buffer(f))
+        Q = torch.load(buffer, weights_only=True)
         return Instance(Q)
+
+    def save(self, file_like: FileLike[bytes]) -> None:
+        """Serialize this instance to ``file_like``, tagged with its type.
+
+        Args:
+            file_like: Destination — a file path ([`str`][] or [`os.PathLike`][]),
+                or a binary-writable [`typing.IO`][] stream.
+
+        Example:
+            ```python
+            from pathlib import Path
+
+            with Path("instance.bin").open("wb") as f:
+                instance.save(f)
+            ```
+        """
+        with io_utils.open(file_like, "wb") as f:
+            io_utils.save_header(f)
+            io_utils.save_string(f, self._tag())
+            self._write_body(f)
+
+    @classmethod
+    def load(cls: type[_InstanceT], file_like: FileLike[bytes]) -> _InstanceT:
+        """Deserialize an [`Instance`][] previously saved with [`save`][].
+
+        Called on the base class [`qubosolver.Instance`][], it loads any instance with automatic dispatch.
+
+        Called on a subclass (e.g. [`variable_fixing.Instance.load(f)`][qubosolver.transforms.variable_fixing.Instance.load]),
+        it additionally requires the loaded `Instance` to be an instance of that subclass (raising [`TypeError`][]
+        otherwise).
+
+        Args:
+            file_like: Source file path or readable binary file object,
+                as produced by [`save`][].
+
+        Returns:
+            A new instance of whichever concrete type wrote the tag.
+
+        Raises:
+            ValueError: If the stream is not a qubosolver file, or if its type
+                tag is missing or unrecognized.
+            TypeError: If the loaded instance's type is not `cls` or a subclass thereof.
+
+        Example:
+            ```python
+            from pathlib import Path
+            from qubosolver import Instance
+            from qubosolver.transforms import variable_fixing
+
+            file = Path("instance.bin")
+            instance = variable_fixing.Instance(Instance())
+
+            with file.open("wb") as f:
+                instance.save(f)
+
+            # Three ways to load it back, from least to most strict:
+            with file.open("rb") as f:
+                loaded = Instance.load(f)                  # accepts any Instance subtype
+                loaded = Instance.load(f).variable_fixing  # loads, then narrows (fails after loading)
+                loaded = variable_fixing.Instance.load(f)  # narrows first (fails before loading)
+            ```
+        """
+        with io_utils.open(file_like, "rb") as f:
+            io_utils.load_header(f)
+            tag = io_utils.load_string(f)
+            target_cls = Instance._registry.get(tag)
+            if target_cls is None:
+                raise ValueError(f"Cannot load Instance: unrecognized type tag {tag!r}.")
+            instance = target_cls._read_body(f)
+        if not isinstance(instance, cls):
+            raise TypeError(
+                f"Cannot load {cls.__module__}.{cls.__qualname__}: "
+                f"stream contains a {type(instance).__module__}.{type(instance).__qualname__}."
+            )
+        return instance
+
+    def _narrow(self, cls: type[_InstanceT]) -> _InstanceT:
+        """Narrow ``self`` to a transform-specific `Instance` subclass.
+
+        Shared implementation for convenience properties (`variable_fixing`,
+        `zeroing`, `negative_bitflip`) that let call sites avoid
+        ``assert isinstance(instance, <transform>.Instance)`` boilerplate before
+        using a method specific to that subclass. These properties exist purely
+        to satisfy static type checkers (mypy) and enable IDE code completion —
+        the runtime `isinstance` check and the `TypeError` here just mirror the
+        guarantee that the `assert` would otherwise provide.
+
+        Raises:
+            TypeError: If ``self`` is not an instance of *cls*.
+        """
+        if not isinstance(self, cls):
+            raise TypeError(
+                f"Expected a {cls.__module__}.{cls.__qualname__}, got {type(self).__name__}."
+            )
+        return self
+
+    @property
+    @no_runtime_typecheck
+    def variable_fixing(self) -> variable_fixing.Instance:
+        """View of this instance as a variable-fixing [`Instance`][qubosolver.transforms.variable_fixing.Instance].
+
+        Convenience property to avoid the boilerplate of
+        ``assert isinstance(instance, variable_fixing.Instance)`` before calling
+        a method specific to that subclass. It exists purely to satisfy static
+        type checkers (mypy) and enable IDE code completion — the runtime
+        [`isinstance`][] check and the [`TypeError`][] below just mirror the guarantee
+        that the [`assert`](https://docs.python.org/3/reference/simple_stmts.html#index-18) would otherwise provide.
+
+        Returns:
+            This instance, narrowed to the variable-fixing subclass.
+
+        Raises:
+            TypeError: If this instance is not a
+                [`variable_fixing.Instance`][qubosolver.transforms.variable_fixing.Instance].
+        """
+        from qubosolver.transforms import variable_fixing
+
+        return self._narrow(variable_fixing.Instance)
+
+    @property
+    @no_runtime_typecheck
+    def zeroing(self) -> zeroing.Instance:
+        """View of this instance as a zeroing [`Instance`][qubosolver.transforms.zeroing.Instance].
+
+        Convenience property to avoid the boilerplate of
+        ``assert isinstance(instance, zeroing.Instance)`` before calling
+        a method specific to that subclass. It exists purely to satisfy static
+        type checkers (mypy) and enable IDE code completion — the runtime
+        [`isinstance`][] check and the [`TypeError`][] below just mirror the guarantee
+        that the [`assert`](https://docs.python.org/3/reference/simple_stmts.html#index-18) would otherwise provide.
+
+        Returns:
+            This instance, narrowed to the zeroing subclass.
+
+        Raises:
+            TypeError: If this instance is not a
+                [`zeroing.Instance`][qubosolver.transforms.zeroing.Instance].
+        """
+        from qubosolver.transforms import zeroing
+
+        return self._narrow(zeroing.Instance)
+
+    @property
+    @no_runtime_typecheck
+    def negative_bitflip(self) -> negative_bitflip.Instance:
+        """View of this instance as a negative-bitflip [`Instance`][qubosolver.transforms.negative_bitflip.Instance].
+
+        Convenience property to avoid the boilerplate of
+        ``assert isinstance(instance, negative_bitflip.Instance)`` before calling
+        a method specific to that subclass. It exists purely to satisfy static
+        type checkers (mypy) and enable IDE code completion — the runtime
+        [`isinstance`][] check and the [`TypeError`][] below just mirror the guarantee
+        that the [`assert`](https://docs.python.org/3/reference/simple_stmts.html#index-18) would otherwise provide.
+
+        Returns:
+            This instance, narrowed to the negative-bitflip subclass.
+
+        Raises:
+            TypeError: If this instance is not a
+                [`negative_bitflip.Instance`][qubosolver.transforms.negative_bitflip.Instance].
+        """
+        from qubosolver.transforms import negative_bitflip
+
+        return self._narrow(negative_bitflip.Instance)
+
+
+# __init_subclass__ registers every subclass, but never fires for Instance
+# itself, so it must be registered here explicitly.
+Instance._registry[Instance._tag()] = Instance
 
 
 # Density classification thresholds — half-open intervals [lo, hi).
@@ -190,8 +345,8 @@ _MEDIUM_THRESHOLD: tuple[float, float] = (0.3, 0.7)  # [0.3, 0.7)
 _HIGH_THRESHOLD: tuple[float, float] = (0.7, 1.0)  # [0.7, 1.0]
 
 
-def _classify_density(density: float) -> DensityType:
-    """Map a density value to a :class:`~.DensityType` category.
+def _classify_density(density: float) -> _DensityType:
+    """Map a density value to a :class:`~._DensityType` category.
 
     The boundaries follow half-open intervals so that every value in
     ``[0.0, 1.0]`` maps to exactly one category:
@@ -207,22 +362,22 @@ def _classify_density(density: float) -> DensityType:
     +-----------+------------------+
 
     Args:
-        density (float): Non-zero ratio in ``[0.0, 1.0]`` as returned by
+        density: Non-zero ratio in ``[0.0, 1.0]`` as returned by
             `_calculate_density`.
 
     Returns:
-        DensityType: Corresponding :class:`~.DensityType` member.
+        Corresponding :class:`~._DensityType` member.
 
     Raises:
         ValueError: If *density* falls outside ``[0.0, 1.0]`` (e.g. negative
             values or values greater than 1).
     """
     if _SPARSE_THRESHOLD[0] <= density < _SPARSE_THRESHOLD[1]:
-        return DensityType.SPARSE
+        return _DensityType.SPARSE
     elif _MEDIUM_THRESHOLD[0] <= density < _MEDIUM_THRESHOLD[1]:
-        return DensityType.MEDIUM
+        return _DensityType.MEDIUM
     elif _HIGH_THRESHOLD[0] <= density <= _HIGH_THRESHOLD[1]:
-        return DensityType.HIGH
+        return _DensityType.HIGH
     else:
         raise ValueError(f"Density {density} is outside the defined thresholds.")
 
@@ -231,12 +386,12 @@ def _calculate_density(m: Matrix) -> float:
     """Compute the fraction of non-zero entries in a coefficient matrix.
 
     Args:
-        m (Matrix): QUBO coefficient matrix of any shape.
+        m: QUBO coefficient matrix of any shape.
 
     Returns:
-        float: Value in ``[0.0, 1.0]`` where ``0.0`` means all entries are zero
-        and ``1.0`` means no entry is zero.  Returns ``0.0`` for empty matrices
-        (``m.numel() == 0``) to avoid division by zero.
+        Value in ``[0.0, 1.0]`` where ``0.0`` means all entries are zero
+            and ``1.0`` means no entry is zero. Returns ``0.0`` for empty
+            matrices (``m.numel() == 0``) to avoid division by zero.
     """
     if m.numel() == 0:
         return 0.0
