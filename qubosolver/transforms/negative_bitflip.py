@@ -4,30 +4,32 @@ Quantum (Rydberg) solvers cannot encode attractive interactions, so a QUBO must
 have non-negative off-diagonal coefficients to be embeddable.  A change of
 variable ``x_i -> 1 - y_i`` on a subset of variables flips the sign of the
 interactions incident to it; choosing the subset that removes as much negative
-weight as possible is an integer linear program solved here with GLPK.
+weight as possible is an integer linear program solved here with [GLPK](https://github.com/bradfordboyle/pyglpk).
 
-[`apply`][qubosolver.transforms.negative_bitflip.apply] solves the ILP and
-applies the optimal bit flips to the matrix, returning a wrapper `Instance` that
+[`apply`][] solves the **Integer Linear Program (ILP)** and
+applies the optimal bit flips to the matrix, returning a wrapper [`Instance`][] that
 records the flip vector so the solution can later be mapped back with
-[`unapply`][qubosolver.transforms.negative_bitflip.unapply].  When bit flips
+[`lift`][].  When bit flips
 cannot remove *every* negative off-diagonal coefficient, the remaining ones can
-be dropped with
-[`qubosolver.transforms.zeroing.apply`][qubosolver.transforms.zeroing.apply].
+be dropped with [`transforms.zeroing.apply`][].
 
 Typical usage:
 
 ```python
-import qubosolver.transforms.negative_bitflip as bitflip
+from qubosolver.transforms import negative_bitflip
+from qubosolver.solving import brute_force
 
-reduced = bitflip.apply(qubo_instance, time_limit_s=60.0)
-solution = solver.solve(reduced)
-full = bitflip.unapply(solution, reduced)
+flipped_instance = negative_bitflip.apply(instance, time_limit_s=60.0)
+flipped_solution = brute_force.solve(flipped_instance)
+solution = negative_bitflip.lift(flipped_solution, flipped_instance)
 ```
 """
 
 from __future__ import annotations
 
 import copy
+import io
+import json
 import logging
 from dataclasses import dataclass
 from typing import Any
@@ -36,6 +38,8 @@ import torch
 
 import qubosolver
 from qubosolver.types import Solution, vector, Matrix, Bitstrings, Bitstring, bitstring
+from qubosolver._io import utils as io_utils
+from qubosolver._io.utils import Stream
 
 logger = logging.getLogger(__name__)
 
@@ -362,7 +366,7 @@ class Instance(qubosolver.Instance):
     Wraps a parent [`qubosolver.Instance`][] whose off-diagonal coefficients may
     contain negative interactions.  Applying [`apply`][] solves the bit-flip ILP,
     stores the flip vector here, and exposes the transformed matrix so it can be
-    embedded and solved.  [`unapply`][] uses the stored state to map a solution
+    embedded and solved.  [`lift`][] uses the stored state to map a solution
     back onto the original variables.
     """
 
@@ -375,41 +379,81 @@ class Instance(qubosolver.Instance):
         """
         super().__init__(parent_instance.matrix.detach().clone())
         self._parent_instance = copy.deepcopy(parent_instance)
+
         self.flips: Bitstring = bitstring.zeros(parent_instance.size)
+        """Flip vector applied to the parent matrix, all-zero until [`apply`][] populates it."""
+
         self.metrics: dict[str, Any] = {}
+        """Negative off-diagonal count and weight before/after the flips, as computed by [`apply`][]."""
+
         self.status: str = "NONE"
+        """Outcome of the bit-flip ILP solve (e.g. ``"NONE"``, ``"OPTIMAL"``, ``"REJECTED_WORSE_THAN_NOOP"``)."""
+
         self.offset: float = 0.0
+        """Constant term relating the flipped and original QUBO costs, $x^T Q x = y^T Q_{flipped} y + offset$."""
+
+    def _write_body(self, f: Stream[bytes]) -> None:
+        """Write the matrix, flip vector, solve metadata, and parent instance to `f`."""
+        super()._write_body(f)
+
+        buffer = io.BytesIO()
+        torch.save(self.flips, buffer)
+        io_utils.save_sized_buffer(f, buffer.getbuffer())
+
+        state_json = json.dumps(
+            {"status": self.status, "offset": self.offset, "metrics": self.metrics}
+        )
+        io_utils.save_string(f, state_json)
+
+        self._parent_instance.save(f)
+
+    @classmethod
+    def _read_body(cls, f: Stream[bytes]) -> Instance:
+        """Read back a negative-bitflip instance written by [`_write_body`][]."""
+        instance = Instance(qubosolver.Instance._read_body(f))
+
+        buffer = io.BytesIO(io_utils.load_sized_buffer(f))
+        instance.flips = torch.load(buffer, weights_only=True)
+
+        state = json.loads(io_utils.load_string(f))
+        instance.status = state["status"]
+        instance.offset = state["offset"]
+        instance.metrics = state["metrics"]
+
+        instance._parent_instance = qubosolver.Instance.load(f)
+        return instance
 
 
 def apply(
-    qubo: qubosolver.Instance,
+    instance: qubosolver.Instance,
     *,
     time_limit_s: float = 60.0,
     eps: float = 0.0,
 ) -> Instance:
     """Solve the bit-flip ILP and apply the optimal flips to the QUBO matrix.
 
-    Wraps *qubo* in a bit-flip [`Instance`][], solves the negative-weight ILP
-    with GLPK, and replaces the matrix with its flipped counterpart.  When
-    *qubo* has no negative off-diagonal coefficient, the wrapper is returned
+    Wraps `instance` in a bit-flip [`Instance`][], solves the negative-weight
+    **Integer Linear Program (ILP)**
+    with [`GLPK`](https://github.com/bradfordboyle/pyglpk), and replaces the matrix with its flipped counterpart.  When
+    `instance` has no negative off-diagonal coefficient, the wrapper is returned
     unchanged (``status`` stays ``"NONE"`` and ``flips`` stays all-zero).  If
     the solved flips would leave *more* negative weight than doing nothing
-    (a known GLPK edge case), they are rejected and replaced with a no-op
+    (a known `GLPK` edge case), they are rejected and replaced with a no-op
     (``status`` becomes ``"REJECTED_WORSE_THAN_NOOP"``).
 
     Args:
-        qubo: The QUBO instance to preprocess.
-        time_limit_s: GLPK solver time limit in seconds.
+        instance: The QUBO instance to preprocess.
+        time_limit_s: `GLPK` solver time limit in seconds.
         eps: Tolerance below which a coefficient is treated as zero.
 
     Returns:
-        A bit-flip [`Instance`][] carrying the flip vector and metrics.
+        A bit-flip instance carrying the flip vector and metrics.
     """
-    instance = Instance(qubo)
+    flipped_instance = Instance(instance)
 
-    Q = qubo.matrix
+    Q = instance.matrix
     if instance.size == 0 or not _has_negative_offdiagonal(Q, eps=eps):
-        return instance
+        return flipped_instance
 
     flips, objective_value, status = _solve_bitflip_preprocessing_glpk(
         Q,
@@ -432,38 +476,38 @@ def apply(
 
     Q_flipped, offset = _transform_qubo_with_bitflips(Q, flips)
 
-    instance._matrix = Q_flipped
-    instance.flips = flips
-    instance.metrics = metrics
-    instance.metrics["objective_value"] = objective_value
-    instance.status = status
-    instance.offset = offset
+    flipped_instance._matrix = Q_flipped
+    flipped_instance.flips = flips
+    flipped_instance.metrics = metrics
+    flipped_instance.metrics["objective_value"] = objective_value
+    flipped_instance.status = status
+    flipped_instance.offset = offset
 
-    return instance
+    return flipped_instance
 
 
-def unapply(flipped_solution: Solution, flipped_qubo: Instance) -> Solution:
-    """Map a solution of the bit-flipped QUBO back onto the original variables.
+def lift(flipped_solution: Solution, flipped_instance: Instance) -> Solution:
+    """Map a solution of the bit-flipped QUBO instance back onto the original variables.
 
-    Undoes the flips recorded on *flipped_qubo* (``y_i -> x_i``) and recomputes
+    Undoes the flips recorded on `flipped_instance` (``y_i -> x_i``) and recomputes
     costs against the original (unflipped) matrix.  When no bit flip was applied,
-    returns a deep copy of *flipped_solution* unchanged.
+    returns a deep copy of `flipped_solution` unchanged.
 
     Args:
-        flipped_solution: Solution obtained on the bit-flipped QUBO.
-        flipped_qubo: The bit-flip [`Instance`][] produced by [`apply`][].
+        flipped_solution: Solution obtained on the bit-flipped instance.
+        flipped_instance: The bit-flipped instance produced by [`apply`][].
 
     Returns:
         A new solution over the original variables.
     """
-    flipped = torch.any(flipped_qubo.flips != 0)
+    flipped = torch.any(flipped_instance.flips != 0)
     if not flipped:
         return copy.deepcopy(flipped_solution)
 
     solution = Solution()
-    solution.bitstrings = _apply_bitflips(flipped_solution.bitstrings, flipped_qubo.flips)
+    solution.bitstrings = _apply_bitflips(flipped_solution.bitstrings, flipped_instance.flips)
     solution.costs = vector.tensor(
-        [flipped_qubo._parent_instance.evaluate_solution(b) for b in solution.bitstrings]
+        [flipped_instance._parent_instance.cost(b) for b in solution.bitstrings]
     )
     solution.counts = flipped_solution.counts
     solution.probabilities = flipped_solution.probabilities

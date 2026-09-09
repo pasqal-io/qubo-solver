@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import itertools
 from typing import Any
 
@@ -13,7 +14,7 @@ from qubosolver import (
     bitstrings,
     matrix,
     bitstring,
-    solvers,
+    solving,
 )
 from qubosolver.utils._costs import quadratic_cost
 from qubosolver.transforms.negative_bitflip import (
@@ -126,14 +127,27 @@ def test_bitflip_apply_is_noop_without_negative_coefficients() -> None:
     torch.testing.assert_close(flipped_instance.matrix, instance.matrix)
 
 
-def test_bitflip_unapply_restores_original_variables() -> None:
+def test_init_preserves_the_parent_instance_type() -> None:
+    # __init__ deep-copies parent_instance into _parent_instance; if that
+    # parent is itself a transform subclass (e.g. zeroing.Instance), the copy
+    # must keep that concrete type, not collapse to the base
+    # qubosolver.Instance.
     instance, _ = bipartisable_negative_qubo()
-    solution = solvers.brute_force(instance)
+    zeroed_parent = transforms.zeroing.apply(instance)
+
+    wrapped = transforms.negative_bitflip.Instance(zeroed_parent)
+
+    check.is_instance(wrapped._parent_instance, transforms.zeroing.Instance)
+
+
+def test_bitflip_lift_restores_original_variables() -> None:
+    instance, _ = bipartisable_negative_qubo()
+    solution = solving.brute_force.solve(instance)
 
     flipped_instance = transforms.negative_bitflip.apply(instance)
-    flipped_solution = solvers.brute_force(flipped_instance)
+    flipped_solution = solving.brute_force.solve(flipped_instance)
 
-    restored = transforms.negative_bitflip.unapply(flipped_solution, flipped_instance)
+    restored = transforms.negative_bitflip.lift(flipped_solution, flipped_instance)
 
     torch.testing.assert_close(restored[0].bitstring, solution[0].bitstring)
     check.almost_equal(restored[0].cost, solution[0].cost)
@@ -210,16 +224,16 @@ def test_metrics_reflect_the_original_matrix_not_the_flipped_one() -> None:
     check.greater(expected_before_count, expected_after_count)
 
 
-def test_bitflip_unapply_restores_original_variables_for_a_batch() -> None:
+def test_bitflip_lift_restores_original_variables_for_a_batch() -> None:
     instance, _ = bipartisable_negative_qubo()
-    solution = solvers.brute_force(instance, max_bitstrings=4)
-    solution.sort_by_cost()
+    solution = solving.brute_force.solve(instance, max_bitstrings=4)
+    solution._sort_by_cost()
 
     flipped_instance = transforms.negative_bitflip.apply(instance)
-    flipped_solution = solvers.brute_force(flipped_instance, max_bitstrings=4)
+    flipped_solution = solving.brute_force.solve(flipped_instance, max_bitstrings=4)
 
-    restored = transforms.negative_bitflip.unapply(flipped_solution, flipped_instance)
-    restored.sort_by_cost()
+    restored = transforms.negative_bitflip.lift(flipped_solution, flipped_instance)
+    restored._sort_by_cost()
 
     torch.testing.assert_close(restored.costs, solution.costs)
     torch.testing.assert_close(restored[0].bitstring, solution[0].bitstring)
@@ -230,7 +244,7 @@ def test_bitflip_unapply_restores_original_variables_for_a_batch() -> None:
     for i in range(len(restored)):
         x = torch.abs(flipped_solution[i].bitstring - flipped_instance.flips)
         torch.testing.assert_close(restored[i].bitstring, x)
-        check.almost_equal(restored[i].cost, instance.evaluate_solution(restored[i].bitstring))
+        check.almost_equal(restored[i].cost, instance.cost(restored[i].bitstring))
 
 
 def test_glpk_infeasible_or_error_falls_back_to_noop_flips() -> None:
@@ -316,6 +330,84 @@ def test_apply_keeps_flips_that_reduce_negative_weight(
     check.equal(flipped_instance.status, "OPTIMAL")
     check.is_true(flipped_instance.flips.any())
     torch.testing.assert_close(flipped_instance.matrix, expected_matrix)
+
+
+def test_save_load_roundtrips_bitflip_state() -> None:
+    # save/load must persist the bit-flip specific state (flips, metrics,
+    # status, offset, parent instance), not just the matrix inherited from
+    # the base Instance.save/load.
+    instance, _ = non_bipartisable_negative_qubo()
+    flipped_instance = transforms.negative_bitflip.apply(instance)
+
+    buffer = io.BytesIO()
+    flipped_instance.save(buffer)
+    buffer.seek(0)
+    loaded_instance = transforms.negative_bitflip.Instance.load(buffer)
+
+    check.is_instance(loaded_instance, transforms.negative_bitflip.Instance)
+    torch.testing.assert_close(loaded_instance.matrix, flipped_instance.matrix)
+    torch.testing.assert_close(loaded_instance.flips, flipped_instance.flips)
+    check.equal(loaded_instance.status, flipped_instance.status)
+    check.equal(loaded_instance.offset, flipped_instance.offset)
+    check.equal(loaded_instance.metrics, flipped_instance.metrics)
+    torch.testing.assert_close(
+        loaded_instance._parent_instance.matrix, flipped_instance._parent_instance.matrix
+    )
+
+
+def test_load_of_saved_bitflip_instance_can_be_lifted() -> None:
+    # A round-tripped instance must remain usable end-to-end: lift() needs
+    # _parent_instance and flips to be restored correctly.
+    instance, _ = bipartisable_negative_qubo()
+    flipped_instance = transforms.negative_bitflip.apply(instance)
+    flipped_solution = solving.brute_force.solve(flipped_instance)
+
+    buffer = io.BytesIO()
+    flipped_instance.save(buffer)
+    buffer.seek(0)
+    loaded_instance = transforms.negative_bitflip.Instance.load(buffer)
+
+    restored_solution = transforms.negative_bitflip.lift(flipped_solution, loaded_instance)
+    expected_solution = transforms.negative_bitflip.lift(flipped_solution, flipped_instance)
+
+    for restored, expected in zip(restored_solution, expected_solution):
+        check.equal(restored.string, expected.string)
+        check.equal(restored.count, expected.count)
+        check.almost_equal(restored.cost, expected.cost)
+        check.almost_equal(restored.probability, expected.probability)
+
+
+def test_base_instance_load_dispatches_to_negative_bitflip_instance() -> None:
+    # The generic Instance.load() entry point must dispatch on the tag
+    # written by save(), not on the class it's called through, so loading a
+    # negative_bitflip.Instance via the base Instance.load() must still
+    # return the full subclass (with its flip state), not collapse to a
+    # plain base Instance.
+    instance, _ = non_bipartisable_negative_qubo()
+    flipped_instance = transforms.negative_bitflip.apply(instance)
+
+    buffer = io.BytesIO()
+    flipped_instance.save(buffer)
+    buffer.seek(0)
+    loaded = Instance.load(buffer)
+
+    check.is_instance(loaded, transforms.negative_bitflip.Instance)
+    torch.testing.assert_close(loaded.matrix, flipped_instance.matrix)
+    torch.testing.assert_close(loaded.negative_bitflip.flips, flipped_instance.flips)
+
+
+def test_negative_bitflip_load_rejects_a_stream_saved_as_a_different_type() -> None:
+    # negative_bitflip.Instance.load(f) must reject a stream that was saved
+    # as a plain (or otherwise unrelated) Instance, instead of silently
+    # returning the wrong type.
+    instance, _ = non_bipartisable_negative_qubo()
+
+    buffer = io.BytesIO()
+    instance.save(buffer)
+    buffer.seek(0)
+
+    with pytest.raises(TypeError):
+        transforms.negative_bitflip.Instance.load(buffer)
 
 
 def test_glpk_solve_survives_internal_exception(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -1,3 +1,11 @@
+"""Core data types for the QUBO solver: tensors, solutions, and backends.
+
+This subpackage re-exports the tensor submodules (`bitstring`, `bitstrings`,
+`matrix`, `tensor`, `vector`, `vectori`, `linalg`), the container classes
+(`Solution`, `SingleSolution`, `Instance`, `Dataset`), and the emulator backend
+wrappers used throughout the public API.
+"""
+
 from __future__ import annotations
 
 from qubosolver.types import (
@@ -12,16 +20,8 @@ from qubosolver.types import (
 )
 from qubosolver.types.linalg import Bitstring, Bitstrings, Matrix, Tensor, Vector, Vectori
 from qubosolver.types.solution import Solution, SingleSolution
-from qubosolver.types.analyzer import Analyzer
 from qubosolver.types.instance import Instance
 from qubosolver.types.dataset import Dataset
-from qubosolver.types.enums import (
-    EmbedderType,
-    LayoutType,
-    DriveType,
-    DensityType,
-    ClassicalSolverType,
-)
 from qubosolver.types.backends import (
     LocalEmulator,
     RemoteEmulator,
@@ -29,19 +29,6 @@ from qubosolver.types.backends import (
     AutoRemoteEmulatorBackend,
 )
 from qubosolver.types.random import torch_rng
-from qubosolver.types.aliases import (
-    # Deprecated QUBO* classes
-    QUBOSolution,
-    QUBOAnalyzer,
-    QUBOInstance,
-    QUBODataset,
-    # Qubo* TypeAliases
-    QuboSolution,
-    QuboSingleSolution,
-    QuboAnalyzer,
-    QuboInstance,
-    QuboDataset,
-)
 
 __all__ = [
     # Submodules
@@ -63,30 +50,12 @@ __all__ = [
     # Classes
     "Solution",
     "SingleSolution",
-    "Analyzer",
     "Instance",
     "Dataset",
     "LocalEmulator",
     "RemoteEmulator",
     "AutoLocalEmulatorBackend",
     "AutoRemoteEmulatorBackend",
-    # Enums
-    "EmbedderType",
-    "LayoutType",
-    "DriveType",
-    "DensityType",
-    "ClassicalSolverType",
     # Functions
     "torch_rng",
-    # Qubo* TypeAliases
-    "QuboSolution",
-    "QuboSingleSolution",
-    "QuboAnalyzer",
-    "QuboInstance",
-    "QuboDataset",
-    # Deprecated QUBO* classes
-    "QUBOSolution",
-    "QUBOAnalyzer",
-    "QUBOInstance",
-    "QUBODataset",
 ]

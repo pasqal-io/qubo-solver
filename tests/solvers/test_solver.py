@@ -19,20 +19,20 @@ from qubosolver import (
     Instance,
     Solver,
     Solution,
-    EmbedderType,
-    DriveType,
-    Analyzer,
-    EmbeddingConfig,
-    DriveShapingConfig,
-    SolverConfig,
-    ClassicalConfig,
     vectori,
     bitstrings,
     matrix,
     LocalEmulator,
     RemoteEmulator,
+    SolverConfig,
+    QuantumSolvingConfig,
+    ClassicalSolvingConfig,
+    EmbeddingConfig,
+    DriveShapingConfig,
 )
-from qubosolver.solvers.solver import _QuboSolverQuantum
+from qubosolver.utils import analysis
+from qubosolver.solver.solver import _QuboSolverQuantum
+from qubosolver.solver.config.embedding import _EmbeddingAlgorithm
 from mock.connection import MockConnection
 
 from pulser.backend.remote import (
@@ -64,7 +64,9 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
     default_solver = Solver(
         simple_qubo_instance,
         SolverConfig(
-            use_quantum=True, backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=500)
+            solving=QuantumSolvingConfig(
+                backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=500)
+            )
         ),
     )
     solutions = default_solver.solve()
@@ -73,7 +75,9 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
     lessshots_solver = Solver(
         simple_qubo_instance,
         SolverConfig(
-            use_quantum=True, backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=100)
+            solving=QuantumSolvingConfig(
+                backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=100)
+            )
         ),
     )
     solutions = lessshots_solver.solve()
@@ -86,9 +90,10 @@ def test_run_local_backends(simple_qubo_instance: Instance, local_backend: Local
     solver = Solver(
         simple_qubo_instance,
         SolverConfig(
-            use_quantum=True,
-            backend=local_backend,
-            embedding=EmbeddingConfig(embedding_method=EmbedderType.BLADE),
+            solving=QuantumSolvingConfig(
+                backend=local_backend,
+                embedding=EmbeddingConfig(algorithm="blade"),
+            )
         ),
     )
     solutions = solver.solve()
@@ -101,20 +106,22 @@ def test_solver_different_devices(
     request: pytest.FixtureRequest,
     qubo_for_testing_many_devices: Instance,
     local_device: Device,
-    embedding_method: EmbedderType,
+    embedding_algorithm: _EmbeddingAlgorithm,
 ) -> None:
 
-    config = SolverConfig(
-        use_quantum=True,
-        drive_shaping=DriveShapingConfig(drive_shaping_method="proportional_diagonal"),
+    quantum_config = QuantumSolvingConfig(
+        drive_shaping=DriveShapingConfig(algorithm="proportional_diagonal"),
         embedding=EmbeddingConfig(
-            embedding_method=embedding_method,
-            greedy_traps=qubo_for_testing_many_devices.size,
+            algorithm=embedding_algorithm,
+            greedy_layout_traps=qubo_for_testing_many_devices.size,
         ),
-        do_postprocessing=False,
-        do_preprocessing=False,
         device=local_device,
         backend=LocalEmulator(backend_type=SVBackend),
+    )
+    config = SolverConfig(
+        solving=quantum_config,
+        postprocessing=False,
+        preprocessing=False,
     )
     solver = Solver(qubo_for_testing_many_devices, config)
     solution = solver.solve()
@@ -126,7 +133,7 @@ def test_parse_results() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"001": 10, "110": 5, "010": 3}
 
-    solution = Solution.from_results(mock_result)
+    solution = Solution.from_results(mock_result, Instance(matrix.zeros(3)))
 
     expected_bitstrings = bitstrings.tensor([[0, 0, 1], [1, 1, 0], [0, 1, 0]])
     expected_counts = vectori.tensor([10, 5, 3])
@@ -140,7 +147,7 @@ def test_parse_results_empty_final_bitstrings() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {}
 
-    solution = Solution.from_results(mock_result)
+    solution = Solution.from_results(mock_result, Instance())
 
     check.equal(solution.bitstrings.shape, (0, 0))
     check.equal(solution.bitstrings.dtype, torch.int8)
@@ -153,7 +160,7 @@ def test_parse_results_binary_string_conversion() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"0101": 8, "1010": 12, "1111": 4}
 
-    solution = Solution.from_results(mock_result)
+    solution = Solution.from_results(mock_result, Instance(matrix.zeros(4)))
 
     expected_bitstrings = bitstrings.tensor([[0, 1, 0, 1], [1, 0, 1, 0], [1, 1, 1, 1]])
     expected_counts = vectori.tensor([8, 12, 4])
@@ -167,7 +174,7 @@ def test_parse_results_single_bitstring() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"101": 25}
 
-    solution = Solution.from_results(mock_result)
+    solution = Solution.from_results(mock_result, Instance(matrix.zeros(3)))
 
     expected_bitstrings = bitstrings.tensor([[1, 0, 1]])
     expected_counts = vectori.tensor([25])
@@ -181,7 +188,7 @@ def test_parse_results_string_counts_to_integer_tensor() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"101": "15", "010": "8", "111": "12"}
 
-    solution = Solution.from_results(mock_result)
+    solution = Solution.from_results(mock_result, Instance(matrix.zeros(3)))
 
     expected_bitstrings = bitstrings.tensor([[1, 0, 1], [0, 1, 0], [1, 1, 1]])
     expected_counts = vectori.tensor([15, 8, 12])
@@ -200,15 +207,19 @@ def trivial_triangular_qubo(connection: Optional[RemoteConnection] = None) -> So
     )
     qubo = Instance(Q)
 
-    config = SolverConfig(use_quantum=True, do_preprocessing=False)
-
-    config.embedding = EmbeddingConfig(embedding_method="blade")
     num_shots = 100
-
-    if connection is None:
-        config.backend = LocalEmulator(num_shots=num_shots)
-    else:
-        config.backend = RemoteEmulator(connection=connection, num_shots=num_shots)
+    backend = (
+        LocalEmulator(num_shots=num_shots)
+        if connection is None
+        else RemoteEmulator(connection=connection, num_shots=num_shots)
+    )
+    config = SolverConfig(
+        solving=QuantumSolvingConfig(
+            embedding=EmbeddingConfig(algorithm="blade"),
+            backend=backend,
+        ),
+        preprocessing=False,
+    )
 
     solver = Solver(qubo, config)
 
@@ -223,16 +234,15 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
 
     solver = trivial_triangular_qubo()
 
-    embedding = solver.embedding()
+    embedding = solver._embedding()
     # Qoolqit's embedding has an hardcoded seed. Set the seed ourselves.
     np.random.seed(seed)
-    drive, _ = solver.drive(embedding)
+    drive, _ = solver._drive(embedding)
 
-    job = solver.submit(drive, embedding)
+    job = solver._submit(drive, embedding)
     results = job.results()
 
-    solution = Solution.from_results(results)
-    solution.compute_costs(solver.instance.matrix).compute_probabilities()
+    solution = Solution.from_results(results, solver.instance)
 
     # Take the top 3 solutions with the highest probabilities
     sorted_indices = torch.argsort(solution.probabilities, descending=True)
@@ -243,8 +253,7 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
 
     torch.testing.assert_close(bitstrings_, bitstrings.tensor([[0, 0, 1], [0, 1, 0], [1, 0, 0]]))
 
-    analyzer = Analyzer([solution])
-    print(f"\n{analyzer.df}")
+    print(f"\n{analysis.to_dataframe([solution])}")
 
     # Remote solutions should be identical to local ones
     np.random.seed(seed)
@@ -252,11 +261,11 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
     assert isinstance(results, Results)
     solver_remote = trivial_triangular_qubo(make_mock_connection(results, running_iterations=1))
 
-    embedding = solver_remote.embedding()
+    embedding = solver_remote._embedding()
     # Qoolqit's embedding has an hardcoded seed. Set the seed ourselves.
     np.random.seed(seed)
-    drive, _ = solver_remote.drive(embedding)
-    remote_job = solver_remote.submit(drive, embedding)
+    drive, _ = solver_remote._drive(embedding)
+    remote_job = solver_remote._submit(drive, embedding)
 
     if not wait:
         with pytest.raises(TimeoutError):
@@ -266,7 +275,7 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
     assert isinstance(results_remote, Results)
     check.equal(remote_job.get_status(), JobStatus.DONE)
 
-    solution_remote = Solution.from_results(results)
+    solution_remote = Solution.from_results(results, solver.instance)
     torch.testing.assert_close(solution_remote.bitstrings, solution.bitstrings)
     torch.testing.assert_close(solution_remote.counts, solution.counts)
 
@@ -281,7 +290,7 @@ def test_respects_total_bottom_detuning(caplog: pytest.LogCaptureFixture) -> Non
             Q[i, j] = Q[j, i] = 1.0
 
     instance = Instance(Q)
-    config = SolverConfig(drive_shaping=DriveShapingConfig(dmm=True))
+    config = SolverConfig(solving=QuantumSolvingConfig(drive_shaping=DriveShapingConfig(dmm=True)))
 
     with caplog.at_level(logging.INFO):
         solution = Solver(instance, config).solve()
@@ -307,27 +316,27 @@ def _triangular_register_qubo() -> np.ndarray:
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("embedding_method", ["greedy", "blade"])
-def test_quantum_matches_classical_triangular(embedding_method: str) -> None:
+@pytest.mark.parametrize("algorithm", ["greedy_layout", "blade"])
+def test_quantum_matches_classical_triangular(algorithm: _EmbeddingAlgorithm) -> None:
     qubo = _triangular_register_qubo()
     instance = Instance(matrix.tensor(qubo))
 
     quantum_config = SolverConfig(
-        use_quantum=True,
-        embedding=EmbeddingConfig(embedding_method=embedding_method),
-        drive_shaping=DriveShapingConfig(drive_shaping_method=DriveType.PROPORTIONAL_DIAGONAL),
-        do_preprocessing=False,
-        do_postprocessing=False,
+        solving=QuantumSolvingConfig(
+            embedding=EmbeddingConfig(algorithm=algorithm),
+            drive_shaping=DriveShapingConfig(algorithm="proportional_diagonal"),
+        ),
+        preprocessing=False,
+        postprocessing=False,
     )
     quantum_solution = Solver(instance, quantum_config).solve()
-    quantum_solution.sort_by_cost()
+    quantum_solution._sort_by_cost()
 
     classical_config = SolverConfig(
-        use_quantum=False,
-        classical=ClassicalConfig(max_bitstrings=4),
+        solving=ClassicalSolvingConfig(max_bitstrings=4),
     )
     classical_solution = Solver(instance, classical_config).solve()
-    classical_solution.sort_by_cost()
+    classical_solution._sort_by_cost()
 
     check.almost_equal(
         quantum_solution.costs[0].item(),

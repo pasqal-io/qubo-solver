@@ -1,0 +1,116 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+import torch
+from typing import Literal, get_args
+
+import qoolqit
+
+from .embedding import Config as EmbeddingConfig
+from .drive_shaping import Config as DriveShapingConfig
+from qubosolver.types.backends import LocalEmulator, RemoteEmulator
+
+_ClassicalAlgorithm = Literal["tabu_search", "simulated_annealing", "cplex", "random_sampling"]
+
+
+@dataclass
+class ClassicalConfig:
+    """A configuration that defines the classical-solving part of a [`SolverConfig`][].
+
+    Attributes:
+        algorithm: Classical solver algorithm. One of:
+
+            - `"tabu_search"`: Tabu search metaheuristic that avoids recently visited solutions.
+            - `"simulated_annealing"`: Simulated annealing algorithm that probabilistically
+              accepts worse solutions to escape local minima.
+            - `"cplex"`: IBM CPLEX exact solver; requires a valid CPLEX installation and license.
+            - `"random_sampling"`: Randomly samples solutions; useful as a baseline or for testing.
+
+            Defaults to `"tabu_search"`.
+        cplex_maxtime: CPLEX maximum runtime in seconds. Defaults to 600s.
+        cplex_log_path: CPLEX log path. Defaults to `""`, meaning no log file is written.
+        max_iter: Maximum number of iterations to perform for simulated annealing or tabu search.
+        max_bitstrings: Maximal number of bitstrings returned as solutions.
+        sa_initial_temp: Starting temperature (controls exploration).
+        sa_final_temp: Minimum temperature threshold for stopping.
+        sa_cooling_rate: Cooling rate - should be slightly below 1 (e.g., 0.95–0.99).
+            Defaults to `None`, in which case it is derived automatically from
+            `sa_initial_temp`, `sa_final_temp`, and `max_iter`.
+        sa_seed: Random seed for reproducibility.
+        sa_start: Optional initial bitstring of shape (n,).
+        sa_time_limit: Maximum runtime in seconds for simulated annealing.
+            Defaults to `float("inf")`, meaning no time limit.
+        tabu_x0: The initial binary solution tensor of shape (n,).
+        tabu_tenure: Number of iterations a move (bit flip) remains tabu.
+        tabu_max_no_improve: Maximum number of consecutive iterations
+            without improvement before termination.
+        tabu_time_limit: Maximum execution time for tabu search,
+            in seconds. Defaults to `float("inf")`, meaning no time limit.
+    """
+
+    algorithm: Literal["tabu_search", "simulated_annealing", "cplex", "random_sampling"] = (
+        "tabu_search"
+    )
+
+    cplex_maxtime: float = 600.0
+    cplex_log_path: str = ""
+
+    max_iter: int = 100
+    max_bitstrings: int = 1
+
+    sa_initial_temp: float = 10.0
+    sa_final_temp: float = 0.1
+    sa_cooling_rate: float | None = None
+    sa_seed: int | None = None
+    sa_start: torch.Tensor | None = None
+    sa_time_limit: float = float("inf")
+
+    tabu_x0: torch.Tensor | None = None
+    tabu_tenure: int = 7
+    tabu_max_no_improve: int = 20
+    tabu_time_limit: float = float("inf")
+
+    def __post_init__(self) -> None:
+        if self.algorithm not in get_args(_ClassicalAlgorithm):
+            raise ValueError(f"Invalid classical algorithm '{self.algorithm}'.")
+
+
+@dataclass
+class QuantumConfig:
+    """A configuration defines the quantum-solving part of a [`SolverConfig`][].
+
+    Attributes:
+        embedding: Embedding part configuration of the solver.
+        drive_shaping: Drive-shaping part configuration
+            of the solver.
+        backend: backend for running quantum programs. Defaults to a [`LocalEmulator`][].
+        device: The quantum device specification. Defaults to [`qoolqit.AnalogDeviceWithDMM`][].
+    """
+
+    embedding: EmbeddingConfig = field(default_factory=EmbeddingConfig)
+    drive_shaping: DriveShapingConfig = field(default_factory=DriveShapingConfig)
+    backend: LocalEmulator | RemoteEmulator | qoolqit.execution.QPU = field(
+        default_factory=LocalEmulator
+    )
+    device: qoolqit.Device = field(default_factory=qoolqit.AnalogDeviceWithDMM)
+
+    @property
+    def max_min_dist_ratio(self) -> float:
+        """Maximum allowed ratio between the largest and smallest inter-atom distance.
+
+        Resolves ``embedding.max_min_dist_ratio``: returns it directly unless it is
+        the sentinel ``"device"``, in which case the ratio is derived from the
+        configured device's ``max_radial_distance`` / ``min_distance`` specs
+        (or ``inf`` when the device imposes no such limits).
+
+        Returns:
+            The resolved maximum min/max distance ratio.
+        """
+        if self.embedding.max_min_dist_ratio != "device":
+            return self.embedding.max_min_dist_ratio
+        specs = self.device.specs
+        min_distance = specs["min_distance"]
+        max_radial_distance = specs["max_radial_distance"]
+        if min_distance is not None and min_distance > 0 and max_radial_distance is not None:
+            return max_radial_distance / min_distance
+        return torch.inf
