@@ -48,11 +48,11 @@ def _get_backend_type(
     """Get the backend type for a given backend ID and execution mode.
 
     Args:
-        backend_id (Literal["qutip", "emu_sv", "emu_mps"]): Backend identifier.
-        remote (bool): Whether to get a remote or local backend type.
+        backend_id: Backend identifier.
+        remote: Whether to get a remote or local backend type.
 
     Returns:
-        Type[EmulatorBackend] | Type[RemoteEmulatorBackend]: The backend class for the specified ID and execution mode.
+        The backend class for the specified ID and execution mode.
 
     Raises:
         ValueError: If the backend_id is not recognized.
@@ -80,13 +80,12 @@ def _select_backend_type(
     """Select the appropriate backend class based on the number of qubits.
 
     Args:
-        n_qubits (int): Number of qubits in the quantum register.
-        remote (bool): Whether to select a remote or local backend.
+        n_qubits: Number of qubits in the quantum register.
+        remote: Whether to select a remote or local backend.
 
     Returns:
-        Type[EmulatorBackend] | Type[RemoteEmulatorBackend]: The selected backend class
-        appropriate for the given problem size. QutipBackendV2/RemoteEmuFreeBackend become
-        intractable beyond 15 qubits.
+        The selected backend class appropriate for the given problem size.
+            `QutipBackendV2`/`RemoteEmuFreeBackend` become intractable beyond 15 qubits.
     """
     if n_qubits >= _MPS_THRESHOLD:
         return _get_backend_type("emu_mps", remote)
@@ -102,29 +101,32 @@ class AutoLocalEmulatorBackend(EmulatorBackend):
     This factory uses `__new__` to return instances of different backend types
     based on quantum register size for optimal performance:
 
-    - `MPSBackend` for large problems (≥26 qubits)
-    - `SVBackend` for medium problems (15-25 qubits)
-    - `QutipBackendV2` for small problems (<15 qubits)
+    - [`MPSBackend`](https://pasqal-io.github.io/emulators/latest/emu_mps/api/#mpsbackend) for large problems (≥26 qubits)
+    - [`SVBackend`](https://pasqal-io.github.io/emulators/latest/emu_sv/api/#svbackend) for medium problems (15-25 qubits)
+    - [`QutipBackendV2`](https://docs.pasqal.com/pulser/apidoc/_autosummary/pulser_simulation.QutipBackendV2) for small problems (<15 qubits)
 
     Note:
         This class acts as a factory and never instantiates itself.
         The `__new__` method directly returns instances of the selected backend type.
-        Type checking is suppressed as this factory pattern confuses static analyzers.
-
-    Required by `qoolqit.LocalEmulator` which expects backend_type to pass
-    `issubclass(backend_type, EmulatorBackend)` checks.
     """
 
     def __new__(cls, sequence: pulser.Sequence, *args: Any, **kwargs: Any) -> EmulatorBackend:  # type: ignore[misc]
         """Create a local emulator backend selected from the sequence size.
 
         Args:
-            sequence (pulser.Sequence): The pulse sequence to simulate.
+            sequence: The pulse sequence to simulate.
             *args: Additional positional arguments passed to the selected backend.
             **kwargs: Additional keyword arguments passed to the selected backend.
 
         Returns:
-            EmulatorBackend: An instance of the automatically selected backend (`MPSBackend`, `SVBackend`, or `QutipBackendV2`).
+            An instance of the automatically selected backend (`MPSBackend`, `SVBackend`,
+                or `QutipBackendV2`).
+
+        Note:
+            Required by `qoolqit.LocalEmulator` which expects backend_type to pass
+            `issubclass(backend_type, EmulatorBackend)` checks.
+            Type checking is suppressed (`type: ignore[misc]`) because this factory pattern,
+            where `__new__` returns an instance of a different class, confuses static analyzers.
         """
         n_qubits = len(sequence.register.qubit_ids)
         return _select_backend_type(n_qubits, False)(sequence, *args, **kwargs)
@@ -136,9 +138,9 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
     This factory uses `__new__` to return instances of different remote backend types
     based on quantum register size for optimal performance:
 
-    - `RemoteMPSBackend` for large problems (≥26 qubits)
-    - `RemoteSVBackend` for medium problems (15-25 qubits)
-    - `RemoteEmuFreeBackend` for small problems (<15 qubits)
+    - [`RemoteMPSBackend`](https://docs.pasqal.com/cloud/pasqal-cloud/reference/backends/#pasqal_cloud.backends.RemoteMPSBackend) for large problems (≥26 qubits)
+    - [`RemoteSVBackend`](https://docs.pasqal.com/cloud/pasqal-cloud/reference/backends/#pasqal_cloud.backends.RemoteSVBackend) for medium problems (15-25 qubits)
+    - [`RemoteEmuFreeBackend`](https://docs.pasqal.com/cloud/pasqal-cloud/reference/backends/#pasqal_cloud.backends.RemoteEmuFreeBackend) for small problems (<15 qubits)
 
     Note:
         This class acts as a factory and never instantiates itself.
@@ -149,12 +151,19 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
         """Create a remote emulator backend selected from the sequence size.
 
         Args:
-            sequence (pulser.Sequence): The pulse sequence to simulate.
+            sequence: The pulse sequence to simulate.
             *args: Additional positional arguments passed to the selected backend.
             **kwargs: Additional keyword arguments passed to the selected backend.
 
         Returns:
-            RemoteEmulatorBackend: An instance of the automatically selected remote backend (`RemoteMPSBackend`, `RemoteSVBackend`, or `RemoteEmuFreeBackend`).
+            An instance of the automatically selected remote backend (`RemoteMPSBackend`,
+                `RemoteSVBackend`, or `RemoteEmuFreeBackend`).
+
+        Note:
+            Required by `qoolqit.RemoteLocalEmulator` which expects backend_type to pass
+            `issubclass(backend_type, EmulatorBackend)` checks.
+            Type checking is suppressed (`type: ignore[misc]`) because this factory pattern,
+            where `__new__` returns an instance of a different class, confuses static analyzers.
         """
         n_qubits = len(sequence.register.qubit_ids)
         backend = _select_backend_type(n_qubits, True)(sequence, *args, **kwargs)
@@ -169,8 +178,8 @@ def _warn_suboptimal_backend(
     """Warn if using a suboptimal backend for the given problem size.
 
     Args:
-        backend_type: The currently selected backend type
-        n_qubits: Number of qubits in the quantum program
+        backend_type: The currently selected backend type.
+        n_qubits: Number of qubits in the quantum program.
     """
     if backend_type in [AutoLocalEmulatorBackend, AutoRemoteEmulatorBackend]:
         return
@@ -197,21 +206,20 @@ def _warn_suboptimal_backend(
 class LocalEmulator(QoolqitLocalEmulator):
     """Local quantum emulator with automatic backend selection.
 
-    This class wraps qoolqit.LocalEmulator and automatically selects
+    This class wraps [`qoolqit.execution.LocalEmulator`][] and automatically selects
     the optimal local backend based on the quantum register size.
-    It provides the same interface as the base LocalEmulator but with
+    It provides the same interface as the base [`qoolqit.execution.LocalEmulator`][] but with
     improved performance through intelligent backend selection.
 
     The optimal backend selection follows these guidelines:
 
-    - Small problems (< 15 qubits): `QutipBackendV2`
-    - Medium problems (15-25 qubits): `SVBackend`
-    - Large problems (≥ 26 qubits): `MPSBackend`
+    - Small problems (< 15 qubits): [`QutipBackendV2`](https://docs.pasqal.com/pulser/apidoc/_autosummary/pulser_simulation.QutipBackendV2)
+    - Medium problems (15-25 qubits): [`SVBackend`](https://pasqal-io.github.io/emulators/latest/emu_sv/api/#svbackend)
+    - Large problems (≥ 26 qubits): [`MPSBackend`](https://pasqal-io.github.io/emulators/latest/emu_mps/api/#mpsbackend)
 
     Args:
-        backend_type (type, optional): Backend type to use. Defaults to
-            `AutoLocalEmulatorBackend` for automatic selection.
-        **kwargs: Additional keyword arguments passed to the base LocalEmulator.
+        backend_type: Backend type to use.
+        **kwargs: Additional keyword arguments passed to the base [`qoolqit.execution.LocalEmulator`][].
 
     Example:
         ```python
@@ -227,15 +235,15 @@ class LocalEmulator(QoolqitLocalEmulator):
         super().__init__(backend_type=backend_type, **kwargs)
 
     def run(self, program: qoolqit.QuantumProgram, *args: Any, **kwargs: Any) -> Any:
-        """Run the quantum program with backend tractability warning.
+        """Run the quantum program on the selected backend.
 
         Args:
-            program: The quantum program to execute
-            *args: Additional positional arguments
-            **kwargs: Additional keyword arguments
+            program: The quantum program to execute.
+            *args: Additional positional arguments from [`qoolqit.execution.LocalEmulator`][].
+            **kwargs: Additional keyword arguments from [`qoolqit.execution.LocalEmulator`][].
 
         Returns:
-            The execution results from the local backend
+            The execution results from the local backend.
         """
         _warn_suboptimal_backend(self._backend_type, program.register.n_qubits)
         return super().run(program, *args, **kwargs)
@@ -244,14 +252,14 @@ class LocalEmulator(QoolqitLocalEmulator):
 class RemoteEmulator(QoolqitRemoteEmulator):
     """Remote quantum emulator with automatic backend selection.
 
-    This class wraps `qoolqit.RemoteEmulator` and provides backend selection
+    This class wraps [`qoolqit.execution.RemoteEmulator`][] and provides backend selection
     recommendations based on quantum register size and tractability constraints.
 
     Backend selection guidelines based on computational tractability:
 
-    - Small problems (< 15 qubits): `RemoteEmuFreeBackend` (default)
-    - Medium problems (15-25 qubits): `RemoteSVBackend`
-    - Large problems (≥ 26 qubits): `RemoteMPSBackend`
+    - Small problems (< 15 qubits): [`RemoteEmuFreeBackend`](https://docs.pasqal.com/cloud/pasqal-cloud/reference/backends/#pasqal_cloud.backends.RemoteEmuFreeBackend) (default)
+    - Medium problems (15-25 qubits): [`RemoteSVBackend`](https://docs.pasqal.com/cloud/pasqal-cloud/reference/backends/#pasqal_cloud.backends.RemoteSVBackend)
+    - Large problems (≥ 26 qubits): [`RemoteMPSBackend`](https://docs.pasqal.com/cloud/pasqal-cloud/reference/backends/#pasqal_cloud.backends.RemoteMPSBackend)
 
     Note:
         `RemoteEmuFreeBackend` becomes intractable beyond ~15 qubits, similar to its
@@ -260,7 +268,7 @@ class RemoteEmulator(QoolqitRemoteEmulator):
 
     Args:
         backend_type: Backend type to use.
-        **kwargs: Additional keyword arguments passed to the base `qoolqit.RemoteEmulator`.
+        **kwargs: Additional keyword arguments passed to the base [`qoolqit.execution.RemoteEmulator`][].
 
     Example:
         ```python
@@ -278,15 +286,15 @@ class RemoteEmulator(QoolqitRemoteEmulator):
         super().__init__(backend_type=backend_type, **kwargs)
 
     def run(self, program: qoolqit.QuantumProgram, *args: Any, **kwargs: Any) -> Any:
-        """Run the quantum program with backend tractability warning.
+        """Run the quantum program on the selected backend.
 
         Args:
-            program: The quantum program to execute
-            *args: Additional positional arguments
-            **kwargs: Additional keyword arguments
+            program: The quantum program to execute.
+            *args: Additional positional arguments for [`qoolqit.execution.RemoteEmulator`][].
+            **kwargs: Additional keyword arguments for [`qoolqit.execution.RemoteEmulator`][].
 
         Returns:
-            The execution results from the remote backend
+            The execution results from the remote backend.
         """
         _warn_suboptimal_backend(self._backend_type, program.register.n_qubits)
         return super().run(program, *args, **kwargs)

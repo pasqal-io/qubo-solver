@@ -1,1 +1,2 @@
+::: qubosolver.Tensor
 ::: qubosolver.tensor

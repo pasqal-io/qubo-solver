@@ -1,0 +1,7 @@
+:root > * {
+    --soft-green: #173035;
+    --indigo: #4051b5;
+
+    --md-primary-fg-color: var(--soft-green);
+    --md-typeset-a-color:var(--indigo);
+}

@@ -13,18 +13,19 @@ import qoolqit
 from qoolqit import AnalogDevice, DigitalAnalogDevice
 
 from qubosolver import (
-    Analyzer,
-    DriveShapingConfig,
+    Solver,
     EmbeddingConfig,
+    DriveShapingConfig,
+    QuantumSolvingConfig,
+    SolverConfig,
+    analysis,
     Instance,
     Solution,
-    Solver,
-    SolverConfig,
     matrix,
     tensor,
     vector,
     SingleSolution,
-    solvers,
+    solving,
     drive_shaping,
 )
 
@@ -77,7 +78,7 @@ def test_with_perfect_embedding(
     qubo /= qubo.max()
     instance = Instance(matrix=qubo)
 
-    bf_solutions = solvers.brute_force(instance, max_bitstrings=-1)
+    bf_solutions = solving.brute_force.solve(instance, max_bitstrings=-1)
     expected_optimal_solutions = gather_optimal_solutions(bf_solutions)
     check.is_not(expected_optimal_solutions, [])
 
@@ -86,34 +87,35 @@ def test_with_perfect_embedding(
     print(f"Expected optimal bitstrings: {expected_bitstrings}")
 
     embedding_config = EmbeddingConfig(
-        embedding_method="greedy",
-        greedy_traps=100,
-        greedy_max_possible_term=1,
+        algorithm="greedy_layout",
+        greedy_layout_traps=100,
+        greedy_layout_max_possible_term=1.0,
     )
 
     drive_shaping_config = DriveShapingConfig(
-        drive_shaping_method="local_energy_scale",
+        algorithm="local_energy_scale",
         dmm=dmm,
         local_energy_scale_kappa=0.25,
     )
 
-    config = SolverConfig(
-        use_quantum=True,
+    solving_config = QuantumSolvingConfig(
         embedding=embedding_config,
         drive_shaping=drive_shaping_config,
         device=device_type(),
     )
 
-    solver = Solver(instance, config)
-    qubo_solution = solver.solve().sort_by_cost()
-    analyzer = Analyzer([qubo_solution])
-    print(analyzer.df)
+    config = SolverConfig(solving=solving_config)
 
-    register = solver.embedding()
+    solver = Solver(instance, config)
+    solution = solver.solve()
+    df = analysis.to_dataframe([solution])
+    print(df)
+
+    register = solver._embedding()
     print(f"Register: {register.qubits}")
     print(f"Distances: {register.distances()}")
 
-    sampled_optimal_solutions = gather_optimal_solutions(qubo_solution)
+    sampled_optimal_solutions = gather_optimal_solutions(solution)
     check.is_not(sampled_optimal_solutions, [])
 
     minimum_sampled_cost = sampled_optimal_solutions[0].cost
@@ -129,8 +131,8 @@ def test_with_perfect_embedding(
 
     check.almost_equal(minimum_sampled_cost, expected_optimal_solutions[0].cost)
     expected_bitstrings = [s.string for s in expected_optimal_solutions]
-    for solution in sampled_optimal_solutions:
-        check.is_in(solution.string, expected_bitstrings)
+    for s in sampled_optimal_solutions:
+        check.is_in(s.string, expected_bitstrings)
 
     cumulated_probability = sum(solution.probability for solution in sampled_optimal_solutions)
     check.greater(cumulated_probability, 0.6)
@@ -184,3 +186,27 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
     )
     assert detuning_match is not None
     check.almost_equal(float(detuning_match.group(2)), max_detuning, rel=1e-2)
+
+
+def test_dmm_labels_are_ints() -> None:
+
+    vertices = tensor.tensor([[0.0, 0.0], [1.0, 0.0]])
+    register = qoolqit.Register.from_coordinates(vertices)
+    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+    instance = Instance(Q)
+
+    check.is_instance(register.qubits_ids[0], int)
+
+    device = qoolqit.AnalogDeviceWithDMM()
+    drive = drive_shaping.local_energy_scale.build_drive(
+        instance, register, dmm=True, device=device
+    )
+
+    assert drive.dmm is not None
+    for k, v in drive.dmm.weights.items():
+        check.is_instance(k, int)
+        check.is_instance(v, float)
+    # check that compilation doesn't throw
+    qoolqit.QuantumProgram(register, drive).compile_to(
+        device, profile="max_energy", device_max_duration_ratio=0.999
+    )

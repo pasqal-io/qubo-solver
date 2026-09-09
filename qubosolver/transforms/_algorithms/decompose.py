@@ -11,6 +11,16 @@ from shapely.geometry import Point, Polygon, MultiPolygon
 from qubosolver import matrix, Matrix, Bitstring, Vector, vector
 from qubosolver.types._checks import no_runtime_typecheck
 
+
+# Find a better way to compute this ?
+# Choose better than 50 ?
+def _clamp_max_radial_distance(max_radial_distance: float) -> float:
+    if np.isfinite(max_radial_distance).all():
+        return max_radial_distance
+    else:
+        return 50.0
+
+
 VertexToPlace = TypedDict(
     "VertexToPlace",
     {
@@ -25,24 +35,34 @@ VertexToPlace = TypedDict(
 
 
 class WeightedZone:
-    """
-    For a given placed vertex, identified by its id, we define 3 zones or rings
-    calculated by shapely (forbidden, blocking, and the zone of edge values).
+    """A placed vertex together with its forbidden, blocking, and range zones.
 
-    Attributes :
-        id (int) : identifier of vertex.
-        x (float) : x-coordinate.
-        y (float) : y-coordinate.
-        weight (float) : qubo weight.
-        forbidden_zone : forbidden zone.
-        blocking_zone : blocking zone.
-        range_zone : zone of edge values.
-        circle_end_forbidden: circle delimiting end of forbidden_zone.
-        circle_end_blocking: circle delimiting end of blocking_zone.
+    For a given placed vertex, identified by its id, this defines 3 zones or
+    rings computed with shapely: forbidden, blocking, and the zone of edge
+    values.
+
+    Attributes:
+        id (int): Identifier of vertex.
+        x (float): x-coordinate.
+        y (float): y-coordinate.
+        weight (float): QUBO weight.
+        forbidden_zone: Forbidden zone.
+        blocking_zone: Blocking zone.
+        range_zone: Zone of edge values.
+        circle_end_forbidden: Circle delimiting end of forbidden_zone.
+        circle_end_blocking: Circle delimiting end of blocking_zone.
     """
 
     def __init__(self, id: int, x: float, y: float, weight: float, min_distance: float) -> None:
+        """Initialize the zone geometry for a placed vertex.
 
+        Args:
+            id: Identifier of the vertex.
+            x: x-coordinate of the vertex.
+            y: y-coordinate of the vertex.
+            weight: QUBO weight of the vertex.
+            min_distance: Radius of the forbidden zone around the vertex.
+        """
         self.id = id
         self.x = x
         self.y = y
@@ -81,7 +101,7 @@ def compute_min_max_distances(
             ``max_min_dist_ratio`` is infinite (no distance limits).
     """
     if max_min_dist_ratio == torch.inf:
-        return 0, torch.inf
+        return 0.0, torch.inf
     min_distance = float(np.max(np.triu(interactions, k=1)) ** (-1 / 6))
     max_radial_distance = min_distance * max_min_dist_ratio
     return min_distance, max_radial_distance
@@ -274,6 +294,9 @@ def positive_vertices_update(
     Args:
         dict_vertices_to_place (dict[int, VertexToPlace]): current dictionary of vertices to place.
         global_solution (torch.Tensor): global solution of the qubo.
+
+    Returns:
+        list[int]: Identifiers of the vertices removed from `dict_vertices_to_place`.
     """
     positive_vertices = []
     for key, value in dict_vertices_to_place.items():
@@ -425,9 +448,13 @@ def random_point_in_geometry(
     Args:
         geometry (Polygon): 2D Geometry to sample from.
         max_trials (int, optional): Number of maximum trials. Defaults to 10000.
+        rng: Random number generator for reproducibility.
 
     Returns:
-        list[float]: Coordinates of the sampled point.
+        Vector: Coordinates of the sampled point.
+
+    Raises:
+        ValueError: If `max_trials` is not a positive integer.
     """
     if max_trials <= 0:
         raise ValueError(f"max_trials must be a positive integer, got {max_trials}.")
@@ -508,7 +535,7 @@ def bfgs_placement(
 
     Args:
         vertex (int): Vertex to place.
-        final_intersection (Polygon): Intersection of zones.
+        init_guess (Vector): Initial guess for the BFGS search.
         placed_vertices (dict[int, WeightedZone]): Placed vertices.
         matrix (torch.Tensor): qubo matrix.
         dict_vertices_to_place (dict): Vertices to place.
@@ -551,7 +578,7 @@ def check_limit_zone(final_point: Point, max_radial_distance: float) -> bool:
     """
 
     center_poly = Point(0, 0)
-    limit_zone = center_poly.buffer(max_radial_distance)
+    limit_zone = center_poly.buffer(_clamp_max_radial_distance(max_radial_distance))
     return bool(limit_zone.contains(final_point))
 
 
@@ -599,6 +626,7 @@ def test_placing_vertex(
         cost_function_thresold (float): Threshold for cost function.
         tested_vertices (list[int]): Already tested vertices.
         queue (list[int]): Current queue of vertices to place.
+        rng: Random number generator for reproducibility.
     """
     places_vertices_tensor = torch.tensor(list(placed_vertices.keys()))
     neighbors = dict_vertices_to_place[vertex]["neighbors_id"][
@@ -612,7 +640,7 @@ def test_placing_vertex(
     ]
 
     center_poly = Point(0, 0)
-    final_intersection = center_poly.buffer(max_radial_distance)
+    final_intersection = center_poly.buffer(_clamp_max_radial_distance(max_radial_distance))
 
     final_intersection = zone_intersection(
         final_intersection, blockings, placed_vertices, "blocking_zone"
@@ -679,6 +707,7 @@ def obtain_vertice_to_test(
         vertices_list (list[int]): list of vertices to select from.
         dict_vertices_to_place (dict[int, VertexToPlace]): dictionary of vertices to place.
         placed_vertices (dict[int, WeightedZone]): Placed vertices.
+        rng: Random number generator for reproducibility.
 
     Returns:
         int: identifier of a vertex to test placing.
@@ -815,11 +844,9 @@ def distance_plan(x1: float, y1: float, x2: float, y2: float) -> float:
 def interaction_matrix_from_placed(
     placed_vertices: dict[int, WeightedZone],
 ) -> tuple[Matrix, dict[int, int]]:
-    """
-    Compute interaction matrix corresponding to embedded subgraph.
+    """Compute interaction matrix corresponding to embedded subgraph.
 
     Args:
-        dict_vertices_to_place (dict[int, dict]): Vertices to place.
         placed_vertices (dict[int, WeightedZone]): Vertices already placed.
 
     Returns:
