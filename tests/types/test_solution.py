@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import io
 
 import pytest
 import pytest_check as check
@@ -16,14 +17,14 @@ def instance() -> Instance:
 
 
 def _assert_valid(solution: Solution, instance: Instance) -> None:
-    check.is_true(solution.check_consistency(instance))
-    check.is_true(solution.check_consistency(instance, throw=True))
+    check.is_true(solution.check_consistency(instance=instance))
+    check.is_true(solution.check_consistency(instance=instance, throw=True))
 
 
 def _assert_invalid(solution: Solution, instance: Instance) -> None:
-    check.is_false(solution.check_consistency(instance))
+    check.is_false(solution.check_consistency(instance=instance))
     with pytest.raises(AssertionError):
-        solution.check_consistency(instance, throw=True)
+        solution.check_consistency(instance=instance, throw=True)
 
 
 def test_valid_solution_passes(instance: Instance) -> None:
@@ -209,35 +210,22 @@ def test_deduplicate_empty_solution_is_noop() -> None:
     check.is_false(solution)
 
 
-def test_deduplicate_missing_counts_is_skipped() -> None:
+def test_deduplicate_missing_counts_is_invalid() -> None:
     solution = Solution(
         bitstrings=bitstrings.tensor([[1, 0], [0, 1], [1, 0]]),
         costs=vector.tensor([1.0, 2.0, 1.0]),
     )
-    solution.deduplicate()
-    check.equal(len(solution), 2)
-    check.equal(solution.counts.numel(), 0)
-    check.equal(solution.probabilities.numel(), 0)
+    with pytest.raises(AssertionError):
+        solution.deduplicate()
 
 
-def test_deduplicate_missing_costs_is_skipped() -> None:
+def test_deduplicate_missing_costs_is_invalid() -> None:
     solution = Solution(
         bitstrings=bitstrings.tensor([[1, 0], [0, 1], [1, 0]]),
         counts=vectori.tensor([2, 1, 3]),
     )
-    solution.deduplicate()
-    assert len(solution) == 2
-    check.equal(solution.costs.numel(), 0)
-
-    s0 = solution[0]
-    check.equal(s0.string, "01")
-    check.equal(s0.count, 1)
-    check.almost_equal(s0.probability, 1 / 6)
-
-    s1 = solution[1]
-    check.equal(s1.string, "10")
-    check.equal(s1.count, 5)
-    check.almost_equal(s1.probability, 5 / 6)
+    with pytest.raises(AssertionError):
+        solution.deduplicate()
 
 
 def test_concat_disjoint_bitstrings_concatenates(instance: Instance) -> None:
@@ -384,12 +372,11 @@ def test_concat_unit_counts_sets_counts_to_one_before_dedup(instance: Instance) 
     check.almost_equal(s1.probability, 1 / 3)
 
 
-def test_concat_unit_counts_without_counts_leaves_probabilities_empty() -> None:
+def test_concat_unit_counts_without_counts_is_invalid() -> None:
     a = Solution(bitstrings=bitstrings.tensor([[1, 0]]), costs=vector.tensor([1.0]))
     b = Solution(bitstrings=bitstrings.tensor([[0, 1]]), costs=vector.tensor([2.0]))
-    merged = Solution.concat([a, b], unit_counts=True)
-    check.equal(merged.counts.tolist(), [1, 1])
-    check.equal(merged.probabilities.numel(), 0)
+    with pytest.raises(AssertionError):
+        Solution.concat([a, b], unit_counts=True)
 
 
 def test_concat_accepts_generator(instance: Instance) -> None:
@@ -470,7 +457,7 @@ def test_concat_mixed_populated_and_empty_costs_raises() -> None:
         costs=vector.tensor([1.5]),
         counts=vectori.tensor([3]),
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Solution.concat([a, b])
 
 
@@ -495,6 +482,7 @@ def test_truncate_keeps_first_k_rows(instance: Instance) -> None:
 def test_truncate_recomputes_probabilities_from_counts() -> None:
     solution = Solution(
         bitstrings=bitstrings.tensor([[1, 0], [0, 1], [0, 0]]),
+        costs=vector.tensor([1.0, 2.0, 3.0]),
         counts=vectori.tensor([3, 1, 4]),
         probabilities=vector.tensor([3 / 8, 1 / 8, 4 / 8]),
     )
@@ -516,13 +504,10 @@ def test_truncate_k_greater_than_len_is_noop(instance: Instance) -> None:
     assert len(solution) == 2
 
 
-def test_truncate_missing_costs_and_counts_is_skipped() -> None:
+def test_truncate_missing_costs_and_counts_is_invalid() -> None:
     solution = Solution(bitstrings=bitstrings.tensor([[1, 0], [0, 1], [0, 0]]))
-    solution.truncate(2)
-    assert len(solution) == 2
-    check.equal(solution.costs.numel(), 0)
-    check.equal(solution.counts.numel(), 0)
-    check.equal(solution.probabilities.numel(), 0)
+    with pytest.raises(AssertionError):
+        solution.truncate(2)
 
 
 def test_truncate_empty_solution_is_noop() -> None:
@@ -537,8 +522,29 @@ def test_truncate_probabilities_without_counts_raises() -> None:
         bitstrings=bitstrings.tensor([[1, 0], [0, 1], [0, 0]]),
         probabilities=vector.tensor([0.375, 0.125, 0.5]),
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         solution.truncate(2)
+
+
+def test_update_computes_costs_sorts_and_computes_probabilities(instance: Instance) -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
+        counts=vectori.tensor([1, 3]),
+    )
+    solution._update(instance)
+    _assert_valid(solution, instance)
+
+    s0 = solution[0]
+    check.equal(s0.string, "10")
+    check.equal(s0.cost, 1.0)
+    check.equal(s0.count, 3)
+    check.equal(s0.probability, 0.75)
+
+    s1 = solution[1]
+    check.equal(s1.string, "01")
+    check.equal(s1.cost, 2.0)
+    check.equal(s1.count, 1)
+    check.equal(s1.probability, 0.25)
 
 
 def test_deepcopy_is_independent_of_original() -> None:
@@ -561,6 +567,32 @@ def test_deepcopy_is_independent_of_original() -> None:
     check.equal(solution[0].probability, 0.75)
 
 
+def test_save_load() -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[1, 0], [0, 1]]),
+        costs=vector.tensor([1.0, 2.0]),
+        counts=vectori.tensor([3, 1]),
+        probabilities=vector.tensor([0.75, 0.25]),
+    )
+
+    buffer = io.BytesIO()
+    solution.save(buffer)
+    buffer.seek(0)
+
+    loaded = Solution.load(buffer)
+    check.is_true(torch.equal(loaded.bitstrings, solution.bitstrings))
+    check.is_true(torch.allclose(loaded.costs, solution.costs))
+    check.is_true(torch.equal(loaded.counts, solution.counts))
+    check.is_true(torch.allclose(loaded.probabilities, solution.probabilities))
+
+
+def test_load_rejects_a_stream_that_is_not_a_qubosolver_file() -> None:
+    buffer = io.BytesIO(b"not a qubosolver file at all")
+
+    with pytest.raises(ValueError, match="Not a qubosolver file"):
+        Solution.load(buffer)
+
+
 def test_concat_mixed_populated_and_empty_counts_raises() -> None:
     a = Solution(
         bitstrings=bitstrings.tensor([[1, 0]]),
@@ -571,5 +603,5 @@ def test_concat_mixed_populated_and_empty_counts_raises() -> None:
         costs=vector.tensor([1.5]),
         counts=vectori.tensor([3]),
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Solution.concat([a, b])

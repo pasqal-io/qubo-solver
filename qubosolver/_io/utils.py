@@ -2,32 +2,62 @@ from __future__ import annotations
 
 import builtins
 import io
+import logging
 import os
 import struct
 from contextlib import nullcontext
+from importlib.metadata import version
 
-from typing import overload, Sized
-from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING, TYPE_CHECKING
+from typing import IO, Union, TypeVar, overload, Sized, TYPE_CHECKING
+
+from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING
+
+logger = logging.getLogger(__name__)
+
+_MAGIC = b"QUBOSLVR"
+"""Identifies a stream as written by this library, so a foreign or corrupt file
+fails immediately with a clear error instead of being misread as valid data."""
+
+_MAX_BUFFER_SIZE = 1 << 30
+"""Ceiling (1 GiB) on a single length-prefixed payload, checked before allocating.
+Keeps a corrupt or hostile size prefix from triggering a huge allocation."""
+
+_MAX_STRING_SIZE = 1 << 10
+"""Ceiling (1 KiB) on a length-prefixed string: ~1000 ASCII characters, fewer
+if multibyte. Strings in these formats are type tags and version numbers, the
+longest around 50 bytes."""
 
 if TYPE_CHECKING:
-    from typing import Any, Union, IO, Literal, TypeVar
+    from typing import Any, Literal
     from typing_extensions import Buffer
-    import typing
     from contextlib import AbstractContextManager
 
-    _T = TypeVar("_T", bytes, str)
-    if _RUNTIME_TYPE_CHECKING and not typing.TYPE_CHECKING:
-        FileLike = Union[_T, Any]
-    else:
-        FileLike = Union[str, os.PathLike[str], IO[_T]]
+_T = TypeVar("_T", bytes, str)
+
+# `Stream[_T]` is an already-open binary or text stream: `io.BytesIO`, the
+# result of `open`, ...
+if TYPE_CHECKING or not _RUNTIME_TYPE_CHECKING:
+    Stream = IO[_T]
+else:
+    # Runtime-checking variant: the static hint widened with `io.IOBase`.
+    #
+    # beartype expands `IO[_T]` into a PEP 544 protocol requiring the full
+    # `typing.IO` surface, including the `mode` and `name` attributes. In-memory
+    # streams have neither, so `io.BytesIO()` is rejected while an `open()` file
+    # object passes -- a check that fails exactly the callers it should accept.
+    #
+    # The extra `io.IOBase` arm readmits every real stream while still rejecting
+    # non-streams. It gives up only the bytes/str distinction for in-memory
+    # streams, which `open` enforces anyway by raising `TypeError` on a stream
+    # of the wrong flavour. `IO[_T]` is kept so the alias stays generic.
+    Stream = Union[IO[_T], io.IOBase]  # type: ignore[misc,assignment]
+
+FileLike = Union[str, os.PathLike[str], Stream[_T]]
+"""A filesystem path or an already-open [`Stream`][], as taken by `save`/`load`."""
 
 
-def read_exact(src: IO[bytes], length: int) -> bytes:
-    """Read exactly the specified number of bytes from a binary stream.
-
-    This function ensures that exactly the requested number of bytes are read
-    from the source stream. If fewer bytes are available than requested, an
-    EOFError is raised.
+def read_exact(src: Stream[bytes], length: int) -> bytes:
+    """Read exactly `length` bytes from a binary stream.
 
     Args:
         src: A binary input stream to read from.
@@ -49,12 +79,8 @@ def read_exact(src: IO[bytes], length: int) -> bytes:
     return data
 
 
-def save(output: IO[bytes], format: str, data: Any) -> None:
-    """Save data to a binary stream using struct format.
-
-    This function packs data according to the specified struct format and writes
-    it to the output stream. The format string follows Python's struct module
-    conventions for binary data serialization.
+def save(output: Stream[bytes], format: str, data: Any) -> None:
+    """Pack `data` with `struct.pack` and write it to a binary stream.
 
     Args:
         output: A binary output stream to write the packed data to.
@@ -62,19 +88,15 @@ def save(output: IO[bytes], format: str, data: Any) -> None:
                (e.g., '>I' for big-endian unsigned int, 'f' for float).
         data: The data value to be packed and written. Must be compatible
               with the specified format.
-
-    Returns:
-        None
     """
     output.write(struct.pack(format, data))
 
 
-def load(src: IO[bytes], format: str) -> Any:
-    """Load and unpack a single value from a binary stream using struct format.
+def load(src: Stream[bytes], format: str) -> Any:
+    """Read and unpack a single value from a binary stream with `struct`.
 
-    This function reads the exact number of bytes required by the specified
-    struct format from the source stream, unpacks the binary data according
-    to the format, and returns the first (and typically only) unpacked value.
+    Reads exactly the number of bytes required by `format` and returns the
+    first (and typically only) unpacked value.
 
     Args:
         src: A binary input stream to read the packed data from.
@@ -94,21 +116,16 @@ def load(src: IO[bytes], format: str) -> Any:
     return struct.unpack(format, read_exact(src, struct.calcsize(format)))[0]
 
 
-def save_sized_buffer(output: IO[bytes], buffer: Buffer) -> None:
-    """Save a buffer to a binary stream with its size prefix.
+def save_sized_buffer(output: Stream[bytes], buffer: Buffer) -> None:
+    """Write a buffer to a binary stream, prefixed with its length.
 
-    This function writes a buffer to the output stream by first writing the
-    buffer's length as a 4-byte big-endian unsigned integer, followed by the
-    buffer's contents. This format allows the buffer to be read back later
-    using load_sized_buffer().
+    The length is written as a 4-byte big-endian unsigned integer, followed
+    by the buffer's contents, so it can be read back with `load_sized_buffer`.
 
     Args:
         output: A binary output stream to write the sized buffer to.
         buffer: A buffer object (bytes-like) that supports len() to be written.
                Must implement the Buffer protocol and be Sized.
-
-    Returns:
-        None
 
     Raises:
         AssertionError: If the buffer is not an instance of Sized.
@@ -119,46 +136,45 @@ def save_sized_buffer(output: IO[bytes], buffer: Buffer) -> None:
     output.write(buffer)
 
 
-def load_sized_buffer(src: IO[bytes]) -> bytes:
-    """Load a buffer from a binary stream that was saved with a size prefix.
-
-    This function reads a buffer from the source stream that was previously
-    written using save_sized_buffer(). It first reads a 4-byte big-endian
-    unsigned integer representing the buffer length, then reads exactly that
-    many bytes and returns them.
+def load_sized_buffer(src: Stream[bytes], *, max_size: int = _MAX_BUFFER_SIZE) -> bytes:
+    """Read a length-prefixed buffer previously written by `save_sized_buffer`.
 
     Args:
         src: A binary input stream to read the sized buffer from.
+        max_size: Reject a size prefix larger than this, before reading. Guards
+            against a corrupt or hostile prefix causing a huge allocation.
 
     Returns:
         bytes: The buffer data that was read from the stream.
 
     Raises:
+        ValueError: If the size prefix exceeds `max_size`.
         EOFError: If fewer bytes are available than required by the size prefix
                  or if the stream ends before the complete buffer is read.
         struct.error: If the size prefix cannot be unpacked as an unsigned int.
     """
     size_fmt = ">I"
     length = struct.unpack(size_fmt, read_exact(src, struct.calcsize(size_fmt)))[0]
+    # Checked before `read_exact` so an implausible prefix is rejected rather
+    # than allocated.
+    if length > max_size:
+        raise ValueError(
+            f"Refusing to read a {length}-byte payload: exceeds the {max_size}-byte limit."
+        )
     return read_exact(src, length)
 
 
-def save_string(output: IO[bytes], string: str, *, encoding: str = "utf-8") -> None:
-    """Save a string to a binary stream with size prefix and encoding.
+def save_string(output: Stream[bytes], string: str, *, encoding: str = "utf-8") -> None:
+    """Encode a string and write it to a binary stream with a length prefix.
 
-    This function encodes a string using the specified encoding and saves it
-    to the output stream using save_sized_buffer(), which prefixes the encoded
-    string with its byte length. This allows the string to be read back later
-    using load_string().
+    Uses `save_sized_buffer` internally, so it can be read back with
+    `load_string`.
 
     Args:
         output: A binary output stream to write the encoded string to.
         string: The string to be encoded and written to the stream.
         encoding: The character encoding to use when converting the string
                  to bytes. Defaults to "utf-8".
-
-    Returns:
-        None
 
     Raises:
         UnicodeEncodeError: If the string cannot be encoded using the
@@ -169,54 +185,95 @@ def save_string(output: IO[bytes], string: str, *, encoding: str = "utf-8") -> N
     save_sized_buffer(output, string.encode(encoding))
 
 
-def load_string(src: IO[bytes], *, encoding: str = "utf-8") -> str:
-    """Load a string from a binary stream that was saved with size prefix and encoding.
-
-    This function reads a string from the source stream that was previously
-    written using save_string(). It first loads the sized buffer containing
-    the encoded string bytes, then decodes those bytes back to a string using
-    the specified encoding.
+def load_string(
+    src: Stream[bytes], *, encoding: str = "utf-8", max_size: int = _MAX_STRING_SIZE
+) -> str:
+    """Read a length-prefixed, encoded string previously written by `save_string`.
 
     Args:
         src: A binary input stream to read the encoded string from.
         encoding: The character encoding to use when converting the bytes
                  back to a string. Defaults to "utf-8". Must match the
                  encoding used when the string was saved.
+        max_size: Reject a size prefix larger than this, before reading.
 
     Returns:
         str: The decoded string that was read from the stream.
 
     Raises:
+        ValueError: If the size prefix exceeds `max_size`.
         EOFError: If fewer bytes are available than required by the size prefix
                  or if the stream ends before the complete string is read.
         UnicodeDecodeError: If the bytes cannot be decoded using the
                            specified encoding.
         struct.error: If the size prefix cannot be unpacked as an unsigned int.
     """
-    return load_sized_buffer(src).decode(encoding)
+    return load_sized_buffer(src, max_size=max_size).decode(encoding)
+
+
+def _package_version() -> str:
+    """Version of this package, as written into file headers by `save_header`.
+
+    Read from the installed distribution metadata rather than
+    `qubosolver.__version__`, because `qubosolver/__init__.py` imports this
+    module transitively and importing it back would be circular.
+    """
+    return version("qubo-solver")
+
+
+def save_header(output: Stream[bytes]) -> None:
+    """Write the format header: magic bytes followed by this package's version.
+
+    Written once at the start of a file by the outermost `save`. Nested
+    objects (e.g. a `Solution` inside a `Dataset`) do not carry their own
+    header.
+
+    Args:
+        output: A binary output stream to write the header to.
+    """
+    output.write(_MAGIC)
+    save_string(output, _package_version())
+
+
+def load_header(src: Stream[bytes]) -> str:
+    """Read and validate a header written by `save_header`.
+
+    A wrong magic is a hard error: the stream is not one of ours, so reading
+    on would misinterpret arbitrary bytes. A version mismatch is only a
+    warning — these formats are deliberately not versioned, so the writer's
+    version is recorded purely to make a later failure easier to diagnose.
+
+    Args:
+        src: A binary input stream positioned at the start of the header.
+
+    Returns:
+        str: The version of the package that wrote the stream.
+
+    Raises:
+        ValueError: If the magic bytes are missing or do not match.
+        EOFError: If the stream ends inside the header.
+    """
+    magic = read_exact(src, len(_MAGIC))
+    if magic != _MAGIC:
+        raise ValueError(f"Not a qubosolver file: expected magic {_MAGIC!r}, got {magic!r}.")
+    writer_version = load_string(src)
+    current_version = _package_version()
+    # Compared by equality only. Ordering PEP 440 strings would imply a
+    # compatibility guarantee that these formats do not offer.
+    if writer_version != current_version:
+        logger.warning(
+            "Reading a file written by qubosolver %s using qubosolver %s. "
+            "This format is not versioned, so a mismatch may surface as a "
+            "confusing error or as wrong values.",
+            writer_version,
+            current_version,
+        )
+    return writer_version
 
 
 @overload
 def open(file_like: FileLike[bytes]) -> AbstractContextManager[IO[bytes]]:
-    """Open a binary file-like object with default write mode.
-
-    This overload handles binary file operations for file-like objects that work
-    with bytes, using the default "wb" (write binary) mode. It provides a context
-    manager for safe file handling with automatic resource cleanup.
-
-    Args:
-        file_like: A file-like object that works with bytes. Can be a file path
-                  (str or PathLike) or an existing binary IO object.
-
-    Returns:
-        AbstractContextManager[IO[bytes]]: A context manager that yields a binary
-        IO object when entered. The context manager handles proper resource cleanup.
-
-    Raises:
-        TypeError: If file_like is not a valid binary file-like object when it's
-                  not a path.
-        OSError: If the file cannot be opened (when file_like is a path).
-    """
+    """Open a binary file-like object, defaulting to write ("wb") mode."""
     ...  # pragma: no cover # fmt: skip
 
 
@@ -224,53 +281,13 @@ def open(file_like: FileLike[bytes]) -> AbstractContextManager[IO[bytes]]:
 def open(
     file_like: FileLike[bytes], mode: Literal["rb", "wb"]
 ) -> AbstractContextManager[IO[bytes]]:
-    """Open a binary file-like object with specified mode.
-
-    This overload handles binary file operations for file-like objects that work
-    with bytes. It provides a context manager for safe file handling with automatic
-    resource cleanup.
-
-    Args:
-        file_like: A file-like object that works with bytes. Can be a file path
-                  (str or PathLike) or an existing binary IO object.
-        mode: The file access mode. Must be either "rb" for reading binary data
-              or "wb" for writing binary data.
-
-    Returns:
-        AbstractContextManager[IO[bytes]]: A context manager that yields a binary
-        IO object when entered. The context manager handles proper resource cleanup.
-
-    Raises:
-        TypeError: If file_like is not a valid binary file-like object when it's
-                  not a path.
-        OSError: If the file cannot be opened (when file_like is a path).
-    """
+    """Open a binary file-like object with an explicit "rb" or "wb" mode."""
     ...  # pragma: no cover # fmt: skip
 
 
 @overload
 def open(file_like: FileLike[str], mode: Literal["r", "w"]) -> AbstractContextManager[IO[str]]:
-    """Open a text file-like object with specified mode.
-
-    This overload handles text file operations for file-like objects that work
-    with strings. It provides a context manager for safe file handling with automatic
-    resource cleanup.
-
-    Args:
-        file_like: A file-like object that works with strings. Can be a file path
-                  (str or PathLike) or an existing text IO object.
-        mode: The file access mode. Must be either "r" for reading text data
-              or "w" for writing text data.
-
-    Returns:
-        AbstractContextManager[IO[str]]: A context manager that yields a text
-        IO object when entered. The context manager handles proper resource cleanup.
-
-    Raises:
-        TypeError: If file_like is not a valid text file-like object when it's
-                  not a path.
-        OSError: If the file cannot be opened (when file_like is a path).
-    """
+    """Open a text file-like object with an explicit "r" or "w" mode."""
     ...  # pragma: no cover # fmt: skip
 
 

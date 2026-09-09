@@ -44,7 +44,7 @@ class Greedy:
         Build the initial lattice of trap coordinates.
 
         Expected `params` keys:
-          - "layout": LayoutType (TRIANGULAR or SQUARE) or "triangular"/"square"
+          - "layout": Layout (TRIANGULAR or SQUARE) or "triangular"/"square"
           - "traps": int (number of trap sites)
           - "spacing": float (minimum inter-site spacing)
         """

@@ -12,7 +12,7 @@ Typical usage:
 
     v = vectori.zeros(4)                     # 1-D zero int64 vector of length 4
     v = vectori.tensor([0, 1, 2, 3])         # from a list of integers
-    v = vectori.from_torch(some_tensor)      # cast existing tensor to int64
+    v = vectori.as_tensor(some_tensor)       # cast existing tensor to int64, no copy when possible
 
 See also [`qubosolver.vector`][qubosolver.vector] for float vectors.
 """
@@ -62,13 +62,20 @@ def tensor(data: Any, *, device: torch.device = device(), **kwargs: Any) -> Vect
     return vector.tensor(data, dtype=dtype(), device=device, **kwargs)
 
 
-def from_torch(tensor: torch.Tensor) -> Vectori:
-    """Converts an existing torch tensor to an integer vector (``int64``, on the global device).
+def as_tensor(data: Any) -> Vectori:
+    """Convenience wrapper for `torch.as_tensor` that converts data to an integer
+    vector tensor, avoiding a copy when possible.
+
+    If *data* is already a tensor with the right dtype and on the right device, it is
+    returned as-is, sharing the same underlying memory. A numpy array is also shared
+    rather than copied if it already has ``int64`` dtype and the global device is
+    ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a
+    copy). Lists, tuples, and other array-like inputs are always copied.
 
     Args:
-        tensor: Source tensor to convert.
+        data: Input data (tensor, numpy array, list, tuple, etc.).
 
     Returns:
-        The tensor cast to ``int64`` on the global device.
+        A 1-D ``int64`` tensor on the global device.
     """
-    return tensor.to(dtype=dtype(), device=device())
+    return torch.as_tensor(data, dtype=dtype(), device=device())

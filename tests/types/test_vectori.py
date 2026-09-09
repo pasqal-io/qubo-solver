@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+import numpy as np
 import torch
 import pytest_check as check
 
@@ -83,16 +84,81 @@ def test_tensor_propagates_kwargs_to_vector_tensor() -> None:
         check.is_false(call_kwargs.kwargs.get("requires_grad"))
 
 
-def test_from_torch_converts_dtype_and_device() -> None:
+def test_as_tensor_converts_dtype_and_device() -> None:
     source = torch.tensor([1, 2, 3], dtype=torch.int32)
-    result = vectori.from_torch(source)
+    result = vectori.as_tensor(source)
     check.equal(result.dtype, torch.int64)
     check.equal(result.device, linalg.device())
     torch.testing.assert_close(result, torch.tensor([1, 2, 3], dtype=torch.int64))
 
 
-def test_from_torch_preserves_values() -> None:
+def test_as_tensor_preserves_values() -> None:
     source = torch.tensor([4.0, 5.0, 6.0], dtype=torch.float32)
-    result = vectori.from_torch(source)
+    result = vectori.as_tensor(source)
     check.equal(result.dtype, torch.int64)
     torch.testing.assert_close(result, torch.tensor([4, 5, 6], dtype=torch.int64))
+
+
+def test_as_tensor_creates_int64_tensor_from_list() -> None:
+    data = [1, 2, 3, 4, 5]
+    result = vectori.as_tensor(data)
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=vectori.dtype(), device=vectori.device())
+    )
+
+
+def test_as_tensor_creates_int64_tensor_from_numpy_array() -> None:
+    data = np.array([1, 2, 3, 4, 5])
+    result = vectori.as_tensor(data)
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=vectori.dtype(), device=vectori.device())
+    )
+
+
+def test_as_tensor_no_copy_when_input_already_matches_dtype_and_device() -> None:
+    source = torch.tensor([1, 2, 3, 4], dtype=vectori.dtype(), device=vectori.device())
+    result = vectori.as_tensor(source)
+    check.is_(result, source)
+    source[0] = 0
+    check.equal(result[0].item(), 0)
+
+
+def test_as_tensor_copies_when_dtype_differs() -> None:
+    source = torch.tensor([1, 2, 3, 4], dtype=torch.int32)
+    result = vectori.as_tensor(source)
+    check.equal(result.dtype, vectori.dtype())
+    check.is_not(result, source)
+    source[0] = 5
+    check.equal(result[0].item(), 1)
+
+
+def test_as_tensor_no_copy_when_numpy_array_already_matches_dtype_on_cpu() -> None:
+    source = np.array([1, 2, 3, 4], dtype=np.int64)
+    result = vectori.as_tensor(source)
+    check.equal(result.dtype, vectori.dtype())
+    source[0] = 5
+    check.equal(result[0].item(), 5)
+
+
+def test_as_tensor_copies_when_numpy_array_dtype_differs() -> None:
+    source = np.array([1, 2, 3, 4], dtype=np.int32)
+    result = vectori.as_tensor(source)
+    check.equal(result.dtype, vectori.dtype())
+    source[0] = 5
+    check.equal(result[0].item(), 1)
+
+
+def test_as_tensor_copies_when_input_is_a_list() -> None:
+    data = [1, 2, 3, 4]
+    result = vectori.as_tensor(data)
+    check.equal(result.dtype, vectori.dtype())
+    data[0] = 5
+    check.equal(result[0].item(), 1)
+
+
+def test_as_tensor_preserves_values_from_list() -> None:
+    data = [1, 2, 3, 4, 5]
+    result = vectori.as_tensor(data)
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=vectori.dtype(), device=vectori.device())
+    )

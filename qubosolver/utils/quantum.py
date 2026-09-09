@@ -1,3 +1,5 @@
+"""Reconstruct QUBO instances from quantum register and drive parameters."""
+
 from __future__ import annotations
 
 import torch
@@ -30,12 +32,6 @@ def _detuning(
 def extract_qubo(register: qoolqit.Register, drive: qoolqit.Drive) -> Instance:
     """Reconstruct the QUBO encoded by a register's geometry and a drive's final detuning.
 
-    Off-diagonal coefficients are read from the register's pairwise ``1/r^6``
-    interaction strengths. Diagonal coefficients are recovered from the
-    drive's final detuning value(s), inverting the
-    ``d_i = -0.5 * Q[i, i]`` convention used when shaping a drive from a
-    QUBO instance (see `qubosolver.drive_shaping.proportional_diagonal.build_drive`).
-
     Args:
         register: The physical register whose geometry encodes the QUBO's
             off-diagonal coefficients.
@@ -45,18 +41,9 @@ def extract_qubo(register: qoolqit.Register, drive: qoolqit.Drive) -> Instance:
     Returns:
         The reconstructed QUBO instance.
     """
-    qubit_ids = register.qubits_ids
-    index = {qubit_id: i for i, qubit_id in enumerate(qubit_ids)}
-    n = register.n_qubits
+    Q = matrix.tensor(register.interaction_matrix())
 
-    Q = matrix.zeros(n)
-
-    for (u, v), value in register.interactions().items():
-        i, j = index[u], index[v]
-        Q[i, j] = value
-        Q[j, i] = value
-
-    delta = _detuning(drive, drive.duration, n=n, qubit_ids=qubit_ids)
+    delta = _detuning(drive, drive.duration, n=len(register), qubit_ids=register.qubits_ids)
     Q += torch.diag(-2 * delta)
 
     return Instance(Q)

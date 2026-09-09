@@ -82,57 +82,20 @@ of cplex.
 ### With a quantum solver
 
 ```python
-import torch
-from qubosolver import Instance, SolverConfig, Solver
+from qubosolver import Instance, Solver, analysis, matrix
 
-
-# define QUBO
-Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
+# Define a
+Q = matrix.tensor([[1.0, 0.0], [0.0, 1.0]])
 instance = Instance(matrix=Q)
 
-# Create a SolverConfig object to use a quantum backend
-config = SolverConfig(use_quantum=True)
-
-# Instantiate the quantum solver.
-solver = Solver(instance, config)
-
-# Solve the QUBO problem.
+# Instantiate the quantum solver (default)
+solver = Solver(instance)
 solution = solver.solve()
-print(solution)
-
-# Returns the following
-# Solution(bitstrings=tensor([[0, 0]]), costs=tensor([0.]), counts=None, probabilities=None, solution_status=<SolutionStatusType.TRIVIALZERO: 'trivial-zero'>)
+print(analysis.to_dataframe([solution]))
 ```
 
 The solver returns a `Solution` instance containing candidates or bitstrings solutions found by the solver,
-with their respective QUBO costs. If sampling was performed, we would also obtain respective counts (frequencies a solution has been sampled), and the respective probabilities (counts divided by the number of samples). Finally, the `solution_status` determines if preprocessing (technique to reduce the instance to another smaller instance) or postprocessing were applied (modification of the solution after solving), or if the solution found is trivial (obtaining the solution from the QUBO instance is straighforward as the case above where we have only positive coefficients, hence all variables must be set to 0).
-
-### With a classical solver
-
-```python
-import torch
-from qubosolver import Instance, ClassicalConfig, SolverConfig
-
-# define QUBO
-Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
-instance = Instance(matrix=Q)
-
-# Create a SolverConfig object with classical solver options.
-classical_config = ClassicalConfig(
-    classical_solver_type="cplex",
-    cplex_maxtime=10.0,
-    cplex_log_path="test_solver.log",
-)
-config = SolverConfig(use_quantum=False, classical=classical_config)
-
-# Instantiate the classical solver via the pipeline's classical solver dispatcher.
-classical_solver = Solver(instance, config)
-
-# Solve the QUBO problem.
-solution = classical_solver.solve()
-print(solution)
-```
-
+with their respective QUBO costs. If sampling was performed, we would also obtain respective counts (frequencies a solution has been sampled), and the respective probabilities (counts divided by the number of samples).
 
 ## Documentation
 

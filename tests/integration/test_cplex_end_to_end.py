@@ -5,12 +5,13 @@ import pytest
 import pytest_check as check
 
 from qubosolver import (
-    Analyzer,
     Instance,
     Solution,
     SingleSolution,
-    solvers,
+    solving,
 )
+
+from qubosolver.utils import analysis
 
 from qubos import QUBOS
 
@@ -29,8 +30,7 @@ def check_solution(
     # Solutions are not duplicated
     check.equal(solution.bitstrings.unique(dim=0).shape[0], len(solution))
 
-    analyzer = Analyzer(solution)
-    print(f"\n{analyzer.df}")
+    print(f"\n{analysis.to_dataframe([solution])}")
 
     optimal_solutions = gather_optimal_solutions(solution)
     check.is_not(optimal_solutions, [])
@@ -45,7 +45,7 @@ def check_solution(
         return 0.0
 
     expected_optimal_solutions = gather_optimal_solutions(
-        solvers.brute_force(qubo, max_bitstrings=-1)
+        solving.brute_force.solve(qubo, max_bitstrings=-1)
     )
     check.almost_equal(min_cost, expected_optimal_solutions[0].cost)
     expected_optimal_bitstrings = [s.string for s in expected_optimal_solutions]
@@ -69,5 +69,5 @@ def test_cplex(
 ) -> None:
     instance = QUBOS[qubo_id]
 
-    solution = solvers.cplex(instance)
+    solution = solving.cplex.solve(instance)
     check_solution(solution, instance)

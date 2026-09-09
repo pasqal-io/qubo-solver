@@ -6,24 +6,26 @@ import pytest
 import pytest_check as check
 import torch
 from copy import deepcopy
+from typing import Literal
 
 from qoolqit import DigitalAnalogDevice
 from qubosolver import (
     Instance,
     Solution,
     transforms,
-    EmbeddingConfig,
-    Analyzer,
-    DriveShapingConfig,
-    SolverConfig,
-    EmbedderType,
     Solver,
     matrix,
     bitstring,
     bitstrings,
     vector,
     LocalEmulator,
+    SolverConfig,
+    QuantumSolvingConfig,
+    ClassicalSolvingConfig,
+    EmbeddingConfig,
+    DriveShapingConfig,
 )
+from qubosolver.utils import analysis
 
 
 def test_apply_full_and_post_process_fixation() -> None:
@@ -40,7 +42,7 @@ def test_apply_full_and_post_process_fixation() -> None:
 
     reduced_solution = Solution(bitstrings.zeros(0, 0), vector.zeros(0))
 
-    sol_reconstructed = transforms.variable_fixing.unapply(reduced_solution, reduced_qubo)
+    sol_reconstructed = transforms.variable_fixing.lift(reduced_solution, reduced_qubo)
 
     assert isinstance(sol_reconstructed, Solution)
 
@@ -121,14 +123,14 @@ def test_quantum_preprocessing_falls_back_to_zeroing_when_bitflip_is_not_enough(
     check.is_true(transforms.negative_bitflip._has_negative_offdiagonal(flipped.matrix))
 
     config = SolverConfig(
-        use_quantum=True,
-        do_preprocessing=True,
+        solving=QuantumSolvingConfig(),
+        preprocessing=True,
         activate_trivial_solutions=False,
-        do_postprocessing=False,
+        postprocessing=False,
     )
     solver = Solver(instance, config)
 
-    with caplog.at_level("INFO", logger="qubosolver.solvers.solver"):
+    with caplog.at_level("INFO", logger="qubosolver.solver.solver"):
         solution = solver.solve()
 
     check.is_true(
@@ -139,7 +141,7 @@ def test_quantum_preprocessing_falls_back_to_zeroing_when_bitflip_is_not_enough(
     # Costs in the returned solution must be evaluated against the true,
     # original QUBO, not the zeroed approximation used internally.
     for sol in solution:
-        check.almost_equal(sol.cost, instance.evaluate_solution(sol.bitstring))
+        check.almost_equal(sol.cost, instance.cost(sol.bitstring))
 
 
 def test_quantum_preprocessing(qubo_instance_for_preprocessing: Instance) -> None:
@@ -147,7 +149,7 @@ def test_quantum_preprocessing(qubo_instance_for_preprocessing: Instance) -> Non
     Test instance using quantum with preprocessing.
     """
     quantum_preprocessing_config = SolverConfig(
-        use_quantum=True, do_preprocessing=True, do_postprocessing=False
+        solving=QuantumSolvingConfig(), preprocessing=True, postprocessing=False
     )
     solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
@@ -159,7 +161,7 @@ def test_quantum_postprocessing(qubo_instance_for_preprocessing: Instance) -> No
     Test instance using quantum with postprocessing.
     """
     quantum_preprocessing_config = SolverConfig(
-        use_quantum=True, do_preprocessing=False, do_postprocessing=True
+        solving=QuantumSolvingConfig(), preprocessing=False, postprocessing=True
     )
     solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
@@ -173,7 +175,7 @@ def test_quantum_prepostprocessing(
     Test instance using quantum with both preprocessing and postprocessing.
     """
     quantum_preprocessing_config = SolverConfig(
-        use_quantum=True, do_preprocessing=True, do_postprocessing=True
+        solving=QuantumSolvingConfig(), preprocessing=True, postprocessing=True
     )
     solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
@@ -185,7 +187,7 @@ def test_classical_preprocessing(qubo_instance_for_preprocessing: Instance) -> N
     Test instance using classical with preprocessing.
     """
     quantum_preprocessing_config = SolverConfig(
-        use_quantum=False, do_preprocessing=True, do_postprocessing=False
+        solving=ClassicalSolvingConfig(), preprocessing=True, postprocessing=False
     )
     solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
@@ -199,7 +201,7 @@ def test_classical_postprocessing(
     Test instance using classical with postprocessing.
     """
     quantum_preprocessing_config = SolverConfig(
-        use_quantum=False, do_preprocessing=False, do_postprocessing=True
+        solving=ClassicalSolvingConfig(), preprocessing=False, postprocessing=True
     )
     solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
@@ -213,7 +215,7 @@ def test_classical_prepostprocessing(
     Test instance using classical with preprocessing and postprocessing.
     """
     quantum_preprocessing_config = SolverConfig(
-        use_quantum=False, do_preprocessing=True, do_postprocessing=True
+        solving=ClassicalSolvingConfig(), preprocessing=True, postprocessing=True
     )
     solver = Solver(qubo_instance_for_preprocessing, quantum_preprocessing_config)
     solution = solver.solve()
@@ -244,7 +246,7 @@ def test_reduce_qubo_2() -> None:
         costs=vector.tensor([0.0]),
     )
 
-    solution = transforms.variable_fixing.unapply(reduced_solution, reduced_qubo)
+    solution = transforms.variable_fixing.lift(reduced_solution, reduced_qubo)
     check.equal(solution.bitstrings.shape, (1, 5))
 
     bitstring_ = bitstring.to_string(solution.bitstrings[0])
@@ -253,11 +255,11 @@ def test_reduce_qubo_2() -> None:
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("embedding_method", [EmbedderType.BLADE])
+@pytest.mark.parametrize("embedding_method", ["blade"])
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no_pre"])
 @pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
 def test_quantum_prepostprocessing_2(
-    embedding_method: str,
+    embedding_method: Literal["blade"],
     preprocessing: bool,
     dmm: bool,
 ) -> None:
@@ -280,21 +282,22 @@ def test_quantum_prepostprocessing_2(
     instance = Instance(Q)
 
     config = SolverConfig(
-        use_quantum=True, do_preprocessing=preprocessing, device=DigitalAnalogDevice()
+        solving=QuantumSolvingConfig(
+            EmbeddingConfig(
+                algorithm=embedding_method,
+                greedy_layout_traps=500,
+            ),
+            drive_shaping=DriveShapingConfig(dmm=dmm),
+            device=DigitalAnalogDevice(),
+            backend=LocalEmulator(num_shots=50),
+        ),
+        preprocessing=preprocessing,
     )
-    config.embedding = EmbeddingConfig(
-        embedding_method=embedding_method,
-        greedy_traps=500,
-    )
-
-    config.drive_shaping = DriveShapingConfig(dmm=dmm)
-    config.backend = LocalEmulator(num_shots=50)
     solver = Solver(instance, config)
 
     solutions = solver.solve()
 
-    analyzer = Analyzer([solutions])
-    df = analyzer.df
+    df = analysis.to_dataframe([solutions])
     print(f"\n{df}")
 
     check.is_true(df["bitstrings"].is_unique)

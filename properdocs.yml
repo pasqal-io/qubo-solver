@@ -1,0 +1,198 @@
+site_name: Qubo Solver Documentation
+site_author: Pasqal
+repo_url: https://github.com/pasqal-io/qubo-solver/
+repo_name: pasqal-io/qubo-solver
+copyright: © 2026, Pasqal
+
+nav:
+  - Overview: index.md
+  - Get started:
+    - 30-Second Quickstart: get_started/quickstart.md
+    - Install: get_started/install.md
+    - Solving QUBOs: get_started/solving_qubos.md
+  - User guide:
+    - Solving QUBOs: user_guide/intro.md
+    - Instances and Solutions: user_guide/instances_and_solutions.md
+    - Quantum pipeline:
+      - Introduction: user_guide/quantum/intro.md
+      - Embedding: user_guide/quantum/embedding.md
+      - Drive shaping: user_guide/quantum/drive_shaping.md
+      - Compilation: user_guide/quantum/compilation.md
+      - Backends: user_guide/quantum/backend.md
+    - Classical pipeline:
+      - Introduction: user_guide/classical/intro.md
+      - Solvers: user_guide/classical/solvers.md
+      - Transforms: user_guide/classical/transforms.md
+  - Under the Hood:
+    - Embedding:
+      - Greedy Layout: under_the_hood/embedding/greedy_layout.md
+      - BLaDE: under_the_hood/embedding/blade.md
+    - Drive shaping:
+      - Proportional-Diagonal Drive: under_the_hood/driveshaping/proportional_diagonal.md
+      - Local-Energy-Scale Drive: under_the_hood/driveshaping/local_energy_scale.md
+      - Bayesian Search Drive: under_the_hood/driveshaping/bayesian_search.md
+      - Custom: under_the_hood/driveshaping/custom.md
+
+  - Tutorials:
+    - Getting started: tutorials/00-getting-started.ipynb
+    - QUBO Solver basics: tutorials/01-qubosolver-basics.ipynb
+    - QUBO Solver in full: tutorials/02-qubosolver-in-full.ipynb
+    - Embedding:
+      - Overview: tutorials/03-embedding/00-embedding.ipynb
+      - BLaDE: tutorials/03-embedding/01-blade.ipynb
+      - Greedy layout: tutorials/03-embedding/02-greedy-layout.ipynb
+    - Drive shaping:
+      - Overview: tutorials/04-drive-shaping/00-drive-shaping.ipynb
+      - Proportional-diagonal: tutorials/04-drive-shaping/01-proportional-diagonal.ipynb
+      - Local-energy-scale: tutorials/04-drive-shaping/02-local-energy-scale.ipynb
+      - Bayesian search: tutorials/04-drive-shaping/03-bayesian-search.ipynb
+    - Solving:
+      - Classical: tutorials/05-solving/01-classical.ipynb
+      - Quantum analog sampling: tutorials/05-solving/02-quantum-analog-sampling.ipynb
+      - Hybrid drive + Bayesian search: tutorials/05-solving/03-hybrid-drive-bayesian-search.ipynb
+    - Transforms:
+      - Overview: tutorials/06-transforms/00-transforms.ipynb
+      - Variable fixing: tutorials/06-transforms/01-variable-fixing.ipynb
+      - Zeroing: tutorials/06-transforms/02-zeroing.ipynb
+      - Negative bitflip: tutorials/06-transforms/03-negative-bitflip.ipynb
+    - Analysis: tutorials/07-analysis.ipynb
+
+  - API:
+    - qubosolver: api/qubosolver.md
+    - qubosolver.solver: api/solver.md
+    - qubosolver.analysis: api/analysis.md
+    - qubosolver.drive_shaping: api/drive_shaping.md
+    - qubosolver.embedding: api/embedding.md
+    - qubosolver.protocols: api/protocols.md
+    - qubosolver.solving: api/solving.md
+    - qubosolver.solving.classical: api/classical_solving.md
+    - qubosolver.solving.hybrid: api/hybrid_solving.md
+    - qubosolver.solving.quantum: api/quantum_solving.md
+    - qubosolver.transforms: api/transforms.md
+    - Tensors:
+      - qubosolver.bitstring: api/bitstring.md
+      - qubosolver.bitstrings: api/bitstrings.md
+      - qubosolver.matrix: api/matrix.md
+      - qubosolver.tensor: api/tensor.md
+      - qubosolver.vector: api/vector.md
+      - qubosolver.vectori: api/vectori.md
+  - Contribute:
+    - How to contribute: CONTRIBUTING.md
+    - Code of conduct: CODE_OF_CONDUCT.md
+    - Contributor Agreement: CONTRIBUTOR_AGREEMENT.md
+
+theme:
+  name: material
+  logo: extras/assets/logo/qubosolver_symbol_white.svg
+  favicon: extras/assets/logo/qubosolver_symbol_darkgreen.svg
+  custom_dir: docs/extras/overrides/
+  features:
+    - content.code.copy
+    - content.tooltips
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - navigation.tracking
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+
+  palette:
+  - media: "(prefers-color-scheme: light)"
+    scheme: default
+    primary: custom
+    toggle:
+      icon: material/weather-sunny
+      name: Switch to dark mode
+  - media: "(prefers-color-scheme: dark)"
+    scheme: slate
+    primary: custom
+    toggle:
+      icon: material/weather-night
+      name: Switch to light mode
+
+markdown_extensions:
+- admonition  # for notes
+- footnotes
+- pymdownx.arithmatex: # for mathjax
+    generic: true
+- pymdownx.highlight:
+    anchor_linenums: true
+- pymdownx.tabbed:
+      alternate_style: true
+- pymdownx.inlinehilite
+- pymdownx.snippets
+- pymdownx.superfences
+- mdx_math:
+    enable_dollar_delimiter: True #for use of inline $..$
+
+plugins:
+- search
+- macros
+- section-index
+- markdown-exec
+- autorefs
+- mkdocs-jupyter:
+    include: ["*.ipynb"]
+    include_requirejs: true
+    custom_mathjax_url: "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS_CHTML-full,Safe"
+- mkdocstrings:
+    handlers:
+      python:
+        paths: [qubosolver]
+        inventories:
+        - url: https://pasqal-io.github.io/qoolqit/latest/objects.inv
+          base_url: https://docs.pasqal.com/qoolqit/
+        - url: https://pytorch.org/docs/stable/objects.inv
+        - url: https://pandas.pydata.org/docs/objects.inv
+        - url: https://docs.python.org/3/objects.inv
+        options:
+          docstring_options:
+            ignore_init_summary: true
+          docstring_section_style: list
+          filters: public
+          heading_level: 2
+          inherited_members: true
+          merge_init_into_class: true
+          parameter_headings: false
+          type_parameter_headings: true
+          preload_modules: [qubosolver]
+          relative_crossrefs: true
+          scoped_crossrefs: true
+          show_bases: false
+          show_inheritance_diagram: false
+          show_root_heading: true
+          show_root_full_path: true
+          show_signature_annotations: true
+          show_signature_type_parameters: true
+          show_source: true
+          show_symbol_type_heading: true
+          show_symbol_type_toc: true
+          show_overloads: false
+          signature_crossrefs: true
+          summary: true
+          unwrap_annotated: true
+          separate_signature: true
+          annotations_path: source
+          line_length: 80
+
+
+watch:
+  - qubosolver
+
+extra:
+ version:
+   provider: mike
+
+# To get nice tabs
+extra_css:
+- extras/css/mkdocstrings.css
+- extras/css/home.css
+- extras/css/colors.css
+
+# For mathjax
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML

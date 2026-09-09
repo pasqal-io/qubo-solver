@@ -61,18 +61,6 @@ def tensor(data: Any, *, device: torch.device = device(), **kwargs: Any) -> Bits
     return torch.tensor(data, dtype=dtype(), device=device, **kwargs)
 
 
-def from_torch(tensor: torch.Tensor) -> Bitstrings:
-    """Converts an existing torch tensor to bitstrings (``int8``, on the global device).
-
-    Args:
-        tensor: Source tensor to convert.
-
-    Returns:
-        The tensor cast to ``int8`` on the global device.
-    """
-    return tensor.to(dtype=dtype(), device=device())
-
-
 def from_strings(strings: Sequence[str], *, device: torch.device = device()) -> Bitstrings:
     """Creates a 2-D bitstrings tensor from a sequence of '0'/'1' strings.
 
@@ -124,3 +112,22 @@ def rand(
         A 2-D ``int8`` tensor of shape ``(count, n_bits)`` containing 0s and 1s.
     """
     return torch.randint(0, 2, (count, n_bits), generator=rng, device=device, dtype=dtype())
+
+
+def as_tensor(data: Any) -> Bitstrings:
+    """Convenience wrapper for `torch.as_tensor` that converts data to a bitstrings
+    tensor, avoiding a copy when possible.
+
+    If *data* is already a tensor with the right dtype and on the right device, it is
+    returned as-is, sharing the same underlying memory. A numpy array is also shared
+    rather than copied if it already has ``int8`` dtype and the global device is
+    ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a
+    copy). Lists, tuples, and other array-like inputs are always copied.
+
+    Args:
+        data: Input data (tensor, numpy array, nested list, etc.).
+
+    Returns:
+        A 2-D ``int8`` tensor on the global device.
+    """
+    return torch.as_tensor(data, dtype=dtype(), device=device())
