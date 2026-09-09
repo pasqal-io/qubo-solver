@@ -9,7 +9,11 @@ hybrid, and classical QUBO solvers.
 
 from __future__ import annotations
 
+import logging
+
 from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 from qubosolver.types import (
     # Submodules
