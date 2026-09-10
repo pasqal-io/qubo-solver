@@ -71,6 +71,34 @@ def test_strategy_selection_improves_solution(
     check.less_equal(new_solution[0].cost, solution[0].cost)
 
 
+def test_int_candidates_generates_that_many_random_starts() -> None:
+    """Passing an int for `candidates` must draw that many uniformly random
+    starting bitstrings (via random_sampling.solve) and locally optimize
+    each of them, instead of requiring a pre-built Solution."""
+    Q = matrix.tensor([[-10.0, 1.0], [1.0, -10.0]])
+    instance = Instance(Q)
+
+    result = solving.iterative_bitflip_local_search.solve(instance, 5, strategy="best_improvement")
+
+    check.is_true(result.check_consistency(instance=instance, throw=True))
+    check.less_equal(len(result), 5)
+    for sol in result:
+        check.equal(sol.string, "11")
+
+
+def test_default_candidates_is_one_random_start() -> None:
+    """Omitting `candidates` must default to a single uniformly random
+    starting bitstring."""
+    Q = matrix.tensor([[-10.0, 1.0], [1.0, -10.0]])
+    instance = Instance(Q)
+
+    result = solving.iterative_bitflip_local_search.solve(instance)
+
+    check.is_true(result.check_consistency(instance=instance, throw=True))
+    check.equal(len(result), 1)
+    check.equal(result[0].string, "11")
+
+
 def test_unknown_strategy_raises() -> None:
     Q = matrix.tensor([[-1.0, 2.0], [2.0, -2.0]])
     instance = Instance(Q)

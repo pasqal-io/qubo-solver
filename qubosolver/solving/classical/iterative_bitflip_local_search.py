@@ -1,13 +1,14 @@
 """Bit-flip local search for QUBO solutions.
 
 This module provides greedy single-bit-flip local search strategies that
-improve an existing [`Solution`][] by iteratively flipping bits, stopping
-when no flip improves the objective, a maximum number of iterations is
-reached, or a shared time budget is exhausted.
+improve a batch of candidate bitstrings by iteratively flipping bits,
+stopping when no flip improves the objective, a maximum number of
+iterations is reached, or a shared time budget is exhausted.
 
-The main public entry point is [`solve`][], which applies the selected strategy
-independently to every bitstring in a solution. It is used as a
-post-processing step in [`Solver`][].
+The main public entry point is [`solve`][], which applies the selected
+strategy independently to every bitstring in an existing [`Solution`][], or
+to a batch of uniformly random candidates generated on the fly. It is used
+as a post-processing step in [`Solver`][].
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from copy import deepcopy
 
 
 from qubosolver import Instance, Solution, Bitstring
+from .random_sampling import solve as random_sampling_solve
 
 
 def _iterations(n: int) -> Iterable[int]:
@@ -210,24 +212,31 @@ _STRATEGIES: dict[str, Callable[..., tuple[Bitstring, float]]] = {
 
 def solve(
     instance: Instance,
-    solution: Solution,
+    candidates: Solution | int = 1,
     *,
     strategy: Literal["greedy_sweep", "best_improvement", "first_improvement"] = "greedy_sweep",
     max_iterations: int = -1,
     time_limit: float = float("inf"),
 ) -> Solution:
-    """Improve every bitstring in `solution` via single-bit-flip local search.
+    """Improve every bitstring in `candidates` via single-bit-flip local search.
 
     Bitstrings driven to the same local minimum are merged afterwards via
     [`deduplicate`][qubosolver.Solution.deduplicate].
 
     `time_limit` is a *global* budget for the whole batch of bitstrings in
-    `solution`, not a per-bitstring limit. Once it is exhausted, any
+    `candidates`, not a per-bitstring limit. Once it is exhausted, any
     remaining bitstrings are left unchanged, with their original cost.
 
     Args:
         instance: The instance used to evaluate bitstring costs.
-        solution: The solution to refine.
+        candidates: Either the [`Solution`][] to refine, or an ``int`` giving
+            the number of uniformly random candidate bitstrings to draw
+            via [`random_sampling.solve`][],
+            which may return fewer than requested after deduplication. This
+            random draw is *not* reproducible via a caller-supplied `rng`;
+            callers who need reproducibility should sample their own
+            [`Solution`][] (e.g. with a seeded [`random_sampling.solve`][])
+            and pass it in directly.
         strategy: Which local-search strategy to use: ``"best_improvement"``,
             ``"first_improvement"``, or ``"greedy_sweep"``.
         max_iterations: Maximum number of accepted flips per bitstring.
@@ -245,7 +254,10 @@ def solve(
     if strategy not in _STRATEGIES:
         raise ValueError(f"Unknown postprocessing strategy: {strategy}")
 
-    solution = deepcopy(solution)
+    if isinstance(candidates, int):
+        solution = random_sampling_solve(instance, max_bitstrings=candidates)
+    else:
+        solution = deepcopy(candidates)
 
     # If there are no bitstrings, return the solution unchanged.
     if not solution:
