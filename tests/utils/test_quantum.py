@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from types import SimpleNamespace
 
 import pytest_check as check
 import torch
@@ -10,6 +11,7 @@ from qoolqit import ConstantWaveform
 from qoolqit import RampWaveform
 from qubosolver import Instance, matrix, vector, drive_shaping, embedding, extract_qubo
 from qubosolver.embedding._algorithms.greedy.layout import get_layout
+from qubosolver.utils.quantum import _max_min_distance_ratio
 
 
 def _register() -> qoolqit.Register:
@@ -145,3 +147,29 @@ def test_extract_qubo_round_trip_through_greedy_embedding_and_drive_shaping() ->
     check.almost_equal(full_distance, 0.0, abs=1e-6)
     check.almost_equal(off_diag_distance, 0.0, abs=1e-6)
     check.almost_equal(diag_distance, 0.0, abs=1e-6)
+
+
+def test_max_min_distance_ratio_from_device_specs() -> None:
+    device = qoolqit.AnalogDevice()
+    check.equal(device.specs["min_distance"], 1.0)
+    check.equal(device.specs["max_radial_distance"], 7.6)
+
+    check.equal(_max_min_distance_ratio(device), 7.6)
+
+
+def test_max_min_distance_ratio_is_infinite_without_min_distance() -> None:
+    device = SimpleNamespace(specs={"min_distance": None, "max_radial_distance": 7.6})
+
+    check.equal(_max_min_distance_ratio(device), float("inf"))
+
+
+def test_max_min_distance_ratio_is_infinite_without_max_radial_distance() -> None:
+    device = SimpleNamespace(specs={"min_distance": 1.0, "max_radial_distance": None})
+
+    check.equal(_max_min_distance_ratio(device), float("inf"))
+
+
+def test_max_min_distance_ratio_is_infinite_when_min_distance_is_zero() -> None:
+    device = SimpleNamespace(specs={"min_distance": 0.0, "max_radial_distance": 7.6})
+
+    check.equal(_max_min_distance_ratio(device), float("inf"))

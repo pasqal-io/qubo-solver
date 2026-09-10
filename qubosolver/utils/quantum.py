@@ -47,3 +47,12 @@ def extract_qubo(register: qoolqit.Register, drive: qoolqit.Drive) -> Instance:
     Q += torch.diag(-2 * delta)
 
     return Instance(Q)
+
+def _max_min_distance_ratio(device: qoolqit.Device) -> float:
+    specs = device.specs
+    min_distance = specs["min_distance"]
+    max_radial_distance = specs["max_radial_distance"]
+    if min_distance is not None and min_distance > 0 and max_radial_distance is not None:
+        return max_radial_distance / min_distance
+    else:
+        return float("inf")

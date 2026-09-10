@@ -19,6 +19,7 @@ from ._algorithms import greedy
 from qubosolver import Instance, tensor
 from .enums import Lattice
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
+from qubosolver.utils.quantum import _max_min_distance_ratio
 
 if TYPE_CHECKING:
     from qubosolver import EmbeddingConfig
@@ -72,13 +73,7 @@ class Config:
             self.traps = _number_of_traps_from_device(device)
 
         if self.max_min_dist_ratio == "device":
-            specs = device.specs
-            min_distance = specs["min_distance"]
-            max_radial_distance = specs["max_radial_distance"]
-            if min_distance is not None and min_distance > 0 and max_radial_distance is not None:
-                self.max_min_dist_ratio = max_radial_distance / min_distance
-            else:
-                self.max_min_dist_ratio = float("inf")
+            self.max_min_dist_ratio = _max_min_distance_ratio(device)
 
     @staticmethod
     def _from_embedding_config(config: EmbeddingConfig) -> Config:
