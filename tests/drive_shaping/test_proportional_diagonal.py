@@ -21,7 +21,7 @@ from qubosolver import (
     matrix,
     drive_shaping,
     Solution,
-    SingleSolution,
+    Candidate,
 )
 from qubosolver.utils import analysis
 import qoolqit
@@ -30,7 +30,7 @@ from qoolqit import DigitalAnalogDevice, AnalogDevice
 
 def gather_optimal_solutions(
     solution: Solution,
-) -> list[SingleSolution]:
+) -> list[Candidate]:
     min_cost = solution[0].cost
     return [s for s in solution if np.allclose(s.cost, min_cost)]
 

@@ -12,7 +12,7 @@ import qoolqit
 from qubosolver import (
     Instance,
     Solver,
-    SingleSolution,
+    Candidate,
     Solution,
     bitstrings,
     vectori,
@@ -31,7 +31,7 @@ from qubosolver.utils import analysis
 from qubosolver.solver.config.solving import _ClassicalAlgorithm
 
 
-def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
+def gather_optimal_solutions(solutions: Solution) -> list[Candidate]:
     min_cost = solutions[0].cost
     return [d for d in solutions if np.allclose(d.cost, min_cost)]
 
@@ -42,7 +42,7 @@ def interaction_matrix_from_vertices(vertices: Tensor) -> Matrix:
     return U
 
 
-def simple_qubo() -> tuple[Instance, list[SingleSolution]]:
+def simple_qubo() -> tuple[Instance, list[Candidate]]:
 
     sqrt3 = np.sqrt(3.0)
     vertices = tensor.tensor(
@@ -88,7 +88,7 @@ def manual_seed(seed: int) -> torch.Generator:
 
 def check_solution(
     solutions: Solution,
-    expected_optimal_solutions: list[SingleSolution],
+    expected_optimal_solutions: list[Candidate],
     *,
     expected_optimal_probability: float = 0.75,
 ) -> None:

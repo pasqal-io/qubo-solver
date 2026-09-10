@@ -10,7 +10,7 @@ import qoolqit
 from qubosolver import (
     Instance,
     Solution,
-    SingleSolution,
+    Candidate,
     solving,
     embedding,
     drive_shaping,
@@ -30,7 +30,7 @@ def manual_seed(seed: int) -> torch.Generator:
     return torch_rng(seed)
 
 
-def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
+def gather_optimal_solutions(solutions: Solution) -> list[Candidate]:
     min_cost = solutions[0].cost
     return [d for d in solutions if np.allclose(d.cost, min_cost)]
 

@@ -6,13 +6,13 @@ import pytest
 import pytest_check as check
 import torch
 
-from qubosolver import Instance, solving, bitstrings, matrix, torch_rng, SingleSolution
+from qubosolver import Instance, solving, bitstrings, matrix, torch_rng, Candidate
 
 
-def _reference_sorted(instance: Instance) -> list[SingleSolution]:
+def _reference_sorted(instance: Instance) -> list[Candidate]:
     """All candidate solutions sorted by ascending cost, by exhaustive search."""
     solutions = [
-        SingleSolution(bitstring=b, cost=instance.cost(b))
+        Candidate(bitstring=b, cost=instance.cost(b))
         for b in bitstrings.tensor(list(itertools.product([0, 1], repeat=instance.size)))
     ]
     solutions.sort(key=lambda s: s.cost)

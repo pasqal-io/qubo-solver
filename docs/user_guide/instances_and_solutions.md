@@ -72,7 +72,7 @@ print(analysis.to_dataframe([solution]))
 ### Features
 
 - Store candidate `bitstrings`, their `costs`, `counts`, and `probabilities`.
-- Iterable: iterating (or indexing) a `Solution` yields [`SingleSolution`][qubosolver.types.solution.SingleSolution] objects, one per candidate.
+- Iterable: iterating (or indexing) a `Solution` yields [`Candidate`][qubosolver.types.solution.Candidate] objects, one per candidate.
 - Serialize to and from disk.
 
 ### Code example

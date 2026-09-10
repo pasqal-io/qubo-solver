@@ -14,7 +14,7 @@ from qoolqit.register import Register
 
 from qubosolver import (
     Instance,
-    SingleSolution,
+    Candidate,
     Solution,
     solving,
     vector,
@@ -34,8 +34,8 @@ def interaction_matrix_from_vertices(vertices: Tensor) -> Matrix:
 
 
 def gather_optimal_solutions(
-    data: Iterable[SingleSolution], min_cost: float | None = None
-) -> list[SingleSolution]:
+    data: Iterable[Candidate], min_cost: float | None = None
+) -> list[Candidate]:
     if min_cost is None:
         min_cost = min(d.cost for d in data)
     return [d for d in data if np.allclose(d.cost, min_cost)]

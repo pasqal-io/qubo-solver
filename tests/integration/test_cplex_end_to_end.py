@@ -7,7 +7,7 @@ import pytest_check as check
 from qubosolver import (
     Instance,
     Solution,
-    SingleSolution,
+    Candidate,
     solving,
 )
 
@@ -16,7 +16,7 @@ from qubosolver.utils import analysis
 from qubos import QUBOS
 
 
-def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
+def gather_optimal_solutions(solutions: Solution) -> list[Candidate]:
     min_cost = solutions[0].cost
     return [d for d in solutions if np.allclose(d.cost, min_cost)]
 

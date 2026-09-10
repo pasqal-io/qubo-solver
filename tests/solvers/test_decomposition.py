@@ -18,7 +18,7 @@ from qubosolver import (
     matrix,
     bitstring,
     torch_rng,
-    SingleSolution,
+    Candidate,
     Solution,
     analysis,
     vector,
@@ -357,7 +357,7 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
     for subpb_solutions in itertools.product(*subpb_optimal_solutions):
         b = torch.cat([s.bitstring for s in subpb_solutions])
         cost = sum(s.cost for s in subpb_solutions)
-        optimal_solutions_list.append(SingleSolution(b, cost, 1))
+        optimal_solutions_list.append(Candidate(b, cost, 1))
 
     optimal_solutions = Solution(
         bitstrings=torch.stack([s.bitstring for s in optimal_solutions_list]),

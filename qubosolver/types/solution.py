@@ -2,7 +2,7 @@
 
 Defines [`Solution`][qubosolver.types.solution.Solution], a collection of candidate
 bitstrings together with their costs, sample counts, and probabilities, and
-[`SingleSolution`][qubosolver.types.solution.SingleSolution], a single candidate
+[`Candidate`][qubosolver.types.solution.Candidate], a single candidate
 extracted from it.
 """
 
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 @debug_runtime_typecheck
 @dataclass
-class SingleSolution:
+class Candidate:
     """A single candidate solution extracted from a [`Solution`][].
 
     Instances are normally obtained via [`Solution.__getitem__`][] rather
@@ -86,8 +86,8 @@ class Solution:
     counts: Vectori = vectori.zeros(0)
     probabilities: Vector = vector.zeros(0)
 
-    def __getitem__(self, idx: int) -> SingleSolution:
-        """Return the candidate at position `idx` as a [`SingleSolution`][].
+    def __getitem__(self, idx: int) -> Candidate:
+        """Return the candidate at position `idx` as a [`Candidate`][].
 
         Args:
             idx: Zero-based index into the ``num_solutions`` axis.
@@ -95,21 +95,21 @@ class Solution:
         Returns:
             Snapshot of the candidate at `idx`.
         """
-        solution = SingleSolution(self.bitstrings[idx])
-        solution.count = int(self.counts[idx].item())
+        candidate = Candidate(self.bitstrings[idx])
+        candidate.count = int(self.counts[idx].item())
         if self.costs.numel() > 0:
-            solution.cost = self.costs[idx].item()
+            candidate.cost = self.costs[idx].item()
         if self.probabilities.numel() > 0:
-            solution.probability = self.probabilities[idx].item()
+            candidate.probability = self.probabilities[idx].item()
 
-        return solution
+        return candidate
 
     def __len__(self) -> int:
         """Return the number of candidate solutions (``num_solutions``)."""
         return self.bitstrings.shape[0]
 
-    def __iter__(self) -> Iterator[SingleSolution]:
-        """Iterate over all candidates in index order, yielding [`SingleSolution`][] objects.
+    def __iter__(self) -> Iterator[Candidate]:
+        """Iterate over all candidates in index order, yielding [`Candidate`][] objects.
 
         Yields:
             Same as [`__getitem__`][] for each index ``0 … len(self)-1``.

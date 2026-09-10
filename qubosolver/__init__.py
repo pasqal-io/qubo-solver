@@ -34,7 +34,7 @@ from qubosolver.types import (
     Vectori,
     # Classes
     Solution,
-    SingleSolution,
+    Candidate,
     Instance,
     Dataset,
     LocalEmulator,
@@ -85,7 +85,7 @@ __all__ = [
     "Vectori",
     # Classes
     "Solution",
-    "SingleSolution",
+    "Candidate",
     "Instance",
     "Dataset",
     "LocalEmulator",
