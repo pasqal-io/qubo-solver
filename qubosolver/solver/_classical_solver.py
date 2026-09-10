@@ -130,7 +130,7 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
             final_temp=self.config.sa_final_temp,
             cooling_rate=self.config.sa_cooling_rate,
             rng=rng,
-            start=start.unsqueeze(0),
+            starts=start.unsqueeze(0),
             time_limit=self.config.sa_time_limit,
             stats="per_run",
         )

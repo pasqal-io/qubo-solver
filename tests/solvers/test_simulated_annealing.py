@@ -391,6 +391,50 @@ def test_simulated_annealing_merge_true_matches_manual_concat_and_deduplicate(
     torch.testing.assert_close(merged_solution.counts, manually_merged.counts)
 
 
+def test_simulated_annealing_int_starts_generates_that_many_random_runs() -> None:
+    """Passing an int for `starts` must generate that many uniformly random
+    starting bitstrings from `rng`, giving the same result as pre-generating
+    them with bitstrings.rand from the same rng and passing them explicitly."""
+    n_starts = 3
+
+    rng_int = torch_rng(5821)
+    solution = solving.simulated_annealing.solve(
+        instance_symmetric,
+        n_starts,
+        merge=False,
+        top_k=2,
+        max_iter=50,
+        rng=rng_int,
+    )
+
+    rng_explicit = torch_rng(5821)
+    expected_starts = bitstrings.rand(n_starts, instance_symmetric.size, rng=rng_explicit)
+    expected = solving.simulated_annealing.solve(
+        instance_symmetric,
+        expected_starts,
+        merge=False,
+        top_k=2,
+        max_iter=50,
+        rng=rng_explicit,
+    )
+
+    check.equal(len(solution), n_starts)
+    for actual, exp in zip(solution, expected):
+        torch.testing.assert_close(actual.bitstrings, exp.bitstrings)
+        torch.testing.assert_close(actual.costs, exp.costs, atol=0.0, rtol=0.0)
+
+
+def test_simulated_annealing_default_starts_is_one_random_start() -> None:
+    """Omitting `starts` must default to a single uniformly random start,
+    producing exactly one run's worth of results."""
+    solution = solving.simulated_annealing.solve(
+        instance_symmetric, merge=False, top_k=1, max_iter=50, rng=torch_rng(0)
+    )
+
+    check.equal(len(solution), 1)
+    check.is_true(solution[0].check_consistency(instance=instance_symmetric, throw=True))
+
+
 def test_simulated_annealing_empty_start_merge_false_returns_empty_list() -> None:
     """An empty batch of starts must produce an empty list, with no runs
     performed, when merge=False."""

@@ -69,7 +69,7 @@ _default_rng = torch_rng()
 @overload
 def solve(
     instance: Instance,
-    start: Bitstrings,
+    starts: Bitstrings | int = 1,
     *,
     merge: Literal[True] = True,
     top_k: int = 1,
@@ -86,7 +86,7 @@ def solve(
 @overload
 def solve(
     instance: Instance,
-    start: Bitstrings,
+    starts: Bitstrings | int = 1,
     *,
     merge: Literal[False],
     top_k: int = 1,
@@ -103,7 +103,7 @@ def solve(
 @torch.no_grad()
 def solve(
     instance: Instance,
-    start: Bitstrings,
+    starts: Bitstrings | int = 1,
     *,
     merge: bool = True,
     top_k: int = 1,
@@ -129,8 +129,8 @@ def solve(
     get back the unmerged, one-per-start list.
 
     Example:
-        Running a single start requires promoting it to a batch of size 1
-        first, via [`torch.unsqueeze`][]:
+        Running a single explicit start requires promoting it to a batch of
+        size 1 first, via [`torch.unsqueeze`][]:
 
         ```python
         solution = simulated_annealing(instance, start.unsqueeze(0))
@@ -140,18 +140,19 @@ def solve(
         single merged `Solution`:
 
         ```python
-        solutions = simulated_annealing(instance, start, merge=False)
+        solutions = simulated_annealing(instance, starts, merge=False)
         ```
 
     Args:
         instance: The QUBO instance to solve.  Its coefficient matrix is
             symmetrised internally as ``(Q + Qᵀ) / 2``.
-        start: Batch of initial binary solutions, a tensor of shape
-            ``(k, n)`` with values in ``{0, 1}``.  One independent run is
-            performed per row.
+        starts: Either a batch of initial binary solutions, a tensor of
+            shape ``(k, n)`` with values in ``{0, 1}`` (one independent run
+            is performed per row), or an ``int`` giving the number of
+            uniformly random starts to generate.
         merge: When ``True`` (default), merge the per-start results into a
             single [`Solution`][]. When ``False``, return the unmerged list of one [`Solution`][] per
-            starting point (same order as `start`).
+            starting point (same order as `starts`).
         top_k: Maximum number of unique best solutions to keep per run,
             ordered by ascending energy.
         max_iter: Number of bit-flip proposals to perform.
@@ -187,7 +188,7 @@ def solve(
     Returns:
         When ``merge=True``, a single [`Solution`][] merging every start's
             results.  When ``merge=False``, one [`Solution`][] per starting
-            point (same order as `start`).  Either way, each [`Solution`][]
+            point (same order as `starts`).  Either way, each [`Solution`][]
             contains up to `top_k` unique bitstrings sorted by ascending energy,
             with their costs, counts (see `stats`), and probabilities.
 
@@ -223,8 +224,10 @@ def solve(
         alpha = (final_temp / initial_temp) ** (1.0 / (max_iter - 1))
 
     solutions: list[Solution] = []
+    if isinstance(starts, int):
+        starts = bitstrings.rand(starts, n, rng=rng)
 
-    for b in start:
+    for b in starts:
         bits: Bitstring = b.detach().clone()
 
         Qx = Q @ bits.to(Q)
