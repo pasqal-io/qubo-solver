@@ -63,3 +63,22 @@ def test_tabu_search_is_deterministic_given_same_start() -> None:
 
     torch.testing.assert_close(solution_a.bitstrings, solution_b.bitstrings)
     torch.testing.assert_close(solution_a.costs, solution_b.costs)
+
+
+def test_int_starts_generates_that_many_random_runs() -> None:
+    """Passing an int for `starts` must generate that many uniformly random
+    starting bitstrings, one independent run each."""
+    n_starts = 5
+
+    solution = solving.tabu_search.solve(instance, n_starts, max_iter=50)
+
+    check.is_true(solution.check_consistency(instance=instance, throw=True))
+    check.less_equal(len(solution), n_starts)
+
+
+def test_default_starts_is_one_random_start() -> None:
+    """Omitting `starts` must default to a single uniformly random start."""
+    solution = solving.tabu_search.solve(instance, max_iter=50)
+
+    check.is_true(solution.check_consistency(instance=instance, throw=True))
+    check.less_equal(len(solution), 1)

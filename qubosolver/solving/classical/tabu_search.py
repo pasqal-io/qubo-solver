@@ -16,7 +16,7 @@ from qubosolver.utils import _costs
 
 def solve(
     instance: Instance,
-    start: Bitstrings,
+    starts: Bitstrings | int = 1,
     *,
     max_iter: int = 100,
     tabu_tenure: int = 7,
@@ -25,7 +25,7 @@ def solve(
 ) -> Solution:
     """Perform Tabu Search on a QUBO instance to find low-cost bitstrings.
 
-    Runs one independent search per row of ``start``, each exploring
+    Runs one independent search per row of `starts`, each exploring
     single-bit-flip neighbors from its own starting point.  A tabu list
     prevents revisiting recently flipped bits; aspiration overrides the tabu
     restriction whenever a move yields a new global best.  All independent
@@ -34,8 +34,13 @@ def solve(
 
     Args:
         instance: The QUBO instance providing the cost matrix.
-        start: Initial binary solutions, one row per independent
-            run, each of length ``n``.
+        starts: Either a batch of initial binary solutions, one row per
+            independent run, each of length ``n``, or an ``int`` giving the
+            number of uniformly random starts to generate. This random draw
+            is *not* reproducible via a caller-supplied `rng`; callers who
+            need reproducibility should sample their own [`Bitstrings`][]
+            (e.g. with a seeded [`bitstrings.rand`][]) and pass it in
+            directly.
         max_iter: Maximum number of search iterations.
         tabu_tenure: Number of iterations a bit-flip move stays tabu.
         max_no_improve: Maximum consecutive iterations without improvement
@@ -49,10 +54,12 @@ def solve(
     """
     Q = instance.matrix
     device = Q.device
-    n_bitstrings, n = start.shape
+    if isinstance(starts, int):
+        starts = bitstrings.rand(starts, instance.size)
+    n_bitstrings, n = starts.shape
 
     # Repeat x0 for each parallel run
-    x_current = start.detach().clone()
+    x_current = starts.detach().clone()
     f_current = _costs.batched_quadratic_cost(x_current.to(Q), Q)
     x_best = x_current.clone()
     f_best = f_current.clone()
