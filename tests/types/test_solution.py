@@ -526,6 +526,53 @@ def test_truncate_probabilities_without_counts_raises() -> None:
         solution.truncate(2)
 
 
+def test_compute_costs_mutates_in_place(instance: Instance) -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
+        counts=vectori.tensor([1, 3]),
+    )
+    result = solution._compute_costs(instance.matrix)
+    check.is_(result, solution)
+    torch.testing.assert_close(solution.costs, vector.tensor([2.0, 1.0]))
+
+
+def test_sort_by_cost_mutates_in_place() -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
+        costs=vector.tensor([2.0, 1.0]),
+        counts=vectori.tensor([1, 3]),
+        probabilities=vector.tensor([0.25, 0.75]),
+    )
+    result = solution._sort_by_cost()
+    check.is_(result, solution)
+    torch.testing.assert_close(solution.costs, vector.tensor([1.0, 2.0]))
+    torch.testing.assert_close(solution.bitstrings, bitstrings.tensor([[1, 0], [0, 1]]))
+
+
+def test_compute_probabilities_mutates_in_place() -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
+        costs=vector.tensor([2.0, 1.0]),
+        counts=vectori.tensor([1, 3]),
+    )
+    result = solution._compute_probabilities()
+    check.is_(result, solution)
+    torch.testing.assert_close(solution.probabilities, vector.tensor([0.25, 0.75]))
+
+
+def test_update_mutates_in_place(instance: Instance) -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
+        counts=vectori.tensor([1, 3]),
+    )
+    result = solution._update(instance)
+    check.is_(result, solution)
+    torch.testing.assert_close(solution.bitstrings, bitstrings.tensor([[1, 0], [0, 1]]))
+    torch.testing.assert_close(solution.costs, vector.tensor([1.0, 2.0]))
+    torch.testing.assert_close(solution.counts, vectori.tensor([3, 1]))
+    torch.testing.assert_close(solution.probabilities, vector.tensor([0.75, 0.25]))
+
+
 def test_update_computes_costs_sorts_and_computes_probabilities(instance: Instance) -> None:
     solution = Solution(
         bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
