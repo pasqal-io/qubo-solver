@@ -249,7 +249,7 @@ class BaseSolver(ABC):
 
         return solving.iterative_bitflip_local_search.solve(
             self.instance,
-            solution,
+            starts=solution,
             strategy="greedy_sweep",
             max_iterations=1,
             time_limit=self.config.postprocessing_time_limit,

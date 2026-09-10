@@ -69,8 +69,8 @@ _default_rng = torch_rng()
 @overload
 def solve(
     instance: Instance,
-    starts: Bitstrings | int = 1,
     *,
+    starts: Bitstrings | int = 1,
     merge: Literal[True] = True,
     top_k: int = 1,
     max_iter: int = 1000,

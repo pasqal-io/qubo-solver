@@ -113,7 +113,7 @@ def test_quantum_remote_job(
             assert isinstance(instance, transforms.variable_fixing.Instance)
             solution = transforms.variable_fixing.lift(solution, instance)
             instance = instance._parent_instance
-        solution = solving.iterative_bitflip_local_search.solve(instance, solution)
+        solution = solving.iterative_bitflip_local_search.solve(instance, starts=solution)
 
         solution._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
 

@@ -135,7 +135,7 @@ def test_simulated_annealing_costs_match_bitstrings(instance: Instance) -> None:
 
     solution = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         top_k=5,
         max_iter=3000,
         initial_temp=4.0,
@@ -161,7 +161,7 @@ def test_simulated_annealing_solution_is_internally_consistent(instance: Instanc
 
     solution = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         top_k=5,
         max_iter=3000,
         initial_temp=4.0,
@@ -181,7 +181,7 @@ def test_simulated_annealing_counts_sum_to_visits(instance: Instance) -> None:
 
     solution = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         top_k=3,
         max_iter=500,
         initial_temp=4.0,
@@ -201,7 +201,7 @@ def test_simulated_annealing_respects_top_k(instance: Instance) -> None:
 
     solution = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         top_k=2,
         max_iter=500,
         initial_temp=4.0,
@@ -219,7 +219,7 @@ def test_simulated_annealing_deterministic_with_seeded_rng(instance: Instance) -
 
     solution_a = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         top_k=4,
         max_iter=500,
         initial_temp=4.0,
@@ -228,7 +228,7 @@ def test_simulated_annealing_deterministic_with_seeded_rng(instance: Instance) -
     )
     solution_b = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         top_k=4,
         max_iter=500,
         initial_temp=4.0,
@@ -252,7 +252,7 @@ def test_simulated_annealing_zero_max_iter_returns_start(instance: Instance) -> 
 
     solution = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         top_k=5,
         max_iter=0,
         initial_temp=4.0,
@@ -273,7 +273,7 @@ def test_simulated_annealing_zero_time_limit_returns_start(instance: Instance) -
 
     solution = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         top_k=5,
         max_iter=1000,
         initial_temp=4.0,
@@ -295,7 +295,7 @@ def test_simulated_annealing_explicit_cooling_rate_used(instance: Instance) -> N
 
     solution = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         top_k=3,
         max_iter=200,
         initial_temp=4.0,
@@ -326,7 +326,7 @@ def test_simulated_annealing_raises_on_invalid_arguments(kwargs: dict, match: st
     start = bitstrings.zeros(1, instance_symmetric.size)
 
     with pytest.raises(ValueError, match=match):
-        solving.simulated_annealing.solve(instance_symmetric, start, rng=torch_rng(658), **kwargs)
+        solving.simulated_annealing.solve(instance_symmetric, starts=start, rng=torch_rng(658), **kwargs)
 
 
 @pytest.mark.parametrize("instance", instances, ids=instance_ids)
@@ -340,7 +340,7 @@ def test_simulated_annealing_merge_false_returns_one_solution_per_start(
 
     solutions = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         merge=False,
         top_k=2,
         max_iter=100,
@@ -366,7 +366,7 @@ def test_simulated_annealing_merge_true_matches_manual_concat_and_deduplicate(
 
     merged_solution = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         top_k=top_k,
         max_iter=200,
         initial_temp=4.0,
@@ -375,7 +375,7 @@ def test_simulated_annealing_merge_true_matches_manual_concat_and_deduplicate(
     )
     solutions = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         merge=False,
         top_k=top_k,
         max_iter=200,
@@ -400,7 +400,7 @@ def test_simulated_annealing_int_starts_generates_that_many_random_runs() -> Non
     rng_int = torch_rng(5821)
     solution = solving.simulated_annealing.solve(
         instance_symmetric,
-        n_starts,
+        starts=n_starts,
         merge=False,
         top_k=2,
         max_iter=50,
@@ -411,7 +411,7 @@ def test_simulated_annealing_int_starts_generates_that_many_random_runs() -> Non
     expected_starts = bitstrings.rand(n_starts, instance_symmetric.size, rng=rng_explicit)
     expected = solving.simulated_annealing.solve(
         instance_symmetric,
-        expected_starts,
+        starts=expected_starts,
         merge=False,
         top_k=2,
         max_iter=50,
@@ -452,7 +452,7 @@ def test_simulated_annealing_empty_start_merge_true_returns_empty_solution() -> 
     performed, when merge=True (the default)."""
     start = bitstrings.zeros(0, instance_symmetric.size)
 
-    solution = solving.simulated_annealing.solve(instance_symmetric, start, rng=torch_rng(0))
+    solution = solving.simulated_annealing.solve(instance_symmetric, starts=start, rng=torch_rng(0))
 
     check.is_false(solution)
 
@@ -472,7 +472,7 @@ def test_simulated_annealing_stats_per_run_sets_single_run_counts_to_one(
 
     solution = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         top_k=3,
         max_iter=500,
         initial_temp=4.0,
@@ -493,7 +493,7 @@ def test_simulated_annealing_stats_per_run_merged_counts_reflect_run_agreement()
 
     solution = solving.simulated_annealing.solve(
         instance_symmetric,
-        start,
+        starts=start,
         top_k=1,
         max_iter=300,
         initial_temp=4.0,
@@ -522,7 +522,7 @@ def test_simulated_annealing_stats_per_run_top_k_one_merge_true_matches_manual_e
 
     per_run_solution = solving.simulated_annealing.solve(
         instance_symmetric,
-        start,
+        starts=start,
         max_iter=300,
         initial_temp=4.0,
         final_temp=0.05,
@@ -531,7 +531,7 @@ def test_simulated_annealing_stats_per_run_top_k_one_merge_true_matches_manual_e
 
     solutions = solving.simulated_annealing.solve(
         instance_symmetric,
-        start,
+        starts=start,
         merge=False,
         top_k=3,
         max_iter=300,
@@ -561,7 +561,7 @@ def test_simulated_annealing_stats_per_run_is_default(instance: Instance) -> Non
 
     default_solution = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         top_k=3,
         max_iter=500,
         initial_temp=4.0,
@@ -570,7 +570,7 @@ def test_simulated_annealing_stats_per_run_is_default(instance: Instance) -> Non
     )
     explicit_per_run_solution = solving.simulated_annealing.solve(
         instance,
-        start,
+        starts=start,
         top_k=3,
         max_iter=500,
         initial_temp=4.0,
@@ -592,7 +592,7 @@ def test_simulated_annealing_stats_per_run_top_k_above_one_logs_info(
     with caplog.at_level("INFO", logger="qubosolver.solving.classical.simulated_annealing"):
         solving.simulated_annealing.solve(
             instance_symmetric,
-            start,
+            starts=start,
             top_k=2,
             max_iter=50,
             initial_temp=4.0,
@@ -614,7 +614,7 @@ def test_simulated_annealing_stats_per_run_top_k_one_does_not_log(
     with caplog.at_level("INFO", logger="qubosolver.solving.classical.simulated_annealing"):
         solving.simulated_annealing.solve(
             instance_symmetric,
-            start,
+            starts=start,
             top_k=1,
             max_iter=50,
             initial_temp=4.0,
@@ -669,11 +669,11 @@ def test_simulated_annealing_overload_return_types_are_statically_correct() -> N
     assert_type is a no-op there -- its only purpose is to be type-checked."""
     start = bitstrings.zeros(1, instance_symmetric.size)
 
-    default_result = solving.simulated_annealing.solve(instance_symmetric, start)
+    default_result = solving.simulated_annealing.solve(instance_symmetric, starts=start)
     assert_type(default_result, Solution)
 
-    explicit_merge_result = solving.simulated_annealing.solve(instance_symmetric, start, merge=True)
+    explicit_merge_result = solving.simulated_annealing.solve(instance_symmetric, starts=start, merge=True)
     assert_type(explicit_merge_result, Solution)
 
-    unmerged_result = solving.simulated_annealing.solve(instance_symmetric, start, merge=False)
+    unmerged_result = solving.simulated_annealing.solve(instance_symmetric, starts=start, merge=False)
     assert_type(unmerged_result, list[Solution])

@@ -16,8 +16,8 @@ from qubosolver.utils import _costs
 
 def solve(
     instance: Instance,
-    starts: Bitstrings | int = 1,
     *,
+    starts: Bitstrings | int = 1,
     max_iter: int = 100,
     tabu_tenure: int = 7,
     max_no_improve: int = 20,

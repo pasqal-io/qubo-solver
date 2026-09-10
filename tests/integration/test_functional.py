@@ -186,7 +186,7 @@ def test_quantum_solve(
         solution = transforms.variable_fixing.lift(solution, effective_qubo)
 
     if postprocessing:
-        solution = solving.iterative_bitflip_local_search.solve(qubo, solution)
+        solution = solving.iterative_bitflip_local_search.solve(qubo, starts=solution)
 
     expected_optimal_probability = 0.75
     if drive_shaping_method in ["bayesian_search"]:
@@ -225,18 +225,18 @@ def test_classical_solve(
         solution = solving.cplex.solve(effective_qubo)
     elif solving_method == "tabu":
         solution = solving.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=3)
-        solution = solving.tabu_search.solve(effective_qubo, solution.bitstrings)
+        solution = solving.tabu_search.solve(effective_qubo, starts=solution.bitstrings)
     elif solving_method == "sa":
         solution = solving.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=1)
         solution = solving.simulated_annealing.solve(
-            effective_qubo, solution[0].bitstring.unsqueeze(0), top_k=1
+            effective_qubo, starts=solution[0].bitstring.unsqueeze(0), top_k=1
         )
     elif solving_method == "sa+tabu":
         solution = solving.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=1)
         solution = solving.simulated_annealing.solve(
-            effective_qubo, solution[0].bitstring.unsqueeze(0), top_k=1
+            effective_qubo, starts=solution[0].bitstring.unsqueeze(0), top_k=1
         )
-        solution = solving.tabu_search.solve(effective_qubo, solution.bitstrings)
+        solution = solving.tabu_search.solve(effective_qubo, starts=solution.bitstrings)
     elif solving_method == "random":
         solution = solving.random_sampling.solve(effective_qubo, rng=rng)
     else:
@@ -247,7 +247,7 @@ def test_classical_solve(
         solution = transforms.variable_fixing.lift(solution, effective_qubo)
 
     if postprocessing:
-        solution = solving.iterative_bitflip_local_search.solve(qubo, solution)
+        solution = solving.iterative_bitflip_local_search.solve(qubo, starts=solution)
 
     expected_optimal_probability = 0.75
     if solving_method in ["random"]:

@@ -212,24 +212,24 @@ _STRATEGIES: dict[str, Callable[..., tuple[Bitstring, float]]] = {
 
 def solve(
     instance: Instance,
-    candidates: Solution | int = 1,
     *,
+    starts: Solution | int = 1,
     strategy: Literal["greedy_sweep", "best_improvement", "first_improvement"] = "greedy_sweep",
     max_iterations: int = -1,
     time_limit: float = float("inf"),
 ) -> Solution:
-    """Improve every bitstring in `candidates` via single-bit-flip local search.
+    """Improve every bitstring in `starts` via single-bit-flip local search.
 
     Bitstrings driven to the same local minimum are merged afterwards via
     [`deduplicate`][qubosolver.Solution.deduplicate].
 
     `time_limit` is a *global* budget for the whole batch of bitstrings in
-    `candidates`, not a per-bitstring limit. Once it is exhausted, any
+    `starts`, not a per-bitstring limit. Once it is exhausted, any
     remaining bitstrings are left unchanged, with their original cost.
 
     Args:
         instance: The instance used to evaluate bitstring costs.
-        candidates: Either the [`Solution`][] to refine, or an ``int`` giving
+        starts: Either the [`Solution`][] to refine, or an ``int`` giving
             the number of uniformly random candidate bitstrings to draw
             via [`random_sampling.solve`][],
             which may return fewer than requested after deduplication. This
@@ -254,10 +254,10 @@ def solve(
     if strategy not in _STRATEGIES:
         raise ValueError(f"Unknown postprocessing strategy: {strategy}")
 
-    if isinstance(candidates, int):
-        solution = random_sampling_solve(instance, max_bitstrings=candidates)
+    if isinstance(starts, int):
+        solution = random_sampling_solve(instance, max_bitstrings=starts)
     else:
-        solution = deepcopy(candidates)
+        solution = deepcopy(starts)
 
     # If there are no bitstrings, return the solution unchanged.
     if not solution:

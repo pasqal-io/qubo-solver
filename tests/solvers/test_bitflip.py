@@ -32,7 +32,7 @@ def test_solution_not_mutated(
     check.equal(solution[0].string, "00")
 
     new_solution = solving.iterative_bitflip_local_search.solve(
-        instance, solution, strategy=strategy
+        instance, starts=solution, strategy=strategy
     )
     check.equal(len(solution), 1)
     check.equal(solution[0].string, "00")
@@ -44,7 +44,7 @@ def test_solution_not_mutated(
     check.is_not(new_solution, solution)
 
     new_solution2 = solving.iterative_bitflip_local_search.solve(
-        instance, new_solution, strategy=strategy
+        instance, starts=new_solution, strategy=strategy
     )
     check.equal(len(new_solution2), 1)
     if strategy == "best_improvement":
@@ -64,21 +64,23 @@ def test_strategy_selection_improves_solution(
     solution._update(instance)
 
     new_solution = solving.iterative_bitflip_local_search.solve(
-        instance, solution, strategy=strategy
+        instance, starts=solution, strategy=strategy
     )
 
     check.equal(new_solution[0].string, "11")
     check.less_equal(new_solution[0].cost, solution[0].cost)
 
 
-def test_int_candidates_generates_that_many_random_starts() -> None:
-    """Passing an int for `candidates` must draw that many uniformly random
+def test_int_starts_generates_that_many_random_starts() -> None:
+    """Passing an int for `starts` must draw that many uniformly random
     starting bitstrings (via random_sampling.solve) and locally optimize
     each of them, instead of requiring a pre-built Solution."""
     Q = matrix.tensor([[-10.0, 1.0], [1.0, -10.0]])
     instance = Instance(Q)
 
-    result = solving.iterative_bitflip_local_search.solve(instance, 5, strategy="best_improvement")
+    result = solving.iterative_bitflip_local_search.solve(
+        instance, starts=5, strategy="best_improvement"
+    )
 
     check.is_true(result.check_consistency(instance=instance, throw=True))
     check.less_equal(len(result), 5)
@@ -86,8 +88,8 @@ def test_int_candidates_generates_that_many_random_starts() -> None:
         check.equal(sol.string, "11")
 
 
-def test_default_candidates_is_one_random_start() -> None:
-    """Omitting `candidates` must default to a single uniformly random
+def test_default_starts_is_one_random_start() -> None:
+    """Omitting `starts` must default to a single uniformly random
     starting bitstring."""
     Q = matrix.tensor([[-10.0, 1.0], [1.0, -10.0]])
     instance = Instance(Q)
@@ -106,7 +108,7 @@ def test_unknown_strategy_raises() -> None:
     solution._update(instance)
 
     with pytest.raises(ValueError):
-        solving.iterative_bitflip_local_search.solve(instance, solution, strategy="does_not_exist")  # type: ignore[arg-type]
+        solving.iterative_bitflip_local_search.solve(instance, starts=solution, strategy="does_not_exist")  # type: ignore[arg-type]
 
 
 def test_max_iterations_limits_progress() -> None:
@@ -124,13 +126,13 @@ def test_max_iterations_limits_progress() -> None:
 
     limited = solving.iterative_bitflip_local_search.solve(
         instance,
-        solution,
+        starts=solution,
         strategy="best_improvement",
         max_iterations=1,
     )
     unlimited = solving.iterative_bitflip_local_search.solve(
         instance,
-        solution,
+        starts=solution,
         strategy="best_improvement",
         max_iterations=-1,
     )
@@ -174,7 +176,7 @@ def test_time_limit_is_global_and_skips_remaining_batch(monkeypatch: pytest.Monk
     monkeypatch.setattr(instance, "cost", ticking_cost)
 
     result = solving.iterative_bitflip_local_search.solve(
-        instance, solution, strategy="first_improvement", time_limit=time_limit
+        instance, starts=solution, strategy="first_improvement", time_limit=time_limit
     )
 
     # Only row 0 is ever searched: one eval for its initial cost, one more for the
