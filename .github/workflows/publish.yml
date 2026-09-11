@@ -20,7 +20,7 @@ jobs:
             # IMPORTANT: this permission is mandatory for trusted publishing
             id-token: write
         steps:
-        - name: Check out mis
+        - name: Checkout
           uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
           with:
             ref: ${{ github.ref }}
@@ -48,18 +48,8 @@ jobs:
         name: Publish docs to github pages
         runs-on: ubuntu-latest
         steps:
-        - name: Checkout mis
+        - name: Checkout
           uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        - name: Install JetBrains Mono font
-          run: |
-            sudo apt install -y wget unzip fontconfig
-            wget https://download.jetbrains.com/fonts/JetBrainsMono-2.304.zip
-            unzip JetBrainsMono-2.304.zip -d JetBrainsMono
-            mkdir -p /usr/share/fonts/truetype/jetbrains
-            cp JetBrainsMono/fonts/ttf/*.ttf /usr/share/fonts/truetype/jetbrains/
-            fc-cache -f -v
-        - name: Install graphviz
-          run: sudo apt-get install -y graphviz
         - name: Install uv
           uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
           with:
