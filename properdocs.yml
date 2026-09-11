@@ -118,6 +118,7 @@ theme:
 
 markdown_extensions:
 - admonition  # for notes
+- pymdownx.details  # for collapsible sections
 - footnotes
 - pymdownx.arithmatex: # for mathjax
     generic: true
