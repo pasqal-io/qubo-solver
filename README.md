@@ -56,6 +56,6 @@ If you wish to install directly from the source, for example, if you are develop
 
 # Getting in touch
 
-- [Pasqal Community Portal](https://community.pasqal.com/) (forums, chat, tutorials, examples, code library).
+- [Pasqal Community Portal](https://community.pasqal.com/) (to learn about Quantum Computing on Pasqal's platform).
 - [GitHub Repository](https://github.com/pasqal-io/qubo-solver/) (source code, issue tracker).
-- [Professional Support](https://www.pasqal.com/contact-us/) (if you need tech support, custom licenses, a variant of this library optimized for your workload, your own QPU, remote access to a QPU, ...)
+- [Professional Support](https://www.pasqal.com/contact-us/) (e.g., technical support, custom licensing, a variant of this library optimized for your workload, purchasing your own QPU or remote access to one, etc.).
