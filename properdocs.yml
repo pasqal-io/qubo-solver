@@ -80,6 +80,10 @@ nav:
     - How to contribute: CONTRIBUTING.md
     - Code of conduct: CODE_OF_CONDUCT.md
     - Contributor Agreement: CONTRIBUTOR_AGREEMENT.md
+  - Help:
+    - FAQ: help/faq.md
+    - Troubleshooting: help/troubleshooting.md
+    - Contact us: help/contact.md
 
 theme:
   name: material
