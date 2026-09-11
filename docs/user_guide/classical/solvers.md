@@ -30,8 +30,8 @@ instance = Instance(matrix.tensor([
     [ 0.0, 0.5, 1.0, 0.5,-1.5],
 ]))
 
-start = bitstrings.rand(5, instance.size, rng=torch_rng(15))
-solution = solving.tabu_search.solve(instance, start, time_limit=10.0)
+starts = bitstrings.rand(5, instance.size, rng=torch_rng(15))
+solution = solving.tabu_search.solve(instance, starts=starts, time_limit=10.0)
 
 print("Tabu Search solution:")
 print(analysis.to_dataframe([solution]))
@@ -69,7 +69,7 @@ print("Quantum solution:")
 print(analysis.to_dataframe([quantum_solution]))
 
 # Refine the quantum solution classically.
-refined_solution = solving.iterative_bitflip_local_search.solve(instance, quantum_solution)
+refined_solution = solving.iterative_bitflip_local_search.solve(instance, starts=quantum_solution)
 
 print("Refined solution:")
 print(analysis.to_dataframe([refined_solution]))
