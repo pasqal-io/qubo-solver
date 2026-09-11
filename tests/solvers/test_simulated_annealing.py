@@ -326,7 +326,9 @@ def test_simulated_annealing_raises_on_invalid_arguments(kwargs: dict, match: st
     start = bitstrings.zeros(1, instance_symmetric.size)
 
     with pytest.raises(ValueError, match=match):
-        solving.simulated_annealing.solve(instance_symmetric, starts=start, rng=torch_rng(658), **kwargs)
+        solving.simulated_annealing.solve(
+            instance_symmetric, starts=start, rng=torch_rng(658), **kwargs
+        )
 
 
 @pytest.mark.parametrize("instance", instances, ids=instance_ids)
@@ -672,8 +674,12 @@ def test_simulated_annealing_overload_return_types_are_statically_correct() -> N
     default_result = solving.simulated_annealing.solve(instance_symmetric, starts=start)
     assert_type(default_result, Solution)
 
-    explicit_merge_result = solving.simulated_annealing.solve(instance_symmetric, starts=start, merge=True)
+    explicit_merge_result = solving.simulated_annealing.solve(
+        instance_symmetric, starts=start, merge=True
+    )
     assert_type(explicit_merge_result, Solution)
 
-    unmerged_result = solving.simulated_annealing.solve(instance_symmetric, starts=start, merge=False)
+    unmerged_result = solving.simulated_annealing.solve(
+        instance_symmetric, starts=start, merge=False
+    )
     assert_type(unmerged_result, list[Solution])

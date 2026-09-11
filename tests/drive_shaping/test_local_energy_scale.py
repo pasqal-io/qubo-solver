@@ -30,9 +30,7 @@ from qubosolver import (
 )
 
 
-def gather_optimal_solutions(
-    solution: Solution, min_cost: float | None = None
-) -> list[Candidate]:
+def gather_optimal_solutions(solution: Solution, min_cost: float | None = None) -> list[Candidate]:
     """Return all solutions having the minimum cost."""
     if min_cost is None:
         min_cost = min(s.cost for s in solution)

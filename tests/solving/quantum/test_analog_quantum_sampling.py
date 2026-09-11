@@ -19,11 +19,13 @@ def test_too_large_register() -> None:
 
     # Two close atoms and one far one: a large max/min distance ratio that a
     # device-aware blade config would have avoided.
-    coords = tensor.tensor([
-        [-0.5, 0.0],
-        [ 0.5, 0.0],
-        [ 0.0, 9.9],
-    ])
+    coords = tensor.tensor(
+        [
+            [-0.5, 0.0],
+            [0.5, 0.0],
+            [0.0, 9.9],
+        ]
+    )
     config = embedding.blade.Config(
         starting_positions=coords.numpy(),
     )
@@ -35,8 +37,9 @@ def test_too_large_register() -> None:
     max_amplitude = device.specs["max_amplitude"]
     assert max_duration is not None
     assert max_amplitude is not None
-    drive = qoolqit.Drive(amplitude=qoolqit.ConstantWaveform(0.9 * max_duration, 0.1 * max_amplitude))
+    drive = qoolqit.Drive(
+        amplitude=qoolqit.ConstantWaveform(0.9 * max_duration, 0.1 * max_amplitude)
+    )
 
     with pytest.raises(ValueError, match="max/min distance ratio"):
         solving.analog_quantum_sampling.compile(register, drive, device)
-

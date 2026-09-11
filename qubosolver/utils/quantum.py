@@ -48,6 +48,7 @@ def extract_qubo(register: qoolqit.Register, drive: qoolqit.Drive) -> Instance:
 
     return Instance(Q)
 
+
 def _max_min_distance_ratio(device: qoolqit.Device) -> float:
     specs = device.specs
     min_distance = specs["min_distance"]
