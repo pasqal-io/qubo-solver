@@ -144,8 +144,7 @@ def test_quantum_solve(
         effective_qubo = transforms.variable_fixing.apply_recursively(qubo)
 
     if embedding_method == "blade":
-        blade_config = embedding.blade.Config(device=device)
-        register = embedding.blade.embed(effective_qubo, config=blade_config)
+        register = embedding.blade.embed_for_device(effective_qubo, device)
     elif embedding_method == "greedy_layout":
         greedy_config = embedding.greedy_layout.Config(traps=100)
         register = embedding.greedy_layout.embed(effective_qubo, config=greedy_config)

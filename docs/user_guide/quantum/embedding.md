@@ -16,6 +16,9 @@ See the [embedding overview notebook](../../tutorials/03-embedding/00-embedding.
 
 `qubosolver` currently ships two embedding algorithms — BLaDE and greedy layout, described below — plus the option to write your own embedding function or supply a precomputed register.
 
+!!! warning
+    Each algorithm exposes two entry points: `embed(instance, config=...)` and `embed_for_device(instance, device)`. `embed` takes a fully-resolved `config` as-is and does not look at any device, so use it to tune parameters freely — but tread carefully with device-dependent ones: a value unsuited to your target device can produce a register that device cannot realize. `embed_for_device` derives those device-dependent fields automatically and is the safer default whenever you have a target device. See the [API reference](../../api/embedding.md) for the exact fields each algorithm derives.
+
 ## BLaDE
 
 BLaDE places atoms by progressively projecting the problem from a high-dimensional layout down to the device's 2D plane, refining positions layer by layer so that pairwise distances keep approximating the QUBO couplings at each step.
@@ -24,12 +27,13 @@ BLaDE places atoms by progressively projecting the problem from a high-dimension
 - Tutorial: [BLaDE notebook](../../tutorials/03-embedding/01-blade.ipynb)
 - Under the hood: [BLaDE](../../under_the_hood/embedding/blade.md)
 
-The example below runs BLaDE with its default `BladeConfig` — the sequence of dimension layers, number of steps per round, and starting positions can all be overridden by passing a `config=BladeConfig(...)` argument. See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/) for the available parameters.
+The example below runs BLaDE sized for a target device via `embed_for_device` — the sequence of dimension layers, number of steps per round, and starting positions can all be tuned by combining `BladeConfig(device=...)` with `embed` directly. See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/) for the available parameters.
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="embedding" result="text"
 from qubosolver import Instance, matrix, embedding
 import torch
+import qoolqit
 
 # Private utility to set seed.
 from qubosolver.utils._random import manual_seed
@@ -41,7 +45,7 @@ instance = Instance(matrix.tensor([
     [2, 3, 0, 5],
     [1, 0, 5, 0],
     ]))
-register = embedding.blade.embed(instance)
+register = embedding.blade.embed_for_device(instance, qoolqit.AnalogDevice())
 interaction_matrix = matrix.as_tensor(register.interaction_matrix())
 
 torch.set_printoptions(precision=2)

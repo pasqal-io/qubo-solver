@@ -136,8 +136,7 @@ def test_quantum_solve_blade_proportional_diagonal(
     device = qoolqit.AnalogDeviceWithDMM()
     emulator = qoolqit.execution.LocalEmulator()
 
-    blade_config = embedding.blade.Config(device=device)
-    register = embedding.blade.embed(instance, config=blade_config)
+    register = embedding.blade.embed_for_device(instance, device)
 
     drive = drive_shaping.proportional_diagonal.build_drive(
         instance,
