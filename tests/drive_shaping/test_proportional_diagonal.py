@@ -68,7 +68,7 @@ def test_with_perfect_embedding(
         if constant_diagonal
         else vector.tensor([1.0, 1.25, 0.2, 1.167])
     )
-    Q = matrix.tensor(register.interaction_matrix()) + diagonal_scale * torch.diag(diagonal)
+    Q = matrix.as_tensor(register.interaction_matrix()) + diagonal_scale * torch.diag(diagonal)
     Q /= Q.max()
     instance = Instance(matrix=Q)
 
@@ -155,7 +155,7 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
             [D, 0.0],
         ]
     )
-    Q = matrix.tensor(register.interaction_matrix()) + vector.zeros(3).fill_(-50.0).diag()
+    Q = matrix.as_tensor(register.interaction_matrix()) + vector.zeros(3).fill_(-50.0).diag()
     instance = Instance(Q)
 
     with caplog.at_level(logging.INFO, logger="qubosolver.drive_shaping.proportional_diagonal"):

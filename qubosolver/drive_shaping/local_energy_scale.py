@@ -140,7 +140,7 @@ def build_drive(
     # For each qubit i, compute:
     #
     # sum_{j != i} |V_ij|.
-    interaction_scale = matrix.tensor(register.interaction_matrix()).abs().sum(dim=0)
+    interaction_scale = matrix.as_tensor(register.interaction_matrix()).abs().sum(dim=0)
 
     # Local physical energy scale:
     #

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 
 import numpy as np
 import pytest
@@ -96,7 +97,11 @@ def test_run_local_backends(simple_qubo_instance: Instance, local_backend: Local
             )
         ),
     )
-    solutions = solver.solve()
+    with warnings.catch_warnings():
+        # simple_qubo_instance is tiny, so non-QutipBackendV2 backends are intentionally
+        # suboptimal here and expected to warn.
+        warnings.filterwarnings("ignore", message="Using .* Consider using", category=UserWarning)
+        solutions = solver.solve()
     # theoretically -4.4000 can be found
     assert solutions.costs.min().item() <= -3.0
 
@@ -116,7 +121,7 @@ def test_solver_different_devices(
             greedy_layout_traps=qubo_for_testing_many_devices.size,
         ),
         device=local_device,
-        backend=LocalEmulator(backend_type=SVBackend),
+        backend=LocalEmulator(),
     )
     config = SolverConfig(
         solving=quantum_config,

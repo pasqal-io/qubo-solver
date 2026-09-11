@@ -7,7 +7,8 @@ credentials are needed.
 
 from __future__ import annotations
 
-from typing import Any, Mapping, Sequence as TypingSequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 from uuid import uuid4
 
 from pulser.backend.remote import (
@@ -18,9 +19,10 @@ from pulser.backend.remote import (
     RemoteResultsError,
 )
 from pulser.backend.results import Results
-from pulser.sequence import Sequence
+from pulser.sequence import Sequence as PulserSequence
 from pulser_simulation import QutipBackendV2
 
+from qubosolver.types._checks import no_runtime_typecheck
 from qubosolver.types.backends import _SV_THRESHOLD
 
 # From this register size on, QuTiP emulation becomes intractable.
@@ -44,9 +46,10 @@ class LocalConnection(RemoteConnection):
         """Instantiate a connection with no submitted batch."""
         self._batches: dict[str, Results] = {}
 
+    @no_runtime_typecheck
     def submit(
         self,
-        sequence: Sequence,
+        sequence: PulserSequence,
         wait: bool = False,
         open: bool = False,
         batch_id: str | None = None,
@@ -83,7 +86,7 @@ class LocalConnection(RemoteConnection):
         """Return whether open batches are supported, which they are not."""
         return False
 
-    def _fetch_result(self, batch_id: str, job_ids: list[str] | None) -> TypingSequence[Results]:
+    def _fetch_result(self, batch_id: str, job_ids: list[str] | None) -> Sequence[Results]:
         """Return the results of a batch, whose only job `job_ids` must match."""
         results = self._batch(batch_id)
         if job_ids is not None and job_ids != self._get_job_ids(batch_id):

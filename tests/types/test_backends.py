@@ -163,28 +163,28 @@ def remote_auto_backend() -> tuple[RemoteEmulator, pulser.backend.RemoteResults]
 
 @pytest.mark.priority(120)
 @pytest.mark.parametrize(
-    "size, backend_and_results, expected_type",
+    "size, backend_and_results, expected_type, optimal_type",
     [
         # Auto backend tests - local
-        (2, "local_auto_backend", QutipBackendV2),
-        (20, "local_auto_backend", SVBackend),
-        (30, "local_auto_backend", MPSBackend),
+        (2, "local_auto_backend", QutipBackendV2, QutipBackendV2),
+        (20, "local_auto_backend", SVBackend, SVBackend),
+        (30, "local_auto_backend", MPSBackend, MPSBackend),
         # Auto backend tests - remote
-        (2, "remote_auto_backend", RemoteEmuFreeBackend),
-        (20, "remote_auto_backend", RemoteSVBackend),
-        (30, "remote_auto_backend", RemoteMPSBackend),
+        (2, "remote_auto_backend", RemoteEmuFreeBackend, RemoteEmuFreeBackend),
+        (20, "remote_auto_backend", RemoteSVBackend, RemoteSVBackend),
+        (30, "remote_auto_backend", RemoteMPSBackend, RemoteMPSBackend),
         # Default backend tests - local
-        (2, "local_default_backend", QutipBackendV2),
-        (20, "local_default_backend", SVBackend),
-        (30, "local_default_backend", MPSBackend),
-        # Default backend tests - remote (always RemoteEmuFreeBackend)
-        (2, "remote_default_backend", RemoteEmuFreeBackend),
-        (20, "remote_default_backend", RemoteEmuFreeBackend),
-        (30, "remote_default_backend", RemoteEmuFreeBackend),
+        (2, "local_default_backend", QutipBackendV2, QutipBackendV2),
+        (20, "local_default_backend", SVBackend, SVBackend),
+        (30, "local_default_backend", MPSBackend, MPSBackend),
+        # Default backend tests - remote (always RemoteEmuFreeBackend, suboptimal above ~15 qubits)
+        (2, "remote_default_backend", RemoteEmuFreeBackend, RemoteEmuFreeBackend),
+        (20, "remote_default_backend", RemoteEmuFreeBackend, RemoteSVBackend),
+        (30, "remote_default_backend", RemoteEmuFreeBackend, RemoteMPSBackend),
         # Default config tests - local
-        (2, "local_default_config", QutipBackendV2),
-        (20, "local_default_config", SVBackend),
-        (30, "local_default_config", MPSBackend),
+        (2, "local_default_config", QutipBackendV2, QutipBackendV2),
+        (20, "local_default_config", SVBackend, SVBackend),
+        (30, "local_default_config", MPSBackend, MPSBackend),
     ],
     indirect=("backend_and_results",),
 )
@@ -192,6 +192,7 @@ def test_emulator_backend_selection(
     size: int,
     backend_and_results: tuple,
     expected_type: type,
+    optimal_type: type,
 ) -> None:
     """Test that emulators select the correct backend based on problem size and configuration."""
     Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
@@ -210,7 +211,11 @@ def test_emulator_backend_selection(
 
     solver = Solver(instance, solver_config)
     with patch.object(expected_type, "run", return_value=results) as mock_run:
-        solver.solve()
+        if expected_type is not optimal_type:
+            with pytest.warns(UserWarning, match=f"Consider using {optimal_type.__name__}"):
+                solver.solve()
+        else:
+            solver.solve()
         mock_run.assert_called_once()
 
 

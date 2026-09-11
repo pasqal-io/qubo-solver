@@ -144,7 +144,7 @@ def test_max_iterations_limits_progress() -> None:
 def test_time_limit_is_global_and_skips_remaining_batch(monkeypatch: pytest.MonkeyPatch) -> None:
     n = 4
     Q = torch.randn(n, n, generator=torch_rng(0))
-    Q = matrix.tensor((Q + Q.T) / 2)
+    Q = matrix.as_tensor((Q + Q.T) / 2)
     instance = Instance(Q)
 
     # Fake monotonic clock, ticked by qubo evaluations, so the deadline trips

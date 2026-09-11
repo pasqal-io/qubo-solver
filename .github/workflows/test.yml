@@ -77,7 +77,7 @@ jobs:
             USE_DOUBLE_PRECISION: ${{ matrix.use-double-precision }}
             QUBO_SOLVER_RUNTIME_CHECKS: 1
           run: |
-            uv run --all-extras pytest
+            uv run --all-extras pytest -W error
 
   test_docs:
     name: Documentation
