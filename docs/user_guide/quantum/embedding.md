@@ -94,10 +94,10 @@ instance = Instance(matrix.tensor([
     [1, 0, 5, 0],
     ]))
 
-config = embedding.greedy_layout.Config(
-    lattice=embedding.Lattice.TRIANGULAR,
+register = embedding.greedy_layout.embed_for_device(
+    instance,
+    qoolqit.AnalogDevice(),
 )
-register = embedding.greedy_layout.embed(instance, config=config, device=qoolqit.AnalogDevice())
 interaction_matrix = matrix.as_tensor(register.interaction_matrix())
 
 torch.set_printoptions(precision=2)

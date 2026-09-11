@@ -323,13 +323,13 @@ def test_max_distance_constraint() -> None:
 def test_empty_embedding() -> None:
     config = embedding.greedy_layout.Config(traps=0)
     with pytest.raises(ValueError, match="empty instance"):
-        embedding.greedy_layout.embed(Instance(), device=AnalogDeviceWithDMM(), config=config)
+        embedding.greedy_layout.embed(Instance(), config=config)
 
 
 def test_single_atom_embedding() -> None:
     config = embedding.greedy_layout.Config(traps=1)
     instance = Instance(matrix.zeros(1))
-    register = embedding.greedy_layout.embed(instance, device=AnalogDeviceWithDMM(), config=config)
+    register = embedding.greedy_layout.embed(instance, config=config)
     check.equal(len(register), 1)
 
 

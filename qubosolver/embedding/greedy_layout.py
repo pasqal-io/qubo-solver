@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Literal, TYPE_CHECKING
+import logging
 import numpy as np
 import pathlib
 
@@ -24,14 +25,24 @@ from qubosolver.utils.quantum import _max_min_distance_ratio
 if TYPE_CHECKING:
     from qubosolver import EmbeddingConfig
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class Config:
     """Configuration for the greedy layout embedding algorithm.
 
+    Use `Config.from_device` to derive `traps` and `max_min_dist_ratio`
+    from a device's constraints instead of setting them by hand.
+
+    Warning:
+        `traps` and `max_min_dist_ratio` are advanced parameters: set them
+        manually (or overwrite them after calling `from_device`) with care,
+        since a bad value can produce a register that the target device
+        cannot realize.
+
     Attributes:
-        traps: Number of trap sites in the layout. ``"device"`` means
-            auto-detect from the device.
+        traps: Number of trap sites in the layout.
         max_possible_term: Largest QUBO interaction term representable at the
             minimum trap-trap distance, in adimensional units. If a float, it
             is used directly. If a tuple, the first element must be
@@ -42,56 +53,56 @@ class Config:
         lattice: Lattice pattern (square or triangular).
         max_min_dist_ratio: Maximum allowed ratio between the largest and
             the smallest inter-atom distance in the resulting register.
-            ``"device"`` means it is derived from the device.
     """
 
-    traps: int | Literal["device"] = "device"
+    traps: int = 200
+    max_min_dist_ratio: float = float("inf")
     max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
     lattice: Lattice = Lattice.TRIANGULAR
-    max_min_dist_ratio: float | Literal["device"] = "device"
 
     def __post_init__(self) -> None:
         self._draw_steps: bool = False
         self._animation_save_path: pathlib.Path | None = None
 
-    def _update_from_device(self, device: qoolqit.Device) -> None:
-        """Resolve the ``"device"`` sentinels in-place from device constraints.
+    @staticmethod
+    def from_device(device: qoolqit.Device) -> Config:
+        """Create a [`Config`][] with `traps` and `max_min_dist_ratio` derived from *device*.
 
-        When ``traps`` is ``"device"`` (auto), resolves it via
-        `_number_of_traps_from_device`. When ``max_min_dist_ratio`` is
-        ``"device"`` (auto), resolves it from *device*'s
-        ``max_radial_distance`` / ``min_distance`` specs (or ``inf`` when the
-        device imposes no such limits).
+        Use this to size the embedding to what *device* actually supports.
+        All fields can be overwritten on the returned instance.
 
         Args:
-            device: Target quantum device whose ``_device`` attributes are
-                inspected for ``max_layout_traps``, ``max_atom_num``,
-                ``max_layout_filling``, ``max_radial_distance``, and
-                ``min_distance``.
-        """
-        if self.traps == "device":
-            self.traps = _number_of_traps_from_device(device)
+            device: Target quantum device to derive the layout constraints from.
 
-        if self.max_min_dist_ratio == "device":
-            self.max_min_dist_ratio = _max_min_distance_ratio(device)
+        Returns:
+            A configuration with device-derived `traps` and `max_min_dist_ratio`.
+        """
+        return Config(
+            traps=_number_of_traps_from_device(device),
+            max_min_dist_ratio=_max_min_distance_ratio(device),
+        )
 
     @staticmethod
-    def _from_embedding_config(config: EmbeddingConfig) -> Config:
+    def _from_embedding_config(config: EmbeddingConfig, device: qoolqit.Device) -> Config:
         """Create a [`Config`][] from a user-facing [`EmbeddingConfig`][].
 
         Maps the ``greedy_*`` fields of *config* onto the corresponding
-        `Config` attributes. Sentinel values (``"device"`` for ``greedy_layout_traps``,
-        ``"device"`` for ``max_min_dist_ratio``) are carried through as
-        ``"device"`` and only resolved later, by `update_from_device`.
+        `Config` attributes. Wherever *config* uses the ``"device"`` sentinel
+        (for ``greedy_layout_traps`` or ``max_min_dist_ratio``), the value is
+        instead derived from *device* via `Config.from_device`.
 
         Args:
             config: The embedding configuration to convert.
+            device: Target quantum device, used to resolve any ``"device"``
+                sentinel in *config*.
 
         Returns:
             A configuration fully populated from the ``greedy_*`` embedding settings of *config*.
         """
-        cfg = Config()
-        cfg.traps = config.greedy_layout_traps
+        cfg = Config.from_device(device)
+
+        if config.greedy_layout_traps != "device":
+            cfg.traps = config.greedy_layout_traps
         cfg.max_possible_term = config.greedy_layout_max_possible_term
 
         match config.greedy_layout_lattice:
@@ -105,7 +116,8 @@ class Config:
                     f"Expected 'triangular' or 'square'."
                 )
 
-        cfg.max_min_dist_ratio = config.max_min_dist_ratio
+        if config.max_min_dist_ratio != "device":
+            cfg.max_min_dist_ratio = config.max_min_dist_ratio
 
         return cfg
 
@@ -174,10 +186,40 @@ def _number_of_traps_from_device(device: qoolqit.Device) -> int:
     return 200
 
 
+def embed_for_device(
+    instance: Instance,
+    device: qoolqit.Device,
+) -> qoolqit.Register:
+    """Embed a QUBO instance using the greedy layout-based algorithm, sized for *device*.
+
+    Convenience wrapper around `embed` that derives `Config.traps` and
+    `Config.max_min_dist_ratio` from *device* via `Config.from_device`.
+
+    Args:
+        instance: The QUBO instance to embed.
+        device: Target quantum device the resulting register must fit.
+
+    Returns:
+        A register mapping each atom to a 2-D position.
+
+    To also tune device-independent parameters (e.g. `lattice` or
+    `max_possible_term`), combine [`Config.from_device`][] with [`embed`][]
+    directly:
+
+    Example:
+        ```python
+        config = Config.from_device(device)
+        config.lattice = Lattice.SQUARE
+        register = embed(instance, config=config)
+        ```
+    """
+    logger.debug("embed_for_device: instance size=%d, device=%r", instance.size, device)
+    return embed(instance, config=Config.from_device(device))
+
+
 def embed(
     instance: Instance,
     *,
-    device: qoolqit.Device,
     config: Config = Config(),
 ) -> qoolqit.Register:
     """Embed a QUBO instance using the greedy layout-based algorithm.
@@ -186,15 +228,17 @@ def embed(
     scale as ``1 / distance ** 6``), so the coordinates it returns are already
     final and require no post-hoc rescaling.
 
+    Warning:
+        A poorly chosen `config` can produce a register that is incompatible
+        with a target device. See [`Config`][].
+
     Args:
         instance: The QUBO instance to embed.  Its ``matrix`` attribute drives
             the greedy cost function.
-        device: Target quantum device.
-        config: Greedy embedding parameters.  Its device-dependent fields are
-            resolved against `device` before the algorithm runs, so device constraints
-            are always respected. ``max_min_dist_ratio`` bounds the ratio
-            between the largest and the smallest inter-atom distance in the
-            resulting register.
+        config: Greedy embedding parameters, fully resolved (see `Config.from_device`
+            for deriving `traps` and `max_min_dist_ratio` from a device).
+            ``max_min_dist_ratio`` bounds the ratio between the largest and
+            the smallest inter-atom distance in the resulting register.
 
     Returns:
         A register mapping each atom to a 2-D position.
@@ -205,15 +249,12 @@ def embed(
             count is less than ``instance.size`` (i.e. there are not enough
             trap sites for all QUBO variables).
     """
+    logger.debug("embed: instance size=%d, config=%r", instance.size, config)
     if not instance:
         raise ValueError("Cannot embed an empty instance (size=0): nothing to place.")
 
     if _has_negative_offdiagonal(instance.matrix):
         raise ValueError("QUBOs with negative off-diagonal coefficients cannot be embedded.")
-
-    config._update_from_device(device)
-    assert isinstance(config.traps, int)  # nosec B101
-    assert isinstance(config.max_min_dist_ratio, float)  # nosec B101
 
     if config.traps < instance.size:
         raise ValueError(

@@ -82,7 +82,7 @@ def test_quantum_remote_job(
             register = embedding.blade.embed(instance)
         else:
             config = embedding.greedy_layout.Config(traps=100)
-            register = embedding.greedy_layout.embed(instance, device=device, config=config)
+            register = embedding.greedy_layout.embed(instance, config=config)
 
         num_shots = 50
         backend: protocols.Backend

@@ -195,7 +195,7 @@ def test_quantum_solve_greedy_proportional_diagonal(
     emulator = qoolqit.execution.LocalEmulator()
 
     greedy_config = embedding.greedy_layout.Config(traps=100)
-    register = embedding.greedy_layout.embed(instance, device=device, config=greedy_config)
+    register = embedding.greedy_layout.embed(instance, config=greedy_config)
 
     drive = drive_shaping.proportional_diagonal.build_drive(
         instance,
