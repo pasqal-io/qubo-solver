@@ -188,8 +188,7 @@ class BaseSolver(ABC):
 
         instance: Instance = transforms.variable_fixing.apply_recursively(self.instance)
         instance = transforms.negative_bitflip.apply(instance)
-        assert isinstance(instance, transforms.negative_bitflip.Instance)
-        self._update_instance(instance)
+        self._update_instance(instance.negative_bitflip)
 
     def _post_process_fixation(self, solution: Solution) -> Solution:
         """Restore fixed variables and recover a solution over the original QUBO.

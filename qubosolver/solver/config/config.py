@@ -108,7 +108,7 @@ class SolverConfig:
         """
         if self.solving_mode != "quantum":
             raise ValueError(f"Config '{self.config_name}' is not configured for quantum solving.")
-        assert isinstance(self.solving, QuantumSolvingConfig)
+        assert isinstance(self.solving, QuantumSolvingConfig)  # nosec B101
         return self.solving
 
     @property
@@ -127,5 +127,5 @@ class SolverConfig:
             raise ValueError(
                 f"Config '{self.config_name}' is not configured for classical solving."
             )
-        assert isinstance(self.solving, ClassicalSolvingConfig)
+        assert isinstance(self.solving, ClassicalSolvingConfig)  # nosec B101
         return self.solving

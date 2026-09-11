@@ -69,6 +69,7 @@ dev = [
   "mypy",
   "jaxtyping",
   "beartype",
+  "bandit[sarif,toml]>=1.9.4",
 ]
 doc = [
   "properdocs",
@@ -161,6 +162,9 @@ max-complexity = 15
 
 [lint.flake8-quotes]
 docstring-quotes = "double"
+
+[tool.bandit]
+exclude_dirs = ["tests", "docs", "examples"]
 
 [tool.black]
 line-length = 100

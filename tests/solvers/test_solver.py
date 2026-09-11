@@ -40,7 +40,6 @@ from pulser.backend.remote import (
     Results,
     RemoteConnection,
 )
-from emu_sv import SVBackend
 
 from typing import Optional
 

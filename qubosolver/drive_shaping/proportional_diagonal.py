@@ -55,7 +55,7 @@ def build_drive(
     if specs.get("max_amplitude") is not None and specs.get("max_abs_detuning") is not None:
         max_amplitude = specs["max_amplitude"]
         max_abs_detuning = specs["max_abs_detuning"]
-        assert max_amplitude is not None and max_abs_detuning is not None
+        assert max_amplitude is not None and max_abs_detuning is not None  # nosec B101
         det_amp_ratio = max_amplitude / max_abs_detuning
         if kappa < det_amp_ratio:
             logger.warning(

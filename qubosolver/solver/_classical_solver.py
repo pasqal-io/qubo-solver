@@ -160,7 +160,6 @@ class TabuSearchSolver(BaseClassicalSolver):
             ``config.max_bitstrings`` best bitstrings found during the search.
         """
         if self.config.tabu_x0 is None:
-            assert self.instance.size
             rng = torch_rng().set_state(torch.get_rng_state())
             random_solution = solving.random_sampling.solve(
                 self.instance, rng=rng, max_bitstrings=self.config.max_bitstrings

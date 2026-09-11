@@ -131,7 +131,7 @@ def save_sized_buffer(output: Stream[bytes], buffer: Buffer) -> None:
         AssertionError: If the buffer is not an instance of Sized.
         struct.error: If the buffer length cannot be packed as an unsigned int.
     """
-    assert isinstance(buffer, Sized)
+    assert isinstance(buffer, Sized)  # nosec B101
     output.write(struct.pack(">I", len(buffer)))
     output.write(buffer)
 
