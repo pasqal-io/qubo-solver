@@ -18,7 +18,7 @@ Users setting their first steps into quantum computing will learn how to impleme
 
 ### Install as a dependency
 
-Using `hatch`, `uv` or any pyproject-compatible Python manager
+Using `uv` or any pyproject-compatible Python manager
 
 Edit file `pyproject.toml` to add the line
 
@@ -70,7 +70,7 @@ part of the [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/wind
 ### Cplex Installation
 
 The `cplex` package is only available under some combinations of platforms and versions of Python. We
-recommend using python `3.11` or `3.12`, which we have tested to work with cplex.
+support python `3.10` through `3.14`, which we have tested to work with cplex.
 
 If you wish to use the licensed version of cplex, you will need to set the environment
 variable `ILOG_LICENSE_FILE` to the location of the license file -- for more details, see the documentation
