@@ -35,6 +35,18 @@ def test_tabu_search_costs_match_bitstrings() -> None:
     )
 
 
+def test_tabu_search_stays_consistent_across_refresh_boundary() -> None:
+    """The incrementally tracked `QX`/`f_current` are periodically recomputed
+    exactly (see `_REFRESH_EVERY` in `tabu_search.py`) to bound rounding
+    drift; run past several refreshes and check the result is still fully
+    internally consistent."""
+    start = bitstrings.zeros(3, instance.size)
+
+    solution = solving.tabu_search.solve(instance, starts=start, max_iter=300)
+
+    check.is_true(solution.check_consistency(instance=instance, throw=True))
+
+
 def test_tabu_search_runs_start_from_given_bitstrings() -> None:
     """Each row of ``start`` must seed its own independent run.
 
