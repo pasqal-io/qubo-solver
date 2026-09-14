@@ -101,7 +101,8 @@ def test_run_local_backends(simple_qubo_instance: Instance, local_backend: Local
     # simple_qubo_instance is tiny, so non-QutipBackendV2 backends are intentionally
     # suboptimal here and expected to warn.
     if local_backend._backend_type is QutipBackendV2:
-        with warnings.catch_warnings(action="error"):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             solutions = solver.solve()
     else:
         with pytest.warns(UserWarning, match="Using .* Consider using"):
