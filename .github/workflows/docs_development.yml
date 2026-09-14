@@ -1,0 +1,35 @@
+name: Docs dev version
+
+on:
+    pull_request:
+        types:
+            [closed]
+        branches:
+            - main
+
+permissions:
+    contents: read
+
+jobs:
+    publish_dev_docs:
+        name: Publish development docs to github pages
+        if: github.event.pull_request.merged == true
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout
+          uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          with:
+            ref: main
+        - name: Install uv
+          uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+          with:
+            version: 0.11.30
+            python-version: '3.14'
+        - name: Deploy docs
+          run: |
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git fetch origin gh-pages
+            uv run --extra doc mike deploy --push --update-aliases main development
+        permissions:
+            contents: write # TODO: wide permissions needed for deployment with mike

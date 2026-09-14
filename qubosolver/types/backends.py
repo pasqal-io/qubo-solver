@@ -17,6 +17,7 @@ References:
 
 from __future__ import annotations
 
+import logging
 import warnings
 from typing import Any, Type, cast, Literal
 
@@ -36,6 +37,8 @@ from qoolqit.execution import (
     LocalEmulator as QoolqitLocalEmulator,
     RemoteEmulator as QoolqitRemoteEmulator,
 )
+
+logger = logging.getLogger(__name__)
 
 # Thresholds for automatic backend selection based on number of qubits
 _MPS_THRESHOLD = 26  # Use MPS-based backends for problems with ≥26 qubits
@@ -129,7 +132,9 @@ class AutoLocalEmulatorBackend(EmulatorBackend):
             where `__new__` returns an instance of a different class, confuses static analyzers.
         """
         n_qubits = len(sequence.register.qubit_ids)
-        return _select_backend_type(n_qubits, False)(sequence, *args, **kwargs)
+        backend_type = _select_backend_type(n_qubits, False)
+        logger.info("Selected %s for %d qubits.", backend_type.__name__, n_qubits)
+        return backend_type(sequence, *args, **kwargs)
 
 
 class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
@@ -166,7 +171,9 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
             where `__new__` returns an instance of a different class, confuses static analyzers.
         """
         n_qubits = len(sequence.register.qubit_ids)
-        backend = _select_backend_type(n_qubits, True)(sequence, *args, **kwargs)
+        backend_type = _select_backend_type(n_qubits, True)
+        logger.info("Selected %s for %d qubits.", backend_type.__name__, n_qubits)
+        backend = backend_type(sequence, *args, **kwargs)
         assert isinstance(backend, RemoteEmulatorBackend)  # nosec B101
         return backend
 
@@ -200,6 +207,7 @@ def _warn_suboptimal_backend(
     if remote:
         warning_msg += " Note: Fees may apply for remote execution."
 
+    logger.warning(warning_msg)
     warnings.warn(warning_msg, UserWarning, stacklevel=2)
 
 

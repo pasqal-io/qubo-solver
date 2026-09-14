@@ -116,10 +116,10 @@ class GreedyEmbedder(_BaseEmbedder):
         Returns:
             The atom register with positions determined by the greedy placer.
         """
-        config = embedding.greedy_layout.Config._from_embedding_config(self.config.embedding)
-        return embedding.greedy_layout.embed(
-            self.instance, device=self.config.device, config=config
+        config = embedding.greedy_layout.Config._from_embedding_config(
+            self.config.embedding, self.config.device
         )
+        return embedding.greedy_layout.embed(self.instance, config=config)
 
 
 def _get_embedder(

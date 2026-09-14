@@ -9,9 +9,12 @@ hybrid, and classical QUBO solvers.
 
 from __future__ import annotations
 
-from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING
+import logging
 
-from qubosolver.types import (
+logging.getLogger(__name__).addHandler(logging.NullHandler())
+
+from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING  # noqa: E402
+from qubosolver.types import (  # noqa: E402
     # Submodules
     bitstring,
     bitstrings,
@@ -30,7 +33,7 @@ from qubosolver.types import (
     Vectori,
     # Classes
     Solution,
-    SingleSolution,
+    Candidate,
     Instance,
     Dataset,
     LocalEmulator,
@@ -40,14 +43,14 @@ from qubosolver.types import (
     # Functions
     torch_rng,
 )
-from qubosolver.utils import extract_qubo, analysis
+from qubosolver.utils import extract_qubo, analysis  # noqa: E402
 
-from importlib.metadata import version
-from pulser.sequence import store_package_version_metadata
+from importlib.metadata import version  # noqa: E402
+from pulser.sequence import store_package_version_metadata  # noqa: E402
 
-from qubosolver import transforms, drive_shaping, embedding, solving
+from qubosolver import transforms, drive_shaping, embedding, solving  # noqa: E402
 
-from qubosolver.solver import (
+from qubosolver.solver import (  # noqa: E402
     Solver,
     SolverConfig,
     DecompositionConfig,
@@ -81,7 +84,7 @@ __all__ = [
     "Vectori",
     # Classes
     "Solution",
-    "SingleSolution",
+    "Candidate",
     "Instance",
     "Dataset",
     "LocalEmulator",

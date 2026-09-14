@@ -77,6 +77,43 @@ def test_wrong_costs_is_invalid(instance: Instance) -> None:
     _assert_invalid(solution, instance)
 
 
+def test_tiny_cost_error_on_zero_cost_bitstring_is_tolerated() -> None:
+    """A float rounding error must be judged the same way at cost 0 as elsewhere.
+
+    Solvers that accumulate costs incrementally (e.g.
+    [`simulated_annealing`][qubosolver.solving.classical.simulated_annealing])
+    report costs a few ULPs off the exact ``x^T Q x``. `check_consistency`
+    absorbs that via `torch.allclose`'s relative tolerance -- except on a
+    bitstring whose true cost is exactly ``0.0``, where only `atol` applies.
+    Callers that expect such errors must be able to raise `atol` explicitly
+    so the very same absolute error is tolerated there too.
+    """
+    # x = [1, 1] costs 1 - 1 - 1 + 1 = 0 exactly; x = [1, 0] costs 1.
+    Q = matrix.tensor([[1.0, -1.0], [-1.0, 1.0]])
+    zero_cost_instance = Instance(matrix=Q)
+    two_bitstrings = bitstrings.tensor([[1, 1], [1, 0]])
+    error = 1e-6
+
+    def solution_with_costs(costs: list[float]) -> Solution:
+        return Solution(
+            bitstrings=two_bitstrings,
+            costs=vector.tensor(costs),
+            counts=vectori.tensor([1, 1]),
+            probabilities=vector.tensor([0.5, 0.5]),
+        )
+
+    # The same absolute error is tolerated on the cost-1.0 bitstring ...
+    check.is_true(
+        solution_with_costs([0.0, 1.0 - error]).check_consistency(instance=zero_cost_instance)
+    )
+    # ... so it must equally be tolerated on the cost-0.0 one, given a large enough atol.
+    check.is_true(
+        solution_with_costs([0.0 - error, 1.0]).check_consistency(
+            instance=zero_cost_instance, atol=1e-5
+        )
+    )
+
+
 def test_unsorted_costs_is_invalid(instance: Instance) -> None:
     solution = Solution(
         bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
@@ -161,6 +198,30 @@ def test_deduplicate_sums_counts_for_duplicate_bitstrings(instance: Instance) ->
     check.equal(s1.cost, 2.0)
     check.equal(s1.count, 1)
     check.almost_equal(s1.probability, 1 / 6)
+
+
+def test_deduplicate_update_false_skips_sort_and_probabilities() -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[0, 1], [1, 0], [1, 0]]),
+        costs=vector.tensor([2.0, 1.0, 1.0]),
+        counts=vectori.tensor([1, 2, 3]),
+        probabilities=vector.tensor([1 / 6, 1 / 3, 1 / 2]),
+    )
+    solution.deduplicate(update=False)
+    assert len(solution) == 2
+
+    # Merged, but left in original row order (not re-sorted by cost) and with
+    # stale probabilities (not recomputed from the merged counts).
+    s0 = solution[0]
+    check.equal(s0.string, "01")
+    check.equal(s0.cost, 2.0)
+    check.equal(s0.count, 1)
+    check.almost_equal(s0.probability, 1 / 6)
+
+    s1 = solution[1]
+    check.equal(s1.string, "10")
+    check.equal(s1.cost, 1.0)
+    check.equal(s1.count, 5)
 
 
 def test_deduplicate_keeps_minimum_cost_for_duplicate_bitstrings() -> None:
@@ -524,6 +585,53 @@ def test_truncate_probabilities_without_counts_raises() -> None:
     )
     with pytest.raises(AssertionError):
         solution.truncate(2)
+
+
+def test_compute_costs_mutates_in_place(instance: Instance) -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
+        counts=vectori.tensor([1, 3]),
+    )
+    result = solution._compute_costs(instance.matrix)
+    check.is_(result, solution)
+    torch.testing.assert_close(solution.costs, vector.tensor([2.0, 1.0]))
+
+
+def test_sort_by_cost_mutates_in_place() -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
+        costs=vector.tensor([2.0, 1.0]),
+        counts=vectori.tensor([1, 3]),
+        probabilities=vector.tensor([0.25, 0.75]),
+    )
+    result = solution._sort_by_cost()
+    check.is_(result, solution)
+    torch.testing.assert_close(solution.costs, vector.tensor([1.0, 2.0]))
+    torch.testing.assert_close(solution.bitstrings, bitstrings.tensor([[1, 0], [0, 1]]))
+
+
+def test_compute_probabilities_mutates_in_place() -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
+        costs=vector.tensor([2.0, 1.0]),
+        counts=vectori.tensor([1, 3]),
+    )
+    result = solution._compute_probabilities()
+    check.is_(result, solution)
+    torch.testing.assert_close(solution.probabilities, vector.tensor([0.25, 0.75]))
+
+
+def test_update_mutates_in_place(instance: Instance) -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
+        counts=vectori.tensor([1, 3]),
+    )
+    result = solution._update(instance)
+    check.is_(result, solution)
+    torch.testing.assert_close(solution.bitstrings, bitstrings.tensor([[1, 0], [0, 1]]))
+    torch.testing.assert_close(solution.costs, vector.tensor([1.0, 2.0]))
+    torch.testing.assert_close(solution.counts, vectori.tensor([3, 1]))
+    torch.testing.assert_close(solution.probabilities, vector.tensor([0.75, 0.25]))
 
 
 def test_update_computes_costs_sorts_and_computes_probabilities(instance: Instance) -> None:

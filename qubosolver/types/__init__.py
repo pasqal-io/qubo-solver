@@ -2,7 +2,7 @@
 
 This subpackage re-exports the tensor submodules (`bitstring`, `bitstrings`,
 `matrix`, `tensor`, `vector`, `vectori`, `linalg`), the container classes
-(`Solution`, `SingleSolution`, `Instance`, `Dataset`), and the emulator backend
+(`Solution`, `Candidate`, `Instance`, `Dataset`), and the emulator backend
 wrappers used throughout the public API.
 """
 
@@ -19,7 +19,7 @@ from qubosolver.types import (
     protocols,
 )
 from qubosolver.types.linalg import Bitstring, Bitstrings, Matrix, Tensor, Vector, Vectori
-from qubosolver.types.solution import Solution, SingleSolution
+from qubosolver.types.solution import Solution, Candidate
 from qubosolver.types.instance import Instance
 from qubosolver.types.dataset import Dataset
 from qubosolver.types.backends import (
@@ -49,7 +49,7 @@ __all__ = [
     "Vectori",
     # Classes
     "Solution",
-    "SingleSolution",
+    "Candidate",
     "Instance",
     "Dataset",
     "LocalEmulator",

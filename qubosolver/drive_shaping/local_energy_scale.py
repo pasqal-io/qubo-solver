@@ -112,8 +112,8 @@ def build_drive(
     if specs.get("max_amplitude") is not None and specs.get("max_abs_detuning") is not None:
         device_max_amplitude = specs["max_amplitude"]
         device_max_abs_detuning = specs["max_abs_detuning"]
-        assert device_max_amplitude is not None
-        assert device_max_abs_detuning is not None
+        assert device_max_amplitude is not None  # nosec B101
+        assert device_max_abs_detuning is not None  # nosec B101
 
         det_amp_ratio = device_max_amplitude / device_max_abs_detuning
 
@@ -140,7 +140,7 @@ def build_drive(
     # For each qubit i, compute:
     #
     # sum_{j != i} |V_ij|.
-    interaction_scale = matrix.tensor(register.interaction_matrix()).abs().sum(dim=0)
+    interaction_scale = matrix.as_tensor(register.interaction_matrix()).abs().sum(dim=0)
 
     # Local physical energy scale:
     #

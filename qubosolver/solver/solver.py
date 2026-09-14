@@ -209,7 +209,7 @@ class _QuboSolverQuantum(BaseSolver):
             The final [`Solution`][qubosolver.Solution], sorted by
                 ascending cost with probabilities computed.
         """
-        assert self.config.solving_mode == "quantum"
+        assert self.config.solving_mode == "quantum"  # nosec B101
 
         # 1) try trivial else delegate to quantum solver
         if self.config.activate_trivial_solutions:

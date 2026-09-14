@@ -130,7 +130,7 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
             final_temp=self.config.sa_final_temp,
             cooling_rate=self.config.sa_cooling_rate,
             rng=rng,
-            start=start.unsqueeze(0),
+            starts=start.unsqueeze(0),
             time_limit=self.config.sa_time_limit,
             stats="per_run",
         )
@@ -160,7 +160,6 @@ class TabuSearchSolver(BaseClassicalSolver):
             ``config.max_bitstrings`` best bitstrings found during the search.
         """
         if self.config.tabu_x0 is None:
-            assert self.instance.size
             rng = torch_rng().set_state(torch.get_rng_state())
             random_solution = solving.random_sampling.solve(
                 self.instance, rng=rng, max_bitstrings=self.config.max_bitstrings
@@ -170,7 +169,7 @@ class TabuSearchSolver(BaseClassicalSolver):
             x0 = self.config.tabu_x0
         tabu_search_solution = solving.tabu_search.solve(
             instance=self.instance,
-            start=x0,
+            starts=x0,
             max_iter=self.config.max_iter,
             tabu_tenure=self.config.tabu_tenure,
             max_no_improve=self.config.tabu_max_no_improve,

@@ -319,8 +319,11 @@ def _solve_bitflip_preprocessing_glpk(
         status = status_names.get(mip_status, f"GLPK_STATUS_{mip_status}")
 
         if mip_status in (glp.GLP_OPT, glp.GLP_FEAS):
-            flips = bitstring.tensor(
-                [int(round(glp.glp_mip_col_val(prob, f_col(i)))) for i in range(n)],
+            # GLPK's default integrality tolerance is 1e-5, looser than
+            # `round`'s default.
+            flips = bitstring.round(
+                [glp.glp_mip_col_val(prob, f_col(i)) for i in range(n)],
+                atol=1e-4,
             )
             objective_value = float(glp.glp_mip_obj_val(prob))
 

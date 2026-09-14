@@ -2,7 +2,7 @@
 
 Defines [`Solution`][qubosolver.types.solution.Solution], a collection of candidate
 bitstrings together with their costs, sample counts, and probabilities, and
-[`SingleSolution`][qubosolver.types.solution.SingleSolution], a single candidate
+[`Candidate`][qubosolver.types.solution.Candidate], a single candidate
 extracted from it.
 """
 
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 @debug_runtime_typecheck
 @dataclass
-class SingleSolution:
+class Candidate:
     """A single candidate solution extracted from a [`Solution`][].
 
     Instances are normally obtained via [`Solution.__getitem__`][] rather
@@ -86,8 +86,8 @@ class Solution:
     counts: Vectori = vectori.zeros(0)
     probabilities: Vector = vector.zeros(0)
 
-    def __getitem__(self, idx: int) -> SingleSolution:
-        """Return the candidate at position `idx` as a [`SingleSolution`][].
+    def __getitem__(self, idx: int) -> Candidate:
+        """Return the candidate at position `idx` as a [`Candidate`][].
 
         Args:
             idx: Zero-based index into the ``num_solutions`` axis.
@@ -95,21 +95,21 @@ class Solution:
         Returns:
             Snapshot of the candidate at `idx`.
         """
-        solution = SingleSolution(self.bitstrings[idx])
-        solution.count = int(self.counts[idx].item())
+        candidate = Candidate(self.bitstrings[idx])
+        candidate.count = int(self.counts[idx].item())
         if self.costs.numel() > 0:
-            solution.cost = self.costs[idx].item()
+            candidate.cost = self.costs[idx].item()
         if self.probabilities.numel() > 0:
-            solution.probability = self.probabilities[idx].item()
+            candidate.probability = self.probabilities[idx].item()
 
-        return solution
+        return candidate
 
     def __len__(self) -> int:
         """Return the number of candidate solutions (``num_solutions``)."""
         return self.bitstrings.shape[0]
 
-    def __iter__(self) -> Iterator[SingleSolution]:
-        """Iterate over all candidates in index order, yielding [`SingleSolution`][] objects.
+    def __iter__(self) -> Iterator[Candidate]:
+        """Iterate over all candidates in index order, yielding [`Candidate`][] objects.
 
         Yields:
             Same as [`__getitem__`][] for each index ``0 … len(self)-1``.
@@ -229,13 +229,16 @@ class Solution:
 
         return self
 
-    def deduplicate(self) -> Self:
+    def deduplicate(self, update: bool = True) -> Self:
         """Collapse duplicate bitstrings in-place, summing their counts.
 
         Rows sharing the same bitstring are merged into a single row:
-        `counts` are summed, the minimum `cost` is kept, and
-        `probabilities` are recomputed from the new totals. The result
-        is sorted by cost.
+        `counts` are summed and the minimum `cost` is kept.
+
+        Args:
+            update: When ``True`` (default), sort the result by cost and
+                recompute `probabilities` from the new counts before
+                returning. Pass ``False`` to skip both.
 
         Returns:
             The same [`Solution`][] instance, allowing method chaining.
@@ -244,6 +247,14 @@ class Solution:
             AssertionError: If this solution is non-empty and `costs`,
                 `counts`, or `probabilities` is not populated (checked
                 via [`check_consistency(full=False)`][check_consistency]).
+
+        Warning:
+            With ``update=False``, `probabilities` is left stale and
+            `bitstrings` unsorted by cost. Most (if not all) algorithms
+            expect a consistent solution (see
+            [`check_consistency`][qubosolver.types.solution.Solution.check_consistency]),
+            so only pass ``update=False`` if you will restore consistency
+            yourself before the solution is used further.
 
         Note:
             Rows sharing a bitstring are expected to also share the same
@@ -273,7 +284,8 @@ class Solution:
             dim=0, index=inverse, src=self.costs, reduce="amin", include_self=False
         )
 
-        self._sort_by_cost()._compute_probabilities()
+        if update:
+            self._sort_by_cost()._compute_probabilities()
 
         return self
 
@@ -437,7 +449,13 @@ class Solution:
         )
 
     def check_consistency(
-        self, *, instance: Instance | None = None, throw: bool = False, full: bool = True
+        self,
+        *,
+        instance: Instance | None = None,
+        throw: bool = False,
+        full: bool = True,
+        rtol: float = 1e-5,
+        atol: float = 1e-8,
     ) -> bool:
         """Check internal consistency of this solution against a QUBO instance.
 
@@ -471,6 +489,12 @@ class Solution:
                 and skip the rest (cost recomputation, sortedness,
                 duplicate/binary/count/probability checks), which scale
                 with the number of solutions.
+            rtol: Relative tolerance forwarded to `torch.allclose` when
+                comparing `costs` against $x^T Q x$ and `probabilities`
+                against normalized `counts`.
+            atol: Absolute tolerance forwarded to `torch.allclose` when
+                comparing `costs` against $x^T Q x$ and `probabilities`
+                against normalized `counts`.
 
         Returns:
             ``True`` if all checks pass, ``False`` otherwise (unless
@@ -515,7 +539,9 @@ class Solution:
             )
 
             valid &= check(
-                torch.allclose(self.costs, expected_costs.to(self.costs.dtype)),
+                torch.allclose(
+                    self.costs, expected_costs.to(self.costs.dtype), rtol=rtol, atol=atol
+                ),
                 f"costs {self.costs.tolist()} does not match x^T Q x "
                 f"{expected_costs.tolist()} for the corresponding bitstrings",
             )
@@ -550,9 +576,14 @@ class Solution:
 
         expected_probabilities = self.counts / self.counts.sum()
         valid &= check(
-            torch.allclose(self.probabilities, expected_probabilities.to(self.probabilities.dtype)),
+            torch.allclose(
+                self.probabilities,
+                expected_probabilities.to(self.probabilities.dtype),
+                rtol=rtol,
+                atol=atol,
+            ),
             f"probabilities {self.probabilities.tolist()} does not match counts "
-            f"{self.counts.tolist()} normalised by their sum",
+            f"{self.counts.tolist()} normalized by their sum",
         )
 
         return valid

@@ -9,6 +9,9 @@ hide:
 !!! danger "🔥 Can't wait to try it? 🔥"
     Jump straight to the [30-Second Quickstart](get_started/quickstart.md).
 
+!!! tip "🆘 Need help? 🆘"
+    Check out the [Help](help/faq.md) section for FAQ, troubleshooting, and contact info.
+
 # Qubo Solver
 
 **Qubo Solver** is a Python library for solving **Quadratic Unconstrained Binary Optimization (QUBO)** problems on Pasqal's neutral-atom quantum processors.
