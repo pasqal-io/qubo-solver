@@ -122,7 +122,8 @@ def _to_solution(cplex_solution: CPLEX.SolutionInterface) -> Solution:
     solution_cost = cplex_solution.get_objective_value()
 
     # Convert the solution into a Solution.
-    bitstring_tensor = bitstrings.tensor([[int(round(b)) for b in solution_values]])
+    # CPLEX's default integrality tolerance is 1e-5, looser than `round`'s default.
+    bitstring_tensor = bitstrings.round([solution_values], atol=1e-4)
     counts = vectori.tensor([1])
     cost_tensor = vector.tensor([solution_cost])
 

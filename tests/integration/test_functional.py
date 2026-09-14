@@ -12,7 +12,7 @@ import qoolqit
 from qubosolver import (
     Instance,
     Solution,
-    SingleSolution,
+    Candidate,
     solving,
     transforms,
     embedding,
@@ -28,7 +28,7 @@ from qubosolver import (
 from qubosolver.utils import analysis
 
 
-def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
+def gather_optimal_solutions(solutions: Solution) -> list[Candidate]:
     min_cost = solutions[0].cost
     return [d for d in solutions if np.allclose(d.cost, min_cost)]
 
@@ -39,7 +39,7 @@ def interaction_matrix_from_vertices(vertices: Tensor) -> Matrix:
     return U
 
 
-def simple_qubo() -> tuple[Instance, list[SingleSolution]]:
+def simple_qubo() -> tuple[Instance, list[Candidate]]:
 
     sqrt3 = np.sqrt(3.0)
     vertices = tensor.tensor(
@@ -85,7 +85,7 @@ def manual_seed(seed: int) -> torch.Generator:
 
 def check_solution(
     solutions: Solution,
-    expected_optimal_solutions: list[SingleSolution],
+    expected_optimal_solutions: list[Candidate],
     *,
     expected_optimal_probability: float = 0.75,
 ) -> None:
@@ -144,13 +144,10 @@ def test_quantum_solve(
         effective_qubo = transforms.variable_fixing.apply_recursively(qubo)
 
     if embedding_method == "blade":
-        blade_config = embedding.blade.Config(device=device)
-        register = embedding.blade.embed(effective_qubo, config=blade_config)
+        register = embedding.blade.embed_for_device(effective_qubo, device)
     elif embedding_method == "greedy_layout":
         greedy_config = embedding.greedy_layout.Config(traps=100)
-        register = embedding.greedy_layout.embed(
-            effective_qubo, device=device, config=greedy_config
-        )
+        register = embedding.greedy_layout.embed(effective_qubo, config=greedy_config)
     else:
         raise ValueError(f"Invalid embedding method: {embedding_method}")
     print(f"Register: {register.qubits}")
@@ -186,7 +183,7 @@ def test_quantum_solve(
         solution = transforms.variable_fixing.lift(solution, effective_qubo)
 
     if postprocessing:
-        solution = solving.iterative_bitflip_local_search.solve(qubo, solution)
+        solution = solving.iterative_bitflip_local_search.solve(qubo, starts=solution)
 
     expected_optimal_probability = 0.75
     if drive_shaping_method in ["bayesian_search"]:
@@ -225,18 +222,18 @@ def test_classical_solve(
         solution = solving.cplex.solve(effective_qubo)
     elif solving_method == "tabu":
         solution = solving.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=3)
-        solution = solving.tabu_search.solve(effective_qubo, solution.bitstrings)
+        solution = solving.tabu_search.solve(effective_qubo, starts=solution.bitstrings)
     elif solving_method == "sa":
         solution = solving.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=1)
         solution = solving.simulated_annealing.solve(
-            effective_qubo, solution[0].bitstring.unsqueeze(0), top_k=1
+            effective_qubo, starts=solution[0].bitstring.unsqueeze(0), top_k=1
         )
     elif solving_method == "sa+tabu":
         solution = solving.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=1)
         solution = solving.simulated_annealing.solve(
-            effective_qubo, solution[0].bitstring.unsqueeze(0), top_k=1
+            effective_qubo, starts=solution[0].bitstring.unsqueeze(0), top_k=1
         )
-        solution = solving.tabu_search.solve(effective_qubo, solution.bitstrings)
+        solution = solving.tabu_search.solve(effective_qubo, starts=solution.bitstrings)
     elif solving_method == "random":
         solution = solving.random_sampling.solve(effective_qubo, rng=rng)
     else:
@@ -247,7 +244,7 @@ def test_classical_solve(
         solution = transforms.variable_fixing.lift(solution, effective_qubo)
 
     if postprocessing:
-        solution = solving.iterative_bitflip_local_search.solve(qubo, solution)
+        solution = solving.iterative_bitflip_local_search.solve(qubo, starts=solution)
 
     expected_optimal_probability = 0.75
     if solving_method in ["random"]:

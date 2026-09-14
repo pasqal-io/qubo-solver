@@ -10,7 +10,7 @@ import qoolqit
 from qubosolver import (
     Instance,
     Solution,
-    SingleSolution,
+    Candidate,
     solving,
     embedding,
     drive_shaping,
@@ -30,7 +30,7 @@ def manual_seed(seed: int) -> torch.Generator:
     return torch_rng(seed)
 
 
-def gather_optimal_solutions(solutions: Solution) -> list[SingleSolution]:
+def gather_optimal_solutions(solutions: Solution) -> list[Candidate]:
     min_cost = solutions[0].cost
     return [d for d in solutions if np.allclose(d.cost, min_cost)]
 
@@ -136,8 +136,7 @@ def test_quantum_solve_blade_proportional_diagonal(
     device = qoolqit.AnalogDeviceWithDMM()
     emulator = qoolqit.execution.LocalEmulator()
 
-    blade_config = embedding.blade.Config(device=device)
-    register = embedding.blade.embed(instance, config=blade_config)
+    register = embedding.blade.embed_for_device(instance, device)
 
     drive = drive_shaping.proportional_diagonal.build_drive(
         instance,
@@ -195,7 +194,7 @@ def test_quantum_solve_greedy_proportional_diagonal(
     emulator = qoolqit.execution.LocalEmulator()
 
     greedy_config = embedding.greedy_layout.Config(traps=100)
-    register = embedding.greedy_layout.embed(instance, device=device, config=greedy_config)
+    register = embedding.greedy_layout.embed(instance, config=greedy_config)
 
     drive = drive_shaping.proportional_diagonal.build_drive(
         instance,

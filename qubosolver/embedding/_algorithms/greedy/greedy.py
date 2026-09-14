@@ -219,7 +219,7 @@ class Greedy:
                     }
                 )
             except Exception:
-                pass  # never let viz crash the solver
+                pass  # nosec B110  # never let viz crash the solver
 
         while len(positioned) < len(nodes):
 
@@ -287,7 +287,7 @@ class Greedy:
                             }
                         )
                     except Exception:
-                        pass
+                        pass  # nosec B110  # never let viz crash the solver
                 continue
 
             # commit placement
@@ -326,7 +326,7 @@ class Greedy:
                         }
                     )
                 except Exception:
-                    pass
+                    pass  # nosec B110  # never let viz crash the solver
 
         # finalize coordinates tensor
         final_coords = torch.zeros((Q.shape[0], 2), dtype=torch.float32)
@@ -655,7 +655,7 @@ class Greedy:
                     try:
                         on_step(state)
                     except Exception:
-                        pass
+                        pass  # nosec B110  # never let viz crash the solver
                 if anim_flag:
                     try:
                         frames.append(state.copy())

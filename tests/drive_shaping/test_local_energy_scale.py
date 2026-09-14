@@ -24,15 +24,13 @@ from qubosolver import (
     matrix,
     tensor,
     vector,
-    SingleSolution,
+    Candidate,
     solving,
     drive_shaping,
 )
 
 
-def gather_optimal_solutions(
-    solution: Solution, min_cost: float | None = None
-) -> list[SingleSolution]:
+def gather_optimal_solutions(solution: Solution, min_cost: float | None = None) -> list[Candidate]:
     """Return all solutions having the minimum cost."""
     if min_cost is None:
         min_cost = min(s.cost for s in solution)
@@ -67,7 +65,7 @@ def test_with_perfect_embedding(
             [-0.5, -0.5 * sqrt3],
         ]
     )
-    interaction_matrix = matrix.tensor(
+    interaction_matrix = matrix.as_tensor(
         qoolqit.Register.from_coordinates(vertices).interaction_matrix()
     )
 
@@ -158,7 +156,7 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
             [D, 0.0],
         ]
     )
-    Q = matrix.tensor(register.interaction_matrix()) + vector.zeros(3).fill_(-50.0).diag()
+    Q = matrix.as_tensor(register.interaction_matrix()) + vector.zeros(3).fill_(-50.0).diag()
     instance = Instance(Q)
 
     with caplog.at_level(logging.INFO, logger="qubosolver.drive_shaping.local_energy_scale"):

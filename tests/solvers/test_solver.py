@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 
 import numpy as np
 import pytest
@@ -39,7 +40,6 @@ from pulser.backend.remote import (
     Results,
     RemoteConnection,
 )
-from emu_sv import SVBackend
 
 from typing import Optional
 
@@ -87,6 +87,8 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
 @pytest.mark.priority(40)
 @pytest.mark.flaky(max_runs=5)
 def test_run_local_backends(simple_qubo_instance: Instance, local_backend: LocalEmulator) -> None:
+    from pulser_simulation import QutipBackendV2
+
     solver = Solver(
         simple_qubo_instance,
         SolverConfig(
@@ -96,7 +98,15 @@ def test_run_local_backends(simple_qubo_instance: Instance, local_backend: Local
             )
         ),
     )
-    solutions = solver.solve()
+    # simple_qubo_instance is tiny, so non-QutipBackendV2 backends are intentionally
+    # suboptimal here and expected to warn.
+    if local_backend._backend_type is QutipBackendV2:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            solutions = solver.solve()
+    else:
+        with pytest.warns(UserWarning, match="Using .* Consider using"):
+            solutions = solver.solve()
     # theoretically -4.4000 can be found
     assert solutions.costs.min().item() <= -3.0
 
@@ -116,7 +126,7 @@ def test_solver_different_devices(
             greedy_layout_traps=qubo_for_testing_many_devices.size,
         ),
         device=local_device,
-        backend=LocalEmulator(backend_type=SVBackend),
+        backend=LocalEmulator(),
     )
     config = SolverConfig(
         solving=quantum_config,
