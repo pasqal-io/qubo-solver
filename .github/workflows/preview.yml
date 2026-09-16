@@ -118,6 +118,7 @@ jobs:
         run: |
           mkdir -p portal-dist
           docker run --rm \
+            --user 0:0 \
             --volume "$PWD/portal-dist:/out" \
             --env BUILD_CONFIG='{"qubo":"https://pasqal-io.github.io/qubo-solver/pr-preview/pr-${{ github.event.pull_request.number }}/"}' \
             --env ASTRO_BASE="/qubo-solver/${PORTAL_PREVIEW_PATH}/" \
