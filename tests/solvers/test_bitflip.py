@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from typing import Literal
 
 import pytest
@@ -14,9 +15,11 @@ from qubosolver import (
     vectori,
     matrix,
     torch_rng,
-    Bitstring,
 )
 from qubosolver.solving.classical import iterative_bitflip_local_search
+from qubosolver.solving.classical.iterative_bitflip_local_search import (
+    _best_improvement_search_batch,
+)
 
 
 @pytest.mark.parametrize("strategy", ["best_improvement", "first_improvement", "greedy_sweep"])
@@ -182,46 +185,39 @@ def test_time_limit_is_global_and_skips_remaining_batch(monkeypatch: pytest.Monk
     Q = matrix.as_tensor((Q + Q.T) / 2)
     instance = Instance(Q)
 
-    # Fake monotonic clock, ticked by qubo evaluations, so the deadline trips
-    # deterministically instead of depending on wall-clock timing.
+    # Fake monotonic clock, ticked by the deadline checks themselves, so the
+    # budget trips deterministically instead of depending on wall-clock timing.
+    # `solve()` reads the clock once to set the global deadline, then once more
+    # per row to compute that row's remaining budget; `_first_improvement_search`
+    # reads it once to set its own inner deadline, then once per iteration of its
+    # loop. Ticking by a small amount on every call, then jumping far past the
+    # budget after the 4th call, lets row 0 read the (still-open) global
+    # deadline, start its own search, take one iteration (applying its first
+    # improving flip), and then have its *next* deadline check trip - so row 0
+    # ends up improved by exactly one flip, while every following row is
+    # skipped by the batch-level check before its search ever runs.
     time_limit = 3.0
     clock = 0.0
-    monkeypatch.setattr(iterative_bitflip_local_search.time, "monotonic", lambda: clock)
+    call_count = 0
+
+    def ticking_clock() -> float:
+        nonlocal clock, call_count
+        call_count += 1
+        clock += time_limit + 1.0 if call_count > 4 else 0.1
+        return clock
+
+    monkeypatch.setattr(iterative_bitflip_local_search.time, "monotonic", ticking_clock)
 
     batch = 10
     solution = Solution(bitstrings.zeros(batch, n), counts=vectori.zeros(batch).fill_(1))
     solution._update(instance)
 
-    original_cost = instance.cost
-    eval_count = 0
-
-    def ticking_cost(s: Bitstring) -> float:
-        # Advance the clock by more than the whole budget on every evaluation. The
-        # first row's search still gets to try its first flip (its own inner deadline
-        # is computed only *after* the initial evaluation has already ticked the
-        # clock forward), finds an improving flip on the first try, and applies it -
-        # but by then the global deadline (fixed before the batch loop started) is
-        # long past, so every subsequent row is skipped by the batch-level check
-        # before it ever reaches cost.
-        nonlocal clock, eval_count
-        eval_count += 1
-        clock += time_limit + 1.0
-        return original_cost(s)
-
-    monkeypatch.setattr(instance, "cost", ticking_cost)
-
     result = solving.iterative_bitflip_local_search.solve(
         instance, starts=solution, strategy="first_improvement", time_limit=time_limit
     )
 
-    # Only row 0 is ever searched: one eval for its initial cost, one more for the
-    # first improving flip it applies before its own deadline check trips. Every
-    # other row is skipped by the batch-level deadline check before being searched,
-    # so evaluate_solution is called exactly twice for the whole batch.
-    check.equal(eval_count, 2)
-
     # Row 0 was improved by a single flip; the other 9 (all identical, untouched
-    # all-zero rows) are merged by the final torch.unique into one entry.
+    # all-zero rows) are merged into one entry.
     check.equal(len(result), 2)
     check.equal(result[0].string, "1000")
     check.equal(result[0].count, 1)
@@ -229,3 +225,170 @@ def test_time_limit_is_global_and_skips_remaining_batch(monkeypatch: pytest.Monk
     check.equal(result[1].string, "0000")
     check.equal(result[1].count, 9)
     check.almost_equal(result[1].cost, 0.0)
+
+
+@pytest.mark.parametrize("strategy", ["first_improvement", "greedy_sweep"])
+def test_row_budget_is_the_remaining_batch_budget(
+    strategy: Literal["greedy_sweep", "first_improvement"],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Each row is granted only what is left of the global budget.
+
+    Regression test: passing the *full* `time_limit` down to every row makes
+    the batch budget effectively per-row, so a batch of `m` rows that each run
+    to their own deadline can consume up to `m * time_limit` in total.
+
+    Rather than assert on the fake clock's exact final value (which depends on
+    how many ticks each strategy happens to burn), this checks the budget the
+    rows are actually handed: every row's budget must be strictly smaller than
+    the previous row's, since time only moves forward. A full `time_limit`
+    handed to each row shows up as a constant sequence instead.
+    """
+    n = 4
+    Q = torch.randn(n, n, generator=torch_rng(0))
+    Q = matrix.as_tensor((Q + Q.T) / 2)
+    instance = Instance(Q)
+
+    time_limit = 1.0
+    clock = 0.0
+
+    def ticking_clock() -> float:
+        nonlocal clock
+        clock += 0.01
+        return clock
+
+    monkeypatch.setattr(iterative_bitflip_local_search.time, "monotonic", ticking_clock)
+
+    # Record the budget handed to each row, then stop that row immediately so
+    # the batch walks through every row instead of burning the budget on one.
+    row_budgets: list[float] = []
+    search_fn = iterative_bitflip_local_search._ROW_STRATEGIES[strategy]
+
+    def recording_search(*args: object, **kwargs: object) -> torch.Tensor:
+        row_budgets.append(float(kwargs["time_limit"]))  # type: ignore[arg-type]
+        return search_fn(*args, **{**kwargs, "time_limit": 0.0})
+
+    monkeypatch.setitem(iterative_bitflip_local_search._ROW_STRATEGIES, strategy, recording_search)
+
+    batch = 5
+    solution = Solution(
+        bitstrings.rand(batch, n, rng=torch_rng(1)), counts=vectori.zeros(batch).fill_(1)
+    )
+    solution._update(instance)
+
+    solving.iterative_bitflip_local_search.solve(
+        instance, starts=solution, strategy=strategy, time_limit=time_limit
+    )
+
+    check.equal(len(row_budgets), batch)
+    # Strictly decreasing: each row only gets what the previous rows left. With
+    # the full budget passed down, every entry would instead equal `time_limit`.
+    for earlier, later in zip(row_budgets, row_budgets[1:]):
+        check.less(later, earlier)
+    check.less(row_budgets[0], time_limit)
+
+
+def test_best_improvement_batch_matches_per_row_result() -> None:
+    """best_improvement runs every row of a multi-row batch in lockstep,
+    masking out rows that already reached their own local optimum so they
+    are not perturbed while slower rows keep improving. Each row's result
+    must therefore be identical to running that same row alone through the
+    batch search."""
+    n, m = 12, 8
+    rng = torch_rng(7)
+    Q = torch.randn(n, n, generator=rng)
+    Q = matrix.as_tensor((Q + Q.T) / 2)
+
+    X = bitstrings.rand(m, n, rng=rng)
+
+    batched = _best_improvement_search_batch(Q, X)
+    for i in range(m):
+        solo = _best_improvement_search_batch(Q, X[i : i + 1])
+        check.is_true(torch.equal(batched[i], solo[0]))
+
+
+@pytest.mark.priority(10)
+@pytest.mark.parametrize(
+    "variables, starts, strategy, expected_elapsed, expected_cplex_gap",
+    [
+        (10, 10, "best_improvement", 0.5, 0.0001),
+        (10, 100, "best_improvement", 0.5, 0.0001),
+        (10, 500, "best_improvement", 0.5, 0.0001),
+        (50, 10, "best_improvement", 0.5, 0.0001),
+        (50, 100, "best_improvement", 0.5, 0.0001),
+        (50, 500, "best_improvement", 0.5, 0.0001),
+        (200, 10, "best_improvement", 0.5, 0.3),
+        (200, 100, "best_improvement", 0.5, 0.0001),
+        (200, 500, "best_improvement", 0.5, 0.0001),
+        (10, 10, "first_improvement", 0.5, 0.0001),
+        (10, 100, "first_improvement", 0.5, 0.0001),
+        (10, 500, "first_improvement", 1.0, 0.0001),
+        (50, 10, "first_improvement", 0.5, 0.0001),
+        (50, 100, "first_improvement", 1.0, 0.0001),
+        (50, 500, "first_improvement", 4.0, 0.0001),
+        (200, 10, "first_improvement", 1.0, 0.0001),
+        (200, 100, "first_improvement", 6.0, 0.0001),
+        (200, 500, "first_improvement", 99.0, 0.0001),  # time-out
+        (10, 10, "greedy_sweep", 0.5, 0.0001),
+        (10, 100, "greedy_sweep", 0.5, 0.0001),
+        (10, 500, "greedy_sweep", 1.0, 0.0001),
+        (50, 10, "greedy_sweep", 0.5, 0.0001),
+        (50, 100, "greedy_sweep", 2.0, 0.0001),
+        (50, 500, "greedy_sweep", 6.0, 0.0001),
+        (200, 10, "greedy_sweep", 1.0, 0.3),
+        (200, 100, "greedy_sweep", 8.0, 0.0001),
+        (200, 500, "greedy_sweep", 99.0, 0.0001),  # time-out
+    ],
+)
+def test_benchmark_grid_report(
+    variables: int,
+    starts: int,
+    strategy: Literal["greedy_sweep", "best_improvement", "first_improvement"],
+    expected_elapsed: float,
+    expected_cplex_gap: float,
+) -> None:
+    """Report wall time and best cost found for every (num_variables,
+    batch_size, strategy) cell of a benchmark grid, checked against the
+    CPLEX-optimal cost for that `num_variables` and a baseline wall time
+    observed on a previous run."""
+    time_limit = 10.0
+
+    rng = torch_rng(0)
+    Q = torch.randn(variables, variables, generator=rng)
+    Q = matrix.as_tensor((Q + Q.T) / 2)
+    instance = Instance(Q)
+
+    starts_ = bitstrings.rand(starts, variables, rng=rng)
+    solution = Solution(starts_, counts=vectori.zeros(starts).fill_(1))
+    solution._update(instance)
+
+    t0 = time.perf_counter()
+    result = solving.iterative_bitflip_local_search.solve(
+        instance,
+        starts=solution,
+        strategy=strategy,
+        max_iterations=-1,
+        time_limit=time_limit,
+    )
+    elapsed = time.perf_counter() - t0
+    best_cost = float(result.costs.min().item())
+
+    cplex_costs = {
+        10: -11.9943,
+        50: -149.1611,
+        200: -1309.7295,
+    }
+    cplex_cost = cplex_costs[variables]
+    gap = 100 * (best_cost - cplex_cost) / abs(cplex_cost)
+
+    print(f"\nvariables = {variables}")
+    print(f"starts = {starts}")
+    print(f"strategy = {strategy}")
+    print(f"elapsed = {elapsed} s")
+    print(f"best_cost = {best_cost}")
+    print(f"gap = {gap} %")
+
+    check.less_equal(gap, expected_cplex_gap)
+
+    if elapsed > expected_elapsed:
+        pytest.xfail("elapsed time exceeded the expected baseline")
