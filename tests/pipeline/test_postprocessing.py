@@ -11,7 +11,6 @@ from qubosolver import (
     solving,
     Dataset,
     Instance,
-    Bitstring,
     bitstring,
     bitstrings,
     matrix,
@@ -20,7 +19,9 @@ from qubosolver import (
     torch_rng,
     SolverConfig,
 )
-from qubosolver.solving.classical.iterative_bitflip_local_search import _best_improvement_search
+from qubosolver.solving.classical.iterative_bitflip_local_search import (
+    _best_improvement_search_batch,
+)
 from qubosolver.utils import _costs
 
 
@@ -128,8 +129,7 @@ def test_no_solution() -> None:
     check.equal(pp_solution.bitstrings.numel(), 0)
 
 
-@pytest.mark.parametrize("shuffle", [True, False])
-def test_best_improvement_search_basic(shuffle: bool) -> None:
+def test_best_improvement_search_basic() -> None:
 
     # fmt: off
     Q = matrix.tensor([
@@ -137,23 +137,22 @@ def test_best_improvement_search_basic(shuffle: bool) -> None:
         [1.0, -10.0]
     ])
     # fmt: on
-    def cost_function(b: Bitstring) -> float:
-        return _costs.quadratic_cost(b, Q)
 
     s = bitstring.zeros(2)
-    initial_cost = cost_function(s)
+    initial_cost = _costs.quadratic_cost(s, Q)
     check.almost_equal(initial_cost, 0.0)
 
-    best_bitstring, best_cost = _best_improvement_search(cost_function, s, rng=torch_rng(65))
+    best_bitstrings = _best_improvement_search_batch(Q, s.unsqueeze(0))
+    best_bitstring = best_bitstrings.squeeze(0)
+    best_cost = _costs.quadratic_cost(best_bitstring, Q)
 
     np.testing.assert_allclose(best_bitstring, np.array([1, 1]))
     check.almost_equal(best_cost, -18.0)
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("shuffle", [True, False])
 @pytest.mark.parametrize("density", [0.2, 0.5, 0.8])
-def test_best_improvement_search_randoms(shuffle: bool, density: float) -> None:
+def test_best_improvement_search_randoms(density: float) -> None:
 
     size = 5
 
@@ -163,10 +162,7 @@ def test_best_improvement_search_randoms(shuffle: bool, density: float) -> None:
         s = bitstring.zeros(size)
 
         for instance, _ in dataset:
-
-            def cost_function(b: Bitstring) -> float:
-                return _costs.quadratic_cost(b, instance.matrix)
-
-            initial_cost = cost_function(s)
-            _, best_cost = _best_improvement_search(cost_function, s, rng=rng if shuffle else None)
+            initial_cost = _costs.quadratic_cost(s, instance.matrix)
+            best_bitstrings = _best_improvement_search_batch(instance.matrix, s.unsqueeze(0))
+            best_cost = _costs.quadratic_cost(best_bitstrings.squeeze(0), instance.matrix)
             check.less_equal(best_cost, initial_cost)
