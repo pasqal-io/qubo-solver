@@ -77,7 +77,6 @@ def solve(
     deadline = time.perf_counter() + time_limit
     rows = torch.arange(n_bitstrings, device=device)
     cols = torch.arange(n, device=device)
-    visits = 0
 
     for iteration in range(max_iter):
         if time.perf_counter() >= deadline:
@@ -88,9 +87,13 @@ def solve(
         # x^T Q x. Recomputing them exactly every _REFRESH_EVERY iterations
         # keeps that error from growing unbounded, at the cost of one extra
         # matmul amortized over many iterations.
-        if visits % _REFRESH_EVERY == 0:
+        if iteration % _REFRESH_EVERY == 0:
             QX = X @ Q
             f_current = (X * QX).sum(dim=1)
+
+        # Tabu tenure counts down to 0 every iteration, regardless of whether
+        # a move is made; a bit is tabu while its counter is still positive.
+        tabu_list.sub_(1).clamp_(min=0)
 
         # Delta of each candidate one-bit-flip move, for every run at once;
         # avoids recomputing the full x^T Q x per candidate.
@@ -98,7 +101,7 @@ def solve(
         f_candidates = f_current.unsqueeze(1) + dE
 
         # Tabu and aspiration
-        tabu_mask = tabu_list > iteration
+        tabu_mask = tabu_list > 0
         aspiration_mask = f_candidates < f_best.unsqueeze(1)
         allowed = (~tabu_mask) | aspiration_mask
 
@@ -106,7 +109,7 @@ def solve(
         f_masked = torch.where(allowed, f_candidates, torch.inf)
 
         # Pick best move per run
-        best_costs, best_moves = torch.min(f_masked, dim=1)
+        best_moves = torch.argmin(f_masked, dim=1)
         move_mask = cols.unsqueeze(0) == best_moves.unsqueeze(1)
 
         # Apply the best move
@@ -114,9 +117,15 @@ def solve(
         step = 1.0 - 2.0 * xi
         X[rows, best_moves] = xi + step
         QX += step.unsqueeze(1) * Q[best_moves, :]
-        f_current = best_costs
-        tabu_list[move_mask] = iteration + tabu_tenure
-        visits += 1
+        # Read the new cost from `f_candidates`, not from the tabu-masked
+        # `f_masked`: when every move of a run is disallowed, `f_masked` is
+        # all-`inf` for that row and its minimum is the `inf` sentinel, not a
+        # real cost. `f_current` is persistent state, so assigning that
+        # sentinel here would make every later `f_current + dE` `inf` too --
+        # including at allowed positions -- which also disables aspiration
+        # (`inf < f_best` is never true) and stops the run searching.
+        f_current = f_candidates[rows, best_moves]
+        tabu_list[move_mask] = tabu_tenure
 
         # Update best solutions
         improved = f_current < f_best
