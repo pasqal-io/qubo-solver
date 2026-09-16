@@ -129,7 +129,7 @@ def test_tabu_search_never_lets_f_current_go_inf(
     saw_all_tabu_iteration = False
     saw_inf_at_allowed_move = False
 
-    def spying_where(condition: torch.Tensor, x: torch.Tensor, y: object) -> torch.Tensor:
+    def spying_where(condition: torch.Tensor, x: torch.Tensor, y: float) -> torch.Tensor:
         nonlocal saw_all_tabu_iteration, saw_inf_at_allowed_move
         if condition.any() and torch.isinf(x[condition]).any():
             saw_inf_at_allowed_move = True
@@ -188,14 +188,16 @@ def test_tabu_search_still_finds_optimum_when_all_moves_become_tabu() -> None:
     120 makes the difference observable at this horizon -- so it is not
     interchangeable with an arbitrary matrix of the same size.
     """
-    instance = Instance(matrix.tensor(
-        [
-            [-0.9875382781028748, 0.628231406211853, -0.10774004459381104, 1.2844055891036987],
-            [0.628231406211853, -0.45010146498680115, 0.5505266189575195, -0.4758329391479492],
-            [-0.10774004459381104, 0.5505266189575195, 0.4487120509147644, -0.22096946835517883],
-            [1.2844055891036987, -0.4758329391479492, -0.22096946835517883, -0.5388421416282654],
-        ]
-    ))
+    instance = Instance(
+        matrix.tensor(
+            [
+                [-0.9875382781028748, 0.628231406211853, -0.10774004459381104, 1.2844055891036987],
+                [0.628231406211853, -0.45010146498680115, 0.5505266189575195, -0.4758329391479492],
+                [-0.10774004459381104, 0.5505266189575195, 0.4487120509147644, -0.22096946835517883],
+                [1.2844055891036987, -0.4758329391479492, -0.22096946835517883, -0.5388421416282654],
+            ]
+        )
+    )  # fmt: skip
 
     solution = solving.tabu_search.solve(
         instance,
@@ -209,4 +211,4 @@ def test_tabu_search_still_finds_optimum_when_all_moves_become_tabu() -> None:
 
     check.almost_equal(solution[0].cost, optimum[0].cost)
 
-    print(f"\n{analysis.to_dataframe([optimum, solution], labels=["optimum", "solution"])}")
+    print(f"\n{analysis.to_dataframe([optimum, solution], labels=['optimum', 'solution'])}")
