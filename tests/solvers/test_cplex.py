@@ -8,16 +8,16 @@ import torch
 from qubosolver import (
     Instance,
     Solution,
-    ClassicalConfig,
-    SolverConfig,
     Solver,
     matrix,
-    solvers,
+    solving,
     vectori,
     tensor,
     torch_rng,
+    SolverConfig,
+    ClassicalSolvingConfig,
 )
-from qubosolver.solvers.classical.cplex import _to_solution
+from qubosolver.solving.classical.cplex import _to_solution
 
 
 def test_to_solution_without_incumbent() -> None:
@@ -64,13 +64,13 @@ def test_qubo_solver_classical_cplex() -> None:
     Q = matrix.tensor([[1.0, 0.0], [0.0, 1.0]])
     instance = Instance(matrix=Q)
 
-    # Create a SolverConfig object with classical solver options.
-    classical_config = ClassicalConfig(
-        classical_solver_type="cplex",
+    # Create a solving.Config object with classical solver options.
+    classical_config = ClassicalSolvingConfig(
+        algorithm="cplex",
         cplex_maxtime=10.0,
         cplex_log_path="test_solver.log",
     )
-    config = SolverConfig(use_quantum=False, classical=classical_config)
+    config = SolverConfig(solving=classical_config)
 
     # Instantiate the classical solver via the pipeline's classical solver dispatcher.
     classical_solver = Solver(instance, config)
@@ -231,7 +231,7 @@ def _build_rounding_matrix() -> Instance:
     Q = _ROUNDING_DIAGONAL.diag()
     i, j, w = _ROUNDING_COUPLINGS.unbind(dim=1)
     Q[i, j] = Q[j, i] = w
-    return Instance(matrix.from_torch(Q))
+    return Instance(matrix.as_tensor(Q))
 
 
 def test_rounding() -> None:
@@ -241,11 +241,11 @@ def test_rounding() -> None:
     # must report the actual cost of its own bitstring, not CPLEX's internal
     # (possibly rounded) objective value.
     instance = _build_rounding_matrix()
-    solution = solvers.cplex(instance, maxtime=60.0)
+    solution = solving.cplex.solve(instance, maxtime=60.0)
 
-    check.is_true(solution.check_consistency(instance))
+    check.is_true(solution.check_consistency(instance=instance))
 
     best_cost = solution[0].cost
-    expected_best_cost = solution.compute_costs(instance.matrix)[0].cost
+    expected_best_cost = solution._compute_costs(instance.matrix)[0].cost
 
     check.equal(best_cost, expected_best_cost)

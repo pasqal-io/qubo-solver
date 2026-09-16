@@ -1,15 +1,22 @@
 from __future__ import annotations
 
 import io
+import logging
+import struct
 from pathlib import Path
 
 import pytest
 import pytest_check as check
 
 from qubosolver._io.utils import (
+    _MAGIC,
+    _MAX_STRING_SIZE,
+    _package_version,
     read_exact,
     save,
     load,
+    save_header,
+    load_header,
     save_sized_buffer,
     load_sized_buffer,
     save_string,
@@ -169,6 +176,93 @@ class TestString:
         result = load_string(stream)
 
         check.equal(result, text)
+
+
+class TestHeader:
+    def test_save_load_header_roundtrip(self) -> None:
+        stream = io.BytesIO()
+        save_header(stream)
+        stream.seek(0)
+
+        check.equal(load_header(stream), _package_version())
+
+    def test_header_precedes_the_payload(self) -> None:
+        # load_header must leave the stream positioned exactly at the payload,
+        # so a header can be prepended to any existing format.
+        stream = io.BytesIO()
+        save_header(stream)
+        save_string(stream, "payload")
+        stream.seek(0)
+
+        load_header(stream)
+        check.equal(load_string(stream), "payload")
+
+    def test_load_header_rejects_wrong_magic(self) -> None:
+        stream = io.BytesIO(b"NOTMAGIC" + b"whatever follows")
+
+        with pytest.raises(ValueError, match="Not a qubosolver file"):
+            load_header(stream)
+
+    def test_load_header_rejects_a_truncated_header(self) -> None:
+        stream = io.BytesIO(b"QUBO")
+
+        with pytest.raises(EOFError):
+            load_header(stream)
+
+    def test_load_header_warns_on_a_version_mismatch_but_still_reads(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        # A mismatch is a debugging breadcrumb, not an error: the format is
+        # deliberately unversioned, so loading must proceed.
+        stream = io.BytesIO()
+        stream.write(_MAGIC)
+        save_string(stream, "0.0.1-from-the-past")
+        save_string(stream, "payload")
+        stream.seek(0)
+
+        with caplog.at_level(logging.WARNING):
+            writer_version = load_header(stream)
+
+        check.equal(writer_version, "0.0.1-from-the-past")
+        check.is_in("0.0.1-from-the-past", caplog.text)
+        check.is_in(_package_version(), caplog.text)
+        # The payload is still readable after the warning.
+        check.equal(load_string(stream), "payload")
+
+    def test_load_header_does_not_warn_on_a_matching_version(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        stream = io.BytesIO()
+        save_header(stream)
+        stream.seek(0)
+
+        with caplog.at_level(logging.WARNING):
+            load_header(stream)
+
+        check.equal(caplog.text, "")
+
+
+class TestSizeLimits:
+    def test_load_sized_buffer_rejects_an_oversized_prefix(self) -> None:
+        # The size prefix must be rejected before it is used to allocate, so a
+        # corrupt or hostile prefix cannot request an enormous read.
+        stream = io.BytesIO(struct.pack(">I", 4096))
+
+        with pytest.raises(ValueError, match="exceeds the 1024-byte limit"):
+            load_sized_buffer(stream, max_size=1024)
+
+    def test_load_sized_buffer_accepts_a_payload_at_the_limit(self) -> None:
+        stream = io.BytesIO()
+        save_sized_buffer(stream, b"x" * 64)
+        stream.seek(0)
+
+        check.equal(load_sized_buffer(stream, max_size=64), b"x" * 64)
+
+    def test_load_string_rejects_an_oversized_prefix(self) -> None:
+        stream = io.BytesIO(struct.pack(">I", _MAX_STRING_SIZE + 1))
+
+        with pytest.raises(ValueError, match="exceeds"):
+            load_string(stream)
 
 
 class TestOpen:

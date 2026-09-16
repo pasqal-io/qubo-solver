@@ -9,25 +9,26 @@ Typical usage:
     bs = bitstring.from_string("1010")
     s  = bitstring.to_string(bs)        # "1010"
     z  = bitstring.zeros(4)             # tensor([0, 0, 0, 0], dtype=torch.int8)
+    f  = bitstring.round([1.0, 0.0, 0.9999999])         # from a MIP solver's output
 """
 
 from __future__ import annotations
 
 from typing import Any
 import torch
-from . import linalg, vector
+from . import bitstrings, vector
 from .linalg import Bitstring
 from .random import torch_rng
 
 
 def dtype() -> torch.dtype:
     """Returns the dtype used for bitstrings (``torch.int8``)."""
-    return torch.int8
+    return bitstrings.dtype()
 
 
 def device() -> torch.device:
     """Returns the globally configured torch device."""
-    return linalg.device()
+    return bitstrings.device()
 
 
 def zeros(n: int, *, device: torch.device = device()) -> Bitstring:
@@ -57,18 +58,6 @@ def tensor(data: Any, *, device: torch.device = device(), **kwargs: Any) -> Bits
     return vector.tensor(data, dtype=dtype(), device=device, **kwargs)
 
 
-def from_torch(tensor: torch.Tensor) -> Bitstring:
-    """Converts an existing torch tensor to a bitstring (``int8``, on the global device).
-
-    Args:
-        tensor: Source tensor to convert.
-
-    Returns:
-        The tensor cast to ``int8`` on the global device.
-    """
-    return tensor.to(dtype=dtype(), device=device())
-
-
 def from_string(s: str, *, device: torch.device = device()) -> Bitstring:
     """Creates a bitstring tensor from a string of '0' and '1' characters.
 
@@ -79,7 +68,31 @@ def from_string(s: str, *, device: torch.device = device()) -> Bitstring:
     Returns:
         A 1-D ``int8`` tensor.
     """
-    return tensor([int(c) for c in s], device=device)
+    return bitstrings.from_strings([s], device=device)[0]
+
+
+def round(data: Any, *, atol: float = 1e-6, device: torch.device = device()) -> Bitstring:
+    """Rounds near-integral float values to a bitstring tensor.
+
+    Values are compared in ``float64`` regardless of the globally configured
+    float dtype, so *atol* keeps its meaning even when the global dtype is
+    narrower (e.g. ``float32``, which would round ``0.9999999998`` to exactly
+    ``1.0`` before the check could see it).
+
+    Args:
+        data: Input data (tensor, numpy array, list, etc.) of floats, each
+            within *atol* of 0 or 1.
+        atol: Maximum absolute distance from 0 or 1 tolerated before raising.
+        device: Torch device for the tensor.
+
+    Returns:
+        A 1-D ``int8`` tensor of 0s and 1s.
+
+    Raises:
+        ValueError: If any value is further than *atol* from both 0 and 1.
+    """
+    values = torch.as_tensor(data, dtype=torch.float64)
+    return bitstrings.round(values.unsqueeze(0), atol=atol, device=device)[0]
 
 
 def to_string(bitstring: Bitstring) -> str:
@@ -91,7 +104,7 @@ def to_string(bitstring: Bitstring) -> str:
     Returns:
         A string of '0' and '1' characters.
     """
-    return "".join(str(b.item()) for b in bitstring.flatten())
+    return bitstrings.to_strings(bitstring.flatten().unsqueeze(0))[0]
 
 
 def rand(
@@ -108,3 +121,22 @@ def rand(
         A 1-D ``int8`` tensor of 0s and 1s.
     """
     return torch.randint(0, 2, (n,), generator=rng, device=device, dtype=dtype())
+
+
+def as_tensor(data: Any) -> Bitstring:
+    """Convenience wrapper for `torch.as_tensor` that converts data to a bitstring
+    tensor, avoiding a copy when possible.
+
+    If *data* is already a tensor with the right dtype and on the right device, it is
+    returned as-is, sharing the same underlying memory. A numpy array is also shared
+    rather than copied if it already has ``int8`` dtype and the global device is
+    ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a
+    copy). Lists, tuples, and other array-like inputs are always copied.
+
+    Args:
+        data: Input data (tensor, numpy array, list, tuple, etc.).
+
+    Returns:
+        A 1-D ``int8`` tensor on the global device.
+    """
+    return torch.as_tensor(data, dtype=dtype(), device=device())

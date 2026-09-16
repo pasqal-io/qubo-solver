@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from types import SimpleNamespace
 
 import pytest_check as check
 import torch
@@ -8,7 +9,9 @@ import torch
 import qoolqit
 from qoolqit import ConstantWaveform
 from qoolqit import RampWaveform
-from qubosolver import Instance, matrix, vector, drive_shaping, embedding, extract_qubo, LayoutType
+from qubosolver import Instance, matrix, vector, drive_shaping, embedding, extract_qubo
+from qubosolver.embedding._algorithms.greedy.layout import get_layout
+from qubosolver.utils.quantum import _max_min_distance_ratio
 
 
 def _register() -> qoolqit.Register:
@@ -108,27 +111,19 @@ def test_extract_qubo_round_trip_through_greedy_embedding_and_drive_shaping() ->
     # A register of 3 atoms sitting on qoolqit's triangular lattice layout
     # (the grid greedy embedding places atoms on), picked non-adjacent so
     # the resulting triangle is scalene rather than equilateral.
-    lattice = LayoutType.TRIANGULAR.value(n_traps=12, spacing=1.0)
-    coords = lattice.coords
-    triangle = qoolqit.Register(
-        {
-            "0": tuple(coords[5]),
-            "1": tuple(coords[1]),
-            "2": tuple(coords[10]),
-        }
-    )
-    index = {"0": 0, "1": 1, "2": 2}
-    Q = matrix.zeros(3)
-    for (u, v), value in triangle.interactions().items():
-        Q[index[u], index[v]] = value
-        Q[index[v], index[u]] = value
+    coords = get_layout(layout_type=embedding.Lattice.TRIANGULAR, n_traps=12)
+    triangle = qoolqit.Register.from_coordinates(coords[(5, 1, 10), :])
+    Q = triangle.interaction_matrix()
+    assert isinstance(Q, torch.Tensor)
+    # qoolqit forces float64
+    Q = matrix.as_tensor(Q)
     Q.diagonal().copy_(vector.tensor([-1.0, -0.5, -1.1]))
 
     original = Instance(matrix=Q)
 
     device = qoolqit.AnalogDeviceWithDMM()
-    config = embedding.greedy.Config(traps=12, max_possible_term=1.0)
-    register = embedding.greedy.embed(original, device, config=config)
+    config = embedding.greedy_layout.Config(traps=12, max_possible_term=1.0)
+    register = embedding.greedy_layout.embed(original, config=config)
     drive = drive_shaping.proportional_diagonal.build_drive(
         original, register, device=device, dmm=True
     )
@@ -152,3 +147,29 @@ def test_extract_qubo_round_trip_through_greedy_embedding_and_drive_shaping() ->
     check.almost_equal(full_distance, 0.0, abs=1e-6)
     check.almost_equal(off_diag_distance, 0.0, abs=1e-6)
     check.almost_equal(diag_distance, 0.0, abs=1e-6)
+
+
+def test_max_min_distance_ratio_from_device_specs() -> None:
+    device = qoolqit.AnalogDevice()
+    check.equal(device.specs["min_distance"], 1.0)
+    check.equal(device.specs["max_radial_distance"], 7.6)
+
+    check.equal(_max_min_distance_ratio(device), 7.6)
+
+
+def test_max_min_distance_ratio_is_infinite_without_min_distance() -> None:
+    device = SimpleNamespace(specs={"min_distance": None, "max_radial_distance": 7.6})
+
+    check.equal(_max_min_distance_ratio(device), float("inf"))  # type: ignore[arg-type]
+
+
+def test_max_min_distance_ratio_is_infinite_without_max_radial_distance() -> None:
+    device = SimpleNamespace(specs={"min_distance": 1.0, "max_radial_distance": None})
+
+    check.equal(_max_min_distance_ratio(device), float("inf"))  # type: ignore[arg-type]
+
+
+def test_max_min_distance_ratio_is_infinite_when_min_distance_is_zero() -> None:
+    device = SimpleNamespace(specs={"min_distance": 0.0, "max_radial_distance": 7.6})
+
+    check.equal(_max_min_distance_ratio(device), float("inf"))  # type: ignore[arg-type]

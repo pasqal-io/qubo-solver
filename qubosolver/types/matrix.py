@@ -9,7 +9,7 @@ Typical usage:
 
     Q = matrix.zeros(4)                          # 4×4 zero matrix
     Q = matrix.tensor([[0, 1], [1, 0]])          # from nested list
-    Q = matrix.from_torch(some_tensor)           # cast existing tensor
+    Q = matrix.as_tensor(some_tensor)            # cast existing tensor, no copy when possible
 """
 
 from __future__ import annotations
@@ -65,13 +65,20 @@ def tensor(
     return torch.tensor(data, dtype=dtype, device=device, **kwargs)
 
 
-def from_torch(tensor: torch.Tensor) -> Matrix:
-    """Converts an existing torch tensor to a matrix with the global dtype and device.
+def as_tensor(data: Any) -> Matrix:
+    """Convenience wrapper for `torch.as_tensor` that converts data to a matrix
+    tensor, avoiding a copy when possible.
+
+    If *data* is already a tensor with the right dtype and on the right device, it is
+    returned as-is, sharing the same underlying memory. A numpy array is also shared
+    rather than copied if it already has the global float dtype and the global device
+    is ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a
+    copy). Lists, tuples, and other array-like inputs are always copied.
 
     Args:
-        tensor: Source tensor to convert.
+        data: Input data (tensor, numpy array, nested list, etc.).
 
     Returns:
-        The tensor cast to the global float dtype and device.
+        A 2-D tensor on the global dtype and device.
     """
-    return tensor.to(dtype=dtype(), device=device())
+    return torch.as_tensor(data, dtype=dtype(), device=device())

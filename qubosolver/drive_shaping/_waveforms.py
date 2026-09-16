@@ -100,6 +100,6 @@ def constant_weighted_dmm(
 
     waveform = ConstantWaveform(duration, final_detuning)
     return qoolqit.drive.DetuningMapModulator(
-        weights={str(i): w for i, w in enumerate(norm_weights)},
+        weights={i: w for i, w in enumerate(norm_weights)},
         waveform=waveform,
     )

@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 from unittest.mock import patch
 
+import numpy as np
 import pytest
 import torch
 import pytest_check as check
@@ -85,19 +86,19 @@ def test_tensor_propagates_kwargs_to_vector_tensor() -> None:
         check.is_false(call_kwargs.kwargs.get("requires_grad"))
 
 
-def test_from_torch_converts_dtype_and_device() -> None:
+def test_as_tensor_converts_dtype_and_device() -> None:
     source = torch.tensor([1, 0, 1, 0], dtype=torch.int32)
-    result = bitstring.from_torch(source)
+    result = bitstring.as_tensor(source)
     check.equal(result.dtype, torch.int8)
     check.equal(result.device, linalg.device())
-    torch.testing.assert_close(result, torch.tensor([1, 0, 1, 0], dtype=torch.int8))
+    torch.testing.assert_close(result, bitstring.tensor([1, 0, 1, 0]))
 
 
-def test_from_torch_preserves_values() -> None:
+def test_as_tensor_preserves_values() -> None:
     source = torch.tensor([0, 1, 1, 0, 1], dtype=torch.float32)
-    result = bitstring.from_torch(source)
+    result = bitstring.as_tensor(source)
     check.equal(result.dtype, torch.int8)
-    torch.testing.assert_close(result, torch.tensor([0, 1, 1, 0, 1], dtype=torch.int8))
+    torch.testing.assert_close(result, bitstring.tensor([0, 1, 1, 0, 1]))
 
 
 def test_from_string_creates_bitstring_from_empty_string() -> None:
@@ -110,19 +111,19 @@ def test_from_string_creates_bitstring_from_empty_string() -> None:
 def test_from_string_creates_bitstring_from_single_zero() -> None:
     result = bitstring.from_string("0")
     check.equal(result.dtype, torch.int8)
-    torch.testing.assert_close(result, torch.tensor([0], dtype=torch.int8))
+    torch.testing.assert_close(result, bitstring.tensor([0]))
 
 
 def test_from_string_creates_bitstring_from_single_one() -> None:
     result = bitstring.from_string("1")
     check.equal(result.dtype, torch.int8)
-    torch.testing.assert_close(result, torch.tensor([1], dtype=torch.int8))
+    torch.testing.assert_close(result, bitstring.tensor([1]))
 
 
 def test_from_string_creates_bitstring_from_multi_char_string() -> None:
     result = bitstring.from_string("01101")
     check.equal(result.dtype, torch.int8)
-    torch.testing.assert_close(result, torch.tensor([0, 1, 1, 0, 1], dtype=torch.int8))
+    torch.testing.assert_close(result, bitstring.tensor([0, 1, 1, 0, 1]))
 
 
 def test_from_string_creates_bitstring_on_specified_device() -> None:
@@ -194,9 +195,9 @@ def test_to_string_converts_bitstring_tensor_to_string() -> None:
     check.equal(result, "10011")
 
 
-def test_to_string_converts_from_torch_bitstring_to_string() -> None:
+def test_to_string_converts_as_tensor_bitstring_to_string() -> None:
     source = torch.tensor([1, 0, 1, 1, 0], dtype=torch.int32)
-    bs = bitstring.from_torch(source)
+    bs = bitstring.as_tensor(source)
     result = bitstring.to_string(bs)
     check.equal(result, "10110")
 
@@ -242,3 +243,166 @@ def test_rand_differs_across_seeds() -> None:
     a = bitstring.rand(50, rng=torch_rng(1))
     b = bitstring.rand(50, rng=torch_rng(2))
     check.is_false(torch.equal(a, b))
+
+
+def test_as_tensor_creates_int8_tensor_from_list() -> None:
+    data = [1, 0, 1, 1, 0]
+    result = bitstring.as_tensor(data)
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=bitstring.dtype(), device=bitstring.device())
+    )
+
+
+def test_as_tensor_creates_int8_tensor_from_numpy_array() -> None:
+    data = np.array([0, 1, 1, 0, 1])
+    result = bitstring.as_tensor(data)
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=bitstring.dtype(), device=bitstring.device())
+    )
+
+
+def test_as_tensor_no_copy_when_input_already_matches_dtype_and_device() -> None:
+    source = torch.tensor([1, 0, 1, 0], dtype=bitstring.dtype(), device=bitstring.device())
+    result = bitstring.as_tensor(source)
+    check.is_(result, source)
+    source[0] = 0
+    check.equal(result[0].item(), 0)
+
+
+def test_as_tensor_copies_when_dtype_differs() -> None:
+    source = torch.tensor([1, 0, 1, 0], dtype=torch.int32)
+    result = bitstring.as_tensor(source)
+    check.equal(result.dtype, bitstring.dtype())
+    check.is_not(result, source)
+    source[0] = 5
+    check.equal(result[0].item(), 1)
+
+
+def test_as_tensor_no_copy_when_numpy_array_already_matches_dtype_on_cpu() -> None:
+    source = np.array([1, 0, 1, 0], dtype=np.int8)
+    result = bitstring.as_tensor(source)
+    check.equal(result.dtype, bitstring.dtype())
+    source[0] = 5
+    check.equal(result[0].item(), 5)
+
+
+def test_as_tensor_copies_when_numpy_array_dtype_differs() -> None:
+    source = np.array([1, 0, 1, 0], dtype=np.int32)
+    result = bitstring.as_tensor(source)
+    check.equal(result.dtype, bitstring.dtype())
+    source[0] = 5
+    check.equal(result[0].item(), 1)
+
+
+def test_as_tensor_copies_when_input_is_a_list() -> None:
+    data = [1, 0, 1, 0]
+    result = bitstring.as_tensor(data)
+    check.equal(result.dtype, bitstring.dtype())
+    data[0] = 5
+    check.equal(result[0].item(), 1)
+
+
+def test_as_tensor_preserves_values_from_list() -> None:
+    data = [0, 1, 1, 0, 1]
+    result = bitstring.as_tensor(data)
+    torch.testing.assert_close(
+        result, torch.tensor(data, dtype=bitstring.dtype(), device=bitstring.device())
+    )
+
+
+def test_round_converts_exact_values() -> None:
+    result = bitstring.round([1.0, 0.0, 1.0, 0.0])
+    check.equal(result.dtype, torch.int8)
+    torch.testing.assert_close(result, bitstring.tensor([1, 0, 1, 0]))
+
+
+def test_round_rounds_near_integral_values() -> None:
+    result = bitstring.round([0.9999999, 1e-9, -0.0, 1.0000001])
+    torch.testing.assert_close(result, bitstring.tensor([1, 0, 0, 1]))
+
+
+def test_round_accepts_values_just_inside_the_tolerance() -> None:
+    result = bitstring.round([9e-7, 1.0 - 9e-7])
+    torch.testing.assert_close(result, bitstring.tensor([0, 1]))
+
+
+def test_round_accepts_a_custom_tolerance() -> None:
+    result = bitstring.round([0.999, 0.001], atol=1e-2)
+    torch.testing.assert_close(result, bitstring.tensor([1, 0]))
+
+
+def test_round_creates_tensor_on_specified_device() -> None:
+    custom_device = torch.device("cpu")
+    result = bitstring.round([1.0, 0.0], device=custom_device)
+    check.equal(result.device, custom_device)
+
+
+def test_round_returns_empty_tensor_for_empty_input() -> None:
+    result = bitstring.round([])
+    check.equal(result.dtype, torch.int8)
+    check.equal(result.shape, (0,))
+
+
+def test_round_accepts_a_float_tensor() -> None:
+    source = torch.tensor([1.0, 0.0, 0.9999999], dtype=torch.float64)
+    result = bitstring.round(source)
+    check.equal(result.dtype, torch.int8)
+    torch.testing.assert_close(result, bitstring.tensor([1, 0, 1]))
+
+
+def test_round_accepts_a_numpy_float_array() -> None:
+    source = np.array([0.0, 1.0, 1e-9], dtype=np.float64)
+    result = bitstring.round(source)
+    check.equal(result.dtype, torch.int8)
+    torch.testing.assert_close(result, bitstring.tensor([0, 1, 0]))
+
+
+def test_round_compares_in_float64_regardless_of_global_dtype() -> None:
+    # A fractional value must still be rejected when the global float dtype is
+    # narrow enough that casting to it first would hide the error.
+    original = linalg._GlobalConfig._float_dtype
+    try:
+        linalg._GlobalConfig.set_float_precision(torch.float16)
+        with pytest.raises(ValueError, match="of 0 or 1"):
+            bitstring.round([0.9999])
+    finally:
+        linalg._GlobalConfig._float_dtype = original
+
+
+def test_round_raises_on_fractional_value() -> None:
+    with pytest.raises(ValueError, match="within 1e-06 of 0 or 1"):
+        bitstring.round([1.0, 0.5, 0.0])
+
+
+def test_round_raises_on_value_just_outside_the_tolerance() -> None:
+    with pytest.raises(ValueError, match="of 0 or 1"):
+        bitstring.round([1.0 - 2e-6])
+
+
+def test_round_raises_on_out_of_range_value() -> None:
+    with pytest.raises(ValueError, match="of 0 or 1"):
+        bitstring.round([0.0, 2.0])
+
+
+def test_round_raises_on_negative_value() -> None:
+    with pytest.raises(ValueError, match="of 0 or 1"):
+        bitstring.round([-1.0, 0.0])
+
+
+def test_round_raises_when_custom_tolerance_is_tighter_than_the_error() -> None:
+    with pytest.raises(ValueError, match="within 1e-09 of 0 or 1"):
+        bitstring.round([0.9999999], atol=1e-9)
+
+
+def test_round_error_message_reports_the_offending_values() -> None:
+    with pytest.raises(ValueError, match=r"got \[0\.5\]"):
+        bitstring.round([1.0, 0.5, 0.0])
+
+
+@pytest.mark.parametrize("seed", [73, 256, 8401])
+@pytest.mark.parametrize("length", [1, 2, 5, 10, 50])
+def test_round_matches_from_string_on_perturbed_bits(seed: int, length: int) -> None:
+    rng = random.Random(seed)
+    string = "".join(rng.choice("01") for _ in range(length))
+    perturbed = [int(c) + rng.uniform(-1e-7, 1e-7) for c in string]
+    torch.testing.assert_close(bitstring.round(perturbed), bitstring.from_string(string))

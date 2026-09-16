@@ -1,6 +1,7 @@
 from __future__ import annotations
 from unittest.mock import patch, MagicMock
 
+import logging
 import pytest
 import pytest_check as check
 import torch
@@ -24,14 +25,15 @@ import qoolqit
 
 from qubosolver import (
     Instance,
-    SolverConfig,
-    EmbeddingConfig,
     AutoLocalEmulatorBackend,
     AutoRemoteEmulatorBackend,
     LocalEmulator,
     RemoteEmulator,
-    Solver,
     matrix,
+    Solver,
+    SolverConfig,
+    EmbeddingConfig,
+    QuantumSolvingConfig,
 )
 from qubosolver.types.backends import (
     _get_backend_type,
@@ -140,7 +142,7 @@ def local_auto_backend() -> tuple[LocalEmulator, pulser.backend.Results]:
 @pytest.fixture
 def local_default_config() -> tuple[LocalEmulator, pulser.backend.Results]:
     results = MagicMock(spec=pulser.backend.Results)
-    backend = SolverConfig().backend
+    backend = SolverConfig().quantum.backend
     assert isinstance(backend, LocalEmulator)
     return backend, results
 
@@ -162,28 +164,28 @@ def remote_auto_backend() -> tuple[RemoteEmulator, pulser.backend.RemoteResults]
 
 @pytest.mark.priority(120)
 @pytest.mark.parametrize(
-    "size, backend_and_results, expected_type",
+    "size, backend_and_results, expected_type, optimal_type",
     [
         # Auto backend tests - local
-        (2, "local_auto_backend", QutipBackendV2),
-        (20, "local_auto_backend", SVBackend),
-        (30, "local_auto_backend", MPSBackend),
+        (2, "local_auto_backend", QutipBackendV2, QutipBackendV2),
+        (20, "local_auto_backend", SVBackend, SVBackend),
+        (30, "local_auto_backend", MPSBackend, MPSBackend),
         # Auto backend tests - remote
-        (2, "remote_auto_backend", RemoteEmuFreeBackend),
-        (20, "remote_auto_backend", RemoteSVBackend),
-        (30, "remote_auto_backend", RemoteMPSBackend),
+        (2, "remote_auto_backend", RemoteEmuFreeBackend, RemoteEmuFreeBackend),
+        (20, "remote_auto_backend", RemoteSVBackend, RemoteSVBackend),
+        (30, "remote_auto_backend", RemoteMPSBackend, RemoteMPSBackend),
         # Default backend tests - local
-        (2, "local_default_backend", QutipBackendV2),
-        (20, "local_default_backend", SVBackend),
-        (30, "local_default_backend", MPSBackend),
-        # Default backend tests - remote (always RemoteEmuFreeBackend)
-        (2, "remote_default_backend", RemoteEmuFreeBackend),
-        (20, "remote_default_backend", RemoteEmuFreeBackend),
-        (30, "remote_default_backend", RemoteEmuFreeBackend),
+        (2, "local_default_backend", QutipBackendV2, QutipBackendV2),
+        (20, "local_default_backend", SVBackend, SVBackend),
+        (30, "local_default_backend", MPSBackend, MPSBackend),
+        # Default backend tests - remote (always RemoteEmuFreeBackend, suboptimal above ~15 qubits)
+        (2, "remote_default_backend", RemoteEmuFreeBackend, RemoteEmuFreeBackend),
+        (20, "remote_default_backend", RemoteEmuFreeBackend, RemoteSVBackend),
+        (30, "remote_default_backend", RemoteEmuFreeBackend, RemoteMPSBackend),
         # Default config tests - local
-        (2, "local_default_config", QutipBackendV2),
-        (20, "local_default_config", SVBackend),
-        (30, "local_default_config", MPSBackend),
+        (2, "local_default_config", QutipBackendV2, QutipBackendV2),
+        (20, "local_default_config", SVBackend, SVBackend),
+        (30, "local_default_config", MPSBackend, MPSBackend),
     ],
     indirect=("backend_and_results",),
 )
@@ -191,31 +193,37 @@ def test_emulator_backend_selection(
     size: int,
     backend_and_results: tuple,
     expected_type: type,
+    optimal_type: type,
 ) -> None:
     """Test that emulators select the correct backend based on problem size and configuration."""
-    Q = matrix.from_torch(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
+    Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
     instance = Instance(Q)
 
     backend, results = backend_and_results
     attach_bitstring(results, size)
 
     solver_config = SolverConfig(
-        use_quantum=True,
-        backend=backend,
-        embedding=EmbeddingConfig(embedding_method="blade"),
+        solving=QuantumSolvingConfig(
+            backend=backend,
+            embedding=EmbeddingConfig(algorithm="blade"),
+        ),
         activate_trivial_solutions=False,
     )
 
     solver = Solver(instance, solver_config)
     with patch.object(expected_type, "run", return_value=results) as mock_run:
-        solver.solve()
+        if expected_type is not optimal_type:
+            with pytest.warns(UserWarning, match=f"Consider using {optimal_type.__name__}"):
+                solver.solve()
+        else:
+            solver.solve()
         mock_run.assert_called_once()
 
 
 def test_default_config_backend() -> None:
-    """Test that default SolverConfig uses AutoLocalEmulatorBackend."""
-    config = SolverConfig(use_quantum=True)
-    check.is_(config.backend._backend_type, AutoLocalEmulatorBackend)
+    """Test that default solving.Config uses AutoLocalEmulatorBackend."""
+    config = SolverConfig()
+    check.is_(config.quantum.backend._backend_type, AutoLocalEmulatorBackend)
 
 
 def test_default_remote_emulator_backend() -> None:
@@ -228,15 +236,16 @@ def test_default_remote_emulator_backend() -> None:
 def test_remote_emulator_warning() -> None:
     """Test that RemoteEmulator warns when using suboptimal backend."""
     size = 2
-    Q = matrix.from_torch(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
+    Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
     instance = Instance(Q)
     mock_connection, mock_results = mock_connection_and_results()
     attach_bitstring(mock_results, size)
     config = SolverConfig(
-        use_quantum=True,
-        backend=RemoteEmulator(backend_type=RemoteSVBackend, connection=mock_connection),
+        solving=QuantumSolvingConfig(
+            backend=RemoteEmulator(backend_type=RemoteSVBackend, connection=mock_connection),
+            embedding=EmbeddingConfig(algorithm="blade"),
+        ),
         activate_trivial_solutions=False,
-        embedding=EmbeddingConfig(embedding_method="blade"),
     )
     solver = Solver(instance, config)
 
@@ -249,13 +258,14 @@ def test_remote_emulator_warning() -> None:
 def test_local_emulator_warning() -> None:
     """Test that LocalEmulator warns when using suboptimal backend."""
     size = 2
-    Q = matrix.from_torch(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
+    Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
     instance = Instance(Q)
     config = SolverConfig(
-        use_quantum=True,
-        backend=LocalEmulator(backend_type=SVBackend),
+        solving=QuantumSolvingConfig(
+            backend=LocalEmulator(backend_type=SVBackend),
+            embedding=EmbeddingConfig(algorithm="blade"),
+        ),
         activate_trivial_solutions=False,
-        embedding=EmbeddingConfig(embedding_method="blade"),
     )
 
     solver = Solver(instance, config)
@@ -377,3 +387,68 @@ def test_warn_suboptimal_backend_message_content() -> None:
         UserWarning, match=r"Using SVBackend for 10 qubits\. Consider using QutipBackendV2"
     ):
         _warn_suboptimal_backend(SVBackend, 10)
+
+
+def test_warn_suboptimal_backend_logs_warning(caplog: pytest.LogCaptureFixture) -> None:
+    """Test that _warn_suboptimal_backend also logs a warning, not just warnings.warn."""
+    with caplog.at_level(logging.WARNING, logger="qubosolver.types.backends"):
+        with pytest.warns(UserWarning):
+            _warn_suboptimal_backend(SVBackend, 10)
+
+    assert len(caplog.records) == 1
+    check.equal(caplog.records[0].levelno, logging.WARNING)
+    check.is_in("Using SVBackend for 10 qubits", caplog.records[0].message)
+
+
+def test_dont_warn_optimal_backend_no_log(caplog: pytest.LogCaptureFixture) -> None:
+    """Test that _warn_suboptimal_backend does not log anything for optimal backends."""
+    with caplog.at_level(logging.WARNING, logger="qubosolver.types.backends"):
+        _warn_suboptimal_backend(QutipBackendV2, 10)
+
+    check.equal(len(caplog.records), 0)
+
+
+@pytest.mark.parametrize(
+    "size, expected_type",
+    [
+        (10, QutipBackendV2),
+        (20, SVBackend),
+        (30, MPSBackend),
+    ],
+)
+def test_auto_local_emulator_backend_logs_info(
+    size: int, expected_type: type, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test that AutoLocalEmulatorBackend logs the selected backend type at INFO level."""
+    device = qoolqit.MockDevice()
+    sequence = make_sequence(dummy_pulser_register(size), device)
+    with caplog.at_level(logging.INFO, logger="qubosolver.types.backends"):
+        AutoLocalEmulatorBackend(sequence)  # type: ignore[abstract]
+
+    assert len(caplog.records) == 1
+    check.equal(caplog.records[0].levelno, logging.INFO)
+    check.is_in(expected_type.__name__, caplog.records[0].message)
+    check.is_in(str(size), caplog.records[0].message)
+
+
+@pytest.mark.parametrize(
+    "size, expected_type",
+    [
+        (10, RemoteEmuFreeBackend),
+        (20, RemoteSVBackend),
+        (30, RemoteMPSBackend),
+    ],
+)
+def test_auto_remote_emulator_backend_logs_info(
+    size: int, expected_type: type, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test that AutoRemoteEmulatorBackend logs the selected backend type at INFO level."""
+    device = qoolqit.MockDevice()
+    sequence = make_sequence(dummy_pulser_register(size), device)
+    with caplog.at_level(logging.INFO, logger="qubosolver.types.backends"):
+        AutoRemoteEmulatorBackend(sequence, MagicMock(spec=pulser.backend.remote.RemoteConnection))
+
+    assert len(caplog.records) == 1
+    check.equal(caplog.records[0].levelno, logging.INFO)
+    check.is_in(expected_type.__name__, caplog.records[0].message)
+    check.is_in(str(size), caplog.records[0].message)

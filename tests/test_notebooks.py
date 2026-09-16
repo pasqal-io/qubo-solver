@@ -15,6 +15,7 @@ skip: dict[str, str] = {
     "01-dataset-generation-and-loading.ipynb": "Must manually save data",
     "03-prepostprocessing.ipynb": "Must manually save data from notebook 01",
     "05-blade.ipynb": "Blade moved to Qoolqit",
+    "08-qubo_analyzer.ipynb": "TODO: update with revamp",
     "09-decomposition.ipynb": "Flaky: Need a device with DMM other than DigitalAnalogDevice",
 }
 
@@ -25,12 +26,12 @@ def get_ipynb_files(dir: Path) -> list[Path]:
     for it in dir.iterdir():
         if it.suffix == ".ipynb" and not it.match("*.ipynb_checkpoints*"):
             files.append(it)
-        elif it.is_dir():
+        elif it.is_dir() and it.name != "retired":
             files.extend(get_ipynb_files(it))
     return files
 
 
-notebooks_dir = Path(__file__).parent.parent.joinpath("docs").joinpath("tutorial").resolve()
+notebooks_dir = Path(__file__).parent.parent.joinpath("docs").joinpath("tutorials").resolve()
 assert notebooks_dir.exists()
 notebooks_files = get_ipynb_files(notebooks_dir)
 

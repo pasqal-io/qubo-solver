@@ -10,6 +10,7 @@ Typical usage:
     bs = bitstrings.from_strings(["1010", "0110", "1100"])
     ss = bitstrings.to_strings(bs)          # ["1010", "0110", "1100"]
     z  = bitstrings.zeros(4, 8)             # 4 zero bitstrings of length 8
+    f  = bitstrings.round([[1.0, 0.0, 0.9999999]])  # from a MIP solver's output
 
 See also [`qubosolver.bitstring`][qubosolver.bitstring] for single-bitstring operations.
 """
@@ -18,19 +19,19 @@ from __future__ import annotations
 
 from typing import Any, Sequence
 import torch
+from . import linalg
 from .linalg import Bitstrings
-from . import bitstring
 from .random import torch_rng
 
 
 def dtype() -> torch.dtype:
     """Returns the dtype used for bitstrings (``torch.int8``)."""
-    return bitstring.dtype()
+    return torch.int8
 
 
 def device() -> torch.device:
     """Returns the globally configured torch device."""
-    return bitstring.device()
+    return linalg.device()
 
 
 def zeros(count: int, n_bits: int, *, device: torch.device = device()) -> Bitstrings:
@@ -61,18 +62,6 @@ def tensor(data: Any, *, device: torch.device = device(), **kwargs: Any) -> Bits
     return torch.tensor(data, dtype=dtype(), device=device, **kwargs)
 
 
-def from_torch(tensor: torch.Tensor) -> Bitstrings:
-    """Converts an existing torch tensor to bitstrings (``int8``, on the global device).
-
-    Args:
-        tensor: Source tensor to convert.
-
-    Returns:
-        The tensor cast to ``int8`` on the global device.
-    """
-    return tensor.to(dtype=dtype(), device=device())
-
-
 def from_strings(strings: Sequence[str], *, device: torch.device = device()) -> Bitstrings:
     """Creates a 2-D bitstrings tensor from a sequence of '0'/'1' strings.
 
@@ -94,7 +83,39 @@ def from_strings(strings: Sequence[str], *, device: torch.device = device()) -> 
         raise ValueError(
             f"All bitstrings must have the same length, got lengths: {sorted(lengths)}"
         )
-    return torch.stack([bitstring.from_string(s, device=device) for s in strings])
+    return tensor([[int(c) for c in s] for s in strings], device=device)
+
+
+def round(data: Any, *, atol: float = 1e-6, device: torch.device = device()) -> Bitstrings:
+    """Rounds near-integral float values to a 2-D bitstrings tensor.
+
+    Values are compared in ``float64`` regardless of the globally configured
+    float dtype, so *atol* keeps its meaning even when the global dtype is
+    narrower (e.g. ``float32``, which would round ``0.9999999998`` to exactly
+    ``1.0`` before the check could see it).
+
+    Args:
+        data: Input data (tensor, numpy array, nested list, etc.) of floats, each
+            within *atol* of 0 or 1. Nested sequences must not be ragged.
+        atol: Maximum absolute distance from 0 or 1 tolerated before raising.
+        device: Torch device for the tensor.
+
+    Returns:
+        A 2-D ``int8`` tensor of shape ``(count, n_bits)``.
+
+    Raises:
+        ValueError: If any value is further than *atol* from both 0 and 1, or if
+            the input is a ragged nested sequence.
+    """
+    values = torch.as_tensor(data, dtype=torch.float64)
+    bits = torch.round(values)
+    invalid = ((bits != 0) & (bits != 1)) | ((values - bits).abs() > atol)
+    if bool(invalid.any()):
+        raise ValueError(
+            f"Expected values within {atol} of 0 or 1, got "
+            f"{values[invalid].tolist()} in {values.tolist()}"
+        )
+    return bits.to(dtype=dtype(), device=device)
 
 
 def to_strings(bitstrings: Bitstrings) -> list[str]:
@@ -106,7 +127,7 @@ def to_strings(bitstrings: Bitstrings) -> list[str]:
     Returns:
         A list of *n* strings, each of length *m*, representing each row of the tensor.
     """
-    return [bitstring.to_string(b) for b in bitstrings]
+    return ["".join(str(b.item()) for b in row) for row in bitstrings]
 
 
 def rand(
@@ -124,3 +145,22 @@ def rand(
         A 2-D ``int8`` tensor of shape ``(count, n_bits)`` containing 0s and 1s.
     """
     return torch.randint(0, 2, (count, n_bits), generator=rng, device=device, dtype=dtype())
+
+
+def as_tensor(data: Any) -> Bitstrings:
+    """Convenience wrapper for `torch.as_tensor` that converts data to a bitstrings
+    tensor, avoiding a copy when possible.
+
+    If *data* is already a tensor with the right dtype and on the right device, it is
+    returned as-is, sharing the same underlying memory. A numpy array is also shared
+    rather than copied if it already has ``int8`` dtype and the global device is
+    ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a
+    copy). Lists, tuples, and other array-like inputs are always copied.
+
+    Args:
+        data: Input data (tensor, numpy array, nested list, etc.).
+
+    Returns:
+        A 2-D ``int8`` tensor on the global device.
+    """
+    return torch.as_tensor(data, dtype=dtype(), device=device())

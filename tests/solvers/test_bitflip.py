@@ -9,14 +9,14 @@ import torch
 from qubosolver import (
     Solution,
     Instance,
-    solvers,
+    solving,
     bitstrings,
     vectori,
     matrix,
     torch_rng,
     Bitstring,
 )
-from qubosolver.solvers.classical import bitflip
+from qubosolver.solving.classical import iterative_bitflip_local_search
 
 
 @pytest.mark.parametrize("strategy", ["best_improvement", "first_improvement", "greedy_sweep"])
@@ -27,11 +27,13 @@ def test_solution_not_mutated(
     instance = Instance(Q)
 
     solution = Solution(bitstrings.zeros(1, 2), counts=vectori.tensor([1]))
-    solution.compute_costs(instance.matrix)
+    solution._update(instance)
     check.equal(len(solution), 1)
     check.equal(solution[0].string, "00")
 
-    new_solution = solvers.iterative_bitflip_local_search(instance, solution, strategy=strategy)
+    new_solution = solving.iterative_bitflip_local_search.solve(
+        instance, starts=solution, strategy=strategy
+    )
     check.equal(len(solution), 1)
     check.equal(solution[0].string, "00")
     check.equal(len(new_solution), 1)
@@ -41,8 +43,8 @@ def test_solution_not_mutated(
         check.equal(new_solution[0].string, "10")
     check.is_not(new_solution, solution)
 
-    new_solution2 = solvers.iterative_bitflip_local_search(
-        instance, new_solution, strategy=strategy
+    new_solution2 = solving.iterative_bitflip_local_search.solve(
+        instance, starts=new_solution, strategy=strategy
     )
     check.equal(len(new_solution2), 1)
     if strategy == "best_improvement":
@@ -59,22 +61,54 @@ def test_strategy_selection_improves_solution(
     instance = Instance(Q)
 
     solution = Solution(bitstrings.zeros(1, 2), counts=vectori.tensor([1]))
-    solution.compute_costs(instance.matrix)
+    solution._update(instance)
 
-    new_solution = solvers.iterative_bitflip_local_search(instance, solution, strategy=strategy)
+    new_solution = solving.iterative_bitflip_local_search.solve(
+        instance, starts=solution, strategy=strategy
+    )
 
     check.equal(new_solution[0].string, "11")
     check.less_equal(new_solution[0].cost, solution[0].cost)
+
+
+def test_int_starts_generates_that_many_random_starts() -> None:
+    """Passing an int for `starts` must draw that many uniformly random
+    starting bitstrings (via random_sampling.solve) and locally optimize
+    each of them, instead of requiring a pre-built Solution."""
+    Q = matrix.tensor([[-10.0, 1.0], [1.0, -10.0]])
+    instance = Instance(Q)
+
+    result = solving.iterative_bitflip_local_search.solve(
+        instance, starts=5, strategy="best_improvement"
+    )
+
+    check.is_true(result.check_consistency(instance=instance, throw=True))
+    check.less_equal(len(result), 5)
+    for sol in result:
+        check.equal(sol.string, "11")
+
+
+def test_default_starts_is_one_random_start() -> None:
+    """Omitting `starts` must default to a single uniformly random
+    starting bitstring."""
+    Q = matrix.tensor([[-10.0, 1.0], [1.0, -10.0]])
+    instance = Instance(Q)
+
+    result = solving.iterative_bitflip_local_search.solve(instance)
+
+    check.is_true(result.check_consistency(instance=instance, throw=True))
+    check.equal(len(result), 1)
+    check.equal(result[0].string, "11")
 
 
 def test_unknown_strategy_raises() -> None:
     Q = matrix.tensor([[-1.0, 2.0], [2.0, -2.0]])
     instance = Instance(Q)
     solution = Solution(bitstrings.zeros(1, 2), counts=vectori.tensor([1]))
-    solution.compute_costs(instance.matrix)
+    solution._update(instance)
 
     with pytest.raises(ValueError):
-        solvers.iterative_bitflip_local_search(instance, solution, strategy="does_not_exist")  # type: ignore[arg-type]
+        solving.iterative_bitflip_local_search.solve(instance, starts=solution, strategy="does_not_exist")  # type: ignore[arg-type]
 
 
 def test_max_iterations_limits_progress() -> None:
@@ -88,61 +122,96 @@ def test_max_iterations_limits_progress() -> None:
     )
     instance = Instance(Q)
     solution = Solution(bitstrings.zeros(1, 3), counts=vectori.tensor([1]))
-    solution.compute_costs(instance.matrix)
+    solution._update(instance)
 
-    limited = solvers.iterative_bitflip_local_search(
+    limited = solving.iterative_bitflip_local_search.solve(
         instance,
-        solution,
+        starts=solution,
         strategy="best_improvement",
         max_iterations=1,
     )
-    unlimited = solvers.iterative_bitflip_local_search(
+    unlimited = solving.iterative_bitflip_local_search.solve(
         instance,
-        solution,
+        starts=solution,
         strategy="best_improvement",
         max_iterations=-1,
     )
-    check.is_true(limited.check_consistency(instance))
-    check.is_true(unlimited.check_consistency(instance))
+    check.is_true(limited.check_consistency(instance=instance))
+    check.is_true(unlimited.check_consistency(instance=instance))
     check.less_equal(unlimited[0].cost, limited[0].cost)
+
+
+@pytest.mark.parametrize("n", [2, 10, 50, 200])
+@pytest.mark.parametrize("strategy", ["best_improvement", "first_improvement", "greedy_sweep"])
+def test_solve_reaches_a_consistent_local_minimum(
+    n: int, strategy: Literal["greedy_sweep", "best_improvement", "first_improvement"]
+) -> None:
+    """Regardless of QUBO size, `solve` must return a solution whose costs are
+    consistent with the instance and that is a genuine local minimum under
+    single-bit flips: no flip of the best bitstring found should yield a
+    strictly lower cost. This is the baseline correctness contract that any
+    future cost-evaluation optimization (e.g. an incremental/differential
+    cost update instead of recomputing z^T Q z from scratch on every flip)
+    must continue to satisfy exactly."""
+    rng = torch_rng(n)
+    Q = torch.randn(n, n, generator=rng)
+    Q = matrix.as_tensor((Q + Q.T) / 2)
+    instance = Instance(Q)
+
+    m = 20
+    start = bitstrings.rand(m, n, rng=rng)
+    solution = Solution(start, counts=vectori.zeros(m).fill_(1))
+    solution._update(instance)
+
+    result = solving.iterative_bitflip_local_search.solve(
+        instance, starts=solution, strategy=strategy
+    )
+
+    check.is_true(result.check_consistency(instance=instance, throw=True))
+
+    best = result[0]
+    for i in range(n):
+        flipped = best.bitstring.clone()
+        flipped[i] = 1 - flipped[i]
+        check.greater_equal(instance.cost(flipped), best.cost)
 
 
 def test_time_limit_is_global_and_skips_remaining_batch(monkeypatch: pytest.MonkeyPatch) -> None:
     n = 4
     Q = torch.randn(n, n, generator=torch_rng(0))
-    Q = matrix.tensor((Q + Q.T) / 2)
+    Q = matrix.as_tensor((Q + Q.T) / 2)
     instance = Instance(Q)
 
     # Fake monotonic clock, ticked by qubo evaluations, so the deadline trips
     # deterministically instead of depending on wall-clock timing.
     time_limit = 3.0
     clock = 0.0
-    monkeypatch.setattr(bitflip.time, "monotonic", lambda: clock)
+    monkeypatch.setattr(iterative_bitflip_local_search.time, "monotonic", lambda: clock)
 
     batch = 10
     solution = Solution(bitstrings.zeros(batch, n), counts=vectori.zeros(batch).fill_(1))
-    solution.compute_costs(Q)
+    solution._update(instance)
 
-    original_eval = instance.evaluate_solution
+    original_cost = instance.cost
     eval_count = 0
 
-    def ticking_eval(s: Bitstring) -> float:
+    def ticking_cost(s: Bitstring) -> float:
         # Advance the clock by more than the whole budget on every evaluation. The
         # first row's search still gets to try its first flip (its own inner deadline
         # is computed only *after* the initial evaluation has already ticked the
         # clock forward), finds an improving flip on the first try, and applies it -
         # but by then the global deadline (fixed before the batch loop started) is
         # long past, so every subsequent row is skipped by the batch-level check
-        # before it ever reaches evaluate_solution.
+        # before it ever reaches cost.
         nonlocal clock, eval_count
         eval_count += 1
         clock += time_limit + 1.0
-        return original_eval(s)
+        return original_cost(s)
 
-    monkeypatch.setattr(instance, "evaluate_solution", ticking_eval)
+    monkeypatch.setattr(instance, "cost", ticking_cost)
 
-    result = solvers.iterative_bitflip_local_search(
-        instance, solution, strategy="first_improvement", time_limit=time_limit
+    result = solving.iterative_bitflip_local_search.solve(
+        instance, starts=solution, strategy="first_improvement", time_limit=time_limit
     )
 
     # Only row 0 is ever searched: one eval for its initial cost, one more for the

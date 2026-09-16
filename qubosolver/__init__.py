@@ -1,8 +1,20 @@
+"""QUBO Solver: a library for solving Quadratic Unconstrained Binary Optimization (QUBO) problems using
+classical, quantum, and hybrid algorithms, including on Pasqal neutral-atom QPUs.
+
+Exposes the core data types ([`Instance`][], [`Solution`][], [`Dataset`][], ...), the
+[`Solver`][] entry point, and the [`transforms`][], [`embedding`][],
+[`drive_shaping`][], and [`solving`][] submodules used to build and run quantum,
+hybrid, and classical QUBO solvers.
+"""
+
 from __future__ import annotations
 
-from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING
+import logging
 
-from qubosolver.types import (
+logging.getLogger(__name__).addHandler(logging.NullHandler())
+
+from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING  # noqa: E402
+from qubosolver.types import (  # noqa: E402
     # Submodules
     bitstring,
     bitstrings,
@@ -21,49 +33,32 @@ from qubosolver.types import (
     Vectori,
     # Classes
     Solution,
-    SingleSolution,
-    Analyzer,
+    Candidate,
     Instance,
     Dataset,
     LocalEmulator,
     RemoteEmulator,
     AutoLocalEmulatorBackend,
     AutoRemoteEmulatorBackend,
-    # Enums
-    EmbedderType,
-    DriveType,
-    LayoutType,
-    DensityType,
-    ClassicalSolverType,
     # Functions
     torch_rng,
-    # Qubo* TypeAliases
-    QuboSolution,
-    QuboSingleSolution,
-    QuboAnalyzer,
-    QuboInstance,
-    QuboDataset,
-    # Deprecated QUBO* classes
-    QUBOSolution,
-    QUBOAnalyzer,
-    QUBOInstance,
-    QUBODataset,
 )
-from qubosolver.config import (
+from qubosolver.utils import extract_qubo, analysis  # noqa: E402
+
+from importlib.metadata import version  # noqa: E402
+from pulser.sequence import store_package_version_metadata  # noqa: E402
+
+from qubosolver import transforms, drive_shaping, embedding, solving  # noqa: E402
+
+from qubosolver.solver import (  # noqa: E402
+    Solver,
     SolverConfig,
-    EmbeddingConfig,
-    DriveShapingConfig,
-    ClassicalConfig,
     DecompositionConfig,
+    DriveShapingConfig,
+    EmbeddingConfig,
+    ClassicalSolvingConfig,
+    QuantumSolvingConfig,
 )
-
-from qubosolver.utils import extract_qubo
-
-from importlib.metadata import version
-from pulser.sequence import store_package_version_metadata
-
-from qubosolver import solvers, transforms, drive_shaping, embedding
-from qubosolver.solvers import Solver, QuboSolver
 
 __all__ = [
     # Submodules
@@ -75,10 +70,11 @@ __all__ = [
     "vectori",
     "linalg",
     "protocols",
-    "solvers",
+    "solving",
     "transforms",
     "embedding",
     "drive_shaping",
+    "analysis",
     # Type Aliases
     "Bitstring",
     "Bitstrings",
@@ -88,42 +84,24 @@ __all__ = [
     "Vectori",
     # Classes
     "Solution",
-    "SingleSolution",
-    "Analyzer",
+    "Candidate",
     "Instance",
-    "Solver",
     "Dataset",
     "LocalEmulator",
     "RemoteEmulator",
     "AutoLocalEmulatorBackend",
     "AutoRemoteEmulatorBackend",
-    # Enums
-    "EmbedderType",
-    "DriveType",
-    "LayoutType",
-    "DensityType",
-    "ClassicalSolverType",
-    # Configs
-    "SolverConfig",
-    "EmbeddingConfig",
-    "DriveShapingConfig",
-    "ClassicalConfig",
-    "DecompositionConfig",
     # Functions
     "torch_rng",
     "extract_qubo",
-    # Qubo* TypeAliases
-    "QuboSolution",
-    "QuboSingleSolution",
-    "QuboAnalyzer",
-    "QuboInstance",
-    "QuboDataset",
-    "QuboSolver",
-    # Deprecated QUBO* classes
-    "QUBOSolution",
-    "QUBOAnalyzer",
-    "QUBOInstance",
-    "QUBODataset",
+    # Config-based API
+    "Solver",
+    "SolverConfig",
+    "DecompositionConfig",
+    "DriveShapingConfig",
+    "EmbeddingConfig",
+    "ClassicalSolvingConfig",
+    "QuantumSolvingConfig",
 ]
 
 __version__ = version("qubo-solver")

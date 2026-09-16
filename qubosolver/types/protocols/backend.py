@@ -13,10 +13,10 @@ from ._protocol import Protocol
 class Backend(Protocol):
     """Structural protocol for quantum backends.
 
-    Any object that implements :meth:`run` with the expected signature
-    is considered a ``Backend``, without requiring explicit subclassing.
-    This enables duck-typed compatibility checks (via ``isinstance`` when
-    beartype runtime checking is active, or static type checking via mypy/pyright).
+    Any object that implements [`run`][] with the expected signature is considered a
+    [`Backend`][], without requiring explicit subclassing. This enables duck-typed
+    compatibility checks (via [`isinstance`][] when beartype runtime checking is
+    active, or static type checking via mypy/pyright).
 
     Typical implementations wrap a remote or local quantum execution engine
     (e.g. a Qoolqit emulator or a real QPU) and return a handle to the
@@ -30,8 +30,7 @@ class Backend(Protocol):
             program: The compiled quantum program to execute.
 
         Returns:
-            A :class:`~qoolqit.execution.job.Job` wrapping the
-            :class:`~pulser.backend.Results` that will be populated
-            upon completion.
+            A job wrapping the [`qoolqit.execution.Results`][]
+                that will be populated upon completion.
         """
         ...
