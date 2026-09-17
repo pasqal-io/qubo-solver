@@ -3591,13 +3591,13 @@
 <p>2) Setup an environment for developing. From your <code>qubo-solver</code> folder run:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>pip<span class="w"> </span>install<span class="w"> </span>--group<span class="w"> </span>dev<span class="w"> </span>-e<span class="w"> </span>.
 </code></pre></div>
 <h3 id="useful-things-for-your-workflow-linting-and-testing">Useful things for your workflow: Linting and Testing</h3>
-<p>Use <code>pre-commit</code> hooks to make sure that the code is properly linted before pushing a new commit. Make sure that the unit tests and type checks are passing since the merge request will not be accepted if the automatic CI/CD pipeline do not pass.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pip<span class="w"> </span>install<span class="w"> </span>pre-commit
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>pre-commit<span class="w"> </span>install
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+<p>Use <code>prek</code> (a drop-in, faster replacement for <code>pre-commit</code>) to make sure that the code is properly linted before pushing a new commit. Make sure that the unit tests and type checks are passing since the merge request will not be accepted if the automatic CI/CD pipeline do not pass.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pip<span class="w"> </span>install<span class="w"> </span>prek
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>prek<span class="w"> </span>install
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>prek<span class="w"> </span>run<span class="w"> </span>--all-files
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>pytest
 </code></pre></div>
 <h2 id="a-word-on-patents">A Word on Patents</h2>
