@@ -79,11 +79,11 @@ dev = [
   "beartype",
   "typing_extensions",
   "bandit[sarif,toml]>=1.9.4",
-  { include-group = "pre-commit" },
-]
-pre-commit = [
-  "prek",
   "deptry",
+  { include-group = "prek" },
+]
+prek = [
+  "prek",
 ]
 doc = [
   "properdocs",
