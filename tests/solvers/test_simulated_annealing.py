@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import sys
 
 import pytest
 import pytest_check as check
@@ -628,6 +629,15 @@ def test_simulated_annealing_stats_per_run_top_k_one_does_not_log(
     check.equal(caplog.records, [])
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 11),
+    reason=(
+        "typing_extensions.get_overloads only sees overloads registered via "
+        "typing.overload starting on Python 3.11 (it delegates to typing's "
+        "own registry); on 3.10 it maintains a separate registry that only "
+        "typing_extensions.overload writes into."
+    ),
+)
 def test_simulated_annealing_overloads_match_implementation_signature() -> None:
     """Every @overload stub of simulated_annealing must declare exactly the
     same parameters, with the same defaults, as the real implementation, so
