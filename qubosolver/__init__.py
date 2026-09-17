@@ -108,7 +108,7 @@ __version__ = version("qubo-solver")
 store_package_version_metadata("qubosolver", __version__)
 
 if _RUNTIME_TYPE_CHECKING:
-    from beartype import BeartypeConf
-    from beartype.claw import beartype_this_package
+    from beartype import BeartypeConf  # deptry: ignore[DEP004]
+    from beartype.claw import beartype_this_package  # deptry: ignore[DEP004]
 
     beartype_this_package(conf=BeartypeConf(warning_cls_on_decorator_exception=None))

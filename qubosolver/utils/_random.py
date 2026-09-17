@@ -44,8 +44,14 @@ def seed_context(seed: int) -> Generator[torch.Generator]:
 
 def register_seeded_magic() -> None:
     """Register the ``%%seeded <seed>`` cell magic in the running IPython kernel."""
-    from IPython.core.getipython import get_ipython
-    from IPython.core.magic import register_cell_magic
+    try:
+        from IPython.core.getipython import get_ipython  # deptry: ignore[DEP004]
+        from IPython.core.magic import register_cell_magic  # deptry: ignore[DEP004]
+    except ImportError as e:
+        raise ImportError(
+            "register_seeded_magic() requires IPython. "
+            "Install it with: pip install 'qubo-solver[dev]'"
+        ) from e
 
     @register_cell_magic
     def seeded(line: str, cell: str) -> None:

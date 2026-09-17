@@ -60,17 +60,17 @@ git merge upstream/main
   ```sh
   python -m venv .venv
   source .venv/bin/activate
-  pip install -e .[dev]
+  pip install --group dev -e .
   ```
 
 ### Useful things for your workflow: Linting and Testing
 
-Use `pre-commit` hooks to make sure that the code is properly linted before pushing a new commit. Make sure that the unit tests and type checks are passing since the merge request will not be accepted if the automatic CI/CD pipeline do not pass.
+Use `prek` (a drop-in, faster replacement for `pre-commit`) to make sure that the code is properly linted before pushing a new commit. Make sure that the unit tests and type checks are passing since the merge request will not be accepted if the automatic CI/CD pipeline do not pass.
 
 ```shell
-pip install pre-commit
-pre-commit install
-pre-commit run --all-files
+pip install prek
+prek install
+prek run --all-files
 pytest
 ```
 

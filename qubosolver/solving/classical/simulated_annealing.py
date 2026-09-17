@@ -11,10 +11,9 @@ import time
 import heapq
 import logging
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, overload
 
 import torch
-from typing_extensions import overload
 
 from qubosolver import (
     Instance,

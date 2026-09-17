@@ -35,5 +35,5 @@ If you are developing code for Qubo Solver, you can install it directly from sou
   ```sh
   python -m venv .venv
   source .venv/bin/activate
-  pip install -e .[dev]
+  pip install --group dev -e .
   ```

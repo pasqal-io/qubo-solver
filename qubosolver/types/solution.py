@@ -13,9 +13,12 @@ import io
 import logging
 import torch
 from collections.abc import Iterable, Iterator
-from typing_extensions import Self
 
-from ._checks import debug_runtime_typecheck
+from ._checks import debug_runtime_typecheck, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
 from . import bitstring, vector, vectori
 from . import bitstrings as _bitstrings
 from .linalg import Bitstrings, Vector, Vectori, Matrix, Bitstring
