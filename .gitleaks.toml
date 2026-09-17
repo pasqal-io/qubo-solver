@@ -4,5 +4,13 @@ title = "qubo-solver gitleaks config"
 useDefault = true  # keep all built-in rules
 
 [allowlist]
-# False positive: low-entropy placeholder in generated docs (v0.7.0 tutorial HTML)
-regexes = ['''AIDA0AICAAAAIDAEIAAA''']
+regexes = [
+  # False positive: low-entropy placeholder in generated docs (v0.7.0 tutorial HTML)
+  '''AIDA0AICAAAAIDAEIAAA''',
+  # False positive: public Auth0 client_id for the password-realm grant flow,
+  # documented publicly at docs.pasqal.com/cloud/retrieve-token-from-auth0
+  '''eiSaMfiINjiaXr0tnc2Bh1Mr6XPQ1BDK''',
+  # False positive: low-entropy substring in compiled CSS/font data from the
+  # portal-preview gh-pages build, coincidentally matching the AWS key shape
+  '''A3TAAEAAAAAAAAAAAAAA''',
+]
