@@ -10,8 +10,13 @@ import time
 
 import torch
 
-from qubosolver.types import Instance, Solution, Bitstrings, bitstrings
-from qubosolver.utils import _costs
+from qubosolver.types import Instance, Solution, Bitstrings, bitstrings, vector, vectori
+from qubosolver.utils._costs import _flip_deltas
+
+# How often the incremental QX/f_current tracking is refreshed by an exact
+# recompute. Bounds the rounding drift accumulated by the incremental update
+# without materially adding to the per-iteration cost.
+_REFRESH_EVERY = 128
 
 
 def solve(
@@ -59,9 +64,10 @@ def solve(
     n_bitstrings, n = starts.shape
 
     # Repeat x0 for each parallel run
-    x_current = starts.detach().clone()
-    f_current = _costs.batched_quadratic_cost(x_current.to(Q), Q)
-    x_best = x_current.clone()
+    X = starts.detach().clone().to(Q)
+    QX = X @ Q
+    f_current = (X * QX).sum(dim=1)
+    x_best = X.clone()
     f_best = f_current.clone()
 
     # Tabu list per run and bit
@@ -69,21 +75,33 @@ def solve(
     iter_since_last_improve = torch.zeros(n_bitstrings, dtype=torch.int64, device=device)
 
     deadline = time.perf_counter() + time_limit
+    rows = torch.arange(n_bitstrings, device=device)
+    cols = torch.arange(n, device=device)
 
     for iteration in range(max_iter):
         if time.perf_counter() >= deadline:
             break
 
-        # Generate all neighbor candidates for each bit flip
-        flips = torch.eye(n, dtype=torch.int64, device=device).unsqueeze(0)
-        x_neighbors = x_current.unsqueeze(1).clone()
-        x_neighbors = (x_neighbors + flips) % 2  # each bit flipped
-        f_candidates = _costs.batched_quadratic_cost(x_neighbors.view(-1, n).to(Q), Q).view(
-            n_bitstrings, n
-        )
+        # `f_current` and `QX` are accumulated incrementally below, so each
+        # step adds a rounding error that leaves them a few ULPs off the true
+        # x^T Q x. Recomputing them exactly every _REFRESH_EVERY iterations
+        # keeps that error from growing unbounded, at the cost of one extra
+        # matmul amortized over many iterations.
+        if iteration % _REFRESH_EVERY == 0:
+            QX = X @ Q
+            f_current = (X * QX).sum(dim=1)
+
+        # Tabu tenure counts down to 0 every iteration, regardless of whether
+        # a move is made; a bit is tabu while its counter is still positive.
+        tabu_list.sub_(1).clamp_(min=0)
+
+        # Delta of each candidate one-bit-flip move, for every run at once;
+        # avoids recomputing the full x^T Q x per candidate.
+        dE = _flip_deltas(Q, X, QX)
+        f_candidates = f_current.unsqueeze(1) + dE
 
         # Tabu and aspiration
-        tabu_mask = tabu_list > iteration
+        tabu_mask = tabu_list > 0
         aspiration_mask = f_candidates < f_best.unsqueeze(1)
         allowed = (~tabu_mask) | aspiration_mask
 
@@ -91,36 +109,44 @@ def solve(
         f_masked = torch.where(allowed, f_candidates, torch.inf)
 
         # Pick best move per run
-        best_costs, best_moves = torch.min(f_masked, dim=1)
-        move_mask = torch.arange(n, device=device).unsqueeze(0) == best_moves.unsqueeze(1)
+        best_moves = torch.argmin(f_masked, dim=1)
+        move_mask = cols.unsqueeze(0) == best_moves.unsqueeze(1)
 
         # Apply the best move
-        x_current = (x_current + move_mask.to(torch.int64)) % 2
-        f_current = best_costs
-        tabu_list = torch.where(move_mask, iteration + tabu_tenure, tabu_list)
+        xi = X[rows, best_moves]
+        step = 1.0 - 2.0 * xi
+        X[rows, best_moves] = xi + step
+        QX += step.unsqueeze(1) * Q[best_moves, :]
+        # Read the new cost from `f_candidates`, not from the tabu-masked
+        # `f_masked`: when every move of a run is disallowed, `f_masked` is
+        # all-`inf` for that row and its minimum is the `inf` sentinel, not a
+        # real cost. `f_current` is persistent state, so assigning that
+        # sentinel here would make every later `f_current + dE` `inf` too --
+        # including at allowed positions -- which also disables aspiration
+        # (`inf < f_best` is never true) and stops the run searching.
+        f_current = f_candidates[rows, best_moves]
+        tabu_list[move_mask] = tabu_tenure
 
         # Update best solutions
         improved = f_current < f_best
-        x_best = torch.where(improved.unsqueeze(1), x_current, x_best)
-        f_best = torch.where(improved, f_current, f_best)
-        iter_since_last_improve = torch.where(improved, 0, iter_since_last_improve + 1)
+        x_best[improved] = X[improved]
+        f_best[improved] = f_current[improved]
+        iter_since_last_improve += 1
+        iter_since_last_improve[improved] = 0
 
         # Early stop if all stagnated
         if torch.all(iter_since_last_improve >= max_no_improve):
             break
 
-    # Get unique final solutions
-    uniq, counts = torch.unique(x_best, dim=0, return_counts=True)
-    costs = _costs.batched_quadratic_cost(uniq.to(Q), Q)
-
-    solution = (
-        Solution(
-            bitstrings=bitstrings.as_tensor(uniq),
-            costs=costs,
-            counts=counts,
-        )
-        ._sort_by_cost()
-        ._compute_probabilities()
+    # `f_best` was accumulated incrementally, drifting from the true x^T Q x
+    # by up to _REFRESH_EVERY steps of rounding error. `deduplicate` picks the
+    # row to keep per bitstring based on that drifted cost, so skip its own
+    # recompute (`update=False`) and instead recompute exactly via `_update`
+    # right after.
+    solution = Solution(
+        bitstrings=bitstrings.as_tensor(x_best),
+        costs=f_best,
+        counts=vectori.zeros(n_bitstrings).fill_(1),
+        probabilities=vector.zeros(n_bitstrings).fill_(1.0 / n_bitstrings),
     )
-
-    return solution
+    return solution.deduplicate(update=False)._update(instance)
