@@ -34,7 +34,8 @@ jobs:
           python-version: "3.14"
 
       - name: Build documentation
-        run: uv run --extra doc properdocs build --clean --strict
+        run: |
+          uv run --group doc --no-default-groups properdocs build --clean --strict
 
       - name: Upload built site
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
