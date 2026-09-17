@@ -47,11 +47,18 @@ dependencies = [
   "swiglpk>=5.0.13",
   "qoolqit[extras]>=1.4.0", # The version in .pre-commit-config.yaml must match
   "shapely",
+  "scipy",
+  "pasqal-cloud",
+  "pulser[torch]>=1.9.0",
+  "emu-mps",
+  "emu-sv",
 ]
 
 [project.optional-dependencies]
 extras = [
 ]
+
+[dependency-groups]
 dev = [
   "pytest>=9.0.3",
   "pytest-check",
@@ -61,15 +68,22 @@ dev = [
   "pytest-rerunfailures",
   "nbconvert",
   "ipykernel",
-  "pre-commit",
   "black",
   "ruff",
   "jupyter",
+  "ipython",
+  "matplotlib",
   "tqdm",
   "mypy",
   "jaxtyping",
   "beartype",
+  "typing_extensions",
   "bandit[sarif,toml]>=1.9.4",
+  { include-group = "pre-commit" },
+]
+pre-commit = [
+  "prek",
+  "deptry",
 ]
 doc = [
   "properdocs",
@@ -84,6 +98,9 @@ doc = [
   "mike",
   "python-markdown-math",
 ]
+
+[tool.uv]
+default-groups = "all"
 
 [project.urls]
 Documentation = "https://pasqal-io.github.io/qubo-solver/latest/"
@@ -195,3 +212,10 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["qoolqit.*"]
 follow_untyped_imports = true
+
+[tool.deptry]
+extend_exclude = ["docs/tutorials/retired"]
+
+[tool.deptry.package_module_name_map]
+scikit-learn = "skopt"
+pulser = ["pulser", "pulser_simulation"]

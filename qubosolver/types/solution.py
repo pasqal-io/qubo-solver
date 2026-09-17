@@ -13,7 +13,10 @@ import io
 import logging
 import torch
 from collections.abc import Iterable, Iterator
-from typing_extensions import Self
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 from ._checks import debug_runtime_typecheck
 from . import bitstring, vector, vectori

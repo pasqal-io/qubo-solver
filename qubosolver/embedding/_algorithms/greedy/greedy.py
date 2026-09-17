@@ -364,15 +364,22 @@ class Greedy:
     ) -> Optional[Any]:
         """Post-run animation (traps = gray, qubits = green). No persistent rings."""
         if not _VIZ_OK:
-            return None  # matplotlib or numpy not available
+            return None  # numpy not available
 
         import os
 
-        import matplotlib.pyplot as plt
         import numpy as np
-        from IPython.display import HTML, display
-        from matplotlib import animation, gridspec
-        from matplotlib.animation import FFMpegWriter, PillowWriter
+
+        try:
+            import matplotlib.pyplot as plt  # deptry: ignore[DEP004]
+            from IPython.display import HTML, display  # deptry: ignore[DEP004]
+            from matplotlib import animation, gridspec  # deptry: ignore[DEP004]
+            from matplotlib.animation import FFMpegWriter, PillowWriter  # deptry: ignore[DEP004]
+        except ImportError as e:
+            raise ImportError(
+                "Rendering the greedy-embedding animation requires 'matplotlib' and "
+                "'ipython'. Install them with: pip install 'qubo-solver[dev]'"
+            ) from e
 
         X, Y = all_coords_np[:, 0], all_coords_np[:, 1]
         xmin, xmax = X.min() - spacing, X.max() + spacing

@@ -30,6 +30,6 @@ jobs:
             git config user.name "GitHub Actions"
             git config user.email "actions@github.com"
             git fetch origin gh-pages
-            uv run --extra doc mike deploy --push --update-aliases main development
+            uv run --group doc --no-default-groups mike deploy --push --update-aliases main development
         permissions:
             contents: write # TODO: wide permissions needed for deployment with mike

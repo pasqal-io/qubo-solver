@@ -1,0 +1,6 @@
+scan:
+  skip-dirs:
+    - .venv/lib/python3.14/site-packages/jupyterlab/tests
+  skip-files:
+    - .venv/lib/python3.14/site-packages/jupyterlab/staging/yarn.lock
+

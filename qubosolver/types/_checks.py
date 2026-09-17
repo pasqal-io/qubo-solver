@@ -3,7 +3,8 @@
 Set ``QUBO_SOLVER_RUNTIME_CHECKS=1`` before launching the process to enable
 beartype-powered runtime type validation across the library.  When the variable
 is absent or set to any other value, all decorators defined here are no-ops and
-add zero overhead.
+add zero overhead. Enabling it requires the ``dev`` extras (``beartype`` and
+``jaxtyping``) to be installed; otherwise an ``ImportError`` is raised at import time.
 
 Module-level constants
 ----------------------
@@ -18,10 +19,17 @@ TYPE_CHECKING : bool
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import typing
 
 _RUNTIME_TYPE_CHECKING: bool = os.getenv("QUBO_SOLVER_RUNTIME_CHECKS", "0") == "1"
+
+if _RUNTIME_TYPE_CHECKING and importlib.util.find_spec("beartype") is None:
+    raise ImportError(
+        "QUBO_SOLVER_RUNTIME_CHECKS=1 requires the 'beartype' and 'jaxtyping' packages. "
+        "Install them with: pip install 'qubo-solver[dev]'"
+    )
 
 TYPE_CHECKING = typing.TYPE_CHECKING or _RUNTIME_TYPE_CHECKING
 
@@ -51,7 +59,7 @@ def debug_runtime_typecheck(target: _T) -> _T:
         def solve(matrix: np.ndarray) -> Solution: ...
     """
     if _RUNTIME_TYPE_CHECKING:
-        from beartype import beartype
+        from beartype import beartype  # deptry: ignore[DEP004]
 
         return beartype(target)  # type: ignore[no-any-return]
     return target
@@ -80,7 +88,7 @@ def no_runtime_typecheck(target: _T) -> _T:
         def _fast_inner_loop(data: list) -> None: ...
     """
     if _RUNTIME_TYPE_CHECKING:
-        from beartype import beartype, BeartypeConf, BeartypeStrategy
+        from beartype import beartype, BeartypeConf, BeartypeStrategy  # deptry: ignore[DEP004]
 
         return beartype(target, conf=BeartypeConf(strategy=BeartypeStrategy.O0))  # type: ignore[no-any-return]
     return target
