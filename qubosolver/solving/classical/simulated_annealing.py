@@ -27,6 +27,8 @@ from qubosolver import (
     vectori,
 )
 
+from qubosolver.utils._costs import batched_quadratic_cost, _flip_deltas
+
 logger = logging.getLogger(__name__)
 
 
@@ -64,6 +66,12 @@ def _shrink(visited_solutions: dict[bytes, _Data], *, top_k: int) -> None:
 # picked, instead of each `def` capturing its own independent instance.
 _default_rng = torch_rng()
 
+# How often the vectorized runner recomputes `energy` and `QX` exactly instead
+# of accumulating them incrementally. Small enough that rounding error stays
+# well below the tolerance of `Solution.check_consistency`, large enough that
+# the extra matmul stays negligible against the per-iteration cost.
+_REFRESH_EVERY = 128
+
 
 @overload
 def solve(
@@ -79,6 +87,7 @@ def solve(
     time_limit: float = float("inf"),
     rng: torch.Generator = _default_rng,
     stats: Literal["per_run", "full"] = "per_run",
+    vectorized: bool = True,
 ) -> Solution: ...
 
 
@@ -96,6 +105,7 @@ def solve(
     time_limit: float = float("inf"),
     rng: torch.Generator = _default_rng,
     stats: Literal["per_run", "full"] = "per_run",
+    vectorized: bool = True,
 ) -> list[Solution]: ...
 
 
@@ -113,6 +123,7 @@ def solve(
     time_limit: float = float("inf"),
     rng: torch.Generator = _default_rng,
     stats: Literal["per_run", "full"] = "per_run",
+    vectorized: bool = True,
 ) -> Solution | list[Solution]:
     """Run Simulated Annealing on a QUBO instance from each of a batch of starting points.
 
@@ -168,10 +179,15 @@ def solve(
         time_limit: Wall-clock budget in seconds.  The algorithm stops early
             when either `max_iter` steps or the time limit is reached,
             whichever comes first.  Defaults to ``float("inf")`` (no limit).
+            With ``vectorized=True`` this is a single budget for the whole
+            batch of starts, which all stop at the same iteration; with
+            ``vectorized=False`` each start gets its own budget.
         rng: PyTorch random number generator used for bit selection and
             acceptance sampling.  Defaults to a module-level
             generator created once at import time; pass an explicit generator
-            for reproducibility across calls.
+            for reproducibility across calls.  Note that `vectorized` changes
+            the order in which draws are consumed, so a given seed produces
+            the same result only for a fixed value of `vectorized`.
         stats: When ``"per_run"`` (default), each run's retained bitstrings
             are counted as ``1`` instead of how many iterations were spent
             at each one, before any merging. This is mainly meant for
@@ -183,6 +199,13 @@ def solve(
             generally neither ``1`` nor uniform. When ``"full"``, counts
             instead reflect how many iterations were spent at each
             bitstring.
+        vectorized: When ``True`` (default), step every start forward together
+            so each iteration costs a handful of batched tensor operations
+            regardless of how many starts there are -- markedly faster for
+            large batches. When ``False``, anneal the starts one at a time;
+            this is the reference implementation, kept for comparison. The two
+            run the same algorithm but differ in `time_limit` scope and in RNG
+            draw order (see `time_limit` and `rng`).
 
     Returns:
         When ``merge=True``, a single [`Solution`][] merging every start's
@@ -210,7 +233,6 @@ def solve(
         )
 
     n = instance.size
-    Q = instance.matrix
 
     # determine cooling rate alpha
     if max_iter <= 1:
@@ -222,9 +244,72 @@ def solve(
     else:
         alpha = (final_temp / initial_temp) ** (1.0 / (max_iter - 1))
 
-    solutions: list[Solution] = []
     if isinstance(starts, int):
         starts = bitstrings.rand(starts, n, rng=rng)
+
+    if starts.shape[0] == 0:
+        return Solution() if merge else []
+
+    runner = _run_vectorized if vectorized else _run_sequential
+    solutions = runner(
+        instance,
+        starts,
+        top_k=top_k,
+        max_iter=max_iter,
+        initial_temp=initial_temp,
+        alpha=alpha,
+        time_limit=time_limit,
+        rng=rng,
+        stats=stats,
+    )
+
+    if merge:
+        return Solution.concat(solutions).deduplicate()
+
+    return solutions
+
+
+def _run_sequential(
+    instance: Instance,
+    starts: Bitstrings,
+    *,
+    top_k: int,
+    max_iter: int,
+    initial_temp: float,
+    alpha: float,
+    time_limit: float,
+    rng: torch.Generator,
+    stats: Literal["per_run", "full"],
+) -> list[Solution]:
+    """Anneal each start in turn, one scalar bit-flip proposal at a time.
+
+    The original, run-at-a-time implementation, kept as the reference
+    behaviour that [`_run_vectorized`][] is checked against. It is
+    `O(len(starts) * max_iter)` in Python-level torch calls, so prefer the
+    vectorized path for large batches.
+
+    Unlike the vectorized path, `time_limit` here is consumed per run: each
+    start gets its own fresh deadline.
+
+    Args:
+        instance: The QUBO instance to solve; its coefficient matrix must
+            already be symmetric.
+        starts: Batch of initial bitstrings of shape ``(k, n)``.
+        top_k: Maximum number of unique best solutions to keep per run.
+        max_iter: Number of bit-flip proposals per run.
+        initial_temp: Starting temperature.
+        alpha: Geometric cooling factor applied at each step.
+        time_limit: Wall-clock budget in seconds, per run.
+        rng: Generator used for bit selection and acceptance sampling.
+        stats: See [`solve`][].
+
+    Returns:
+        One [`Solution`][] per row of `starts`, in the same order, each
+            sorted by ascending cost with probabilities computed.
+    """
+    Q = instance.matrix
+    n = Q.shape[0]
+    solutions: list[Solution] = []
 
     for b in starts:
         bits: Bitstring = b.detach().clone()
@@ -238,10 +323,18 @@ def solve(
         visited_solutions[_to_key(bits)] = _Data(energy, 1)
 
         deadline = time.perf_counter() + time_limit
+        visits = 1
 
         for _ in range(max_iter):
             if time.perf_counter() >= deadline:
                 break
+
+            # See the matching comment in `_run_vectorized`: `energy` and `Qx`
+            # are accumulated incrementally, so periodically recomputing them
+            # exactly from `bits` keeps rounding error from growing unbounded.
+            if visits % _REFRESH_EVERY == 0:
+                Qx = Q @ bits.to(Q)
+                energy = float(bits.to(Q).dot(Qx))
 
             i = int(torch.randint(0, n, (1,), generator=rng).item())
             xi = int(bits[i].item())
@@ -265,6 +358,7 @@ def solve(
             key = _to_key(bits)
             sol = visited_solutions.setdefault(key, _Data(energy, 0))
             sol.count += 1
+            visits += 1
 
             # Most inserts are one-off bitstrings that will never make the
             # top_k cut, so the dict keeps growing between shrinks regardless
@@ -292,9 +386,147 @@ def solve(
             counts=counts,
         )
 
-        solutions.append(solution._sort_by_cost()._compute_probabilities())
+        # `costs` was accumulated incrementally, drifting from the true x^T Q x
+        # by up to _REFRESH_EVERY steps of rounding error; recompute it exactly
+        # now that the hot loop is done.
+        solutions.append(solution._update(instance))
 
-    if merge:
-        return Solution.concat(solutions).deduplicate()
+    return solutions
+
+
+def _run_vectorized(
+    instance: Instance,
+    starts: Bitstrings,
+    *,
+    top_k: int,
+    max_iter: int,
+    initial_temp: float,
+    alpha: float,
+    time_limit: float,
+    rng: torch.Generator,
+    stats: Literal["per_run", "full"],
+) -> list[Solution]:
+    """Anneal every start simultaneously, one batched bit-flip proposal per step.
+
+    All runs are stepped forward together: each iteration proposes one flip per
+    run, evaluates every candidate delta in a single matmul, and accepts or
+    rejects per run via a boolean mask. The number of Python-level torch calls
+    is therefore proportional to `max_iter` alone rather than to
+    ``len(starts) * max_iter``, so the cost is nearly flat in the number of
+    starts. The runs remain statistically independent -- only their bookkeeping
+    is shared.
+
+    Two differences from [`_run_sequential`][] follow from batching:
+
+    - `time_limit` is a single budget for the whole batch, checked once per
+      iteration, so all runs stop at the same iteration.
+    - Random draws are batched across runs, so a given seed does not reproduce
+      the sequential path's draw order.
+
+    Args:
+        instance: See [`_run_sequential`][].
+        starts: See [`_run_sequential`][].
+        top_k: See [`_run_sequential`][].
+        max_iter: See [`_run_sequential`][].
+        initial_temp: See [`_run_sequential`][].
+        alpha: See [`_run_sequential`][].
+        time_limit: Wall-clock budget in seconds, for the whole batch.
+        rng: See [`_run_sequential`][].
+        stats: See [`solve`][].
+
+    Returns:
+        One [`Solution`][] per row of `starts`, in the same order, each
+            sorted by ascending cost with probabilities computed.
+    """
+    Q = instance.matrix
+    n = Q.shape[0]
+    n_runs = starts.shape[0]
+
+    X = starts.detach().clone().to(Q)
+    QX = X @ Q
+    energy = batched_quadratic_cost(X, Q)
+
+    # Preallocated for the worst case (every iteration runs) and sliced down to
+    # however many actually did; each iteration writes the post-move state of
+    # every run at index `visits`, with index 0 holding the starting state.
+    visited_bits = torch.empty((max_iter + 1, n_runs, n), dtype=bitstring.dtype(), device=X.device)
+    visited_energy = torch.empty((max_iter + 1, n_runs), dtype=energy.dtype, device=X.device)
+    visited_bits[0] = X.to(bitstring.dtype())
+    visited_energy[0] = energy
+
+    temperature: float = initial_temp
+    rows = torch.arange(n_runs, device=X.device)
+    deadline = time.perf_counter() + time_limit
+    visits = 1
+
+    for _ in range(max_iter):
+        if time.perf_counter() >= deadline:
+            break
+
+        # `energy` and `QX` are accumulated incrementally, so each step adds a
+        # rounding error that leaves the reported costs a few ULPs off the true
+        # x^T Q x. Recomputing them exactly every _REFRESH_EVERY steps keeps
+        # that error from becoming visible, at the cost of one extra matmul
+        # amortized over many iterations. `X` itself never needs this: each
+        # accepted flip moves it by an exact +1/-1, so it stays exact with no
+        # drift to correct.
+        if visits % _REFRESH_EVERY == 0:
+            QX = X @ Q
+            energy = batched_quadratic_cost(X, Q)
+
+        idx = torch.randint(0, n, (n_runs,), generator=rng, device=X.device)
+        dE = _flip_deltas(Q, X, QX).gather(1, idx.unsqueeze(1)).squeeze(1)
+
+        accept = (dE <= 0.0) | (
+            torch.rand(n_runs, generator=rng, device=X.device, dtype=X.dtype)
+            < torch.exp(-dE / temperature)
+        )
+
+        # Flipping x -> 1 - x moves the bit by +1 or -1; zeroing that step on
+        # the rejected runs leaves them untouched without branching per run.
+        xi = X[rows, idx]
+        step = (1.0 - 2.0 * xi) * accept.to(X.dtype)
+        X[rows, idx] = xi + step
+        energy = energy + step.abs() * dE
+        QX = QX + step.unsqueeze(1) * Q[idx, :]
+
+        visited_bits[visits] = X.to(bitstring.dtype())
+        visited_energy[visits] = energy
+        visits += 1
+
+        temperature *= alpha
+        if temperature < 1e-12:
+            temperature = 1e-12
+
+    # (visits, n_runs, n) and (visits, n_runs): one entry per recorded state.
+    visited_bits = visited_bits[:visits]
+    visited_energy = visited_energy[:visits]
+
+    solutions: list[Solution] = []
+    for r in range(n_runs):
+        # Every recorded state starts as its own candidate counting a single
+        # visit; `deduplicate` then collapses repeats of the same bitstring,
+        # summing those visits into its count and keeping its energy. Since it
+        # leaves the result sorted by ascending cost, `truncate` reduces it to
+        # the top_k lowest-energy ones. This loop runs once per run rather than
+        # once per iteration, so it stays off the hot path.
+        solution = Solution(
+            bitstrings=bitstrings.as_tensor(visited_bits[:, r, :]),
+            costs=visited_energy[:, r],
+            counts=vectori.zeros(visits).fill_(1),
+            probabilities=vector.zeros(visits).fill_(1.0 / visits),
+        )
+        # `costs` was accumulated incrementally, drifting from the true x^T Q x
+        # by up to _REFRESH_EVERY steps of rounding error. `deduplicate` picks
+        # the row to keep per bitstring based on that drifted cost, so skip its
+        # own recompute (`update=False`) and instead recompute exactly via
+        # `_update` right after, before `truncate` selects on it.
+        solution.deduplicate(update=False)._update(instance).truncate(top_k)
+
+        if stats == "per_run":
+            solution.counts = solution.counts.clone().fill_(1)
+            solution._compute_probabilities()
+
+        solutions.append(solution)
 
     return solutions
