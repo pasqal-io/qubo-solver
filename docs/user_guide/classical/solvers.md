@@ -6,8 +6,21 @@ Classical solvers tackle a QUBO `Instance` entirely on CPU, without going throug
 
 These solvers start from scratch:
 
-- `solving.cplex.solve` — exact MIP solve via IBM CPLEX. Requires the `extras` optional dependency group: `pip install 'qubo-solver[extras]'`.
+- `solving.cplex.solve` — exact MIP solve via IBM CPLEX.
 - `solving.random_sampling.solve` — uniform random sampling baseline.
+
+!!! warning "`solving.cplex` requires the `extras` optional dependency group"
+    === "pip"
+
+        ```sh
+        pip install 'qubo-solver[extras]'
+        ```
+
+    === "uv"
+
+        ```sh
+        uv sync --extra extras
+        ```
 
 ## With an initial solution
 
