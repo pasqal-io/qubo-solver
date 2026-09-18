@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-import cplex
 import pytest
 import pytest_check as check
 import torch
+
+try:
+    import cplex
+except ImportError:
+    cplex = None  # tests using it are skipped via the `extras` marker below
 
 from qubosolver import (
     Instance,
