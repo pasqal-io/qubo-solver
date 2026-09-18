@@ -77,6 +77,8 @@ def solve(
     deadline = time.perf_counter() + time_limit
     rows = torch.arange(n_bitstrings, device=device)
     cols = torch.arange(n, device=device)
+    diagonal = Q.diagonal()
+    dE_buffer = torch.empty_like(QX)
 
     for iteration in range(max_iter):
         if time.perf_counter() >= deadline:
@@ -97,7 +99,7 @@ def solve(
 
         # Delta of each candidate one-bit-flip move, for every run at once;
         # avoids recomputing the full x^T Q x per candidate.
-        dE = _flip_deltas(Q, X, QX)
+        dE = _flip_deltas(Q, X, QX, diagonal=diagonal, out=dE_buffer)
         f_candidates = f_current.unsqueeze(1) + dE
 
         # Tabu and aspiration
