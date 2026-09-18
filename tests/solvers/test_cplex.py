@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-import cplex
 import pytest
 import pytest_check as check
 import torch
+
+try:
+    import cplex
+except ImportError:
+    cplex = None  # tests using it are skipped via the `extras` marker below
 
 from qubosolver import (
     Instance,
@@ -18,6 +22,8 @@ from qubosolver import (
     ClassicalSolvingConfig,
 )
 from qubosolver.solving.classical.cplex import _to_solution
+
+pytestmark = pytest.mark.extras
 
 
 def test_to_solution_without_incumbent() -> None:

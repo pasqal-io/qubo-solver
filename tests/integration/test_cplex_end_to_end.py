@@ -15,6 +15,8 @@ from qubosolver.utils import analysis
 
 from qubos import QUBOS
 
+pytestmark = pytest.mark.extras
+
 
 def gather_optimal_solutions(solutions: Solution) -> list[Candidate]:
     min_cost = solutions[0].cost

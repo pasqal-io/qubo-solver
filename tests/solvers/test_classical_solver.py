@@ -223,7 +223,7 @@ def test_sa_time_limit(simple_qubo_instance: Instance) -> None:
     "classical_method",
     [
         "simulated_annealing",
-        "cplex",
+        pytest.param("cplex", marks=pytest.mark.extras),
         "tabu_search",
     ],
 )

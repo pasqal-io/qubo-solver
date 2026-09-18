@@ -9,6 +9,19 @@ These solvers start from scratch:
 - `solving.cplex.solve` — exact MIP solve via IBM CPLEX.
 - `solving.random_sampling.solve` — uniform random sampling baseline.
 
+!!! warning "`solving.cplex` requires the `extras` optional dependency group"
+    === "pip"
+
+        ```sh
+        pip install 'qubo-solver[extras]'
+        ```
+
+    === "uv"
+
+        ```sh
+        uv sync --extra extras
+        ```
+
 ## With an initial solution
 
 These solvers take a starting point. Because they accept a starting point, they can also be used to **refine a previous solution** — for example, post-processing a quantum solver's output:

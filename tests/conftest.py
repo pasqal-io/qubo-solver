@@ -2,6 +2,7 @@
 # functions common to every test
 from __future__ import annotations
 
+import os
 import pytest
 import random
 import torch
@@ -58,6 +59,19 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
         return int(marker.args[0]) if marker else 0
 
     items.sort(key=priority, reverse=True)
+
+    # QUBOSOLVER_WITHOUT_EXTRAS explicitly declares that extras (e.g. cplex) are
+    # not installed, so extras-marked tests are skipped rather than failing.
+    # When unset, extras are assumed to be installed; if they're not, the
+    # extras-marked tests run and fail naturally with the install instructions
+    # already raised by the code under test (see cplex.py's _import_cplex()).
+    if os.environ.get("QUBOSOLVER_WITHOUT_EXTRAS"):
+        skip_extras = pytest.mark.skip(
+            reason="QUBOSOLVER_WITHOUT_EXTRAS is set: extras (e.g. cplex) are not installed"
+        )
+        for item in items:
+            if "extras" in item.keywords:
+                item.add_marker(skip_extras)
 
 
 @pytest.fixture
