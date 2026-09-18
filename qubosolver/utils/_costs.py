@@ -56,7 +56,13 @@ def batched_quadratic_cost(x: Matrix, Q: Matrix) -> Matrix:
     return torch.einsum("bi,ij,bj->b", x, Q, x)
 
 
-def _flip_deltas(Q: Matrix, X: Tensor, QX: Tensor) -> Tensor:
+def _flip_deltas(
+    Q: Matrix,
+    X: Tensor,
+    QX: Tensor,
+    diagonal: Tensor | None = None,
+    out: Tensor | None = None,
+) -> Tensor:
     """Energy change from flipping each bit, for every run in the batch at once.
 
     For a single run, flipping $x_i \\to 1 - x_i$ changes $x^T Q x$ by
@@ -65,14 +71,33 @@ def _flip_deltas(Q: Matrix, X: Tensor, QX: Tensor) -> Tensor:
     `i` and all runs is a single elementwise expression over the ``(b, n)``
     tensors, replacing ``b * n`` scalar evaluations.
 
+    The expression is evaluated as ``2*QX - 4*QX*X + diag`` via a broadcast copy
+    plus one fused multiply-add, which keeps the whole thing to a single
+    ``(b, n)`` allocation (or none at all, when `out` is supplied) instead of the
+    four temporaries the naive elementwise form materializes.
+
     Args:
         Q: Symmetric QUBO coefficient matrix of shape ``(n, n)``.
         X: Current binary states of shape ``(b, n)``, in `Q`'s dtype.
         QX: The product ``X @ Q``, of shape ``(b, n)``, maintained
             incrementally by the caller.
+        diagonal: Optional precomputed ``Q.diagonal()`` of shape ``(n,)``.
+            Callers in a loop should hoist it out and pass it in, so the
+            diagonal view is not rebuilt on every call. Defaults to reading it
+            from `Q`.
+        out: Optional ``(b, n)`` buffer to write the result into, in `Q`'s
+            dtype. Reused across iterations by callers in a loop to avoid
+            reallocating the delta tensor every round. Must not alias `QX` or
+            `X`. Defaults to allocating a fresh tensor.
 
     Returns:
         A ``(b, n)`` tensor whose ``[r, i]`` entry is the energy change run `r`
-            would see from flipping its bit `i`.
+            would see from flipping its bit `i`. This is `out` itself when `out`
+            is supplied.
     """
-    return 2.0 * QX * (1.0 - 2.0 * X) + Q.diagonal()
+    diag = Q.diagonal() if diagonal is None else diagonal
+    # dE = 2*QX*(1 - 2*X) + diag = (2*QX + diag) - 4*QX*X, built as one
+    # broadcast add followed by one in-place fused multiply-add.
+    dE = torch.add(QX, diag, alpha=0.5, out=out)
+    dE *= 2.0
+    return dE.addcmul_(QX, X, value=-4.0)
