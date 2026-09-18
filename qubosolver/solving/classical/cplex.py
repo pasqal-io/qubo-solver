@@ -6,15 +6,35 @@ solution within the given time limit.
 
 Note:
     This module requires the ``cplex`` Python package (part of IBM CPLEX
-    Optimization Studio) to be installed.
+    Optimization Studio) to be installed. Install it with the ``extras``
+    extra: ``pip install 'qubo-solver[extras]'``.
 """
 
 from __future__ import annotations
 
-import cplex as CPLEX
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from qubosolver import Instance, Solution, bitstrings, vector, vectori
+
+if TYPE_CHECKING:
+    import cplex as CPLEX
+
+
+def _import_cplex() -> Any:
+    """Import and return the ``cplex`` module, with a helpful error if absent.
+
+    Raises:
+        ImportError: If the ``cplex`` package is not installed.
+    """
+    try:
+        import cplex
+
+        return cplex
+    except ImportError as e:
+        raise ImportError(
+            "Solving with CPLEX requires the 'cplex' package. Install it with: "
+            "pip install 'qubo-solver[extras]'"
+        ) from e
 
 
 def _qubo_instance_to_sparsepairs(
@@ -41,6 +61,8 @@ def _qubo_instance_to_sparsepairs(
             element *i* encodes the non-zero scaled coefficients in row *i* of
             the QUBO matrix.
     """
+    cplex_module = _import_cplex()
+
     size = instance.size
     sparsepairs: list[CPLEX.SparsePair] = []
     matrix = instance.matrix.cpu().numpy()
@@ -53,7 +75,7 @@ def _qubo_instance_to_sparsepairs(
             if abs(coeff) > tol:
                 indices.append(j)
                 values.append(float(coeff))
-        sparsepairs.append(CPLEX.SparsePair(ind=indices, val=values))
+        sparsepairs.append(cplex_module.SparsePair(ind=indices, val=values))
 
     return sparsepairs
 
@@ -76,10 +98,12 @@ def _to_cplex(instance: Instance, *, log_file: Any = None) -> CPLEX.Cplex:
             and the quadratic objective set, ready for the caller to
             configure further (e.g. time limit) and solve.
     """
+    cplex_module = _import_cplex()
+
     # Convert the coefficient matrix into CPLEX sparse pairs format using the conversion tool.
     sparsepairs: list[CPLEX.SparsePair] = _qubo_instance_to_sparsepairs(instance)
 
-    problem = CPLEX.Cplex()
+    problem = cplex_module.Cplex()
 
     # Redirect logging streams.
     problem.set_log_stream(log_file)

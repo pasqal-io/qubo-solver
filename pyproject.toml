@@ -43,7 +43,6 @@ dependencies = [
   "pandas",
   "seaborn",
   "scikit-optimize",
-  "cplex",
   "swiglpk>=5.0.13",
   "qoolqit[extras]>=1.4.0", # The version in .pre-commit-config.yaml must match
   "shapely",
@@ -56,6 +55,7 @@ dependencies = [
 
 [project.optional-dependencies]
 extras = [
+  "cplex",
 ]
 
 [dependency-groups]
@@ -143,6 +143,7 @@ asyncio_mode="auto"
 asyncio_default_fixture_loop_scope="function"
 markers = [
 	"priority(n): run higher priority tests first.",
+	"extras: requires optional extras (e.g. cplex) to be installed.",
 ]
 log_cli = true
 log_cli_level = "WARNING"

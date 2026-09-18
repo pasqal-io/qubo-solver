@@ -192,7 +192,9 @@ def test_quantum_solve(
 
 
 @pytest.mark.usefixtures("restore_rng_state")
-@pytest.mark.parametrize("solving_method", ["cplex", "tabu", "sa", "random"])
+@pytest.mark.parametrize(
+    "solving_method", [pytest.param("cplex", marks=pytest.mark.extras), "tabu", "sa", "random"]
+)
 @pytest.mark.parametrize("postprocessing", [True, False], ids=["post", "no-post"])
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no-pre"])
 def test_classical_solve(

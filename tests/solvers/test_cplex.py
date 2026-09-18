@@ -19,6 +19,8 @@ from qubosolver import (
 )
 from qubosolver.solving.classical.cplex import _to_solution
 
+pytestmark = pytest.mark.extras
+
 
 def test_to_solution_without_incumbent() -> None:
     # Regression test flagged in review: if CPLEX's time/node limit is hit
