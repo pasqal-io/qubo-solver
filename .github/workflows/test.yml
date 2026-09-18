@@ -43,7 +43,7 @@ jobs:
         - name: Install uv
           uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
           with:
-            version: 0.11.30
+            version: 0.12.9
             python-version: ${{ matrix.python-version }}
         - name: Perform unit tests
           run: |
@@ -63,7 +63,7 @@ jobs:
         - name: Install uv
           uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
           with:
-            version: 0.11.30
+            version: 0.12.9
             python-version: "3.14"
         - name: Perform unit tests
           env:
@@ -88,7 +88,7 @@ jobs:
         - name: Install uv
           uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
           with:
-            version: 0.11.30
+            version: 0.12.9
         - name: Perform unit tests
           env:
             USE_DOUBLE_PRECISION: ${{ matrix.use-double-precision }}
@@ -108,7 +108,7 @@ jobs:
         - name: Install uv
           uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
           with:
-            version: 0.11.30
+            version: 0.12.9
             python-version: ${{ matrix.python-version }}
         - name: Test docs
           run: |
