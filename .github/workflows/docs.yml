@@ -1,4 +1,4 @@
-name: Deploy PR previews
+name: Docs
 
 on:
   pull_request:
@@ -7,17 +7,22 @@ on:
       - reopened
       - synchronize
       - closed
+    branches:
+      - main
+  push:
+    branches:
+      - main
 
 permissions: {}
 
 concurrency:
-  group: preview-${{ github.event.pull_request.number }}
+  group: gh-pages-deploy
   cancel-in-progress: false
 
 jobs:
   build:
     name: Build docs
-    if: github.event.action != 'closed'
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -49,6 +54,7 @@ jobs:
     needs: [build]
     if: |
       always() &&
+      github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       (github.event.action == 'closed' || needs.build.result == 'success')
     runs-on: ubuntu-latest
@@ -77,12 +83,14 @@ jobs:
           source-dir: ./site/
           preview-branch: gh-pages
           qr-code: false
+          wait-for-pages-deployment: true
 
   portal-preview:
     name: Deploy doc-portal preview
     needs: [deploy]
     if: |
       always() &&
+      github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       (github.event.action == 'closed' || needs.deploy.result == 'success')
     runs-on: ubuntu-latest
@@ -136,6 +144,7 @@ jobs:
           umbrella-dir: portal-preview
           qr-code: false
           comment: false
+          wait-for-pages-deployment: true
 
       - name: Comment the preview link on the PR
         # `head.sha` here is fine — it's only interpolated into a comment body
@@ -157,3 +166,26 @@ jobs:
         with:
           header: doc-portal-preview
           delete: true
+
+  publish-dev-docs:
+    name: Publish development docs to GitHub Pages
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # TODO: wide permissions needed for deployment with mike
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: 0.11.30
+          python-version: "3.14"
+      - name: Deploy docs
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git fetch origin gh-pages
+          uv run --group doc --no-default-groups mike deploy --push --update-aliases main development
