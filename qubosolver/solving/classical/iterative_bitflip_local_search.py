@@ -232,7 +232,7 @@ def _greedy_sweep_search(
             recompute it exactly instead of trusting an incremental value.
     """
     Q = Q_torch.detach().cpu().numpy()
-    x = s.to(Q_torch).detach().cpu().numpy()
+    x = s.to(Q_torch).detach().cpu().numpy().copy()
     deadline = time.monotonic() + time_limit
     n = x.shape[0]
     visit_order = range(n)
