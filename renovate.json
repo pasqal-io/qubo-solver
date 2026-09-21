@@ -9,5 +9,8 @@
     "enabled": true
   },
 
-  "minimumReleaseAge": "15 days"
+  "minimumReleaseAge": "15 days",
+  "schedule": ["every weekend"],
+  "rebaseWhen": "conflicted",
+  "updateNotScheduled": false
 }
