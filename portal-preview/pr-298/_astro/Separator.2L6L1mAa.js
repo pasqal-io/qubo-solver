@@ -1,0 +1,1 @@
+import{n as e,t}from"./jsx-runtime.DqPOxqk3.js";var n=t(),r=({fullHeight:t=!1,direction:r=`vertical`})=>{let i=e([`Separator`,t&&`Separator--fullHeight`,r===`horizontal`&&`Separator--horizontal`]);return(0,n.jsx)(`div`,{className:i})};export{r as t};
