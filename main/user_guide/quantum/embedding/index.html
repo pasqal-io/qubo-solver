@@ -3605,7 +3605,7 @@
 <li>Tutorial: <a href="../../../tutorials/03-embedding/01-blade/">BLaDE notebook</a></li>
 <li>Under the hood: <a href="../../../under_the_hood/embedding/blade/">BLaDE</a></li>
 </ul>
-<p>The example below runs BLaDE sized for a target device via <code>embed_for_device</code> — the sequence of dimension layers, number of steps per round, and starting positions can all be tuned by combining <code>BladeConfig(device=...)</code> with <code>embed</code> directly. See <a href="https://pasqal-io.github.io/qoolqit/main/reference/internals/">Qoolqit's documentation</a> for the available parameters.</p>
+<p>The example below runs BLaDE sized for a target device via <code>embed_for_device</code> — the sequence of dimension layers, number of steps per round, and starting positions can all be tuned by combining <code>BladeConfig(device=...)</code> with <code>embed</code> directly. See <a href="https://docs.pasqal.com/qoolqit/reference/embedding/#qoolqit.embedding.BladeConfig">Qoolqit's documentation</a> for the available parameters.</p>
 <h3 id="code-example">Code example</h3>
 <p><div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-30--__tabbed_1_1" name="exec-30--__tabbed_1" type="radio" /><input id="exec-30--__tabbed_1_2" name="exec-30--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-30--__tabbed_1_1">Source</label><label for="exec-30--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
@@ -3780,7 +3780,7 @@ Plot the resulting register:</p>
 </div>
 </div>
 <h2 id="the-solver-shortcut">The <code>Solver</code> shortcut</h2>
-<p>Rather than calling <code>embedding.blade.embed</code> or <code>embedding.greedy_layout.embed</code> directly, you can select and configure the embedding algorithm through <code>EmbeddingConfig</code>, nested in <code>QuantumSolvingConfig</code> and <code>SolverConfig</code>; <code>Solver</code> then runs it as part of the full quantum pipeline. Leaving <code>EmbeddingConfig</code> unset falls back to the greedy layout embedder on a triangular lattice, sized from the target device — see <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SolverConfig&lt;/span&gt;
+<p>Rather than calling <code>embedding.blade.embed</code> or <code>embedding.greedy_layout.embed</code> directly, you can select and configure the embedding algorithm through <code>EmbeddingConfig</code>, nested in <code>QuantumSolvingConfig</code> and <code>SolverConfig</code>; <code>Solver</code> then runs it as part of the full quantum pipeline. Leaving <code>EmbeddingConfig</code> unset falls back to the BLaDE embedder — see <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SolverConfig&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
