@@ -23,7 +23,7 @@ def test_default_config() -> None:
     assert isinstance(default_config.solving, QuantumSolvingConfig)
     check.is_instance(default_config.solving.backend, LocalEmulator)
     check.is_(default_config.solving.backend._backend_type, AutoLocalEmulatorBackend)
-    check.equal(default_config.solving.embedding.algorithm, "greedy_layout")
+    check.equal(default_config.solving.embedding.algorithm, "blade")
     check.equal(default_config.solving.embedding.greedy_layout_lattice, "triangular")
     check.is_none(default_config.decompose)
 
@@ -57,7 +57,7 @@ def test_drive_shaping_config() -> None:
 
 def test_embdedding_config() -> None:
     default_embedding_config = EmbeddingConfig()
-    check.equal(default_embedding_config.algorithm, "greedy_layout")
+    check.equal(default_embedding_config.algorithm, "blade")
     check.equal(default_embedding_config.greedy_layout_lattice, "triangular")
     check.is_true(default_embedding_config.greedy_layout_traps)
 

@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 import torch
 
-_EmbeddingAlgorithm = Literal["greedy_layout", "blade"]
+_EmbeddingAlgorithm = Literal["blade", "greedy_layout"]
 _GreedyLayoutLattice = Literal["square", "triangular"]
 
 
@@ -17,11 +17,11 @@ class Config:
         algorithm: The type of embedding method used to
             place atoms on the register according to the QUBO problem. One of:
 
+            - `"blade"`: BLADE embedder using graph-theoretic optimization for qubit placement.
             - `"greedy_layout"`: Greedy layout-based embedder that places qubits on a
               regular lattice.
-            - `"blade"`: BLADE embedder using graph-theoretic optimization for qubit placement.
 
-            Defaults to `"greedy_layout"`.
+            Defaults to `"blade"`.
         greedy_layout_lattice: Lattice type for the
             greedy layout embedder method. One of `"square"` or `"triangular"`.
             Defaults to `"triangular"`.
@@ -48,7 +48,7 @@ class Config:
             ``max_radial_distance`` / ``min_distance`` specs. Defaults to ``"device"``.
     """
 
-    algorithm: Literal["greedy_layout", "blade"] = "greedy_layout"
+    algorithm: Literal["blade", "greedy_layout"] = "blade"
 
     greedy_layout_lattice: Literal["square", "triangular"] = "triangular"
     greedy_layout_traps: int | Literal["device"] = "device"

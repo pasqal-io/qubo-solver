@@ -27,7 +27,7 @@ BLaDE places atoms by progressively projecting the problem from a high-dimension
 - Tutorial: [BLaDE notebook](../../tutorials/03-embedding/01-blade.ipynb)
 - Under the hood: [BLaDE](../../under_the_hood/embedding/blade.md)
 
-The example below runs BLaDE sized for a target device via `embed_for_device` — the sequence of dimension layers, number of steps per round, and starting positions can all be tuned by combining `BladeConfig(device=...)` with `embed` directly. See [Qoolqit's documentation](https://pasqal-io.github.io/qoolqit/main/reference/internals/) for the available parameters.
+The example below runs BLaDE sized for a target device via `embed_for_device` — the sequence of dimension layers, number of steps per round, and starting positions can all be tuned by combining `BladeConfig(device=...)` with `embed` directly. See [Qoolqit's documentation](https://docs.pasqal.com/qoolqit/reference/embedding/#qoolqit.embedding.BladeConfig) for the available parameters.
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="embedding" result="text"
@@ -155,7 +155,7 @@ print('<figure><figcaption>Register</figcaption><img src="quantum_embedding_cust
 
 ## The `Solver` shortcut
 
-Rather than calling `embedding.blade.embed` or `embedding.greedy_layout.embed` directly, you can select and configure the embedding algorithm through `EmbeddingConfig`, nested in `QuantumSolvingConfig` and `SolverConfig`; `Solver` then runs it as part of the full quantum pipeline. Leaving `EmbeddingConfig` unset falls back to the greedy layout embedder on a triangular lattice, sized from the target device — see [`SolverConfig`][qubosolver.SolverConfig] for the full set of defaults.
+Rather than calling `embedding.blade.embed` or `embedding.greedy_layout.embed` directly, you can select and configure the embedding algorithm through `EmbeddingConfig`, nested in `QuantumSolvingConfig` and `SolverConfig`; `Solver` then runs it as part of the full quantum pipeline. Leaving `EmbeddingConfig` unset falls back to the BLaDE embedder — see [`SolverConfig`][qubosolver.SolverConfig] for the full set of defaults.
 
 `EmbeddingConfig` only exposes the most commonly tuned parameters of each algorithm (e.g. `blade_dimensions`, `blade_steps_per_round`, `greedy_layout_lattice`). Finer-grained parameters — such as BLaDE's `pca` flag or its `compute_*` schedule functions — are not settable this way; call `embedding.blade.embed`/`embedding.greedy_layout.embed` directly with a full `BladeConfig`/`greedy_layout.Config` if you need those.
 
