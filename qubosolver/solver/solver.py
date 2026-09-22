@@ -1,24 +1,19 @@
 """Concrete QUBO solver implementations built on top of [`BaseSolver`][].
 
-This module provides three internal solver classes and the public
+This module provides two internal solver classes and the public
 [`Solver`][qubosolver.Solver]:
 
 * [`Solver`][qubosolver.Solver] — public entry point.  Its concrete solving
-  strategy is chosen from [`Config`][] at construction time, from
-  the three solvers below.
+  strategy (quantum or classical) is chosen from [`Config`][] at
+  construction time.
 * `_QuboSolverQuantum` — runs the full quantum pipeline: embedding →
   drive shaping → analog quantum sampling → postprocessing.
 * `_QuboSolverClassical` — solves using a classical optimizer
   (CPLEX, Simulated Annealing, Tabu Search, …) via
   `~qubosolver.solver.get_classical_solver`.
-* `_DecomposeQuboSolver` — recursively decomposes a large QUBO into
-  device-sized subproblems, solves each with a sub-solver, and merges the
-  partial solutions.
 """
 
 from __future__ import annotations
-
-from collections.abc import Callable
 
 import logging
 import torch
@@ -27,7 +22,8 @@ from copy import deepcopy
 import qoolqit
 
 from qubosolver import Solution, Instance, transforms, torch_rng
-from .config import DecompositionConfig, SolverConfig, ClassicalSolvingConfig
+from .config import SolverConfig, ClassicalSolvingConfig
+from .config.config import _DecompositionConfig
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from ._basesolver import BaseSolver
 from ._classical_solver import get_classical_solver
@@ -40,8 +36,8 @@ logger = logging.getLogger(__name__)
 class Solver(BaseSolver):
     """A QUBO solver.
 
-    Its concrete solving strategy (quantum, classical, or decomposition)
-    is chosen from [`SolverConfig`][] at construction time.
+    Its concrete solving strategy (quantum or classical) is chosen from
+    [`SolverConfig`][] at construction time.
 
     Example:
         ```python
@@ -65,14 +61,7 @@ class Solver(BaseSolver):
         super().__init__(instance, config)
         self._solver: BaseSolver
 
-        if config.decompose:
-            if self.config.solving_mode == "quantum":
-                solver_factory: type[BaseSolver] = _QuboSolverQuantum
-            else:
-                solver_factory = _QuboSolverClassical
-            self._solver = _DecomposeQuboSolver(instance, self.config, solver_factory)
-
-        elif self.config.solving_mode == "quantum":
+        if self.config.solving_mode == "quantum":
             self._solver = _QuboSolverQuantum(instance, config)
         else:
             self._solver = _QuboSolverClassical(instance, config)
@@ -311,10 +300,10 @@ class _DecomposeQuboSolver(BaseSolver):
 
     Treats the QUBO as a graph (variables = vertices, coefficients =
     weighted edges), iteratively extracts device-sized subgraphs using
-    geometric search, solves each subproblem with a configurable
-    ``solver_factory``, and merges the partial solutions back into a
+    geometric search, solves each subproblem with a `Solver` configured
+    from ``solver_config``, and merges the partial solutions back into a
     global solution.  The final tail of variables (those that fall below
-    `DecompositionConfig.decompose_stop_number`)
+    `_DecompositionConfig.decompose_stop_number`)
     is always solved classically.
 
     Constraints:
@@ -328,21 +317,22 @@ class _DecomposeQuboSolver(BaseSolver):
     def __init__(
         self,
         instance: Instance,
-        config: SolverConfig | None,
-        solver_factory: Callable[[Instance, SolverConfig], BaseSolver],
+        *,
+        solver_config: SolverConfig = SolverConfig(),
+        decompose_config: _DecompositionConfig = _DecompositionConfig(),
     ):
         """Initialise the decomposition solver.
 
         Args:
             instance: The QUBO problem to decompose and solve.  All
                 off-diagonal coefficients must be non-negative.
-            config: Solver settings (backend, device, decomposition
-                parameters, etc.).  Defaults to
-                ``Config(use_quantum=True)`` when ``None``.
-            solver_factory: A callable (typically
-                `_QuboSolverQuantum` or `_QuboSolverClassical`) that
-                constructs the sub-solver used to solve each extracted
-                subproblem.
+            solver_config: Solver settings (backend, device, embedding,
+                drive shaping, etc.) used both for the sub-solver that
+                solves each extracted subproblem and for the final
+                classical resolution of the remaining tail.  Defaults to
+                a default-constructed `SolverConfig`.
+            decompose_config: The decomposition parameters to use.
+                Defaults to a default-constructed `_DecompositionConfig`.
 
         Raises:
             ValueError: If any off-diagonal coefficient in
@@ -354,18 +344,14 @@ class _DecomposeQuboSolver(BaseSolver):
         # default is a quantum solver as we apply device-dependent decomposition
         super().__init__(
             Instance(instance.matrix),
-            config or SolverConfig(),
+            solver_config,
         )
-        self._solver_factory = solver_factory
 
-        self.decomposition_config: DecompositionConfig = (
-            self.config.decompose or DecompositionConfig()
-        )
+        self.decomposition_config = decompose_config
 
         # A cached version of `config` that we're going
         # to use for problems we do not wish to decompose.
         self._config_subproblems = deepcopy(self.config)
-        self._config_subproblems.decompose = None
 
         self._decomposition = [list(range(instance.size))]
 
@@ -399,7 +385,7 @@ class _DecomposeQuboSolver(BaseSolver):
         if self.instance.size <= self.decomposition_config.decompose_stop_number:
             solver = _QuboSolverClassical(
                 self.instance,
-                SolverConfig(solving=ClassicalSolvingConfig(), decompose=None),
+                SolverConfig(solving=ClassicalSolvingConfig()),
             )
             return solver.solve()
 
@@ -425,7 +411,7 @@ class _DecomposeQuboSolver(BaseSolver):
                     break
                 self.number_iterations += 1
 
-                subsolver = self._solver_factory(subqubo, self._config_subproblems)
+                subsolver = Solver(subqubo, self._config_subproblems)
 
                 # only one bitstring is kept as per design choice of the
                 # decomposition algorithm
@@ -442,7 +428,7 @@ class _DecomposeQuboSolver(BaseSolver):
             if subqubo.size != 0:
                 lastsolver = _QuboSolverClassical(
                     subqubo,
-                    SolverConfig(solving=ClassicalSolvingConfig(), decompose=None),
+                    SolverConfig(solving=ClassicalSolvingConfig()),
                 )
                 subsolution = lastsolver.solve()._compute_costs(subqubo.matrix)._sort_by_cost()
                 solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)

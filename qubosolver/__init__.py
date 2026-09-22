@@ -53,7 +53,6 @@ from qubosolver import transforms, drive_shaping, embedding, solving  # noqa: E4
 from qubosolver.solver import (  # noqa: E402
     Solver,
     SolverConfig,
-    DecompositionConfig,
     DriveShapingConfig,
     EmbeddingConfig,
     ClassicalSolvingConfig,
@@ -97,7 +96,6 @@ __all__ = [
     # Config-based API
     "Solver",
     "SolverConfig",
-    "DecompositionConfig",
     "DriveShapingConfig",
     "EmbeddingConfig",
     "ClassicalSolvingConfig",

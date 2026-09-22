@@ -10,7 +10,6 @@ from qubosolver import (
     ClassicalSolvingConfig,
     DriveShapingConfig,
     EmbeddingConfig,
-    DecompositionConfig,
     LocalEmulator,
     AutoLocalEmulatorBackend,
 )
@@ -25,7 +24,6 @@ def test_default_config() -> None:
     check.is_(default_config.solving.backend._backend_type, AutoLocalEmulatorBackend)
     check.equal(default_config.solving.embedding.algorithm, "blade")
     check.equal(default_config.solving.embedding.greedy_layout_lattice, "triangular")
-    check.is_none(default_config.decompose)
 
 
 def test_default_classical_config() -> None:
@@ -161,8 +159,3 @@ def test_initialization_device() -> None:
 
     solver = QuantumSolvingConfig()
     check.equal(solver.embedding.greedy_layout_traps, "device")
-
-
-def test_decomposition_config() -> None:
-    config = SolverConfig(decompose=DecompositionConfig())
-    check.is_not_none(config.decompose)

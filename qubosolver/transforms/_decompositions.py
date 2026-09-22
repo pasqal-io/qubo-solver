@@ -19,7 +19,7 @@ import copy
 from dataclasses import dataclass
 import torch
 
-from qubosolver import DecompositionConfig
+from qubosolver.solver.config.config import _DecompositionConfig
 from qubosolver import Solution, Matrix, matrix, Bitstring, bitstring, vectori, torch_rng
 from qubosolver import Instance as QUBOInstanceBase
 from ._algorithms.decompose import (
@@ -60,9 +60,9 @@ class Config:
 
     @staticmethod
     def _from_decomposition_config(
-        config: DecompositionConfig, *, max_min_dist_ratio: float
+        config: _DecompositionConfig, *, max_min_dist_ratio: float
     ) -> Config:
-        """Create a :class:`Config` from a user-facing :class:`DecompositionConfig`."""
+        """Create a :class:`Config` from a user-facing :class:`_DecompositionConfig`."""
         return Config(
             neglecting_inter_distance=config.neglecting_inter_distance,
             neglecting_max_coefficient=config.neglecting_max_coefficient,
