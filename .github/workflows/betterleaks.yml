@@ -6,6 +6,12 @@ on:
       - gh-pages
   workflow_dispatch: {}
   workflow_call:
+    inputs:
+      scan_gh_pages:
+        description: Scan the gh-pages branch instead of the triggering ref
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read  # Minimal permissions — read-only access to repo contents
@@ -21,20 +27,25 @@ jobs:
     env:
       BETTERLEAKS_VERSION: v1.8.1
       BETTERLEAKS_SHA256: efa407244e1ea8e35f582b8a42becdeac08bdead04f68eb752adda722d583c2a
-      # gh-pages only accumulates generated preview/deploy commits, so scan just
-      # the latest few instead of its whole (large, mostly-generated) history.
-      # Everywhere else, do a full history scan excluding gh-pages (deploy-preview
-      # commits there would pollute the history of other branches' scans).
-      LOG_OPTS: ${{ github.ref == 'refs/heads/gh-pages' && '-5 refs/heads/gh-pages' || '--exclude=origin/gh-pages --remotes=*' }}
+      # Full history scan excluding gh-pages (deploy-preview commits there would
+      # pollute the history of other branches' scans). Overridden below when
+      # scanning gh-pages itself.
+      LOG_OPTS: --exclude=origin/gh-pages --remotes=*
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.scan_gh_pages && 'gh-pages' || github.ref }}
           fetch-depth: 0  # Required for git scan mode
       - name: Use the .betterleaks.toml config from main
         # gh-pages doesn't carry this file (it's only maintained on main), so pull it
         # in explicitly when scanning gh-pages instead of relying on it being present.
-        if: github.ref == 'refs/heads/gh-pages'
-        run: git show origin/main:.betterleaks.toml > .betterleaks.toml
+        # Also override LOG_OPTS: gh-pages only accumulates generated preview/deploy
+        # commits, so scan just the latest few instead of its whole (large,
+        # mostly-generated) history.
+        if: inputs.scan_gh_pages
+        run: |
+          git show origin/main:.betterleaks.toml > .betterleaks.toml
+          echo "LOG_OPTS=-10 refs/heads/gh-pages" >> "$GITHUB_ENV"
       - name: Install betterleaks
         run: |
           archive="betterleaks_${BETTERLEAKS_VERSION#v}_linux_x64.tar.gz"
