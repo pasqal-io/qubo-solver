@@ -63,3 +63,13 @@ jobs:
             uv run --group doc --no-default-groups mike deploy --push --update-aliases ${{ github.ref_name }} latest
         permissions:
             contents: write # TODO: wide permissions needed for deployment with mike
+
+    betterleaks-gh-pages:
+        name: Secret Detection (gh-pages)
+        needs: [public_docs]
+        permissions:
+            contents: read
+            security-events: write
+        uses: pasqal-io/qubo-solver/.github/workflows/betterleaks.yml@main
+        with:
+            scan_gh_pages: true

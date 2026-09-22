@@ -176,8 +176,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: main
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
@@ -189,3 +187,14 @@ jobs:
           git config user.email "actions@github.com"
           git fetch origin gh-pages
           uv run --group doc --no-default-groups mike deploy --push --update-aliases main development
+
+  betterleaks-gh-pages:
+    name: Secret Detection (gh-pages)
+    needs: [portal-preview, publish-dev-docs]
+    if: always()
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/betterleaks.yml
+    with:
+      scan_gh_pages: true
