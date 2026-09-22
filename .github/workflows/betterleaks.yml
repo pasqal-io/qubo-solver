@@ -1,0 +1,53 @@
+name: Secret Detection
+
+on:
+  push:
+    branches-ignore:
+      - gh-pages
+  workflow_dispatch: {}
+  workflow_call:
+
+permissions:
+  contents: read  # Minimal permissions — read-only access to repo contents
+
+jobs:
+
+  betterleaks:
+    name: Secret Detection - Betterleaks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload
+    env:
+      BETTERLEAKS_VERSION: v1.8.1
+      BETTERLEAKS_SHA256: efa407244e1ea8e35f582b8a42becdeac08bdead04f68eb752adda722d583c2a
+      # gh-pages only accumulates generated preview/deploy commits, so scan just
+      # the latest few instead of its whole (large, mostly-generated) history.
+      # Everywhere else, do a full history scan excluding gh-pages (deploy-preview
+      # commits there would pollute the history of other branches' scans).
+      LOG_OPTS: ${{ github.ref == 'refs/heads/gh-pages' && '-5 refs/heads/gh-pages' || '--exclude=origin/gh-pages --remotes=*' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0  # Required for git scan mode
+      - name: Install betterleaks
+        run: |
+          archive="betterleaks_${BETTERLEAKS_VERSION#v}_linux_x64.tar.gz"
+          curl -sSfLO "https://github.com/betterleaks/betterleaks/releases/download/$BETTERLEAKS_VERSION/$archive"
+          echo "$BETTERLEAKS_SHA256  $archive" | sha256sum -c -
+          tar -xzf "$archive" betterleaks
+      - name: Run betterleaks
+        run: |
+          ./betterleaks git \
+            --log-opts="$LOG_OPTS" \
+            --report-format=sarif \
+            --report-path=betterleaks-report.sarif \
+            --exit-code=1 \
+            --verbose \
+            --no-color \
+            --no-banner
+      - name: Upload Betterleaks SARIF to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        with:
+          sarif_file: betterleaks-report.sarif
