@@ -30,6 +30,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0  # Required for git scan mode
+      - name: Use the .betterleaks.toml config from main
+        # gh-pages doesn't carry this file (it's only maintained on main), so pull it
+        # in explicitly when scanning gh-pages instead of relying on it being present.
+        if: github.ref == 'refs/heads/gh-pages'
+        run: git show origin/main:.betterleaks.toml > .betterleaks.toml
       - name: Install betterleaks
         run: |
           archive="betterleaks_${BETTERLEAKS_VERSION#v}_linux_x64.tar.gz"
