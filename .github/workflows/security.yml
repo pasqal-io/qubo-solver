@@ -40,18 +40,6 @@ jobs:
         with:
           sarif_file: bandit-results.sarif
 
-  gitleaks:
-    name: Secret Detection - Gitleaks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-      - name: Install Gitleaks
-        run: sudo apt-get install -y gitleaks
-      - name: Run Gitleaks
-        run: gitleaks detect --source . --config .gitleaks.toml --verbose
-
   trivy:
     # SCA (Software Composition Analysis) — scans dependencies for known CVEs and license info.
     # SBOM (Software Bill of Materials) — generates a full inventory of all dependencies

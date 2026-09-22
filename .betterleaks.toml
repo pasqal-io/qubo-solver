@@ -1,0 +1,16 @@
+title = "qubo-solver betterleaks config"
+
+[extend]
+useDefault = true  # keep all built-in rules
+
+[allowlist]
+regexes = [
+  # False positive: low-entropy placeholder in generated docs (v0.7.0 tutorial HTML)
+  '''AIDA0AICAAAAIDAEIAAA''',
+  # False positive: doc/tutorial examples assign a placeholder to `password=`
+  # (PASSWORD, password, my_password, #TO_PROVIDE, HTML-escaped quote, etc.),
+  # not a real secret. Matches historical generated-doc variants across the
+  # full git history (docs/tutorial*/*.ipynb, docs/**/*.md, old portal-preview
+  # and versioned doc-site builds on gh-pages-derived history).
+  '''^(#TO_PROVIDE|&#x22|password|PASSWORD|my_password\))[\\\x7f]*n?$''',
+]
