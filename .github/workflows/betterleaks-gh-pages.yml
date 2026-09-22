@@ -1,0 +1,20 @@
+name: Secret Detection (gh-pages)
+
+# gh-pages is deploy-only (updated by CI via mike/pr-preview-action, never touched by
+# hand), so it never picks up workflow-file updates merged to main. Calling
+# betterleaks.yml@main as a reusable workflow ensures gh-pages always runs the current
+# scanning logic instead of a stale copy that would otherwise need manual syncing.
+on:
+  push:
+    branches:
+      - gh-pages
+
+permissions:
+  contents: read
+
+jobs:
+  betterleaks:
+    permissions:
+      contents: read
+      security-events: write
+    uses: pasqal-io/qubo-solver/.github/workflows/betterleaks.yml@main
