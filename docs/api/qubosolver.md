@@ -12,7 +12,6 @@
         - "!^Vector$"
         - "!^Vectori$"
         - "!^ClassicalSolvingConfig$"
-        - "!^DecompositionConfig$"
         - "!^DriveShapingConfig$"
         - "!^EmbeddingConfig$"
         - "!^QuantumSolvingConfig$"

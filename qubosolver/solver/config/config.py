@@ -8,7 +8,7 @@ from .solving import QuantumConfig as QuantumSolvingConfig
 
 
 @dataclass
-class DecompositionConfig:
+class _DecompositionConfig:
     """The configuration parameters when using a decomposition method
     for solving large QUBO instances.
 
@@ -62,10 +62,6 @@ class SolverConfig:
 
     activate_trivial_solutions: bool = True
     """Whether to calculate trivial solutions (`True`) or not (`False`). Defaults to `True`."""
-
-    decompose: DecompositionConfig | None = None
-    """Which decomposition configuration to use when solving large QUBOs.
-    Defaults to `None`, i.e. no decomposition is applied."""
 
     postprocessing_time_limit: float = float("inf")
     """Maximum total time in seconds for the whole post-processing batch,
