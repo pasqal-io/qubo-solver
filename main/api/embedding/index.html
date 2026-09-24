@@ -2752,6 +2752,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#qubosolver.embedding.greedy_layout.Config.__post_init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;__post_init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#qubosolver.embedding.greedy_layout.Config.from_device" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3680,6 +3691,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#qubosolver.embedding.greedy_layout.Config.__post_init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;__post_init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#qubosolver.embedding.greedy_layout.Config.from_device" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3973,7 +3995,7 @@ exposes a single [<code>embed</code>] entry point accepting an
 in a quantum program.</p>
 <p>BLaDE maps the QUBO coefficient matrix onto a 2-D (or higher-dimensional)
 set of atom positions so that the physical interaction strengths
-(∝ 1/‖rᵢ − rⱼ‖⁶) are as proportional to the QUBO edge weights as possible.
+(∝ 1/‖rᵢ - rⱼ‖⁶) are as proportional to the QUBO edge weights as possible.
 It does so by iteratively refining coordinates across multiple dimensional
 reduction rounds.</p>
 
@@ -4083,12 +4105,7 @@ produce a register that the target device cannot realize.</p>
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.blade.Config&lt;/code&gt;)" href="#qubosolver.embedding.blade.Config">Config</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;Config&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.blade.Config&lt;/code&gt;)" href="#qubosolver.embedding.blade.Config">Config</a></span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Register&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Register">Register</a></span>
+  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.blade.Config&lt;/code&gt;)" href="#qubosolver.embedding.blade.Config">Config</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Register&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Register">Register</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4127,13 +4144,8 @@ with a target device. See <a class="autorefs autorefs-internal" title="&lt;code 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.blade.Config&lt;/code&gt;)" href="#qubosolver.embedding.blade.Config">Config</a></code>, default:
-                  <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;Config&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.blade.Config&lt;/code&gt;)" href="#qubosolver.embedding.blade.Config">Config</a>()</code>
+  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.blade.Config&lt;/code&gt;)" href="#qubosolver.embedding.blade.Config">Config</a> | None</code>, default:
+                  <code>None</code>
 )
           –
           <div class="doc-md-description">
@@ -4151,7 +4163,8 @@ maximum allowed ratio of radial to minimum distance, etc.).</p>
               <code><a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Register&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Register">Register</a></code>
           –
           <div class="doc-md-description">
-            <p>A register mapping each atom label to its 2-D position, with atom positions determined by BLaDE.</p>
+            <p>A register mapping each atom label to its 2-D position, with atom positions
+determined by BLaDE.</p>
           </div>
         </li>
     </ul>
@@ -4180,8 +4193,7 @@ coefficients, since BLaDE cannot embed such instances.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/embedding/blade.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-40">40</a></span>
-<span class="normal"><a href="#__codelineno-0-41">41</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-41">41</a></span>
 <span class="normal"><a href="#__codelineno-0-42">42</a></span>
 <span class="normal"><a href="#__codelineno-0-43">43</a></span>
 <span class="normal"><a href="#__codelineno-0-44">44</a></span>
@@ -4225,52 +4237,57 @@ coefficients, since BLaDE cannot embed such instances.</p>
 <span class="normal"><a href="#__codelineno-0-82">82</a></span>
 <span class="normal"><a href="#__codelineno-0-83">83</a></span>
 <span class="normal"><a href="#__codelineno-0-84">84</a></span>
-<span class="normal"><a href="#__codelineno-0-85">85</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="k">def</span><span class="w"> </span><span class="nf">embed</span><span class="p">(</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>    <span class="n">config</span><span class="p">:</span> <span class="n">Config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(),</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="p">:</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="w">    </span><span class="sd">"""Embed a QUBO instance using the BLaDE algorithm.</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">    Runs the BLaDE optimization on the QUBO coefficient matrix. Atom</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">    labels are assigned as integer indices (``0``, ``1``, …)</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">    matching the variable ordering of the QUBO matrix.</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">    Warning:</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">        A poorly chosen `config` can produce a register that is incompatible</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">        with a target device. See [`Config`][].</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">        instance: The QUBO instance to embed.</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">        config: BLaDE configuration controlling the optimization (number of</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">            steps per round, initial atom positions, dimension sequence,</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">            maximum allowed ratio of radial to minimum distance, etc.).</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">        A register mapping each atom label to its 2-D position, with atom positions determined by BLaDE.</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="sd">    Raises:</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="sd">        ValueError: If `instance` has no variables (``size == 0``), since a</span>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="sd">            register must contain at least one qubit.</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">        ValueError: If the QUBO coefficient matrix has negative off-diagonal</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">            coefficients, since BLaDE cannot embed such instances.</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">    """</span>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"embed: instance size=</span><span class="si">%d</span><span class="s2">, config=</span><span class="si">%r</span><span class="s2">"</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">instance</span><span class="p">:</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cannot embed an empty instance (size=0): nothing to place."</span><span class="p">)</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a>    <span class="k">if</span> <span class="n">_has_negative_offdiagonal</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">):</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"QUBOs with negative off-diagonal coefficients cannot be embedded."</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-85">85</a></span>
+<span class="normal"><a href="#__codelineno-0-86">86</a></span>
+<span class="normal"><a href="#__codelineno-0-87">87</a></span>
+<span class="normal"><a href="#__codelineno-0-88">88</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="k">def</span><span class="w"> </span><span class="nf">embed</span><span class="p">(</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="n">config</span><span class="p">:</span> <span class="n">Config</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="p">:</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="w">    </span><span class="sd">"""Embed a QUBO instance using the BLaDE algorithm.</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">    Runs the BLaDE optimization on the QUBO coefficient matrix. Atom</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">    labels are assigned as integer indices (``0``, ``1``, …)</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="sd">    matching the variable ordering of the QUBO matrix.</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">    Warning:</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">        A poorly chosen `config` can produce a register that is incompatible</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">        with a target device. See [`Config`][].</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">        instance: The QUBO instance to embed.</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">        config: BLaDE configuration controlling the optimization (number of</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">            steps per round, initial atom positions, dimension sequence,</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">            maximum allowed ratio of radial to minimum distance, etc.).</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">        A register mapping each atom label to its 2-D position, with atom positions</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="sd">            determined by BLaDE.</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">        ValueError: If `instance` has no variables (``size == 0``), since a</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">            register must contain at least one qubit.</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">        ValueError: If the QUBO coefficient matrix has negative off-diagonal</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">            coefficients, since BLaDE cannot embed such instances.</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="sd">    """</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>    <span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">Config</span><span class="p">()</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"embed: instance size=</span><span class="si">%d</span><span class="s2">, config=</span><span class="si">%r</span><span class="s2">"</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">instance</span><span class="p">:</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cannot embed an empty instance (size=0): nothing to place."</span><span class="p">)</span>
 <a id="__codelineno-0-76" name="__codelineno-0-76"></a>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a>    <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a>        <span class="c1"># A single atom has no off-diagonal term to place it relative to,</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a>        <span class="c1"># so it is placed at the origin without running the algorithm.</span>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a>        <span class="k">return</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="o">.</span><span class="n">from_coordinates</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a>    <span class="n">_blade</span> <span class="o">=</span> <span class="n">Blade</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="n">graph</span> <span class="o">=</span> <span class="n">_blade</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="n">register</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="o">.</span><span class="n">from_graph</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a>    <span class="k">return</span> <span class="n">register</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a>    <span class="k">if</span> <span class="n">_has_negative_offdiagonal</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">):</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"QUBOs with negative off-diagonal coefficients cannot be embedded."</span><span class="p">)</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a>    <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a>        <span class="c1"># A single atom has no off-diagonal term to place it relative to,</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a>        <span class="c1"># so it is placed at the origin without running the algorithm.</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a>        <span class="k">return</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="o">.</span><span class="n">from_coordinates</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a>    <span class="n">_blade</span> <span class="o">=</span> <span class="n">Blade</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a>    <span class="n">graph</span> <span class="o">=</span> <span class="n">_blade</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a>    <span class="n">register</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="o">.</span><span class="n">from_graph</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a>    <span class="k">return</span> <span class="n">register</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4322,7 +4339,8 @@ from <em>device</em> via <code>Config</code>'s <code>device</code> constructor a
               <code><a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Register&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Register">Register</a></code>
           –
           <div class="doc-md-description">
-            <p>A register mapping each atom label to its 2-D position, with atom positions determined by BLaDE.</p>
+            <p>A register mapping each atom label to its 2-D position, with atom positions
+determined by BLaDE.</p>
           </div>
         </li>
     </ul>
@@ -4339,10 +4357,7 @@ from <em>device</em> via <code>Config</code>'s <code>device</code> constructor a
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/embedding/blade.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-88"> 88</a></span>
-<span class="normal"><a href="#__codelineno-0-89"> 89</a></span>
-<span class="normal"><a href="#__codelineno-0-90"> 90</a></span>
-<span class="normal"><a href="#__codelineno-0-91"> 91</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-91"> 91</a></span>
 <span class="normal"><a href="#__codelineno-0-92"> 92</a></span>
 <span class="normal"><a href="#__codelineno-0-93"> 93</a></span>
 <span class="normal"><a href="#__codelineno-0-94"> 94</a></span>
@@ -4365,33 +4380,38 @@ from <em>device</em> via <code>Config</code>'s <code>device</code> constructor a
 <span class="normal"><a href="#__codelineno-0-111">111</a></span>
 <span class="normal"><a href="#__codelineno-0-112">112</a></span>
 <span class="normal"><a href="#__codelineno-0-113">113</a></span>
-<span class="normal"><a href="#__codelineno-0-114">114</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="k">def</span><span class="w"> </span><span class="nf">embed_for_device</span><span class="p">(</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a>    <span class="n">device</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Device</span><span class="p">,</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="p">:</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="w">    </span><span class="sd">"""Embed a QUBO instance using the BLaDE algorithm, sized for *device*.</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="sd">    Convenience wrapper around `embed` that derives `Config.max_min_dist_ratio`</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">    from *device* via `Config`'s `device` constructor argument.</span>
+<span class="normal"><a href="#__codelineno-0-114">114</a></span>
+<span class="normal"><a href="#__codelineno-0-115">115</a></span>
+<span class="normal"><a href="#__codelineno-0-116">116</a></span>
+<span class="normal"><a href="#__codelineno-0-117">117</a></span>
+<span class="normal"><a href="#__codelineno-0-118">118</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="k">def</span><span class="w"> </span><span class="nf">embed_for_device</span><span class="p">(</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="n">device</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Device</span><span class="p">,</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="p">:</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="w">    </span><span class="sd">"""Embed a QUBO instance using the BLaDE algorithm, sized for *device*.</span>
 <a id="__codelineno-0-96" name="__codelineno-0-96"></a>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">        instance: The QUBO instance to embed.</span>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">        device: Target quantum device the resulting register must fit.</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">        A register mapping each atom label to its 2-D position, with atom positions determined by BLaDE.</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    Convenience wrapper around `embed` that derives `Config.max_min_dist_ratio`</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">    from *device* via `Config`'s `device` constructor argument.</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">        instance: The QUBO instance to embed.</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">        device: Target quantum device the resulting register must fit.</span>
 <a id="__codelineno-0-103" name="__codelineno-0-103"></a>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">    To also tune device-independent parameters (e.g. `dimensions` or</span>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">    `steps_per_round`), pass them directly to `Config` alongside `device`:</span>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a>
-<a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">    Example:</span>
-<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">        ```python</span>
-<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">        config = Config(device=device, steps_per_round=100)</span>
-<a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="sd">        register = embed(instance, config=config)</span>
-<a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="sd">        ```</span>
-<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">    """</span>
-<a id="__codelineno-0-113" name="__codelineno-0-113"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"embed_for_device: instance size=</span><span class="si">%d</span><span class="s2">, device=</span><span class="si">%r</span><span class="s2">"</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
-<a id="__codelineno-0-114" name="__codelineno-0-114"></a>    <span class="k">return</span> <span class="n">embed</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">Config</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">        A register mapping each atom label to its 2-D position, with atom positions</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">            determined by BLaDE.</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">    To also tune device-independent parameters (e.g. `dimensions` or</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">    `steps_per_round`), pass them directly to `Config` alongside `device`:</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="sd">    Example:</span>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">        ```python</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">        config = Config(device=device, steps_per_round=100)</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a><span class="sd">        register = embed(instance, config=config)</span>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">        ```</span>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a><span class="sd">    """</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"embed_for_device: instance size=</span><span class="si">%d</span><span class="s2">, device=</span><span class="si">%r</span><span class="s2">"</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a>    <span class="k">return</span> <span class="n">embed</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">Config</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4422,7 +4442,7 @@ from <em>device</em> via <code>Config</code>'s <code>device</code> constructor a
 <p>The greedy algorithm places logical QUBO nodes one at a time onto trap sites
 of a pre-defined lattice (triangular or square), choosing at each step the
 (node, trap) pair that minimizes the incremental mismatch between the QUBO
-coefficient matrix and the physical interaction matrix (∝ 1/‖rᵢ − rⱼ‖⁶).</p>
+coefficient matrix and the physical interaction matrix (∝ 1/‖rᵢ - rⱼ‖⁶).</p>
 
 
 
@@ -4580,6 +4600,13 @@ the smallest inter-atom distance in the resulting register.</p>
 <p><span class="doc-section-title">Methods:</span></p>
     <ul>
           <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-method&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;__post_init__&lt;/span&gt; (&lt;code&gt;qubosolver.embedding.greedy_layout.Config.__post_init__&lt;/code&gt;)" href="#qubosolver.embedding.greedy_layout.Config.__post_init__">__post_init__</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Initialize the private animation-related attributes.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
             <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-method&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;from_device&lt;/span&gt;
 
 
@@ -4613,6 +4640,37 @@ the smallest inter-atom distance in the resulting register.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="qubosolver.embedding.greedy_layout.Config.__post_init__" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">__post_init__</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__post_init__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize the private animation-related attributes.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>qubosolver/embedding/greedy_layout.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-64">64</a></span>
+<span class="normal"><a href="#__codelineno-0-65">65</a></span>
+<span class="normal"><a href="#__codelineno-0-66">66</a></span>
+<span class="normal"><a href="#__codelineno-0-67">67</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="w">    </span><span class="sd">"""Initialize the private animation-related attributes."""</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_draw_steps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_animation_save_path</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
@@ -4678,9 +4736,7 @@ All fields can be overwritten on the returned instance.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/embedding/greedy_layout.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-67">67</a></span>
-<span class="normal"><a href="#__codelineno-0-68">68</a></span>
-<span class="normal"><a href="#__codelineno-0-69">69</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-69">69</a></span>
 <span class="normal"><a href="#__codelineno-0-70">70</a></span>
 <span class="normal"><a href="#__codelineno-0-71">71</a></span>
 <span class="normal"><a href="#__codelineno-0-72">72</a></span>
@@ -4694,23 +4750,25 @@ All fields can be overwritten on the returned instance.</p>
 <span class="normal"><a href="#__codelineno-0-80">80</a></span>
 <span class="normal"><a href="#__codelineno-0-81">81</a></span>
 <span class="normal"><a href="#__codelineno-0-82">82</a></span>
-<span class="normal"><a href="#__codelineno-0-83">83</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="nd">@staticmethod</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="k">def</span><span class="w"> </span><span class="nf">from_device</span><span class="p">(</span><span class="n">device</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Device</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Config</span><span class="p">:</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="w">    </span><span class="sd">"""Create a [`Config`][] with `traps` and `max_min_dist_ratio` derived from *device*.</span>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="sd">    Use this to size the embedding to what *device* actually supports.</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">    All fields can be overwritten on the returned instance.</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">        device: Target quantum device to derive the layout constraints from.</span>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">        A configuration with device-derived `traps` and `max_min_dist_ratio`.</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">    """</span>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a>    <span class="k">return</span> <span class="n">Config</span><span class="p">(</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a>        <span class="n">traps</span><span class="o">=</span><span class="n">_number_of_traps_from_device</span><span class="p">(</span><span class="n">device</span><span class="p">),</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a>        <span class="n">max_min_dist_ratio</span><span class="o">=</span><span class="n">_max_min_distance_ratio</span><span class="p">(</span><span class="n">device</span><span class="p">),</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-83">83</a></span>
+<span class="normal"><a href="#__codelineno-0-84">84</a></span>
+<span class="normal"><a href="#__codelineno-0-85">85</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="nd">@staticmethod</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="k">def</span><span class="w"> </span><span class="nf">from_device</span><span class="p">(</span><span class="n">device</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Device</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Config</span><span class="p">:</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="w">    </span><span class="sd">"""Create a [`Config`][] with `traps` and `max_min_dist_ratio` derived from *device*.</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">    Use this to size the embedding to what *device* actually supports.</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">    All fields can be overwritten on the returned instance.</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">        device: Target quantum device to derive the layout constraints from.</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">        A configuration with device-derived `traps` and `max_min_dist_ratio`.</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">    """</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a>    <span class="k">return</span> <span class="n">Config</span><span class="p">(</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a>        <span class="n">traps</span><span class="o">=</span><span class="n">_number_of_traps_from_device</span><span class="p">(</span><span class="n">device</span><span class="p">),</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a>        <span class="n">max_min_dist_ratio</span><span class="o">=</span><span class="n">_max_min_distance_ratio</span><span class="p">(</span><span class="n">device</span><span class="p">),</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a>    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4739,12 +4797,7 @@ All fields can be overwritten on the returned instance.</p>
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.greedy_layout.Config&lt;/code&gt;)" href="#qubosolver.embedding.greedy_layout.Config">Config</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Config&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.greedy_layout.Config&lt;/code&gt;)" href="#qubosolver.embedding.greedy_layout.Config">Config</a></span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Register&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Register">Register</a></span>
+  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.greedy_layout.Config&lt;/code&gt;)" href="#qubosolver.embedding.greedy_layout.Config">Config</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Register&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Register">Register</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4784,13 +4837,8 @@ the greedy cost function.</p>
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.greedy_layout.Config&lt;/code&gt;)" href="#qubosolver.embedding.greedy_layout.Config">Config</a></code>, default:
-                  <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Config&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.greedy_layout.Config&lt;/code&gt;)" href="#qubosolver.embedding.greedy_layout.Config">Config</a>()</code>
+  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.greedy_layout.Config&lt;/code&gt;)" href="#qubosolver.embedding.greedy_layout.Config">Config</a> | None</code>, default:
+                  <code>None</code>
 )
           –
           <div class="doc-md-description">
@@ -4837,8 +4885,7 @@ trap sites for all QUBO variables).</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/embedding/greedy_layout.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-220">220</a></span>
-<span class="normal"><a href="#__codelineno-0-221">221</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-221">221</a></span>
 <span class="normal"><a href="#__codelineno-0-222">222</a></span>
 <span class="normal"><a href="#__codelineno-0-223">223</a></span>
 <span class="normal"><a href="#__codelineno-0-224">224</a></span>
@@ -4910,80 +4957,83 @@ trap sites for all QUBO variables).</p>
 <span class="normal"><a href="#__codelineno-0-290">290</a></span>
 <span class="normal"><a href="#__codelineno-0-291">291</a></span>
 <span class="normal"><a href="#__codelineno-0-292">292</a></span>
-<span class="normal"><a href="#__codelineno-0-293">293</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-220" name="__codelineno-0-220"></a><span class="k">def</span><span class="w"> </span><span class="nf">embed</span><span class="p">(</span>
-<a id="__codelineno-0-221" name="__codelineno-0-221"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
-<a id="__codelineno-0-222" name="__codelineno-0-222"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-223" name="__codelineno-0-223"></a>    <span class="n">config</span><span class="p">:</span> <span class="n">Config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(),</span>
-<a id="__codelineno-0-224" name="__codelineno-0-224"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="p">:</span>
-<a id="__codelineno-0-225" name="__codelineno-0-225"></a><span class="w">    </span><span class="sd">"""Embed a QUBO instance using the greedy layout-based algorithm.</span>
-<a id="__codelineno-0-226" name="__codelineno-0-226"></a>
-<a id="__codelineno-0-227" name="__codelineno-0-227"></a><span class="sd">    The algorithm operates entirely in adimensional units (interactions</span>
-<a id="__codelineno-0-228" name="__codelineno-0-228"></a><span class="sd">    scale as ``1 / distance ** 6``), so the coordinates it returns are already</span>
-<a id="__codelineno-0-229" name="__codelineno-0-229"></a><span class="sd">    final and require no post-hoc rescaling.</span>
-<a id="__codelineno-0-230" name="__codelineno-0-230"></a>
-<a id="__codelineno-0-231" name="__codelineno-0-231"></a><span class="sd">    Warning:</span>
-<a id="__codelineno-0-232" name="__codelineno-0-232"></a><span class="sd">        A poorly chosen `config` can produce a register that is incompatible</span>
-<a id="__codelineno-0-233" name="__codelineno-0-233"></a><span class="sd">        with a target device. See [`Config`][].</span>
-<a id="__codelineno-0-234" name="__codelineno-0-234"></a>
-<a id="__codelineno-0-235" name="__codelineno-0-235"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-236" name="__codelineno-0-236"></a><span class="sd">        instance: The QUBO instance to embed.  Its ``matrix`` attribute drives</span>
-<a id="__codelineno-0-237" name="__codelineno-0-237"></a><span class="sd">            the greedy cost function.</span>
-<a id="__codelineno-0-238" name="__codelineno-0-238"></a><span class="sd">        config: Greedy embedding parameters, fully resolved (see [`Config.from_device`][]</span>
-<a id="__codelineno-0-239" name="__codelineno-0-239"></a><span class="sd">            for deriving `traps` and `max_min_dist_ratio` from a device).</span>
-<a id="__codelineno-0-240" name="__codelineno-0-240"></a><span class="sd">            ``max_min_dist_ratio`` bounds the ratio between the largest and</span>
-<a id="__codelineno-0-241" name="__codelineno-0-241"></a><span class="sd">            the smallest inter-atom distance in the resulting register.</span>
-<a id="__codelineno-0-242" name="__codelineno-0-242"></a>
-<a id="__codelineno-0-243" name="__codelineno-0-243"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-244" name="__codelineno-0-244"></a><span class="sd">        A register mapping each atom to a 2-D position.</span>
-<a id="__codelineno-0-245" name="__codelineno-0-245"></a>
-<a id="__codelineno-0-246" name="__codelineno-0-246"></a><span class="sd">    Raises:</span>
-<a id="__codelineno-0-247" name="__codelineno-0-247"></a><span class="sd">        ValueError: If `instance` has no variables (``size == 0``), since a</span>
-<a id="__codelineno-0-248" name="__codelineno-0-248"></a><span class="sd">            register must contain at least one qubit. If the resolved trap</span>
-<a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="sd">            count is less than ``instance.size`` (i.e. there are not enough</span>
-<a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="sd">            trap sites for all QUBO variables).</span>
-<a id="__codelineno-0-251" name="__codelineno-0-251"></a><span class="sd">    """</span>
-<a id="__codelineno-0-252" name="__codelineno-0-252"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"embed: instance size=</span><span class="si">%d</span><span class="s2">, config=</span><span class="si">%r</span><span class="s2">"</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-<a id="__codelineno-0-253" name="__codelineno-0-253"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">instance</span><span class="p">:</span>
-<a id="__codelineno-0-254" name="__codelineno-0-254"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cannot embed an empty instance (size=0): nothing to place."</span><span class="p">)</span>
-<a id="__codelineno-0-255" name="__codelineno-0-255"></a>
-<a id="__codelineno-0-256" name="__codelineno-0-256"></a>    <span class="k">if</span> <span class="n">_has_negative_offdiagonal</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">):</span>
-<a id="__codelineno-0-257" name="__codelineno-0-257"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"QUBOs with negative off-diagonal coefficients cannot be embedded."</span><span class="p">)</span>
-<a id="__codelineno-0-258" name="__codelineno-0-258"></a>
-<a id="__codelineno-0-259" name="__codelineno-0-259"></a>    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">traps</span> <span class="o">&lt;</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
-<a id="__codelineno-0-260" name="__codelineno-0-260"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-<a id="__codelineno-0-261" name="__codelineno-0-261"></a>            <span class="s2">"Number of traps must be at least equal to the number of atoms on the register."</span>
-<a id="__codelineno-0-262" name="__codelineno-0-262"></a>        <span class="p">)</span>
-<a id="__codelineno-0-263" name="__codelineno-0-263"></a>
-<a id="__codelineno-0-264" name="__codelineno-0-264"></a>    <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-265" name="__codelineno-0-265"></a>        <span class="c1"># A single atom has no off-diagonal term to place it relative to,</span>
-<a id="__codelineno-0-266" name="__codelineno-0-266"></a>        <span class="c1"># so it is placed at the origin without running the algorithm.</span>
-<a id="__codelineno-0-267" name="__codelineno-0-267"></a>        <span class="k">return</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="o">.</span><span class="n">from_coordinates</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-<a id="__codelineno-0-268" name="__codelineno-0-268"></a>
-<a id="__codelineno-0-269" name="__codelineno-0-269"></a>    <span class="c1"># spacing between adjacent trap sites, derived from the largest QUBO term</span>
-<a id="__codelineno-0-270" name="__codelineno-0-270"></a>    <span class="c1"># so that it is exactly representable at the minimum trap-trap distance</span>
-<a id="__codelineno-0-271" name="__codelineno-0-271"></a>    <span class="c1"># (interactions scale as 1 / distance ** 6).</span>
-<a id="__codelineno-0-272" name="__codelineno-0-272"></a>    <span class="n">max_possible_term</span> <span class="o">=</span> <span class="n">_resolve_max_possible_term</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">max_possible_term</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
-<a id="__codelineno-0-273" name="__codelineno-0-273"></a>    <span class="n">spacing</span> <span class="o">=</span> <span class="n">max_possible_term</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">)</span> <span class="k">if</span> <span class="n">max_possible_term</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span>
-<a id="__codelineno-0-274" name="__codelineno-0-274"></a>
-<a id="__codelineno-0-275" name="__codelineno-0-275"></a>    <span class="c1"># build params for the Greedy algorithm</span>
-<a id="__codelineno-0-276" name="__codelineno-0-276"></a>    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-277" name="__codelineno-0-277"></a>        <span class="s2">"layout"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">lattice</span><span class="p">,</span>
-<a id="__codelineno-0-278" name="__codelineno-0-278"></a>        <span class="s2">"traps"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">traps</span><span class="p">,</span>
-<a id="__codelineno-0-279" name="__codelineno-0-279"></a>        <span class="s2">"spacing"</span><span class="p">:</span> <span class="n">spacing</span><span class="p">,</span>
-<a id="__codelineno-0-280" name="__codelineno-0-280"></a>        <span class="c1"># animation controls (all read by Greedy)</span>
-<a id="__codelineno-0-281" name="__codelineno-0-281"></a>        <span class="s2">"draw_steps"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">_draw_steps</span><span class="p">,</span>  <span class="c1"># collect per-step data</span>
-<a id="__codelineno-0-282" name="__codelineno-0-282"></a>        <span class="s2">"animation"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">_draw_steps</span><span class="p">,</span>  <span class="c1"># render animation after run</span>
-<a id="__codelineno-0-283" name="__codelineno-0-283"></a>        <span class="s2">"animation_save_path"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">_animation_save_path</span><span class="p">,</span>  <span class="c1"># optional export</span>
-<a id="__codelineno-0-284" name="__codelineno-0-284"></a>    <span class="p">}</span>
-<a id="__codelineno-0-285" name="__codelineno-0-285"></a>
-<a id="__codelineno-0-286" name="__codelineno-0-286"></a>    <span class="c1"># --- Call Greedy (unchanged public signature)</span>
-<a id="__codelineno-0-287" name="__codelineno-0-287"></a>    <span class="n">_</span><span class="p">,</span> <span class="n">coords</span> <span class="o">=</span> <span class="n">greedy</span><span class="o">.</span><span class="n">Greedy</span><span class="p">()</span><span class="o">.</span><span class="n">launch_greedy</span><span class="p">(</span>
-<a id="__codelineno-0-288" name="__codelineno-0-288"></a>        <span class="n">Q</span><span class="o">=</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span>
-<a id="__codelineno-0-289" name="__codelineno-0-289"></a>        <span class="n">max_min_dist_ratio</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">max_min_dist_ratio</span><span class="p">,</span>
-<a id="__codelineno-0-290" name="__codelineno-0-290"></a>        <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
-<a id="__codelineno-0-291" name="__codelineno-0-291"></a>    <span class="p">)</span>
-<a id="__codelineno-0-292" name="__codelineno-0-292"></a>    <span class="n">register</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="o">.</span><span class="n">from_coordinates</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
-<a id="__codelineno-0-293" name="__codelineno-0-293"></a>    <span class="k">return</span> <span class="n">register</span>
+<span class="normal"><a href="#__codelineno-0-293">293</a></span>
+<span class="normal"><a href="#__codelineno-0-294">294</a></span>
+<span class="normal"><a href="#__codelineno-0-295">295</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-221" name="__codelineno-0-221"></a><span class="k">def</span><span class="w"> </span><span class="nf">embed</span><span class="p">(</span>
+<a id="__codelineno-0-222" name="__codelineno-0-222"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
+<a id="__codelineno-0-223" name="__codelineno-0-223"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-224" name="__codelineno-0-224"></a>    <span class="n">config</span><span class="p">:</span> <span class="n">Config</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-225" name="__codelineno-0-225"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="p">:</span>
+<a id="__codelineno-0-226" name="__codelineno-0-226"></a><span class="w">    </span><span class="sd">"""Embed a QUBO instance using the greedy layout-based algorithm.</span>
+<a id="__codelineno-0-227" name="__codelineno-0-227"></a>
+<a id="__codelineno-0-228" name="__codelineno-0-228"></a><span class="sd">    The algorithm operates entirely in adimensional units (interactions</span>
+<a id="__codelineno-0-229" name="__codelineno-0-229"></a><span class="sd">    scale as ``1 / distance ** 6``), so the coordinates it returns are already</span>
+<a id="__codelineno-0-230" name="__codelineno-0-230"></a><span class="sd">    final and require no post-hoc rescaling.</span>
+<a id="__codelineno-0-231" name="__codelineno-0-231"></a>
+<a id="__codelineno-0-232" name="__codelineno-0-232"></a><span class="sd">    Warning:</span>
+<a id="__codelineno-0-233" name="__codelineno-0-233"></a><span class="sd">        A poorly chosen `config` can produce a register that is incompatible</span>
+<a id="__codelineno-0-234" name="__codelineno-0-234"></a><span class="sd">        with a target device. See [`Config`][].</span>
+<a id="__codelineno-0-235" name="__codelineno-0-235"></a>
+<a id="__codelineno-0-236" name="__codelineno-0-236"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-237" name="__codelineno-0-237"></a><span class="sd">        instance: The QUBO instance to embed.  Its ``matrix`` attribute drives</span>
+<a id="__codelineno-0-238" name="__codelineno-0-238"></a><span class="sd">            the greedy cost function.</span>
+<a id="__codelineno-0-239" name="__codelineno-0-239"></a><span class="sd">        config: Greedy embedding parameters, fully resolved (see [`Config.from_device`][]</span>
+<a id="__codelineno-0-240" name="__codelineno-0-240"></a><span class="sd">            for deriving `traps` and `max_min_dist_ratio` from a device).</span>
+<a id="__codelineno-0-241" name="__codelineno-0-241"></a><span class="sd">            ``max_min_dist_ratio`` bounds the ratio between the largest and</span>
+<a id="__codelineno-0-242" name="__codelineno-0-242"></a><span class="sd">            the smallest inter-atom distance in the resulting register.</span>
+<a id="__codelineno-0-243" name="__codelineno-0-243"></a>
+<a id="__codelineno-0-244" name="__codelineno-0-244"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-245" name="__codelineno-0-245"></a><span class="sd">        A register mapping each atom to a 2-D position.</span>
+<a id="__codelineno-0-246" name="__codelineno-0-246"></a>
+<a id="__codelineno-0-247" name="__codelineno-0-247"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-248" name="__codelineno-0-248"></a><span class="sd">        ValueError: If `instance` has no variables (``size == 0``), since a</span>
+<a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="sd">            register must contain at least one qubit. If the resolved trap</span>
+<a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="sd">            count is less than ``instance.size`` (i.e. there are not enough</span>
+<a id="__codelineno-0-251" name="__codelineno-0-251"></a><span class="sd">            trap sites for all QUBO variables).</span>
+<a id="__codelineno-0-252" name="__codelineno-0-252"></a><span class="sd">    """</span>
+<a id="__codelineno-0-253" name="__codelineno-0-253"></a>    <span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">Config</span><span class="p">()</span>
+<a id="__codelineno-0-254" name="__codelineno-0-254"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"embed: instance size=</span><span class="si">%d</span><span class="s2">, config=</span><span class="si">%r</span><span class="s2">"</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<a id="__codelineno-0-255" name="__codelineno-0-255"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">instance</span><span class="p">:</span>
+<a id="__codelineno-0-256" name="__codelineno-0-256"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cannot embed an empty instance (size=0): nothing to place."</span><span class="p">)</span>
+<a id="__codelineno-0-257" name="__codelineno-0-257"></a>
+<a id="__codelineno-0-258" name="__codelineno-0-258"></a>    <span class="k">if</span> <span class="n">_has_negative_offdiagonal</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">):</span>
+<a id="__codelineno-0-259" name="__codelineno-0-259"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"QUBOs with negative off-diagonal coefficients cannot be embedded."</span><span class="p">)</span>
+<a id="__codelineno-0-260" name="__codelineno-0-260"></a>
+<a id="__codelineno-0-261" name="__codelineno-0-261"></a>    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">traps</span> <span class="o">&lt;</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+<a id="__codelineno-0-262" name="__codelineno-0-262"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+<a id="__codelineno-0-263" name="__codelineno-0-263"></a>            <span class="s2">"Number of traps must be at least equal to the number of atoms on the register."</span>
+<a id="__codelineno-0-264" name="__codelineno-0-264"></a>        <span class="p">)</span>
+<a id="__codelineno-0-265" name="__codelineno-0-265"></a>
+<a id="__codelineno-0-266" name="__codelineno-0-266"></a>    <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-267" name="__codelineno-0-267"></a>        <span class="c1"># A single atom has no off-diagonal term to place it relative to,</span>
+<a id="__codelineno-0-268" name="__codelineno-0-268"></a>        <span class="c1"># so it is placed at the origin without running the algorithm.</span>
+<a id="__codelineno-0-269" name="__codelineno-0-269"></a>        <span class="k">return</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="o">.</span><span class="n">from_coordinates</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<a id="__codelineno-0-270" name="__codelineno-0-270"></a>
+<a id="__codelineno-0-271" name="__codelineno-0-271"></a>    <span class="c1"># spacing between adjacent trap sites, derived from the largest QUBO term</span>
+<a id="__codelineno-0-272" name="__codelineno-0-272"></a>    <span class="c1"># so that it is exactly representable at the minimum trap-trap distance</span>
+<a id="__codelineno-0-273" name="__codelineno-0-273"></a>    <span class="c1"># (interactions scale as 1 / distance ** 6).</span>
+<a id="__codelineno-0-274" name="__codelineno-0-274"></a>    <span class="n">max_possible_term</span> <span class="o">=</span> <span class="n">_resolve_max_possible_term</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">max_possible_term</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
+<a id="__codelineno-0-275" name="__codelineno-0-275"></a>    <span class="n">spacing</span> <span class="o">=</span> <span class="n">max_possible_term</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">)</span> <span class="k">if</span> <span class="n">max_possible_term</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span>
+<a id="__codelineno-0-276" name="__codelineno-0-276"></a>
+<a id="__codelineno-0-277" name="__codelineno-0-277"></a>    <span class="c1"># build params for the Greedy algorithm</span>
+<a id="__codelineno-0-278" name="__codelineno-0-278"></a>    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-0-279" name="__codelineno-0-279"></a>        <span class="s2">"layout"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">lattice</span><span class="p">,</span>
+<a id="__codelineno-0-280" name="__codelineno-0-280"></a>        <span class="s2">"traps"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">traps</span><span class="p">,</span>
+<a id="__codelineno-0-281" name="__codelineno-0-281"></a>        <span class="s2">"spacing"</span><span class="p">:</span> <span class="n">spacing</span><span class="p">,</span>
+<a id="__codelineno-0-282" name="__codelineno-0-282"></a>        <span class="c1"># animation controls (all read by Greedy)</span>
+<a id="__codelineno-0-283" name="__codelineno-0-283"></a>        <span class="s2">"draw_steps"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">_draw_steps</span><span class="p">,</span>  <span class="c1"># collect per-step data</span>
+<a id="__codelineno-0-284" name="__codelineno-0-284"></a>        <span class="s2">"animation"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">_draw_steps</span><span class="p">,</span>  <span class="c1"># render animation after run</span>
+<a id="__codelineno-0-285" name="__codelineno-0-285"></a>        <span class="s2">"animation_save_path"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">_animation_save_path</span><span class="p">,</span>  <span class="c1"># optional export</span>
+<a id="__codelineno-0-286" name="__codelineno-0-286"></a>    <span class="p">}</span>
+<a id="__codelineno-0-287" name="__codelineno-0-287"></a>
+<a id="__codelineno-0-288" name="__codelineno-0-288"></a>    <span class="c1"># --- Call Greedy (unchanged public signature)</span>
+<a id="__codelineno-0-289" name="__codelineno-0-289"></a>    <span class="n">_</span><span class="p">,</span> <span class="n">coords</span> <span class="o">=</span> <span class="n">greedy</span><span class="o">.</span><span class="n">Greedy</span><span class="p">()</span><span class="o">.</span><span class="n">launch_greedy</span><span class="p">(</span>
+<a id="__codelineno-0-290" name="__codelineno-0-290"></a>        <span class="n">Q</span><span class="o">=</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span>
+<a id="__codelineno-0-291" name="__codelineno-0-291"></a>        <span class="n">max_min_dist_ratio</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">max_min_dist_ratio</span><span class="p">,</span>
+<a id="__codelineno-0-292" name="__codelineno-0-292"></a>        <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+<a id="__codelineno-0-293" name="__codelineno-0-293"></a>    <span class="p">)</span>
+<a id="__codelineno-0-294" name="__codelineno-0-294"></a>    <span class="n">register</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="o">.</span><span class="n">from_coordinates</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+<a id="__codelineno-0-295" name="__codelineno-0-295"></a>    <span class="k">return</span> <span class="n">register</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5064,8 +5114,7 @@ directly:</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/embedding/greedy_layout.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-189">189</a></span>
-<span class="normal"><a href="#__codelineno-0-190">190</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-190">190</a></span>
 <span class="normal"><a href="#__codelineno-0-191">191</a></span>
 <span class="normal"><a href="#__codelineno-0-192">192</a></span>
 <span class="normal"><a href="#__codelineno-0-193">193</a></span>
@@ -5092,35 +5141,36 @@ directly:</p>
 <span class="normal"><a href="#__codelineno-0-214">214</a></span>
 <span class="normal"><a href="#__codelineno-0-215">215</a></span>
 <span class="normal"><a href="#__codelineno-0-216">216</a></span>
-<span class="normal"><a href="#__codelineno-0-217">217</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="k">def</span><span class="w"> </span><span class="nf">embed_for_device</span><span class="p">(</span>
-<a id="__codelineno-0-190" name="__codelineno-0-190"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a>    <span class="n">device</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Device</span><span class="p">,</span>
-<a id="__codelineno-0-192" name="__codelineno-0-192"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="p">:</span>
-<a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="w">    </span><span class="sd">"""Embed a QUBO instance using the greedy layout-based algorithm, sized for *device*.</span>
-<a id="__codelineno-0-194" name="__codelineno-0-194"></a>
-<a id="__codelineno-0-195" name="__codelineno-0-195"></a><span class="sd">    Convenience wrapper around `embed` that derives `Config.traps` and</span>
-<a id="__codelineno-0-196" name="__codelineno-0-196"></a><span class="sd">    `Config.max_min_dist_ratio` from *device* via [`Config.from_device`][].</span>
-<a id="__codelineno-0-197" name="__codelineno-0-197"></a>
-<a id="__codelineno-0-198" name="__codelineno-0-198"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-199" name="__codelineno-0-199"></a><span class="sd">        instance: The QUBO instance to embed.</span>
-<a id="__codelineno-0-200" name="__codelineno-0-200"></a><span class="sd">        device: Target quantum device the resulting register must fit.</span>
-<a id="__codelineno-0-201" name="__codelineno-0-201"></a>
-<a id="__codelineno-0-202" name="__codelineno-0-202"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">        A register mapping each atom to a 2-D position.</span>
-<a id="__codelineno-0-204" name="__codelineno-0-204"></a>
-<a id="__codelineno-0-205" name="__codelineno-0-205"></a><span class="sd">    To also tune device-independent parameters (e.g. `lattice` or</span>
-<a id="__codelineno-0-206" name="__codelineno-0-206"></a><span class="sd">    `max_possible_term`), combine [`Config.from_device`][] with [`embed`][]</span>
-<a id="__codelineno-0-207" name="__codelineno-0-207"></a><span class="sd">    directly:</span>
-<a id="__codelineno-0-208" name="__codelineno-0-208"></a>
-<a id="__codelineno-0-209" name="__codelineno-0-209"></a><span class="sd">    Example:</span>
-<a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="sd">        ```python</span>
-<a id="__codelineno-0-211" name="__codelineno-0-211"></a><span class="sd">        config = Config.from_device(device)</span>
-<a id="__codelineno-0-212" name="__codelineno-0-212"></a><span class="sd">        config.lattice = Lattice.SQUARE</span>
-<a id="__codelineno-0-213" name="__codelineno-0-213"></a><span class="sd">        register = embed(instance, config=config)</span>
-<a id="__codelineno-0-214" name="__codelineno-0-214"></a><span class="sd">        ```</span>
-<a id="__codelineno-0-215" name="__codelineno-0-215"></a><span class="sd">    """</span>
-<a id="__codelineno-0-216" name="__codelineno-0-216"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"embed_for_device: instance size=</span><span class="si">%d</span><span class="s2">, device=</span><span class="si">%r</span><span class="s2">"</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
-<a id="__codelineno-0-217" name="__codelineno-0-217"></a>    <span class="k">return</span> <span class="n">embed</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">Config</span><span class="o">.</span><span class="n">from_device</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+<span class="normal"><a href="#__codelineno-0-217">217</a></span>
+<span class="normal"><a href="#__codelineno-0-218">218</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-190" name="__codelineno-0-190"></a><span class="k">def</span><span class="w"> </span><span class="nf">embed_for_device</span><span class="p">(</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a>    <span class="n">device</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Device</span><span class="p">,</span>
+<a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="p">:</span>
+<a id="__codelineno-0-194" name="__codelineno-0-194"></a><span class="w">    </span><span class="sd">"""Embed a QUBO instance using the greedy layout-based algorithm, sized for *device*.</span>
+<a id="__codelineno-0-195" name="__codelineno-0-195"></a>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a><span class="sd">    Convenience wrapper around `embed` that derives `Config.traps` and</span>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a><span class="sd">    `Config.max_min_dist_ratio` from *device* via [`Config.from_device`][].</span>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a><span class="sd">        instance: The QUBO instance to embed.</span>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a><span class="sd">        device: Target quantum device the resulting register must fit.</span>
+<a id="__codelineno-0-202" name="__codelineno-0-202"></a>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a><span class="sd">        A register mapping each atom to a 2-D position.</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a><span class="sd">    To also tune device-independent parameters (e.g. `lattice` or</span>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a><span class="sd">    `max_possible_term`), combine [`Config.from_device`][] with [`embed`][]</span>
+<a id="__codelineno-0-208" name="__codelineno-0-208"></a><span class="sd">    directly:</span>
+<a id="__codelineno-0-209" name="__codelineno-0-209"></a>
+<a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="sd">    Example:</span>
+<a id="__codelineno-0-211" name="__codelineno-0-211"></a><span class="sd">        ```python</span>
+<a id="__codelineno-0-212" name="__codelineno-0-212"></a><span class="sd">        config = Config.from_device(device)</span>
+<a id="__codelineno-0-213" name="__codelineno-0-213"></a><span class="sd">        config.lattice = Lattice.SQUARE</span>
+<a id="__codelineno-0-214" name="__codelineno-0-214"></a><span class="sd">        register = embed(instance, config=config)</span>
+<a id="__codelineno-0-215" name="__codelineno-0-215"></a><span class="sd">        ```</span>
+<a id="__codelineno-0-216" name="__codelineno-0-216"></a><span class="sd">    """</span>
+<a id="__codelineno-0-217" name="__codelineno-0-217"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"embed_for_device: instance size=</span><span class="si">%d</span><span class="s2">, device=</span><span class="si">%r</span><span class="s2">"</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<a id="__codelineno-0-218" name="__codelineno-0-218"></a>    <span class="k">return</span> <span class="n">embed</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">Config</span><span class="o">.</span><span class="n">from_device</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

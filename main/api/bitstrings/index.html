@@ -3038,6 +3038,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#qubosolver.bitstrings.zeros_field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;zeros_field
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3627,6 +3638,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#qubosolver.bitstrings.zeros_field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;zeros_field
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3667,12 +3689,13 @@
   </span>
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">Bitstrings</span><span class="p">:</span> <span class="n"><span title="typing_extensions.TypeAlias">TypeAlias</span></span> <span class="o">=</span> <span class="n"><span title="jaxtyping">jaxtyping</span></span><span class="o">.</span><span class="n"><span title="jaxtyping.Int8">Int8</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.Tensor&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor">Tensor</a></span><span class="p">,</span> <span class="s1">'n m'</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">Bitstrings</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.TypeAlias&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.TypeAlias">TypeAlias</a></span> <span class="o">=</span> <span class="n"><span title="jaxtyping">jaxtyping</span></span><span class="o">.</span><span class="n"><span title="jaxtyping.Int8">Int8</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.Tensor&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor">Tensor</a></span><span class="p">,</span> <span class="s1">'n m'</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
 
-        <p>2-D int8 tensor of shape <code>(n, m)</code> representing a batch of <em>n</em> bitstrings each of length <em>m</em>.</p>
+        <p>2-D int8 tensor of shape <code>(n, m)</code> representing a batch of <em>n</em> bitstrings each of
+length <em>m</em>.</p>
 
     </div>
 
@@ -3725,7 +3748,7 @@ f  = bitstrings.round([[1.0, 0.0, 0.9999999]])  # from a MIP solver's output
             <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;as_tensor&lt;/span&gt; (&lt;code&gt;qubosolver.bitstrings.as_tensor&lt;/code&gt;)" href="#qubosolver.bitstrings.as_tensor">as_tensor</a></code></b>
             –
             <div class="doc-md-description">
-              <p>Convenience wrapper for <code>torch.as_tensor</code> that converts data to a bitstrings</p>
+              <p>Convenience wrapper for <code>torch.as_tensor</code> that converts data to a bitstrings tensor.</p>
             </div>
           </li>
           <li class="doc-section-item field-body">
@@ -3784,6 +3807,13 @@ f  = bitstrings.round([[1.0, 0.0, 0.9999999]])  # from a MIP solver's output
               <p>Creates a zero-filled 2-D bitstrings tensor.</p>
             </div>
           </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;zeros_field&lt;/span&gt; (&lt;code&gt;qubosolver.bitstrings.zeros_field&lt;/code&gt;)" href="#qubosolver.bitstrings.zeros_field">zeros_field</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Creates a dataclass field defaulting to a zero-filled bitstrings tensor.</p>
+            </div>
+          </li>
     </ul>
 
 
@@ -3819,12 +3849,11 @@ f  = bitstrings.round([[1.0, 0.0, 0.9999999]])  # from a MIP solver's output
 
     <div class="doc doc-contents ">
 
-        <p>Convenience wrapper for <code>torch.as_tensor</code> that converts data to a bitstrings
-tensor, avoiding a copy when possible.</p>
-<p>If <em>data</em> is already a tensor with the right dtype and on the right device, it is
-returned as-is, sharing the same underlying memory. A numpy array is also shared
-rather than copied if it already has <code>int8</code> dtype and the global device is
-<code>cpu</code> (numpy arrays only live on CPU, so any other dtype or device forces a
+        <p>Convenience wrapper for <code>torch.as_tensor</code> that converts data to a bitstrings tensor.</p>
+<p>Avoids a copy when possible. If <em>data</em> is already a tensor with the right dtype and on
+the right device, it is returned as-is, sharing the same underlying memory. A numpy
+array is also shared rather than copied if it already has <code>int8</code> dtype and the global
+device is <code>cpu</code> (numpy arrays only live on CPU, so any other dtype or device forces a
 copy). Lists, tuples, and other array-like inputs are always copied.</p>
 
 
@@ -3860,39 +3889,37 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/bitstrings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-150">150</a></span>
-<span class="normal"><a href="#__codelineno-0-151">151</a></span>
-<span class="normal"><a href="#__codelineno-0-152">152</a></span>
-<span class="normal"><a href="#__codelineno-0-153">153</a></span>
-<span class="normal"><a href="#__codelineno-0-154">154</a></span>
-<span class="normal"><a href="#__codelineno-0-155">155</a></span>
-<span class="normal"><a href="#__codelineno-0-156">156</a></span>
-<span class="normal"><a href="#__codelineno-0-157">157</a></span>
-<span class="normal"><a href="#__codelineno-0-158">158</a></span>
-<span class="normal"><a href="#__codelineno-0-159">159</a></span>
-<span class="normal"><a href="#__codelineno-0-160">160</a></span>
-<span class="normal"><a href="#__codelineno-0-161">161</a></span>
-<span class="normal"><a href="#__codelineno-0-162">162</a></span>
-<span class="normal"><a href="#__codelineno-0-163">163</a></span>
-<span class="normal"><a href="#__codelineno-0-164">164</a></span>
-<span class="normal"><a href="#__codelineno-0-165">165</a></span>
-<span class="normal"><a href="#__codelineno-0-166">166</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-150" name="__codelineno-0-150"></a><span class="k">def</span><span class="w"> </span><span class="nf">as_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bitstrings</span><span class="p">:</span>
-<a id="__codelineno-0-151" name="__codelineno-0-151"></a><span class="w">    </span><span class="sd">"""Convenience wrapper for `torch.as_tensor` that converts data to a bitstrings</span>
-<a id="__codelineno-0-152" name="__codelineno-0-152"></a><span class="sd">    tensor, avoiding a copy when possible.</span>
-<a id="__codelineno-0-153" name="__codelineno-0-153"></a>
-<a id="__codelineno-0-154" name="__codelineno-0-154"></a><span class="sd">    If *data* is already a tensor with the right dtype and on the right device, it is</span>
-<a id="__codelineno-0-155" name="__codelineno-0-155"></a><span class="sd">    returned as-is, sharing the same underlying memory. A numpy array is also shared</span>
-<a id="__codelineno-0-156" name="__codelineno-0-156"></a><span class="sd">    rather than copied if it already has ``int8`` dtype and the global device is</span>
-<a id="__codelineno-0-157" name="__codelineno-0-157"></a><span class="sd">    ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a</span>
-<a id="__codelineno-0-158" name="__codelineno-0-158"></a><span class="sd">    copy). Lists, tuples, and other array-like inputs are always copied.</span>
-<a id="__codelineno-0-159" name="__codelineno-0-159"></a>
-<a id="__codelineno-0-160" name="__codelineno-0-160"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-161" name="__codelineno-0-161"></a><span class="sd">        data: Input data (tensor, numpy array, nested list, etc.).</span>
-<a id="__codelineno-0-162" name="__codelineno-0-162"></a>
-<a id="__codelineno-0-163" name="__codelineno-0-163"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-164" name="__codelineno-0-164"></a><span class="sd">        A 2-D ``int8`` tensor on the global device.</span>
-<a id="__codelineno-0-165" name="__codelineno-0-165"></a><span class="sd">    """</span>
-<a id="__codelineno-0-166" name="__codelineno-0-166"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">())</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-177">177</a></span>
+<span class="normal"><a href="#__codelineno-0-178">178</a></span>
+<span class="normal"><a href="#__codelineno-0-179">179</a></span>
+<span class="normal"><a href="#__codelineno-0-180">180</a></span>
+<span class="normal"><a href="#__codelineno-0-181">181</a></span>
+<span class="normal"><a href="#__codelineno-0-182">182</a></span>
+<span class="normal"><a href="#__codelineno-0-183">183</a></span>
+<span class="normal"><a href="#__codelineno-0-184">184</a></span>
+<span class="normal"><a href="#__codelineno-0-185">185</a></span>
+<span class="normal"><a href="#__codelineno-0-186">186</a></span>
+<span class="normal"><a href="#__codelineno-0-187">187</a></span>
+<span class="normal"><a href="#__codelineno-0-188">188</a></span>
+<span class="normal"><a href="#__codelineno-0-189">189</a></span>
+<span class="normal"><a href="#__codelineno-0-190">190</a></span>
+<span class="normal"><a href="#__codelineno-0-191">191</a></span>
+<span class="normal"><a href="#__codelineno-0-192">192</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-177" name="__codelineno-0-177"></a><span class="k">def</span><span class="w"> </span><span class="nf">as_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bitstrings</span><span class="p">:</span>  <span class="c1"># noqa: ANN401 (array-like input forwarded to torch.as_tensor)</span>
+<a id="__codelineno-0-178" name="__codelineno-0-178"></a><span class="w">    </span><span class="sd">"""Convenience wrapper for `torch.as_tensor` that converts data to a bitstrings tensor.</span>
+<a id="__codelineno-0-179" name="__codelineno-0-179"></a>
+<a id="__codelineno-0-180" name="__codelineno-0-180"></a><span class="sd">    Avoids a copy when possible. If *data* is already a tensor with the right dtype and on</span>
+<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="sd">    the right device, it is returned as-is, sharing the same underlying memory. A numpy</span>
+<a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="sd">    array is also shared rather than copied if it already has ``int8`` dtype and the global</span>
+<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">    device is ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a</span>
+<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="sd">    copy). Lists, tuples, and other array-like inputs are always copied.</span>
+<a id="__codelineno-0-185" name="__codelineno-0-185"></a>
+<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="sd">        data: Input data (tensor, numpy array, nested list, etc.).</span>
+<a id="__codelineno-0-188" name="__codelineno-0-188"></a>
+<a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-190" name="__codelineno-0-190"></a><span class="sd">        A 2-D ``int8`` tensor on the global device.</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="sd">    """</span>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">())</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3917,11 +3944,11 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/bitstrings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-32">32</a></span>
-<span class="normal"><a href="#__codelineno-0-33">33</a></span>
-<span class="normal"><a href="#__codelineno-0-34">34</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="k">def</span><span class="w"> </span><span class="nf">device</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
-<a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="w">    </span><span class="sd">"""Returns the globally configured torch device."""</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a>    <span class="k">return</span> <span class="n">linalg</span><span class="o">.</span><span class="n">device</span><span class="p">()</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-36">36</a></span>
+<span class="normal"><a href="#__codelineno-0-37">37</a></span>
+<span class="normal"><a href="#__codelineno-0-38">38</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="k">def</span><span class="w"> </span><span class="nf">device</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="w">    </span><span class="sd">"""Returns the globally configured torch device."""</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a>    <span class="k">return</span> <span class="n">linalg</span><span class="o">.</span><span class="n">device</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3946,11 +3973,11 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/bitstrings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-27">27</a></span>
-<span class="normal"><a href="#__codelineno-0-28">28</a></span>
-<span class="normal"><a href="#__codelineno-0-29">29</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="k">def</span><span class="w"> </span><span class="nf">dtype</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="w">    </span><span class="sd">"""Returns the dtype used for bitstrings (``torch.int8``)."""</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">int8</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-31">31</a></span>
+<span class="normal"><a href="#__codelineno-0-32">32</a></span>
+<span class="normal"><a href="#__codelineno-0-33">33</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="k">def</span><span class="w"> </span><span class="nf">dtype</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="w">    </span><span class="sd">"""Returns the dtype used for bitstrings (``torch.int8``)."""</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">int8</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3965,7 +3992,7 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_strings</span><span class="p">(</span><span class="n">strings</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Sequence&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.bitstrings.device&lt;/code&gt;)" href="#qubosolver.bitstrings.device">device</a></span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Bitstrings&lt;/span&gt;
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_strings</span><span class="p">(</span><span class="n">strings</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;collections.abc.Sequence&lt;/code&gt;" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Bitstrings&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
@@ -3982,7 +4009,7 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
     <ul>
         <li class="doc-section-item field-body">
             <b><code>strings</code></b>
-              (<code><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Sequence&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a>]</code>)
+              (<code><a class="autorefs autorefs-external" title="&lt;code&gt;collections.abc.Sequence&lt;/code&gt;" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence">Sequence</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a>]</code>)
           –
           <div class="doc-md-description">
             <p>A sequence of strings, each consisting of '0' and '1' characters.
@@ -3991,8 +4018,8 @@ All strings must have the same length.</p>
         </li>
         <li class="doc-section-item field-body">
             <b><code>device</code></b>
-              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></code>, default:
-                  <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.bitstrings.device&lt;/code&gt;)" href="#qubosolver.bitstrings.device">device</a>()</code>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a> | None</code>, default:
+                  <code>None</code>
 )
           –
           <div class="doc-md-description">
@@ -4033,49 +4060,51 @@ All strings must have the same length.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/bitstrings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-65">65</a></span>
-<span class="normal"><a href="#__codelineno-0-66">66</a></span>
-<span class="normal"><a href="#__codelineno-0-67">67</a></span>
-<span class="normal"><a href="#__codelineno-0-68">68</a></span>
-<span class="normal"><a href="#__codelineno-0-69">69</a></span>
-<span class="normal"><a href="#__codelineno-0-70">70</a></span>
-<span class="normal"><a href="#__codelineno-0-71">71</a></span>
-<span class="normal"><a href="#__codelineno-0-72">72</a></span>
-<span class="normal"><a href="#__codelineno-0-73">73</a></span>
-<span class="normal"><a href="#__codelineno-0-74">74</a></span>
-<span class="normal"><a href="#__codelineno-0-75">75</a></span>
-<span class="normal"><a href="#__codelineno-0-76">76</a></span>
-<span class="normal"><a href="#__codelineno-0-77">77</a></span>
-<span class="normal"><a href="#__codelineno-0-78">78</a></span>
-<span class="normal"><a href="#__codelineno-0-79">79</a></span>
-<span class="normal"><a href="#__codelineno-0-80">80</a></span>
-<span class="normal"><a href="#__codelineno-0-81">81</a></span>
-<span class="normal"><a href="#__codelineno-0-82">82</a></span>
-<span class="normal"><a href="#__codelineno-0-83">83</a></span>
-<span class="normal"><a href="#__codelineno-0-84">84</a></span>
-<span class="normal"><a href="#__codelineno-0-85">85</a></span>
-<span class="normal"><a href="#__codelineno-0-86">86</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="k">def</span><span class="w"> </span><span class="nf">from_strings</span><span class="p">(</span><span class="n">strings</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Bitstrings</span><span class="p">:</span>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="w">    </span><span class="sd">"""Creates a 2-D bitstrings tensor from a sequence of '0'/'1' strings.</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">        strings: A sequence of strings, each consisting of '0' and '1' characters.</span>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">            All strings must have the same length.</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="sd">        device: Torch device for the tensor.</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">        A 2-D ``int8`` tensor of shape ``(len(strings), len(strings[0]))``, possibly empty.</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">    Raises:</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">        ValueError: If the strings have differing lengths.</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">    """</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">strings</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a>        <span class="k">return</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a>    <span class="n">lengths</span> <span class="o">=</span> <span class="p">{</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strings</span><span class="p">}</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a>            <span class="sa">f</span><span class="s2">"All bitstrings must have the same length, got lengths: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a>        <span class="p">)</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a>    <span class="k">return</span> <span class="n">tensor</span><span class="p">([[</span><span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">s</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strings</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-79"> 79</a></span>
+<span class="normal"><a href="#__codelineno-0-80"> 80</a></span>
+<span class="normal"><a href="#__codelineno-0-81"> 81</a></span>
+<span class="normal"><a href="#__codelineno-0-82"> 82</a></span>
+<span class="normal"><a href="#__codelineno-0-83"> 83</a></span>
+<span class="normal"><a href="#__codelineno-0-84"> 84</a></span>
+<span class="normal"><a href="#__codelineno-0-85"> 85</a></span>
+<span class="normal"><a href="#__codelineno-0-86"> 86</a></span>
+<span class="normal"><a href="#__codelineno-0-87"> 87</a></span>
+<span class="normal"><a href="#__codelineno-0-88"> 88</a></span>
+<span class="normal"><a href="#__codelineno-0-89"> 89</a></span>
+<span class="normal"><a href="#__codelineno-0-90"> 90</a></span>
+<span class="normal"><a href="#__codelineno-0-91"> 91</a></span>
+<span class="normal"><a href="#__codelineno-0-92"> 92</a></span>
+<span class="normal"><a href="#__codelineno-0-93"> 93</a></span>
+<span class="normal"><a href="#__codelineno-0-94"> 94</a></span>
+<span class="normal"><a href="#__codelineno-0-95"> 95</a></span>
+<span class="normal"><a href="#__codelineno-0-96"> 96</a></span>
+<span class="normal"><a href="#__codelineno-0-97"> 97</a></span>
+<span class="normal"><a href="#__codelineno-0-98"> 98</a></span>
+<span class="normal"><a href="#__codelineno-0-99"> 99</a></span>
+<span class="normal"><a href="#__codelineno-0-100">100</a></span>
+<span class="normal"><a href="#__codelineno-0-101">101</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="k">def</span><span class="w"> </span><span class="nf">from_strings</span><span class="p">(</span><span class="n">strings</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bitstrings</span><span class="p">:</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="w">    </span><span class="sd">"""Creates a 2-D bitstrings tensor from a sequence of '0'/'1' strings.</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">        strings: A sequence of strings, each consisting of '0' and '1' characters.</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">            All strings must have the same length.</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">        device: Torch device for the tensor.</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">        A 2-D ``int8`` tensor of shape ``(len(strings), len(strings[0]))``, possibly empty.</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">        ValueError: If the strings have differing lengths.</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="sd">    """</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="n">device</span> <span class="o">=</span> <span class="n">device</span> <span class="ow">or</span> <span class="n">_device</span><span class="p">()</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">strings</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a>        <span class="k">return</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a>    <span class="n">lengths</span> <span class="o">=</span> <span class="p">{</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strings</span><span class="p">}</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a>            <span class="sa">f</span><span class="s2">"All bitstrings must have the same length, got lengths: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a>        <span class="p">)</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a>    <span class="k">return</span> <span class="n">tensor</span><span class="p">([[</span><span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">s</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strings</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4090,7 +4119,7 @@ All strings must have the same length.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">rand</span><span class="p">(</span><span class="n">count</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="n">n_bits</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.bitstrings.device&lt;/code&gt;)" href="#qubosolver.bitstrings.device">device</a></span><span class="p">(),</span> <span class="n">rng</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.Generator&lt;/code&gt;" href="https://pytorch.org/docs/stable/generated/torch.Generator.html#torch.Generator">Generator</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;torch_rng&lt;/span&gt; (&lt;code&gt;qubosolver.types.random.torch_rng&lt;/code&gt;)" href="../qubosolver/#qubosolver.torch_rng">torch_rng</a></span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Bitstrings&lt;/span&gt;
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">rand</span><span class="p">(</span><span class="n">count</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="n">n_bits</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">rng</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.Generator&lt;/code&gt;" href="https://pytorch.org/docs/stable/generated/torch.Generator.html#torch.Generator">Generator</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Bitstrings&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
@@ -4123,8 +4152,8 @@ All strings must have the same length.</p>
         </li>
         <li class="doc-section-item field-body">
             <b><code>device</code></b>
-              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></code>, default:
-                  <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.bitstrings.device&lt;/code&gt;)" href="#qubosolver.bitstrings.device">device</a>()</code>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a> | None</code>, default:
+                  <code>None</code>
 )
           –
           <div class="doc-md-description">
@@ -4133,8 +4162,8 @@ All strings must have the same length.</p>
         </li>
         <li class="doc-section-item field-body">
             <b><code>rng</code></b>
-              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.Generator&lt;/code&gt;" href="https://pytorch.org/docs/stable/generated/torch.Generator.html#torch.Generator">Generator</a></code>, default:
-                  <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;torch_rng&lt;/span&gt; (&lt;code&gt;qubosolver.types.random.torch_rng&lt;/code&gt;)" href="../qubosolver/#qubosolver.torch_rng">torch_rng</a>()</code>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.Generator&lt;/code&gt;" href="https://pytorch.org/docs/stable/generated/torch.Generator.html#torch.Generator">Generator</a> | None</code>, default:
+                  <code>None</code>
 )
           –
           <div class="doc-md-description">
@@ -4163,35 +4192,47 @@ All strings must have the same length.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/bitstrings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-133">133</a></span>
-<span class="normal"><a href="#__codelineno-0-134">134</a></span>
-<span class="normal"><a href="#__codelineno-0-135">135</a></span>
-<span class="normal"><a href="#__codelineno-0-136">136</a></span>
-<span class="normal"><a href="#__codelineno-0-137">137</a></span>
-<span class="normal"><a href="#__codelineno-0-138">138</a></span>
-<span class="normal"><a href="#__codelineno-0-139">139</a></span>
-<span class="normal"><a href="#__codelineno-0-140">140</a></span>
-<span class="normal"><a href="#__codelineno-0-141">141</a></span>
-<span class="normal"><a href="#__codelineno-0-142">142</a></span>
-<span class="normal"><a href="#__codelineno-0-143">143</a></span>
-<span class="normal"><a href="#__codelineno-0-144">144</a></span>
-<span class="normal"><a href="#__codelineno-0-145">145</a></span>
-<span class="normal"><a href="#__codelineno-0-146">146</a></span>
-<span class="normal"><a href="#__codelineno-0-147">147</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-133" name="__codelineno-0-133"></a><span class="k">def</span><span class="w"> </span><span class="nf">rand</span><span class="p">(</span>
-<a id="__codelineno-0-134" name="__codelineno-0-134"></a>    <span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span><span class="p">(),</span> <span class="n">rng</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">torch_rng</span><span class="p">()</span>
-<a id="__codelineno-0-135" name="__codelineno-0-135"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bitstrings</span><span class="p">:</span>
-<a id="__codelineno-0-136" name="__codelineno-0-136"></a><span class="w">    </span><span class="sd">"""Creates a 2-D bitstrings tensor with independent uniformly random bits.</span>
-<a id="__codelineno-0-137" name="__codelineno-0-137"></a>
-<a id="__codelineno-0-138" name="__codelineno-0-138"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-139" name="__codelineno-0-139"></a><span class="sd">        count: Number of bitstrings (rows).</span>
-<a id="__codelineno-0-140" name="__codelineno-0-140"></a><span class="sd">        n_bits: Length of each bitstring (columns).</span>
-<a id="__codelineno-0-141" name="__codelineno-0-141"></a><span class="sd">        device: Torch device for the tensor.</span>
-<a id="__codelineno-0-142" name="__codelineno-0-142"></a><span class="sd">        rng: PyTorch random number generator controlling the sampling.</span>
-<a id="__codelineno-0-143" name="__codelineno-0-143"></a>
-<a id="__codelineno-0-144" name="__codelineno-0-144"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-145" name="__codelineno-0-145"></a><span class="sd">        A 2-D ``int8`` tensor of shape ``(count, n_bits)`` containing 0s and 1s.</span>
-<a id="__codelineno-0-146" name="__codelineno-0-146"></a><span class="sd">    """</span>
-<a id="__codelineno-0-147" name="__codelineno-0-147"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">n_bits</span><span class="p">),</span> <span class="n">generator</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">())</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-154">154</a></span>
+<span class="normal"><a href="#__codelineno-0-155">155</a></span>
+<span class="normal"><a href="#__codelineno-0-156">156</a></span>
+<span class="normal"><a href="#__codelineno-0-157">157</a></span>
+<span class="normal"><a href="#__codelineno-0-158">158</a></span>
+<span class="normal"><a href="#__codelineno-0-159">159</a></span>
+<span class="normal"><a href="#__codelineno-0-160">160</a></span>
+<span class="normal"><a href="#__codelineno-0-161">161</a></span>
+<span class="normal"><a href="#__codelineno-0-162">162</a></span>
+<span class="normal"><a href="#__codelineno-0-163">163</a></span>
+<span class="normal"><a href="#__codelineno-0-164">164</a></span>
+<span class="normal"><a href="#__codelineno-0-165">165</a></span>
+<span class="normal"><a href="#__codelineno-0-166">166</a></span>
+<span class="normal"><a href="#__codelineno-0-167">167</a></span>
+<span class="normal"><a href="#__codelineno-0-168">168</a></span>
+<span class="normal"><a href="#__codelineno-0-169">169</a></span>
+<span class="normal"><a href="#__codelineno-0-170">170</a></span>
+<span class="normal"><a href="#__codelineno-0-171">171</a></span>
+<span class="normal"><a href="#__codelineno-0-172">172</a></span>
+<span class="normal"><a href="#__codelineno-0-173">173</a></span>
+<span class="normal"><a href="#__codelineno-0-174">174</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-154" name="__codelineno-0-154"></a><span class="k">def</span><span class="w"> </span><span class="nf">rand</span><span class="p">(</span>
+<a id="__codelineno-0-155" name="__codelineno-0-155"></a>    <span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-156" name="__codelineno-0-156"></a>    <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-157" name="__codelineno-0-157"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-158" name="__codelineno-0-158"></a>    <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-159" name="__codelineno-0-159"></a>    <span class="n">rng</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-160" name="__codelineno-0-160"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bitstrings</span><span class="p">:</span>
+<a id="__codelineno-0-161" name="__codelineno-0-161"></a><span class="w">    </span><span class="sd">"""Creates a 2-D bitstrings tensor with independent uniformly random bits.</span>
+<a id="__codelineno-0-162" name="__codelineno-0-162"></a>
+<a id="__codelineno-0-163" name="__codelineno-0-163"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-164" name="__codelineno-0-164"></a><span class="sd">        count: Number of bitstrings (rows).</span>
+<a id="__codelineno-0-165" name="__codelineno-0-165"></a><span class="sd">        n_bits: Length of each bitstring (columns).</span>
+<a id="__codelineno-0-166" name="__codelineno-0-166"></a><span class="sd">        device: Torch device for the tensor.</span>
+<a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="sd">        rng: PyTorch random number generator controlling the sampling.</span>
+<a id="__codelineno-0-168" name="__codelineno-0-168"></a>
+<a id="__codelineno-0-169" name="__codelineno-0-169"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="sd">        A 2-D ``int8`` tensor of shape ``(count, n_bits)`` containing 0s and 1s.</span>
+<a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">    """</span>
+<a id="__codelineno-0-172" name="__codelineno-0-172"></a>    <span class="n">device</span> <span class="o">=</span> <span class="n">device</span> <span class="ow">or</span> <span class="n">_device</span><span class="p">()</span>
+<a id="__codelineno-0-173" name="__codelineno-0-173"></a>    <span class="n">rng</span> <span class="o">=</span> <span class="n">rng</span> <span class="ow">or</span> <span class="n">torch_rng</span><span class="p">()</span>
+<a id="__codelineno-0-174" name="__codelineno-0-174"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">n_bits</span><span class="p">),</span> <span class="n">generator</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">())</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4206,7 +4247,7 @@ All strings must have the same length.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">round</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Any&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">1e-06</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.bitstrings.device&lt;/code&gt;)" href="#qubosolver.bitstrings.device">device</a></span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Bitstrings&lt;/span&gt;
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">round</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Any&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">1e-06</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Bitstrings&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
@@ -4246,8 +4287,8 @@ within <em>atol</em> of 0 or 1. Nested sequences must not be ragged.</p>
         </li>
         <li class="doc-section-item field-body">
             <b><code>device</code></b>
-              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></code>, default:
-                  <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.bitstrings.device&lt;/code&gt;)" href="#qubosolver.bitstrings.device">device</a>()</code>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a> | None</code>, default:
+                  <code>None</code>
 )
           –
           <div class="doc-md-description">
@@ -4289,22 +4330,7 @@ the input is a ragged nested sequence.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/bitstrings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-89"> 89</a></span>
-<span class="normal"><a href="#__codelineno-0-90"> 90</a></span>
-<span class="normal"><a href="#__codelineno-0-91"> 91</a></span>
-<span class="normal"><a href="#__codelineno-0-92"> 92</a></span>
-<span class="normal"><a href="#__codelineno-0-93"> 93</a></span>
-<span class="normal"><a href="#__codelineno-0-94"> 94</a></span>
-<span class="normal"><a href="#__codelineno-0-95"> 95</a></span>
-<span class="normal"><a href="#__codelineno-0-96"> 96</a></span>
-<span class="normal"><a href="#__codelineno-0-97"> 97</a></span>
-<span class="normal"><a href="#__codelineno-0-98"> 98</a></span>
-<span class="normal"><a href="#__codelineno-0-99"> 99</a></span>
-<span class="normal"><a href="#__codelineno-0-100">100</a></span>
-<span class="normal"><a href="#__codelineno-0-101">101</a></span>
-<span class="normal"><a href="#__codelineno-0-102">102</a></span>
-<span class="normal"><a href="#__codelineno-0-103">103</a></span>
-<span class="normal"><a href="#__codelineno-0-104">104</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-104">104</a></span>
 <span class="normal"><a href="#__codelineno-0-105">105</a></span>
 <span class="normal"><a href="#__codelineno-0-106">106</a></span>
 <span class="normal"><a href="#__codelineno-0-107">107</a></span>
@@ -4318,36 +4344,63 @@ the input is a ragged nested sequence.</p>
 <span class="normal"><a href="#__codelineno-0-115">115</a></span>
 <span class="normal"><a href="#__codelineno-0-116">116</a></span>
 <span class="normal"><a href="#__codelineno-0-117">117</a></span>
-<span class="normal"><a href="#__codelineno-0-118">118</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="k">def</span><span class="w"> </span><span class="nf">round</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Bitstrings</span><span class="p">:</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="w">    </span><span class="sd">"""Rounds near-integral float values to a 2-D bitstrings tensor.</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="sd">    Values are compared in ``float64`` regardless of the globally configured</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">    float dtype, so *atol* keeps its meaning even when the global dtype is</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="sd">    narrower (e.g. ``float32``, which would round ``0.9999999998`` to exactly</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">    ``1.0`` before the check could see it).</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">        data: Input data (tensor, numpy array, nested list, etc.) of floats, each</span>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">            within *atol* of 0 or 1. Nested sequences must not be ragged.</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">        atol: Maximum absolute distance from 0 or 1 tolerated before raising.</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">        device: Torch device for the tensor.</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">        A 2-D ``int8`` tensor of shape ``(count, n_bits)``.</span>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">    Raises:</span>
-<a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">        ValueError: If any value is further than *atol* from both 0 and 1, or if</span>
-<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">            the input is a ragged nested sequence.</span>
-<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">    """</span>
-<a id="__codelineno-0-110" name="__codelineno-0-110"></a>    <span class="n">values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-<a id="__codelineno-0-111" name="__codelineno-0-111"></a>    <span class="n">bits</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-<a id="__codelineno-0-112" name="__codelineno-0-112"></a>    <span class="n">invalid</span> <span class="o">=</span> <span class="p">((</span><span class="n">bits</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">bits</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="p">((</span><span class="n">values</span> <span class="o">-</span> <span class="n">bits</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">atol</span><span class="p">)</span>
-<a id="__codelineno-0-113" name="__codelineno-0-113"></a>    <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">invalid</span><span class="o">.</span><span class="n">any</span><span class="p">()):</span>
-<a id="__codelineno-0-114" name="__codelineno-0-114"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-<a id="__codelineno-0-115" name="__codelineno-0-115"></a>            <span class="sa">f</span><span class="s2">"Expected values within </span><span class="si">{</span><span class="n">atol</span><span class="si">}</span><span class="s2"> of 0 or 1, got "</span>
-<a id="__codelineno-0-116" name="__codelineno-0-116"></a>            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="n">invalid</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-117" name="__codelineno-0-117"></a>        <span class="p">)</span>
-<a id="__codelineno-0-118" name="__codelineno-0-118"></a>    <span class="k">return</span> <span class="n">bits</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-118">118</a></span>
+<span class="normal"><a href="#__codelineno-0-119">119</a></span>
+<span class="normal"><a href="#__codelineno-0-120">120</a></span>
+<span class="normal"><a href="#__codelineno-0-121">121</a></span>
+<span class="normal"><a href="#__codelineno-0-122">122</a></span>
+<span class="normal"><a href="#__codelineno-0-123">123</a></span>
+<span class="normal"><a href="#__codelineno-0-124">124</a></span>
+<span class="normal"><a href="#__codelineno-0-125">125</a></span>
+<span class="normal"><a href="#__codelineno-0-126">126</a></span>
+<span class="normal"><a href="#__codelineno-0-127">127</a></span>
+<span class="normal"><a href="#__codelineno-0-128">128</a></span>
+<span class="normal"><a href="#__codelineno-0-129">129</a></span>
+<span class="normal"><a href="#__codelineno-0-130">130</a></span>
+<span class="normal"><a href="#__codelineno-0-131">131</a></span>
+<span class="normal"><a href="#__codelineno-0-132">132</a></span>
+<span class="normal"><a href="#__codelineno-0-133">133</a></span>
+<span class="normal"><a href="#__codelineno-0-134">134</a></span>
+<span class="normal"><a href="#__codelineno-0-135">135</a></span>
+<span class="normal"><a href="#__codelineno-0-136">136</a></span>
+<span class="normal"><a href="#__codelineno-0-137">137</a></span>
+<span class="normal"><a href="#__codelineno-0-138">138</a></span>
+<span class="normal"><a href="#__codelineno-0-139">139</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="k">def</span><span class="w"> </span><span class="nf">round</span><span class="p">(</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a>    <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401 (array-like input forwarded to torch.as_tensor)</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a>    <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a>    <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bitstrings</span><span class="p">:</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="w">    </span><span class="sd">"""Rounds near-integral float values to a 2-D bitstrings tensor.</span>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">    Values are compared in ``float64`` regardless of the globally configured</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">    float dtype, so *atol* keeps its meaning even when the global dtype is</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a><span class="sd">    narrower (e.g. ``float32``, which would round ``0.9999999998`` to exactly</span>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">    ``1.0`` before the check could see it).</span>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a><span class="sd">        data: Input data (tensor, numpy array, nested list, etc.) of floats, each</span>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a><span class="sd">            within *atol* of 0 or 1. Nested sequences must not be ragged.</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a><span class="sd">        atol: Maximum absolute distance from 0 or 1 tolerated before raising.</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a><span class="sd">        device: Torch device for the tensor.</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="sd">        A 2-D ``int8`` tensor of shape ``(count, n_bits)``.</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125"></a>
+<a id="__codelineno-0-126" name="__codelineno-0-126"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-127" name="__codelineno-0-127"></a><span class="sd">        ValueError: If any value is further than *atol* from both 0 and 1, or if</span>
+<a id="__codelineno-0-128" name="__codelineno-0-128"></a><span class="sd">            the input is a ragged nested sequence.</span>
+<a id="__codelineno-0-129" name="__codelineno-0-129"></a><span class="sd">    """</span>
+<a id="__codelineno-0-130" name="__codelineno-0-130"></a>    <span class="n">device</span> <span class="o">=</span> <span class="n">device</span> <span class="ow">or</span> <span class="n">_device</span><span class="p">()</span>
+<a id="__codelineno-0-131" name="__codelineno-0-131"></a>    <span class="n">values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-0-132" name="__codelineno-0-132"></a>    <span class="n">bits</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+<a id="__codelineno-0-133" name="__codelineno-0-133"></a>    <span class="n">invalid</span> <span class="o">=</span> <span class="p">((</span><span class="n">bits</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">bits</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="p">((</span><span class="n">values</span> <span class="o">-</span> <span class="n">bits</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">atol</span><span class="p">)</span>
+<a id="__codelineno-0-134" name="__codelineno-0-134"></a>    <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">invalid</span><span class="o">.</span><span class="n">any</span><span class="p">()):</span>
+<a id="__codelineno-0-135" name="__codelineno-0-135"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+<a id="__codelineno-0-136" name="__codelineno-0-136"></a>            <span class="sa">f</span><span class="s2">"Expected values within </span><span class="si">{</span><span class="n">atol</span><span class="si">}</span><span class="s2"> of 0 or 1, got "</span>
+<a id="__codelineno-0-137" name="__codelineno-0-137"></a>            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="n">invalid</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-138" name="__codelineno-0-138"></a>        <span class="p">)</span>
+<a id="__codelineno-0-139" name="__codelineno-0-139"></a>    <span class="k">return</span> <span class="n">bits</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4362,7 +4415,7 @@ the input is a ragged nested sequence.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">tensor</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Any&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.bitstrings.device&lt;/code&gt;)" href="#qubosolver.bitstrings.device">device</a></span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Any&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Bitstrings&lt;/span&gt;
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">tensor</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Any&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Any&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Bitstrings&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
@@ -4387,8 +4440,8 @@ the input is a ragged nested sequence.</p>
         </li>
         <li class="doc-section-item field-body">
             <b><code>device</code></b>
-              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></code>, default:
-                  <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.bitstrings.device&lt;/code&gt;)" href="#qubosolver.bitstrings.device">device</a>()</code>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a> | None</code>, default:
+                  <code>None</code>
 )
           –
           <div class="doc-md-description">
@@ -4427,29 +4480,41 @@ the input is a ragged nested sequence.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/bitstrings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-51">51</a></span>
-<span class="normal"><a href="#__codelineno-0-52">52</a></span>
-<span class="normal"><a href="#__codelineno-0-53">53</a></span>
-<span class="normal"><a href="#__codelineno-0-54">54</a></span>
-<span class="normal"><a href="#__codelineno-0-55">55</a></span>
-<span class="normal"><a href="#__codelineno-0-56">56</a></span>
-<span class="normal"><a href="#__codelineno-0-57">57</a></span>
-<span class="normal"><a href="#__codelineno-0-58">58</a></span>
-<span class="normal"><a href="#__codelineno-0-59">59</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-59">59</a></span>
 <span class="normal"><a href="#__codelineno-0-60">60</a></span>
 <span class="normal"><a href="#__codelineno-0-61">61</a></span>
-<span class="normal"><a href="#__codelineno-0-62">62</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="k">def</span><span class="w"> </span><span class="nf">tensor</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bitstrings</span><span class="p">:</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="w">    </span><span class="sd">"""Creates a 2-D bitstrings tensor from the given data.</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">        data: Input data (nested list or array-like of 0s and 1s).</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">        device: Torch device for the tensor.</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">        **kwargs: Extra keyword arguments forwarded to `torch.tensor`.</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">        A 2-D ``int8`` tensor.</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">    """</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-62">62</a></span>
+<span class="normal"><a href="#__codelineno-0-63">63</a></span>
+<span class="normal"><a href="#__codelineno-0-64">64</a></span>
+<span class="normal"><a href="#__codelineno-0-65">65</a></span>
+<span class="normal"><a href="#__codelineno-0-66">66</a></span>
+<span class="normal"><a href="#__codelineno-0-67">67</a></span>
+<span class="normal"><a href="#__codelineno-0-68">68</a></span>
+<span class="normal"><a href="#__codelineno-0-69">69</a></span>
+<span class="normal"><a href="#__codelineno-0-70">70</a></span>
+<span class="normal"><a href="#__codelineno-0-71">71</a></span>
+<span class="normal"><a href="#__codelineno-0-72">72</a></span>
+<span class="normal"><a href="#__codelineno-0-73">73</a></span>
+<span class="normal"><a href="#__codelineno-0-74">74</a></span>
+<span class="normal"><a href="#__codelineno-0-75">75</a></span>
+<span class="normal"><a href="#__codelineno-0-76">76</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="k">def</span><span class="w"> </span><span class="nf">tensor</span><span class="p">(</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>    <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401 (array-like input forwarded to torch.tensor)</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>    <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a>    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401 (forwarded to torch.tensor)</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bitstrings</span><span class="p">:</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="w">    </span><span class="sd">"""Creates a 2-D bitstrings tensor from the given data.</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">        data: Input data (nested list or array-like of 0s and 1s).</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">        device: Torch device for the tensor.</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">        **kwargs: Extra keyword arguments forwarded to `torch.tensor`.</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">        A 2-D ``int8`` tensor.</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">    """</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a>    <span class="n">device</span> <span class="o">=</span> <span class="n">device</span> <span class="ow">or</span> <span class="n">_device</span><span class="p">()</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4509,25 +4574,25 @@ the input is a ragged nested sequence.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/bitstrings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-121">121</a></span>
-<span class="normal"><a href="#__codelineno-0-122">122</a></span>
-<span class="normal"><a href="#__codelineno-0-123">123</a></span>
-<span class="normal"><a href="#__codelineno-0-124">124</a></span>
-<span class="normal"><a href="#__codelineno-0-125">125</a></span>
-<span class="normal"><a href="#__codelineno-0-126">126</a></span>
-<span class="normal"><a href="#__codelineno-0-127">127</a></span>
-<span class="normal"><a href="#__codelineno-0-128">128</a></span>
-<span class="normal"><a href="#__codelineno-0-129">129</a></span>
-<span class="normal"><a href="#__codelineno-0-130">130</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-121" name="__codelineno-0-121"></a><span class="k">def</span><span class="w"> </span><span class="nf">to_strings</span><span class="p">(</span><span class="n">bitstrings</span><span class="p">:</span> <span class="n">Bitstrings</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<a id="__codelineno-0-122" name="__codelineno-0-122"></a><span class="w">    </span><span class="sd">"""Converts a 2-D bitstrings tensor into a list of '0'/'1' strings.</span>
-<a id="__codelineno-0-123" name="__codelineno-0-123"></a>
-<a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-125" name="__codelineno-0-125"></a><span class="sd">        bitstrings: A 2-D ``int8`` tensor of shape ``(n, m)`` containing 0s and 1s.</span>
-<a id="__codelineno-0-126" name="__codelineno-0-126"></a>
-<a id="__codelineno-0-127" name="__codelineno-0-127"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-128" name="__codelineno-0-128"></a><span class="sd">        A list of *n* strings, each of length *m*, representing each row of the tensor.</span>
-<a id="__codelineno-0-129" name="__codelineno-0-129"></a><span class="sd">    """</span>
-<a id="__codelineno-0-130" name="__codelineno-0-130"></a>    <span class="k">return</span> <span class="p">[</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">bitstrings</span><span class="p">]</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-142">142</a></span>
+<span class="normal"><a href="#__codelineno-0-143">143</a></span>
+<span class="normal"><a href="#__codelineno-0-144">144</a></span>
+<span class="normal"><a href="#__codelineno-0-145">145</a></span>
+<span class="normal"><a href="#__codelineno-0-146">146</a></span>
+<span class="normal"><a href="#__codelineno-0-147">147</a></span>
+<span class="normal"><a href="#__codelineno-0-148">148</a></span>
+<span class="normal"><a href="#__codelineno-0-149">149</a></span>
+<span class="normal"><a href="#__codelineno-0-150">150</a></span>
+<span class="normal"><a href="#__codelineno-0-151">151</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-142" name="__codelineno-0-142"></a><span class="k">def</span><span class="w"> </span><span class="nf">to_strings</span><span class="p">(</span><span class="n">bitstrings</span><span class="p">:</span> <span class="n">Bitstrings</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<a id="__codelineno-0-143" name="__codelineno-0-143"></a><span class="w">    </span><span class="sd">"""Converts a 2-D bitstrings tensor into a list of '0'/'1' strings.</span>
+<a id="__codelineno-0-144" name="__codelineno-0-144"></a>
+<a id="__codelineno-0-145" name="__codelineno-0-145"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-146" name="__codelineno-0-146"></a><span class="sd">        bitstrings: A 2-D ``int8`` tensor of shape ``(n, m)`` containing 0s and 1s.</span>
+<a id="__codelineno-0-147" name="__codelineno-0-147"></a>
+<a id="__codelineno-0-148" name="__codelineno-0-148"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-149" name="__codelineno-0-149"></a><span class="sd">        A list of *n* strings, each of length *m*, representing each row of the tensor.</span>
+<a id="__codelineno-0-150" name="__codelineno-0-150"></a><span class="sd">    """</span>
+<a id="__codelineno-0-151" name="__codelineno-0-151"></a>    <span class="k">return</span> <span class="p">[</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">bitstrings</span><span class="p">]</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4542,7 +4607,7 @@ the input is a ragged nested sequence.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">zeros</span><span class="p">(</span><span class="n">count</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="n">n_bits</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.bitstrings.device&lt;/code&gt;)" href="#qubosolver.bitstrings.device">device</a></span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Bitstrings&lt;/span&gt;
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">zeros</span><span class="p">(</span><span class="n">count</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="n">n_bits</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Bitstrings&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
@@ -4575,8 +4640,8 @@ the input is a ragged nested sequence.</p>
         </li>
         <li class="doc-section-item field-body">
             <b><code>device</code></b>
-              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></code>, default:
-                  <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.bitstrings.device&lt;/code&gt;)" href="#qubosolver.bitstrings.device">device</a>()</code>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a> | None</code>, default:
+                  <code>None</code>
 )
           –
           <div class="doc-md-description">
@@ -4605,29 +4670,145 @@ the input is a ragged nested sequence.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/bitstrings.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-37">37</a></span>
-<span class="normal"><a href="#__codelineno-0-38">38</a></span>
-<span class="normal"><a href="#__codelineno-0-39">39</a></span>
-<span class="normal"><a href="#__codelineno-0-40">40</a></span>
-<span class="normal"><a href="#__codelineno-0-41">41</a></span>
-<span class="normal"><a href="#__codelineno-0-42">42</a></span>
-<span class="normal"><a href="#__codelineno-0-43">43</a></span>
-<span class="normal"><a href="#__codelineno-0-44">44</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-44">44</a></span>
 <span class="normal"><a href="#__codelineno-0-45">45</a></span>
 <span class="normal"><a href="#__codelineno-0-46">46</a></span>
 <span class="normal"><a href="#__codelineno-0-47">47</a></span>
-<span class="normal"><a href="#__codelineno-0-48">48</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="k">def</span><span class="w"> </span><span class="nf">zeros</span><span class="p">(</span><span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Bitstrings</span><span class="p">:</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="w">    </span><span class="sd">"""Creates a zero-filled 2-D bitstrings tensor.</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">        count: Number of bitstrings (rows).</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">        n_bits: Length of each bitstring (columns).</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">        device: Torch device for the tensor.</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">        A 2-D ``int8`` tensor of shape ``(count, n_bits)``.</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">    """</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">count</span><span class="p">,</span> <span class="n">n_bits</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#__codelineno-0-49">49</a></span>
+<span class="normal"><a href="#__codelineno-0-50">50</a></span>
+<span class="normal"><a href="#__codelineno-0-51">51</a></span>
+<span class="normal"><a href="#__codelineno-0-52">52</a></span>
+<span class="normal"><a href="#__codelineno-0-53">53</a></span>
+<span class="normal"><a href="#__codelineno-0-54">54</a></span>
+<span class="normal"><a href="#__codelineno-0-55">55</a></span>
+<span class="normal"><a href="#__codelineno-0-56">56</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="k">def</span><span class="w"> </span><span class="nf">zeros</span><span class="p">(</span><span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bitstrings</span><span class="p">:</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="w">    </span><span class="sd">"""Creates a zero-filled 2-D bitstrings tensor.</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">        count: Number of bitstrings (rows).</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">        n_bits: Length of each bitstring (columns).</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="sd">        device: Torch device for the tensor.</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">        A 2-D ``int8`` tensor of shape ``(count, n_bits)``.</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">    """</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="n">device</span> <span class="o">=</span> <span class="n">device</span> <span class="ow">or</span> <span class="n">_device</span><span class="p">()</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">count</span><span class="p">,</span> <span class="n">n_bits</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="qubosolver.bitstrings.zeros_field" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">zeros_field</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">zeros_field</span><span class="p">(</span><span class="n">count</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="n">n_bits</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Bitstrings&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.types.linalg.Bitstrings&lt;/code&gt;)" href="#qubosolver.Bitstrings">Bitstrings</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates a dataclass field defaulting to a zero-filled bitstrings tensor.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>count</code></b>
+              (<code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Number of bitstrings (rows).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>n_bits</code></b>
+              (<code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Length of each bitstring (columns).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>device</code></b>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a> | None</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Torch device for the tensor.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Bitstrings&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.types.linalg.Bitstrings&lt;/code&gt;)" href="#qubosolver.Bitstrings">Bitstrings</a></code>
+          –
+          <div class="doc-md-description">
+            <p>A dataclass field (typed as <code>Bitstrings</code> for the enclosing class) whose</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Bitstrings&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.types.linalg.Bitstrings&lt;/code&gt;)" href="#qubosolver.Bitstrings">Bitstrings</a></code>
+          –
+          <div class="doc-md-description">
+            <p><code>default_factory</code> builds a fresh zero tensor per instance.</p>
+          </div>
+        </li>
+    </ul>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>qubosolver/types/bitstrings.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-195">195</a></span>
+<span class="normal"><a href="#__codelineno-0-196">196</a></span>
+<span class="normal"><a href="#__codelineno-0-197">197</a></span>
+<span class="normal"><a href="#__codelineno-0-198">198</a></span>
+<span class="normal"><a href="#__codelineno-0-199">199</a></span>
+<span class="normal"><a href="#__codelineno-0-200">200</a></span>
+<span class="normal"><a href="#__codelineno-0-201">201</a></span>
+<span class="normal"><a href="#__codelineno-0-202">202</a></span>
+<span class="normal"><a href="#__codelineno-0-203">203</a></span>
+<span class="normal"><a href="#__codelineno-0-204">204</a></span>
+<span class="normal"><a href="#__codelineno-0-205">205</a></span>
+<span class="normal"><a href="#__codelineno-0-206">206</a></span>
+<span class="normal"><a href="#__codelineno-0-207">207</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-195" name="__codelineno-0-195"></a><span class="k">def</span><span class="w"> </span><span class="nf">zeros_field</span><span class="p">(</span><span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bitstrings</span><span class="p">:</span>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a><span class="w">    </span><span class="sd">"""Creates a dataclass field defaulting to a zero-filled bitstrings tensor.</span>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a><span class="sd">        count: Number of bitstrings (rows).</span>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a><span class="sd">        n_bits: Length of each bitstring (columns).</span>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a><span class="sd">        device: Torch device for the tensor.</span>
+<a id="__codelineno-0-202" name="__codelineno-0-202"></a>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a><span class="sd">        A dataclass field (typed as `Bitstrings` for the enclosing class) whose</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a><span class="sd">        `default_factory` builds a fresh zero tensor per instance.</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a><span class="sd">    """</span>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a>    <span class="k">return</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">zeros</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">n_bits</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

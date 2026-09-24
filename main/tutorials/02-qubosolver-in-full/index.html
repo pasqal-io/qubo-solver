@@ -4251,20 +4251,24 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Instance</span><span class="p">,</span>
-    <span class="n">solving</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
     <span class="n">analysis</span><span class="p">,</span>
     <span class="n">bitstrings</span><span class="p">,</span>
+    <span class="n">matrix</span><span class="p">,</span>
+    <span class="n">solving</span><span class="p">,</span>
     <span class="n">torch_rng</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span>
-    <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
-<span class="p">])</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+    <span class="p">]</span>
+<span class="p">)</span>
 <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
 
 <span class="c1"># Run tabu search in parallel from 5 starting bitstrings</span>
@@ -4273,20 +4277,24 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">from qubosolver import (
+<div class="clipboard-copy-txt" id="cell-1">from __future__ import annotations
+
+from qubosolver import (
     Instance,
-    solving,
-    matrix,
     analysis,
     bitstrings,
+    matrix,
+    solving,
     torch_rng,
 )
 
-Q = matrix.tensor([
-    [-0.2, 0.0, 1.0],
-    [ 0.0, 0.0, 1.5],
-    [ 1.0, 1.5, 0.0],
-])
+Q = matrix.tensor(
+    [
+        [-0.2, 0.0, 1.0],
+        [0.0, 0.0, 1.5],
+        [1.0, 1.5, 0.0],
+    ]
+)
 instance = Instance(Q)
 
 # Run tabu search in parallel from 5 starting bitstrings
@@ -4344,23 +4352,26 @@ print(analysis.to_dataframe([solution]))</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Instance</span><span class="p">,</span>
-    <span class="n">Solution</span><span class="p">,</span>
-    <span class="n">solving</span><span class="p">,</span>
-    <span class="n">embedding</span><span class="p">,</span>
-    <span class="n">drive_shaping</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
-    <span class="n">LocalEmulator</span><span class="p">,</span>
-    <span class="n">analysis</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
 
-<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span>
-    <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
-<span class="p">])</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Instance</span><span class="p">,</span>
+    <span class="n">LocalEmulator</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">analysis</span><span class="p">,</span>
+    <span class="n">drive_shaping</span><span class="p">,</span>
+    <span class="n">embedding</span><span class="p">,</span>
+    <span class="n">matrix</span><span class="p">,</span>
+    <span class="n">solving</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+    <span class="p">]</span>
+<span class="p">)</span>
 <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
 
 <span class="n">device</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">AnalogDevice</span><span class="p">()</span>
@@ -4374,23 +4385,26 @@ print(analysis.to_dataframe([solution]))</div>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-2">from qubosolver import (
-    Instance,
-    Solution,
-    solving,
-    embedding,
-    drive_shaping,
-    matrix,
-    LocalEmulator,
-    analysis,
-)
-import qoolqit
+<div class="clipboard-copy-txt" id="cell-2">import qoolqit
 
-Q = matrix.tensor([
-    [-0.2, 0.0, 1.0],
-    [ 0.0, 0.0, 1.5],
-    [ 1.0, 1.5, 0.0],
-])
+from qubosolver import (
+    Instance,
+    LocalEmulator,
+    Solution,
+    analysis,
+    drive_shaping,
+    embedding,
+    matrix,
+    solving,
+)
+
+Q = matrix.tensor(
+    [
+        [-0.2, 0.0, 1.0],
+        [0.0, 0.0, 1.5],
+        [1.0, 1.5, 0.0],
+    ]
+)
 instance = Instance(Q)
 
 device = qoolqit.AnalogDevice()
@@ -4445,32 +4459,33 @@ print(analysis.to_dataframe([solution]))</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Instance</span><span class="p">,</span>
-    <span class="n">Solution</span><span class="p">,</span>
-    <span class="n">solving</span><span class="p">,</span>
-    <span class="n">embedding</span><span class="p">,</span>
-    <span class="n">drive_shaping</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
-    <span class="n">RemoteEmulator</span><span class="p">,</span>
-    <span class="n">analysis</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qoolqit.execution</span><span class="w"> </span><span class="kn">import</span> <span class="n">QPU</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pasqal_cloud</span><span class="w"> </span><span class="kn">import</span> <span class="n">PasqalCloudConnection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qoolqit.execution</span><span class="w"> </span><span class="kn">import</span> <span class="n">QPU</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Instance</span><span class="p">,</span>
+    <span class="n">RemoteEmulator</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">analysis</span><span class="p">,</span>
+    <span class="n">drive_shaping</span><span class="p">,</span>
+    <span class="n">embedding</span><span class="p">,</span>
+    <span class="n">matrix</span><span class="p">,</span>
+    <span class="n">solving</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="c1"># Replace with your username, project id and password on the Pasqal Cloud.</span>
-<span class="n">USERNAME</span><span class="o">=</span><span class="s2">"#TO_PROVIDE"</span>
-<span class="n">PROJECT_ID</span><span class="o">=</span><span class="s2">"#TO_PROVIDE"</span>
-<span class="n">PASSWORD</span><span class="o">=</span><span class="kc">None</span>
+<span class="n">USERNAME</span> <span class="o">=</span> <span class="s2">"#TO_PROVIDE"</span>
+<span class="n">PROJECT_ID</span> <span class="o">=</span> <span class="s2">"#TO_PROVIDE"</span>
+<span class="n">PASSWORD</span> <span class="o">=</span> <span class="kc">None</span>
 
-<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span>
-    <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
-<span class="p">])</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+    <span class="p">]</span>
+<span class="p">)</span>
 <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
 
 <span class="k">if</span> <span class="n">PASSWORD</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -4483,6 +4498,7 @@ print(analysis.to_dataframe([solution]))</div>
 <span class="k">else</span><span class="p">:</span>
     <span class="c1"># Use a mock local connection for tutorial</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver.utils._local_connection</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalConnection</span>
+
     <span class="n">connection</span> <span class="o">=</span> <span class="n">LocalConnection</span><span class="p">()</span>
 
 <span class="n">emulate</span> <span class="o">=</span> <span class="kc">True</span>
@@ -4502,32 +4518,33 @@ print(analysis.to_dataframe([solution]))</div>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-3">from qubosolver import (
-    Instance,
-    Solution,
-    solving,
-    embedding,
-    drive_shaping,
-    matrix,
-    RemoteEmulator,
-    analysis,
-)
-import qoolqit
-
-import qoolqit
-from qoolqit.execution import QPU
+<div class="clipboard-copy-txt" id="cell-3">import qoolqit
 from pasqal_cloud import PasqalCloudConnection
+from qoolqit.execution import QPU
+
+from qubosolver import (
+    Instance,
+    RemoteEmulator,
+    Solution,
+    analysis,
+    drive_shaping,
+    embedding,
+    matrix,
+    solving,
+)
 
 # Replace with your username, project id and password on the Pasqal Cloud.
-USERNAME="#TO_PROVIDE"
-PROJECT_ID="#TO_PROVIDE"
-PASSWORD=None
+USERNAME = "#TO_PROVIDE"
+PROJECT_ID = "#TO_PROVIDE"
+PASSWORD = None
 
-Q = matrix.tensor([
-    [-0.2, 0.0, 1.0],
-    [ 0.0, 0.0, 1.5],
-    [ 1.0, 1.5, 0.0],
-])
+Q = matrix.tensor(
+    [
+        [-0.2, 0.0, 1.0],
+        [0.0, 0.0, 1.5],
+        [1.0, 1.5, 0.0],
+    ]
+)
 instance = Instance(Q)
 
 if PASSWORD is not None:
@@ -4540,6 +4557,7 @@ if PASSWORD is not None:
 else:
     # Use a mock local connection for tutorial
     from qubosolver.utils._local_connection import LocalConnection
+
     connection = LocalConnection()
 
 emulate = True
@@ -4611,16 +4629,17 @@ print(analysis.to_dataframe([solution]))</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qoolqit.execution.job</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_batch_id</span><span class="p">,</span> <span class="n">retrieve_remote_job</span><span class="p">,</span> <span class="n">JobStatus</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qoolqit.execution.job</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span><span class="p">,</span> <span class="n">get_batch_id</span><span class="p">,</span> <span class="n">retrieve_remote_job</span>
 
 <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"job_id"</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="p">(),</span>
     <span class="s2">"batch_id"</span><span class="p">:</span> <span class="n">get_batch_id</span><span class="p">(</span><span class="n">job</span><span class="p">),</span>
 <span class="p">}</span>
 
-<span class="n">output_directory</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span> <span class="o">/</span> <span class="s2">"tmp"</span> <span class="o">/</span> <span class="s2">"qubosolver-in-full"</span> 
+<span class="n">output_directory</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span> <span class="o">/</span> <span class="s2">"tmp"</span> <span class="o">/</span> <span class="s2">"qubosolver-in-full"</span>
 <span class="n">output_directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">metadata_file</span> <span class="o">=</span> <span class="n">output_directory</span> <span class="o">/</span> <span class="s2">"metadata.json"</span>
 <span class="n">data_file</span> <span class="o">=</span> <span class="n">output_directory</span> <span class="o">/</span> <span class="s2">"data.bin"</span>
@@ -4630,16 +4649,17 @@ print(analysis.to_dataframe([solution]))</div>
 <span class="k">with</span> <span class="n">data_file</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">instance</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-4">import pathlib
-import json
-from qoolqit.execution.job import get_batch_id, retrieve_remote_job, JobStatus
+<div class="clipboard-copy-txt" id="cell-4">import json
+import pathlib
+
+from qoolqit.execution.job import JobStatus, get_batch_id, retrieve_remote_job
 
 metadata = {
     "job_id": job.job_id(),
     "batch_id": get_batch_id(job),
 }
 
-output_directory = pathlib.Path.cwd() / "tmp" / "qubosolver-in-full" 
+output_directory = pathlib.Path.cwd() / "tmp" / "qubosolver-in-full"
 output_directory.mkdir(parents=True, exist_ok=True)
 metadata_file = output_directory / "metadata.json"
 data_file = output_directory / "data.bin"
