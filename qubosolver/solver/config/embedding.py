@@ -55,12 +55,7 @@ class Config:
     algorithm: Literal["blade", "greedy_layout"] = "blade"
 
     greedy_layout_lattice: Literal["square", "triangular"] = "triangular"
-    greedy_layout_traps: int | Literal["device"] = "device"
-    greedy_layout_max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
     blade_steps_per_round: int | None = 200
-    blade_starting_positions: torch.Tensor | None = None
-    blade_dimensions: list[int] = field(default_factory=lambda: [5, 4, 3, 2, 2, 2])
-    max_min_dist_ratio: float | Literal["device"] = "device"
 
     def __post_init__(self) -> None:
         """Validate `algorithm` and `greedy_layout_lattice`."""

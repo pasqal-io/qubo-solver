@@ -61,13 +61,6 @@ class SolverConfig:
     preprocessing: bool = False
     """Whether we apply pre-processing (`True`) or not (`False`). Defaults to `False`."""
 
-    activate_trivial_solutions: bool = True
-    """Whether to calculate trivial solutions (`True`) or not (`False`). Defaults to `True`."""
-
-    postprocessing_time_limit: float = float("inf")
-    """Maximum total time in seconds for the whole post-processing batch,
-    shared across all bitstrings. Defaults to `float("inf")`, meaning no time limit."""
-
     def __repr__(self) -> str:
         """Return the configuration's name."""
         return self.config_name

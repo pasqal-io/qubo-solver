@@ -48,23 +48,13 @@ class Config:
     algorithm: Literal["bayesian_search", "proportional_diagonal", "local_energy_scale"] = (
         "proportional_diagonal"
     )
-    dmm: bool = True
     bayesian_search_n_calls: int = 20
-    bayesian_search_initial_omega_parameters: list[float] = field(
-        default_factory=lambda: [0.5, 0.9, 0.5]
-    )
-    bayesian_search_initial_detuning_parameters: list[float] = field(
-        default_factory=lambda: [-0.8, 0.0, 0.8]
-    )
-    bayesian_search_seed: int | None = None
 
     # Proportional-diagonal coefficient for omega
     proportional_diagonal_kappa: float = 0.25
 
     # Local-energy-scale coefficient for omega
     local_energy_scale_kappa: float = 0.25
-
-    default_sequence_duration: int = 50000
 
     def __post_init__(self) -> None:
         """Validate `algorithm` and the Bayesian-search initial parameter lengths."""
