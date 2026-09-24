@@ -17,23 +17,25 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
+
 import torch
 
-from qubosolver.solver.config.config import _DecompositionConfig
-from qubosolver import Solution, Matrix, matrix, Bitstring, bitstring, vectori, torch_rng
+from qubosolver import Bitstring, Matrix, Solution, bitstring, matrix, torch_rng, vectori
 from qubosolver import Instance as QUBOInstanceBase
+from qubosolver.solver.config.config import _DecompositionConfig
+
 from ._algorithms.decompose import (
+    VertexToPlace,
+    WeightedZone,
     compute_distance_interaction_matrix,
     compute_min_max_distances,
     geometric_search,
     interaction_matrix_from_placed,
     last_target_matrix,
+    positive_vertices_update,
     transfer_edge_values,
     update_global_solution,
     vertices_to_place,
-    positive_vertices_update,
-    VertexToPlace,
-    WeightedZone,
 )
 
 
@@ -84,14 +86,15 @@ class Instance(QUBOInstanceBase):
         self,
         parent_instance: QUBOInstanceBase,
         *,
-        config: Config = Config(),
-    ):
+        config: Config | None = None,
+    ) -> None:
         """Initialize the decomposition-aware QUBO instance.
 
         Args:
             parent_instance: The original QUBO instance.
             config: Decomposition algorithm parameters.
         """
+        config = config or Config()
         super().__init__(parent_instance.matrix)
         self._parent_instance = copy.deepcopy(parent_instance)
 
@@ -129,19 +132,20 @@ class SubQUBOInstance(QUBOInstanceBase):
 
     def __init__(
         self,
-        coefficients: Matrix = matrix.zeros(0),
-        map_index_vertices: dict[int, int] = {},
-    ):
-        """
+        coefficients: Matrix | None = None,
+        map_index_vertices: dict[int, int] | None = None,
+    ) -> None:
+        """Initialize the sub-QUBO instance.
+
         Args:
-            coefficients: Square coefficient matrix for the sub-problem.
-                Defaults to an empty matrix (used as a sentinel for "no
-                sub-problem extracted").
-            map_index_vertices: Mapping from original global variable indices
-                to local (sub-problem) column/row indices.
+        coefficients: Square coefficient matrix for the sub-problem.
+            Defaults to an empty matrix (used as a sentinel for "no
+            sub-problem extracted").
+        map_index_vertices: Mapping from original global variable indices
+            to local (sub-problem) column/row indices.
         """
-        super().__init__(coefficients)
-        self._map_index_vertices = map_index_vertices
+        super().__init__(coefficients if coefficients is not None else matrix.zeros(0))
+        self._map_index_vertices = map_index_vertices if map_index_vertices is not None else {}
 
 
 def extract_subqubo(
@@ -149,7 +153,7 @@ def extract_subqubo(
     config: Config,
     *,
     last: bool = False,
-    rng: torch.Generator = torch_rng(),
+    rng: torch.Generator | None = None,
 ) -> SubQUBOInstance:
     """Extract an embeddable sub-problem from the decomposed QUBO.
 
@@ -168,6 +172,7 @@ def extract_subqubo(
         index mapping.  Returns an empty instance if the geometric
         search yields too few vertices.
     """
+    rng = rng or torch_rng()
     if last:
         matrix_to_solve, map_index_vertices = last_target_matrix(
             list(qubo._vertices_to_place.keys()),

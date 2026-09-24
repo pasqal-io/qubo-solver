@@ -1,4 +1,4 @@
-"""QUBO problem instances.
+r"""QUBO problem instances.
 
 An [`Instance`][qubosolver.types.instance.Instance] wraps a symmetric square coefficient matrix
 ``Q`` and defines the QUBO objective to minimize:
@@ -8,27 +8,38 @@ $$\\text{cost}(x) = x^T Q x, \\quad x \\in \\{0, 1\\}^n$$
 
 from __future__ import annotations
 
-import torch
 import io
-from typing import TYPE_CHECKING, TypeVar
+from typing import ClassVar, TypeVar
 
-from ._checks import debug_runtime_typecheck, no_runtime_typecheck
-from . import matrix
-from .linalg import Matrix, Bitstring
-from ._enums import _DensityType
+import torch
+
 from qubosolver._io import utils as io_utils
-from qubosolver._io.utils import Stream
-from qubosolver._io.utils import FileLike
+from qubosolver._io.utils import FileLike, Stream
+
+from . import matrix
+from ._checks import (
+    _RUNTIME_TYPE_CHECKING,
+    TYPE_CHECKING,
+    debug_runtime_typecheck,
+    no_runtime_typecheck,
+)
+from ._enums import _DensityType
+from .linalg import Bitstring, Matrix
+
+_matrix_module = matrix  # alias so the shadowed `matrix` parameter can still reach this module
+
+if TYPE_CHECKING and not _RUNTIME_TYPE_CHECKING:
+    from qubosolver.transforms import negative_bitflip, variable_fixing, zeroing
 
 if TYPE_CHECKING:
-    from qubosolver.transforms import negative_bitflip, variable_fixing, zeroing
+    from typing_extensions import Self
 
 _InstanceT = TypeVar("_InstanceT", bound="Instance")
 
 
 @debug_runtime_typecheck
 class Instance:
-    """A single QUBO problem instance.
+    r"""A single QUBO problem instance.
 
     Wraps a symmetric square matrix $Q$ and exposes helpers for
     evaluation, serialization, and introspection.  The objective to minimize is:
@@ -43,9 +54,10 @@ class Instance:
 
     def __init__(
         self,
-        matrix: Matrix = matrix.zeros(0),
-    ):
-        self._matrix: Matrix = matrix
+        matrix: Matrix | None = None,
+    ) -> None:
+        """Wrap `matrix` as a QUBO instance."""
+        self._matrix: Matrix = matrix if matrix is not None else _matrix_module.zeros(0)
 
     @property
     def size(self) -> int:
@@ -66,9 +78,7 @@ class Instance:
         Raises:
             AssertionError: If the internal tensor is not 2-D or not square.
         """
-        assert (
-            self._matrix.ndim == 2 and self._matrix.shape[0] == self._matrix.shape[1]
-        )  # nosec B101
+        assert self._matrix.ndim == 2 and self._matrix.shape[0] == self._matrix.shape[1]  # nosec B101
         return self._matrix
 
     @property
@@ -120,8 +130,9 @@ class Instance:
         """
         return f"{cls.__module__}.{cls.__qualname__}"
 
-    _registry: dict[str, type[Instance]] = {}
-    """Tag -> `Instance` subclass, populated by [`__init_subclass__`][] for [`load`][] to dispatch on."""
+    _registry: ClassVar[dict[str, type[Instance]]] = {}
+    """Tag -> `Instance` subclass, populated by [`__init_subclass__`][] for [`load`][] to
+    dispatch on."""
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Register `cls` under its `_tag` so [`load`][] can dispatch to it.
@@ -189,14 +200,16 @@ class Instance:
             self._write_body(f)
 
     @classmethod
-    def load(cls: type[_InstanceT], file_like: FileLike[bytes]) -> _InstanceT:
+    def load(cls, file_like: FileLike[bytes]) -> Self:
         """Deserialize an [`Instance`][] previously saved with [`save`][].
 
-        Called on the base class [`qubosolver.Instance`][], it loads any instance with automatic dispatch.
+        Called on the base class [`qubosolver.Instance`][], it loads any instance with
+        automatic dispatch.
 
-        Called on a subclass (e.g. [`variable_fixing.Instance.load(f)`][qubosolver.transforms.variable_fixing.Instance.load]),
-        it additionally requires the loaded `Instance` to be an instance of that subclass (raising [`TypeError`][]
-        otherwise).
+        Called on a subclass (e.g.
+        [`variable_fixing.Instance.load(f)`][qubosolver.transforms.variable_fixing.Instance.load]),
+        it additionally requires the loaded `Instance` to be an instance of that subclass
+        (raising [`TypeError`][] otherwise).
 
         Args:
             file_like: Source file path or readable binary file object,
@@ -225,7 +238,8 @@ class Instance:
             # Three ways to load it back, from least to most strict:
             with file.open("rb") as f:
                 loaded = Instance.load(f)                  # accepts any Instance subtype
-                loaded = Instance.load(f).variable_fixing  # loads, then narrows (fails after loading)
+                # loads, then narrows (fails after loading)
+                loaded = Instance.load(f).variable_fixing
                 loaded = variable_fixing.Instance.load(f)  # narrows first (fails before loading)
             ```
         """
@@ -266,14 +280,15 @@ class Instance:
     @property
     @no_runtime_typecheck
     def variable_fixing(self) -> variable_fixing.Instance:
-        """View of this instance as a variable-fixing [`Instance`][qubosolver.transforms.variable_fixing.Instance].
+        """View of this instance as a variable-fixing instance.
 
         Convenience property to avoid the boilerplate of
         ``assert isinstance(instance, variable_fixing.Instance)`` before calling
         a method specific to that subclass. It exists purely to satisfy static
         type checkers (mypy) and enable IDE code completion — the runtime
-        [`isinstance`][] check and the [`TypeError`][] below just mirror the guarantee
-        that the [`assert`](https://docs.python.org/3/reference/simple_stmts.html#index-18) would otherwise provide.
+        [`isinstance`][] check and the [`TypeError`][] below just mirror the guarantee that
+        the [`assert`](https://docs.python.org/3/reference/simple_stmts.html#index-18)
+        would otherwise provide.
 
         Returns:
             This instance, narrowed to the variable-fixing subclass.
@@ -289,14 +304,15 @@ class Instance:
     @property
     @no_runtime_typecheck
     def zeroing(self) -> zeroing.Instance:
-        """View of this instance as a zeroing [`Instance`][qubosolver.transforms.zeroing.Instance].
+        """View of this instance as a zeroing instance.
 
         Convenience property to avoid the boilerplate of
         ``assert isinstance(instance, zeroing.Instance)`` before calling
         a method specific to that subclass. It exists purely to satisfy static
         type checkers (mypy) and enable IDE code completion — the runtime
-        [`isinstance`][] check and the [`TypeError`][] below just mirror the guarantee
-        that the [`assert`](https://docs.python.org/3/reference/simple_stmts.html#index-18) would otherwise provide.
+        [`isinstance`][] check and the [`TypeError`][] below just mirror the guarantee that
+        the [`assert`](https://docs.python.org/3/reference/simple_stmts.html#index-18)
+        would otherwise provide.
 
         Returns:
             This instance, narrowed to the zeroing subclass.
@@ -312,14 +328,15 @@ class Instance:
     @property
     @no_runtime_typecheck
     def negative_bitflip(self) -> negative_bitflip.Instance:
-        """View of this instance as a negative-bitflip [`Instance`][qubosolver.transforms.negative_bitflip.Instance].
+        """View of this instance as a negative-bitflip instance.
 
         Convenience property to avoid the boilerplate of
         ``assert isinstance(instance, negative_bitflip.Instance)`` before calling
         a method specific to that subclass. It exists purely to satisfy static
         type checkers (mypy) and enable IDE code completion — the runtime
-        [`isinstance`][] check and the [`TypeError`][] below just mirror the guarantee
-        that the [`assert`](https://docs.python.org/3/reference/simple_stmts.html#index-18) would otherwise provide.
+        [`isinstance`][] check and the [`TypeError`][] below just mirror the guarantee that
+        the [`assert`](https://docs.python.org/3/reference/simple_stmts.html#index-18)
+        would otherwise provide.
 
         Returns:
             This instance, narrowed to the negative-bitflip subclass.

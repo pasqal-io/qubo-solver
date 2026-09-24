@@ -7,26 +7,25 @@ import re
 import numpy as np
 import pytest
 import pytest_check as check
-import torch
-
 import qoolqit
+import torch
 from qoolqit import AnalogDevice, DigitalAnalogDevice
 
 from qubosolver import (
-    Solver,
-    EmbeddingConfig,
+    Candidate,
     DriveShapingConfig,
+    EmbeddingConfig,
+    Instance,
     QuantumSolvingConfig,
+    Solution,
+    Solver,
     SolverConfig,
     analysis,
-    Instance,
-    Solution,
+    drive_shaping,
     matrix,
+    solving,
     tensor,
     vector,
-    Candidate,
-    solving,
-    drive_shaping,
 )
 
 
@@ -46,7 +45,7 @@ def gather_optimal_solutions(solution: Solution, min_cost: float | None = None) 
 def test_with_perfect_embedding(
     seed: int,
     dmm: bool,
-    device_type: type[DigitalAnalogDevice] | type[AnalogDevice],
+    device_type: type[DigitalAnalogDevice | AnalogDevice],
     constant_diagonal: bool,
     diagonal_scale: float,
 ) -> None:

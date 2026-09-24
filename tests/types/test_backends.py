@@ -1,45 +1,43 @@
 from __future__ import annotations
-from unittest.mock import patch, MagicMock
 
 import logging
-import pytest
-import pytest_check as check
-import torch
-from typing import Literal
 import warnings
-
+from typing import Literal
+from unittest.mock import MagicMock, patch
 
 import pulser
-from pulser_simulation import QutipBackendV2
-from pulser.backend.abc import EmulatorBackend
-from emu_sv import SVBackend
+import pytest
+import pytest_check as check
+import qoolqit
+import torch
 from emu_mps import MPSBackend
+from emu_sv import SVBackend
+from mock.connection import MockConnection
 from pasqal_cloud.backends import (
     RemoteEmuFreeBackend,
-    RemoteSVBackend,
-    RemoteMPSBackend,
     RemoteEmulatorBackend,
+    RemoteMPSBackend,
+    RemoteSVBackend,
 )
-
-import qoolqit
+from pulser.backend.abc import EmulatorBackend
+from pulser_simulation import QutipBackendV2
 
 from qubosolver import (
-    Instance,
     AutoLocalEmulatorBackend,
     AutoRemoteEmulatorBackend,
+    EmbeddingConfig,
+    Instance,
     LocalEmulator,
+    QuantumSolvingConfig,
     RemoteEmulator,
-    matrix,
     Solver,
     SolverConfig,
-    EmbeddingConfig,
-    QuantumSolvingConfig,
+    matrix,
 )
 from qubosolver.types.backends import (
     _get_backend_type,
     _warn_suboptimal_backend,
 )
-from mock.connection import MockConnection
 
 
 def make_sequence(register: pulser.Register, device: qoolqit.Device) -> pulser.Sequence:
@@ -96,7 +94,10 @@ def test_auto_local_emulator_backend(size: int, expected_type: type) -> None:
     ],
 )
 def test_auto_remote_emulator_backend(size: int, expected_type: type) -> None:
-    """Test that AutoRemoteEmulatorBackend selects the correct backend type based on problem size."""
+    """Test that AutoRemoteEmulatorBackend selects the correct backend type based on size.
+
+    Selection is based on problem size.
+    """
     device = qoolqit.MockDevice()
     sequence = make_sequence(dummy_pulser_register(size), device)
     backend = AutoRemoteEmulatorBackend(
@@ -249,10 +250,12 @@ def test_remote_emulator_warning() -> None:
     )
     solver = Solver(instance, config)
 
-    with patch.object(RemoteSVBackend, "run", return_value=mock_results) as mock_run:
-        with pytest.warns(UserWarning, match="Consider using RemoteEmuFreeBackend"):
-            solver.solve()
-            mock_run.assert_called_once()
+    with (
+        patch.object(RemoteSVBackend, "run", return_value=mock_results) as mock_run,
+        pytest.warns(UserWarning, match="Consider using RemoteEmuFreeBackend"),
+    ):
+        solver.solve()
+        mock_run.assert_called_once()
 
 
 def test_local_emulator_warning() -> None:
@@ -271,10 +274,12 @@ def test_local_emulator_warning() -> None:
     solver = Solver(instance, config)
     results = MagicMock(spec=pulser.backend.Results)
     attach_bitstring(results, size)
-    with patch.object(SVBackend, "run", return_value=results) as mock_run:
-        with pytest.warns(UserWarning, match="Consider using QutipBackendV2"):
-            solver.solve()
-            mock_run.assert_called_once()
+    with (
+        patch.object(SVBackend, "run", return_value=results) as mock_run,
+        pytest.warns(UserWarning, match="Consider using QutipBackendV2"),
+    ):
+        solver.solve()
+        mock_run.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -391,9 +396,11 @@ def test_warn_suboptimal_backend_message_content() -> None:
 
 def test_warn_suboptimal_backend_logs_warning(caplog: pytest.LogCaptureFixture) -> None:
     """Test that _warn_suboptimal_backend also logs a warning, not just warnings.warn."""
-    with caplog.at_level(logging.WARNING, logger="qubosolver.types.backends"):
-        with pytest.warns(UserWarning):
-            _warn_suboptimal_backend(SVBackend, 10)
+    with (
+        caplog.at_level(logging.WARNING, logger="qubosolver.types.backends"),
+        pytest.warns(UserWarning),
+    ):
+        _warn_suboptimal_backend(SVBackend, 10)
 
     assert len(caplog.records) == 1
     check.equal(caplog.records[0].levelno, logging.WARNING)

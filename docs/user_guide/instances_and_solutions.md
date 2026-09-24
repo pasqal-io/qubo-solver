@@ -48,11 +48,15 @@ Some preprocessing steps in `qubosolver.transforms` (variable fixing, zeroing, n
 ```python exec="on" source="tabbed-left" result="text"
 from qubosolver import Instance, matrix, solving, transforms, analysis
 
-instance = Instance(matrix.tensor([
-    [10.0, 1.0, 1.0],
-    [ 1.0, -3.0, 2.0],
-    [ 1.0, 2.0, -1.0],
-]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [10.0, 1.0, 1.0],
+            [1.0, -3.0, 2.0],
+            [1.0, 2.0, -1.0],
+        ]
+    )
+)
 
 reduced_instance = transforms.variable_fixing.apply_recursively(instance)
 reduced_solution = solving.brute_force.solve(reduced_instance)

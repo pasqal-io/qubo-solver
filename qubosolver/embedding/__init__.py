@@ -6,7 +6,7 @@ from qubosolver.embedding import blade, greedy_layout
 from qubosolver.embedding.enums import Lattice
 
 __all__ = [
+    "Lattice",
     "blade",
     "greedy_layout",
-    "Lattice",
 ]

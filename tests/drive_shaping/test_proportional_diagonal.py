@@ -1,31 +1,32 @@
 from __future__ import annotations
 
-import torch
 import logging
+import random
 import re
+
 import numpy as np
 import pytest
 import pytest_check as check
-import random
+import qoolqit
+import torch
+from qoolqit import AnalogDevice, DigitalAnalogDevice
 
 from qubosolver import (
-    EmbeddingConfig,
+    Candidate,
     DriveShapingConfig,
-    QuantumSolvingConfig,
-    SolverConfig,
+    EmbeddingConfig,
     Instance,
+    QuantumSolvingConfig,
+    Solution,
     Solver,
+    SolverConfig,
+    drive_shaping,
+    matrix,
     solving,
     tensor,
     vector,
-    matrix,
-    drive_shaping,
-    Solution,
-    Candidate,
 )
 from qubosolver.utils import analysis
-import qoolqit
-from qoolqit import DigitalAnalogDevice, AnalogDevice
 
 
 def gather_optimal_solutions(
@@ -44,7 +45,7 @@ def gather_optimal_solutions(
 def test_with_perfect_embedding(
     seed: int,
     dmm: bool,
-    device_type: type[DigitalAnalogDevice] | type[AnalogDevice],
+    device_type: type[DigitalAnalogDevice | AnalogDevice],
     constant_diagonal: bool,
     diagonal_scale: float,
 ) -> None:

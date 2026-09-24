@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
+import numpy as np
+import pytest
 import torch
 
-from qubosolver.embedding._algorithms.greedy import Greedy
 from qubosolver import embedding
+from qubosolver.embedding._algorithms.greedy import Greedy
 
 
 def _toy_qubo() -> torch.Tensor:
@@ -49,12 +51,12 @@ def test_greedy_coords_shape_no_animation() -> None:
     assert tuple(coords.shape) == (n, 2)
 
 
-def test_greedy_animation_calls_renderer(monkeypatch: Any) -> None:
-    """
-    Force le chemin d’animation en patchant:
-      - le flag _VIZ_OK à True (sinon pas d’appel)
+def test_greedy_animation_calls_renderer(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Force le chemin d'animation en patchant le flag et la méthode de rendu.
+
+      - le flag _VIZ_OK à True (sinon pas d'appel)
       - la méthode _render_animation pour compter les appels
-    Aucun fichier n’est écrit, aucun backend graphique requis.
+    Aucun fichier n'est écrit, aucun backend graphique requis.
     """
     Q = _toy_qubo()
     n = Q.shape[0]
@@ -63,17 +65,17 @@ def test_greedy_animation_calls_renderer(monkeypatch: Any) -> None:
     params["animation"] = True
     params["animation_save_path"] = None  # ne rien écrire
 
-    # Compteur d’appels
+    # Compteur d'appels
     called: dict[str, int] = {"count": 0}
 
     def _fake_render(
         self: Greedy,
         frames: list[dict[str, Any]],
-        all_coords_np: Any,
+        all_coords_np: np.ndarray,
         spacing: float,
         layout_name: str,
         top_k: int = 5,
-        save_path: Optional[str] = None,
+        save_path: str | None = None,
         fps: float = 1.25,
     ) -> None:
         called["count"] += 1

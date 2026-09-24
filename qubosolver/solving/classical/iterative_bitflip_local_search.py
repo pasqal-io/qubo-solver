@@ -16,16 +16,17 @@ and ``"greedy_sweep"`` improve each bitstring independently.
 from __future__ import annotations
 
 import itertools
-from typing import Literal, Iterable
 import time
+from collections.abc import Callable, Iterable
+from copy import deepcopy
+from typing import Literal
+
 import numpy as np
 import torch
-from collections.abc import Callable
-from copy import deepcopy
 
-
-from qubosolver import Instance, Solution, Bitstring, Matrix, bitstrings, Bitstrings, bitstring
+from qubosolver import Bitstring, Bitstrings, Instance, Matrix, Solution, bitstring, bitstrings
 from qubosolver.utils._costs import _flip_deltas
+
 from .random_sampling import solve as random_sampling_solve
 
 

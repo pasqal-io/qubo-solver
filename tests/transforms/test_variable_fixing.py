@@ -5,7 +5,7 @@ import io
 import pytest_check as check
 import torch
 
-from qubosolver import Instance, Solution, transforms, bitstrings, matrix, solving, vectori
+from qubosolver import Instance, Solution, bitstrings, matrix, solving, transforms, vectori
 from qubosolver.transforms.variable_fixing import hansen_fixing
 
 

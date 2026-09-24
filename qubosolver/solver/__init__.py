@@ -11,20 +11,19 @@ namespace, so they can be imported directly as e.g. `from qubosolver import Solv
 from __future__ import annotations
 
 from qubosolver.solver.config import (
-    SolverConfig,
+    ClassicalSolvingConfig,
     DriveShapingConfig,
     EmbeddingConfig,
-    ClassicalSolvingConfig,
     QuantumSolvingConfig,
+    SolverConfig,
 )
-
 from qubosolver.solver.solver import Solver
 
 __all__ = [
-    "Solver",
-    "SolverConfig",
+    "ClassicalSolvingConfig",
     "DriveShapingConfig",
     "EmbeddingConfig",
-    "ClassicalSolvingConfig",
     "QuantumSolvingConfig",
+    "Solver",
+    "SolverConfig",
 ]

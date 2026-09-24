@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import copy
 import inspect
 import sys
 
 import pytest
 import pytest_check as check
 import torch
-import copy
 from typing_extensions import assert_type, get_overloads
 
 from qubosolver import (
@@ -14,18 +14,18 @@ from qubosolver import (
     Instance,
     Solution,
     bitstring,
-    torch_rng,
-    solving,
-    matrix,
     bitstrings,
+    matrix,
+    solving,
+    torch_rng,
     vectori,
 )
 from qubosolver.solving.classical.simulated_annealing import (
     _Data,
-    _to_key,
     _from_key,
     _item_energy,
     _shrink,
+    _to_key,
 )
 
 instance_symmetric = Instance(
@@ -174,11 +174,13 @@ def test_simulated_annealing_costs_match_bitstrings(instance: Instance, vectoriz
 @pytest.mark.priority(5)
 @pytest.mark.parametrize("vectorized", vectorized_params)
 def test_simulated_annealing_energy_does_not_drift_on_large_batch(vectorized: bool) -> None:
-    """On a large enough batch/instance, accumulated rounding error in the
-    incrementally tracked `energy` must not make reported costs drift from the
-    true `x^T Q x`, for either path: both `_run_sequential` and
-    `_run_vectorized` periodically recompute it exactly (see `_REFRESH_EVERY`),
-    and recompute it once more from the final bitstrings before returning."""
+    """On a large batch/instance, accumulated rounding error must not make costs drift.
+
+    Reported costs must not drift from the true `x^T Q x`, for either path: both
+    `_run_sequential` and `_run_vectorized` periodically recompute it exactly (see
+    `_REFRESH_EVERY`), and recompute it once more from the final bitstrings before
+    returning.
+    """
     rng = torch_rng(64548)
     dataset = Dataset.from_random(1, 100, rng=rng)
     instance, _ = dataset[0]
@@ -195,9 +197,11 @@ def test_simulated_annealing_energy_does_not_drift_on_large_batch(vectorized: bo
 def test_simulated_annealing_solution_is_internally_consistent(
     instance: Instance, vectorized: bool
 ) -> None:
-    """The returned Solution must pass the full consistency check (shapes, costs,
-    sortedness, no duplicate bitstrings, positive integer counts, probabilities
-    matching normalised counts)."""
+    """The returned Solution must pass the full consistency check.
+
+    Checks shapes, costs, sortedness, no duplicate bitstrings, positive integer counts,
+    and probabilities matching normalised counts.
+    """
     skip_if_sequential_too_slow(vectorized, n_starts=1, max_iter=3000)
     start = bitstrings.zeros(1, instance.size)
     rng = torch_rng(0)
@@ -219,8 +223,10 @@ def test_simulated_annealing_solution_is_internally_consistent(
 @pytest.mark.parametrize("instance", instances, ids=instance_ids)
 @pytest.mark.parametrize("vectorized", vectorized_params)
 def test_simulated_annealing_counts_sum_to_visits(instance: Instance, vectorized: bool) -> None:
-    """Counts must be strictly positive integers, and their total must be at
-    least the number of returned bitstrings."""
+    """Counts must be strictly positive integers.
+
+    Their total must be at least the number of returned bitstrings.
+    """
     start = bitstrings.zeros(1, instance.size)
     rng = torch_rng(0)
 
@@ -352,8 +358,10 @@ def test_simulated_annealing_zero_time_limit_returns_start(
 def test_simulated_annealing_explicit_cooling_rate_used(
     instance: Instance, vectorized: bool
 ) -> None:
-    """When cooling_rate is provided, final_temp is ignored and no error is
-    raised even if final_temp is invalid (<= 0)."""
+    """When cooling_rate is provided, final_temp is ignored.
+
+    No error is raised even if final_temp is invalid (<= 0).
+    """
     start = bitstrings.zeros(1, instance.size)
     rng = torch_rng(0)
 
@@ -401,8 +409,10 @@ def test_simulated_annealing_raises_on_invalid_arguments(kwargs: dict, match: st
 def test_simulated_annealing_merge_false_returns_one_solution_per_start(
     instance: Instance, vectorized: bool
 ) -> None:
-    """With merge=False, one Solution must be returned per row of `start`,
-    in the same order, none of them merged with the others."""
+    """With merge=False, one Solution must be returned per row of `start`.
+
+    They are returned in the same order, none of them merged with the others.
+    """
     start = bitstrings.zeros(3, instance.size)
     rng = torch_rng(0)
 
@@ -428,9 +438,11 @@ def test_simulated_annealing_merge_false_returns_one_solution_per_start(
 def test_simulated_annealing_merge_true_matches_manual_concat_and_deduplicate(
     instance: Instance, vectorized: bool
 ) -> None:
-    """merge=True (the default) must be equivalent to merging the merge=False
-    per-start results via Solution.concat(...).deduplicate(), as documented
-    on the function."""
+    """merge=True (the default) must be equivalent to manually merging the per-start results.
+
+    Equivalent to merging the merge=False per-start results via
+    Solution.concat(...).deduplicate(), as documented on the function.
+    """
     start = bitstrings.rand(4, instance.size, rng=torch_rng(574))
     top_k = 3
 
@@ -465,9 +477,11 @@ def test_simulated_annealing_merge_true_matches_manual_concat_and_deduplicate(
 
 @pytest.mark.parametrize("vectorized", vectorized_params)
 def test_simulated_annealing_int_starts_generates_that_many_random_runs(vectorized: bool) -> None:
-    """Passing an int for `starts` must generate that many uniformly random
-    starting bitstrings from `rng`, giving the same result as pre-generating
-    them with bitstrings.rand from the same rng and passing them explicitly."""
+    """Passing an int for `starts` must generate that many uniformly random bitstrings.
+
+    They are generated from `rng`, giving the same result as pre-generating them with
+    bitstrings.rand from the same rng and passing them explicitly.
+    """
     n_starts = 3
 
     rng_int = torch_rng(5821)
@@ -494,15 +508,17 @@ def test_simulated_annealing_int_starts_generates_that_many_random_runs(vectoriz
     )
 
     check.equal(len(solution), n_starts)
-    for actual, exp in zip(solution, expected):
+    for actual, exp in zip(solution, expected, strict=True):
         torch.testing.assert_close(actual.bitstrings, exp.bitstrings)
         torch.testing.assert_close(actual.costs, exp.costs, atol=0.0, rtol=0.0)
 
 
 @pytest.mark.parametrize("vectorized", vectorized_params)
 def test_simulated_annealing_default_starts_is_one_random_start(vectorized: bool) -> None:
-    """Omitting `starts` must default to a single uniformly random start,
-    producing exactly one run's worth of results."""
+    """Omitting `starts` must default to a single uniformly random start.
+
+    This produces exactly one run's worth of results.
+    """
     solution = solving.simulated_annealing.solve(
         instance_symmetric,
         merge=False,
@@ -517,8 +533,10 @@ def test_simulated_annealing_default_starts_is_one_random_start(vectorized: bool
 
 
 def test_simulated_annealing_empty_start_merge_false_returns_empty_list() -> None:
-    """An empty batch of starts must produce an empty list, with no runs
-    performed, when merge=False."""
+    """An empty batch of starts must produce an empty list when merge=False.
+
+    No runs are performed.
+    """
     start = bitstrings.zeros(0, instance_symmetric.size)
 
     solutions = solving.simulated_annealing.solve(
@@ -529,8 +547,10 @@ def test_simulated_annealing_empty_start_merge_false_returns_empty_list() -> Non
 
 
 def test_simulated_annealing_empty_start_merge_true_returns_empty_solution() -> None:
-    """An empty batch of starts must produce an empty Solution, with no runs
-    performed, when merge=True (the default)."""
+    """An empty batch of starts must produce an empty Solution when merge=True (default).
+
+    No runs are performed.
+    """
     start = bitstrings.zeros(0, instance_symmetric.size)
 
     solution = solving.simulated_annealing.solve(instance_symmetric, starts=start, rng=torch_rng(0))
@@ -543,8 +563,9 @@ def test_simulated_annealing_empty_start_merge_true_returns_empty_solution() -> 
 def test_simulated_annealing_stats_per_run_sets_single_run_counts_to_one(
     instance: Instance, vectorized: bool
 ) -> None:
-    """With a single run (one start), stats='per_run' must set every
-    returned bitstring's count to 1, regardless of how many iterations were
+    """With a single run (one start), stats='per_run' must set every count to 1.
+
+    Every returned bitstring's count is set to 1, regardless of how many iterations were
     actually spent at it. With multiple runs merged together, counts are not
     uniformly 1 -- see
     test_simulated_annealing_stats_per_run_merged_counts_reflect_run_agreement.
@@ -571,10 +592,12 @@ def test_simulated_annealing_stats_per_run_sets_single_run_counts_to_one(
 def test_simulated_annealing_stats_per_run_merged_counts_reflect_run_agreement(
     vectorized: bool,
 ) -> None:
-    """With stats='per_run', top_k=1, and merge=True (default), each run
-    contributes a single bitstring with count 1; after merging, a
-    bitstring's count is the number of runs that converged on it -- neither
-    always 1 nor uniform across bitstrings."""
+    """With stats='per_run', top_k=1, and merge=True (default), each run contributes one count.
+
+    Each run contributes a single bitstring with count 1; after merging, a bitstring's
+    count is the number of runs that converged on it -- neither always 1 nor uniform
+    across bitstrings.
+    """
     skip_if_sequential_too_slow(vectorized, n_starts=8, max_iter=300)
     start = bitstrings.rand(8, instance_symmetric.size, rng=torch_rng(11))
 
@@ -598,9 +621,10 @@ def test_simulated_annealing_stats_per_run_merged_counts_reflect_run_agreement(
 def test_simulated_annealing_stats_per_run_top_k_one_merge_true_matches_manual_equivalent(
     vectorized: bool,
 ) -> None:
-    """merge=True, top_k=1, stats='per_run' must be equivalent to running
-    with merge=False, top_k>1, stats='full' (the default), then per start
-    keeping only the best bitstring (truncate(1) -- each per-start Solution
+    """merge=True, top_k=1, stats='per_run' must be equivalent to a manual condensed run.
+
+    Equivalent to running with merge=False, top_k>1, stats='full' (the default), then per
+    start keeping only the best bitstring (truncate(1) -- each per-start Solution
     is already sorted by cost, so its first row is its best), concatenating
     with unit_counts=True (each surviving bitstring counts as a single vote,
     matching stats='per_run'), and deduplicating.
@@ -608,7 +632,8 @@ def test_simulated_annealing_stats_per_run_top_k_one_merge_true_matches_manual_e
     This also shows how to get the condensed, single-best-per-run result that
     most other optimization libraries return by default, while still running
     with stats='full' to keep the complete per-run results available if
-    needed."""
+    needed.
+    """
     skip_if_sequential_too_slow(vectorized, n_starts=8, max_iter=300)
     start = bitstrings.rand(8, instance_symmetric.size, rng=torch_rng(1350))
 
@@ -682,8 +707,10 @@ def test_simulated_annealing_stats_per_run_is_default(instance: Instance, vector
 def test_simulated_annealing_stats_per_run_top_k_above_one_logs_info(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """stats='per_run' with top_k > 1 must emit an info-level log noting that
-    merged counts won't simply be 1 per run."""
+    """stats='per_run' with top_k > 1 must emit an info-level log about merged counts.
+
+    The log notes that merged counts won't simply be 1 per run.
+    """
     start = bitstrings.zeros(1, instance_symmetric.size)
 
     with caplog.at_level("INFO", logger="qubosolver.solving.classical.simulated_annealing"):
@@ -704,8 +731,10 @@ def test_simulated_annealing_stats_per_run_top_k_above_one_logs_info(
 def test_simulated_annealing_stats_per_run_top_k_one_does_not_log(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """stats='per_run' with top_k=1 (the intended, unambiguous usage) must
-    not emit the top_k > 1 caveat log."""
+    """stats='per_run' with top_k=1 (the intended, unambiguous usage) must not log.
+
+    It must not emit the top_k > 1 caveat log.
+    """
     start = bitstrings.zeros(1, instance_symmetric.size)
 
     with caplog.at_level("INFO", logger="qubosolver.solving.classical.simulated_annealing"):
@@ -733,10 +762,11 @@ def test_simulated_annealing_stats_per_run_top_k_one_does_not_log(
     ),
 )
 def test_simulated_annealing_overloads_match_implementation_signature() -> None:
-    """Every @overload stub of simulated_annealing must declare exactly the
-    same parameters, with the same defaults, as the real implementation, so
-    adding/removing/renaming a parameter -- or changing its default -- on
-    only one of the three cannot silently drift from the others.
+    """Every @overload stub of simulated_annealing must match the real implementation exactly.
+
+    Each stub must declare exactly the same parameters, with the same defaults, as the
+    real implementation, so adding/removing/renaming a parameter -- or changing its
+    default -- on only one of the three cannot silently drift from the others.
 
     `merge` is exempted from the default-value check: it intentionally has
     no default in the merge=False overload (it must be passed explicitly to
@@ -769,10 +799,12 @@ def test_simulated_annealing_overloads_match_implementation_signature() -> None:
 
 
 def test_simulated_annealing_overload_return_types_are_statically_correct() -> None:
-    """Static-typing check (evaluated by mypy, not at runtime): merge=True
-    (default) must be inferred as Solution, and merge=False as list[Solution].
+    """Static-typing check (evaluated by mypy, not at runtime) on merge's return type.
+
+    merge=True (default) must be inferred as Solution, and merge=False as list[Solution].
     This function's body never actually executes assertions at runtime --
-    assert_type is a no-op there -- its only purpose is to be type-checked."""
+    assert_type is a no-op there -- its only purpose is to be type-checked.
+    """
     start = bitstrings.zeros(1, instance_symmetric.size)
 
     default_result = solving.simulated_annealing.solve(instance_symmetric, starts=start)

@@ -1,7 +1,8 @@
 """Hybrid quantum-classical QUBO solver using Bayesian optimization of drive schedules.
 
-Runs a Bayesian search (via [`skopt.gp_minimize`](https://scikit-optimize.github.io/stable/modules/generated/skopt.gp_minimize.html)) over analog drive
-waveform parameters, executing a quantum simulation at each evaluation
+Runs a Bayesian search (via
+[`skopt.gp_minimize`](https://scikit-optimize.github.io/stable/modules/generated/skopt.gp_minimize.html))
+over analog drive waveform parameters, executing a quantum simulation at each evaluation
 and minimizing a configurable objective of the resulting solution. Can
 be used as a standalone hybrid solving algorithm, or as a drive-shaping
 method to produce a tuned [`qoolqit.Drive`][] for another solver.
@@ -9,22 +10,22 @@ method to produce a tuned [`qoolqit.Drive`][] for another solver.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-import numpy as np
-from skopt import gp_minimize
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
-import torch
 
+import numpy as np
 import qoolqit
+import torch
+from skopt import gp_minimize
 
+from qubosolver.drive_shaping._device_specs import detuning_amplitude_ratio, max_virtual_amplitude
+from qubosolver.drive_shaping._waveforms import constant_weighted_dmm
 from qubosolver.types import (
     Instance,
     Solution,
     protocols,
 )
-from qubosolver.drive_shaping._device_specs import max_virtual_amplitude, detuning_amplitude_ratio
-from qubosolver.drive_shaping._waveforms import constant_weighted_dmm
 
 if TYPE_CHECKING:
     from qubosolver import DriveShapingConfig
@@ -67,7 +68,7 @@ class Config:
     seed: int | None = None
     objective_fn: Callable[[Solution], float] = _default_objective
     _callback_fn: Callable[[_CallbackInfo], None] = field(
-        default_factory=lambda: (lambda data: None), init=False
+        default_factory=lambda: lambda data: None, init=False
     )
     default_sequence_duration: int = 50000
 
@@ -159,7 +160,7 @@ def _build_drive(
     max_seq_duration: float = device.specs["max_duration"] or 1e3
     max_amplitude = max_virtual_amplitude(device, register)
 
-    amp_params = [1e-9] + list(params[:3]) + [1e-9]
+    amp_params = [1e-9, *list(params[:3]), 1e-9]
     amp_params = [p * max_amplitude for p in amp_params]
     amp_wave = qoolqit.InterpolatedWaveform(max_seq_duration, amp_params)
 
@@ -246,7 +247,7 @@ def solve(
     backend: protocols.Backend,
     device: qoolqit.Device,
     dmm: bool = False,
-    config: Config = Config(),
+    config: Config | None = None,
 ) -> tuple[Solution, qoolqit.Drive]:
     """Solve a QUBO instance via Bayesian optimization of a drive schedule.
 
@@ -270,6 +271,7 @@ def solve(
         A tuple of the best [`qoolqit.Drive`][] found and the corresponding
             [`Solution`][].
     """
+    config = config or Config()
     n_amp = 3
     n_det = 3
 

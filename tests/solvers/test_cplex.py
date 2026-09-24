@@ -10,16 +10,16 @@ except ImportError:
     cplex = None  # tests using it are skipped via the `extras` marker below
 
 from qubosolver import (
+    ClassicalSolvingConfig,
     Instance,
     Solution,
     Solver,
+    SolverConfig,
     matrix,
     solving,
-    vectori,
     tensor,
     torch_rng,
-    SolverConfig,
-    ClassicalSolvingConfig,
+    vectori,
 )
 from qubosolver.solving.classical.cplex import _to_solution
 

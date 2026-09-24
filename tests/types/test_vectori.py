@@ -3,10 +3,10 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import numpy as np
-import torch
 import pytest_check as check
+import torch
 
-from qubosolver import vectori, linalg
+from qubosolver import linalg, vectori
 
 
 def test_dtype_returns_int64() -> None:

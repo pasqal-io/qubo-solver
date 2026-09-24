@@ -1,3 +1,5 @@
+"""Drive-shaping stage configuration."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -65,6 +67,7 @@ class Config:
     default_sequence_duration: int = 50000
 
     def __post_init__(self) -> None:
+        """Validate `algorithm` and the Bayesian-search initial parameter lengths."""
         if self.algorithm not in get_args(_DriveShapingAlgorithm):
             raise ValueError(f"Invalid drive shaping method '{self.algorithm}'.")
         if len(self.bayesian_search_initial_omega_parameters) != 3:

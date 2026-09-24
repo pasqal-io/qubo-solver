@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import Sequence
 import logging
+from collections.abc import Sequence
 
 import numpy as np
 import qoolqit
@@ -67,7 +67,9 @@ def constant_weighted_dmm(
     device: qoolqit.Device | None = None,
     energy_scale: float | None = None,
 ) -> qoolqit.drive.DetuningMapModulator | None:
-    """Create a DetuningMapModulator (DMM) object with a single constant waveform, weighted with per-qubit normalized weights (i.e. in [0, 1]).
+    """Create a DetuningMapModulator (DMM) with a single constant waveform, per-qubit weighted.
+
+    Weights are per-qubit normalized weights (i.e. in [0, 1]).
 
     The convention required by the qoolqit/Pulser stack is that DMM waveform
     values must be ≤ 0 (i.e., ``final_detuning`` should be negative).

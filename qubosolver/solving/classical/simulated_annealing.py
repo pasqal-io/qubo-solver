@@ -1,4 +1,4 @@
-"""Simulated Annealing solver for QUBO problems.
+r"""Simulated Annealing solver for QUBO problems.
 
 Implements a bit-flip annealer that minimizes the quadratic objective
 $E(x) = x^T Q x$ over binary vectors $x \\in \\{0,1\\}^n$, run independently from
@@ -7,27 +7,26 @@ each of a batch of starting points and merged into a single solution.
 
 from __future__ import annotations
 
-import time
 import heapq
 import logging
+import time
 from dataclasses import dataclass
 from typing import Literal, overload
 
 import torch
 
 from qubosolver import (
+    Bitstring,
+    Bitstrings,
     Instance,
     Solution,
     bitstring,
     bitstrings,
-    vector,
-    Bitstring,
-    Bitstrings,
     torch_rng,
+    vector,
     vectori,
 )
-
-from qubosolver.utils._costs import batched_quadratic_cost, _flip_deltas
+from qubosolver.utils._costs import _flip_deltas, batched_quadratic_cost
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +59,22 @@ def _shrink(visited_solutions: dict[bytes, _Data], *, top_k: int) -> None:
     visited_solutions.update(kept)
 
 
-# Built once at import time and shared as the default `rng` across the
-# overload stubs and the implementation below, so calls that omit `rng`
-# consistently reuse the same generator regardless of which overload mypy
-# picked, instead of each `def` capturing its own independent instance.
-_default_rng = torch_rng()
+def _cooling_rate(
+    *, max_iter: int, initial_temp: float, final_temp: float, cooling_rate: float | None
+) -> float:
+    if initial_temp <= 0:
+        raise ValueError("initial_temp must be > 0.")
+    if cooling_rate is None and final_temp <= 0:
+        raise ValueError("final_temp must be > 0 when cooling_rate is None.")
+    if max_iter <= 1:
+        return 1.0
+    if cooling_rate is not None:
+        alpha = cooling_rate
+        if not (0.0 < alpha < 1.0):
+            raise ValueError("cooling_rate (alpha) must be in (0, 1).")
+        return alpha
+    return float((final_temp / initial_temp) ** (1.0 / (max_iter - 1)))
+
 
 # How often the vectorized runner recomputes `energy` and `QX` exactly instead
 # of accumulating them incrementally. Small enough that rounding error stays
@@ -85,7 +95,7 @@ def solve(
     final_temp: float = 1e-3,
     cooling_rate: float | None = None,
     time_limit: float = float("inf"),
-    rng: torch.Generator = _default_rng,
+    rng: torch.Generator | None = None,
     stats: Literal["per_run", "full"] = "per_run",
     vectorized: bool = True,
 ) -> Solution: ...
@@ -103,7 +113,7 @@ def solve(
     final_temp: float = 1e-3,
     cooling_rate: float | None = None,
     time_limit: float = float("inf"),
-    rng: torch.Generator = _default_rng,
+    rng: torch.Generator | None = None,
     stats: Literal["per_run", "full"] = "per_run",
     vectorized: bool = True,
 ) -> list[Solution]: ...
@@ -121,11 +131,11 @@ def solve(
     final_temp: float = 1e-3,
     cooling_rate: float | None = None,
     time_limit: float = float("inf"),
-    rng: torch.Generator = _default_rng,
+    rng: torch.Generator | None = None,
     stats: Literal["per_run", "full"] = "per_run",
     vectorized: bool = True,
 ) -> Solution | list[Solution]:
-    """Run Simulated Annealing on a QUBO instance from each of a batch of starting points.
+    r"""Run Simulated Annealing on a QUBO instance from each of a batch of starting points.
 
     For each starting bitstring, at each of `max_iter` steps a random bit is
     proposed for flipping.  The flip is always accepted when it reduces the
@@ -161,8 +171,8 @@ def solve(
             is performed per row), or an ``int`` giving the number of
             uniformly random starts to generate.
         merge: When ``True`` (default), merge the per-start results into a
-            single [`Solution`][]. When ``False``, return the unmerged list of one [`Solution`][] per
-            starting point (same order as `starts`).
+            single [`Solution`][]. When ``False``, return the unmerged list of one
+            [`Solution`][] per starting point (same order as `starts`).
         top_k: Maximum number of unique best solutions to keep per run,
             ordered by ascending energy.
         max_iter: Number of bit-flip proposals to perform.
@@ -183,11 +193,11 @@ def solve(
             batch of starts, which all stop at the same iteration; with
             ``vectorized=False`` each start gets its own budget.
         rng: PyTorch random number generator used for bit selection and
-            acceptance sampling.  Defaults to a module-level
-            generator created once at import time; pass an explicit generator
-            for reproducibility across calls.  Note that `vectorized` changes
-            the order in which draws are consumed, so a given seed produces
-            the same result only for a fixed value of `vectorized`.
+            acceptance sampling.  When ``None`` (default), a new generator is
+            created; pass an explicit generator for reproducibility across
+            calls.  Note that `vectorized` changes the order in which draws
+            are consumed, so a given seed produces the same result only for a
+            fixed value of `vectorized`.
         stats: When ``"per_run"`` (default), each run's retained bitstrings
             are counted as ``1`` instead of how many iterations were spent
             at each one, before any merging. This is mainly meant for
@@ -222,10 +232,8 @@ def solve(
     """
     if top_k <= 0:
         raise ValueError("top_k must be >= 1.")
-    if initial_temp <= 0:
-        raise ValueError("initial_temp must be > 0.")
-    if cooling_rate is None and final_temp <= 0:
-        raise ValueError("final_temp must be > 0 when cooling_rate is None.")
+    if rng is None:
+        rng = torch_rng()
     if stats == "per_run" and top_k > 1:
         logger.info(
             f"stats='per_run' with top_k={top_k}: per-run counts are set to 1, but merging "
@@ -234,15 +242,12 @@ def solve(
 
     n = instance.size
 
-    # determine cooling rate alpha
-    if max_iter <= 1:
-        alpha = 1.0
-    elif cooling_rate is not None:
-        alpha = float(cooling_rate)
-        if not (0.0 < alpha < 1.0):
-            raise ValueError("cooling_rate (alpha) must be in (0, 1).")
-    else:
-        alpha = (final_temp / initial_temp) ** (1.0 / (max_iter - 1))
+    alpha = _cooling_rate(
+        max_iter=max_iter,
+        initial_temp=initial_temp,
+        final_temp=final_temp,
+        cooling_rate=cooling_rate,
+    )
 
     if isinstance(starts, int):
         starts = bitstrings.rand(starts, n, rng=rng)
@@ -379,7 +384,7 @@ def _run_sequential(
         if stats == "per_run":
             counts.fill_(1)
 
-        unique_bits = torch.stack([_from_key(key) for key in visited_solutions.keys()])
+        unique_bits = torch.stack([_from_key(key) for key in visited_solutions])
         solution = Solution(
             bitstrings=bitstrings.as_tensor(unique_bits),
             costs=vector.tensor([s.energy for s in visited_solutions.values()]),

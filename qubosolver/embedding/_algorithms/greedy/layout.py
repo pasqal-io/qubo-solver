@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import torch
-
-from qubosolver import tensor, Tensor
-from qubosolver.embedding.enums import Lattice
 from pulser.register.special_layouts import SquareLatticeLayout, TriangularLatticeLayout
+
+from qubosolver import Tensor, tensor
+from qubosolver.embedding.enums import Lattice
 
 
 def get_layout(*, layout_type: Lattice | str = Lattice.TRIANGULAR, n_traps: int) -> Tensor:
@@ -55,4 +55,4 @@ def get_layout(*, layout_type: Lattice | str = Lattice.TRIANGULAR, n_traps: int)
 
         case _:
             # Unreachable: layout_type was already validated above.
-            assert False, f"Unhandled layout_type: {layout_type!r}"  # nosec B101
+            raise AssertionError(f"Unhandled layout_type: {layout_type!r}")

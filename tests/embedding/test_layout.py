@@ -1,10 +1,13 @@
+from __future__ import annotations
+
+import math
+
 import pytest
 import pytest_check as check
-import math
-import torch
 import scipy
-
+import torch
 from pulser.register.special_layouts import SquareLatticeLayout
+
 from qubosolver import embedding
 from qubosolver.embedding._algorithms.greedy.layout import get_layout
 
@@ -55,7 +58,7 @@ def test_get_layout_square_spacing_is_one(n_traps: int) -> None:
 @pytest.mark.parametrize("n_traps", [1, 2, 3, 5, 10, 37, 100])
 def test_get_layout_square_is_compact(n_traps: int) -> None:
     coords = get_layout(layout_type=embedding.Lattice.SQUARE, n_traps=n_traps)
-    n = int(math.ceil(math.sqrt(2 * n_traps)))
+    n = math.ceil(math.sqrt(2 * n_traps))
     candidates = torch.tensor(SquareLatticeLayout(n, n, spacing=1).coords, dtype=coords.dtype)
     cand_set = {tuple(p.tolist()) for p in candidates}
     sel_set = {tuple(p.tolist()) for p in coords}

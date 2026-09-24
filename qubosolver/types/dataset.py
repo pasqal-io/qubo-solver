@@ -7,18 +7,19 @@ random dataset generation and binary (de)serialization helpers.
 
 from __future__ import annotations
 
+import io
+from collections.abc import Iterator, Sequence
 from copy import deepcopy
-from typing import Iterator
 
 import torch
-import io
 
-from .solution import Solution
-from .instance import Instance
-from . import matrix
-from .random import torch_rng
 from qubosolver._io import utils as io_utils
 from qubosolver._io.utils import FileLike
+
+from . import matrix
+from .instance import Instance
+from .random import torch_rng
+from .solution import Solution
 
 
 class Dataset:
@@ -51,8 +52,9 @@ class Dataset:
     """
 
     def __init__(
-        self, matrices: torch.Tensor, solutions: list[Solution] = [], *, copy: bool = True
-    ):
+        self, matrices: torch.Tensor, solutions: Sequence[Solution] = (), *, copy: bool = True
+    ) -> None:
+        """Build a dataset from `matrices` and optional `solutions`, deep-copying by default."""
         if copy:
             matrices = matrices.detach().clone()
             solutions = deepcopy(solutions)
@@ -94,10 +96,10 @@ class Dataset:
         n_matrices: int,
         matrix_dim: int,
         *,
-        densities: list[float] = [0.5],
+        densities: Sequence[float] = (0.5,),
         coefficient_bounds: tuple[float, float] = (-10.0, 10.0),
-        dtype: torch.dtype = matrix.dtype(),
-        rng: torch.Generator = torch_rng(),
+        dtype: torch.dtype | None = None,
+        rng: torch.Generator | None = None,
         negative_offdiag_rate: float = 0.0,
     ) -> Dataset:
         """Generates a Dataset of random, symmetric QUBO coefficient matrices.
@@ -128,6 +130,8 @@ class Dataset:
                 coefficient matrices, with no associated solutions.
         """
         # Step 1: Initialize a reproducible random generator.
+        dtype = dtype or matrix.dtype()
+        rng = rng or torch_rng()
         device = rng.device.type
 
         # Step 2: Create a tensor for the coefficients.
@@ -141,7 +145,6 @@ class Dataset:
         for d in densities:
             target = int(d * matrix_dim * matrix_dim)
             for idx in range(n_matrices):
-
                 # generate mask
                 mask = _generate_symmetric_mask(matrix_dim, target, device, rng)
 
@@ -166,7 +169,7 @@ class Dataset:
                     M = nz_pairs.size(0)
                     # Return K negative elements
                     if M > 0:
-                        K = max(1, int(round(rate * M)))
+                        K = max(1, round(rate * M))
                         perm = torch.randperm(M, generator=rng, device=device)[:K]
                         chosen = nz_pairs[perm]
                         i_idx, j_idx = chosen[:, 0], chosen[:, 1]
@@ -273,7 +276,8 @@ class Dataset:
                 as produced by [`save`][].
 
         Returns:
-            The deserialized dataset, including solutions if they were present when the file was saved.
+            The deserialized dataset, including solutions if they were present when the
+                file was saved.
 
         Raises:
             ValueError: If the stream is not a qubosolver file.
@@ -310,7 +314,7 @@ def _generate_symmetric_mask(
     where ``x`` is the number of selected diagonal entries.
 
     Args:
-        size: Side length of the square mask (``size × size``).
+        size: Side length of the square mask (``size x size``).
         target: Exact number of ``True`` entries in the returned mask.
         device: Torch device string (e.g. ``"cpu"``, ``"cuda"``).
         rng: Random number generator for reproducible sampling.

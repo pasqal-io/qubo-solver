@@ -10,7 +10,7 @@ from enum import Enum
 
 
 class _StrEnum(str, Enum):
-    """String-based Enums class implementation"""
+    """String-based Enums class implementation."""
 
     def __str__(self) -> str:
         """Used when dumping enum fields in a schema."""

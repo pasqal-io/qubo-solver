@@ -1,3 +1,5 @@
+"""Top-level solver configuration dataclass."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -9,8 +11,7 @@ from .solving import QuantumConfig as QuantumSolvingConfig
 
 @dataclass
 class _DecompositionConfig:
-    """The configuration parameters when using a decomposition method
-    for solving large QUBO instances.
+    """The configuration parameters when using a decomposition method for large instances.
 
     Attributes:
         decompose_threshold: Threshold value for cost function used
@@ -68,6 +69,7 @@ class SolverConfig:
     shared across all bitstrings. Defaults to `float("inf")`, meaning no time limit."""
 
     def __repr__(self) -> str:
+        """Return the configuration's name."""
         return self.config_name
 
     @property
@@ -92,9 +94,10 @@ class SolverConfig:
 
     @property
     def quantum(self) -> QuantumSolvingConfig:
-        """Access the quantum solving configuration directly, without checking
-        [`solving_mode`][] yourself — this also lets type-checkers narrow the type
-        without an explicit [`isinstance`][] check or [`cast`][typing.cast] at the call site.
+        """Access the quantum solving configuration directly, without checking `solving_mode`.
+
+        This also lets type-checkers narrow the type without an explicit [`isinstance`][] check
+        or [`cast`][typing.cast] at the call site.
 
         Returns:
             The quantum solving configuration, if in quantum solving mode.
@@ -109,9 +112,10 @@ class SolverConfig:
 
     @property
     def classical(self) -> ClassicalSolvingConfig:
-        """Access the classical solving configuration directly, without checking
-        [`solving_mode`][] yourself — this also lets type-checkers narrow the type
-        without an explicit [`isinstance`][] check or [`cast`][typing.cast] at the call site.
+        """Access the classical solving configuration directly, without checking `solving_mode`.
+
+        This also lets type-checkers narrow the type without an explicit [`isinstance`][] check
+        or [`cast`][typing.cast] at the call site.
 
         Returns:
             The classical solving configuration, if in classical solving mode.

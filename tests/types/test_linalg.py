@@ -4,8 +4,8 @@ import os
 from unittest.mock import patch
 
 import pytest
-import torch
 import pytest_check as check
+import torch
 
 from qubosolver import linalg
 
@@ -29,9 +29,11 @@ def test_device_from_env_use_gpu_false() -> None:
 
 
 def test_device_from_env_invalid_qubo_solver_device_raises() -> None:
-    with patch.dict(os.environ, {"QUBO_SOLVER_DEVICE": "invalid_device_string"}, clear=False):
-        with pytest.raises(ValueError, match="Invalid QUBO_SOLVER_DEVICE"):
-            linalg._device_from_env()
+    with (
+        patch.dict(os.environ, {"QUBO_SOLVER_DEVICE": "invalid_device_string"}, clear=False),
+        pytest.raises(ValueError, match="Invalid QUBO_SOLVER_DEVICE"),
+    ):
+        linalg._device_from_env()
 
 
 def test_float_type_from_env_float64_dtype() -> None:
@@ -47,9 +49,11 @@ def test_float_type_from_env_defaults_to_float32() -> None:
 
 
 def test_float_type_from_env_invalid_dtype_raises() -> None:
-    with patch.dict(os.environ, {"QUBO_SOLVER_FLOAT_DTYPE": "float128"}, clear=False):
-        with pytest.raises(ValueError, match="Invalid QUBO_SOLVER_FLOAT_DTYPE"):
-            linalg._float_type_from_env()
+    with (
+        patch.dict(os.environ, {"QUBO_SOLVER_FLOAT_DTYPE": "float128"}, clear=False),
+        pytest.raises(ValueError, match="Invalid QUBO_SOLVER_FLOAT_DTYPE"),
+    ):
+        linalg._float_type_from_env()
 
 
 def test_global_config_use_double_precision_sets_float64() -> None:

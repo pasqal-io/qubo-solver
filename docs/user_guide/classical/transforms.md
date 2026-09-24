@@ -115,14 +115,16 @@ the flips, and returns an `Instance` that records the flip vector, status, and m
 import json
 from qubosolver import Instance, transforms, matrix
 
-Q_hard = Instance(matrix.tensor(
-    [
-        [0.0, -2.0, 1.0, 1.0],
-        [-2.0, 0.0, -2.0, 1.0],
-        [1.0, -2.0, 0.0, -2.0],
-        [1.0, 1.0, -2.0, 0.0],
-    ]
-))
+Q_hard = Instance(
+    matrix.tensor(
+        [
+            [0.0, -2.0, 1.0, 1.0],
+            [-2.0, 0.0, -2.0, 1.0],
+            [1.0, -2.0, 0.0, -2.0],
+            [1.0, 1.0, -2.0, 0.0],
+        ]
+    )
+)
 
 reduced_hard = transforms.negative_bitflip.apply(Q_hard, time_limit_s=60.0)
 
@@ -150,14 +152,16 @@ not modify its argument in place.
 ```python exec="on" source="tabbed-left" session="zeroing" result="text"
 from qubosolver import Instance, transforms, matrix
 
-Q_hard = Instance(matrix.tensor(
-    [
-        [0.0, -2.0, 1.0, 1.0],
-        [-2.0, 0.0, -2.0, 1.0],
-        [1.0, -2.0, 0.0, -2.0],
-        [1.0, 1.0, -2.0, 0.0],
-    ]
-))
+Q_hard = Instance(
+    matrix.tensor(
+        [
+            [0.0, -2.0, 1.0, 1.0],
+            [-2.0, 0.0, -2.0, 1.0],
+            [1.0, -2.0, 0.0, -2.0],
+            [1.0, 1.0, -2.0, 0.0],
+        ]
+    )
+)
 
 reduced_hard = transforms.negative_bitflip.apply(Q_hard, time_limit_s=60.0)
 zeroed_hard = transforms.zeroing.apply(reduced_hard)
@@ -192,14 +196,16 @@ passed in.
 ```python exec="on" source="tabbed-left" session="shortcut" result="text"
 from qubosolver import Instance, Solver, SolverConfig, QuantumSolvingConfig, matrix
 
-Q_hard = Instance(matrix.tensor(
-    [
-        [0.0, -2.0, 1.0, 1.0],
-        [-2.0, 0.0, -2.0, 1.0],
-        [1.0, -2.0, 0.0, -2.0],
-        [1.0, 1.0, -2.0, 0.0],
-    ]
-))
+Q_hard = Instance(
+    matrix.tensor(
+        [
+            [0.0, -2.0, 1.0, 1.0],
+            [-2.0, 0.0, -2.0, 1.0],
+            [1.0, -2.0, 0.0, -2.0],
+            [1.0, 1.0, -2.0, 0.0],
+        ]
+    )
+)
 
 config = SolverConfig(
     solving=QuantumSolvingConfig(),

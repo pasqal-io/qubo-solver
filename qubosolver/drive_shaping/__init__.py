@@ -7,11 +7,11 @@ QUBO problems on neutral-atom hardware.
 from __future__ import annotations
 
 from qubosolver.drive_shaping import (
-    proportional_diagonal,
     local_energy_scale,
+    proportional_diagonal,
 )
 
 __all__ = [
-    "proportional_diagonal",
     "local_energy_scale",
+    "proportional_diagonal",
 ]

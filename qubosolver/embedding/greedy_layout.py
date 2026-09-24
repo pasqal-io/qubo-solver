@@ -3,24 +3,25 @@
 The greedy algorithm places logical QUBO nodes one at a time onto trap sites
 of a pre-defined lattice (triangular or square), choosing at each step the
 (node, trap) pair that minimizes the incremental mismatch between the QUBO
-coefficient matrix and the physical interaction matrix (∝ 1/‖rᵢ − rⱼ‖⁶).
+coefficient matrix and the physical interaction matrix (∝ 1/‖rᵢ - rⱼ‖⁶).
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Literal, TYPE_CHECKING
 import logging
-import numpy as np
 import pathlib
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Literal
 
+import numpy as np
 import qoolqit
 
-from ._algorithms import greedy
 from qubosolver import Instance, tensor
-from .enums import Lattice
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from qubosolver.utils.quantum import _max_min_distance_ratio
+
+from ._algorithms import greedy
+from .enums import Lattice
 
 if TYPE_CHECKING:
     from qubosolver import EmbeddingConfig
@@ -61,6 +62,7 @@ class Config:
     lattice: Lattice = Lattice.TRIANGULAR
 
     def __post_init__(self) -> None:
+        """Initialize the private animation-related attributes."""
         self._draw_steps: bool = False
         self._animation_save_path: pathlib.Path | None = None
 
@@ -164,11 +166,11 @@ def _number_of_traps_from_device(device: qoolqit.Device) -> int:
     Inspects the device's layout and atom number limits to derive an
     appropriate trap count. The resolution order is:
 
-    1. ``max_layout_traps`` – if the device exposes a hard trap limit, use it directly.
-    2. ``max_atom_num`` / ``max_layout_filling`` – if only an atom-number limit is
+    1. ``max_layout_traps`` - if the device exposes a hard trap limit, use it directly.
+    2. ``max_atom_num`` / ``max_layout_filling`` - if only an atom-number limit is
         available, derive the minimum number of traps needed to accommodate that
         many atoms at the device's maximum filling ratio.
-    3. Fallback – return ``200`` when neither property is set.
+    3. Fallback - return ``200`` when neither property is set.
 
     Args:
         device (Device): The quantum device whose constraints are inspected.
@@ -176,7 +178,6 @@ def _number_of_traps_from_device(device: qoolqit.Device) -> int:
     Returns:
         int: The number of traps to allocate for the embedding.
     """
-
     if device._device.max_layout_traps:
         return device._device.max_layout_traps
 
@@ -220,7 +221,7 @@ def embed_for_device(
 def embed(
     instance: Instance,
     *,
-    config: Config = Config(),
+    config: Config | None = None,
 ) -> qoolqit.Register:
     """Embed a QUBO instance using the greedy layout-based algorithm.
 
@@ -249,6 +250,7 @@ def embed(
             count is less than ``instance.size`` (i.e. there are not enough
             trap sites for all QUBO variables).
     """
+    config = config or Config()
     logger.debug("embed: instance size=%d, config=%r", instance.size, config)
     if not instance:
         raise ValueError("Cannot embed an empty instance (size=0): nothing to place.")

@@ -1,13 +1,17 @@
+"""Greedy embedding of a QUBO matrix onto a fixed lattice of traps."""
+
 from __future__ import annotations
 
+import contextlib
 import copy
-from collections.abc import Callable
 import typing
-from typing import Any, Optional, cast
+from collections.abc import Callable
+from typing import Any, cast
 
 import torch
 
-from qubosolver import Matrix, matrix, Tensor, tensor
+from qubosolver import Matrix, Tensor, matrix, tensor
+
 from .layout import get_layout
 
 # Optional imports for animation; guarded so library usage stays safe in non-notebook envs.
@@ -21,8 +25,7 @@ except Exception:  # pragma: no cover
 
 @typing.no_type_check
 class Greedy:
-    """
-    Greedy embedding on a fixed lattice (triangular or square).
+    """Greedy embedding on a fixed lattice (triangular or square).
 
     At each step, place one logical node onto one trap to minimize the
     incremental mismatch between the logical QUBO matrix Q and the physical
@@ -33,15 +36,16 @@ class Greedy:
       - post-run animation when params["animation"] or params["draw_steps"] is True
     """
 
-    MAPPING_COORDS_POSITIONS: dict = {}
-    MAPPING_POSITIONS_COORDS: dict = {}
+    def __init__(self) -> None:
+        """Initialize the per-instance coordinate <-> trap index maps."""
+        self.MAPPING_COORDS_POSITIONS: dict = {}
+        self.MAPPING_POSITIONS_COORDS: dict = {}
 
     # ----------------------------
     # Layout utilities
     # ----------------------------
     def get_predefined_coordinates(self, params: dict) -> Tensor:
-        """
-        Build the initial lattice of trap coordinates.
+        """Build the initial lattice of trap coordinates.
 
         Expected `params` keys:
           - "layout": Layout (TRIANGULAR or SQUARE) or "triangular"/"square"
@@ -67,9 +71,9 @@ class Greedy:
     # Precompute mismatch tensor
     # ----------------------------
     def precompute_coefficients(self, Q: Matrix, coordinates: Tensor) -> Tensor:
-        """
-        Precompute Z[i,j,p,q] = | Q[i,j] - U[p,q] | where U[p,q] is the
-        physical interaction between traps p and q (1 / r^6).
+        """Precompute Z[i,j,p,q] = | Q[i,j] - U[p,q] |.
+
+        U[p,q] is the physical interaction between traps p and q (1 / r^6).
         """
         n_nodes = Q.shape[0]
         n_traps = len(coordinates)
@@ -94,10 +98,10 @@ class Greedy:
     # ----------------------------
     # Next node heuristic
     # ----------------------------
-    def get_best(self, Q: torch.Tensor, positioned: set, all_vertices: set) -> Any:
-        """
-        Pick the next logical node: the one with the largest total coupling
-        to the already-positioned set.
+    def get_best(self, Q: torch.Tensor, positioned: set, all_vertices: set) -> int:
+        """Pick the next logical node: the one with the largest total coupling to positioned.
+
+        The coupling is computed against the already-positioned set.
         """
         all_vertices = all_vertices.difference(positioned)
         node_contributes: list[tuple[int, float]] = []
@@ -106,7 +110,7 @@ class Greedy:
             for j in positioned:
                 s += float(Q[u, j].item())
             node_contributes.append((u, s))
-        u = list(sorted(node_contributes, key=lambda x: x[1], reverse=True))[0][0]
+        u = max(node_contributes, key=lambda x: x[1])[0]
         return u
 
     # ----------------------------
@@ -121,9 +125,9 @@ class Greedy:
         all_traps: set,
         used_traps: set,
         return_candidates: bool = False,
-    ) -> tuple[Any, Any, Any] | tuple[Any, Any, Any, list[tuple[int, float]]]:
-        """
-        Evaluate all available traps p for node u and pick the one that minimizes:
+    ) -> tuple[Any, Any, Any, list[tuple[int, float]]]:
+        """Evaluate all available traps p for node u and pick the one that minimizes s(p).
+
             s(p) = sum_{j in positioned} Z[u, j, p, trap(j)].
 
         Returns (choice_p, choice_coordinates, min_val)
@@ -145,16 +149,26 @@ class Greedy:
                 q = self.MAPPING_COORDS_POSITIONS[positioned_coords[j]]
                 s += Z[i, j, p, q].item()
 
-            candidates.append((p, float(s)))
+            if return_candidates:
+                candidates.append((p, float(s)))
 
             if s < min_val:
                 min_val = float(s)
                 choice_coordinates = tuple(self.MAPPING_POSITIONS_COORDS[p])
                 choice_p = p
 
-        if return_candidates:  # pragma: no cover
-            return choice_p, choice_coordinates, min_val, candidates
-        return choice_p, choice_coordinates, min_val
+        return choice_p, choice_coordinates, min_val, candidates
+
+    @staticmethod
+    def _emit_step(
+        on_step: Callable[[dict[str, Any]], None] | None,
+        **snapshot: Any,  # noqa: ANN401 (heterogeneous snapshot payload forwarded verbatim)
+    ) -> None:  # pragma: no cover
+        """Forward a state snapshot to `on_step`, never letting viz crash the solver."""
+        if on_step is None:
+            return
+        with contextlib.suppress(Exception):
+            on_step(snapshot)
 
     # ----------------------------
     # Main greedy pass for one start node
@@ -167,12 +181,13 @@ class Greedy:
         v: int,
         results: dict,
         params: dict,
-        on_step: Optional[Callable[[dict[str, Any]], None]] = None,
+        on_step: Callable[[dict[str, Any]], None] | None = None,
         max_radial_distance: float = torch.inf,
     ) -> dict:
-        """
-        Greedy loop starting from node v. If `on_step` is provided, emit a
-        state snapshot after each placement (and an initial snapshot).
+        """Greedy loop starting from node v.
+
+        If `on_step` is provided, emit a state snapshot after each placement (and an initial
+        snapshot).
         """
         nodes = list(range(Q.shape[0]))
 
@@ -202,59 +217,35 @@ class Greedy:
         total_mismatch = 0.0
 
         # initial snapshot (optional)
-        if on_step is not None:  # pragma: no cover
-            try:
-                on_step(
-                    {
-                        "step": step_id,
-                        "picked_node": int(v),
-                        "picked_trap": int(self.MAPPING_COORDS_POSITIONS.get(init_coord, -1)),
-                        "placed_nodes": list(positioned),
-                        "used_traps": list(used_traps),
-                        "inc_mismatch": 0.0,
-                        "total_mismatch": 0.0,
-                        "per_trap_candidates": [],
-                        "positioned_coords": positioned_coords.copy(),
-                        "trap_of": _trap_of_from_coords(),
-                    }
-                )
-            except Exception:
-                pass  # nosec B110  # never let viz crash the solver
+        self._emit_step(
+            on_step,
+            step=step_id,
+            picked_node=int(v),
+            picked_trap=int(self.MAPPING_COORDS_POSITIONS.get(init_coord, -1)),
+            placed_nodes=list(positioned),
+            used_traps=list(used_traps),
+            inc_mismatch=0.0,
+            total_mismatch=0.0,
+            per_trap_candidates=[],
+            positioned_coords=positioned_coords.copy(),
+            trap_of=_trap_of_from_coords(),
+        )
 
         while len(positioned) < len(nodes):
-
             u = self.get_best(Q, positioned, copy.deepcopy(vertices))
 
             # If visualization is enabled, ask for candidates too
             want_candidates = bool(params.get("draw_steps", False) or (on_step is not None))
-            if want_candidates:  # pragma: no cover
-                res4 = self.optimize_position(
-                    Z=Z,
-                    u=u,
-                    positioned=positioned,
-                    positioned_coords=positioned_coords,
-                    all_traps=copy.deepcopy(all_traps),
-                    used_traps=used_traps,
-                    return_candidates=True,
-                )
-                # Help mypy: explicitly cast 4-tuple
-                _, u_coordinates, _, candidates = typing.cast(
-                    tuple[Any, Any, Any, list[tuple[int, float]]], res4
-                )
-                candidates.sort(key=lambda t: t[1])  # ascending by mismatch
-            else:
-                res3 = self.optimize_position(
-                    Z=Z,
-                    u=u,
-                    positioned=positioned,
-                    positioned_coords=positioned_coords,
-                    all_traps=copy.deepcopy(all_traps),
-                    used_traps=used_traps,
-                    return_candidates=False,
-                )
-                # Help mypy: explicitly cast 3-tuple
-                _, u_coordinates, _ = typing.cast(tuple[Any, Any, Any], res3)
-                candidates = []
+            _, u_coordinates, _, candidates = self.optimize_position(
+                Z=Z,
+                u=u,
+                positioned=positioned,
+                positioned_coords=positioned_coords,
+                all_traps=copy.deepcopy(all_traps),
+                used_traps=used_traps,
+                return_candidates=want_candidates,
+            )
+            candidates.sort(key=lambda t: t[1])  # ascending by mismatch
 
             distance = torch.tensor(u_coordinates).norm().item()
 
@@ -270,24 +261,19 @@ class Greedy:
                 used_traps.add(self.MAPPING_COORDS_POSITIONS[u_coordinates])
                 n_extra_traps -= 1
                 # snapshot of the skip (optional)
-                if on_step is not None:  # pragma: no cover
-                    try:
-                        on_step(
-                            {
-                                "step": step_id,
-                                "picked_node": int(u),
-                                "picked_trap": int(self.MAPPING_COORDS_POSITIONS[u_coordinates]),
-                                "placed_nodes": list(positioned),
-                                "used_traps": list(used_traps),
-                                "inc_mismatch": 0.0,
-                                "total_mismatch": float(total_mismatch),
-                                "per_trap_candidates": candidates,
-                                "positioned_coords": positioned_coords.copy(),
-                                "trap_of": _trap_of_from_coords(),
-                            }
-                        )
-                    except Exception:
-                        pass  # nosec B110  # never let viz crash the solver
+                self._emit_step(
+                    on_step,
+                    step=step_id,
+                    picked_node=int(u),
+                    picked_trap=int(self.MAPPING_COORDS_POSITIONS[u_coordinates]),
+                    placed_nodes=list(positioned),
+                    used_traps=list(used_traps),
+                    inc_mismatch=0.0,
+                    total_mismatch=float(total_mismatch),
+                    per_trap_candidates=candidates,
+                    positioned_coords=positioned_coords.copy(),
+                    trap_of=_trap_of_from_coords(),
+                )
                 continue
 
             # commit placement
@@ -309,24 +295,19 @@ class Greedy:
             step_id += 1
 
             # emit snapshot
-            if on_step is not None:  # pragma: no cover
-                try:
-                    on_step(
-                        {
-                            "step": step_id,
-                            "picked_node": int(u),
-                            "picked_trap": int(self.MAPPING_COORDS_POSITIONS[u_coordinates]),
-                            "placed_nodes": list(positioned),
-                            "used_traps": list(used_traps),
-                            "inc_mismatch": float(inc_val),
-                            "total_mismatch": float(total_mismatch),
-                            "per_trap_candidates": candidates,
-                            "positioned_coords": positioned_coords.copy(),
-                            "trap_of": _trap_of_from_coords(),
-                        }
-                    )
-                except Exception:
-                    pass  # nosec B110  # never let viz crash the solver
+            self._emit_step(
+                on_step,
+                step=step_id,
+                picked_node=int(u),
+                picked_trap=int(self.MAPPING_COORDS_POSITIONS[u_coordinates]),
+                placed_nodes=list(positioned),
+                used_traps=list(used_traps),
+                inc_mismatch=float(inc_val),
+                total_mismatch=float(total_mismatch),
+                per_trap_candidates=candidates,
+                positioned_coords=positioned_coords.copy(),
+                trap_of=_trap_of_from_coords(),
+            )
 
         # finalize coordinates tensor
         final_coords = torch.zeros((Q.shape[0], 2), dtype=torch.float32)
@@ -340,11 +321,10 @@ class Greedy:
         used_traps.clear()
 
         # compute final total distance (as in original code)
-        diff = 0.0
-        for i in range(Q.shape[0]):
-            for j in range(i + 1, Q.shape[0]):
-                uij = 1 / torch.norm(final_coords[i] - final_coords[j]) ** 6
-                diff += abs(Q[i, j] - uij)
+        n_qubits = Q.shape[0]
+        iu, ju = torch.triu_indices(n_qubits, n_qubits, offset=1)
+        uij = 1 / torch.cdist(final_coords, final_coords)[iu, ju] ** 6
+        diff = torch.abs(Q[iu, ju] - uij).sum()
 
         results[v] = {"coords": final_coords, "distance": diff}
         return results
@@ -352,16 +332,16 @@ class Greedy:
     # ----------------------------
     # Internal: post-run animation (only if animation=True)
     # ----------------------------
-    def _render_animation(  # pragma: no cover
+    def _render_animation(  # pragma: no cover  # noqa: C901 (viz setup, not worth splitting)
         self,
         frames: list[dict[str, Any]],
-        all_coords_np: "np.ndarray",
+        all_coords_np: np.ndarray,
         spacing: float,
         layout_name: str,
         top_k: int = 5,
-        save_path: Optional[str] = None,
+        save_path: str | None = None,
         fps: float = 1.25,
-    ) -> Optional[Any]:
+    ) -> Any | None:  # noqa: ANN401 (matplotlib animation type is an optional, lazily-imported dep)
         """Post-run animation (traps = gray, qubits = green). No persistent rings."""
         if not _VIZ_OK:
             return None  # numpy not available
@@ -496,7 +476,7 @@ class Greedy:
             # Update placed points + labels
             trap_of = st.get("trap_of", {})
             pos = []
-            for q_idx, trap_idx in trap_of.items():
+            for _, trap_idx in trap_of.items():
                 if trap_idx is None or trap_idx < 0 or trap_idx >= len(all_coords_np):
                     continue
                 pos.append(all_coords_np[trap_idx])
@@ -525,7 +505,7 @@ class Greedy:
             # Update info panel
             val_step.set_text(f"{st.get('step', 0)}")
             val_last.set_text(
-                f"qubit {st.get('picked_node', '–')} → trap {st.get('picked_trap', '–')}"
+                f"qubit {st.get('picked_node', '-')} → trap {st.get('picked_trap', '-')}"
             )
             val_inc.set_text(f"{st.get('inc_mismatch', 0.0):.4f}")
             val_total.set_text(f"{st.get('total_mismatch', 0.0):.4f}")
@@ -620,10 +600,9 @@ class Greedy:
         *,
         max_min_dist_ratio: float,
         params: dict,
-        on_step: Optional[Callable[[dict[str, Any]], None]] = None,
-    ) -> Any:
-        """
-        Run greedy from each start node and keep the best result.
+        on_step: Callable[[dict[str, Any]], None] | None = None,
+    ) -> tuple[Any, torch.Tensor]:
+        """Run greedy from each start node and keep the best result.
 
         Instrumentation rules:
           - If params['animation'] or params['draw_steps'] is True, we collect steps and
@@ -659,10 +638,8 @@ class Greedy:
 
             def _collector(state: dict[str, Any]) -> None:
                 if on_step is not None:
-                    try:
+                    with contextlib.suppress(Exception):  # never let viz crash
                         on_step(state)
-                    except Exception:
-                        pass  # nosec B110  # never let viz crash the solver
                 if anim_flag:
                     try:
                         frames.append(state.copy())
@@ -702,7 +679,7 @@ class Greedy:
                 spacing=float(params["spacing"]),
                 layout_name=str(params["layout"]),
                 top_k=int(params.get("animation_top_k", 5)),
-                save_path=params.get("animation_save_path", None),
+                save_path=params.get("animation_save_path"),
                 fps=0.5,
             )
 

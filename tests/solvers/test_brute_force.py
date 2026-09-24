@@ -6,7 +6,7 @@ import pytest
 import pytest_check as check
 import torch
 
-from qubosolver import Instance, solving, bitstrings, matrix, torch_rng, Candidate
+from qubosolver import Candidate, Instance, bitstrings, matrix, solving, torch_rng
 
 
 def _reference_sorted(instance: Instance) -> list[Candidate]:

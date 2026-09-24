@@ -1,29 +1,30 @@
 from __future__ import annotations
 
 import random
+from copy import deepcopy
+from typing import Literal
+
 import numpy as np
 import pytest
 import pytest_check as check
 import torch
-from copy import deepcopy
-from typing import Literal
-
 from qoolqit import DigitalAnalogDevice
+
 from qubosolver import (
+    ClassicalSolvingConfig,
+    DriveShapingConfig,
+    EmbeddingConfig,
     Instance,
+    LocalEmulator,
+    QuantumSolvingConfig,
     Solution,
-    transforms,
     Solver,
-    matrix,
+    SolverConfig,
     bitstring,
     bitstrings,
+    matrix,
+    transforms,
     vector,
-    LocalEmulator,
-    SolverConfig,
-    QuantumSolvingConfig,
-    ClassicalSolvingConfig,
-    EmbeddingConfig,
-    DriveShapingConfig,
 )
 from qubosolver.utils import analysis
 
@@ -105,10 +106,10 @@ def test_apply_rule() -> None:
 def test_quantum_preprocessing_falls_back_to_zeroing_when_bitflip_is_not_enough(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """
-    A non-bipartisable QUBO: bit-flip preprocessing cannot remove every
-    negative off-diagonal coefficient, so the quantum solver must zero the
-    rest out automatically (and log it) before embedding.
+    """A non-bipartisable QUBO where bit-flip preprocessing alone is not enough.
+
+    Bit-flip preprocessing cannot remove every negative off-diagonal coefficient, so the
+    quantum solver must zero the rest out automatically (and log it) before embedding.
     """
     Q = matrix.tensor(
         [
@@ -145,9 +146,7 @@ def test_quantum_preprocessing_falls_back_to_zeroing_when_bitflip_is_not_enough(
 
 
 def test_quantum_preprocessing(qubo_instance_for_preprocessing: Instance) -> None:
-    """
-    Test instance using quantum with preprocessing.
-    """
+    """Test instance using quantum with preprocessing."""
     quantum_preprocessing_config = SolverConfig(
         solving=QuantumSolvingConfig(), preprocessing=True, postprocessing=False
     )
@@ -157,9 +156,7 @@ def test_quantum_preprocessing(qubo_instance_for_preprocessing: Instance) -> Non
 
 
 def test_quantum_postprocessing(qubo_instance_for_preprocessing: Instance) -> None:
-    """
-    Test instance using quantum with postprocessing.
-    """
+    """Test instance using quantum with postprocessing."""
     quantum_preprocessing_config = SolverConfig(
         solving=QuantumSolvingConfig(), preprocessing=False, postprocessing=True
     )
@@ -171,9 +168,7 @@ def test_quantum_postprocessing(qubo_instance_for_preprocessing: Instance) -> No
 def test_quantum_prepostprocessing(
     qubo_instance_for_preprocessing: Instance,
 ) -> None:
-    """
-    Test instance using quantum with both preprocessing and postprocessing.
-    """
+    """Test instance using quantum with both preprocessing and postprocessing."""
     quantum_preprocessing_config = SolverConfig(
         solving=QuantumSolvingConfig(), preprocessing=True, postprocessing=True
     )
@@ -183,9 +178,7 @@ def test_quantum_prepostprocessing(
 
 
 def test_classical_preprocessing(qubo_instance_for_preprocessing: Instance) -> None:
-    """
-    Test instance using classical with preprocessing.
-    """
+    """Test instance using classical with preprocessing."""
     quantum_preprocessing_config = SolverConfig(
         solving=ClassicalSolvingConfig(), preprocessing=True, postprocessing=False
     )
@@ -197,9 +190,7 @@ def test_classical_preprocessing(qubo_instance_for_preprocessing: Instance) -> N
 def test_classical_postprocessing(
     qubo_instance_for_preprocessing: Instance,
 ) -> None:
-    """
-    Test instance using classical with postprocessing.
-    """
+    """Test instance using classical with postprocessing."""
     quantum_preprocessing_config = SolverConfig(
         solving=ClassicalSolvingConfig(), preprocessing=False, postprocessing=True
     )
@@ -211,9 +202,7 @@ def test_classical_postprocessing(
 def test_classical_prepostprocessing(
     qubo_instance_for_preprocessing: Instance,
 ) -> None:
-    """
-    Test instance using classical with preprocessing and postprocessing.
-    """
+    """Test instance using classical with preprocessing and postprocessing."""
     quantum_preprocessing_config = SolverConfig(
         solving=ClassicalSolvingConfig(), preprocessing=True, postprocessing=True
     )

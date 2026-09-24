@@ -4,8 +4,8 @@ import random
 
 import numpy as np
 import pytest
-import torch
 import pytest_check as check
+import torch
 
 from qubosolver import bitstring, bitstrings, torch_rng
 

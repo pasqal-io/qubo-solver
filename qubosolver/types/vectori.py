@@ -19,8 +19,11 @@ See also [`qubosolver.vector`][qubosolver.vector] for float vectors.
 
 from __future__ import annotations
 
+from dataclasses import field
 from typing import Any
+
 import torch
+
 from . import linalg, vector
 from .linalg import Vectori
 
@@ -35,7 +38,10 @@ def device() -> torch.device:
     return linalg.device()
 
 
-def zeros(n: int, *, device: torch.device = device()) -> Vectori:
+_device = device  # alias so shadowed `device` params can still call the module function
+
+
+def zeros(n: int, *, device: torch.device | None = None) -> Vectori:
     """Creates a zero-filled integer vector of length *n*.
 
     Args:
@@ -45,10 +51,16 @@ def zeros(n: int, *, device: torch.device = device()) -> Vectori:
     Returns:
         A 1-D ``int64`` tensor of zeros.
     """
+    device = device or _device()
     return vector.zeros(n, dtype=dtype(), device=device)
 
 
-def tensor(data: Any, *, device: torch.device = device(), **kwargs: Any) -> Vectori:
+def tensor(
+    data: Any,  # noqa: ANN401 (array-like input forwarded to torch.tensor)
+    *,
+    device: torch.device | None = None,
+    **kwargs: Any,  # noqa: ANN401 (forwarded to torch.tensor)
+) -> Vectori:
     """Creates an integer vector tensor from the given data.
 
     Args:
@@ -59,18 +71,18 @@ def tensor(data: Any, *, device: torch.device = device(), **kwargs: Any) -> Vect
     Returns:
         A 1-D ``int64`` tensor.
     """
+    device = device or _device()
     return vector.tensor(data, dtype=dtype(), device=device, **kwargs)
 
 
-def as_tensor(data: Any) -> Vectori:
-    """Convenience wrapper for `torch.as_tensor` that converts data to an integer
-    vector tensor, avoiding a copy when possible.
+def as_tensor(data: Any) -> Vectori:  # noqa: ANN401 (array-like input forwarded to torch.as_tensor)
+    """Convenience wrapper for `torch.as_tensor` that converts data to an integer vector tensor.
 
-    If *data* is already a tensor with the right dtype and on the right device, it is
-    returned as-is, sharing the same underlying memory. A numpy array is also shared
-    rather than copied if it already has ``int64`` dtype and the global device is
-    ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a
-    copy). Lists, tuples, and other array-like inputs are always copied.
+    Avoids a copy when possible. If *data* is already a tensor with the right dtype and on
+    the right device, it is returned as-is, sharing the same underlying memory. A numpy
+    array is also shared rather than copied if it already has ``int64`` dtype and the
+    global device is ``cpu`` (numpy arrays only live on CPU, so any other dtype or device
+    forces a copy). Lists, tuples, and other array-like inputs are always copied.
 
     Args:
         data: Input data (tensor, numpy array, list, tuple, etc.).
@@ -79,3 +91,17 @@ def as_tensor(data: Any) -> Vectori:
         A 1-D ``int64`` tensor on the global device.
     """
     return torch.as_tensor(data, dtype=dtype(), device=device())
+
+
+def zeros_field(n: int, *, device: torch.device | None = None) -> Vectori:
+    """Creates a dataclass field defaulting to a zero-filled integer vector.
+
+    Args:
+        n: Length of the vector.
+        device: Torch device for the tensor.
+
+    Returns:
+        A dataclass field (typed as `Vectori` for the enclosing class) whose
+        `default_factory` builds a fresh zero tensor per instance.
+    """
+    return field(default_factory=lambda: zeros(n, device=device))

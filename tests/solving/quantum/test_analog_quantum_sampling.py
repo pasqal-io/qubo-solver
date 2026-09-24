@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 import qoolqit
-from qubosolver import matrix, tensor, Instance, solving, embedding
+
+from qubosolver import Instance, embedding, matrix, solving, tensor
 
 
 def test_too_large_register() -> None:

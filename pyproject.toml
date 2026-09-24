@@ -68,7 +68,6 @@ dev = [
   "pytest-rerunfailures",
   "nbconvert",
   "ipykernel",
-  "black",
   "ruff",
   "jupyter",
   "ipython",
@@ -165,41 +164,31 @@ exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:", "p
 line-length = 100
 extend-exclude = ["docs/tutorials/retired"]
 
-[lint]
-extend-ignore = ["F841"]
-select = ["E", "F", "I", "Q"]
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "Q", # flake8-quotes
+    "UP", # pyupgrade
+    "B", # flake8-bugbear
+    "SIM", # flake8-simplify
+    "I", # isort
+    "ANN", # flake8-annotations
+    "D", # pydocstyle
+    "C90", # mccabe
+    "RUF", # ruff-specific rules
+    "PYI", # flake8-pyi
+]
+isort = { required-imports = ["from __future__ import annotations"] }
+mccabe = { max-complexity = 10 }
+flake8-quotes = { docstring-quotes = "double" }
+pydocstyle = { convention = "google" }
 
-[lint.isort]
-required-imports = ["from __future__ import annotations"]
-
-[lint.per-file-ignores]
-"__init__.py" = ["F401", "F403"]
-
-[lint.mccabe]
-max-complexity = 15
-
-[lint.flake8-quotes]
-docstring-quotes = "double"
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D100", "D101", "D102", "D103", "D104", "D105", "D107"]
 
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "examples"]
-
-[tool.black]
-line-length = 100
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
 
 [tool.mypy]
 python_version = "3.14"

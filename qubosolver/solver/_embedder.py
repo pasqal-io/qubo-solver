@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 import warnings
+from abc import ABC, abstractmethod
 
 import torch
 from qoolqit import Register
 
-from qubosolver.types import Instance, protocols
 from qubosolver import embedding
+from qubosolver.types import Instance, protocols
+
 from .config import QuantumSolvingConfig
 
 warnings.filterwarnings("ignore", module="pulser")
@@ -24,15 +25,16 @@ class _BaseEmbedder(ABC):
 
     def __init__(
         self, instance: Instance, config: QuantumSolvingConfig, backend: protocols.Backend
-    ):
-        """
+    ) -> None:
+        """Initialize the embedder.
+
         Args:
-            instance: The QUBO problem to embed.
-            config: Solver configuration, including embedding parameters
-                (via ``config.embedding``) and device constraints
-                (via ``config.device``).
-            backend: Execution backend, passed through for embedders that
-                need backend-specific information during placement.
+        instance: The QUBO problem to embed.
+        config: Solver configuration, including embedding parameters
+            (via ``config.embedding``) and device constraints
+            (via ``config.device``).
+        backend: Execution backend, passed through for embedders that
+            need backend-specific information during placement.
         """
         self.instance: Instance = instance
         self.config: QuantumSolvingConfig = config
@@ -109,7 +111,7 @@ class GreedyEmbedder(_BaseEmbedder):
 
         At each step the algorithm selects the logical node and the available
         trap that minimise the incremental mismatch between the QUBO edge
-        weights and the physical interaction matrix (∝ 1/‖rᵢ − rⱼ‖⁶). The
+        weights and the physical interaction matrix (∝ 1/‖rᵢ - rⱼ‖⁶). The
         algorithm operates entirely in adimensional units, so its output
         coordinates require no further normalization.
 

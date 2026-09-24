@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from qubosolver.types import protocols
-
 from typing import TYPE_CHECKING
+
+from qubosolver.types import protocols
 
 if TYPE_CHECKING:
     from typing import Self
 
 import qoolqit
-from qoolqit.execution import job
 from pulser.backend import Results
+from qoolqit.execution import job
 
 # This "test" is intended to be run with mypy, not mypy
 # We use # type: ignore[...] in combination with the mypy flag "--warn-unused-ignores"

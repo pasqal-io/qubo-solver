@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-import torch
-
 import qoolqit
+import torch
 
 from qubosolver import drive_shaping, solving
 from qubosolver.types import Instance, Solution, protocols
+
 from .config import QuantumSolvingConfig
 
 
@@ -28,7 +28,7 @@ class _BaseDriveShaper(ABC):
 
     def __init__(
         self, instance: Instance, config: QuantumSolvingConfig, backend: protocols.Backend
-    ):
+    ) -> None:
         """Initialize the drive shaping module with a QUBO instance.
 
         Args:
@@ -169,7 +169,7 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
         instance: Instance,
         config: QuantumSolvingConfig,
         backend: protocols.Backend,
-    ):
+    ) -> None:
         """Instantiate a `BayesianSearchDriveShaper`.
 
         Args:
@@ -198,7 +198,6 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
             associated QUBO solution containing bitstrings, costs, and
             probabilities from the final simulation run.
         """
-
         config = solving.drive_bayesian_search.Config._from_drive_shaping_config(
             self.config.drive_shaping
         )

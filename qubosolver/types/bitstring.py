@@ -14,8 +14,11 @@ Typical usage:
 
 from __future__ import annotations
 
+from dataclasses import field
 from typing import Any
+
 import torch
+
 from . import bitstrings, vector
 from .linalg import Bitstring
 from .random import torch_rng
@@ -31,7 +34,10 @@ def device() -> torch.device:
     return bitstrings.device()
 
 
-def zeros(n: int, *, device: torch.device = device()) -> Bitstring:
+_device = device  # alias so shadowed `device` params can still call the module function
+
+
+def zeros(n: int, *, device: torch.device | None = None) -> Bitstring:
     """Creates a zero-filled bitstring of length *n*.
 
     Args:
@@ -41,10 +47,16 @@ def zeros(n: int, *, device: torch.device = device()) -> Bitstring:
     Returns:
         A 1-D ``int8`` tensor of zeros.
     """
+    device = device or _device()
     return vector.zeros(n, dtype=dtype(), device=device)
 
 
-def tensor(data: Any, *, device: torch.device = device(), **kwargs: Any) -> Bitstring:
+def tensor(
+    data: Any,  # noqa: ANN401 (array-like input forwarded to torch.tensor)
+    *,
+    device: torch.device | None = None,
+    **kwargs: Any,  # noqa: ANN401 (forwarded to torch.tensor)
+) -> Bitstring:
     """Creates a bitstring tensor from the given data.
 
     Args:
@@ -55,10 +67,11 @@ def tensor(data: Any, *, device: torch.device = device(), **kwargs: Any) -> Bits
     Returns:
         A 1-D ``int8`` tensor.
     """
+    device = device or _device()
     return vector.tensor(data, dtype=dtype(), device=device, **kwargs)
 
 
-def from_string(s: str, *, device: torch.device = device()) -> Bitstring:
+def from_string(s: str, *, device: torch.device | None = None) -> Bitstring:
     """Creates a bitstring tensor from a string of '0' and '1' characters.
 
     Args:
@@ -68,10 +81,16 @@ def from_string(s: str, *, device: torch.device = device()) -> Bitstring:
     Returns:
         A 1-D ``int8`` tensor.
     """
+    device = device or _device()
     return bitstrings.from_strings([s], device=device)[0]
 
 
-def round(data: Any, *, atol: float = 1e-6, device: torch.device = device()) -> Bitstring:
+def round(
+    data: Any,  # noqa: ANN401 (array-like input forwarded to torch.as_tensor)
+    *,
+    atol: float = 1e-6,
+    device: torch.device | None = None,
+) -> Bitstring:
     """Rounds near-integral float values to a bitstring tensor.
 
     Values are compared in ``float64`` regardless of the globally configured
@@ -91,6 +110,7 @@ def round(data: Any, *, atol: float = 1e-6, device: torch.device = device()) -> 
     Raises:
         ValueError: If any value is further than *atol* from both 0 and 1.
     """
+    device = device or _device()
     values = torch.as_tensor(data, dtype=torch.float64)
     return bitstrings.round(values.unsqueeze(0), atol=atol, device=device)[0]
 
@@ -108,7 +128,7 @@ def to_string(bitstring: Bitstring) -> str:
 
 
 def rand(
-    n: int, *, device: torch.device = device(), rng: torch.Generator = torch_rng()
+    n: int, *, device: torch.device | None = None, rng: torch.Generator | None = None
 ) -> Bitstring:
     """Creates a bitstring of length *n* with independent uniformly random bits.
 
@@ -120,17 +140,18 @@ def rand(
     Returns:
         A 1-D ``int8`` tensor of 0s and 1s.
     """
+    device = device or _device()
+    rng = rng or torch_rng()
     return torch.randint(0, 2, (n,), generator=rng, device=device, dtype=dtype())
 
 
-def as_tensor(data: Any) -> Bitstring:
-    """Convenience wrapper for `torch.as_tensor` that converts data to a bitstring
-    tensor, avoiding a copy when possible.
+def as_tensor(data: Any) -> Bitstring:  # noqa: ANN401 (array-like input forwarded to torch.as_tensor)
+    """Convenience wrapper for `torch.as_tensor` that converts data to a bitstring tensor.
 
-    If *data* is already a tensor with the right dtype and on the right device, it is
-    returned as-is, sharing the same underlying memory. A numpy array is also shared
-    rather than copied if it already has ``int8`` dtype and the global device is
-    ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a
+    Avoids a copy when possible. If *data* is already a tensor with the right dtype and on
+    the right device, it is returned as-is, sharing the same underlying memory. A numpy
+    array is also shared rather than copied if it already has ``int8`` dtype and the global
+    device is ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a
     copy). Lists, tuples, and other array-like inputs are always copied.
 
     Args:
@@ -140,3 +161,17 @@ def as_tensor(data: Any) -> Bitstring:
         A 1-D ``int8`` tensor on the global device.
     """
     return torch.as_tensor(data, dtype=dtype(), device=device())
+
+
+def zeros_field(n: int, *, device: torch.device | None = None) -> Bitstring:
+    """Creates a dataclass field defaulting to a zero-filled bitstring.
+
+    Args:
+        n: Length of the bitstring.
+        device: Torch device for the tensor.
+
+    Returns:
+        A dataclass field (typed as `Bitstring` for the enclosing class) whose
+        `default_factory` builds a fresh zero tensor per instance.
+    """
+    return field(default_factory=lambda: zeros(n, device=device))

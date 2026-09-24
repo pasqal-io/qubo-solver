@@ -25,19 +25,25 @@ import qoolqit
 
 # Private utility to set seed.
 from qubosolver.utils._random import manual_seed
+
 manual_seed(958)
 
-instance = Instance(matrix.tensor([
-    [-1, 1, 2, 1],
-    [ 1,-3, 3, 0],
-    [ 2, 3,-1, 5],
-    [ 1, 0, 5,-2],
-    ]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [-1, 1, 2, 1],
+            [1, -3, 3, 0],
+            [2, 3, -1, 5],
+            [1, 0, 5, -2],
+        ]
+    )
+)
 register = embedding.blade.embed(instance)
 device = qoolqit.AnalogDeviceWithDMM()
 
 drive = drive_shaping.proportional_diagonal.build_drive(
-    instance, register, device=device, dmm=True, kappa=0.25)
+    instance, register, device=device, dmm=True, kappa=0.25
+)
 print(drive)
 ```
 Plot the resulting drive:
@@ -73,19 +79,25 @@ import qoolqit
 
 # Private utility to set seed.
 from qubosolver.utils._random import manual_seed
+
 manual_seed(958)
 
-instance = Instance(matrix.tensor([
-    [-1, 1, 2, 1],
-    [ 1,-3, 3, 0],
-    [ 2, 3,-1, 5],
-    [ 1, 0, 5,-2],
-    ]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [-1, 1, 2, 1],
+            [1, -3, 3, 0],
+            [2, 3, -1, 5],
+            [1, 0, 5, -2],
+        ]
+    )
+)
 register = embedding.blade.embed(instance)
 device = qoolqit.AnalogDeviceWithDMM()
 
 drive = drive_shaping.local_energy_scale.build_drive(
-    instance, register, device=device, dmm=True, kappa=0.25)
+    instance, register, device=device, dmm=True, kappa=0.25
+)
 print(drive)
 ```
 Plot the resulting drive:
@@ -125,14 +137,19 @@ import qoolqit
 
 # Private utility to set seed.
 from qubosolver.utils._random import manual_seed
+
 manual_seed(958)
 
-instance = Instance(matrix.tensor([
-    [-1, 1, 2, 1],
-    [ 1,-3, 3, 0],
-    [ 2, 3,-1, 5],
-    [ 1, 0, 5,-2],
-    ]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [-1, 1, 2, 1],
+            [1, -3, 3, 0],
+            [2, 3, -1, 5],
+            [1, 0, 5, -2],
+        ]
+    )
+)
 register = embedding.blade.embed(instance)
 device = qoolqit.AnalogDeviceWithDMM()
 backend = LocalEmulator()
@@ -140,7 +157,8 @@ backend = LocalEmulator()
 config = solving.drive_bayesian_search.Config(n_evaluations=11)
 
 solution, drive = solving.drive_bayesian_search.solve(
-    instance, register, backend=backend, device=device, dmm=True, config=config)
+    instance, register, backend=backend, device=device, dmm=True, config=config
+)
 print(analysis.to_dataframe([solution]))
 ```
 Plot the resulting drive:
@@ -199,17 +217,17 @@ from dataclasses import asdict
 import pprint
 
 drive_shaping_config = DriveShapingConfig(
-    algorithm = "local_energy_scale",
+    algorithm="local_energy_scale",
     # algorithm = "proportional_diagonal",
     # algorithm = "bayesian_search",
-    dmm = True,
-    local_energy_scale_kappa = 0.3,
+    dmm=True,
+    local_energy_scale_kappa=0.3,
 )
 quantum_config = QuantumSolvingConfig(
-    drive_shaping = drive_shaping_config,
+    drive_shaping=drive_shaping_config,
 )
 solver_config = SolverConfig(
-    solving = quantum_config,
+    solving=quantum_config,
 )
 print(pprint.pformat(asdict(solver_config.solving.drive_shaping)))
 ```

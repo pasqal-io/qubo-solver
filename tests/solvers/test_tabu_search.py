@@ -4,7 +4,6 @@ import copy
 
 import pytest
 import pytest_check as check
-
 import torch
 
 from qubosolver import Instance, analysis, bitstrings, matrix, solving, vectori
@@ -38,10 +37,11 @@ def test_tabu_search_costs_match_bitstrings() -> None:
 
 
 def test_tabu_search_stays_consistent_across_refresh_boundary() -> None:
-    """The incrementally tracked `QX`/`f_current` are periodically recomputed
-    exactly (see `_REFRESH_EVERY` in `tabu_search.py`) to bound rounding
-    drift; run past several refreshes and check the result is still fully
-    internally consistent."""
+    """The incrementally tracked `QX`/`f_current` are periodically recomputed exactly.
+
+    See `_REFRESH_EVERY` in `tabu_search.py`; this bounds rounding drift. Run past several
+    refreshes and check the result is still fully internally consistent.
+    """
     start = bitstrings.zeros(3, instance.size)
 
     solution = solving.tabu_search.solve(instance, starts=start, max_iter=300)
@@ -80,8 +80,10 @@ def test_tabu_search_is_deterministic_given_same_start() -> None:
 
 
 def test_int_starts_generates_that_many_random_runs() -> None:
-    """Passing an int for `starts` must generate that many uniformly random
-    starting bitstrings, one independent run each."""
+    """Passing an int for `starts` must generate that many uniformly random bitstrings.
+
+    Each generated bitstring is one independent run.
+    """
     n_starts = 5
 
     solution = solving.tabu_search.solve(instance, starts=n_starts, max_iter=50)
@@ -193,8 +195,8 @@ def test_tabu_search_still_finds_optimum_when_all_moves_become_tabu() -> None:
             [
                 [-0.9875382781028748, 0.628231406211853, -0.10774004459381104, 1.2844055891036987],
                 [0.628231406211853, -0.45010146498680115, 0.5505266189575195, -0.4758329391479492],
-                [-0.10774004459381104, 0.5505266189575195, 0.4487120509147644, -0.22096946835517883],
-                [1.2844055891036987, -0.4758329391479492, -0.22096946835517883, -0.5388421416282654],
+                [-0.10774004459381104, 0.5505266189575195, 0.4487120509147644, -0.22096946835517883],  # noqa: E501
+                [1.2844055891036987, -0.4758329391479492, -0.22096946835517883, -0.5388421416282654],  # noqa: E501
             ]
         )
     )  # fmt: skip

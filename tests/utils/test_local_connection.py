@@ -1,31 +1,29 @@
 from __future__ import annotations
 
-from typing import Callable
-import torch
-
-import pytest
-import pytest_check as check
+from collections.abc import Callable
 
 import pulser
+import pytest
+import pytest_check as check
+import qoolqit
+import torch
 from pulser.backend import EmulationConfig
 from pulser.backend.default_observables import BitStrings
 from pulser.backend.remote import BatchStatus, RemoteResults, RemoteResultsError
 from pulser.backend.remote import JobStatus as PulserJobStatus
 from pulser.backend.results import Results
-
-import qoolqit
-from qoolqit.execution import JobStatus, retrieve_remote_job, get_batch_id
+from qoolqit.execution import JobStatus, get_batch_id, retrieve_remote_job
 
 from qubosolver import (
     Instance,
     RemoteEmulator,
-    drive_shaping,
-    matrix,
-    vector,
     Solution,
-    embedding,
-    solving,
     analysis,
+    drive_shaping,
+    embedding,
+    matrix,
+    solving,
+    vector,
 )
 from qubosolver.utils._local_connection import _QUBIT_LIMIT, LocalConnection
 

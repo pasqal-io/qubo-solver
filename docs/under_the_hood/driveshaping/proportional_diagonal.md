@@ -173,11 +173,13 @@ generation time.
 import torch
 from qubosolver import Instance, SolverConfig, DriveShapingConfig, Solver, drive_shaping
 
-Q = torch.tensor([
-    [-1.0, 0.5, 0.2],
-    [0.5, -2.0, 0.3],
-    [0.2, 0.3, -3.0],
-])
+Q = torch.tensor(
+    [
+        [-1.0, 0.5, 0.2],
+        [0.5, -2.0, 0.3],
+        [0.2, 0.3, -3.0],
+    ]
+)
 
 instance = Instance(Q)
 

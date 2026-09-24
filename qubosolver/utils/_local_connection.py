@@ -53,7 +53,7 @@ class LocalConnection(RemoteConnection):
         wait: bool = False,
         open: bool = False,
         batch_id: str | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401 (accepted for interface compatibility, unused)
     ) -> RemoteResults:
         """Emulate a sequence and store its results as a one-job batch.
 

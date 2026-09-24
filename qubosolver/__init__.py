@@ -1,5 +1,7 @@
-"""QUBO Solver: a library for solving Quadratic Unconstrained Binary Optimization (QUBO) problems using
-classical, quantum, and hybrid algorithms, including on Pasqal neutral-atom QPUs.
+"""QUBO Solver: a library for solving QUBO problems with classical, quantum, and hybrid algorithms.
+
+Solves Quadratic Unconstrained Binary Optimization (QUBO) problems using classical, quantum,
+and hybrid algorithms, including on Pasqal neutral-atom QPUs.
 
 Exposes the core data types ([`Instance`][], [`Solution`][], [`Dataset`][], ...), the
 [`Solver`][] entry point, and the [`transforms`][], [`embedding`][],
@@ -13,93 +15,94 @@ import logging
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
-from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING  # noqa: E402
+from importlib.metadata import version  # noqa: E402
+
+from pulser.sequence import store_package_version_metadata  # noqa: E402
+
+# isort: split
+# qubosolver.types must be imported (and fully initialized) before qubosolver.drive_shaping,
+# qubosolver.solver, etc., since those submodules import names back from the qubosolver
+# package itself (e.g. `from qubosolver import Instance`). Don't let isort/ruff reorder this
+# block alphabetically, or it will reintroduce that circular import.
 from qubosolver.types import (  # noqa: E402
-    # Submodules
-    bitstring,
-    bitstrings,
-    matrix,
-    tensor,
-    vector,
-    vectori,
-    linalg,
-    protocols,
+    AutoLocalEmulatorBackend,
+    AutoRemoteEmulatorBackend,
     # Type Aliases
     Bitstring,
     Bitstrings,
+    Candidate,
+    Dataset,
+    Instance,
+    LocalEmulator,
     Matrix,
+    RemoteEmulator,
+    # Classes
+    Solution,
     Tensor,
     Vector,
     Vectori,
-    # Classes
-    Solution,
-    Candidate,
-    Instance,
-    Dataset,
-    LocalEmulator,
-    RemoteEmulator,
-    AutoLocalEmulatorBackend,
-    AutoRemoteEmulatorBackend,
+    # Submodules
+    bitstring,
+    bitstrings,
+    linalg,
+    matrix,
+    protocols,
+    tensor,
     # Functions
     torch_rng,
+    vector,
+    vectori,
 )
-from qubosolver.utils import extract_qubo, analysis  # noqa: E402
+from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING  # noqa: E402
 
-from importlib.metadata import version  # noqa: E402
-from pulser.sequence import store_package_version_metadata  # noqa: E402
-
-from qubosolver import transforms, drive_shaping, embedding, solving  # noqa: E402
-
+# isort: split
+from qubosolver import drive_shaping, embedding, solving, transforms  # noqa: E402
 from qubosolver.solver import (  # noqa: E402
-    Solver,
-    SolverConfig,
+    ClassicalSolvingConfig,
     DriveShapingConfig,
     EmbeddingConfig,
-    ClassicalSolvingConfig,
     QuantumSolvingConfig,
+    Solver,
+    SolverConfig,
 )
+from qubosolver.utils import analysis, extract_qubo  # noqa: E402
 
 __all__ = [
-    # Submodules
-    "bitstring",
-    "bitstrings",
-    "matrix",
-    "tensor",
-    "vector",
-    "vectori",
-    "linalg",
-    "protocols",
-    "solving",
-    "transforms",
-    "embedding",
-    "drive_shaping",
-    "analysis",
-    # Type Aliases
+    "AutoLocalEmulatorBackend",
+    "AutoRemoteEmulatorBackend",
     "Bitstring",
     "Bitstrings",
+    "Candidate",
+    "ClassicalSolvingConfig",
+    "Dataset",
+    "DriveShapingConfig",
+    "EmbeddingConfig",
+    "Instance",
+    "LocalEmulator",
     "Matrix",
+    "QuantumSolvingConfig",
+    "RemoteEmulator",
+    "Solution",
+    "Solver",
+    "SolverConfig",
     "Tensor",
     "Vector",
     "Vectori",
-    # Classes
-    "Solution",
-    "Candidate",
-    "Instance",
-    "Dataset",
-    "LocalEmulator",
-    "RemoteEmulator",
-    "AutoLocalEmulatorBackend",
-    "AutoRemoteEmulatorBackend",
-    # Functions
-    "torch_rng",
+    "analysis",
+    "bitstring",
+    "bitstrings",
+    "drive_shaping",
+    "embedding",
     "extract_qubo",
-    # Config-based API
-    "Solver",
-    "SolverConfig",
-    "DriveShapingConfig",
-    "EmbeddingConfig",
-    "ClassicalSolvingConfig",
-    "QuantumSolvingConfig",
+    "linalg",
+    "matrix",
+    "protocols",
+    "solving",
+    "tensor",
+    "torch_rng",
+    "transforms",
+    "vector",
+    "vectori",
 ]
 
 __version__ = version("qubo-solver")

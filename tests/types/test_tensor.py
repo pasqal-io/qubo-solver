@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import numpy as np
-import torch
 import pytest_check as check
+import torch
 
-from qubosolver import tensor, linalg
+from qubosolver import linalg, tensor
 
 
 def test_dtype_returns_linalg_dtype() -> None:

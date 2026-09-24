@@ -10,19 +10,19 @@ import torch
 
 from qubosolver import (
     Instance,
-    transforms,
+    bitstring,
     bitstrings,
     matrix,
-    bitstring,
     solving,
+    transforms,
 )
-from qubosolver.utils._costs import quadratic_cost
 from qubosolver.transforms.negative_bitflip import (
     _apply_bitflips,
-    _transform_qubo_with_bitflips,
     _has_negative_offdiagonal,
     _solve_bitflip_preprocessing_glpk,
+    _transform_qubo_with_bitflips,
 )
+from qubosolver.utils._costs import quadratic_cost
 
 
 def bipartisable_negative_qubo() -> tuple[Instance, Instance]:
@@ -286,7 +286,10 @@ def test_apply_rejects_flips_that_increase_negative_weight(
     # goes from 6.0 (no-op) to 7.0 (flipped).
     worse_flips = bitstring.from_string("1100")
 
-    def _fake_solve(*args: Any, **kwargs: Any) -> tuple[Any, float, str]:
+    def _fake_solve(
+        *args: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
+        **kwargs: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
+    ) -> tuple[Any, float, str]:
         return worse_flips, 0.0, "OPTIMAL"
 
     monkeypatch.setattr(
@@ -317,7 +320,10 @@ def test_apply_keeps_flips_that_reduce_negative_weight(
     good_flips = bitstring.from_string("0100")
     expected_matrix, _ = _transform_qubo_with_bitflips(instance.matrix, good_flips)
 
-    def _fake_solve(*args: Any, **kwargs: Any) -> tuple[Any, float, str]:
+    def _fake_solve(
+        *args: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
+        **kwargs: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
+    ) -> tuple[Any, float, str]:
         return good_flips, 0.0, "OPTIMAL"
 
     monkeypatch.setattr(
@@ -370,7 +376,7 @@ def test_load_of_saved_bitflip_instance_can_be_lifted() -> None:
     restored_solution = transforms.negative_bitflip.lift(flipped_solution, loaded_instance)
     expected_solution = transforms.negative_bitflip.lift(flipped_solution, flipped_instance)
 
-    for restored, expected in zip(restored_solution, expected_solution):
+    for restored, expected in zip(restored_solution, expected_solution, strict=True):
         check.equal(restored.string, expected.string)
         check.equal(restored.count, expected.count)
         check.almost_equal(restored.cost, expected.cost)
@@ -418,7 +424,10 @@ def test_glpk_solve_survives_internal_exception(monkeypatch: pytest.MonkeyPatch)
 
     import swiglpk as glp
 
-    def _raise(*args: Any, **kwargs: Any) -> None:
+    def _raise(
+        *args: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
+        **kwargs: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
+    ) -> None:
         raise RuntimeError("simulated GLPK failure")
 
     monkeypatch.setattr(glp, "glp_intopt", _raise)

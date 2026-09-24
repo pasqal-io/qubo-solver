@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-import pytest
 from typing import get_args
 
+import pytest
+
 from qubosolver import (
+    ClassicalSolvingConfig,
     Instance,
+    QuantumSolvingConfig,
     Solution,
     Solver,
     SolverConfig,
-    ClassicalSolvingConfig,
-    QuantumSolvingConfig,
 )
 from qubosolver.solver.config.solving import _ClassicalAlgorithm
 from qubosolver.utils import analysis

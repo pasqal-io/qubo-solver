@@ -1,7 +1,7 @@
 """1-D vector utilities for QUBO solvers.
 
-A [`Vector`][qubosolver.Vector] is a 1-D float tensor of shape ``(n,)`` using the globally configured
-dtype (float32 by default, float64 when double precision is enabled).
+A [`Vector`][qubosolver.Vector] is a 1-D float tensor of shape ``(n,)`` using the globally
+configured dtype (float32 by default, float64 when double precision is enabled).
 This module provides factory functions for creating and converting such vectors
 on the globally configured torch device.
 
@@ -17,8 +17,11 @@ For higher-rank variants see [`qubosolver.matrix`][qubosolver.matrix] (2-D squar
 
 from __future__ import annotations
 
+from dataclasses import field
 from typing import Any
+
 import torch
+
 from . import linalg
 from .linalg import Vector
 
@@ -33,7 +36,13 @@ def device() -> torch.device:
     return linalg.device()
 
 
-def zeros(n: int, *, dtype: torch.dtype = dtype(), device: torch.device = device()) -> Vector:
+_dtype = dtype  # alias so shadowed `dtype` params can still call the module function
+_device = device  # alias so shadowed `device` params can still call the module function
+
+
+def zeros(
+    n: int, *, dtype: torch.dtype | None = None, device: torch.device | None = None
+) -> Vector:
     """Creates a zero-filled 1-D vector of length *n*.
 
     Args:
@@ -44,15 +53,17 @@ def zeros(n: int, *, dtype: torch.dtype = dtype(), device: torch.device = device
     Returns:
         A 1-D tensor of zeros.
     """
+    dtype = dtype or _dtype()
+    device = device or _device()
     return torch.zeros(n, dtype=dtype, device=device)
 
 
 def tensor(
-    data: Any,
+    data: Any,  # noqa: ANN401 (array-like input forwarded to torch.tensor)
     *,
-    dtype: torch.dtype = dtype(),
-    device: torch.device = device(),
-    **kwargs: Any,
+    dtype: torch.dtype | None = None,
+    device: torch.device | None = None,
+    **kwargs: Any,  # noqa: ANN401 (forwarded to torch.tensor)
 ) -> Vector:
     """Creates a 1-D vector tensor from the given data.
 
@@ -65,18 +76,19 @@ def tensor(
     Returns:
         A 1-D tensor.
     """
+    dtype = dtype or _dtype()
+    device = device or _device()
     return torch.tensor(data, dtype=dtype, device=device, **kwargs)
 
 
-def as_tensor(data: Any) -> Vector:
-    """Convenience wrapper for `torch.as_tensor` that converts data to a vector
-    tensor, avoiding a copy when possible.
+def as_tensor(data: Any) -> Vector:  # noqa: ANN401 (array-like input forwarded to torch.as_tensor)
+    """Convenience wrapper for `torch.as_tensor` that converts data to a vector tensor.
 
-    If *data* is already a tensor with the right dtype and on the right device, it is
-    returned as-is, sharing the same underlying memory. A numpy array is also shared
-    rather than copied if it already has the global float dtype and the global device
-    is ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a
-    copy). Lists, tuples, and other array-like inputs are always copied.
+    Avoids a copy when possible. If *data* is already a tensor with the right dtype and on
+    the right device, it is returned as-is, sharing the same underlying memory. A numpy
+    array is also shared rather than copied if it already has the global float dtype and
+    the global device is ``cpu`` (numpy arrays only live on CPU, so any other dtype or
+    device forces a copy). Lists, tuples, and other array-like inputs are always copied.
 
     Args:
         data: Input data (tensor, numpy array, list, tuple, etc.).
@@ -85,3 +97,20 @@ def as_tensor(data: Any) -> Vector:
         A 1-D tensor on the global dtype and device.
     """
     return torch.as_tensor(data, dtype=dtype(), device=device())
+
+
+def zeros_field(
+    n: int, *, dtype: torch.dtype | None = None, device: torch.device | None = None
+) -> Vector:
+    """Creates a dataclass field defaulting to a zero-filled 1-D vector.
+
+    Args:
+        n: Length of the vector.
+        dtype: Data type of the tensor.
+        device: Torch device for the tensor.
+
+    Returns:
+        A dataclass field (typed as `Vector` for the enclosing class) whose
+        `default_factory` builds a fresh zero tensor per instance.
+    """
+    return field(default_factory=lambda: zeros(n, dtype=dtype, device=device))

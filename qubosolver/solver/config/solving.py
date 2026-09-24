@@ -1,14 +1,17 @@
+"""Solving stage configuration."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-import torch
 from typing import Literal, get_args
 
 import qoolqit
+import torch
 
-from .embedding import Config as EmbeddingConfig
-from .drive_shaping import Config as DriveShapingConfig
 from qubosolver.types.backends import LocalEmulator, RemoteEmulator
+
+from .drive_shaping import Config as DriveShapingConfig
+from .embedding import Config as EmbeddingConfig
 
 _ClassicalAlgorithm = Literal["tabu_search", "simulated_annealing", "cplex", "random_sampling"]
 
@@ -33,7 +36,7 @@ class ClassicalConfig:
         max_bitstrings: Maximal number of bitstrings returned as solutions.
         sa_initial_temp: Starting temperature (controls exploration).
         sa_final_temp: Minimum temperature threshold for stopping.
-        sa_cooling_rate: Cooling rate - should be slightly below 1 (e.g., 0.95–0.99).
+        sa_cooling_rate: Cooling rate - should be slightly below 1 (e.g., 0.95-0.99).
             Defaults to `None`, in which case it is derived automatically from
             `sa_initial_temp`, `sa_final_temp`, and `max_iter`.
         sa_seed: Random seed for reproducibility.
@@ -71,6 +74,7 @@ class ClassicalConfig:
     tabu_time_limit: float = float("inf")
 
     def __post_init__(self) -> None:
+        """Validate `algorithm`."""
         if self.algorithm not in get_args(_ClassicalAlgorithm):
             raise ValueError(f"Invalid classical algorithm '{self.algorithm}'.")
 

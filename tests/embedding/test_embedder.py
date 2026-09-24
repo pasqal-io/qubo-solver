@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-import pytest
 from typing import Literal
 
+import pytest
 from qoolqit import Device
+
 from qubosolver import (
-    Solver,
-    Instance,
-    SolverConfig,
-    QuantumSolvingConfig,
     EmbeddingConfig,
+    Instance,
+    QuantumSolvingConfig,
+    Solver,
+    SolverConfig,
 )
 
 

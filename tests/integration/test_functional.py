@@ -1,29 +1,29 @@
 from __future__ import annotations
 
 import itertools
+import random
+
 import numpy as np
 import pytest
 import pytest_check as check
-import random
+import qoolqit
 import torch
 
-import qoolqit
-
 from qubosolver import (
-    Instance,
-    Solution,
     Candidate,
-    solving,
-    transforms,
-    embedding,
-    drive_shaping,
-    torch_rng,
-    bitstrings,
-    vectori,
-    vector,
-    tensor,
-    Tensor,
+    Instance,
     Matrix,
+    Solution,
+    Tensor,
+    bitstrings,
+    drive_shaping,
+    embedding,
+    solving,
+    tensor,
+    torch_rng,
+    transforms,
+    vector,
+    vectori,
 )
 from qubosolver.utils import analysis
 

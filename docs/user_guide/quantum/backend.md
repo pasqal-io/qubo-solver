@@ -23,19 +23,33 @@ Emulators (local or remote) simulate the Rydberg Hamiltonian on classical hardwa
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="backend" result="text"
-from qubosolver import Instance, matrix, embedding, drive_shaping, solving, Solution, LocalEmulator, analysis
+from qubosolver import (
+    Instance,
+    matrix,
+    embedding,
+    drive_shaping,
+    solving,
+    Solution,
+    LocalEmulator,
+    analysis,
+)
 import qoolqit
 
 # Private utility to set seed.
 from qubosolver.utils._random import manual_seed
+
 manual_seed(958)
 
-instance = Instance(matrix.tensor([
-    [-1, 1, 2, 1],
-    [ 1,-3, 3, 0],
-    [ 2, 3,-1, 5],
-    [ 1, 0, 5,-2],
-    ]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [-1, 1, 2, 1],
+            [1, -3, 3, 0],
+            [2, 3, -1, 5],
+            [1, 0, 5, -2],
+        ]
+    )
+)
 device = qoolqit.AnalogDeviceWithDMM()
 
 register = embedding.blade.embed(instance)
@@ -103,6 +117,7 @@ if PASSWORD is not None:
 else:
     # Local fallback so this snippet runs without credentials.
     from qubosolver.utils._local_connection import LocalConnection
+
     connection = LocalConnection()
 
 # Default: the free engine, regardless of problem size.
@@ -111,7 +126,8 @@ backend = RemoteEmulator(connection=connection, num_shots=500)
 # Automatic engine selection based on problem size.
 # WARNING: will use paid engines for problems >= 15 qubits.
 auto_backend = RemoteEmulator(
-    backend_type=AutoRemoteEmulatorBackend, connection=connection, num_shots=500)
+    backend_type=AutoRemoteEmulatorBackend, connection=connection, num_shots=500
+)
 
 # Manual engine selection (only supported by a real cloud connection).
 remote_backends = [
@@ -136,7 +152,16 @@ print(analysis.to_dataframe([solution]))
 Submitting to a real QPU requires a `PasqalCloudConnection` — there is no local equivalent of the hardware itself. Without a password, the snippet below falls back to emulating the same instance locally with `LocalEmulator` instead, so it stays runnable without credentials.
 
 ```python exec="on" source="tabbed-left" result="text"
-from qubosolver import Instance, LocalEmulator, matrix, embedding, drive_shaping, solving, Solution, analysis
+from qubosolver import (
+    Instance,
+    LocalEmulator,
+    matrix,
+    embedding,
+    drive_shaping,
+    solving,
+    Solution,
+    analysis,
+)
 from qoolqit.execution import QPU
 from pasqal_cloud import PasqalCloudConnection
 import qoolqit
@@ -145,12 +170,16 @@ USERNAME = "#TO_PROVIDE"
 PROJECT_ID = "#TO_PROVIDE"
 PASSWORD = None
 
-instance = Instance(matrix.tensor([
-    [-1, 1, 2, 1],
-    [ 1,-3, 3, 0],
-    [ 2, 3,-1, 5],
-    [ 1, 0, 5,-2],
-    ]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [-1, 1, 2, 1],
+            [1, -3, 3, 0],
+            [2, 3, -1, 5],
+            [1, 0, 5, -2],
+        ]
+    )
+)
 
 if PASSWORD is not None:
     connection = PasqalCloudConnection(

@@ -12,6 +12,7 @@ Note:
 
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING, Any
 
 from qubosolver import Instance, Solution, bitstrings, vector, vectori
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     import cplex as CPLEX
 
 
-def _import_cplex() -> Any:
+def _import_cplex() -> Any:  # noqa: ANN401 (dynamically imported optional module)
     """Import and return the ``cplex`` module, with a helpful error if absent.
 
     Raises:
@@ -40,7 +41,7 @@ def _import_cplex() -> Any:
 def _qubo_instance_to_sparsepairs(
     instance: Instance, *, tol: float = 1e-8
 ) -> list[CPLEX.SparsePair]:
-    """Convert an [`Instance`][] coefficient matrix to CPLEX sparse-pair format.
+    r"""Convert an [`Instance`][] coefficient matrix to CPLEX sparse-pair format.
 
     CPLEX evaluates quadratic objectives as $\\frac{1}{2} x^T Q_{cplex} x$, so
     each coefficient must be pre-multiplied by 2 to recover the standard QUBO
@@ -54,7 +55,7 @@ def _qubo_instance_to_sparsepairs(
             The matrix is moved to CPU and cast to a NumPy array before
             processing.
         tol: Absolute threshold for dropping small coefficients after the
-            ×2 scaling.
+            x2 scaling.
 
     Returns:
         A list of `cplex.SparsePair` of length ``instance.size``, where
@@ -80,7 +81,11 @@ def _qubo_instance_to_sparsepairs(
     return sparsepairs
 
 
-def _to_cplex(instance: Instance, *, log_file: Any = None) -> CPLEX.Cplex:
+def _to_cplex(
+    instance: Instance,
+    *,
+    log_file: Any = None,  # noqa: ANN401 (file-like object forwarded to CPLEX's log streams)
+) -> CPLEX.Cplex:
     """Build the minimal CPLEX problem representing a QUBO instance.
 
     Sets only what is needed to represent the QUBO instance as a CPLEX
@@ -178,21 +183,14 @@ def solve(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> 
     if not instance:
         return Solution()
 
-    if log_path:
-        # Open a log file.
-        log_file = open(log_path, "w")
-    else:
-        log_file = None
+    # Open a log file, or a no-op context manager if none was requested.
+    with open(log_path, "w") if log_path else contextlib.nullcontext() as log_file:
+        problem = _to_cplex(instance, log_file=log_file)
+        problem.parameters.timelimit.set(maxtime)
 
-    problem = _to_cplex(instance, log_file=log_file)
-    problem.parameters.timelimit.set(maxtime)
+        problem.solve()
 
-    problem.solve()
-
-    # Retrieve solution.
-    solution = _to_solution(problem.solution)
-
-    if log_file:
-        log_file.close()
+        # Retrieve solution.
+        solution = _to_solution(problem.solution)
 
     return solution

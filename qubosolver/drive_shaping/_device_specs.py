@@ -20,9 +20,9 @@ def compare_specs(a: dict, b: dict) -> None:
         only_in_a = keys_a - keys_b
         only_in_b = keys_b - keys_a
         if only_in_a:
-            warnings.warn(f"Keys present in a but missing in b: {only_in_a}")
+            warnings.warn(f"Keys present in a but missing in b: {only_in_a}", stacklevel=2)
         if only_in_b:
-            warnings.warn(f"Keys present in b but missing in a: {only_in_b}")
+            warnings.warn(f"Keys present in b but missing in a: {only_in_b}", stacklevel=2)
 
     for key in keys_a & keys_b:
         v1 = a[key]
@@ -30,7 +30,7 @@ def compare_specs(a: dict, b: dict) -> None:
         if v1 is None or v2 is None:
             continue
         if not math.isclose(float(v1), float(v2)):
-            warnings.warn(f"Value mismatch for key '{key}': a={v1}, b={v2}")
+            warnings.warn(f"Value mismatch for key '{key}': a={v1}, b={v2}", stacklevel=2)
 
 
 def pulser_specs(
@@ -120,7 +120,7 @@ def qoolqit_specs(
     _pulser_specs = pulser_specs(device, normalize=True)
 
     def import_from_pulser_or_set(name: str, fallback: float | None = None) -> None:
-        if name in specs.keys():
+        if name in specs:
             return
         if complete_with_pulser:
             specs[name] = _pulser_specs.get(name, fallback)
