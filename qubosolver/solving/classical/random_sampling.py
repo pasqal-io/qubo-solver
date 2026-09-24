@@ -12,7 +12,7 @@ def solve(
     instance: Instance,
     *,
     max_bitstrings: int = 1,
-    rng: torch.Generator = torch_rng(),
+    rng: torch.Generator | None = None,
 ) -> Solution:
     """Sample uniformly random bitstring solutions for a QUBO instance.
 
@@ -37,6 +37,7 @@ def solve(
     Returns:
         A solution with unique bitstrings, their QUBO costs, draw counts, and probabilities.
     """
+    rng = rng or torch_rng()
     bitstrings_ = bitstring.as_tensor(
         torch.randint(0, 2, size=(max_bitstrings, instance.size), generator=rng)
     )

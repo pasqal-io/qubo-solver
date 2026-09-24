@@ -10,7 +10,7 @@ import time
 
 import torch
 
-from qubosolver.types import Instance, Solution, Bitstrings, bitstrings, vector, vectori
+from qubosolver.types import Bitstrings, Instance, Solution, bitstrings, vector, vectori
 from qubosolver.utils._costs import _flip_deltas
 
 # How often the incremental QX/f_current tracking is refreshed by an exact
@@ -55,7 +55,8 @@ def solve(
             ``float('inf')`` (no limit).
 
     Returns:
-        Deduplicated best bitstrings found across all runs, together with their objective values and occurrence counts, sorted by ascending cost.
+        Deduplicated best bitstrings found across all runs, together with their objective
+            values and occurrence counts, sorted by ascending cost.
     """
     Q = instance.matrix
     device = Q.device

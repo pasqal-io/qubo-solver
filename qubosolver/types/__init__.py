@@ -11,51 +11,47 @@ from __future__ import annotations
 from qubosolver.types import (
     bitstring,
     bitstrings,
+    linalg,
     matrix,
+    protocols,
     tensor,
     vector,
     vectori,
-    linalg,
-    protocols,
 )
-from qubosolver.types.linalg import Bitstring, Bitstrings, Matrix, Tensor, Vector, Vectori
-from qubosolver.types.solution import Solution, Candidate
-from qubosolver.types.instance import Instance
-from qubosolver.types.dataset import Dataset
 from qubosolver.types.backends import (
-    LocalEmulator,
-    RemoteEmulator,
     AutoLocalEmulatorBackend,
     AutoRemoteEmulatorBackend,
+    LocalEmulator,
+    RemoteEmulator,
 )
+from qubosolver.types.dataset import Dataset
+from qubosolver.types.instance import Instance
+from qubosolver.types.linalg import Bitstring, Bitstrings, Matrix, Tensor, Vector, Vectori
 from qubosolver.types.random import torch_rng
+from qubosolver.types.solution import Candidate, Solution
 
 __all__ = [
-    # Submodules
-    "bitstring",
-    "bitstrings",
-    "matrix",
-    "tensor",
-    "vector",
-    "vectori",
-    "linalg",
-    "protocols",
-    # Type Aliases
+    "AutoLocalEmulatorBackend",
+    "AutoRemoteEmulatorBackend",
     "Bitstring",
     "Bitstrings",
+    "Candidate",
+    "Dataset",
+    "Instance",
+    "LocalEmulator",
     "Matrix",
+    "RemoteEmulator",
+    "Solution",
     "Tensor",
     "Vector",
     "Vectori",
-    # Classes
-    "Solution",
-    "Candidate",
-    "Instance",
-    "Dataset",
-    "LocalEmulator",
-    "RemoteEmulator",
-    "AutoLocalEmulatorBackend",
-    "AutoRemoteEmulatorBackend",
-    # Functions
+    "bitstring",
+    "bitstrings",
+    "linalg",
+    "matrix",
+    "protocols",
+    "tensor",
     "torch_rng",
+    "vector",
+    "vectori",
 ]

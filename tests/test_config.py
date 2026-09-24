@@ -4,14 +4,15 @@ import pytest
 import pytest_check as check
 from pulser_simulation import QutipBackendV2
 from qoolqit import AnalogDeviceWithDMM
+
 from qubosolver import (
-    SolverConfig,
-    QuantumSolvingConfig,
+    AutoLocalEmulatorBackend,
     ClassicalSolvingConfig,
     DriveShapingConfig,
     EmbeddingConfig,
     LocalEmulator,
-    AutoLocalEmulatorBackend,
+    QuantumSolvingConfig,
+    SolverConfig,
 )
 
 
@@ -103,7 +104,7 @@ def test_quantum_config_property() -> None:
 
     classical_solver_config = SolverConfig(solving=ClassicalSolvingConfig())
     with pytest.raises(ValueError):
-        classical_solver_config.quantum
+        _ = classical_solver_config.quantum
 
 
 def test_classical_config_property() -> None:
@@ -112,7 +113,7 @@ def test_classical_config_property() -> None:
 
     quantum_solver_config = SolverConfig(solving=QuantumSolvingConfig())
     with pytest.raises(ValueError):
-        quantum_solver_config.classical
+        _ = quantum_solver_config.classical
 
 
 def test_qutip_config_backend() -> None:

@@ -11,7 +11,9 @@ Example:
 
 from __future__ import annotations
 
-from typing import Literal, Sequence
+from collections.abc import Sequence
+from typing import Literal
+
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -80,7 +82,7 @@ def to_dataframe(
 
     df_list = []
     df_list.append(_solution_to_dataframe(Solution(), solution_label=""))
-    for label, sol in zip(labels, solutions):
+    for label, sol in zip(labels, solutions, strict=True):
         df_list.append(_solution_to_dataframe(sol, solution_label=label))
     return pd.concat(df_list, ignore_index=True)
 
@@ -118,8 +120,10 @@ def _filter_by_percentage(
             or if top_percent is not in (0, 1].
     """
     if column not in df.columns:
-        raise ValueError(f"{column} data is not available. \
-                         Please add {column} before filtering.")
+        raise ValueError(
+            f"{column} data is not available. \
+                         Please add {column} before filtering."
+        )
 
     if not (0 < top_percent <= 1):
         raise ValueError("top_percent must be a float between 0 and 1.")
@@ -224,8 +228,10 @@ def _plot_vs_bitstrings(
     """
     # Check if the y_axis is available
     if y_axis not in df.columns:
-        raise ValueError(f"{y_axis} data is not available.\
-                          Please add {y_axis} before plotting.")
+        raise ValueError(
+            f"{y_axis} data is not available.\
+                          Please add {y_axis} before plotting."
+        )
     if sort_by and sort_by not in df.columns:
         raise ValueError(f"{sort_by} is not a valid column for sorting.")
 
@@ -304,9 +310,8 @@ def _plot_no_bitstrings(
     if y_axis not in df.columns:
         raise ValueError(f"{y_axis} data is not available. Please add {y_axis} before plotting.")
 
-    if sort_by:
-        if sort_by not in [x_axis, y_axis]:
-            raise ValueError(f"{sort_by} is not a valid column for sorting.")
+    if sort_by and sort_by not in [x_axis, y_axis]:
+        raise ValueError(f"{sort_by} is not a valid column for sorting.")
 
     df = df.groupby([_LABELS, x_axis], as_index=False).agg({y_axis: "sum"})
     df = df.pivot_table(
@@ -385,8 +390,10 @@ def _plot(
     df = df.copy()
 
     if x_axis not in df.columns:
-        raise ValueError(f"{x_axis} data is not available.\
-                            Please add {x_axis} before plotting.")
+        raise ValueError(
+            f"{x_axis} data is not available.\
+                            Please add {x_axis} before plotting."
+        )
 
     if labels:
         df = df[df[_LABELS].isin(labels)]

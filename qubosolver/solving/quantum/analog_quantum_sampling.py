@@ -11,6 +11,7 @@ import dataclasses
 
 import qoolqit
 from qoolqit.execution.compilation_functions import CompilerProfile
+
 from qubosolver.utils.quantum import _max_min_distance_ratio
 
 

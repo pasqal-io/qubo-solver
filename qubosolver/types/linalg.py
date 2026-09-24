@@ -9,7 +9,9 @@ configured float precision and torch device.
 from __future__ import annotations
 
 import os
+
 import torch
+
 from ._checks import TYPE_CHECKING
 
 _FLOAT_DTYPE_MAP: dict[str, torch.dtype] = {
@@ -37,8 +39,8 @@ def _device_from_env() -> torch.device:
     if device_str is not None:
         try:
             return torch.device(device_str)
-        except RuntimeError:
-            raise ValueError(f"Invalid QUBO_SOLVER_DEVICE={device_str!r}.")
+        except RuntimeError as err:
+            raise ValueError(f"Invalid QUBO_SOLVER_DEVICE={device_str!r}.") from err
 
     use_gpu = os.getenv("USE_GPU")
     if use_gpu is not None:
@@ -144,24 +146,24 @@ def device() -> torch.device:
 
 
 if TYPE_CHECKING:
+    from typing import Final, TypeAlias
+
     import jaxtyping
-    from typing import Final
-    from typing_extensions import TypeAlias
 
     _USE_DOUBLE_PRECISION: Final[bool] = _use_double_precision_from_env()
 
     Vectorf: TypeAlias = jaxtyping.Float32[torch.Tensor, "n"]  # noqa: F821
     """1-D float32 tensor of shape ``(n,)``."""
-    Matrixf: TypeAlias = jaxtyping.Float32[torch.Tensor, "n n"]  # noqa: F821, F722
+    Matrixf: TypeAlias = jaxtyping.Float32[torch.Tensor, "n n"]  # noqa: F722
     """2-D float32 tensor of shape ``(n, n)``."""
-    Tensorf: TypeAlias = jaxtyping.Float32[torch.Tensor, "..."]  # noqa: F821
+    Tensorf: TypeAlias = jaxtyping.Float32[torch.Tensor, "..."]
     """Arbitrary-rank float32 tensor."""
 
     Vectord: TypeAlias = jaxtyping.Float64[torch.Tensor, "n"]  # noqa: F821
     """1-D float64 tensor of shape ``(n,)``."""
-    Matrixd: TypeAlias = jaxtyping.Float64[torch.Tensor, "n n"]  # noqa: F821, F722
+    Matrixd: TypeAlias = jaxtyping.Float64[torch.Tensor, "n n"]  # noqa: F722
     """2-D float64 tensor of shape ``(n, n)``."""
-    Tensord: TypeAlias = jaxtyping.Float64[torch.Tensor, "..."]  # noqa: F821
+    Tensord: TypeAlias = jaxtyping.Float64[torch.Tensor, "..."]
     """Arbitrary-rank float64 tensor."""
 
     Vectori: TypeAlias = jaxtyping.Int64[torch.Tensor, "n"]  # noqa: F821
@@ -174,19 +176,24 @@ if TYPE_CHECKING:
         Matrix = Matrixf
         """2-D float tensor using the globally configured precision (float32 by default)."""
         Tensor = Tensorf
-        """Arbitrary-rank float tensor using the globally configured precision (float32 by default)."""
+        """Arbitrary-rank float tensor using the globally configured precision (float32
+        by default)."""
     else:
         Vector = Vectord
-        """1-D float tensor using the globally configured precision (float64 when double precision is enabled)."""
+        """1-D float tensor using the globally configured precision (float64 when double
+        precision is enabled)."""
         Matrix = Matrixd
-        """2-D float tensor using the globally configured precision (float64 when double precision is enabled)."""
+        """2-D float tensor using the globally configured precision (float64 when double
+        precision is enabled)."""
         Tensor = Tensord
-        """Arbitrary-rank float tensor using the globally configured precision (float64 when double precision is enabled)."""
+        """Arbitrary-rank float tensor using the globally configured precision (float64
+        when double precision is enabled)."""
 
     Bitstring: TypeAlias = jaxtyping.Int8[torch.Tensor, "n"]  # noqa: F821
     """1-D int8 tensor of shape ``(n,)`` representing a single bitstring of 0s and 1s."""
-    Bitstrings: TypeAlias = jaxtyping.Int8[torch.Tensor, "n m"]  # noqa: F821, F722
-    """2-D int8 tensor of shape ``(n, m)`` representing a batch of *n* bitstrings each of length *m*."""
+    Bitstrings: TypeAlias = jaxtyping.Int8[torch.Tensor, "n m"]  # noqa: F722
+    """2-D int8 tensor of shape ``(n, m)`` representing a batch of *n* bitstrings each of
+    length *m*."""
 
 else:
     Vectorf: TypeAlias = torch.Tensor
@@ -207,13 +214,17 @@ else:
     """1-D int64 tensor of shape ``(n,)``."""
 
     Vector: TypeAlias = torch.Tensor
-    """1-D float tensor using the globally configured precision (float32 by default, float64 when double precision is enabled)."""
+    """1-D float tensor using the globally configured precision (float32 by default,
+    float64 when double precision is enabled)."""
     Matrix: TypeAlias = torch.Tensor
-    """2-D float tensor using the globally configured precision (float32 by default, float64 when double precision is enabled)."""
+    """2-D float tensor using the globally configured precision (float32 by default,
+    float64 when double precision is enabled)."""
     Tensor: TypeAlias = torch.Tensor
-    """Arbitrary-rank float tensor using the globally configured precision (float32 by default, float64 when double precision is enabled)."""
+    """Arbitrary-rank float tensor using the globally configured precision (float32 by
+    default, float64 when double precision is enabled)."""
 
     Bitstring: TypeAlias = torch.Tensor
     """1-D int8 tensor of shape ``(n,)`` representing a single bitstring of 0s and 1s."""
     Bitstrings: TypeAlias = torch.Tensor
-    """2-D int8 tensor of shape ``(n, m)`` representing a batch of *n* bitstrings each of length *m*."""
+    """2-D int8 tensor of shape ``(n, m)`` representing a batch of *n* bitstrings each of
+    length *m*."""

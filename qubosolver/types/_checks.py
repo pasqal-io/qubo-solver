@@ -88,7 +88,7 @@ def no_runtime_typecheck(target: _T) -> _T:
         def _fast_inner_loop(data: list) -> None: ...
     """
     if _RUNTIME_TYPE_CHECKING:
-        from beartype import beartype, BeartypeConf, BeartypeStrategy  # deptry: ignore[DEP004]
+        from beartype import BeartypeConf, BeartypeStrategy, beartype  # deptry: ignore[DEP004]
 
         return beartype(target, conf=BeartypeConf(strategy=BeartypeStrategy.O0))  # type: ignore[no-any-return]
     return target

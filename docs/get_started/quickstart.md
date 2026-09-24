@@ -20,11 +20,13 @@ pip install qubo-solver
     from qubosolver import Instance, Solver, matrix, analysis
 
     # Define an Instance from a symmetric matrix
-    Q = matrix.tensor([
-        [-0.2, 0.0, 1.0],
-        [ 0.0, 0.0, 1.5],
-        [ 1.0, 1.5, 0.0],
-    ])
+    Q = matrix.tensor(
+        [
+            [-0.2, 0.0, 1.0],
+            [0.0, 0.0, 1.5],
+            [1.0, 1.5, 0.0],
+        ]
+    )
     instance = Instance(Q)
 
     # Instantiate the quantum solver (default)

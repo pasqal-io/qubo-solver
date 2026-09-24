@@ -5,15 +5,17 @@ from __future__ import annotations
 import logging
 
 import numpy as np
+import qoolqit
 import torch
 
-import qoolqit
 from qubosolver import Instance
 
 from ._device_specs import (
-    pulser_specs as _pulser_specs,
-    max_virtual_amplitude,
     detuning_amplitude_ratio,
+    max_virtual_amplitude,
+)
+from ._device_specs import (
+    pulser_specs as _pulser_specs,
 )
 from ._waveforms import constant_weighted_dmm
 
@@ -59,7 +61,8 @@ def build_drive(
         det_amp_ratio = max_amplitude / max_abs_detuning
         if kappa < det_amp_ratio:
             logger.warning(
-                f"proportional_diagonal_kappa is too small ({kappa}), you're likely to get a qoolqit CompilationError. Set it above {det_amp_ratio}."
+                f"proportional_diagonal_kappa is too small ({kappa}), you're likely to get a "
+                f"qoolqit CompilationError. Set it above {det_amp_ratio}."
             )
 
     n = instance.size

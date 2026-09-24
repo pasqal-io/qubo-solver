@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-import torch
+from collections.abc import Sequence
 
 import qoolqit
+import torch
+
+from qubosolver.types import matrix, vector
 from qubosolver.types.instance import Instance
 from qubosolver.types.linalg import Vector
-from qubosolver.types import vector, matrix
-from typing import Sequence
 
 
 def _detuning(

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import time
 from typing import Literal
 
@@ -8,13 +9,13 @@ import pytest_check as check
 import torch
 
 from qubosolver import (
-    Solution,
     Instance,
-    solving,
+    Solution,
     bitstrings,
-    vectori,
     matrix,
+    solving,
     torch_rng,
+    vectori,
 )
 from qubosolver.solving.classical import iterative_bitflip_local_search
 from qubosolver.solving.classical.iterative_bitflip_local_search import (
@@ -75,9 +76,11 @@ def test_strategy_selection_improves_solution(
 
 
 def test_int_starts_generates_that_many_random_starts() -> None:
-    """Passing an int for `starts` must draw that many uniformly random
-    starting bitstrings (via random_sampling.solve) and locally optimize
-    each of them, instead of requiring a pre-built Solution."""
+    """Passing an int for `starts` must draw that many uniformly random starting bitstrings.
+
+    They are drawn via random_sampling.solve and each is locally optimized, instead of
+    requiring a pre-built Solution.
+    """
     Q = matrix.tensor([[-10.0, 1.0], [1.0, -10.0]])
     instance = Instance(Q)
 
@@ -92,8 +95,7 @@ def test_int_starts_generates_that_many_random_starts() -> None:
 
 
 def test_default_starts_is_one_random_start() -> None:
-    """Omitting `starts` must default to a single uniformly random
-    starting bitstring."""
+    """Omitting `starts` must default to a single uniformly random starting bitstring."""
     Q = matrix.tensor([[-10.0, 1.0], [1.0, -10.0]])
     instance = Instance(Q)
 
@@ -111,7 +113,11 @@ def test_unknown_strategy_raises() -> None:
     solution._update(instance)
 
     with pytest.raises(ValueError):
-        solving.iterative_bitflip_local_search.solve(instance, starts=solution, strategy="does_not_exist")  # type: ignore[arg-type]
+        solving.iterative_bitflip_local_search.solve(
+            instance,
+            starts=solution,
+            strategy="does_not_exist",  # type: ignore[arg-type]
+        )
 
 
 def test_max_iterations_limits_progress() -> None:
@@ -149,13 +155,14 @@ def test_max_iterations_limits_progress() -> None:
 def test_solve_reaches_a_consistent_local_minimum(
     n: int, strategy: Literal["greedy_sweep", "best_improvement", "first_improvement"]
 ) -> None:
-    """Regardless of QUBO size, `solve` must return a solution whose costs are
-    consistent with the instance and that is a genuine local minimum under
-    single-bit flips: no flip of the best bitstring found should yield a
-    strictly lower cost. This is the baseline correctness contract that any
-    future cost-evaluation optimization (e.g. an incremental/differential
-    cost update instead of recomputing z^T Q z from scratch on every flip)
-    must continue to satisfy exactly."""
+    """Regardless of QUBO size, `solve` must return a consistent, genuine local minimum.
+
+    The solution's cost must be consistent with the instance, and it must be a genuine
+    local minimum under single-bit flips: no flip of the best bitstring found should yield
+    a strictly lower cost. This is the baseline correctness contract that any future
+    cost-evaluation optimization (e.g. an incremental/differential cost update instead of
+    recomputing z^T Q z from scratch on every flip) must continue to satisfy exactly.
+    """
     rng = torch_rng(n)
     Q = torch.randn(n, n, generator=rng)
     Q = matrix.as_tensor((Q + Q.T) / 2)
@@ -283,17 +290,18 @@ def test_row_budget_is_the_remaining_batch_budget(
     check.equal(len(row_budgets), batch)
     # Strictly decreasing: each row only gets what the previous rows left. With
     # the full budget passed down, every entry would instead equal `time_limit`.
-    for earlier, later in zip(row_budgets, row_budgets[1:]):
+    for earlier, later in itertools.pairwise(row_budgets):
         check.less(later, earlier)
     check.less(row_budgets[0], time_limit)
 
 
 def test_best_improvement_batch_matches_per_row_result() -> None:
-    """best_improvement runs every row of a multi-row batch in lockstep,
-    masking out rows that already reached their own local optimum so they
-    are not perturbed while slower rows keep improving. Each row's result
-    must therefore be identical to running that same row alone through the
-    batch search."""
+    """best_improvement runs every row of a multi-row batch in lockstep.
+
+    It masks out rows that already reached their own local optimum so they are not
+    perturbed while slower rows keep improving. Each row's result must therefore be
+    identical to running that same row alone through the batch search.
+    """
     n, m = 12, 8
     rng = torch_rng(7)
     Q = torch.randn(n, n, generator=rng)
@@ -347,10 +355,11 @@ def test_benchmark_grid_report(
     expected_elapsed: float,
     expected_cplex_gap: float,
 ) -> None:
-    """Report wall time and best cost found for every (num_variables,
-    batch_size, strategy) cell of a benchmark grid, checked against the
-    CPLEX-optimal cost for that `num_variables` and a baseline wall time
-    observed on a previous run."""
+    """Report wall time and best cost found for every cell of a benchmark grid.
+
+    Each (num_variables, batch_size, strategy) cell is checked against the CPLEX-optimal
+    cost for that `num_variables` and a baseline wall time observed on a previous run.
+    """
     time_limit = 10.0
 
     rng = torch_rng(0)

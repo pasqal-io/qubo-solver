@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import torch
+
 from qubosolver.types import Matrix, Tensor
 
 
@@ -63,7 +64,7 @@ def _flip_deltas(
     diagonal: Tensor | None = None,
     out: Tensor | None = None,
 ) -> Tensor:
-    """Energy change from flipping each bit, for every run in the batch at once.
+    r"""Energy change from flipping each bit, for every run in the batch at once.
 
     For a single run, flipping $x_i \\to 1 - x_i$ changes $x^T Q x$ by
     $(1 - 2 x_i)(Q_{ii} + 2 (Qx)_i - 2 Q_{ii} x_i)$, which only needs row/column

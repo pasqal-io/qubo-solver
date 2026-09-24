@@ -16,19 +16,20 @@ This module provides two internal solver classes and the public
 from __future__ import annotations
 
 import logging
-import torch
 from copy import deepcopy
 
 import qoolqit
+import torch
 
-from qubosolver import Solution, Instance, transforms, torch_rng
-from .config import SolverConfig, ClassicalSolvingConfig
-from .config.config import _DecompositionConfig
+from qubosolver import Instance, Solution, torch_rng, transforms
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
+
 from ._basesolver import BaseSolver
 from ._classical_solver import get_classical_solver
-from ._embedder import _get_embedder
 from ._drive_shaper import _get_drive_shaper
+from ._embedder import _get_embedder
+from .config import ClassicalSolvingConfig, SolverConfig
+from .config.config import _DecompositionConfig
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ class Solver(BaseSolver):
         ```
     """
 
-    def __init__(self, instance: Instance, config: SolverConfig = SolverConfig()):
+    def __init__(self, instance: Instance, config: SolverConfig | None = None) -> None:
         """Initialize the solver.
 
         Args:
@@ -58,6 +59,7 @@ class Solver(BaseSolver):
             config: Solver configuration controlling which solving strategy
                 is used and how it behaves.
         """
+        config = config or SolverConfig()
         super().__init__(instance, config)
         self._solver: BaseSolver
 
@@ -107,7 +109,7 @@ class _QuboSolverQuantum(BaseSolver):
     * Problem size is capped at 80 variables (device atom-number limit).
     """
 
-    def __init__(self, instance: Instance, config: SolverConfig = SolverConfig()):
+    def __init__(self, instance: Instance, config: SolverConfig | None = None) -> None:
         """Initialise the quantum solver.
 
         Args:
@@ -121,8 +123,7 @@ class _QuboSolverQuantum(BaseSolver):
         Raises:
             ValueError: If ``instance.size > 80``.
         """
-
-        super().__init__(instance, config)
+        super().__init__(instance, config or SolverConfig())
 
         if _has_negative_offdiagonal(instance.matrix) and not self.config.preprocessing:
             logger.warning(
@@ -149,8 +150,8 @@ class _QuboSolverQuantum(BaseSolver):
         """
         if self.instance.size > 80:
             raise ValueError(
-                f"QUBO size {self.instance.size}×{self.instance.size}"
-                + " exceeds the maximum supported size of 80×80."
+                f"QUBO size {self.instance.size}x{self.instance.size}"
+                + " exceeds the maximum supported size of 80x80."
             )
 
     def _embedding(self) -> qoolqit.Register:
@@ -248,8 +249,8 @@ class _QuboSolverClassical(BaseSolver):
     both methods are no-ops that return ``None``.
     """
 
-    def __init__(self, instance: Instance, config: SolverConfig = SolverConfig()):
-        super().__init__(instance, config)
+    def __init__(self, instance: Instance, config: SolverConfig | None = None) -> None:
+        super().__init__(instance, config or SolverConfig())
 
     def _embedding(self) -> qoolqit.Register:
         """No-op — classical solvers do not require an atom register.
@@ -318,9 +319,9 @@ class _DecomposeQuboSolver(BaseSolver):
         self,
         instance: Instance,
         *,
-        solver_config: SolverConfig = SolverConfig(),
-        decompose_config: _DecompositionConfig = _DecompositionConfig(),
-    ):
+        solver_config: SolverConfig | None = None,
+        decompose_config: _DecompositionConfig | None = None,
+    ) -> None:
         """Initialise the decomposition solver.
 
         Args:
@@ -344,10 +345,10 @@ class _DecomposeQuboSolver(BaseSolver):
         # default is a quantum solver as we apply device-dependent decomposition
         super().__init__(
             Instance(instance.matrix),
-            solver_config,
+            solver_config or SolverConfig(),
         )
 
-        self.decomposition_config = decompose_config
+        self.decomposition_config = decompose_config or _DecompositionConfig()
 
         # A cached version of `config` that we're going
         # to use for problems we do not wish to decompose.
@@ -378,7 +379,8 @@ class _DecomposeQuboSolver(BaseSolver):
             A [`Solution`][qubosolver.Solution] containing exactly one
                 bitstring — the merged result of all subproblem solutions.
         """
-        # Create a local Generator that inherits whatever seeding you did via torch.manual_seed(...) (copies the current global RNG state).
+        # Create a local Generator that inherits whatever seeding you did via
+        # torch.manual_seed(...) (copies the current global RNG state).
         rng = torch_rng().set_state(torch.get_rng_state())
         self.number_iterations = 0
         assert self.instance.size  # nosec B101
@@ -404,7 +406,6 @@ class _DecomposeQuboSolver(BaseSolver):
             solution = Solution()
 
             while len(decomposed_qubo._vertices_to_place) > config.decompose_stop_number:
-
                 subqubo = _decompositions.extract_subqubo(decomposed_qubo, config, rng=rng)
 
                 if subqubo.size == 0:

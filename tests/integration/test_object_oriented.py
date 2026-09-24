@@ -1,34 +1,34 @@
 from __future__ import annotations
 
 import itertools
+import random
+
 import numpy as np
 import pytest
 import pytest_check as check
-import random
+import qoolqit
 import torch
 
-import qoolqit
-
 from qubosolver import (
-    Instance,
-    Solver,
     Candidate,
-    Solution,
-    bitstrings,
-    vectori,
-    vector,
-    tensor,
-    Tensor,
-    Matrix,
-    torch_rng,
-    SolverConfig,
-    QuantumSolvingConfig,
     ClassicalSolvingConfig,
     DriveShapingConfig,
     EmbeddingConfig,
+    Instance,
+    Matrix,
+    QuantumSolvingConfig,
+    Solution,
+    Solver,
+    SolverConfig,
+    Tensor,
+    bitstrings,
+    tensor,
+    torch_rng,
+    vector,
+    vectori,
 )
-from qubosolver.utils import analysis
 from qubosolver.solver.config.solving import _ClassicalAlgorithm
+from qubosolver.utils import analysis
 
 
 def gather_optimal_solutions(solutions: Solution) -> list[Candidate]:

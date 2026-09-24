@@ -1,21 +1,21 @@
 from __future__ import annotations
 
 import io
-import pytest
-import pytest_check as check
-import torch
 import os
 from pathlib import Path
 
 import numpy as np
-from qubosolver import Dataset, torch_rng, bitstrings, vector, vectori
+import pytest
+import pytest_check as check
+import torch
+
+from qubosolver import Dataset, bitstrings, torch_rng, vector, vectori
 from qubosolver.types.instance import _calculate_density
 from qubosolver.types.solution import Solution
 
 
 def test_dataset_copies_input_matrices() -> None:
     """Test that Dataset copies the input tensor instead of aliasing it."""
-
     matrices = torch.zeros(3, 3, 2)
     dataset = Dataset(matrices)
 
@@ -26,7 +26,6 @@ def test_dataset_copies_input_matrices() -> None:
 
 def test_dataset_copies_input_solutions() -> None:
     """Test that Dataset deep-copies the input solutions instead of aliasing them."""
-
     matrices = torch.zeros(3, 3, 1)
     solution = Solution(
         bitstrings=bitstrings.zeros(1, 3),
@@ -45,7 +44,6 @@ def test_dataset_copies_input_solutions() -> None:
 
 def test_dataset_copy_false_aliases_input() -> None:
     """Test that Dataset(copy=False) stores the given matrices/solutions directly."""
-
     matrices = torch.zeros(3, 3, 1)
     solution = Solution(
         bitstrings=bitstrings.zeros(1, 3),
@@ -65,8 +63,7 @@ def test_dataset_copy_false_aliases_input() -> None:
 
 @pytest.mark.parametrize("negative_offdiag_rate", [0.0, 0.2])
 def test_dataset_generation(negative_offdiag_rate: float) -> None:
-    """Test dataset is generated correctly in terms of element properties asked"""
-
+    """Test dataset is generated correctly in terms of element properties asked."""
     size = 5
     num_instances = 10
     density = 0.6
@@ -136,7 +133,7 @@ def test_save_load_to_a_path_preserves_nested_solutions(tmp_path: Path) -> None:
 
     check.equal(len(loaded), 2)
     check.equal(len(loaded.solutions), 2)
-    for original, roundtripped in zip(dataset.solutions, loaded.solutions):
+    for original, roundtripped in zip(dataset.solutions, loaded.solutions, strict=True):
         check.is_true(torch.equal(roundtripped.bitstrings, original.bitstrings))
         check.is_true(torch.allclose(roundtripped.costs, original.costs))
         check.is_true(torch.equal(roundtripped.counts, original.counts))

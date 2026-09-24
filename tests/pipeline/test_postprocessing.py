@@ -1,23 +1,24 @@
 from __future__ import annotations
 
-import torch
 import numpy as np
 import pytest
 import pytest_check as check
+import torch
+
 from qubosolver import (
-    analysis,
-    Solver,
-    Solution,
-    solving,
     Dataset,
     Instance,
+    Solution,
+    Solver,
+    SolverConfig,
+    analysis,
     bitstring,
     bitstrings,
     matrix,
+    solving,
+    torch_rng,
     vector,
     vectori,
-    torch_rng,
-    SolverConfig,
 )
 from qubosolver.solving.classical.iterative_bitflip_local_search import (
     _best_improvement_search_batch,
@@ -27,7 +28,6 @@ from qubosolver.utils import _costs
 
 @pytest.mark.parametrize("postprocessing", [True, False])
 def test_basic_qubo_2d_integration(postprocessing: bool) -> None:
-
     # fmt: off
     Q = matrix.tensor([
         [-10.0, 1.0],
@@ -59,7 +59,6 @@ def test_basic_qubo_2d_integration(postprocessing: bool) -> None:
 
 
 def test_basic_qubo_2d() -> None:
-
     # fmt: off
     Q = matrix.tensor([
         [-10.0, 1.0],
@@ -130,7 +129,6 @@ def test_no_solution() -> None:
 
 
 def test_best_improvement_search_basic() -> None:
-
     # fmt: off
     Q = matrix.tensor([
         [-10.0, 1.0],

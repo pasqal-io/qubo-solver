@@ -7,8 +7,9 @@ import numpy as np
 import numpy.typing as npt
 import torch
 from scipy.optimize import OptimizeResult, minimize
-from shapely.geometry import Point, Polygon, MultiPolygon
-from qubosolver import matrix, Matrix, Bitstring, Vector, vector
+from shapely.geometry import MultiPolygon, Point, Polygon
+
+from qubosolver import Bitstring, Matrix, Vector, matrix, vector
 from qubosolver.types._checks import no_runtime_typecheck
 
 
@@ -21,17 +22,13 @@ def _clamp_max_radial_distance(max_radial_distance: float) -> float:
         return 50.0
 
 
-VertexToPlace = TypedDict(
-    "VertexToPlace",
-    {
-        "id": int,
-        "weight": torch.Tensor,
-        "blocking_vertices": torch.Tensor,
-        "separated_vertices": torch.Tensor,
-        "neighbors_id": torch.Tensor,
-        "neighbors_weight": torch.Tensor,
-    },
-)
+class VertexToPlace(TypedDict):
+    id: int
+    weight: torch.Tensor
+    blocking_vertices: torch.Tensor
+    separated_vertices: torch.Tensor
+    neighbors_id: torch.Tensor
+    neighbors_weight: torch.Tensor
 
 
 class WeightedZone:
@@ -160,9 +157,9 @@ def vertices_to_place(
     qubo_matrix: Matrix,
     separation_threshold: float = 1.5,
 ) -> dict[int, VertexToPlace]:
-    """Obtain the dictionary of vertices to place
-    (i.e., qubo variables to still consider for solving subproblems)
-    with blocking, separated and neighbors vertices.
+    """Obtain the dictionary of vertices to place, with blocking, separated and neighbors.
+
+    I.e., qubo variables to still consider for solving subproblems.
 
     Blocking vertices are vertices that have interation distances of 0 for a current vertex.
     Separated ones are vertices that have interation distances equal to `separation_threshold`.
@@ -183,7 +180,6 @@ def vertices_to_place(
     n = dist_matrix.shape[0]
 
     for i in range(n):
-
         distances = dist_matrix[i, :].ravel()
         # possible to check for 0 as `compute_distance_interaction_matrix` sets to 0 some elements
         # should be <= 0.1 ?
@@ -221,7 +217,6 @@ def update_vertex_info_from_placed(
         dict_vertices_to_place (dict[int, VertexToPlace]): Current dictionary of vertices to place.
         placed_vertices (torch.Tensor): Placed vertices indices.
     """
-
     neighbors_notplaced = ~torch.isin(
         dict_vertices_to_place[vertex]["neighbors_id"], placed_vertices
     )
@@ -331,9 +326,10 @@ def transfer_edge_values(
     global_solution: Bitstring,
     matrix: Matrix,
 ) -> None:
-    """Transfer the values of cut vertices between the embedded subgraph
-    and the leftover subgraph if the value in subgraph was fixed to 1,
-    and update the dictionary of left vertices and global solution.
+    """Transfer the values of cut vertices between the embedded and leftover subgraphs.
+
+    Applies if the value in subgraph was fixed to 1, and updates the dictionary of left
+    vertices and global solution.
 
     Args:
         dict_vertices_to_place (dict[int, VertexToPlace]): current dictionary of vertices to place.
@@ -341,11 +337,10 @@ def transfer_edge_values(
         global_solution (torch.Tensor): global solution of the qubo.
         matrix (torch.Tensor): current qubo matrix.
     """
-
     # add weight of cut vertices if subsolution variable was fixed to 1
     for key in placed_vertices:
         if global_solution[key] == 1:
-            for key2 in dict_vertices_to_place.keys():
+            for key2 in dict_vertices_to_place:
                 if key2 != key:
                     dict_vertices_to_place[key2]["weight"] = (
                         dict_vertices_to_place[key2]["weight"] + matrix[key][key2]
@@ -379,7 +374,6 @@ def zone_intersection(
     Returns:
         Polygon: The resulting geometry of intersection.
     """
-
     for vertex in list_vertices:
         if current_intersection_result.is_empty:
             break
@@ -404,7 +398,6 @@ def separated_zone_intersection(
     Returns:
         Polygon: The resulting geometry of intersection.
     """
-
     for vertex in list_vertices:
         if current_intersection_result.is_empty:
             break
@@ -427,7 +420,6 @@ def forbidden_zone_intersection(
     Returns:
         Polygon: The resulting geometry.
     """
-
     for vertex in placed_vertices:
         if current_intersection_result.is_empty:
             break
@@ -487,7 +479,7 @@ def cost_interaction_point_continuous(
         pos_new (list[float]): Input position.
         placed_points (list[tuple[float, float]]): Placed points.
         Q_target (list[float]): Weights.
-        blocked_edges (list): List of blocked indices.
+        blocked_indices (list): List of blocked indices.
         min_distance (float): Minimum allowed distance to any placed point.
         max_radial_distance (float): Maximum allowed radial distance from origin.
 
@@ -550,7 +542,6 @@ def bfgs_placement(
     current_blocked_edges: list[int] = list()
     counter = 0
     for vertex_key, vertex_value in placed_vertices.items():
-
         placed_points.append([vertex_value.x, vertex_value.y])
         Q_target.append(matrix[vertex_key, vertex].item())
 
@@ -576,7 +567,6 @@ def check_limit_zone(final_point: Point, max_radial_distance: float) -> bool:
     Returns:
         bool: Returns True if point is within limit zone.
     """
-
     center_poly = Point(0, 0)
     limit_zone = center_poly.buffer(_clamp_max_radial_distance(max_radial_distance))
     return bool(limit_zone.contains(final_point))
@@ -593,7 +583,7 @@ def check_prohibited_zones(placed_vertices: dict[int, WeightedZone], final_point
         bool: Returns True if point is not within the forbidden zone of placed vertices.
     """
     checker = True
-    for key in placed_vertices.keys():
+    for key in placed_vertices:
         if placed_vertices[key].forbidden_zone.contains(final_point):
             return False
 
@@ -688,7 +678,6 @@ def test_placing_vertex(
             for j in dict_vertices_to_place[vertex]["neighbors_id"]:
                 j = j.item()
                 if j not in placed_vertices and j not in tested_vertices and j not in queue:
-
                     queue.append(j)
 
     else:
@@ -712,7 +701,6 @@ def obtain_vertice_to_test(
     Returns:
         int: identifier of a vertex to test placing.
     """
-
     best_score = 0.0
     idx: int = int(torch.randint(0, len(vertices_list), (), generator=rng).item())
     chosen_vertice = vertices_list[idx]
@@ -733,7 +721,6 @@ def obtain_vertice_to_test(
     best_score = 0.0
 
     for vertex in vertices_list:
-
         current_score = 0.0
         for blocking_vertex in dict_vertices_to_place[vertex]["blocking_vertices"]:
             if blocking_vertex.item() in placed_vertices:
@@ -755,8 +742,7 @@ def geometric_search(
     max_radial_distance: float,
     rng: torch.Generator,
 ) -> dict[int, WeightedZone]:
-    """Search an embeddable subproblem on the device
-        for solving it during the decomposition.
+    """Search an embeddable subproblem on the device for solving it during the decomposition.
 
     Args:
         matrix (torch.Tensor): Full updated qubo matrix.
@@ -766,12 +752,12 @@ def geometric_search(
             interactions and sum of interactions from embedding.
         min_distance (float): Minimum allowed distance between placed points.
         max_radial_distance (float): Maximum allowed radial distance from origin.
+        rng (torch.Generator): Random number generator used to break ties.
 
     Returns:
         dict[int, WeightedZone]: placed vertices (from the matrix variables)
             with coordinates representing embedded graph
     """
-
     # place first vertex
     zone0 = WeightedZone(
         id=first_vertex,
@@ -853,7 +839,6 @@ def interaction_matrix_from_placed(
         tuple[torch.Tensor, dict]: Interacton matrix of embedded subgraph
             with a mapping of indices of placed vertices.
     """
-
     mat = matrix.zeros(len(placed_vertices))
 
     sorted_placed_vertices = dict(sorted(placed_vertices.items()))
@@ -891,8 +876,7 @@ def update_global_solution(
 
 
 def last_target_matrix(last_indices: list[int], matrix: Matrix) -> tuple[Matrix, dict[int, int]]:
-    """Obtain the last qubo matrix to solve
-        after the decomposition algorithm.
+    """Obtain the last qubo matrix to solve after the decomposition algorithm.
 
     Args:
         last_indices (list[int]): List of last indices.

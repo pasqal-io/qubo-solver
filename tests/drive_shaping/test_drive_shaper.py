@@ -1,28 +1,29 @@
 from __future__ import annotations
 
-import numpy as np
-import pytest
-import torch
-import pytest_check as check
-from scipy.spatial.distance import pdist, squareform
 from typing import Literal, get_args
 
+import numpy as np
+import pytest
+import pytest_check as check
 import qoolqit
+import torch
 from qoolqit.graphs import DataGraph
+from scipy.spatial.distance import pdist, squareform
+
 from qubosolver import (
+    DriveShapingConfig,
+    EmbeddingConfig,
     Instance,
+    QuantumSolvingConfig,
     Solution,
     Solver,
-    matrix,
-    QuantumSolvingConfig,
-    DriveShapingConfig,
     SolverConfig,
-    EmbeddingConfig,
+    matrix,
 )
 from qubosolver.solver._drive_shaper import (
-    _get_drive_shaper,
     BayesianSearchDriveShaper,
     ProportionalDiagonalDriveShaper,
+    _get_drive_shaper,
 )
 from qubosolver.solver.config.drive_shaping import _DriveShapingAlgorithm
 from qubosolver.solver.solver import _QuboSolverQuantum
@@ -108,7 +109,8 @@ def test_normalized_weights_in_drive(
     dummy_register: qoolqit.Register,
     simple_qubo_instance: Instance,
 ) -> None:
-    # skip proportional-diagonal and local-energy-scale drive as their normalization is very specific.
+    # skip proportional-diagonal and local-energy-scale drive as their normalization is
+    # very specific.
     if dmm and drive_method in ["proportional_diagonal", "local_energy_scale"]:
         pytest.skip("Not implemented")
     default_config = QuantumSolvingConfig(
@@ -221,8 +223,9 @@ def _embedding_drive_ratio(solver: Solver) -> float:
 def test_proportional_diagonal_register_and_drive_shape_normalization(
     embedding_method: Literal["greedy_layout", "blade"],
 ) -> None:
-    """The proportional-diagonal drive shaper must normalize the pulse
-    with the same convention as the register.
+    """The proportional-diagonal drive shaper must normalize the pulse consistently.
+
+    It must use the same convention as the register.
     """
     qubo = np.array([[-1.0, 2.0], [2.0, -1.0]])
     config = SolverConfig(

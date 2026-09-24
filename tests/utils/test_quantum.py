@@ -4,12 +4,11 @@ import math
 from types import SimpleNamespace
 
 import pytest_check as check
-import torch
-
 import qoolqit
-from qoolqit import ConstantWaveform
-from qoolqit import RampWaveform
-from qubosolver import Instance, matrix, vector, drive_shaping, embedding, extract_qubo
+import torch
+from qoolqit import ConstantWaveform, RampWaveform
+
+from qubosolver import Instance, drive_shaping, embedding, extract_qubo, matrix, vector
 from qubosolver.embedding._algorithms.greedy.layout import get_layout
 from qubosolver.utils.quantum import _max_min_distance_ratio
 

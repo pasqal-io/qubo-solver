@@ -1,19 +1,20 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
 from pulser.backend.remote import (
     BatchStatus,
     JobStatus,
-    RemoteResults,
     RemoteConnection,
+    RemoteResults,
 )
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from typing import Any
+
     from pulser import Sequence as PulserSequence
     from pulser.backend.results import Results
-    from typing import Any, Mapping
 
 
 class MockConnection(RemoteConnection):
@@ -33,7 +34,7 @@ class MockConnection(RemoteConnection):
         wait: bool = False,
         open: bool = False,
         batch_id: str | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401 (accepted for interface compatibility, unused)
     ) -> RemoteResults:
         if not batch_id:
             batch_id = "abcd"
@@ -48,7 +49,7 @@ class MockConnection(RemoteConnection):
         if self._running_iterations > 0:
             self._running_iterations -= 1
             return {"efgh": (JobStatus.RUNNING, None)}
-        if batch_id not in self.results.keys():
+        if batch_id not in self.results:
             return {"efgh": (JobStatus.ERROR, None)}
         return {"efgh": (JobStatus.DONE, self.results[batch_id])}
 
@@ -57,7 +58,7 @@ class MockConnection(RemoteConnection):
         for status in BatchStatus:
             if status.name in batch_id:
                 return status
-        if batch_id not in self.results.keys():
+        if batch_id not in self.results:
             return BatchStatus.ERROR
         return BatchStatus.DONE
 

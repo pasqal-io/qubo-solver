@@ -1,3 +1,5 @@
+"""Low-level binary I/O helpers for the qubosolver serialization format."""
+
 from __future__ import annotations
 
 import builtins
@@ -5,10 +7,10 @@ import io
 import logging
 import os
 import struct
+from collections.abc import Sized
 from contextlib import nullcontext
 from importlib.metadata import version
-
-from typing import IO, Union, TypeVar, overload, Sized, TYPE_CHECKING
+from typing import IO, TYPE_CHECKING, TypeVar, overload
 
 from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING
 
@@ -28,15 +30,16 @@ if multibyte. Strings in these formats are type tags and version numbers, the
 longest around 50 bytes."""
 
 if TYPE_CHECKING:
-    from typing import Any, Literal
-    from typing_extensions import Buffer
     from contextlib import AbstractContextManager
+    from typing import Any, Literal
+
+    from typing_extensions import Buffer
 
 _T = TypeVar("_T", bytes, str)
 
 # `Stream[_T]` is an already-open binary or text stream: `io.BytesIO`, the
 # result of `open`, ...
-if TYPE_CHECKING or not _RUNTIME_TYPE_CHECKING:
+if TYPE_CHECKING or not _RUNTIME_TYPE_CHECKING:  # noqa: SIM108
     Stream = IO[_T]
 else:
     # Runtime-checking variant: the static hint widened with `io.IOBase`.
@@ -50,9 +53,9 @@ else:
     # non-streams. It gives up only the bytes/str distinction for in-memory
     # streams, which `open` enforces anyway by raising `TypeError` on a stream
     # of the wrong flavour. `IO[_T]` is kept so the alias stays generic.
-    Stream = Union[IO[_T], io.IOBase]  # type: ignore[misc,assignment]
+    Stream = IO[_T] | io.IOBase  # type: ignore[misc,assignment]
 
-FileLike = Union[str, os.PathLike[str], Stream[_T]]
+FileLike = str | os.PathLike[str] | Stream[_T]
 """A filesystem path or an already-open [`Stream`][], as taken by `save`/`load`."""
 
 
@@ -79,7 +82,11 @@ def read_exact(src: Stream[bytes], length: int) -> bytes:
     return data
 
 
-def save(output: Stream[bytes], format: str, data: Any) -> None:
+def save(
+    output: Stream[bytes],
+    format: str,
+    data: Any,  # noqa: ANN401 (struct.pack value type depends on format string)
+) -> None:
     """Pack `data` with `struct.pack` and write it to a binary stream.
 
     Args:
@@ -92,7 +99,7 @@ def save(output: Stream[bytes], format: str, data: Any) -> None:
     output.write(struct.pack(format, data))
 
 
-def load(src: Stream[bytes], format: str) -> Any:
+def load(src: Stream[bytes], format: str) -> Any:  # noqa: ANN401 (unpack type depends on format)
     """Read and unpack a single value from a binary stream with `struct`.
 
     Reads exactly the number of bytes required by `format` and returns the
@@ -272,27 +279,25 @@ def load_header(src: Stream[bytes]) -> str:
 
 
 @overload
-def open(file_like: FileLike[bytes]) -> AbstractContextManager[IO[bytes]]:
-    """Open a binary file-like object, defaulting to write ("wb") mode."""
-    ...  # pragma: no cover # fmt: skip
+def open(
+    file_like: FileLike[bytes],
+) -> AbstractContextManager[IO[bytes]]: ...  # pragma: no cover # fmt: skip
 
 
 @overload
 def open(
     file_like: FileLike[bytes], mode: Literal["rb", "wb"]
-) -> AbstractContextManager[IO[bytes]]:
-    """Open a binary file-like object with an explicit "rb" or "wb" mode."""
-    ...  # pragma: no cover # fmt: skip
+) -> AbstractContextManager[IO[bytes]]: ...  # pragma: no cover # fmt: skip
 
 
 @overload
-def open(file_like: FileLike[str], mode: Literal["r", "w"]) -> AbstractContextManager[IO[str]]:
-    """Open a text file-like object with an explicit "r" or "w" mode."""
-    ...  # pragma: no cover # fmt: skip
+def open(
+    file_like: FileLike[str], mode: Literal["r", "w"]
+) -> AbstractContextManager[IO[str]]: ...  # pragma: no cover # fmt: skip
 
 
 def open(
-    file_like: Union[FileLike[bytes], FileLike[str]],
+    file_like: FileLike[bytes] | FileLike[str],
     mode: Literal["rb", "wb", "r", "w"] = "wb",
 ) -> AbstractContextManager[IO[bytes]] | AbstractContextManager[IO[str]]:
     """Open a file path or wrap an existing file-like object as a context manager.

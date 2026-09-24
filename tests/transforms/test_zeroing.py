@@ -6,7 +6,7 @@ import pytest
 import pytest_check as check
 import torch
 
-from qubosolver import Instance, Solution, transforms, bitstrings, matrix, vectori
+from qubosolver import Instance, Solution, bitstrings, matrix, transforms, vectori
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
 

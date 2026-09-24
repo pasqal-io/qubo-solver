@@ -19,17 +19,17 @@ solution = variable_fixing.lift(reduced_solution, reduced_instance)
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
-from typing import cast, TypeAlias
-
 import copy
 import json
+from collections.abc import Callable, Sequence
+from typing import TypeAlias, cast
+
 import torch
 
 import qubosolver
-from qubosolver.types import Solution, bitstrings, vector
 from qubosolver._io import utils as io_utils
 from qubosolver._io.utils import Stream
+from qubosolver.types import Solution, bitstrings, vector
 from qubosolver.types._checks import debug_runtime_typecheck
 
 # TODO: Using `type` statement when Python >= 3.12
@@ -82,7 +82,7 @@ class Instance(qubosolver.Instance):
     solution can be reconstructed via [`lift`][].
     """
 
-    def __init__(self, parent_instance: qubosolver.Instance):
+    def __init__(self, parent_instance: qubosolver.Instance) -> None:
         """Initialize from a parent QUBO instance.
 
         Args:
@@ -270,9 +270,7 @@ def lift(reduced_solution: Solution, reduced_instance: Instance) -> Solution:
         return bitstring
 
     bits_to_reinsert = sum(len(fixation_dict) for fixation_dict in reduced_instance._fixed_indices)
-    assert (
-        bits_to_reinsert + len(bitstrings_list[0])
-    ) == reduced_instance._parent_instance.size  # nosec B101
+    assert (bits_to_reinsert + len(bitstrings_list[0])) == reduced_instance._parent_instance.size  # nosec B101
 
     if bits_to_reinsert == 0:
         return copy.deepcopy(reduced_solution)

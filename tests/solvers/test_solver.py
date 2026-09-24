@@ -2,46 +2,40 @@ from __future__ import annotations
 
 import logging
 import warnings
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
-
 import pytest_check as check
 import torch
-from unittest.mock import Mock
-
-from scipy.spatial.distance import pdist, squareform
-
+from mock.connection import MockConnection
+from pulser.backend.remote import (
+    RemoteConnection,
+    Results,
+)
 from qoolqit import Device
 from qoolqit.execution import JobStatus
 from qoolqit.graphs import DataGraph
+from scipy.spatial.distance import pdist, squareform
 
 from qubosolver import (
+    ClassicalSolvingConfig,
+    DriveShapingConfig,
+    EmbeddingConfig,
     Instance,
-    Solver,
+    LocalEmulator,
+    QuantumSolvingConfig,
+    RemoteEmulator,
     Solution,
-    vectori,
+    Solver,
+    SolverConfig,
     bitstrings,
     matrix,
-    LocalEmulator,
-    RemoteEmulator,
-    SolverConfig,
-    QuantumSolvingConfig,
-    ClassicalSolvingConfig,
-    EmbeddingConfig,
-    DriveShapingConfig,
+    vectori,
 )
-from qubosolver.utils import analysis
-from qubosolver.solver.solver import _QuboSolverQuantum
 from qubosolver.solver.config.embedding import _EmbeddingAlgorithm
-from mock.connection import MockConnection
-
-from pulser.backend.remote import (
-    Results,
-    RemoteConnection,
-)
-
-from typing import Optional
+from qubosolver.solver.solver import _QuboSolverQuantum
+from qubosolver.utils import analysis
 
 
 @pytest.fixture
@@ -207,7 +201,7 @@ def test_parse_results_string_counts_to_integer_tensor() -> None:
     torch.testing.assert_close(solution.counts, expected_counts)
 
 
-def trivial_triangular_qubo(connection: Optional[RemoteConnection] = None) -> Solver:
+def trivial_triangular_qubo(connection: RemoteConnection | None = None) -> Solver:
     Q = 10.0 * matrix.tensor(
         [
             [-10.0, 6.0, 6.0],

@@ -7,7 +7,7 @@ import pytest
 import pytest_check as check
 import torch
 
-from qubosolver import Instance, Solution, matrix, bitstrings, vector, vectori
+from qubosolver import Instance, Solution, bitstrings, matrix, vector, vectori
 
 
 @pytest.fixture
@@ -699,6 +699,35 @@ def test_load_rejects_a_stream_that_is_not_a_qubosolver_file() -> None:
 
     with pytest.raises(ValueError, match="Not a qubosolver file"):
         Solution.load(buffer)
+
+
+def test_default_constructed_solutions_do_not_share_tensors() -> None:
+    """Each `Solution()` must get its own zero tensors, not one shared across instances.
+
+    Regression test: a bare `zeros(...)` call as a dataclass default is evaluated
+    once at class-definition time, so every default-constructed `Solution` would
+    share (and could corrupt) the same underlying tensor objects.
+    """
+    a = Solution()
+    b = Solution()
+
+    check.is_not(a.bitstrings, b.bitstrings)
+    check.is_not(a.costs, b.costs)
+    check.is_not(a.counts, b.counts)
+    check.is_not(a.probabilities, b.probabilities)
+
+
+def test_mutating_one_default_constructed_solution_does_not_affect_another() -> None:
+    a = Solution()
+    b = Solution()
+
+    a.costs.resize_(1)
+    a.costs[0] = 999.0
+    a.counts.resize_(1)
+    a.counts[0] = 42
+
+    check.equal(b.costs.numel(), 0)
+    check.equal(b.counts.numel(), 0)
 
 
 def test_concat_mixed_populated_and_empty_counts_raises() -> None:

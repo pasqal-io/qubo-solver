@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from typing import Literal
+
 import pandas as pd
 import pytest
 import pytest_check as check
-from typing import Literal
 
 from qubosolver import analysis
 

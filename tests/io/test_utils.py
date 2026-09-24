@@ -12,15 +12,15 @@ from qubosolver._io.utils import (
     _MAGIC,
     _MAX_STRING_SIZE,
     _package_version,
+    load,
+    load_header,
+    load_sized_buffer,
+    load_string,
     read_exact,
     save,
-    load,
     save_header,
-    load_header,
     save_sized_buffer,
-    load_sized_buffer,
     save_string,
-    load_string,
 )
 from qubosolver._io.utils import open as io_utils_open
 
@@ -319,16 +319,20 @@ class TestOpen:
     def test_open_invalid_binary_io_type(self) -> None:
         text_stream = io.StringIO("text")
         # Type-checking also catches this error
-        with pytest.raises(TypeError, match="Expected a binary file-like object"):
-            with io_utils_open(text_stream, "rb"):  # type: ignore[call-overload]
-                pass
+        with (
+            pytest.raises(TypeError, match="Expected a binary file-like object"),
+            io_utils_open(text_stream, "rb"),  # type: ignore[call-overload]
+        ):
+            pass
 
     def test_open_invalid_text_io_type(self) -> None:
         binary_stream = io.BytesIO(b"binary")
         # Type-checking also catches this error
-        with pytest.raises(TypeError, match="Expected a text file-like object"):
-            with io_utils_open(binary_stream, "r"):  # type: ignore[call-overload]
-                pass
+        with (
+            pytest.raises(TypeError, match="Expected a text file-like object"),
+            io_utils_open(binary_stream, "r"),  # type: ignore[call-overload]
+        ):
+            pass
 
     def test_open_default_mode(self, tmp_path: Path) -> None:
         file = tmp_path / "test.bin"

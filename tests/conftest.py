@@ -3,35 +3,33 @@
 from __future__ import annotations
 
 import os
-import pytest
 import random
-import torch
+from collections.abc import Generator
+
 import numpy as np
-from typing import Generator
-
-from pulser_simulation import QutipBackendV2
-from emu_sv import SVBackend
-from emu_mps import MPSBackend
+import pytest
 import qoolqit
-
+import torch
+from emu_mps import MPSBackend
+from emu_sv import SVBackend
 from mock.connection import MockConnection
+from pulser_simulation import QutipBackendV2
 
 from qubosolver import (
+    DriveShapingConfig,
     Instance,
+    LocalEmulator,
+    Matrix,
     Solution,
     bitstrings,
+    matrix,
     vector,
     vectori,
-    matrix,
-    Matrix,
-    LocalEmulator,
-    DriveShapingConfig,
 )
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """
-        Reorder collected pytest items so higher-priority tests run first.
+    """Reorder collected pytest items so higher-priority tests run first.
 
         This hook is called by pytest after test collection and before execution.
         It sorts the collected `items` list in-place by the numeric value of the
@@ -134,9 +132,7 @@ def bayesian_search_drive_shaping() -> DriveShapingConfig:
 
 @pytest.fixture
 def qubo_instance_for_preprocessing() -> Instance:
-    """
-    Generate small instance for pre/postprocessing.
-    """
+    """Generate small instance for pre/postprocessing."""
     return Instance(
         matrix.tensor(
             [
@@ -164,9 +160,7 @@ def simple_qubo_instance2() -> Instance:
 
 @pytest.fixture
 def qubo_instance_for_embedding() -> Instance:
-    """
-    Small QUBO instance for embedding.
-    """
+    """Small QUBO instance for embedding."""
     return Instance(
         matrix.tensor(
             [[-98, 2, 13, 1], [2, -12, 20, 15], [13, 20, -34, 7], [1, 15, 7, -57]],
@@ -208,8 +202,9 @@ def qubo_for_testing_many_devices(request: pytest.FixtureRequest) -> Instance:
 def generate_qubo_matrix(
     size: int, density: float, value_range: tuple[int, int], seed: int | None = None
 ) -> Matrix:
-    """Generate a random symmetric qubo matrix with negative diagonal coefficients
-       and positive off-diagonal elements.
+    """Generate a random symmetric qubo matrix with negative diagonal coefficients.
+
+    Off-diagonal elements are positive.
 
     Args:
         size (int): Size of qubo.
@@ -220,7 +215,6 @@ def generate_qubo_matrix(
     Returns:
         torch.Tensor: Qubo matrix.
     """
-
     import numpy as np
 
     if seed is not None:

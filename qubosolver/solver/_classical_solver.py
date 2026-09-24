@@ -19,8 +19,9 @@ from abc import ABC, abstractmethod
 
 import torch
 
-from qubosolver.types import Instance, Solution, torch_rng
 from qubosolver import solving
+from qubosolver.types import Instance, Solution, torch_rng
+
 from .config import ClassicalSolvingConfig
 
 
@@ -33,7 +34,7 @@ class BaseClassicalSolver(ABC):
     subclasses directly.
     """
 
-    def __init__(self, instance: Instance, config: ClassicalSolvingConfig):
+    def __init__(self, instance: Instance, config: ClassicalSolvingConfig) -> None:
         """Initialise the solver with a QUBO instance and configuration.
 
         Args:

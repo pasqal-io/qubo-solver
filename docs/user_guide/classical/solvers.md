@@ -35,13 +35,17 @@ These solvers take a starting point. Because they accept a starting point, they 
 ```python exec="on" source="tabbed-left" session="tabu" result="text"
 from qubosolver import Instance, solving, matrix, bitstrings, torch_rng, analysis
 
-instance = Instance(matrix.tensor([
-    [-2.0, 1.0, 0.0, 1.5, 0.0],
-    [ 1.0,-1.5, 1.0, 0.0, 0.5],
-    [ 0.0, 1.0,-2.0, 1.0, 1.0],
-    [ 1.5, 0.0, 1.0,-1.0, 0.5],
-    [ 0.0, 0.5, 1.0, 0.5,-1.5],
-]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [-2.0, 1.0, 0.0, 1.5, 0.0],
+            [1.0, -1.5, 1.0, 0.0, 0.5],
+            [0.0, 1.0, -2.0, 1.0, 1.0],
+            [1.5, 0.0, 1.0, -1.0, 0.5],
+            [0.0, 0.5, 1.0, 0.5, -1.5],
+        ]
+    )
+)
 
 starts = bitstrings.rand(5, instance.size, rng=torch_rng(15))
 solution = solving.tabu_search.solve(instance, starts=starts, time_limit=10.0)
@@ -56,19 +60,28 @@ Run the quantum pipeline (see [quantum solving](../quantum/intro.md)), then try 
 
 ```python exec="on" source="tabbed-left" session="refine" result="text"
 from qubosolver import (
-    Instance, Solution, LocalEmulator,
-    embedding, drive_shaping, solving,
-    matrix, analysis,
+    Instance,
+    Solution,
+    LocalEmulator,
+    embedding,
+    drive_shaping,
+    solving,
+    matrix,
+    analysis,
 )
 import qoolqit
 
-instance = Instance(matrix.tensor([
-    [-2.0, 1.0, 0.0, 1.5, 0.0],
-    [ 1.0,-1.5, 1.0, 0.0, 0.5],
-    [ 0.0, 1.0,-2.0, 1.0, 1.0],
-    [ 1.5, 0.0, 1.0,-1.0, 0.5],
-    [ 0.0, 0.5, 1.0, 0.5,-1.5],
-]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [-2.0, 1.0, 0.0, 1.5, 0.0],
+            [1.0, -1.5, 1.0, 0.0, 0.5],
+            [0.0, 1.0, -2.0, 1.0, 1.0],
+            [1.5, 0.0, 1.0, -1.0, 0.5],
+            [0.0, 0.5, 1.0, 0.5, -1.5],
+        ]
+    )
+)
 device = qoolqit.AnalogDeviceWithDMM()
 backend = LocalEmulator()
 
@@ -96,25 +109,33 @@ For the common case, [`SolverConfig`][qubosolver.SolverConfig] and [`Solver`][qu
 
 ```python exec="on" source="tabbed-left" session="shortcut" result="text"
 from qubosolver import (
-    Instance, Solver, SolverConfig, ClassicalSolvingConfig,
-    matrix, analysis,
+    Instance,
+    Solver,
+    SolverConfig,
+    ClassicalSolvingConfig,
+    matrix,
+    analysis,
 )
 from dataclasses import asdict
 import pprint
 
-instance = Instance(matrix.tensor([
-    [-2.0, 1.0, 0.0, 1.5, 0.0],
-    [ 1.0,-1.5, 1.0, 0.0, 0.5],
-    [ 0.0, 1.0,-2.0, 1.0, 1.0],
-    [ 1.5, 0.0, 1.0,-1.0, 0.5],
-    [ 0.0, 0.5, 1.0, 0.5,-1.5],
-]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [-2.0, 1.0, 0.0, 1.5, 0.0],
+            [1.0, -1.5, 1.0, 0.0, 0.5],
+            [0.0, 1.0, -2.0, 1.0, 1.0],
+            [1.5, 0.0, 1.0, -1.0, 0.5],
+            [0.0, 0.5, 1.0, 0.5, -1.5],
+        ]
+    )
+)
 
 classical_config = ClassicalSolvingConfig(
     algorithm="tabu_search",
     # algorithm="simulated_annealing",
     # algorithm="cplex",
-    )
+)
 solver_config = SolverConfig(solving=classical_config)
 solver = Solver(instance, solver_config)
 solution = solver.solve()

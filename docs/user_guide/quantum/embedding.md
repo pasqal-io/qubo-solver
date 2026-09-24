@@ -37,14 +37,19 @@ import qoolqit
 
 # Private utility to set seed.
 from qubosolver.utils._random import manual_seed
+
 manual_seed(958)
 
-instance = Instance(matrix.tensor([
-    [0, 1, 2, 1],
-    [1, 0, 3, 0],
-    [2, 3, 0, 5],
-    [1, 0, 5, 0],
-    ]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [0, 1, 2, 1],
+            [1, 0, 3, 0],
+            [2, 3, 0, 5],
+            [1, 0, 5, 0],
+        ]
+    )
+)
 register = embedding.blade.embed_for_device(instance, qoolqit.AnalogDevice())
 interaction_matrix = matrix.as_tensor(register.interaction_matrix())
 
@@ -89,14 +94,19 @@ import qoolqit
 
 # Private utility to set seed.
 from qubosolver.utils._random import manual_seed
+
 manual_seed(851)
 
-instance = Instance(matrix.tensor([
-    [0, 1, 2, 1],
-    [1, 0, 3, 0],
-    [2, 3, 0, 5],
-    [1, 0, 5, 0],
-    ]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [0, 1, 2, 1],
+            [1, 0, 3, 0],
+            [2, 3, 0, 5],
+            [1, 0, 5, 0],
+        ]
+    )
+)
 
 register = embedding.greedy_layout.embed_for_device(
     instance,
@@ -165,16 +175,16 @@ from dataclasses import asdict
 import pprint
 
 embedding_config = EmbeddingConfig(
-    algorithm = "blade",
+    algorithm="blade",
     # algorithm = "greedy_layout",
     # greedy_layout_lattice = "triangular",
-    greedy_layout_lattice = "square",
+    greedy_layout_lattice="square",
 )
 quantum_config = QuantumSolvingConfig(
-    embedding = embedding_config,
+    embedding=embedding_config,
 )
 solver_config = SolverConfig(
-    solving = quantum_config,
+    solving=quantum_config,
 )
 print(pprint.pformat(asdict(solver_config.solving.embedding)))
 ```

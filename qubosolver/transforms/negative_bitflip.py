@@ -37,9 +37,9 @@ from typing import Any
 import torch
 
 import qubosolver
-from qubosolver.types import Solution, vector, Matrix, Bitstrings, Bitstring, bitstring
 from qubosolver._io import utils as io_utils
 from qubosolver._io.utils import Stream
+from qubosolver.types import Bitstring, Bitstrings, Matrix, Solution, bitstring, vector
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,6 @@ def _transform_qubo_with_bitflips(
     The returned offset satisfies:
         x^T Q x = y^T Q_flipped y + offset
     """
-
     f = flips.to(dtype=Q.dtype)
     s = 1.0 - 2.0 * f
     linear = 2.0 * s * (Q @ f)
@@ -158,7 +157,9 @@ def _compute_negative_weight_metrics(
     }
 
 
-def _solve_bitflip_preprocessing_glpk(
+def _solve_bitflip_preprocessing_glpk(  # noqa: C901
+    # This function is planned to be reimplemented without GLPK; complexity
+    # should be addressed as part of that rewrite rather than fixed here.
     Q: Matrix,
     *,
     time_limit_s: float = 60.0,
@@ -243,7 +244,7 @@ def _solve_bitflip_preprocessing_glpk(
             values = glp.doubleArray(4)
 
             for position, (column, coefficient) in enumerate(
-                zip(columns, coefficients),
+                zip(columns, coefficients, strict=True),
                 start=1,
             ):
                 indices[position] = column
@@ -373,7 +374,7 @@ class Instance(qubosolver.Instance):
     back onto the original variables.
     """
 
-    def __init__(self, parent_instance: qubosolver.Instance):
+    def __init__(self, parent_instance: qubosolver.Instance) -> None:
         """Initialize from a parent QUBO instance.
 
         Args:
@@ -387,13 +388,16 @@ class Instance(qubosolver.Instance):
         """Flip vector applied to the parent matrix, all-zero until [`apply`][] populates it."""
 
         self.metrics: dict[str, Any] = {}
-        """Negative off-diagonal count and weight before/after the flips, as computed by [`apply`][]."""
+        """Negative off-diagonal count and weight before/after the flips, as computed
+        by [`apply`][]."""
 
         self.status: str = "NONE"
-        """Outcome of the bit-flip ILP solve (e.g. ``"NONE"``, ``"OPTIMAL"``, ``"REJECTED_WORSE_THAN_NOOP"``)."""
+        """Outcome of the bit-flip ILP solve (e.g. ``"NONE"``, ``"OPTIMAL"``,
+        ``"REJECTED_WORSE_THAN_NOOP"``)."""
 
         self.offset: float = 0.0
-        """Constant term relating the flipped and original QUBO costs, $x^T Q x = y^T Q_{flipped} y + offset$."""
+        """Constant term relating the flipped and original QUBO costs,
+        $x^T Q x = y^T Q_{flipped} y + offset$."""
 
     def _write_body(self, f: Stream[bytes]) -> None:
         """Write the matrix, flip vector, solve metadata, and parent instance to `f`."""
@@ -437,7 +441,8 @@ def apply(
 
     Wraps `instance` in a bit-flip [`Instance`][], solves the negative-weight
     **Integer Linear Program (ILP)**
-    with [`GLPK`](https://github.com/bradfordboyle/pyglpk), and replaces the matrix with its flipped counterpart.  When
+    with [`GLPK`](https://github.com/bradfordboyle/pyglpk), and replaces the matrix with its
+    flipped counterpart.  When
     `instance` has no negative off-diagonal coefficient, the wrapper is returned
     unchanged (``status`` stays ``"NONE"`` and ``flips`` stays all-zero).  If
     the solved flips would leave *more* negative weight than doing nothing

@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import logging
 
+import qoolqit
 import torch
 
-import qoolqit
-from qubosolver import Instance, matrix, Vector
+from qubosolver import Instance, Vector, matrix
 
 from ._device_specs import (
     detuning_amplitude_ratio,
     max_virtual_amplitude,
+)
+from ._device_specs import (
     pulser_specs as _pulser_specs,
 )
 from ._waveforms import constant_weighted_dmm
@@ -119,7 +121,8 @@ def build_drive(
 
         if kappa < det_amp_ratio:
             logger.warning(
-                f"local_energy_scale_kappa is too small ({kappa}), you're likely to get a qoolqit CompilationError. Set it above {det_amp_ratio}."
+                f"local_energy_scale_kappa is too small ({kappa}), you're likely to get a "
+                f"qoolqit CompilationError. Set it above {det_amp_ratio}."
             )
 
     # Target local final detunings.

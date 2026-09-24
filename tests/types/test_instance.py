@@ -5,25 +5,26 @@ import io
 import os
 from collections.abc import Callable
 from pathlib import Path
+
 import numpy as np
 import pytest
 import pytest_check as check
 import torch
 
 from qubosolver import (
+    ClassicalSolvingConfig,
     Instance,
+    QuantumSolvingConfig,
     Solver,
+    SolverConfig,
     matrix,
     transforms,
-    SolverConfig,
-    ClassicalSolvingConfig,
-    QuantumSolvingConfig,
 )
 from qubosolver._io import utils as io_utils
 
 
 def test_valid_qubo_passes_without_error() -> None:
-    # A 5×5 QUBO with all coefficients >= 0 (identity matrix)
+    # A 5x5 QUBO with all coefficients >= 0 (identity matrix)
     coeffs = matrix.as_tensor(torch.eye(5))
     qi = Instance(coeffs)
     assert qi.size == 5
@@ -45,14 +46,14 @@ def test_len_zero_is_falsy() -> None:
 
 def test_size_exceeds_limit_triggers_system_exit() -> None:
 
-    # An 81×81 QUBO exceeds the maximum supported size of 80×80
+    # An 81x81 QUBO exceeds the maximum supported size of 80x80
     coeffs = np.zeros((81, 81))
 
     qi = Instance(matrix.tensor(coeffs))
     # Expect SystemExit to be raised when setting oversized coefficients
     solver = Solver(qi, SolverConfig(solving=ClassicalSolvingConfig()))
     assert solver.instance.size == 81
-    match_msg = "QUBO size 81×81 exceeds the maximum supported size of 80×80"
+    match_msg = "QUBO size 81x81 exceeds the maximum supported size of 80x80"
     with pytest.raises(ValueError, match=match_msg):
         Solver(qi, SolverConfig(solving=QuantumSolvingConfig()))
 
@@ -61,14 +62,14 @@ def test_size_exceeds_limit_triggers_system_exit() -> None:
 def test_max_off_diag_no_off_diag_entries(size: int) -> None:
     qi = Instance(matrix.zeros(size))
     with pytest.raises(RuntimeError, match="undefined"):
-        qi._max_off_diag
+        _ = qi._max_off_diag
 
 
 def test_variable_fixing_property_raises_for_plain_instance() -> None:
     instance = Instance()
     check.is_not_instance(instance, transforms.variable_fixing.Instance)
     with pytest.raises(TypeError):
-        instance.variable_fixing
+        _ = instance.variable_fixing
 
 
 def test_variable_fixing_property_returns_self_for_variable_fixing_instance() -> None:
@@ -81,7 +82,7 @@ def test_zeroing_property_raises_for_plain_instance() -> None:
     instance = Instance()
     check.is_not_instance(instance, transforms.zeroing.Instance)
     with pytest.raises(TypeError):
-        instance.zeroing
+        _ = instance.zeroing
 
 
 def test_zeroing_property_returns_self_for_zeroing_instance() -> None:
@@ -94,7 +95,7 @@ def test_negative_bitflip_property_raises_for_plain_instance() -> None:
     instance = Instance()
     check.is_not_instance(instance, transforms.negative_bitflip.Instance)
     with pytest.raises(TypeError):
-        instance.negative_bitflip
+        _ = instance.negative_bitflip
 
 
 def test_negative_bitflip_property_returns_self_for_negative_bitflip_instance() -> None:

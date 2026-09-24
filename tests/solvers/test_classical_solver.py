@@ -1,28 +1,29 @@
 from __future__ import annotations
 
-import pytest
-import torch
-import pytest_check as check
 import itertools
-import time
 import random
+import time
+
 import numpy as np
+import pytest
+import pytest_check as check
+import torch
 
 from qubosolver import (
+    ClassicalSolvingConfig,
     Instance,
     Solution,
     Solver,
-    matrix,
-    bitstring,
-    torch_rng,
     SolverConfig,
-    ClassicalSolvingConfig,
+    bitstring,
+    matrix,
+    torch_rng,
 )
 from qubosolver.solver._classical_solver import (
-    get_classical_solver,
+    RandomSolver,
     SimulatedAnnealingSolver,
     TabuSearchSolver,
-    RandomSolver,
+    get_classical_solver,
 )
 from qubosolver.solver.config.solving import _ClassicalAlgorithm
 from qubosolver.utils import _costs
@@ -150,7 +151,7 @@ def test_sa_cost(
         cost = _costs.quadratic_cost(z, Q)
         costs_.append(cost)
 
-    sorted_results = sorted(zip(bitstrings, costs_), key=lambda x: x[1])
+    sorted_results = sorted(zip(bitstrings, costs_, strict=True), key=lambda x: x[1])
     bests = [(b, c) for b, c in sorted_results[:max_bitstrings]]
 
     for bitstring_, cost_ in bests:

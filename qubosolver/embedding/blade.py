@@ -7,20 +7,21 @@ in a quantum program.
 
 BLaDE maps the QUBO coefficient matrix onto a 2-D (or higher-dimensional)
 set of atom positions so that the physical interaction strengths
-(∝ 1/‖rᵢ − rⱼ‖⁶) are as proportional to the QUBO edge weights as possible.
+(∝ 1/‖rᵢ - rⱼ‖⁶) are as proportional to the QUBO edge weights as possible.
 It does so by iteratively refining coordinates across multiple dimensional
 reduction rounds.
 """
 
 from __future__ import annotations
 
-from typing import TypeAlias
 import logging
+from typing import TypeAlias
+
+import qoolqit
+from qoolqit.embedding import Blade, BladeConfig
 
 from qubosolver import Instance, tensor
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
-import qoolqit
-from qoolqit.embedding import Blade, BladeConfig
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ Warning:
 def embed(
     instance: Instance,
     *,
-    config: Config = Config(),
+    config: Config | None = None,
 ) -> qoolqit.Register:
     """Embed a QUBO instance using the BLaDE algorithm.
 
@@ -59,7 +60,8 @@ def embed(
             maximum allowed ratio of radial to minimum distance, etc.).
 
     Returns:
-        A register mapping each atom label to its 2-D position, with atom positions determined by BLaDE.
+        A register mapping each atom label to its 2-D position, with atom positions
+            determined by BLaDE.
 
     Raises:
         ValueError: If `instance` has no variables (``size == 0``), since a
@@ -67,6 +69,7 @@ def embed(
         ValueError: If the QUBO coefficient matrix has negative off-diagonal
             coefficients, since BLaDE cannot embed such instances.
     """
+    config = config or Config()
     logger.debug("embed: instance size=%d, config=%r", instance.size, config)
     if not instance:
         raise ValueError("Cannot embed an empty instance (size=0): nothing to place.")
@@ -99,7 +102,8 @@ def embed_for_device(
         device: Target quantum device the resulting register must fit.
 
     Returns:
-        A register mapping each atom label to its 2-D position, with atom positions determined by BLaDE.
+        A register mapping each atom label to its 2-D position, with atom positions
+            determined by BLaDE.
 
     To also tune device-independent parameters (e.g. `dimensions` or
     `steps_per_round`), pass them directly to `Config` alongside `device`:

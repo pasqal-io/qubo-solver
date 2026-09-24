@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-
-import torch
 import numpy as np
-from qoolqit.devices.device import BaseDevice
-from qoolqit import AnalogDeviceWithDMM
-
-from qubosolver.embedding._algorithms.greedy import Greedy
-from qubosolver.embedding.greedy_layout import _resolve_max_possible_term
-from qubosolver import Dataset, embedding, Instance, matrix
 import pytest
 import pytest_check as check
+import torch
+from qoolqit import AnalogDeviceWithDMM
+from qoolqit.devices.device import BaseDevice
+
+from qubosolver import Dataset, Instance, embedding, matrix
+from qubosolver.embedding._algorithms.greedy import Greedy
+from qubosolver.embedding.greedy_layout import _resolve_max_possible_term
 
 
 def triangular_qubo() -> torch.Tensor:

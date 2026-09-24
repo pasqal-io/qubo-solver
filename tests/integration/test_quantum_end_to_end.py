@@ -1,26 +1,25 @@
 from __future__ import annotations
 
+import random
+
 import numpy as np
 import pytest
 import pytest_check as check
-import random
-import torch
 import qoolqit
+import torch
+from qubos import QUBOS
 
 from qubosolver import (
+    Candidate,
     Instance,
     Solution,
-    Candidate,
-    solving,
-    embedding,
     drive_shaping,
-    torch_rng,
+    embedding,
     extract_qubo,
+    solving,
+    torch_rng,
 )
-
 from qubosolver.utils import analysis
-
-from qubos import QUBOS
 
 
 def manual_seed(seed: int) -> torch.Generator:

@@ -1,18 +1,17 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from qoolqit.execution import job
 
-from .config import SolverConfig
-from qubosolver.types import Instance, Solution
 from qubosolver import solving, transforms
+from qubosolver.types import Instance, Solution
 
-
-from typing import TYPE_CHECKING
+from .config import SolverConfig
 
 if TYPE_CHECKING:
-    from qoolqit import Register, Drive
+    from qoolqit import Drive, Register
 
 
 class BaseSolver(ABC):
@@ -35,7 +34,7 @@ class BaseSolver(ABC):
     * `_draw_sequence` — visualise the compiled pulse sequence.
     """
 
-    def __init__(self, instance: Instance, config: SolverConfig = SolverConfig()):
+    def __init__(self, instance: Instance, config: SolverConfig | None = None) -> None:
         """Initialise the solver with a QUBO instance and configuration.
 
         Args:
@@ -45,12 +44,11 @@ class BaseSolver(ABC):
                 Defaults to a default-constructed `Config`.
         """
         self.instance: Instance = instance
-        self.config = config
+        self.config = config or SolverConfig()
 
     @abstractmethod
     def solve(self) -> Solution:
-        """
-        Solve the given QUBO instance.
+        """Solve the given QUBO instance.
 
         Returns:
             Solution: The result of the optimization.
@@ -59,8 +57,7 @@ class BaseSolver(ABC):
 
     @abstractmethod
     def _embedding(self) -> Register:
-        """
-        Generate or retrieve an embedding for the QUBO instance.
+        """Generate or retrieve an embedding for the QUBO instance.
 
         Returns:
             Register: The atom register layout for the instance.
@@ -88,8 +85,7 @@ class BaseSolver(ABC):
         drive: Drive,
         embedding: Register,
     ) -> job.Job:
-        """
-        Submit a quantum program for execution on the configured backend.
+        """Submit a quantum program for execution on the configured backend.
 
         Creates a QuantumProgram from the provided drive and embedding, compiles it
         to the target device, and submits it for execution.
@@ -111,8 +107,7 @@ class BaseSolver(ABC):
         return self.config.quantum.backend.run(program)
 
     def _execute(self, drive: Drive, embedding: Register) -> Solution:
-        """
-        Execute the drive schedule on the backend and retrieve the solution.
+        """Execute the drive schedule on the backend and retrieve the solution.
 
         Args:
             drive (Drive): The drive schedule to execute.

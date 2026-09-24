@@ -7,15 +7,18 @@ on the globally configured torch device.
 
 Typical usage:
 
-    Q = matrix.zeros(4)                          # 4×4 zero matrix
+    Q = matrix.zeros(4)                          # 4x4 zero matrix
     Q = matrix.tensor([[0, 1], [1, 0]])          # from nested list
     Q = matrix.as_tensor(some_tensor)            # cast existing tensor, no copy when possible
 """
 
 from __future__ import annotations
 
+from dataclasses import field
 from typing import Any
+
 import torch
+
 from . import linalg
 from .linalg import Matrix
 
@@ -30,7 +33,13 @@ def device() -> torch.device:
     return linalg.device()
 
 
-def zeros(n: int, *, dtype: torch.dtype = dtype(), device: torch.device = device()) -> Matrix:
+_dtype = dtype  # alias so shadowed `dtype` params can still call the module function
+_device = device  # alias so shadowed `device` params can still call the module function
+
+
+def zeros(
+    n: int, *, dtype: torch.dtype | None = None, device: torch.device | None = None
+) -> Matrix:
     """Creates a zero-filled square matrix of shape ``(n, n)``.
 
     Args:
@@ -41,15 +50,17 @@ def zeros(n: int, *, dtype: torch.dtype = dtype(), device: torch.device = device
     Returns:
         A 2-D tensor of zeros with shape ``(n, n)``.
     """
+    dtype = dtype or _dtype()
+    device = device or _device()
     return torch.zeros((n, n), dtype=dtype, device=device)
 
 
 def tensor(
-    data: Any,
+    data: Any,  # noqa: ANN401 (array-like input forwarded to torch.tensor)
     *,
-    dtype: torch.dtype = dtype(),
-    device: torch.device = device(),
-    **kwargs: Any,
+    dtype: torch.dtype | None = None,
+    device: torch.device | None = None,
+    **kwargs: Any,  # noqa: ANN401 (forwarded to torch.tensor)
 ) -> Matrix:
     """Creates a matrix tensor from the given data.
 
@@ -62,18 +73,19 @@ def tensor(
     Returns:
         A 2-D tensor.
     """
+    dtype = dtype or _dtype()
+    device = device or _device()
     return torch.tensor(data, dtype=dtype, device=device, **kwargs)
 
 
-def as_tensor(data: Any) -> Matrix:
-    """Convenience wrapper for `torch.as_tensor` that converts data to a matrix
-    tensor, avoiding a copy when possible.
+def as_tensor(data: Any) -> Matrix:  # noqa: ANN401 (array-like input forwarded to torch.as_tensor)
+    """Convenience wrapper for `torch.as_tensor` that converts data to a matrix tensor.
 
-    If *data* is already a tensor with the right dtype and on the right device, it is
-    returned as-is, sharing the same underlying memory. A numpy array is also shared
-    rather than copied if it already has the global float dtype and the global device
-    is ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a
-    copy). Lists, tuples, and other array-like inputs are always copied.
+    Avoids a copy when possible. If *data* is already a tensor with the right dtype and on
+    the right device, it is returned as-is, sharing the same underlying memory. A numpy
+    array is also shared rather than copied if it already has the global float dtype and
+    the global device is ``cpu`` (numpy arrays only live on CPU, so any other dtype or
+    device forces a copy). Lists, tuples, and other array-like inputs are always copied.
 
     Args:
         data: Input data (tensor, numpy array, nested list, etc.).
@@ -82,3 +94,20 @@ def as_tensor(data: Any) -> Matrix:
         A 2-D tensor on the global dtype and device.
     """
     return torch.as_tensor(data, dtype=dtype(), device=device())
+
+
+def zeros_field(
+    n: int, *, dtype: torch.dtype | None = None, device: torch.device | None = None
+) -> Matrix:
+    """Creates a dataclass field defaulting to a zero-filled square matrix.
+
+    Args:
+        n: Size of the matrix (number of rows and columns).
+        dtype: Data type of the tensor.
+        device: Torch device for the tensor.
+
+    Returns:
+        A dataclass field (typed as `Matrix` for the enclosing class) whose
+        `default_factory` builds a fresh zero tensor per instance.
+    """
+    return field(default_factory=lambda: zeros(n, dtype=dtype, device=device))

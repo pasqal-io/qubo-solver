@@ -1,7 +1,9 @@
+"""Embedding stage configuration."""
+
 from __future__ import annotations
 
-from typing import Literal, get_args
 from dataclasses import dataclass, field
+from typing import Literal, get_args
 
 import torch
 
@@ -39,8 +41,10 @@ class Config:
             resolution to represent the terms. Setting it to a lower value
             decreases the resolution and allows traps to be set farther to
             potentially represent smaller terms.
-        blade_steps_per_round: Maps directly to `steps_per_round` in [`qoolqit.embedding.BladeConfig`][]
-        blade_starting_positions: Maps directly to `starting_positions` in [`qoolqit.embedding.BladeConfig`][]
+        blade_steps_per_round: Maps directly to `steps_per_round` in
+            [`qoolqit.embedding.BladeConfig`][]
+        blade_starting_positions: Maps directly to `starting_positions` in
+            [`qoolqit.embedding.BladeConfig`][]
         blade_dimensions: Maps directly to `dimensions` in [`qoolqit.embedding.BladeConfig`][]
         max_min_dist_ratio: Maximum allowed ratio
             between the largest and the smallest inter-atom distance in the resulting
@@ -59,6 +63,7 @@ class Config:
     max_min_dist_ratio: float | Literal["device"] = "device"
 
     def __post_init__(self) -> None:
+        """Validate `algorithm` and `greedy_layout_lattice`."""
         if self.algorithm not in get_args(_EmbeddingAlgorithm):
             raise ValueError(f"Invalid embedding method '{self.algorithm}'.")
         if self.greedy_layout_lattice not in get_args(_GreedyLayoutLattice):

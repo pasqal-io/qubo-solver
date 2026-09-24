@@ -13,7 +13,8 @@ zeroing [`Instance`][qubosolver.transforms.zeroing.Instance].
 from qubosolver.transforms import negative_bitflip, zeroing
 
 reduced_instance = negative_bitflip.apply(instance, time_limit_s=60.0)
-zeroed_instance = zeroing.apply(reduced_instance)  # drop any negative coefficient bit flips could not remove
+# drop any negative coefficient bit flips could not remove
+zeroed_instance = zeroing.apply(reduced_instance)
 print(zeroed_instance.zeroed_edges)       # (N, 2) tensor of zeroed (i, j) index pairs
 ```
 """
@@ -25,11 +26,10 @@ import io
 
 import torch
 
-
 import qubosolver
-from qubosolver.types import Matrix, Solution, Vectori, vector, vectori
 from qubosolver._io import utils as io_utils
 from qubosolver._io.utils import Stream
+from qubosolver.types import Matrix, Solution, Vectori, vector, vectori
 
 
 class Instance(qubosolver.Instance):
@@ -43,7 +43,7 @@ class Instance(qubosolver.Instance):
     [`zeroed_edges`][].
     """
 
-    def __init__(self, parent_instance: qubosolver.Instance):
+    def __init__(self, parent_instance: qubosolver.Instance) -> None:
         """Initialize from a QUBO instance, before any zeroing.
 
         Args:
@@ -92,7 +92,8 @@ def apply(instance: qubosolver.Instance) -> Instance:
 
     Approximates the QUBO by dropping any negative off-diagonal coefficient that
     bit flips could not remove, so a quantum solver can embed it.  Returns a
-    [`Instance`][qubosolver.transforms.zeroing.Instance] whose [`negative_matrix`][qubosolver.transforms.zeroing.Instance.negative_matrix]
+    [`Instance`][qubosolver.transforms.zeroing.Instance] whose
+    [`negative_matrix`][qubosolver.transforms.zeroing.Instance.negative_matrix]
     holds the removed coefficients (an all-zero matrix when nothing was zeroed).
 
     Args:

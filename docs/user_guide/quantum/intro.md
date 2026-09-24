@@ -56,21 +56,31 @@ Qubo Solver can solve a QUBO instance using Pasqal's Rydberg analog devices, eit
 
 ```python exec="on" session="negative" source="tabbed-left" result="text"
 from qubosolver import (
-    Instance, Solution, LocalEmulator,
-    embedding, drive_shaping, solving,
-    matrix, analysis,
+    Instance,
+    Solution,
+    LocalEmulator,
+    embedding,
+    drive_shaping,
+    solving,
+    matrix,
+    analysis,
 )
 import qoolqit
 
 # Private utility to set seed.
 from qubosolver.utils._random import manual_seed
+
 manual_seed(147)
 
-instance = Instance(matrix.tensor([
-    [-2.0, 1.0, 1.0],
-    [ 1.0,-4.0, 1.0],
-    [ 1.0, 1.0,-1.0],
-]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [-2.0, 1.0, 1.0],
+            [1.0, -4.0, 1.0],
+            [1.0, 1.0, -1.0],
+        ]
+    )
+)
 
 device = qoolqit.AnalogDeviceWithDMM()
 backend = LocalEmulator()
@@ -79,8 +89,7 @@ backend = LocalEmulator()
 register = embedding.blade.embed(instance)
 
 # 2. Drive shaping: build the drive Hamiltonian for that register.
-drive = drive_shaping.proportional_diagonal.build_drive(
-    instance, register, device=device, dmm=True)
+drive = drive_shaping.proportional_diagonal.build_drive(instance, register, device=device, dmm=True)
 
 # 3. Compile and run on the chosen backend.
 program = solving.analog_quantum_sampling.compile(register, drive, device)
@@ -125,18 +134,27 @@ For the common case, [`SolverConfig`][qubosolver.SolverConfig] and [`Solver`][qu
 
 ```python exec="on" source="tabbed-left" session="negative" result="text"
 from qubosolver import (
-    Instance, Solver, SolverConfig,
-    matrix, analysis,
+    Instance,
+    Solver,
+    SolverConfig,
+    matrix,
+    analysis,
 )
+
 # Private utility to set seed.
 from qubosolver.utils._random import manual_seed
+
 manual_seed(147)
 
-instance = Instance(matrix.tensor([
-    [-2.0, 1.0, 1.0],
-    [ 1.0,-4.0, 1.0],
-    [ 1.0, 1.0,-1.0],
-]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [-2.0, 1.0, 1.0],
+            [1.0, -4.0, 1.0],
+            [1.0, 1.0, -1.0],
+        ]
+    )
+)
 
 config = SolverConfig()
 solver = Solver(instance, config)

@@ -1,31 +1,31 @@
 from __future__ import annotations
 
-import pytest
-import pytest_check as check
-import torch
 import itertools
-import numpy as np
 import random
 from copy import deepcopy
 
-from qoolqit import Register, DigitalAnalogDevice
+import numpy as np
+import pytest
+import pytest_check as check
+import torch
+from qoolqit import DigitalAnalogDevice, Register
 
 from qubosolver import (
-    solving,
-    Solver,
+    Candidate,
+    ClassicalSolvingConfig,
     Dataset,
     Instance,
-    matrix,
-    bitstring,
-    torch_rng,
-    Candidate,
+    QuantumSolvingConfig,
     Solution,
+    Solver,
+    SolverConfig,
     analysis,
+    bitstring,
+    matrix,
+    solving,
+    torch_rng,
     vector,
     vectori,
-    SolverConfig,
-    ClassicalSolvingConfig,
-    QuantumSolvingConfig,
 )
 from qubosolver.solver.config.config import _DecompositionConfig
 from qubosolver.solver.solver import _DecomposeQuboSolver
@@ -43,10 +43,10 @@ def manual_seed(seed: int) -> torch.Generator:
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("use_quantum", [True, False], ids=["quantum", "classical"])
 def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) -> None:
-    """Test that the first steps of the decomposition (initialization +
-    one loop iteration of a decomposition) are yielding corrent tensors
-    or dictionaries of right sizes.
+    """Test that the first steps of the decomposition yield correctly-sized results.
 
+    Covers initialization and one loop iteration of a decomposition, yielding correct
+    tensors or dictionaries of right sizes.
     """
     # Select seed so that the decomposition is tractable for testing with the
     # Qutip backend
@@ -57,10 +57,10 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
         compute_min_max_distances,
         geometric_search,
         interaction_matrix_from_placed,
+        positive_vertices_update,
         transfer_edge_values,
         update_global_solution,
         vertices_to_place,
-        positive_vertices_update,
     )
 
     size = decomposable_qubo.size
@@ -87,7 +87,7 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
     ## Check for the dictionary of vertices to place, dimensions are correct
     current_vertices_dict = vertices_to_place(dist_matrix, qubo_mat)
     assert len(current_vertices_dict) == size
-    for i in current_vertices_dict.keys():
+    for i in current_vertices_dict:
         assert len(current_vertices_dict[i]["blocking_vertices"]) <= size
         assert len(current_vertices_dict[i]["separated_vertices"]) <= size
         assert len(current_vertices_dict[i]["neighbors_id"]) <= size
@@ -269,7 +269,7 @@ def test_compute_distance_interaction_diagonal() -> None:
 @pytest.mark.parametrize("dims", [(4,), (3,), (3, 3), (2, 3, 2), (4, 3, 2, 3)], ids=str)
 @pytest.mark.parametrize("seed", [1935225697, 1547, 66987, 55571, 998618750])
 def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
-    """Test that the decomposition solver correctly identifies and solves block-diagonal QUBO matrices.
+    """Test that the decomposition solver correctly identifies and solves block-diagonal QUBOs.
 
     The test constructs a block-diagonal QUBO matrix from smaller sub-problems, runs the
     decomposition solver, and verifies that:
@@ -280,7 +280,7 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
     3. The reconstructed global solution matches one of the known optimal bitstrings, and its
        cost matches the known optimal cost.
 
-    When ``len(dims) == 1``, the first block is a fixed symmetric 3×3 matrix (with multiple
+    When ``len(dims) == 1``, the first block is a fixed symmetric 3x3 matrix (with multiple
     optimal solutions) and the second block is randomly generated with the given dimension.
     Otherwise, all blocks are randomly generated according to ``dims``.
 
@@ -297,7 +297,8 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
 
     rng = manual_seed(seed)
 
-    # 32-bits vs 64-bits doesn't generate the same random matrices. So generate 64-bit matrices and convert them.
+    # 32-bits vs 64-bits doesn't generate the same random matrices. So generate 64-bit
+    # matrices and convert them.
     if len(dims) == 1:
         # Symmetric qubo to handle the case with several solutions
         Q1 = matrix.tensor(
@@ -420,19 +421,16 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
 
     # Assume that A and B are partitions of range(N)
     def is_refinement_of(A: list[list[int]], B: list[list[int]]) -> bool:
-        for a in A:
-            if not any(set(a).issubset(b) for b in B):
-                return False
-        return True
+        return all(any(set(a).issubset(b) for b in B) for a in A)
 
     # Examples
     check.is_true(is_refinement_of([[0], [1], [2, 3]], [[0, 1], [2, 3]]))
     check.is_false(is_refinement_of([[0], [1], [2, 3]], [[0, 1, 2], [3]]))
 
-    #  The QUBO is a block matrix. The decomposition should be a refinement of the block decomposition,
-    # i.e. two indices from different blocks cannot belong to the same sub-decomposition.
-    # Ideally, the decomposition should match the block decomposition, but the solver may decompose
-    # the QUBO into smaller sub-decompositions.
+    #  The QUBO is a block matrix. The decomposition should be a refinement of the block
+    # decomposition, i.e. two indices from different blocks cannot belong to the same
+    # sub-decomposition. Ideally, the decomposition should match the block decomposition,
+    # but the solver may decompose the QUBO into smaller sub-decompositions.
     if (seed, dims) in failed_cases:
         check.is_false(is_refinement_of(decomposition, block_decomposition))
         pytest.xfail("Bugged case")

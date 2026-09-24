@@ -4,22 +4,21 @@ import pytest_check as check
 import torch
 
 from qubosolver import (
-    Instance,
-    Solver,
-    matrix,
-    bitstrings,
-    LocalEmulator,
-    SolverConfig,
     ClassicalSolvingConfig,
+    Instance,
+    LocalEmulator,
     QuantumSolvingConfig,
+    Solver,
+    SolverConfig,
+    bitstrings,
+    matrix,
 )
 
 
 def test_classical_all_positive_trivial() -> None:
-    """
-    For a QUBO with all coefficients >= 0, the classical solver
-    should return a batch of one all-zero bitstring
-    with solution_status 'trivial-zero'.
+    """For a QUBO with all coefficients >= 0, the classical solver returns a trivial-zero.
+
+    It should return a batch of one all-zero bitstring with solution_status 'trivial-zero'.
     """
     coeffs = matrix.tensor([[1.0, 0.5], [0.5, 2.0]])
     instance = Instance(matrix=coeffs)
@@ -34,10 +33,9 @@ def test_classical_all_positive_trivial() -> None:
 
 
 def test_quantum_all_negative_trivial(local_backend: LocalEmulator) -> None:
-    """
-    For a QUBO with all coefficients <= 0, the quantum solver
-    should return a batch of one all-one bitstring
-    with solution_status 'trivial-one'.
+    """For a QUBO with all coefficients <= 0, the quantum solver returns a trivial-one.
+
+    It should return a batch of one all-one bitstring with solution_status 'trivial-one'.
     """
     config = SolverConfig(solving=QuantumSolvingConfig(backend=local_backend))
     coeffs = matrix.tensor([[-1.0, 0.0], [0.0, -3.0]])

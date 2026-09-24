@@ -65,7 +65,10 @@ def test_notebooks(notebook: Path) -> None:
     py_file = notebook.with_suffix(".py")
     try:
         with subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env={**os.environ}  # type: ignore
+            cmd,  # type: ignore
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env={**os.environ},
         ) as run_example:
             stdout, stderr = run_example.communicate()
             error_string = (

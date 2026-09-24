@@ -8,25 +8,27 @@ extracted from it.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import io
 import logging
-import torch
 from collections.abc import Iterable, Iterator
+from dataclasses import dataclass
 
-from ._checks import debug_runtime_typecheck, TYPE_CHECKING
+import torch
+
+from ._checks import TYPE_CHECKING, debug_runtime_typecheck
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-from . import bitstring, vector, vectori
-from . import bitstrings as _bitstrings
-from .linalg import Bitstrings, Vector, Vectori, Matrix, Bitstring
-from .instance import Instance
+from pulser.backend.results import Results
+
 from qubosolver._io import utils as io_utils
 from qubosolver._io.utils import FileLike
 
-from pulser.backend.results import Results
+from . import bitstring, vector, vectori
+from . import bitstrings as _bitstrings
+from .instance import Instance
+from .linalg import Bitstring, Bitstrings, Matrix, Vector, Vectori
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,7 @@ logger = logging.getLogger(__name__)
 @debug_runtime_typecheck
 @dataclass
 class Candidate:
-    """A single candidate solution extracted from a [`Solution`][].
+    r"""A single candidate solution extracted from a [`Solution`][].
 
     Instances are normally obtained via [`Solution.__getitem__`][] rather
     than constructed directly.
@@ -64,7 +66,7 @@ class Candidate:
 @debug_runtime_typecheck
 @dataclass
 class Solution:
-    """A collection of candidate solutions for a QUBO problem.
+    r"""A collection of candidate solutions for a QUBO problem.
 
     Stores all bitstrings returned by a solver together with their associated
     metadata (costs, sample counts, probabilities).
@@ -84,10 +86,10 @@ class Solution:
                 sampling probability of each bitstring.
     """
 
-    bitstrings: Bitstrings = _bitstrings.zeros(0, 0)
-    costs: Vector = vector.zeros(0)
-    counts: Vectori = vectori.zeros(0)
-    probabilities: Vector = vector.zeros(0)
+    bitstrings: Bitstrings = _bitstrings.zeros_field(0, 0)  # noqa: RUF009
+    costs: Vector = vector.zeros_field(0)  # noqa: RUF009
+    counts: Vectori = vectori.zeros_field(0)  # noqa: RUF009
+    probabilities: Vector = vector.zeros_field(0)  # noqa: RUF009
 
     def __getitem__(self, idx: int) -> Candidate:
         """Return the candidate at position `idx` as a [`Candidate`][].

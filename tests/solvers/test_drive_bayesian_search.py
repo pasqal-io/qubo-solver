@@ -1,28 +1,28 @@
 from __future__ import annotations
 
-import torch
-import numpy as np
 import math
+from collections.abc import Iterable
+from unittest.mock import MagicMock, patch
+
+import numpy as np
 import pytest
 import pytest_check as check
-from unittest.mock import MagicMock, patch
-from typing import Iterable
-
 import qoolqit
-from qoolqit.devices.device import AnalogDeviceWithDMM, AnalogDevice
+import torch
+from qoolqit.devices.device import AnalogDevice, AnalogDeviceWithDMM
 from qoolqit.register import Register
 
 from qubosolver import (
-    Instance,
     Candidate,
-    Solution,
-    solving,
-    vector,
-    matrix,
-    tensor,
-    Tensor,
-    Matrix,
+    Instance,
     LocalEmulator,
+    Matrix,
+    Solution,
+    Tensor,
+    matrix,
+    solving,
+    tensor,
+    vector,
 )
 from qubosolver.utils import analysis
 
@@ -54,7 +54,8 @@ def probability_based_ojective(
 
     optimal_bitstrings = [s.string for s in optimal_solutions]
     print(
-        f"Best bitstrings: {optimal_bitstrings}, cost: {min_cost}, total probability: {total_prob}, weighted cost: {weighted_cost} "
+        f"Best bitstrings: {optimal_bitstrings}, cost: {min_cost}, "
+        f"total probability: {total_prob}, weighted cost: {weighted_cost} "
     )
 
     return weighted_cost
@@ -246,7 +247,6 @@ def test_errors(raise_exception: bool) -> None:
 
 def test_callback_fn() -> None:
     """`_callback_fn` is private/experimental: set it by attribute after construction."""
-
     # Set a Register and compute the associated QUBO
     vertices = tensor.tensor(
         [

@@ -3,17 +3,15 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import pytest_check as check
+from qubos import QUBOS
 
 from qubosolver import (
+    Candidate,
     Instance,
     Solution,
-    Candidate,
     solving,
 )
-
 from qubosolver.utils import analysis
-
-from qubos import QUBOS
 
 pytestmark = pytest.mark.extras
 

@@ -14,19 +14,23 @@ import qoolqit
 
 # Private utility to set seed.
 from qubosolver.utils._random import manual_seed
+
 manual_seed(958)
 
-instance = Instance(matrix.tensor([
-    [-1, 1, 2, 1],
-    [ 1,-3, 3, 0],
-    [ 2, 3,-1, 5],
-    [ 1, 0, 5,-2],
-    ]))
+instance = Instance(
+    matrix.tensor(
+        [
+            [-1, 1, 2, 1],
+            [1, -3, 3, 0],
+            [2, 3, -1, 5],
+            [1, 0, 5, -2],
+        ]
+    )
+)
 device = qoolqit.AnalogDeviceWithDMM()
 
 register = embedding.blade.embed(instance)
-drive = drive_shaping.proportional_diagonal.build_drive(
-    instance, register, device=device, dmm=True)
+drive = drive_shaping.proportional_diagonal.build_drive(instance, register, device=device, dmm=True)
 
 program = solving.analog_quantum_sampling.compile(register, drive, device)
 print(program)
