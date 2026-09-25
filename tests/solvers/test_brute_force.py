@@ -73,10 +73,16 @@ def test_probabilities_are_normalised() -> None:
     check.almost_equal(solution.probabilities.sum().item(), 1.0)
 
 
-def test_empty_instance_returns_empty_solution() -> None:
-    solution = solving.brute_force.solve(Instance(matrix.zeros(0)))
+def test_empty_instance_returns_zero_length_solution() -> None:
+    instance = Instance(matrix.zeros(0))
+    solution = solving.brute_force.solve(instance)
 
-    check.is_false(solution)
+    check.is_true(solution.check_consistency(instance=instance, throw=True))
+    check.equal(len(solution), 1)
+    check.equal(solution[0].string, "")
+    check.equal(solution[0].cost, 0.0)
+    check.equal(solution[0].count, 1)
+    check.equal(solution[0].probability, 1.0)
 
 
 def test_time_limit_returns_best_so_far_without_enumerating_all() -> None:

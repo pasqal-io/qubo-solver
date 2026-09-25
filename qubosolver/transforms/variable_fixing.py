@@ -261,7 +261,10 @@ def lift(reduced_solution: Solution, reduced_instance: Instance) -> Solution:
             bitstrings and costs evaluated against the original QUBO matrix.
             Counts and probabilities are carried over from `reduced_solution`.
     """
-    bitstrings_list = reduced_solution.bitstrings.tolist() or [[]]
+    if not reduced_solution:
+        return Solution()
+
+    bitstrings_list = reduced_solution.bitstrings.tolist()
 
     def reinsert_fixed_variables(bitstring: list[int]) -> list[int]:
         for fixation_dict in reversed(reduced_instance._fixed_indices):

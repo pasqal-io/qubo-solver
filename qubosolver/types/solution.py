@@ -277,7 +277,14 @@ class Solution:
 
         self.check_consistency(throw=True, full=False)
 
-        unique_bitstrings, inverse = self.bitstrings.unique(dim=0, return_inverse=True)
+        # torch.unique(dim=0) rejects zero-width tensors outright ("0 sized
+        # dimensions... aren't selected"), but a width-0 bitstring is just the
+        # single empty tuple repeated: every row collapses to that one row.
+        if self.bitstrings.shape[1] == 0:
+            unique_bitstrings = self.bitstrings[:1]
+            inverse = vectori.zeros(len(self))
+        else:
+            unique_bitstrings, inverse = self.bitstrings.unique(dim=0, return_inverse=True)
         n = unique_bitstrings.shape[0]
         self.bitstrings = unique_bitstrings
 
@@ -559,7 +566,12 @@ class Solution:
         if num_solutions == 0:
             return valid
 
-        num_unique_bitstrings = self.bitstrings.unique(dim=0).shape[0]
+        # torch.unique(dim=0) rejects zero-width tensors outright ("0 sized
+        # dimensions... aren't selected"), but a width-0 bitstring is just the
+        # single empty tuple repeated: there is exactly one distinct row.
+        num_unique_bitstrings = (
+            1 if self.bitstrings.shape[1] == 0 else self.bitstrings.unique(dim=0).shape[0]
+        )
         valid &= check(
             num_unique_bitstrings == num_solutions,
             f"bitstrings contains {num_solutions - num_unique_bitstrings} duplicate row(s)",

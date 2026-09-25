@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import torch
 
-from qubosolver.types import Instance, Solution, bitstring, torch_rng
-from qubosolver.utils import _costs
+from qubosolver.types import Instance, Solution, bitstrings, torch_rng, vector, vectori
 
 
 def solve(
@@ -38,19 +37,12 @@ def solve(
         A solution with unique bitstrings, their QUBO costs, draw counts, and probabilities.
     """
     rng = rng or torch_rng()
-    bitstrings_ = bitstring.as_tensor(
-        torch.randint(0, 2, size=(max_bitstrings, instance.size), generator=rng)
+    solution = Solution(
+        bitstrings=bitstrings.rand(max_bitstrings, instance.size, rng=rng),
+        costs=vector.zeros(max_bitstrings),
+        counts=vectori.zeros(max_bitstrings).fill_(1),
+        probabilities=vector.zeros(max_bitstrings),
     )
-    unique_bits, counts = torch.unique(bitstrings_, dim=0, return_counts=True)
-    costs_ = _costs.batched_quadratic_cost(unique_bits.to(instance.matrix), instance.matrix)
-    solution = (
-        Solution(
-            bitstrings=unique_bits,
-            costs=costs_,
-            counts=counts,
-        )
-        ._sort_by_cost()
-        ._compute_probabilities()
-    )
+    solution = solution.deduplicate(update=False)._update(instance)
 
     return solution

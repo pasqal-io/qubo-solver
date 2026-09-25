@@ -9,6 +9,18 @@ from qubosolver import Instance, Solution, bitstrings, matrix, solving, transfor
 from qubosolver.transforms.variable_fixing import hansen_fixing
 
 
+def fully_fixable_qubo() -> Instance:
+    """QUBO where recursive Hansen fixing eliminates every variable."""
+    return Instance(
+        matrix.tensor(
+            [
+                [1.0, 2.0],
+                [2.0, 2.0],
+            ]
+        )
+    )
+
+
 def bipartisable_negative_qubo_for_bitflip() -> Instance:
     """QUBO where bit flips can remove all negative off-diagonal coefficients."""
     return Instance(
@@ -130,6 +142,103 @@ def test_lift_is_a_copy_when_nothing_fixed() -> None:
     restored = transforms.variable_fixing.lift(sol, reduced)
 
     torch.testing.assert_close(restored.bitstrings, sol.bitstrings)
+
+
+def test_lift_when_every_variable_gets_fixed() -> None:
+    # Recursive fixing can eliminate every variable, leaving a reduced
+    # instance of size 0. lift() must still reinsert all fixed bits and
+    # recompute a cost against the original (full-size) instance.
+    instance = fully_fixable_qubo()
+    reduced = transforms.variable_fixing.apply_recursively(instance)
+    check.equal(reduced.size, 0)
+
+    reduced_solution = solving.trivial_solution_search.solve(reduced)
+    check.equal(len(reduced_solution), 1)
+    check.equal(reduced_solution[0].string, "")
+    check.equal(reduced_solution[0].cost, 0.0)
+    check.equal(reduced_solution[0].count, 1)
+    check.equal(reduced_solution[0].probability, 1.0)
+    check.is_true(reduced_solution.check_consistency(instance=reduced, throw=True))
+
+    restored = transforms.variable_fixing.lift(reduced_solution, reduced)
+
+    check.equal(len(restored), 1)
+    check.equal(len(restored[0].string), instance.size)
+    check.is_true(restored.check_consistency(instance=instance, throw=True))
+
+
+def test_lift_is_noop_on_already_empty_instance_with_trivial_solution() -> None:
+    # An instance that is already size 0 needs no fixing at all
+    # (fixed_indices stays empty), so lift() must take the "nothing fixed"
+    # early-return path and hand back reduced_solution unchanged (deep-copied)
+    # -- here a single zero-length bitstring, since trivial_solution_search
+    # vacuously satisfies its "all coeffs >= 0" case on an empty matrix.
+    instance = Instance()
+    reduced = transforms.variable_fixing.apply_recursively(instance)
+    check.equal(reduced.size, 0)
+    check.equal(reduced.fixed_indices, [])
+
+    reduced_solution = solving.trivial_solution_search.solve(reduced)
+    check.equal(len(reduced_solution), 1)
+    check.equal(reduced_solution[0].string, "")
+    check.is_true(reduced_solution.check_consistency(instance=reduced, throw=True))
+
+    restored = transforms.variable_fixing.lift(reduced_solution, reduced)
+
+    check.equal(len(restored), 1)
+    check.equal(restored[0].string, "")
+    check.is_true(restored.check_consistency(instance=instance, throw=True))
+
+
+def test_lift_is_noop_on_already_empty_instance_with_empty_solution() -> None:
+    # Same already-size-0 instance, but this time the solution being lifted
+    # is itself empty (no candidates at all). lift() must still take the
+    # "nothing fixed" early-return path and hand back an empty solution
+    # unchanged, not a fabricated single bitstring.
+    instance = Instance()
+    reduced = transforms.variable_fixing.apply_recursively(instance)
+    check.equal(reduced.size, 0)
+    check.equal(reduced.fixed_indices, [])
+
+    restored = transforms.variable_fixing.lift(Solution(), reduced)
+
+    check.equal(len(restored), 0)
+    check.is_false(bool(restored))
+    check.is_true(restored.check_consistency(instance=instance, throw=True))
+
+
+def test_lift_of_empty_solution_stays_empty_even_when_variables_were_fixed() -> None:
+    # Regression test: lift() used `reduced_solution.bitstrings.tolist() or
+    # [[]]` to guess whether the reduced instance has 0 columns. That
+    # fallback also (wrongly) triggers when reduced_solution simply has 0
+    # rows, silently fabricating a fake all-zero-bits row instead of
+    # propagating an empty solution. A solver finding no candidates must lift
+    # to an empty solution, not a made-up one.
+    instance = fixable_qubo()
+    reduced = transforms.variable_fixing.apply_recursively(instance)
+    check.greater(reduced.n_fixed_indices, 0)
+
+    restored = transforms.variable_fixing.lift(Solution(), reduced)
+
+    check.equal(len(restored), 0)
+    check.is_false(bool(restored))
+
+
+def test_lift_reinserts_correctly_with_partial_fixation() -> None:
+    # fixable_qubo() stabilizes with 2 of 5 variables left unfixed (see its
+    # docstring): this exercises the "some but not all variables fixed" path,
+    # distinct from the all-fixed and none-fixed extremes covered above.
+    instance = fixable_qubo()
+    reduced = transforms.variable_fixing.apply_recursively(instance)
+    check.equal(reduced.size, 2)
+
+    reduced_solution = solving.brute_force.solve(reduced)
+    restored = transforms.variable_fixing.lift(reduced_solution, reduced)
+
+    check.is_true(restored.check_consistency(instance=instance, throw=True))
+    for restored_item in restored:
+        check.equal(len(restored_item.string), instance.size)
+        check.almost_equal(restored_item.cost, instance.cost(restored_item.bitstring))
 
 
 def test_apply_does_not_alias_the_parent_instance() -> None:

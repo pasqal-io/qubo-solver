@@ -17,6 +17,8 @@ from typing import TYPE_CHECKING, Any
 
 from qubosolver import Instance, Solution, bitstrings, vector, vectori
 
+from .trivial_solution_search import _zero_length_solution
+
 if TYPE_CHECKING:
     import cplex as CPLEX
 
@@ -65,6 +67,7 @@ def _qubo_instance_to_sparsepairs(
     cplex_module = _import_cplex()
 
     size = instance.size
+
     sparsepairs: list[CPLEX.SparsePair] = []
     matrix = instance.matrix.cpu().numpy()
 
@@ -181,7 +184,7 @@ def solve(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> 
     """
     # If there are no variables, return an empty solution.
     if not instance:
-        return Solution()
+        return _zero_length_solution()
 
     # Open a log file, or a no-op context manager if none was requested.
     with open(log_path, "w") if log_path else contextlib.nullcontext() as log_file:

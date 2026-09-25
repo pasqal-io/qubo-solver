@@ -25,31 +25,41 @@ from qubosolver import (
     matrix,
     transforms,
     vector,
+    vectori,
 )
 from qubosolver.utils import analysis
 
 
 def test_apply_full_and_post_process_fixation() -> None:
 
-    Q = matrix.tensor(
-        [[-98, 2, 13, 1], [2, -12, 20, 15], [13, 20, -34, 7], [1, 15, 7, -57]],
+    instance = Instance(
+        matrix.tensor(
+            [
+                [-98, 2, 13, 1],
+                [2, -12, 20, 15],
+                [13, 20, -34, 7],
+                [1, 15, 7, -57],
+            ]
+        )
     )
 
-    full_qubo = Instance(Q)
-    reduced_qubo = transforms.variable_fixing.apply_recursively(full_qubo)
+    reduced_instance = transforms.variable_fixing.apply_recursively(instance)
 
-    assert reduced_qubo._fixed_indices == [{0: 1, 3: 1}, {0: 0, 1: 0}]
-    assert reduced_qubo.n_fixed_indices == 4
+    assert isinstance(reduced_instance, transforms.variable_fixing.Instance)
+    check.equal(reduced_instance.fixed_indices, [{0: 1, 3: 1}, {0: 0, 1: 0}])
+    check.equal(reduced_instance.n_fixed_indices, 4)
 
-    reduced_solution = Solution(bitstrings.zeros(0, 0), vector.zeros(0))
+    reduced_solution = Solution(
+        bitstrings.zeros(1, 0),
+        vector.tensor([0.0]),
+        vectori.tensor([1]),
+        vector.tensor([1.0]),
+    )
 
-    sol_reconstructed = transforms.variable_fixing.lift(reduced_solution, reduced_qubo)
+    solution = transforms.variable_fixing.lift(reduced_solution, reduced_instance)
 
-    assert isinstance(sol_reconstructed, Solution)
-
-    val_red = int(sol_reconstructed.costs[0])
-
-    assert val_red == -153
+    check.equal(len(solution), 1)
+    check.equal(solution[0].cost, -153)
 
 
 def test_hansen_fixing() -> None:
