@@ -20,6 +20,8 @@ from qubosolver import (
 from qubosolver.solving.classical import iterative_bitflip_local_search
 from qubosolver.solving.classical.iterative_bitflip_local_search import (
     _best_improvement_search_batch,
+    _first_improvement_search,
+    _greedy_sweep_search,
 )
 
 
@@ -117,6 +119,28 @@ def test_unknown_strategy_raises() -> None:
             instance,
             starts=solution,
             strategy="does_not_exist",  # type: ignore[arg-type]
+        )
+
+
+@pytest.mark.parametrize("strategy", ["best_improvement", "first_improvement", "greedy_sweep"])
+def test_starts_length_mismatch_raises(
+    strategy: Literal["greedy_sweep", "best_improvement", "first_improvement"],
+) -> None:
+    """`starts` bitstrings shorter or longer than `instance.size` must raise, not crash."""
+    Q = matrix.tensor([[-1.0, 2.0], [2.0, -2.0]])
+    instance = Instance(Q)
+
+    short_solution = Solution(bitstrings.zeros(1, 1), counts=vectori.tensor([1]))
+    long_solution = Solution(bitstrings.zeros(1, 3), counts=vectori.tensor([1]))
+
+    with pytest.raises(ValueError, match=r"instance\.size"):
+        solving.iterative_bitflip_local_search.solve(
+            instance, starts=short_solution, strategy=strategy
+        )
+
+    with pytest.raises(ValueError, match=r"instance\.size"):
+        solving.iterative_bitflip_local_search.solve(
+            instance, starts=long_solution, strategy=strategy
         )
 
 
@@ -401,3 +425,34 @@ def test_benchmark_grid_report(
 
     if elapsed > expected_elapsed:
         pytest.xfail("elapsed time exceeded the expected baseline")
+
+
+def test_search_functions_raise_on_zero_size_matrix() -> None:
+    Q = matrix.zeros(0)
+    X = bitstrings.zeros(1, 0)
+
+    with pytest.raises(ValueError):
+        _best_improvement_search_batch(Q, X)
+
+    with pytest.raises(ValueError):
+        _first_improvement_search(Q, X[0])
+
+    with pytest.raises(ValueError):
+        _greedy_sweep_search(Q, X[0])
+
+
+@pytest.mark.parametrize("strategy", ["greedy_sweep", "best_improvement", "first_improvement"])
+def test_iterative_bitflip_local_search_solve_empty_instance(
+    strategy: Literal["greedy_sweep", "best_improvement", "first_improvement"],
+) -> None:
+    instance = Instance()
+
+    solution = solving.iterative_bitflip_local_search.solve(instance, strategy=strategy)
+
+    assert isinstance(solution, Solution)
+    check.is_true(solution.check_consistency(instance=instance, throw=True))
+    check.equal(len(solution), 1)
+    check.equal(solution[0].string, "")
+    check.equal(solution[0].cost, 0.0)
+    check.equal(solution[0].count, 1)
+    check.equal(solution[0].probability, 1.0)

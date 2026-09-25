@@ -28,6 +28,7 @@ from qubosolver import Bitstring, Bitstrings, Instance, Matrix, Solution, bitstr
 from qubosolver.utils._costs import _flip_deltas
 
 from .random_sampling import solve as random_sampling_solve
+from .trivial_solution_search import _zero_length_solution
 
 
 def _iterations(n: int) -> Iterable[int]:
@@ -88,7 +89,13 @@ def _best_improvement_search_batch(
         A `Bitstring` of shape ``(m, n)``, each row at a local minimum of
             `Q`'s quadratic form (or as close as `max_iterations`/
             `time_limit` allowed).
+
+    Raises:
+        ValueError: If `Q` is a 0x0 matrix.
     """
+    if Q.shape[0] == 0:
+        raise ValueError("_best_improvement_search_batch does not support a 0x0 matrix.")
+
     X = X.detach().clone().to(Q)
     QX = X @ Q
     rows = torch.arange(X.shape[0], device=X.device)
@@ -151,7 +158,13 @@ def _first_improvement_search(
             is not returned: the deltas accumulated in `Qx` across flips can
             drift from the true cost by a few ULPs, so callers should
             recompute it exactly instead of trusting an incremental value.
+
+    Raises:
+        ValueError: If `Q_torch` is a 0x0 matrix.
     """
+    if Q_torch.shape[0] == 0:
+        raise ValueError("_first_improvement_search does not support a 0x0 matrix.")
+
     Q = Q_torch.detach().cpu().numpy()
     x = s.to(Q_torch).detach().cpu().numpy().copy()
     deadline = time.monotonic() + time_limit
@@ -231,7 +244,13 @@ def _greedy_sweep_search(
             is not returned: the deltas accumulated in `Qx` across flips can
             drift from the true cost by a few ULPs, so callers should
             recompute it exactly instead of trusting an incremental value.
+
+    Raises:
+        ValueError: If `Q_torch` is a 0x0 matrix.
     """
+    if Q_torch.shape[0] == 0:
+        raise ValueError("_greedy_sweep_search does not support a 0x0 matrix.")
+
     Q = Q_torch.detach().cpu().numpy()
     x = s.to(Q_torch).detach().cpu().numpy().copy()
     deadline = time.monotonic() + time_limit
@@ -333,6 +352,7 @@ def solve(
 
     Raises:
         ValueError: If `strategy` is not one of the supported strategies.
+        ValueError: If `starts` bitstrings do not have length `instance.size`.
     """
     if strategy != "best_improvement" and strategy not in _ROW_STRATEGIES:
         raise ValueError(f"Unknown postprocessing strategy: {strategy}")
@@ -345,6 +365,15 @@ def solve(
     # If there are no bitstrings, return the solution unchanged.
     if not solution:
         return solution
+
+    if solution.bitstrings.shape[1] != instance.size:
+        raise ValueError(
+            f"starts has bitstrings of length {solution.bitstrings.shape[1]}, "
+            f"but instance.size is {instance.size}."
+        )
+
+    if instance.size == 0:
+        return _zero_length_solution(len(solution))
 
     if strategy == "best_improvement":
         # best_improvement is batched over every row at once instead of

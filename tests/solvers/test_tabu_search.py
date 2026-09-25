@@ -162,6 +162,18 @@ def test_tabu_search_never_lets_f_current_go_inf(
     )
 
 
+def test_tabu_search_raises_on_starts_length_mismatch() -> None:
+    """`starts` bitstrings shorter or longer than `instance.size` must raise, not crash."""
+    short_start = bitstrings.zeros(1, instance.size - 1)
+    long_start = bitstrings.zeros(1, instance.size + 1)
+
+    with pytest.raises(ValueError, match=r"instance\.size"):
+        solving.tabu_search.solve(instance, starts=short_start)
+
+    with pytest.raises(ValueError, match=r"instance\.size"):
+        solving.tabu_search.solve(instance, starts=long_start)
+
+
 def test_tabu_search_still_finds_optimum_when_all_moves_become_tabu() -> None:
     """A run that hits an all-tabu row must keep searching afterwards.
 

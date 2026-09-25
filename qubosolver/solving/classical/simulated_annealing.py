@@ -28,6 +28,8 @@ from qubosolver import (
 )
 from qubosolver.utils._costs import _flip_deltas, batched_quadratic_cost
 
+from .trivial_solution_search import _zero_length_solution
+
 logger = logging.getLogger(__name__)
 
 
@@ -229,6 +231,7 @@ def solve(
         ValueError: If ``initial_temp <= 0``.
         ValueError: If ``cooling_rate`` is ``None`` and ``final_temp <= 0``.
         ValueError: If ``cooling_rate`` is provided but not in ``(0, 1)``.
+        ValueError: If `starts` bitstrings do not have length `instance.size`.
     """
     if top_k <= 0:
         raise ValueError("top_k must be >= 1.")
@@ -254,6 +257,19 @@ def solve(
 
     if starts.shape[0] == 0:
         return Solution() if merge else []
+
+    if starts.shape[1] != n:
+        raise ValueError(
+            f"starts has bitstrings of length {starts.shape[1]}, but instance.size is {n}."
+        )
+
+    if instance.size == 0:
+        count = starts.shape[0]
+        return (
+            _zero_length_solution(count)
+            if merge
+            else [_zero_length_solution() for _ in range(count)]
+        )
 
     runner = _run_vectorized if vectorized else _run_sequential
     solutions = runner(

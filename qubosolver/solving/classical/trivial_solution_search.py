@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import torch
 
-from qubosolver import Instance, Solution, bitstring, vector, vectori
+from qubosolver import Instance, Solution, bitstring, bitstrings, vector, vectori
 
 
 def solve(instance: Instance) -> Solution:
@@ -72,3 +72,12 @@ def solve(instance: Instance) -> Solution:
         )
 
     return Solution()
+
+
+def _zero_length_solution(count: int = 1) -> Solution:
+    return Solution(
+        bitstrings=bitstrings.zeros(1, 0),
+        counts=vectori.tensor([count]),
+        probabilities=vector.tensor([1.0]),
+        costs=vector.tensor([0.0]),
+    )

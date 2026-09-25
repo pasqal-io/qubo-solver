@@ -45,6 +45,46 @@ def test_empty_solution_against_non_empty_qubo_is_invalid(instance: Instance) ->
     _assert_invalid(Solution(), instance)
 
 
+def test_single_zero_width_bitstring_against_empty_qubo_is_valid() -> None:
+    # Regression test: check_consistency's duplicate-row check used to call
+    # `self.bitstrings.unique(dim=0)` unconditionally, which torch raises on
+    # for zero-width tensors ("0 sized dimensions... aren't selected").
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[]]),
+        costs=vector.tensor([0.0]),
+        counts=vectori.tensor([1]),
+        probabilities=vector.tensor([1.0]),
+    )
+    _assert_valid(solution, Instance())
+
+
+def test_repeated_zero_width_bitstrings_is_invalid() -> None:
+    # A width-0 bitstring is the single empty tuple: two rows of it are
+    # necessarily duplicates of each other, so this must still be flagged as
+    # invalid rather than crashing (see test above) or being reported valid.
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[], []]),
+        costs=vector.tensor([0.0, 0.0]),
+        counts=vectori.tensor([1, 1]),
+        probabilities=vector.tensor([0.5, 0.5]),
+    )
+    _assert_invalid(solution, Instance())
+
+    # deduplicate() has its own `self.bitstrings.unique(dim=0, ...)` call
+    # (separate from check_consistency's), which hits the same zero-width
+    # crash unless also guarded -- collapsing the two duplicate rows above
+    # should leave a single, valid, zero-width row with counts summed.
+    solution.deduplicate()
+    _assert_valid(solution, Instance())
+    assert len(solution) == 1
+
+    s0 = solution[0]
+    check.equal(s0.string, "")
+    check.equal(s0.cost, 0.0)
+    check.equal(s0.count, 2)
+    check.almost_equal(s0.probability, 1.0)
+
+
 def test_wrong_bitstring_width_is_invalid(instance: Instance) -> None:
     solution = Solution(
         bitstrings=bitstrings.tensor([[1, 0, 1], [0, 1, 0]]),

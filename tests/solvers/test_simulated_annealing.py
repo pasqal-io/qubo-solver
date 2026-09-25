@@ -404,6 +404,18 @@ def test_simulated_annealing_raises_on_invalid_arguments(kwargs: dict, match: st
         )
 
 
+def test_simulated_annealing_raises_on_starts_length_mismatch() -> None:
+    """`starts` bitstrings shorter or longer than `instance.size` must raise, not crash."""
+    short_start = bitstrings.zeros(1, instance_symmetric.size - 1)
+    long_start = bitstrings.zeros(1, instance_symmetric.size + 1)
+
+    with pytest.raises(ValueError, match=r"instance\.size"):
+        solving.simulated_annealing.solve(instance_symmetric, starts=short_start)
+
+    with pytest.raises(ValueError, match=r"instance\.size"):
+        solving.simulated_annealing.solve(instance_symmetric, starts=long_start)
+
+
 @pytest.mark.parametrize("instance", instances, ids=instance_ids)
 @pytest.mark.parametrize("vectorized", vectorized_params)
 def test_simulated_annealing_merge_false_returns_one_solution_per_start(

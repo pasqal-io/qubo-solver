@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 import random
 import time
+from types import ModuleType
 
 import numpy as np
 import pytest
@@ -17,6 +18,7 @@ from qubosolver import (
     SolverConfig,
     bitstring,
     matrix,
+    solving,
     torch_rng,
 )
 from qubosolver.solver._classical_solver import (
@@ -249,10 +251,44 @@ def test_empty_qubo_after_preprocessing(classical_method: _ClassicalAlgorithm) -
     classical_solver = Solver(instance, config)
 
     solution = classical_solver.solve()
-    solution._sort_by_cost()
 
-    best_bitstring = bitstring.to_string(solution.bitstrings[0])
-    check.equal(best_bitstring, "00")
+    check.equal(len(solution), 1)
+    check.equal(solution[0].string, "00")
+
+
+@pytest.mark.parametrize(
+    "solve_module",
+    [
+        solving.random_sampling,
+        solving.tabu_search,
+        solving.simulated_annealing,
+        solving.trivial_solution_search,
+        pytest.param(solving.cplex, marks=pytest.mark.extras),
+        solving.brute_force,
+        solving.iterative_bitflip_local_search,
+    ],
+    ids=[
+        "random_sampling",
+        "tabu_search",
+        "simulated_annealing",
+        "trivial_solution_search",
+        "cplex",
+        "brute_force",
+        "iterative_bitflip_local_search",
+    ],
+)
+def test_classical_solve_empty_instance(solve_module: ModuleType) -> None:
+    instance = Instance()
+
+    solution = solve_module.solve(instance)
+
+    assert isinstance(solution, Solution)
+    check.is_true(solution.check_consistency(instance=instance, throw=True))
+    check.equal(len(solution), 1)
+    check.equal(solution[0].string, "")
+    check.equal(solution[0].cost, 0.0)
+    check.equal(solution[0].count, 1)
+    check.equal(solution[0].probability, 1.0)
 
 
 if __name__ == "__main__":

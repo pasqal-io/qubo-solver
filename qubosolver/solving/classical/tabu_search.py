@@ -13,6 +13,8 @@ import torch
 from qubosolver.types import Bitstrings, Instance, Solution, bitstrings, vector, vectori
 from qubosolver.utils._costs import _flip_deltas
 
+from .trivial_solution_search import _zero_length_solution
+
 # How often the incremental QX/f_current tracking is refreshed by an exact
 # recompute. Bounds the rounding drift accumulated by the incremental update
 # without materially adding to the per-iteration cost.
@@ -57,11 +59,24 @@ def solve(
     Returns:
         Deduplicated best bitstrings found across all runs, together with their objective
             values and occurrence counts, sorted by ascending cost.
+
+    Raises:
+        ValueError: If `starts` bitstrings do not have length `instance.size`.
     """
-    Q = instance.matrix
-    device = Q.device
     if isinstance(starts, int):
         starts = bitstrings.rand(starts, instance.size)
+
+    if starts.shape[1] != instance.size:
+        raise ValueError(
+            f"starts has bitstrings of length {starts.shape[1]}, "
+            f"but instance.size is {instance.size}."
+        )
+
+    if instance.size == 0:
+        return _zero_length_solution(starts.shape[0])
+
+    Q = instance.matrix
+    device = Q.device
     n_bitstrings, n = starts.shape
 
     # Repeat x0 for each parallel run
