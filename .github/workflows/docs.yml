@@ -136,10 +136,20 @@ jobs:
             "$DOC_PORTAL_IMAGE" \
             -c 'cd /app && pnpm --filter @pasqal/doc-portal run build:selected && cp -r /app/packages/doc-portal/dist/. /out/'
 
+      # Keep only the qubo pages and the shared assets they load; the other products are ~130 MB per preview.
+      # Temporary until doc-portal can build qubo alone, see pasqal-io/qoolqit#488.
+      - name: Trim the portal preview to qubo
+        if: github.event.action != 'closed'
+        run: |
+          mkdir -p portal-trimmed/applicationsolvingtools
+          cd portal-dist
+          cp -r applicationsolvingtools/qubo ../portal-trimmed/applicationsolvingtools/
+          cp -r _astro assets pagefind favicon.* ../portal-trimmed/
+
       - name: Deploy portal preview
         uses: rossjrw/pr-preview-action@ffa7509e91a3ec8dfc2e5536c4d5c1acdf7a6de9 # v1.8.1
         with:
-          source-dir: ./portal-dist/
+          source-dir: ./portal-trimmed/
           preview-branch: gh-pages
           umbrella-dir: portal-preview
           qr-code: false
