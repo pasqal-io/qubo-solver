@@ -4363,21 +4363,25 @@ We have however more advanced tutorials on the quantum-related components to div
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Instance</span><span class="p">,</span>
+    <span class="n">LocalEmulator</span><span class="p">,</span>
+    <span class="n">QuantumSolvingConfig</span><span class="p">,</span>
     <span class="n">Solver</span><span class="p">,</span>
     <span class="n">SolverConfig</span><span class="p">,</span>
-    <span class="n">QuantumSolvingConfig</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
-    <span class="n">LocalEmulator</span><span class="p">,</span>
     <span class="n">analysis</span><span class="p">,</span>
+    <span class="n">matrix</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span>
-    <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
-<span class="p">])</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+    <span class="p">]</span>
+<span class="p">)</span>
 <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
 
 <span class="c1"># Create a SolverConfig to use a quantum backend.</span>
@@ -4389,21 +4393,25 @@ We have however more advanced tutorials on the quantum-related components to div
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">from qubosolver import (
+<div class="clipboard-copy-txt" id="cell-1">from __future__ import annotations
+
+from qubosolver import (
     Instance,
+    LocalEmulator,
+    QuantumSolvingConfig,
     Solver,
     SolverConfig,
-    QuantumSolvingConfig,
-    matrix,
-    LocalEmulator,
     analysis,
+    matrix,
 )
 
-Q = matrix.tensor([
-    [-0.2, 0.0, 1.0],
-    [ 0.0, 0.0, 1.5],
-    [ 1.0, 1.5, 0.0],
-])
+Q = matrix.tensor(
+    [
+        [-0.2, 0.0, 1.0],
+        [0.0, 0.0, 1.5],
+        [1.0, 1.5, 0.0],
+    ]
+)
 instance = Instance(Q)
 
 # Create a SolverConfig to use a quantum backend.
@@ -4469,29 +4477,31 @@ To do so, we have to provide several information after <a href="https://docs.pas
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pasqal_cloud</span><span class="w"> </span><span class="kn">import</span> <span class="n">PasqalCloudConnection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qoolqit.execution</span><span class="w"> </span><span class="kn">import</span> <span class="n">QPU</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Instance</span><span class="p">,</span>
+    <span class="n">QuantumSolvingConfig</span><span class="p">,</span>
     <span class="n">Solver</span><span class="p">,</span>
     <span class="n">SolverConfig</span><span class="p">,</span>
-    <span class="n">QuantumSolvingConfig</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
     <span class="n">analysis</span><span class="p">,</span>
+    <span class="n">matrix</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qoolqit.execution</span><span class="w"> </span><span class="kn">import</span> <span class="n">QPU</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pasqal_cloud</span><span class="w"> </span><span class="kn">import</span> <span class="n">PasqalCloudConnection</span>
-
 <span class="c1"># Replace with your username, project id and password on the Pasqal Cloud.</span>
-<span class="n">USERNAME</span><span class="o">=</span><span class="s2">"#TO_PROVIDE"</span>
-<span class="n">PROJECT_ID</span><span class="o">=</span><span class="s2">"#TO_PROVIDE"</span>
-<span class="n">PASSWORD</span><span class="o">=</span><span class="kc">None</span>
+<span class="n">USERNAME</span> <span class="o">=</span> <span class="s2">"#TO_PROVIDE"</span>
+<span class="n">PROJECT_ID</span> <span class="o">=</span> <span class="s2">"#TO_PROVIDE"</span>
+<span class="n">PASSWORD</span> <span class="o">=</span> <span class="kc">None</span>
 
-<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span>
-    <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
-<span class="p">])</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+    <span class="p">]</span>
+<span class="p">)</span>
 <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
 
 <span class="k">if</span> <span class="n">PASSWORD</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -4503,13 +4513,13 @@ To do so, we have to provide several information after <a href="https://docs.pas
     <span class="p">)</span>
     <span class="c1"># Get available devices</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Available devices: </span><span class="si">{</span><span class="n">connection</span><span class="o">.</span><span class="n">fetch_available_devices</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="c1"># Choose a device, and use a quantum backend </span>
+    <span class="c1"># Choose a device, and use a quantum backend</span>
     <span class="n">device</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Device</span><span class="o">.</span><span class="n">from_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="s2">"FRESNEL_CAN1"</span><span class="p">)</span>
     <span class="n">qpu_backend</span> <span class="o">=</span> <span class="n">QPU</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">,</span> <span class="n">num_shots</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="c1"># Use a mock local connection for the tutorial</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver.utils._local_connection</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalConnection</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">RemoteEmulator</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver.utils._local_connection</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalConnection</span>
 
     <span class="n">connection</span> <span class="o">=</span> <span class="n">LocalConnection</span><span class="p">()</span>
     <span class="n">device</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">AnalogDevice</span><span class="p">()</span>
@@ -4523,29 +4533,31 @@ To do so, we have to provide several information after <a href="https://docs.pas
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-2">from qubosolver import (
+<div class="clipboard-copy-txt" id="cell-2">import qoolqit
+from pasqal_cloud import PasqalCloudConnection
+from qoolqit.execution import QPU
+
+from qubosolver import (
     Instance,
+    QuantumSolvingConfig,
     Solver,
     SolverConfig,
-    QuantumSolvingConfig,
-    matrix,
     analysis,
+    matrix,
 )
 
-import qoolqit
-from qoolqit.execution import QPU
-from pasqal_cloud import PasqalCloudConnection
-
 # Replace with your username, project id and password on the Pasqal Cloud.
-USERNAME="#TO_PROVIDE"
-PROJECT_ID="#TO_PROVIDE"
-PASSWORD=None
+USERNAME = "#TO_PROVIDE"
+PROJECT_ID = "#TO_PROVIDE"
+PASSWORD = None
 
-Q = matrix.tensor([
-    [-0.2, 0.0, 1.0],
-    [ 0.0, 0.0, 1.5],
-    [ 1.0, 1.5, 0.0],
-])
+Q = matrix.tensor(
+    [
+        [-0.2, 0.0, 1.0],
+        [0.0, 0.0, 1.5],
+        [1.0, 1.5, 0.0],
+    ]
+)
 instance = Instance(Q)
 
 if PASSWORD is not None:
@@ -4557,13 +4569,13 @@ if PASSWORD is not None:
     )
     # Get available devices
     print(f"Available devices: {connection.fetch_available_devices()}")
-    # Choose a device, and use a quantum backend 
+    # Choose a device, and use a quantum backend
     device = qoolqit.Device.from_connection(connection, "FRESNEL_CAN1")
     qpu_backend = QPU(connection=connection, num_shots=1000)
 else:
     # Use a mock local connection for the tutorial
-    from qubosolver.utils._local_connection import LocalConnection
     from qubosolver import RemoteEmulator
+    from qubosolver.utils._local_connection import LocalConnection
 
     connection = LocalConnection()
     device = qoolqit.AnalogDevice()
@@ -4629,28 +4641,30 @@ print(analysis.to_dataframe([solution]))</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pasqal_cloud</span><span class="w"> </span><span class="kn">import</span> <span class="n">PasqalCloudConnection</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Instance</span><span class="p">,</span>
+    <span class="n">QuantumSolvingConfig</span><span class="p">,</span>
+    <span class="n">RemoteEmulator</span><span class="p">,</span>
     <span class="n">Solver</span><span class="p">,</span>
     <span class="n">SolverConfig</span><span class="p">,</span>
-    <span class="n">QuantumSolvingConfig</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
-    <span class="n">RemoteEmulator</span><span class="p">,</span>
     <span class="n">analysis</span><span class="p">,</span>
+    <span class="n">matrix</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pasqal_cloud</span><span class="w"> </span><span class="kn">import</span> <span class="n">PasqalCloudConnection</span>
-
 <span class="c1"># Replace with your username, project id and password on the Pasqal Cloud.</span>
-<span class="n">USERNAME</span><span class="o">=</span><span class="s2">"#TO_PROVIDE"</span>
-<span class="n">PROJECT_ID</span><span class="o">=</span><span class="s2">"#TO_PROVIDE"</span>
-<span class="n">PASSWORD</span><span class="o">=</span><span class="kc">None</span>
+<span class="n">USERNAME</span> <span class="o">=</span> <span class="s2">"#TO_PROVIDE"</span>
+<span class="n">PROJECT_ID</span> <span class="o">=</span> <span class="s2">"#TO_PROVIDE"</span>
+<span class="n">PASSWORD</span> <span class="o">=</span> <span class="kc">None</span>
 
-<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span>
-    <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
-<span class="p">])</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+    <span class="p">]</span>
+<span class="p">)</span>
 <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
 
 <span class="k">if</span> <span class="n">PASSWORD</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -4663,9 +4677,10 @@ print(analysis.to_dataframe([solution]))</div>
 <span class="k">else</span><span class="p">:</span>
     <span class="c1"># Use a mock local connection for tutorial</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver.utils._local_connection</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalConnection</span>
+
     <span class="n">connection</span> <span class="o">=</span> <span class="n">LocalConnection</span><span class="p">()</span>
 
-<span class="c1"># Use a remote emulator backend </span>
+<span class="c1"># Use a remote emulator backend</span>
 <span class="n">remote_emulator_backend</span> <span class="o">=</span> <span class="n">RemoteEmulator</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
 
 <span class="n">quantum_config</span> <span class="o">=</span> <span class="n">QuantumSolvingConfig</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">remote_emulator_backend</span><span class="p">)</span>
@@ -4675,28 +4690,30 @@ print(analysis.to_dataframe([solution]))</div>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-3">from qubosolver import (
+<div class="clipboard-copy-txt" id="cell-3">from pasqal_cloud import PasqalCloudConnection
+
+from qubosolver import (
     Instance,
+    QuantumSolvingConfig,
+    RemoteEmulator,
     Solver,
     SolverConfig,
-    QuantumSolvingConfig,
-    matrix,
-    RemoteEmulator,
     analysis,
+    matrix,
 )
 
-from pasqal_cloud import PasqalCloudConnection
-
 # Replace with your username, project id and password on the Pasqal Cloud.
-USERNAME="#TO_PROVIDE"
-PROJECT_ID="#TO_PROVIDE"
-PASSWORD=None
+USERNAME = "#TO_PROVIDE"
+PROJECT_ID = "#TO_PROVIDE"
+PASSWORD = None
 
-Q = matrix.tensor([
-    [-0.2, 0.0, 1.0],
-    [ 0.0, 0.0, 1.5],
-    [ 1.0, 1.5, 0.0],
-])
+Q = matrix.tensor(
+    [
+        [-0.2, 0.0, 1.0],
+        [0.0, 0.0, 1.5],
+        [1.0, 1.5, 0.0],
+    ]
+)
 instance = Instance(Q)
 
 if PASSWORD is not None:
@@ -4709,9 +4726,10 @@ if PASSWORD is not None:
 else:
     # Use a mock local connection for tutorial
     from qubosolver.utils._local_connection import LocalConnection
+
     connection = LocalConnection()
 
-# Use a remote emulator backend 
+# Use a remote emulator backend
 remote_emulator_backend = RemoteEmulator(connection=connection)
 
 quantum_config = QuantumSolvingConfig(device=device, backend=remote_emulator_backend)
@@ -4775,19 +4793,21 @@ More information on classical approaches can be found in the <a href="https://pa
 </clipboard-copy>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ClassicalSolvingConfig</span><span class="p">,</span>
     <span class="n">Instance</span><span class="p">,</span>
     <span class="n">Solver</span><span class="p">,</span>
     <span class="n">SolverConfig</span><span class="p">,</span>
-    <span class="n">ClassicalSolvingConfig</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
     <span class="n">analysis</span><span class="p">,</span>
+    <span class="n">matrix</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span>
-    <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
-<span class="p">])</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+    <span class="p">]</span>
+<span class="p">)</span>
 <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
 
 <span class="c1"># Create a SolverConfig with a classical solver.</span>
@@ -4803,19 +4823,21 @@ More information on classical approaches can be found in the <a href="https://pa
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-4">from qubosolver import (
+    ClassicalSolvingConfig,
     Instance,
     Solver,
     SolverConfig,
-    ClassicalSolvingConfig,
-    matrix,
     analysis,
+    matrix,
 )
 
-Q = matrix.tensor([
-    [-0.2, 0.0, 1.0],
-    [ 0.0, 0.0, 1.5],
-    [ 1.0, 1.5, 0.0],
-])
+Q = matrix.tensor(
+    [
+        [-0.2, 0.0, 1.0],
+        [0.0, 0.0, 1.5],
+        [1.0, 1.5, 0.0],
+    ]
+)
 instance = Instance(Q)
 
 # Create a SolverConfig with a classical solver.

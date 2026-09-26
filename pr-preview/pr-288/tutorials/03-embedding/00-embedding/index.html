@@ -4250,10 +4250,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverConfig</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver.utils._random</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_seeded_magic</span>
 
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="s2">"matplotlib"</span><span class="p">)</span>
@@ -4262,10 +4264,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 
 <span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">from qubosolver import SolverConfig
+<div class="clipboard-copy-txt" id="cell-1">from __future__ import annotations
 
-import warnings
 import logging
+import warnings
+
+from qubosolver import SolverConfig
 from qubosolver.utils._random import register_seeded_magic
 
 warnings.filterwarnings("ignore", module="matplotlib")
@@ -4509,10 +4513,12 @@ print(analysis.to_dataframe([solution])[:20])
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pprint</span><span class="w"> </span><span class="kn">import</span> <span class="n">pprint</span>
+
 <span class="n">pprint</span><span class="p">(</span><span class="n">asdict</span><span class="p">(</span><span class="n">config</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-4">from dataclasses import asdict
 from pprint import pprint
+
 pprint(asdict(config), width=100)</div>
 </div>
 </div>
@@ -4717,7 +4723,9 @@ pprint(asdict(config), width=100)</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># blade_settings = embedding.Config(algorithm="blade", blade_dimensions=[5 ,4, 3, 2], blade_steps_per_round=300)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># blade_settings = embedding.Config(</span>
+<span class="c1">#     algorithm="blade", blade_dimensions=[5 ,4, 3, 2], blade_steps_per_round=300</span>
+<span class="c1"># )</span>
 <span class="c1"># quantum_config = solvers.QuantumConfig(</span>
 <span class="c1">#     device=AnalogDeviceWithDMM(),</span>
 <span class="c1">#     embedding=blade_settings,</span>
@@ -4728,7 +4736,9 @@ pprint(asdict(config), width=100)</div>
 <span class="c1"># register = solver._embedding()</span>
 <span class="c1"># register.draw()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-8"># blade_settings = embedding.Config(algorithm="blade", blade_dimensions=[5 ,4, 3, 2], blade_steps_per_round=300)
+<div class="clipboard-copy-txt" id="cell-8"># blade_settings = embedding.Config(
+#     algorithm="blade", blade_dimensions=[5 ,4, 3, 2], blade_steps_per_round=300
+# )
 # quantum_config = solvers.QuantumConfig(
 #     device=AnalogDeviceWithDMM(),
 #     embedding=blade_settings,
@@ -4785,7 +4795,9 @@ pprint(asdict(config), width=100)</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># greedy_settings = embedding.Config(algorithm="greedy", greedy_layout="triangular", greedy_traps="device")</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># greedy_settings = embedding.Config(</span>
+<span class="c1">#     algorithm="greedy", greedy_layout="triangular", greedy_traps="device"</span>
+<span class="c1"># )</span>
 
 <span class="c1"># quantum_config = solvers.QuantumConfig(</span>
 <span class="c1">#     device=AnalogDeviceWithDMM(),</span>
@@ -4797,7 +4809,9 @@ pprint(asdict(config), width=100)</div>
 <span class="c1"># register = solver._embedding()</span>
 <span class="c1"># register.draw()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-9"># greedy_settings = embedding.Config(algorithm="greedy", greedy_layout="triangular", greedy_traps="device")
+<div class="clipboard-copy-txt" id="cell-9"># greedy_settings = embedding.Config(
+#     algorithm="greedy", greedy_layout="triangular", greedy_traps="device"
+# )
 
 # quantum_config = solvers.QuantumConfig(
 #     device=AnalogDeviceWithDMM(),

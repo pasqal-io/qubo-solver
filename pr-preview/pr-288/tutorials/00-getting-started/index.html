@@ -4118,19 +4118,23 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Instance</span><span class="p">,</span>
     <span class="n">Solver</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
     <span class="n">analysis</span><span class="p">,</span>
+    <span class="n">matrix</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1"># Define QUBO</span>
-<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span>
-    <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
-    <span class="p">[</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
-<span class="p">])</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+    <span class="p">]</span>
+<span class="p">)</span>
 <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
 <span class="c1"># Solve it!</span>
 <span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
@@ -4138,19 +4142,23 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">from qubosolver import (
+<div class="clipboard-copy-txt" id="cell-1">from __future__ import annotations
+
+from qubosolver import (
     Instance,
     Solver,
-    matrix,
     analysis,
+    matrix,
 )
 
 # Define QUBO
-Q = matrix.tensor([
-    [-0.2, 0.0, 1.0],
-    [ 0.0, 0.0, 1.5],
-    [ 1.0, 1.5, 0.0],
-])
+Q = matrix.tensor(
+    [
+        [-0.2, 0.0, 1.0],
+        [0.0, 0.0, 1.5],
+        [1.0, 1.5, 0.0],
+    ]
+)
 instance = Instance(Q)
 # Solve it!
 solver = Solver(instance)

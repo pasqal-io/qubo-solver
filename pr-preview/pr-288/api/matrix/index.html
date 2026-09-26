@@ -3022,6 +3022,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#qubosolver.matrix.zeros_field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;zeros_field
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3539,6 +3550,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#qubosolver.matrix.zeros_field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;zeros_field
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3613,7 +3635,7 @@ float dtype (float32 by default, float64 when double precision is enabled).
 This module provides factory functions for creating and converting such matrices
 on the globally configured torch device.</p>
 <p>Typical usage:</p>
-<div class="highlight"><pre><span></span><code>Q = matrix.zeros(4)                          # 4×4 zero matrix
+<div class="highlight"><pre><span></span><code>Q = matrix.zeros(4)                          # 4x4 zero matrix
 Q = matrix.tensor([[0, 1], [1, 0]])          # from nested list
 Q = matrix.as_tensor(some_tensor)            # cast existing tensor, no copy when possible
 </code></pre></div>
@@ -3635,7 +3657,7 @@ Q = matrix.as_tensor(some_tensor)            # cast existing tensor, no copy whe
             <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;as_tensor&lt;/span&gt; (&lt;code&gt;qubosolver.matrix.as_tensor&lt;/code&gt;)" href="#qubosolver.matrix.as_tensor">as_tensor</a></code></b>
             –
             <div class="doc-md-description">
-              <p>Convenience wrapper for <code>torch.as_tensor</code> that converts data to a matrix</p>
+              <p>Convenience wrapper for <code>torch.as_tensor</code> that converts data to a matrix tensor.</p>
             </div>
           </li>
           <li class="doc-section-item field-body">
@@ -3664,6 +3686,13 @@ Q = matrix.as_tensor(some_tensor)            # cast existing tensor, no copy whe
             –
             <div class="doc-md-description">
               <p>Creates a zero-filled square matrix of shape <code>(n, n)</code>.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;zeros_field&lt;/span&gt; (&lt;code&gt;qubosolver.matrix.zeros_field&lt;/code&gt;)" href="#qubosolver.matrix.zeros_field">zeros_field</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Creates a dataclass field defaulting to a zero-filled square matrix.</p>
             </div>
           </li>
     </ul>
@@ -3701,13 +3730,12 @@ Q = matrix.as_tensor(some_tensor)            # cast existing tensor, no copy whe
 
     <div class="doc doc-contents ">
 
-        <p>Convenience wrapper for <code>torch.as_tensor</code> that converts data to a matrix
-tensor, avoiding a copy when possible.</p>
-<p>If <em>data</em> is already a tensor with the right dtype and on the right device, it is
-returned as-is, sharing the same underlying memory. A numpy array is also shared
-rather than copied if it already has the global float dtype and the global device
-is <code>cpu</code> (numpy arrays only live on CPU, so any other dtype or device forces a
-copy). Lists, tuples, and other array-like inputs are always copied.</p>
+        <p>Convenience wrapper for <code>torch.as_tensor</code> that converts data to a matrix tensor.</p>
+<p>Avoids a copy when possible. If <em>data</em> is already a tensor with the right dtype and on
+the right device, it is returned as-is, sharing the same underlying memory. A numpy
+array is also shared rather than copied if it already has the global float dtype and
+the global device is <code>cpu</code> (numpy arrays only live on CPU, so any other dtype or
+device forces a copy). Lists, tuples, and other array-like inputs are always copied.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -3742,39 +3770,37 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/matrix.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-68">68</a></span>
-<span class="normal"><a href="#__codelineno-0-69">69</a></span>
-<span class="normal"><a href="#__codelineno-0-70">70</a></span>
-<span class="normal"><a href="#__codelineno-0-71">71</a></span>
-<span class="normal"><a href="#__codelineno-0-72">72</a></span>
-<span class="normal"><a href="#__codelineno-0-73">73</a></span>
-<span class="normal"><a href="#__codelineno-0-74">74</a></span>
-<span class="normal"><a href="#__codelineno-0-75">75</a></span>
-<span class="normal"><a href="#__codelineno-0-76">76</a></span>
-<span class="normal"><a href="#__codelineno-0-77">77</a></span>
-<span class="normal"><a href="#__codelineno-0-78">78</a></span>
-<span class="normal"><a href="#__codelineno-0-79">79</a></span>
-<span class="normal"><a href="#__codelineno-0-80">80</a></span>
-<span class="normal"><a href="#__codelineno-0-81">81</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-81">81</a></span>
 <span class="normal"><a href="#__codelineno-0-82">82</a></span>
 <span class="normal"><a href="#__codelineno-0-83">83</a></span>
-<span class="normal"><a href="#__codelineno-0-84">84</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="k">def</span><span class="w"> </span><span class="nf">as_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Matrix</span><span class="p">:</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="w">    </span><span class="sd">"""Convenience wrapper for `torch.as_tensor` that converts data to a matrix</span>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">    tensor, avoiding a copy when possible.</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">    If *data* is already a tensor with the right dtype and on the right device, it is</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">    returned as-is, sharing the same underlying memory. A numpy array is also shared</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">    rather than copied if it already has the global float dtype and the global device</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">    is ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a</span>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">    copy). Lists, tuples, and other array-like inputs are always copied.</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">        data: Input data (tensor, numpy array, nested list, etc.).</span>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="sd">        A 2-D tensor on the global dtype and device.</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">    """</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">())</span>
+<span class="normal"><a href="#__codelineno-0-84">84</a></span>
+<span class="normal"><a href="#__codelineno-0-85">85</a></span>
+<span class="normal"><a href="#__codelineno-0-86">86</a></span>
+<span class="normal"><a href="#__codelineno-0-87">87</a></span>
+<span class="normal"><a href="#__codelineno-0-88">88</a></span>
+<span class="normal"><a href="#__codelineno-0-89">89</a></span>
+<span class="normal"><a href="#__codelineno-0-90">90</a></span>
+<span class="normal"><a href="#__codelineno-0-91">91</a></span>
+<span class="normal"><a href="#__codelineno-0-92">92</a></span>
+<span class="normal"><a href="#__codelineno-0-93">93</a></span>
+<span class="normal"><a href="#__codelineno-0-94">94</a></span>
+<span class="normal"><a href="#__codelineno-0-95">95</a></span>
+<span class="normal"><a href="#__codelineno-0-96">96</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="k">def</span><span class="w"> </span><span class="nf">as_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Matrix</span><span class="p">:</span>  <span class="c1"># noqa: ANN401 (array-like input forwarded to torch.as_tensor)</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="w">    </span><span class="sd">"""Convenience wrapper for `torch.as_tensor` that converts data to a matrix tensor.</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">    Avoids a copy when possible. If *data* is already a tensor with the right dtype and on</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">    the right device, it is returned as-is, sharing the same underlying memory. A numpy</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">    array is also shared rather than copied if it already has the global float dtype and</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">    the global device is ``cpu`` (numpy arrays only live on CPU, so any other dtype or</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">    device forces a copy). Lists, tuples, and other array-like inputs are always copied.</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">        data: Input data (tensor, numpy array, nested list, etc.).</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="sd">        A 2-D tensor on the global dtype and device.</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">    """</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">(),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">())</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3799,11 +3825,11 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/matrix.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-28">28</a></span>
-<span class="normal"><a href="#__codelineno-0-29">29</a></span>
-<span class="normal"><a href="#__codelineno-0-30">30</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="k">def</span><span class="w"> </span><span class="nf">device</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="w">    </span><span class="sd">"""Returns the globally configured torch device."""</span>
-<a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="k">return</span> <span class="n">linalg</span><span class="o">.</span><span class="n">device</span><span class="p">()</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-31">31</a></span>
+<span class="normal"><a href="#__codelineno-0-32">32</a></span>
+<span class="normal"><a href="#__codelineno-0-33">33</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="k">def</span><span class="w"> </span><span class="nf">device</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="w">    </span><span class="sd">"""Returns the globally configured torch device."""</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33"></a>    <span class="k">return</span> <span class="n">linalg</span><span class="o">.</span><span class="n">device</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3828,11 +3854,11 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/matrix.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-23">23</a></span>
-<span class="normal"><a href="#__codelineno-0-24">24</a></span>
-<span class="normal"><a href="#__codelineno-0-25">25</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="k">def</span><span class="w"> </span><span class="nf">dtype</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="w">    </span><span class="sd">"""Returns the globally configured float dtype."""</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25"></a>    <span class="k">return</span> <span class="n">linalg</span><span class="o">.</span><span class="n">dtype</span><span class="p">()</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-26">26</a></span>
+<span class="normal"><a href="#__codelineno-0-27">27</a></span>
+<span class="normal"><a href="#__codelineno-0-28">28</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="k">def</span><span class="w"> </span><span class="nf">dtype</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="w">    </span><span class="sd">"""Returns the globally configured float dtype."""</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="k">return</span> <span class="n">linalg</span><span class="o">.</span><span class="n">dtype</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3847,7 +3873,7 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">tensor</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Any&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.dtype&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype">dtype</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;dtype&lt;/span&gt; (&lt;code&gt;qubosolver.types.matrix.dtype&lt;/code&gt;)" href="#qubosolver.matrix.dtype">dtype</a></span><span class="p">(),</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.matrix.device&lt;/code&gt;)" href="#qubosolver.matrix.device">device</a></span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Any&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Matrix&lt;/span&gt;
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">tensor</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Any&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.dtype&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype">dtype</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Any&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Matrix&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
@@ -3872,8 +3898,8 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
         </li>
         <li class="doc-section-item field-body">
             <b><code>dtype</code></b>
-              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.dtype&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype">dtype</a></code>, default:
-                  <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;dtype&lt;/span&gt; (&lt;code&gt;qubosolver.types.matrix.dtype&lt;/code&gt;)" href="#qubosolver.matrix.dtype">dtype</a>()</code>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.dtype&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype">dtype</a> | None</code>, default:
+                  <code>None</code>
 )
           –
           <div class="doc-md-description">
@@ -3882,8 +3908,8 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
         </li>
         <li class="doc-section-item field-body">
             <b><code>device</code></b>
-              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></code>, default:
-                  <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.matrix.device&lt;/code&gt;)" href="#qubosolver.matrix.device">device</a>()</code>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a> | None</code>, default:
+                  <code>None</code>
 )
           –
           <div class="doc-md-description">
@@ -3922,43 +3948,47 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/matrix.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-47">47</a></span>
-<span class="normal"><a href="#__codelineno-0-48">48</a></span>
-<span class="normal"><a href="#__codelineno-0-49">49</a></span>
-<span class="normal"><a href="#__codelineno-0-50">50</a></span>
-<span class="normal"><a href="#__codelineno-0-51">51</a></span>
-<span class="normal"><a href="#__codelineno-0-52">52</a></span>
-<span class="normal"><a href="#__codelineno-0-53">53</a></span>
-<span class="normal"><a href="#__codelineno-0-54">54</a></span>
-<span class="normal"><a href="#__codelineno-0-55">55</a></span>
-<span class="normal"><a href="#__codelineno-0-56">56</a></span>
-<span class="normal"><a href="#__codelineno-0-57">57</a></span>
-<span class="normal"><a href="#__codelineno-0-58">58</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-58">58</a></span>
 <span class="normal"><a href="#__codelineno-0-59">59</a></span>
 <span class="normal"><a href="#__codelineno-0-60">60</a></span>
 <span class="normal"><a href="#__codelineno-0-61">61</a></span>
 <span class="normal"><a href="#__codelineno-0-62">62</a></span>
 <span class="normal"><a href="#__codelineno-0-63">63</a></span>
 <span class="normal"><a href="#__codelineno-0-64">64</a></span>
-<span class="normal"><a href="#__codelineno-0-65">65</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="k">def</span><span class="w"> </span><span class="nf">tensor</span><span class="p">(</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span><span class="p">(),</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>    <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span><span class="p">(),</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Matrix</span><span class="p">:</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="w">    </span><span class="sd">"""Creates a matrix tensor from the given data.</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">        data: Input data (nested list or 2-D array-like).</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">        dtype: Data type of the tensor.</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">        device: Torch device for the tensor.</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">        **kwargs: Extra keyword arguments forwarded to `torch.tensor`.</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">        A 2-D tensor.</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="sd">    """</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-65">65</a></span>
+<span class="normal"><a href="#__codelineno-0-66">66</a></span>
+<span class="normal"><a href="#__codelineno-0-67">67</a></span>
+<span class="normal"><a href="#__codelineno-0-68">68</a></span>
+<span class="normal"><a href="#__codelineno-0-69">69</a></span>
+<span class="normal"><a href="#__codelineno-0-70">70</a></span>
+<span class="normal"><a href="#__codelineno-0-71">71</a></span>
+<span class="normal"><a href="#__codelineno-0-72">72</a></span>
+<span class="normal"><a href="#__codelineno-0-73">73</a></span>
+<span class="normal"><a href="#__codelineno-0-74">74</a></span>
+<span class="normal"><a href="#__codelineno-0-75">75</a></span>
+<span class="normal"><a href="#__codelineno-0-76">76</a></span>
+<span class="normal"><a href="#__codelineno-0-77">77</a></span>
+<span class="normal"><a href="#__codelineno-0-78">78</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="k">def</span><span class="w"> </span><span class="nf">tensor</span><span class="p">(</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>    <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401 (array-like input forwarded to torch.tensor)</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>    <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a>    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401 (forwarded to torch.tensor)</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Matrix</span><span class="p">:</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="w">    </span><span class="sd">"""Creates a matrix tensor from the given data.</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">        data: Input data (nested list or 2-D array-like).</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">        dtype: Data type of the tensor.</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">        device: Torch device for the tensor.</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="sd">        **kwargs: Extra keyword arguments forwarded to `torch.tensor`.</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">        A 2-D tensor.</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">    """</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a>    <span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span> <span class="ow">or</span> <span class="n">_dtype</span><span class="p">()</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a>    <span class="n">device</span> <span class="o">=</span> <span class="n">device</span> <span class="ow">or</span> <span class="n">_device</span><span class="p">()</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3973,7 +4003,7 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.dtype&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype">dtype</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;dtype&lt;/span&gt; (&lt;code&gt;qubosolver.types.matrix.dtype&lt;/code&gt;)" href="#qubosolver.matrix.dtype">dtype</a></span><span class="p">(),</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.matrix.device&lt;/code&gt;)" href="#qubosolver.matrix.device">device</a></span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Matrix&lt;/span&gt;
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.dtype&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype">dtype</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Matrix&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
@@ -3998,8 +4028,8 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
         </li>
         <li class="doc-section-item field-body">
             <b><code>dtype</code></b>
-              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.dtype&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype">dtype</a></code>, default:
-                  <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;dtype&lt;/span&gt; (&lt;code&gt;qubosolver.types.matrix.dtype&lt;/code&gt;)" href="#qubosolver.matrix.dtype">dtype</a>()</code>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.dtype&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype">dtype</a> | None</code>, default:
+                  <code>None</code>
 )
           –
           <div class="doc-md-description">
@@ -4008,8 +4038,8 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
         </li>
         <li class="doc-section-item field-body">
             <b><code>device</code></b>
-              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></code>, default:
-                  <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;device&lt;/span&gt; (&lt;code&gt;qubosolver.types.matrix.device&lt;/code&gt;)" href="#qubosolver.matrix.device">device</a>()</code>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a> | None</code>, default:
+                  <code>None</code>
 )
           –
           <div class="doc-md-description">
@@ -4038,29 +4068,157 @@ copy). Lists, tuples, and other array-like inputs are always copied.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/matrix.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-33">33</a></span>
-<span class="normal"><a href="#__codelineno-0-34">34</a></span>
-<span class="normal"><a href="#__codelineno-0-35">35</a></span>
-<span class="normal"><a href="#__codelineno-0-36">36</a></span>
-<span class="normal"><a href="#__codelineno-0-37">37</a></span>
-<span class="normal"><a href="#__codelineno-0-38">38</a></span>
-<span class="normal"><a href="#__codelineno-0-39">39</a></span>
-<span class="normal"><a href="#__codelineno-0-40">40</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-40">40</a></span>
 <span class="normal"><a href="#__codelineno-0-41">41</a></span>
 <span class="normal"><a href="#__codelineno-0-42">42</a></span>
 <span class="normal"><a href="#__codelineno-0-43">43</a></span>
-<span class="normal"><a href="#__codelineno-0-44">44</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="k">def</span><span class="w"> </span><span class="nf">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span><span class="p">(),</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Matrix</span><span class="p">:</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="w">    </span><span class="sd">"""Creates a zero-filled square matrix of shape ``(n, n)``.</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">        n: Size of the matrix (number of rows and columns).</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">        dtype: Data type of the tensor.</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">        device: Torch device for the tensor.</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">        A 2-D tensor of zeros with shape ``(n, n)``.</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">    """</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-44">44</a></span>
+<span class="normal"><a href="#__codelineno-0-45">45</a></span>
+<span class="normal"><a href="#__codelineno-0-46">46</a></span>
+<span class="normal"><a href="#__codelineno-0-47">47</a></span>
+<span class="normal"><a href="#__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#__codelineno-0-49">49</a></span>
+<span class="normal"><a href="#__codelineno-0-50">50</a></span>
+<span class="normal"><a href="#__codelineno-0-51">51</a></span>
+<span class="normal"><a href="#__codelineno-0-52">52</a></span>
+<span class="normal"><a href="#__codelineno-0-53">53</a></span>
+<span class="normal"><a href="#__codelineno-0-54">54</a></span>
+<span class="normal"><a href="#__codelineno-0-55">55</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="k">def</span><span class="w"> </span><span class="nf">zeros</span><span class="p">(</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>    <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Matrix</span><span class="p">:</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="w">    </span><span class="sd">"""Creates a zero-filled square matrix of shape ``(n, n)``.</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">        n: Size of the matrix (number of rows and columns).</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">        dtype: Data type of the tensor.</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">        device: Torch device for the tensor.</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">        A 2-D tensor of zeros with shape ``(n, n)``.</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">    """</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>    <span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span> <span class="ow">or</span> <span class="n">_dtype</span><span class="p">()</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="n">device</span> <span class="o">=</span> <span class="n">device</span> <span class="ow">or</span> <span class="n">_device</span><span class="p">()</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="qubosolver.matrix.zeros_field" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">zeros_field</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">zeros_field</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.dtype&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype">dtype</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Matrix&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.types.linalg.Matrix&lt;/code&gt;)" href="#qubosolver.Matrix">Matrix</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates a dataclass field defaulting to a zero-filled square matrix.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>n</code></b>
+              (<code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Size of the matrix (number of rows and columns).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>dtype</code></b>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.dtype&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype">dtype</a> | None</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Data type of the tensor.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>device</code></b>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.device&lt;/code&gt;" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">device</a> | None</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Torch device for the tensor.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Matrix&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.types.linalg.Matrix&lt;/code&gt;)" href="#qubosolver.Matrix">Matrix</a></code>
+          –
+          <div class="doc-md-description">
+            <p>A dataclass field (typed as <code>Matrix</code> for the enclosing class) whose</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;qubosolver.Matrix&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.types.linalg.Matrix&lt;/code&gt;)" href="#qubosolver.Matrix">Matrix</a></code>
+          –
+          <div class="doc-md-description">
+            <p><code>default_factory</code> builds a fresh zero tensor per instance.</p>
+          </div>
+        </li>
+    </ul>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>qubosolver/types/matrix.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-99"> 99</a></span>
+<span class="normal"><a href="#__codelineno-0-100">100</a></span>
+<span class="normal"><a href="#__codelineno-0-101">101</a></span>
+<span class="normal"><a href="#__codelineno-0-102">102</a></span>
+<span class="normal"><a href="#__codelineno-0-103">103</a></span>
+<span class="normal"><a href="#__codelineno-0-104">104</a></span>
+<span class="normal"><a href="#__codelineno-0-105">105</a></span>
+<span class="normal"><a href="#__codelineno-0-106">106</a></span>
+<span class="normal"><a href="#__codelineno-0-107">107</a></span>
+<span class="normal"><a href="#__codelineno-0-108">108</a></span>
+<span class="normal"><a href="#__codelineno-0-109">109</a></span>
+<span class="normal"><a href="#__codelineno-0-110">110</a></span>
+<span class="normal"><a href="#__codelineno-0-111">111</a></span>
+<span class="normal"><a href="#__codelineno-0-112">112</a></span>
+<span class="normal"><a href="#__codelineno-0-113">113</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="k">def</span><span class="w"> </span><span class="nf">zeros_field</span><span class="p">(</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a>    <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Matrix</span><span class="p">:</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="w">    </span><span class="sd">"""Creates a dataclass field defaulting to a zero-filled square matrix.</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">        n: Size of the matrix (number of rows and columns).</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">        dtype: Data type of the tensor.</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">        device: Torch device for the tensor.</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="sd">        A dataclass field (typed as `Matrix` for the enclosing class) whose</span>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="sd">        `default_factory` builds a fresh zero tensor per instance.</span>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">    """</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a>    <span class="k">return</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
