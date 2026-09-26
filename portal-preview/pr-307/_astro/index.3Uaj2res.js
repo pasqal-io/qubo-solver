@@ -1,0 +1,1 @@
+import{t as e}from"./Icon.nMuqjK-4.js";export{e as default};
