@@ -53,7 +53,7 @@ def _pre_remote_job(
         instance = transforms.variable_fixing.apply_recursively(instance)
 
     if embedding_method == "blade":
-        register = embedding.blade.embed(instance)
+        register = embedding.blade.embed_for_device(instance, device)
     else:
         config = embedding.greedy_layout.Config(traps=100)
         register = embedding.greedy_layout.embed(instance, config=config)

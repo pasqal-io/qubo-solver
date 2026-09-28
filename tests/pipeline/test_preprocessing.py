@@ -136,7 +136,6 @@ def test_quantum_preprocessing_falls_back_to_zeroing_when_bitflip_is_not_enough(
     config = SolverConfig(
         solving=QuantumSolvingConfig(),
         preprocessing=True,
-        activate_trivial_solutions=False,
         postprocessing=False,
     )
     solver = Solver(instance, config)
@@ -256,11 +255,9 @@ def test_reduce_qubo_2() -> None:
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("embedding_method", ["blade"])
 @pytest.mark.parametrize("preprocessing", [True, False], ids=["pre", "no_pre"])
-@pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
 def test_quantum_prepostprocessing_2(
     embedding_method: Literal["blade"],
     preprocessing: bool,
-    dmm: bool,
 ) -> None:
 
     seed = 799
@@ -284,9 +281,8 @@ def test_quantum_prepostprocessing_2(
         solving=QuantumSolvingConfig(
             EmbeddingConfig(
                 algorithm=embedding_method,
-                greedy_layout_traps=500,
             ),
-            drive_shaping=DriveShapingConfig(dmm=dmm),
+            drive_shaping=DriveShapingConfig(),
             device=DigitalAnalogDevice(),
             backend=LocalEmulator(num_shots=50),
         ),

@@ -73,8 +73,7 @@ def test_qubo_solver_classical_cplex() -> None:
     # Create a solving.Config object with classical solver options.
     classical_config = ClassicalSolvingConfig(
         algorithm="cplex",
-        cplex_maxtime=10.0,
-        cplex_log_path="test_solver.log",
+        time_limit=10.0,
     )
     config = SolverConfig(solving=classical_config)
 
@@ -247,7 +246,7 @@ def test_rounding() -> None:
     # must report the actual cost of its own bitstring, not CPLEX's internal
     # (possibly rounded) objective value.
     instance = _build_rounding_matrix()
-    solution = solving.cplex.solve(instance, maxtime=60.0)
+    solution = solving.cplex.solve(instance, time_limit=60.0)
 
     check.is_true(solution.check_consistency(instance=instance))
 

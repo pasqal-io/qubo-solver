@@ -208,7 +208,8 @@ def test_emulator_backend_selection(
             backend=backend,
             embedding=EmbeddingConfig(algorithm="blade"),
         ),
-        activate_trivial_solutions=False,
+        preprocessing=False,
+        postprocessing=False,
     )
 
     solver = Solver(instance, solver_config)
@@ -246,7 +247,8 @@ def test_remote_emulator_warning() -> None:
             backend=RemoteEmulator(backend_type=RemoteSVBackend, connection=mock_connection),
             embedding=EmbeddingConfig(algorithm="blade"),
         ),
-        activate_trivial_solutions=False,
+        preprocessing=False,
+        postprocessing=False,
     )
     solver = Solver(instance, config)
 
@@ -268,7 +270,8 @@ def test_local_emulator_warning() -> None:
             backend=LocalEmulator(backend_type=SVBackend),
             embedding=EmbeddingConfig(algorithm="blade"),
         ),
-        activate_trivial_solutions=False,
+        preprocessing=False,
+        postprocessing=False,
     )
 
     solver = Solver(instance, config)

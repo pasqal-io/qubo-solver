@@ -122,6 +122,11 @@ class Solution:
         for i in range(len(self)):
             yield self[i]
 
+    @property
+    def num_variables(self) -> int:
+        """Return the number of variables per bitstring."""
+        return self.bitstrings.shape[1]
+
     def _compute_costs(self, matrix: Matrix) -> Self:
         """Compute and store the QUBO objective $x^T Q x$ for every bitstring.
 

@@ -202,10 +202,9 @@ class _QuboSolverQuantum(BaseSolver):
         assert self.config.solving_mode == "quantum"  # nosec B101
 
         # 1) try trivial else delegate to quantum solver
-        if self.config.activate_trivial_solutions:
-            trivial = self._trivial_solution()
-            if trivial:
-                return trivial
+        trivial = self._trivial_solution()
+        if trivial:
+            return trivial
         self._check_size_limit()
 
         # 2) Apply preprocessing if requested
@@ -275,10 +274,9 @@ class _QuboSolverClassical(BaseSolver):
             The final [`Solution`][qubosolver.Solution].
         """
         # 1) try trivial
-        if self.config.activate_trivial_solutions:
-            trivial = self._trivial_solution()
-            if trivial:
-                return trivial
+        trivial = self._trivial_solution()
+        if trivial:
+            return trivial
 
         self._preprocess()
 

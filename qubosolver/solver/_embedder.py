@@ -80,10 +80,6 @@ class BLaDEmbedder(_BaseEmbedder):
         step_per_round = embed_config.blade_steps_per_round
         if step_per_round is None:
             step_per_round = default.steps_per_round
-        if embed_config.blade_starting_positions is not None:
-            starting_positions = embed_config.blade_starting_positions.numpy()
-        else:
-            starting_positions = None
 
         max_min_dist_ratio: float | None = self.config.max_min_dist_ratio
         if max_min_dist_ratio == torch.inf:
@@ -91,8 +87,6 @@ class BLaDEmbedder(_BaseEmbedder):
 
         config = embedding.blade.Config(
             steps_per_round=step_per_round,
-            starting_positions=starting_positions,
-            dimensions=tuple(embed_config.blade_dimensions),
             max_min_dist_ratio=max_min_dist_ratio,
         )
         return embedding.blade.embed(self.instance, config=config)

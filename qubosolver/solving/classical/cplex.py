@@ -13,6 +13,7 @@ Note:
 from __future__ import annotations
 
 import contextlib
+import math
 from typing import TYPE_CHECKING, Any
 
 from qubosolver import Instance, Solution, bitstrings, vector, vectori
@@ -165,12 +166,12 @@ def _to_solution(cplex_solution: CPLEX.SolutionInterface) -> Solution:
     return solution
 
 
-def solve(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> Solution:
+def solve(instance: Instance, *, time_limit: float = float("inf"), log_path: str = "") -> Solution:
     """Solve a QUBO instance to optimality (or time limit) using IBM CPLEX.
 
     Args:
         instance: The QUBO instance to solve.
-        maxtime: Wall-clock time limit for CPLEX in seconds. CPLEX returns
+        time_limit: Wall-clock time limit for CPLEX in seconds. CPLEX returns
             the best feasible solution found so far when the limit is
             reached.
         log_path: File path where CPLEX log output (progress, warnings,
@@ -189,7 +190,8 @@ def solve(instance: Instance, *, maxtime: float = 600.0, log_path: str = "") -> 
     # Open a log file, or a no-op context manager if none was requested.
     with open(log_path, "w") if log_path else contextlib.nullcontext() as log_file:
         problem = _to_cplex(instance, log_file=log_file)
-        problem.parameters.timelimit.set(maxtime)
+        if math.isfinite(time_limit):
+            problem.parameters.timelimit.set(time_limit)
 
         problem.solve()
 

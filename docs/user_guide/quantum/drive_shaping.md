@@ -38,8 +38,8 @@ instance = Instance(
         ]
     )
 )
-register = embedding.blade.embed(instance)
 device = qoolqit.AnalogDeviceWithDMM()
+register = embedding.blade.embed_for_device(instance, device)
 
 drive = drive_shaping.proportional_diagonal.build_drive(
     instance, register, device=device, dmm=True, kappa=0.25
@@ -92,8 +92,8 @@ instance = Instance(
         ]
     )
 )
-register = embedding.blade.embed(instance)
 device = qoolqit.AnalogDeviceWithDMM()
+register = embedding.blade.embed_for_device(instance, device)
 
 drive = drive_shaping.local_energy_scale.build_drive(
     instance, register, device=device, dmm=True, kappa=0.25
@@ -150,9 +150,10 @@ instance = Instance(
         ]
     )
 )
-register = embedding.blade.embed(instance)
 device = qoolqit.AnalogDeviceWithDMM()
 backend = LocalEmulator()
+
+register = embedding.blade.embed_for_device(instance, device)
 
 config = solving.drive_bayesian_search.Config(n_evaluations=11)
 

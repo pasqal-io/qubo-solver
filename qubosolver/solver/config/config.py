@@ -55,18 +55,11 @@ class SolverConfig:
     or a classical approach ([`ClassicalSolvingConfig`][]), together with
     the configuration of that approach. Defaults to a `QuantumSolvingConfig`."""
 
-    postprocessing: bool = False
-    """Whether we apply post-processing (`True`) or not (`False`). Defaults to `False`."""
+    postprocessing: bool = True
+    """Whether we apply post-processing (`True`) or not (`False`). Defaults to `True`."""
 
-    preprocessing: bool = False
-    """Whether we apply pre-processing (`True`) or not (`False`). Defaults to `False`."""
-
-    activate_trivial_solutions: bool = True
-    """Whether to calculate trivial solutions (`True`) or not (`False`). Defaults to `True`."""
-
-    postprocessing_time_limit: float = float("inf")
-    """Maximum total time in seconds for the whole post-processing batch,
-    shared across all bitstrings. Defaults to `float("inf")`, meaning no time limit."""
+    preprocessing: bool = True
+    """Whether we apply pre-processing (`True`) or not (`False`). Defaults to `True`."""
 
     def __repr__(self) -> str:
         """Return the configuration's name."""

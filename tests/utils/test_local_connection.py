@@ -210,7 +210,7 @@ def test_end_to_end() -> None:
     device = qoolqit.AnalogDevice()
     backend = RemoteEmulator(connection=connection)
 
-    register = embedding.blade.embed(instance)
+    register = embedding.blade.embed_for_device(instance, device)
     drive = drive_shaping.proportional_diagonal.build_drive(instance, register, device=device)
     program = solving.analog_quantum_sampling.compile(register, drive, device)
     job = backend.run(program)

@@ -20,7 +20,7 @@ from abc import ABC, abstractmethod
 import torch
 
 from qubosolver import solving
-from qubosolver.types import Instance, Solution, torch_rng
+from qubosolver.types import Instance, Solution, bitstrings, torch_rng
 
 from .config import ClassicalSolvingConfig
 
@@ -40,9 +40,9 @@ class BaseClassicalSolver(ABC):
         Args:
             instance: The QUBO problem instance to solve.
             config: Classical solver configuration.  The relevant fields
-                depend on the concrete subclass (e.g. ``cplex_maxtime`` for
-                :class:`CplexSolver`, ``sa_*`` fields for
-                :class:`SimulatedAnnealingSolver`).
+                depend on the concrete subclass (e.g. ``time_limit`` for
+                :class:`CplexSolver`, :class:`SimulatedAnnealingSolver`,
+                and :class:`TabuSearchSolver`).
         """
         self.instance = instance
         self.config = config
@@ -66,8 +66,8 @@ class CplexSolver(BaseClassicalSolver):
     the import is deferred to :meth:`solve` so the rest of the module remains
     usable without it.
 
-    Relevant :class:`~qubosolver.solvers.config.classical.Config` fields:
-    ``cplex_maxtime``, ``cplex_log_path``.
+    Relevant :class:`~qubosolver.solvers.config.classical.Config` field:
+    ``time_limit``.
     """
 
     def solve(self) -> Solution:
@@ -78,61 +78,41 @@ class CplexSolver(BaseClassicalSolver):
 
         Returns:
             A :class:`~qubosolver.types.Solution` with the optimal (or
-            best feasible) bitstring found within ``config.cplex_maxtime``
+            best feasible) bitstring found within ``config.time_limit``
             seconds.
         """
         from qubosolver.solving import cplex
 
-        log_path: str = self.config.cplex_log_path
-        maxtime: float = self.config.cplex_maxtime
-
-        return cplex.solve(self.instance, maxtime=maxtime, log_path=log_path)
+        return cplex.solve(self.instance, time_limit=self.config.time_limit)
 
 
 class SimulatedAnnealingSolver(BaseClassicalSolver):
     """QUBO solver using Simulated Annealing (SA).
 
     Explores the solution space by accepting uphill moves with a probability
-    that decreases as temperature cools from ``sa_initial_temp`` to
-    ``sa_final_temp``.
+    that decreases as the temperature cools over the course of the search.
 
     Relevant :class:`~qubosolver.solvers.config.classical.Config` fields:
-    ``sa_seed``, ``sa_start``, ``sa_initial_temp``, ``sa_final_temp``,
-    ``sa_cooling_rate``, ``sa_time_limit``,
-    ``max_iter``, ``max_bitstrings``.
+    ``time_limit``, ``max_iter``, ``max_bitstrings``.
     """
 
     def solve(self) -> Solution:
         """Solve via Simulated Annealing.
 
-        When ``config.sa_start`` is ``None``, a single uniformly random
-        bitstring is sampled (using ``config.sa_seed`` for reproducibility)
-        and used as the starting point.  Otherwise ``config.sa_start`` is
-        used directly.
+        A single uniformly random bitstring is sampled as the starting point.
 
         Returns:
             A :class:`~qubosolver.types.Solution` containing up to
             ``config.max_bitstrings`` best bitstrings found during the search.
         """
-        rng = torch_rng(self.config.sa_seed)
-        if self.config.sa_start is None:
-            random_solution = solving.random_sampling.solve(
-                self.instance, rng=rng, max_bitstrings=1
-            )
-            start = random_solution.bitstrings[0]
-        else:
-            start = self.config.sa_start
+        starts = bitstrings.rand(1, self.instance.size)
 
         return solving.simulated_annealing.solve(
             instance=self.instance,
             top_k=self.config.max_bitstrings,
             max_iter=self.config.max_iter,
-            initial_temp=self.config.sa_initial_temp,
-            final_temp=self.config.sa_final_temp,
-            cooling_rate=self.config.sa_cooling_rate,
-            rng=rng,
-            starts=start.unsqueeze(0),
-            time_limit=self.config.sa_time_limit,
+            starts=starts,
+            time_limit=self.config.time_limit,
             stats="per_run",
         )
 
@@ -141,40 +121,28 @@ class TabuSearchSolver(BaseClassicalSolver):
     """QUBO solver using Tabu Search.
 
     Performs neighbourhood search (single bit-flips) while maintaining a
-    tabu list that forbids recently visited moves for ``tabu_tenure``
+    tabu list that forbids recently visited moves for a number of
     iterations, preventing short cycles.
 
     Relevant :class:`~qubosolver.solvers.config.classical.Config` fields:
-    ``tabu_x0``, ``tabu_tenure``, ``tabu_max_no_improve``,
-    ``tabu_time_limit``, ``max_iter``, ``max_bitstrings``.
+    ``time_limit``, ``max_iter``, ``max_bitstrings``.
     """
 
     def solve(self) -> Solution:
         """Solve via Tabu Search.
 
-        When ``config.tabu_x0`` is ``None``, a uniformly random bitstring is
-        sampled from the current global PyTorch RNG state and used as the
-        starting point.  Otherwise ``config.tabu_x0`` is used directly.
+        A single uniformly random bitstring is sampled as the starting point.
 
         Returns:
             A :class:`~qubosolver.types.Solution` containing up to
             ``config.max_bitstrings`` best bitstrings found during the search.
         """
-        if self.config.tabu_x0 is None:
-            rng = torch_rng().set_state(torch.get_rng_state())
-            random_solution = solving.random_sampling.solve(
-                self.instance, rng=rng, max_bitstrings=self.config.max_bitstrings
-            )
-            x0 = random_solution.bitstrings
-        else:
-            x0 = self.config.tabu_x0
+        starts = bitstrings.rand(1, self.instance.size)
         tabu_search_solution = solving.tabu_search.solve(
             instance=self.instance,
-            starts=x0,
+            starts=starts,
             max_iter=self.config.max_iter,
-            tabu_tenure=self.config.tabu_tenure,
-            max_no_improve=self.config.tabu_max_no_improve,
-            time_limit=self.config.tabu_time_limit,
+            time_limit=self.config.time_limit,
         )
         return tabu_search_solution
 

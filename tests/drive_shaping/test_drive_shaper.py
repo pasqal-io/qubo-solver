@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal, get_args
+from typing import Literal
 
 import numpy as np
 import pytest
@@ -101,29 +101,21 @@ def test_generate_bayesian_search_drive_shaper(
 
 
 @pytest.mark.priority(25)
-@pytest.mark.parametrize("drive_method", get_args(_DriveShapingAlgorithm))
-@pytest.mark.parametrize("dmm", [True, False])
+@pytest.mark.parametrize("drive_method", ["bayesian_search"])
 def test_normalized_weights_in_drive(
     drive_method: _DriveShapingAlgorithm,
-    dmm: bool,
     dummy_register: qoolqit.Register,
     simple_qubo_instance: Instance,
 ) -> None:
-    # skip proportional-diagonal and local-energy-scale drive as their normalization is
-    # very specific.
-    if dmm and drive_method in ["proportional_diagonal", "local_energy_scale"]:
-        pytest.skip("Not implemented")
     default_config = QuantumSolvingConfig(
-        drive_shaping=DriveShapingConfig(algorithm=drive_method, dmm=dmm),
+        drive_shaping=DriveShapingConfig(algorithm=drive_method),
     )
     backend = default_config.backend
     shaper = _get_drive_shaper(simple_qubo_instance, default_config, backend)
     drive, _ = shaper.generate(dummy_register)
 
     wdetuning = drive.dmm
-    check.equal(dmm, wdetuning is not None)
-    if wdetuning is None:
-        return
+    assert wdetuning is not None
 
     norm_weights = list(wdetuning.weights.values())
     weights = torch.abs(torch.diag(simple_qubo_instance.matrix)).tolist()
@@ -146,14 +138,14 @@ def test_drive_duration_set(
     check.almost_equal(drive.duration, 1000.0)
 
 
-@pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
 def test_generate_proportional_diagonal_drive_shaper(
     dummy_register: qoolqit.Register,
     simple_qubo_instance: Instance,
-    dmm: bool,
 ) -> None:
     default_config = QuantumSolvingConfig(
-        drive_shaping=DriveShapingConfig(algorithm="proportional_diagonal", dmm=dmm),
+        drive_shaping=DriveShapingConfig(
+            algorithm="proportional_diagonal", proportional_diagonal_kappa=0.25
+        ),
         device=qoolqit.DigitalAnalogDevice(),
     )
     backend = default_config.backend
@@ -174,10 +166,7 @@ def test_generate_proportional_diagonal_drive_shaper(
 
     check.equal(drive.detuning.duration, drive.duration)
     check.almost_equal(drive.detuning.min(), -1.5, abs=1e-4)
-    if dmm:
-        check.almost_equal(drive.detuning.max(), 1.5, abs=1e-4)
-    else:
-        check.almost_equal(drive.detuning.max(), 1.0, abs=1e-4)
+    check.almost_equal(drive.detuning.max(), 1.5, abs=1e-4)
 
 
 @pytest.mark.usefixtures("restore_rng_state")
@@ -231,7 +220,12 @@ def test_proportional_diagonal_register_and_drive_shape_normalization(
     config = SolverConfig(
         solving=QuantumSolvingConfig(
             embedding=EmbeddingConfig(algorithm=embedding_method),
-        )
+            drive_shaping=DriveShapingConfig(
+                algorithm="proportional_diagonal", proportional_diagonal_kappa=0.25
+            ),
+        ),
+        preprocessing=False,
+        postprocessing=False,
     )
     solver = Solver(Instance(matrix.tensor(qubo)), config)
     solver.solve()
