@@ -207,5 +207,5 @@ follow_untyped_imports = true
 extend_exclude = ["docs/tutorials/retired"]
 
 [tool.deptry.package_module_name_map]
-scikit-learn = "skopt"
+scikit-learn = "sklearn"
 pulser = ["pulser", "pulser_simulation"]

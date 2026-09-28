@@ -46,9 +46,11 @@ class Config:
         traps: Number of trap sites in the layout.
         max_possible_term: Largest QUBO interaction term representable at the
             minimum trap-trap distance, in adimensional units. If a float, it
-            is used directly. If a tuple, the first element must be
-            ``'factor'`` and the second element is a multiplier on the QUBO
-            instance's largest off-diagonal coefficient. The corresponding
+            is used directly. If a tuple, the first element is either
+            ``'factor'``, the second element then being a multiplier on the QUBO
+            instance's largest off-diagonal coefficient, or ``'quantile'``, the
+            second element then being the quantile (in ``[0, 1]``) of the QUBO
+            instance's strictly positive off-diagonal coefficients. The corresponding
             spacing is ``max_possible_term ** (-1 / 6)``, since interactions
             scale as ``1 / distance ** 6``.
         lattice: Lattice pattern (square or triangular).
@@ -58,7 +60,7 @@ class Config:
 
     traps: int = 200
     max_min_dist_ratio: float = float("inf")
-    max_possible_term: float | tuple[Literal["factor"], float] = ("factor", 1.0)
+    max_possible_term: float | tuple[Literal["factor", "quantile"], float] = ("quantile", 0.95)
     lattice: Lattice = Lattice.TRIANGULAR
 
     def __post_init__(self) -> None:
@@ -115,39 +117,57 @@ class Config:
 
 
 def _resolve_max_possible_term(
-    max_possible_term: float | tuple[Literal["factor"], float], instance: Instance
+    max_possible_term: float | tuple[Literal["factor", "quantile"], float], instance: Instance
 ) -> float:
     """Resolve a `Config.max_possible_term` value to a plain float.
 
     Args:
         max_possible_term: If a float, returned as-is. If a tuple, the first
-            element must be ``'factor'`` and the second element is a
-            multiplier on *instance*'s largest off-diagonal coefficient.
+            element is either ``'factor'``, the second element then being a
+            multiplier on *instance*'s largest off-diagonal coefficient, or
+            ``'quantile'``, the second element then being the quantile (in
+            ``[0, 1]``) of *instance*'s strictly positive off-diagonal coefficients.
         instance: The QUBO instance being embedded, used to resolve the
-            ``'factor'`` tuple form.
+            tuple forms.
 
     Returns:
         The resolved maximum representable quadratic term, as a float.
 
     Raises:
         ValueError: If *max_possible_term* is a tuple whose first element is
-            not ``'factor'``, or if *instance* has fewer than 2 variables and
-            therefore no off-diagonal coefficient to scale by.
+            neither ``'factor'`` nor ``'quantile'``, if *instance* has no
+            strictly positive off-diagonal coefficient to resolve it from, or
+            if the resolved value is not strictly positive.
     """
     if isinstance(max_possible_term, float):
-        return max_possible_term
+        return _check_positive_max_possible_term(max_possible_term)
 
-    kind, factor = max_possible_term
-    if kind != "factor":
+    kind, value = max_possible_term
+    if kind not in ("factor", "quantile"):
         raise ValueError(
-            "When it is a tuple, the first value of `max_possible_term` must be 'factor'."
+            "When it is a tuple, the first value of `max_possible_term` must be "
+            "'factor' or 'quantile'."
         )
-    if instance.size < 2:
+    off_diag = instance.matrix.numpy()[np.triu_indices(instance.size, k=1)]
+    positive = off_diag[off_diag > 0]
+    if not positive.size:
         raise ValueError(
-            "Cannot resolve a 'factor' `max_possible_term` for an instance with fewer than "
-            f"2 variables (size={instance.size}): it has no off-diagonal coefficient to scale."
+            f"Cannot resolve a '{kind}' `max_possible_term` for an instance with no strictly "
+            "positive off-diagonal coefficient: set `max_possible_term` to a float instead."
         )
-    return instance._max_off_diag * factor
+    if kind == "factor":
+        return _check_positive_max_possible_term(instance._max_off_diag * value)
+
+    return _check_positive_max_possible_term(float(np.quantile(positive, value)))
+
+
+def _check_positive_max_possible_term(max_possible_term: float) -> float:
+    if max_possible_term <= 0:
+        raise ValueError(
+            f"`max_possible_term` must resolve to a strictly positive value, got "
+            f"{max_possible_term}."
+        )
+    return max_possible_term
 
 
 def _number_of_traps_from_device(device: qoolqit.Device) -> int:
@@ -262,7 +282,7 @@ def embed(
     # so that it is exactly representable at the minimum trap-trap distance
     # (interactions scale as 1 / distance ** 6).
     max_possible_term = _resolve_max_possible_term(config.max_possible_term, instance)
-    spacing = max_possible_term ** (-1 / 6) if max_possible_term != 0 else 1
+    spacing = max_possible_term ** (-1 / 6)
 
     # build params for the Greedy algorithm
     params = {

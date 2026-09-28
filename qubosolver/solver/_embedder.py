@@ -61,8 +61,7 @@ class BLaDEmbedder(_BaseEmbedder):
 
     BLaDE iteratively adjusts atom positions so that the physical interaction
     strengths (∝ 1/r⁶) match the QUBO edge weights as closely as possible.
-    Embedding parameters (steps per round, initial positions, dimension
-    sequence) are read from ``config.embedding``.
+    The steps per round are read from ``config.embedding``.
     """
 
     def embed(self) -> Register:
