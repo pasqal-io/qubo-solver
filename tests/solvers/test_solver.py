@@ -358,3 +358,32 @@ def test_quantum_matches_classical_triangular(algorithm: _EmbeddingAlgorithm) ->
 
     assert quantum_solution.probabilities is not None
     check.greater_equal(quantum_solution.probabilities[0], 0.1)
+
+
+def test_quantum_solver_skips_pipeline_when_preprocessing_fixes_every_variable(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    # Not caught by trivial_solution_search (mixed-sign, non-diagonal), but
+    # recursive Hansen fixing reduces it to zero variables, so the quantum
+    # pipeline (embedding/drive/execute) must be skipped entirely.
+    Q = matrix.tensor(
+        [
+            [1.0, 0.0, 3.0],
+            [0.0, 1.0, 1.0],
+            [3.0, 1.0, -5.0],
+        ]
+    )
+    instance = Instance(Q)
+    config = SolverConfig(preprocessing=True, postprocessing=False)
+
+    with caplog.at_level(logging.INFO):
+        solution = Solver(instance, config).solve()
+
+    check.is_in(
+        "Instance has zero variables after preprocessing; skipping quantum pipeline.",
+        caplog.text,
+    )
+    assert len(solution) == 1
+    check.equal(len(solution[0].string), instance.size)
+    check.almost_equal(solution[0].cost, -5.0)
+    check.is_true(solution.check_consistency(instance=instance, throw=True))

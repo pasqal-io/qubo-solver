@@ -609,3 +609,21 @@ class Solution:
         )
 
         return valid
+
+    @staticmethod
+    def zeros(length: int, *, count: int = 1) -> Solution:
+        """Build a single all-zero candidate solution of zero cost.
+
+        Args:
+            length: Number of variables in the bitstring.
+            count: Number of samples to attribute to this candidate.
+
+        Returns:
+            A `Solution` holding one all-zero candidate.
+        """
+        return Solution(
+            bitstrings=_bitstrings.zeros(1, length),
+            counts=vectori.tensor([count]),
+            probabilities=vector.tensor([1.0]),
+            costs=vector.tensor([0.0]),
+        )

@@ -28,7 +28,6 @@ from qubosolver import Bitstring, Bitstrings, Instance, Matrix, Solution, bitstr
 from qubosolver.utils._costs import _flip_deltas
 
 from .random_sampling import solve as random_sampling_solve
-from .trivial_solution_search import _zero_length_solution
 
 
 def _iterations(n: int) -> Iterable[int]:
@@ -373,7 +372,7 @@ def solve(
         )
 
     if instance.size == 0:
-        return _zero_length_solution(len(solution))
+        return Solution.zeros(0, count=len(solution))
 
     if strategy == "best_improvement":
         # best_improvement is batched over every row at once instead of

@@ -13,8 +13,6 @@ import torch
 from qubosolver.types import Bitstrings, Instance, Solution, bitstrings, vector, vectori
 from qubosolver.utils._costs import _flip_deltas
 
-from .trivial_solution_search import _zero_length_solution
-
 # How often the incremental QX/f_current tracking is refreshed by an exact
 # recompute. Bounds the rounding drift accumulated by the incremental update
 # without materially adding to the per-iteration cost.
@@ -73,7 +71,7 @@ def solve(
         )
 
     if instance.size == 0:
-        return _zero_length_solution(starts.shape[0])
+        return Solution.zeros(0, count=starts.shape[0])
 
     Q = instance.matrix
     device = Q.device

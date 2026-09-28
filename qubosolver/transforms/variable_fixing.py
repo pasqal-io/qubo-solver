@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import copy
 import json
+import logging
 from collections.abc import Callable, Sequence
 from typing import TypeAlias, cast
 
@@ -31,6 +32,8 @@ from qubosolver._io import utils as io_utils
 from qubosolver._io.utils import Stream
 from qubosolver.types import Solution, bitstrings, vector
 from qubosolver.types._checks import debug_runtime_typecheck
+
+logger = logging.getLogger(__name__)
 
 # TODO: Using `type` statement when Python >= 3.12
 Rule: TypeAlias = Callable[[qubosolver.Instance], dict[int, int]]
@@ -203,6 +206,9 @@ def apply(
     for rule in fixation_rules:
         fixed = rule(instance)
         _reduce_qubo(instance, fixed, inplace=True)
+
+    if instance.size == 0:
+        logger.info("Variable fixing reduced the instance to zero variables.")
 
     return instance
 
