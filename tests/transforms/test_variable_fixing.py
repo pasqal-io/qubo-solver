@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import io
+import logging
 
+import pytest
 import pytest_check as check
 import torch
 
@@ -107,6 +109,26 @@ def test_apply_is_noop_when_nothing_can_be_fixed() -> None:
     check.equal(reduced.size, instance.size)
     check.equal(reduced.n_fixed_indices, 0)
     torch.testing.assert_close(reduced.matrix, instance.matrix)
+
+
+def test_apply_logs_when_instance_is_reduced_to_zero_variables(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    with caplog.at_level(logging.INFO):
+        reduced = transforms.variable_fixing.apply(fully_fixable_qubo())
+
+    check.equal(reduced.size, 0)
+    check.is_in("Variable fixing reduced the instance to zero variables.", caplog.text)
+
+
+def test_apply_does_not_log_when_variables_remain(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    with caplog.at_level(logging.INFO):
+        reduced = transforms.variable_fixing.apply(fixable_qubo())
+
+    check.not_equal(reduced.size, 0)
+    check.is_not_in("Variable fixing reduced the instance to zero variables.", caplog.text)
 
 
 def test_apply_recursively_fixes_until_stable() -> None:

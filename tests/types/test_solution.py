@@ -770,6 +770,39 @@ def test_mutating_one_default_constructed_solution_does_not_affect_another() -> 
     check.equal(b.counts.numel(), 0)
 
 
+def test_zeros_default_count() -> None:
+    solution = Solution.zeros(3)
+    assert len(solution) == 1
+
+    s0 = solution[0]
+    check.equal(s0.string, "000")
+    check.equal(s0.cost, 0.0)
+    check.equal(s0.count, 1)
+    check.almost_equal(s0.probability, 1.0)
+
+
+def test_zeros_custom_count() -> None:
+    solution = Solution.zeros(2, count=5)
+    assert len(solution) == 1
+
+    s0 = solution[0]
+    check.equal(s0.string, "00")
+    check.equal(s0.count, 5)
+
+
+def test_zeros_is_valid_against_matching_instance() -> None:
+    Q = matrix.tensor([[1.0, -1.0], [-1.0, 2.0]])
+    instance = Instance(matrix=Q)
+    _assert_valid(Solution.zeros(2), instance)
+
+
+def test_zeros_length_zero() -> None:
+    solution = Solution.zeros(0)
+    _assert_valid(solution, Instance())
+    assert len(solution) == 1
+    check.equal(solution[0].string, "")
+
+
 def test_concat_mixed_populated_and_empty_counts_raises() -> None:
     a = Solution(
         bitstrings=bitstrings.tensor([[1, 0]]),

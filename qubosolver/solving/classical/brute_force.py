@@ -22,8 +22,6 @@ import torch
 from qubosolver.types import Bitstrings, Instance, Solution, Vectori, bitstrings, vector, vectori
 from qubosolver.utils import _costs
 
-from .trivial_solution_search import _zero_length_solution
-
 logger = logging.getLogger(__name__)
 
 # Number of assignments evaluated per batch. Caps peak memory at roughly
@@ -78,7 +76,7 @@ def solve(
     """
     n: int = instance.size
     if n == 0:
-        return _zero_length_solution()
+        return Solution.zeros(0)
 
     if n > _LARGE_INSTANCE_SIZE and math.isinf(time_limit):
         logger.warning(

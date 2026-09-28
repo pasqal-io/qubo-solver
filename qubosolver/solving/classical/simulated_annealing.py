@@ -28,8 +28,6 @@ from qubosolver import (
 )
 from qubosolver.utils._costs import _flip_deltas, batched_quadratic_cost
 
-from .trivial_solution_search import _zero_length_solution
-
 logger = logging.getLogger(__name__)
 
 
@@ -266,9 +264,7 @@ def solve(
     if instance.size == 0:
         count = starts.shape[0]
         return (
-            _zero_length_solution(count)
-            if merge
-            else [_zero_length_solution() for _ in range(count)]
+            Solution.zeros(0, count=count) if merge else [Solution.zeros(0) for _ in range(count)]
         )
 
     runner = _run_vectorized if vectorized else _run_sequential

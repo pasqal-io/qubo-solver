@@ -218,11 +218,17 @@ class _QuboSolverQuantum(BaseSolver):
             self.instance = transforms.zeroing.apply(self.instance)
             self._update_instance(self.instance)
 
-        embedding = self._embedding()
-        drive, solution = self._drive(embedding)
+        if self.instance.size == 0:
+            logger.info(
+                "Instance has zero variables after preprocessing; skipping quantum pipeline."
+            )
+            solution = Solution.zeros(0)
+        else:
+            embedding = self._embedding()
+            drive, solution = self._drive(embedding)
 
-        if not solution or self.config.quantum.drive_shaping.algorithm != "bayesian_search":
-            solution = self._execute(drive, embedding)
+            if not solution or self.config.quantum.drive_shaping.algorithm != "bayesian_search":
+                solution = self._execute(drive, embedding)
 
         if isinstance(self.instance, transforms.zeroing.Instance):
             solution = transforms.zeroing.lift(solution, self.instance)

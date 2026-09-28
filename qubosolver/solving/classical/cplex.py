@@ -18,8 +18,6 @@ from typing import TYPE_CHECKING, Any
 
 from qubosolver import Instance, Solution, bitstrings, vector, vectori
 
-from .trivial_solution_search import _zero_length_solution
-
 if TYPE_CHECKING:
     import cplex as CPLEX
 
@@ -185,7 +183,7 @@ def solve(instance: Instance, *, time_limit: float = float("inf"), log_path: str
     """
     # If there are no variables, return an empty solution.
     if not instance:
-        return _zero_length_solution()
+        return Solution.zeros(0)
 
     # Open a log file, or a no-op context manager if none was requested.
     with open(log_path, "w") if log_path else contextlib.nullcontext() as log_file:
