@@ -305,11 +305,6 @@ def test_respects_total_bottom_detuning(caplog: pytest.LogCaptureFixture) -> Non
         postprocessing=False,
     )
 
-    # TODO: this now raises `ValueError: Cannot embed an empty instance
-    # (size=0): nothing to place` with default preprocessing (True) after
-    # removing the stale `dmm=True` kwarg from DriveShapingConfig above —
-    # needs investigation into whether preprocessing is zeroing out this
-    # instance, or whether the fix should be elsewhere.
     with caplog.at_level(logging.INFO):
         solution = Solver(instance, config).solve()
 
