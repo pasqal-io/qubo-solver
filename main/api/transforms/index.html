@@ -6701,10 +6701,7 @@ A deep copy is kept internally for later reconstruction.</p>
 
                   <details class="mkdocstrings-source">
                     <summary>Source code in <code>qubosolver/transforms/variable_fixing.py</code></summary>
-                    <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-85">85</a></span>
-<span class="normal"><a href="#__codelineno-0-86">86</a></span>
-<span class="normal"><a href="#__codelineno-0-87">87</a></span>
-<span class="normal"><a href="#__codelineno-0-88">88</a></span>
+                    <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-88">88</a></span>
 <span class="normal"><a href="#__codelineno-0-89">89</a></span>
 <span class="normal"><a href="#__codelineno-0-90">90</a></span>
 <span class="normal"><a href="#__codelineno-0-91">91</a></span>
@@ -6712,18 +6709,21 @@ A deep copy is kept internally for later reconstruction.</p>
 <span class="normal"><a href="#__codelineno-0-93">93</a></span>
 <span class="normal"><a href="#__codelineno-0-94">94</a></span>
 <span class="normal"><a href="#__codelineno-0-95">95</a></span>
-<span class="normal"><a href="#__codelineno-0-96">96</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="w">    </span><span class="sd">"""Initialize from a parent QUBO instance.</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">        parent_instance: The original (unreduced) QUBO instance.</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">            A deep copy is kept internally for later reconstruction.</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">    """</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a>        <span class="n">parent_instance</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a>    <span class="p">)</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_parent_instance</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">parent_instance</span><span class="p">)</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_fixed_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="normal"><a href="#__codelineno-0-96">96</a></span>
+<span class="normal"><a href="#__codelineno-0-97">97</a></span>
+<span class="normal"><a href="#__codelineno-0-98">98</a></span>
+<span class="normal"><a href="#__codelineno-0-99">99</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="w">    </span><span class="sd">"""Initialize from a parent QUBO instance.</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="sd">        parent_instance: The original (unreduced) QUBO instance.</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">            A deep copy is kept internally for later reconstruction.</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="sd">    """</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a>        <span class="n">parent_instance</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a>    <span class="p">)</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_parent_instance</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">parent_instance</span><span class="p">)</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_fixed_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 </code></pre></div></td></tr></table></div>
                   </details>
 
@@ -7629,10 +7629,7 @@ variable-fixing <a class="autorefs autorefs-internal" title="&lt;code class=&quo
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/transforms/variable_fixing.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-178">178</a></span>
-<span class="normal"><a href="#__codelineno-0-179">179</a></span>
-<span class="normal"><a href="#__codelineno-0-180">180</a></span>
-<span class="normal"><a href="#__codelineno-0-181">181</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-181">181</a></span>
 <span class="normal"><a href="#__codelineno-0-182">182</a></span>
 <span class="normal"><a href="#__codelineno-0-183">183</a></span>
 <span class="normal"><a href="#__codelineno-0-184">184</a></span>
@@ -7658,36 +7655,45 @@ variable-fixing <a class="autorefs autorefs-internal" title="&lt;code class=&quo
 <span class="normal"><a href="#__codelineno-0-204">204</a></span>
 <span class="normal"><a href="#__codelineno-0-205">205</a></span>
 <span class="normal"><a href="#__codelineno-0-206">206</a></span>
-<span class="normal"><a href="#__codelineno-0-207">207</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-178" name="__codelineno-0-178"></a><span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span>
-<a id="__codelineno-0-179" name="__codelineno-0-179"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">,</span>
-<a id="__codelineno-0-180" name="__codelineno-0-180"></a>    <span class="n">fixation_rules</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Rule</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">hansen_fixing</span><span class="p">,),</span>
-<a id="__codelineno-0-181" name="__codelineno-0-181"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-182" name="__codelineno-0-182"></a>    <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Instance</span><span class="p">:</span>
-<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="w">    </span><span class="sd">"""Apply each fixation rule once and reduce the QUBO matrix accordingly.</span>
-<a id="__codelineno-0-185" name="__codelineno-0-185"></a>
-<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">    Each rule in `fixation_rules` is called in order; variables it identifies</span>
-<a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="sd">    are immediately fixed and the matrix is reduced before the next rule runs.</span>
+<span class="normal"><a href="#__codelineno-0-207">207</a></span>
+<span class="normal"><a href="#__codelineno-0-208">208</a></span>
+<span class="normal"><a href="#__codelineno-0-209">209</a></span>
+<span class="normal"><a href="#__codelineno-0-210">210</a></span>
+<span class="normal"><a href="#__codelineno-0-211">211</a></span>
+<span class="normal"><a href="#__codelineno-0-212">212</a></span>
+<span class="normal"><a href="#__codelineno-0-213">213</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span>
+<a id="__codelineno-0-182" name="__codelineno-0-182"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">,</span>
+<a id="__codelineno-0-183" name="__codelineno-0-183"></a>    <span class="n">fixation_rules</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Rule</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">hansen_fixing</span><span class="p">,),</span>
+<a id="__codelineno-0-184" name="__codelineno-0-184"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-185" name="__codelineno-0-185"></a>    <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Instance</span><span class="p">:</span>
+<a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="w">    </span><span class="sd">"""Apply each fixation rule once and reduce the QUBO matrix accordingly.</span>
 <a id="__codelineno-0-188" name="__codelineno-0-188"></a>
-<a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-190" name="__codelineno-0-190"></a><span class="sd">        instance: The QUBO instance to reduce.</span>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="sd">        fixation_rules: Ordered sequence of [`Rule`][] callables.</span>
-<a id="__codelineno-0-192" name="__codelineno-0-192"></a><span class="sd">        inplace: If ``False`` (default), wraps `instance` in a new</span>
-<a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="sd">            variable-fixing [`Instance`][] before modifying it.</span>
-<a id="__codelineno-0-194" name="__codelineno-0-194"></a>
-<a id="__codelineno-0-195" name="__codelineno-0-195"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-196" name="__codelineno-0-196"></a><span class="sd">        The reduced instance with updated fixation history.</span>
-<a id="__codelineno-0-197" name="__codelineno-0-197"></a><span class="sd">    """</span>
-<a id="__codelineno-0-198" name="__codelineno-0-198"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">inplace</span><span class="p">:</span>
-<a id="__codelineno-0-199" name="__codelineno-0-199"></a>        <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
-<a id="__codelineno-0-200" name="__codelineno-0-200"></a>
-<a id="__codelineno-0-201" name="__codelineno-0-201"></a>    <span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">variable_fixing</span>
-<a id="__codelineno-0-202" name="__codelineno-0-202"></a>
-<a id="__codelineno-0-203" name="__codelineno-0-203"></a>    <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">fixation_rules</span><span class="p">:</span>
-<a id="__codelineno-0-204" name="__codelineno-0-204"></a>        <span class="n">fixed</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
-<a id="__codelineno-0-205" name="__codelineno-0-205"></a>        <span class="n">_reduce_qubo</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">fixed</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-0-206" name="__codelineno-0-206"></a>
-<a id="__codelineno-0-207" name="__codelineno-0-207"></a>    <span class="k">return</span> <span class="n">instance</span>
+<a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="sd">    Each rule in `fixation_rules` is called in order; variables it identifies</span>
+<a id="__codelineno-0-190" name="__codelineno-0-190"></a><span class="sd">    are immediately fixed and the matrix is reduced before the next rule runs.</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="sd">        instance: The QUBO instance to reduce.</span>
+<a id="__codelineno-0-194" name="__codelineno-0-194"></a><span class="sd">        fixation_rules: Ordered sequence of [`Rule`][] callables.</span>
+<a id="__codelineno-0-195" name="__codelineno-0-195"></a><span class="sd">        inplace: If ``False`` (default), wraps `instance` in a new</span>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a><span class="sd">            variable-fixing [`Instance`][] before modifying it.</span>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a><span class="sd">        The reduced instance with updated fixation history.</span>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a><span class="sd">    """</span>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">inplace</span><span class="p">:</span>
+<a id="__codelineno-0-202" name="__codelineno-0-202"></a>        <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a>    <span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">variable_fixing</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a>    <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">fixation_rules</span><span class="p">:</span>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a>        <span class="n">fixed</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+<a id="__codelineno-0-208" name="__codelineno-0-208"></a>        <span class="n">_reduce_qubo</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">fixed</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-209" name="__codelineno-0-209"></a>
+<a id="__codelineno-0-210" name="__codelineno-0-210"></a>    <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-0-211" name="__codelineno-0-211"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Variable fixing reduced the instance to zero variables."</span><span class="p">)</span>
+<a id="__codelineno-0-212" name="__codelineno-0-212"></a>
+<a id="__codelineno-0-213" name="__codelineno-0-213"></a>    <span class="k">return</span> <span class="n">instance</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -7770,13 +7776,7 @@ variable-fixing <a class="autorefs autorefs-internal" title="&lt;code class=&quo
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/transforms/variable_fixing.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-210">210</a></span>
-<span class="normal"><a href="#__codelineno-0-211">211</a></span>
-<span class="normal"><a href="#__codelineno-0-212">212</a></span>
-<span class="normal"><a href="#__codelineno-0-213">213</a></span>
-<span class="normal"><a href="#__codelineno-0-214">214</a></span>
-<span class="normal"><a href="#__codelineno-0-215">215</a></span>
-<span class="normal"><a href="#__codelineno-0-216">216</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-216">216</a></span>
 <span class="normal"><a href="#__codelineno-0-217">217</a></span>
 <span class="normal"><a href="#__codelineno-0-218">218</a></span>
 <span class="normal"><a href="#__codelineno-0-219">219</a></span>
@@ -7801,38 +7801,44 @@ variable-fixing <a class="autorefs autorefs-internal" title="&lt;code class=&quo
 <span class="normal"><a href="#__codelineno-0-238">238</a></span>
 <span class="normal"><a href="#__codelineno-0-239">239</a></span>
 <span class="normal"><a href="#__codelineno-0-240">240</a></span>
-<span class="normal"><a href="#__codelineno-0-241">241</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="k">def</span><span class="w"> </span><span class="nf">apply_recursively</span><span class="p">(</span>
-<a id="__codelineno-0-211" name="__codelineno-0-211"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">,</span>
-<a id="__codelineno-0-212" name="__codelineno-0-212"></a>    <span class="n">fixation_rules</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Rule</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">hansen_fixing</span><span class="p">,),</span>
-<a id="__codelineno-0-213" name="__codelineno-0-213"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-214" name="__codelineno-0-214"></a>    <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-0-215" name="__codelineno-0-215"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Instance</span><span class="p">:</span>
-<a id="__codelineno-0-216" name="__codelineno-0-216"></a><span class="w">    </span><span class="sd">"""Apply fixation rules repeatedly until no further variables can be fixed.</span>
-<a id="__codelineno-0-217" name="__codelineno-0-217"></a>
-<a id="__codelineno-0-218" name="__codelineno-0-218"></a><span class="sd">    Calls [`apply`][] in a loop; stops when a full pass over all rules</span>
-<a id="__codelineno-0-219" name="__codelineno-0-219"></a><span class="sd">    fixes no additional variables.</span>
-<a id="__codelineno-0-220" name="__codelineno-0-220"></a>
-<a id="__codelineno-0-221" name="__codelineno-0-221"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-222" name="__codelineno-0-222"></a><span class="sd">        instance: The QUBO instance to reduce.</span>
-<a id="__codelineno-0-223" name="__codelineno-0-223"></a><span class="sd">        fixation_rules: Ordered sequence of [`Rule`] callables.</span>
-<a id="__codelineno-0-224" name="__codelineno-0-224"></a><span class="sd">        inplace: If ``False`` (default), wraps `instance` in a new</span>
-<a id="__codelineno-0-225" name="__codelineno-0-225"></a><span class="sd">            variable-fixing [`Instance`][] before modifying it.</span>
+<span class="normal"><a href="#__codelineno-0-241">241</a></span>
+<span class="normal"><a href="#__codelineno-0-242">242</a></span>
+<span class="normal"><a href="#__codelineno-0-243">243</a></span>
+<span class="normal"><a href="#__codelineno-0-244">244</a></span>
+<span class="normal"><a href="#__codelineno-0-245">245</a></span>
+<span class="normal"><a href="#__codelineno-0-246">246</a></span>
+<span class="normal"><a href="#__codelineno-0-247">247</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-216" name="__codelineno-0-216"></a><span class="k">def</span><span class="w"> </span><span class="nf">apply_recursively</span><span class="p">(</span>
+<a id="__codelineno-0-217" name="__codelineno-0-217"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">,</span>
+<a id="__codelineno-0-218" name="__codelineno-0-218"></a>    <span class="n">fixation_rules</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Rule</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">hansen_fixing</span><span class="p">,),</span>
+<a id="__codelineno-0-219" name="__codelineno-0-219"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-220" name="__codelineno-0-220"></a>    <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-0-221" name="__codelineno-0-221"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Instance</span><span class="p">:</span>
+<a id="__codelineno-0-222" name="__codelineno-0-222"></a><span class="w">    </span><span class="sd">"""Apply fixation rules repeatedly until no further variables can be fixed.</span>
+<a id="__codelineno-0-223" name="__codelineno-0-223"></a>
+<a id="__codelineno-0-224" name="__codelineno-0-224"></a><span class="sd">    Calls [`apply`][] in a loop; stops when a full pass over all rules</span>
+<a id="__codelineno-0-225" name="__codelineno-0-225"></a><span class="sd">    fixes no additional variables.</span>
 <a id="__codelineno-0-226" name="__codelineno-0-226"></a>
-<a id="__codelineno-0-227" name="__codelineno-0-227"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-228" name="__codelineno-0-228"></a><span class="sd">        The fully reduced instance.</span>
-<a id="__codelineno-0-229" name="__codelineno-0-229"></a><span class="sd">    """</span>
-<a id="__codelineno-0-230" name="__codelineno-0-230"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">inplace</span><span class="p">:</span>
-<a id="__codelineno-0-231" name="__codelineno-0-231"></a>        <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+<a id="__codelineno-0-227" name="__codelineno-0-227"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-228" name="__codelineno-0-228"></a><span class="sd">        instance: The QUBO instance to reduce.</span>
+<a id="__codelineno-0-229" name="__codelineno-0-229"></a><span class="sd">        fixation_rules: Ordered sequence of [`Rule`] callables.</span>
+<a id="__codelineno-0-230" name="__codelineno-0-230"></a><span class="sd">        inplace: If ``False`` (default), wraps `instance` in a new</span>
+<a id="__codelineno-0-231" name="__codelineno-0-231"></a><span class="sd">            variable-fixing [`Instance`][] before modifying it.</span>
 <a id="__codelineno-0-232" name="__codelineno-0-232"></a>
-<a id="__codelineno-0-233" name="__codelineno-0-233"></a>    <span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">variable_fixing</span>
-<a id="__codelineno-0-234" name="__codelineno-0-234"></a>
-<a id="__codelineno-0-235" name="__codelineno-0-235"></a>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-<a id="__codelineno-0-236" name="__codelineno-0-236"></a>        <span class="n">prev_n_fixations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">_fixed_indices</span><span class="p">)</span>
-<a id="__codelineno-0-237" name="__codelineno-0-237"></a>        <span class="n">apply</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">fixation_rules</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-0-238" name="__codelineno-0-238"></a>        <span class="n">n_fixations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">_fixed_indices</span><span class="p">)</span>
-<a id="__codelineno-0-239" name="__codelineno-0-239"></a>        <span class="k">assert</span> <span class="n">n_fixations</span> <span class="o">&gt;=</span> <span class="n">prev_n_fixations</span>  <span class="c1"># nosec B101</span>
-<a id="__codelineno-0-240" name="__codelineno-0-240"></a>        <span class="k">if</span> <span class="n">n_fixations</span> <span class="o">==</span> <span class="n">prev_n_fixations</span><span class="p">:</span>
-<a id="__codelineno-0-241" name="__codelineno-0-241"></a>            <span class="k">return</span> <span class="n">instance</span>
+<a id="__codelineno-0-233" name="__codelineno-0-233"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-234" name="__codelineno-0-234"></a><span class="sd">        The fully reduced instance.</span>
+<a id="__codelineno-0-235" name="__codelineno-0-235"></a><span class="sd">    """</span>
+<a id="__codelineno-0-236" name="__codelineno-0-236"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">inplace</span><span class="p">:</span>
+<a id="__codelineno-0-237" name="__codelineno-0-237"></a>        <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+<a id="__codelineno-0-238" name="__codelineno-0-238"></a>
+<a id="__codelineno-0-239" name="__codelineno-0-239"></a>    <span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">variable_fixing</span>
+<a id="__codelineno-0-240" name="__codelineno-0-240"></a>
+<a id="__codelineno-0-241" name="__codelineno-0-241"></a>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+<a id="__codelineno-0-242" name="__codelineno-0-242"></a>        <span class="n">prev_n_fixations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">_fixed_indices</span><span class="p">)</span>
+<a id="__codelineno-0-243" name="__codelineno-0-243"></a>        <span class="n">apply</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">fixation_rules</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-244" name="__codelineno-0-244"></a>        <span class="n">n_fixations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">_fixed_indices</span><span class="p">)</span>
+<a id="__codelineno-0-245" name="__codelineno-0-245"></a>        <span class="k">assert</span> <span class="n">n_fixations</span> <span class="o">&gt;=</span> <span class="n">prev_n_fixations</span>  <span class="c1"># nosec B101</span>
+<a id="__codelineno-0-246" name="__codelineno-0-246"></a>        <span class="k">if</span> <span class="n">n_fixations</span> <span class="o">==</span> <span class="n">prev_n_fixations</span><span class="p">:</span>
+<a id="__codelineno-0-247" name="__codelineno-0-247"></a>            <span class="k">return</span> <span class="n">instance</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -7889,10 +7895,7 @@ Variables that cannot be fixed are omitted.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/transforms/variable_fixing.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-41">41</a></span>
-<span class="normal"><a href="#__codelineno-0-42">42</a></span>
-<span class="normal"><a href="#__codelineno-0-43">43</a></span>
-<span class="normal"><a href="#__codelineno-0-44">44</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-44">44</a></span>
 <span class="normal"><a href="#__codelineno-0-45">45</a></span>
 <span class="normal"><a href="#__codelineno-0-46">46</a></span>
 <span class="normal"><a href="#__codelineno-0-47">47</a></span>
@@ -7921,39 +7924,42 @@ Variables that cannot be fixed are omitted.</p>
 <span class="normal"><a href="#__codelineno-0-70">70</a></span>
 <span class="normal"><a href="#__codelineno-0-71">71</a></span>
 <span class="normal"><a href="#__codelineno-0-72">72</a></span>
-<span class="normal"><a href="#__codelineno-0-73">73</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="k">def</span><span class="w"> </span><span class="nf">hansen_fixing</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="w">    </span><span class="sd">"""Identify variables that can be fixed using Hansen's bounding criterion.</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="sd">    For each variable *i*, computes a lower bound</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">    ``c_i + 2 * sum(min(0, Q_ij))`` and an upper bound</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">    ``c_i + 2 * sum(max(0, Q_ij))`` from the diagonal and off-diagonal</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">    elements of the QUBO matrix.  A variable is fixed to 0 when its lower</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">    bound is non-negative (it cannot improve the objective by being 1) and</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">    to 1 when its upper bound is non-positive (it can only improve it).</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">        instance: The QUBO instance to analyze.</span>
+<span class="normal"><a href="#__codelineno-0-73">73</a></span>
+<span class="normal"><a href="#__codelineno-0-74">74</a></span>
+<span class="normal"><a href="#__codelineno-0-75">75</a></span>
+<span class="normal"><a href="#__codelineno-0-76">76</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="k">def</span><span class="w"> </span><span class="nf">hansen_fixing</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="w">    </span><span class="sd">"""Identify variables that can be fixed using Hansen's bounding criterion.</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">    For each variable *i*, computes a lower bound</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">    ``c_i + 2 * sum(min(0, Q_ij))`` and an upper bound</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">    ``c_i + 2 * sum(max(0, Q_ij))`` from the diagonal and off-diagonal</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="sd">    elements of the QUBO matrix.  A variable is fixed to 0 when its lower</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">    bound is non-negative (it cannot improve the objective by being 1) and</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">    to 1 when its upper bound is non-positive (it can only improve it).</span>
 <a id="__codelineno-0-53" name="__codelineno-0-53"></a>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">        Mapping of variable index to fixed value (``0`` or ``1``).</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">            Variables that cannot be fixed are omitted.</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">    """</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>    <span class="n">fixed_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a>    <span class="n">size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a>    <span class="n">epsilon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span>  <span class="c1"># Tolerance to avoid floating-point precision issues</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a>        <span class="n">ci</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>  <span class="c1"># Diagonal element</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">        instance: The QUBO instance to analyze.</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">        Mapping of variable index to fixed value (``0`` or ``1``).</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">            Variables that cannot be fixed are omitted.</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">    """</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="n">fixed_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>    <span class="n">size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a>    <span class="n">epsilon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span>  <span class="c1"># Tolerance to avoid floating-point precision issues</span>
 <a id="__codelineno-0-64" name="__codelineno-0-64"></a>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a>        <span class="n">q_minus</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="k">if</span> <span class="n">j</span> <span class="o">!=</span> <span class="n">i</span><span class="p">)</span>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a>        <span class="n">q_plus</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="k">if</span> <span class="n">j</span> <span class="o">!=</span> <span class="n">i</span><span class="p">)</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a>        <span class="n">ci</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>  <span class="c1"># Diagonal element</span>
 <a id="__codelineno-0-67" name="__codelineno-0-67"></a>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a>        <span class="k">if</span> <span class="n">ci</span> <span class="o">+</span> <span class="n">q_minus</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="n">epsilon</span><span class="p">:</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a>            <span class="n">fixed_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a>        <span class="k">elif</span> <span class="n">ci</span> <span class="o">+</span> <span class="n">q_plus</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">&lt;=</span> <span class="n">epsilon</span><span class="p">:</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a>            <span class="n">fixed_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a>    <span class="k">return</span> <span class="n">fixed_dict</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a>        <span class="n">q_minus</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="k">if</span> <span class="n">j</span> <span class="o">!=</span> <span class="n">i</span><span class="p">)</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a>        <span class="n">q_plus</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="k">if</span> <span class="n">j</span> <span class="o">!=</span> <span class="n">i</span><span class="p">)</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a>        <span class="k">if</span> <span class="n">ci</span> <span class="o">+</span> <span class="n">q_minus</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="n">epsilon</span><span class="p">:</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>            <span class="n">fixed_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a>        <span class="k">elif</span> <span class="n">ci</span> <span class="o">+</span> <span class="n">q_plus</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">&lt;=</span> <span class="n">epsilon</span><span class="p">:</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a>            <span class="n">fixed_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a>    <span class="k">return</span> <span class="n">fixed_dict</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8039,13 +8045,7 @@ Counts and probabilities are carried over from <code>reduced_solution</code>.</p
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/transforms/variable_fixing.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-244">244</a></span>
-<span class="normal"><a href="#__codelineno-0-245">245</a></span>
-<span class="normal"><a href="#__codelineno-0-246">246</a></span>
-<span class="normal"><a href="#__codelineno-0-247">247</a></span>
-<span class="normal"><a href="#__codelineno-0-248">248</a></span>
-<span class="normal"><a href="#__codelineno-0-249">249</a></span>
-<span class="normal"><a href="#__codelineno-0-250">250</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-250">250</a></span>
 <span class="normal"><a href="#__codelineno-0-251">251</a></span>
 <span class="normal"><a href="#__codelineno-0-252">252</a></span>
 <span class="normal"><a href="#__codelineno-0-253">253</a></span>
@@ -8087,55 +8087,61 @@ Counts and probabilities are carried over from <code>reduced_solution</code>.</p
 <span class="normal"><a href="#__codelineno-0-289">289</a></span>
 <span class="normal"><a href="#__codelineno-0-290">290</a></span>
 <span class="normal"><a href="#__codelineno-0-291">291</a></span>
-<span class="normal"><a href="#__codelineno-0-292">292</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-244" name="__codelineno-0-244"></a><span class="k">def</span><span class="w"> </span><span class="nf">lift</span><span class="p">(</span><span class="n">reduced_solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">,</span> <span class="n">reduced_instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
-<a id="__codelineno-0-245" name="__codelineno-0-245"></a><span class="w">    </span><span class="sd">"""Reconstruct the full solution by reinserting fixed variables.</span>
-<a id="__codelineno-0-246" name="__codelineno-0-246"></a>
-<a id="__codelineno-0-247" name="__codelineno-0-247"></a><span class="sd">    Reverses the fixation history stored in `reduced_instance`: fixed variables</span>
-<a id="__codelineno-0-248" name="__codelineno-0-248"></a><span class="sd">    are reinserted at their original positions in each bitstring, and costs</span>
-<a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="sd">    are recomputed against the original (unreduced) QUBO matrix.</span>
-<a id="__codelineno-0-250" name="__codelineno-0-250"></a>
-<a id="__codelineno-0-251" name="__codelineno-0-251"></a><span class="sd">    If no variables were fixed, returns a deep copy of `reduced_solution`</span>
-<a id="__codelineno-0-252" name="__codelineno-0-252"></a><span class="sd">    unchanged.</span>
-<a id="__codelineno-0-253" name="__codelineno-0-253"></a>
-<a id="__codelineno-0-254" name="__codelineno-0-254"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-255" name="__codelineno-0-255"></a><span class="sd">        reduced_solution: Solution obtained from solving the reduced QUBO.</span>
-<a id="__codelineno-0-256" name="__codelineno-0-256"></a><span class="sd">        reduced_instance: The reduced instance carrying the fixation</span>
-<a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="sd">            history and a reference to the original instance.</span>
-<a id="__codelineno-0-258" name="__codelineno-0-258"></a>
-<a id="__codelineno-0-259" name="__codelineno-0-259"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-260" name="__codelineno-0-260"></a><span class="sd">        A new solution with full-length</span>
-<a id="__codelineno-0-261" name="__codelineno-0-261"></a><span class="sd">            bitstrings and costs evaluated against the original QUBO matrix.</span>
-<a id="__codelineno-0-262" name="__codelineno-0-262"></a><span class="sd">            Counts and probabilities are carried over from `reduced_solution`.</span>
-<a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="sd">    """</span>
-<a id="__codelineno-0-264" name="__codelineno-0-264"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">reduced_solution</span><span class="p">:</span>
-<a id="__codelineno-0-265" name="__codelineno-0-265"></a>        <span class="k">return</span> <span class="n">Solution</span><span class="p">()</span>
-<a id="__codelineno-0-266" name="__codelineno-0-266"></a>
-<a id="__codelineno-0-267" name="__codelineno-0-267"></a>    <span class="n">bitstrings_list</span> <span class="o">=</span> <span class="n">reduced_solution</span><span class="o">.</span><span class="n">bitstrings</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-<a id="__codelineno-0-268" name="__codelineno-0-268"></a>
-<a id="__codelineno-0-269" name="__codelineno-0-269"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">reinsert_fixed_variables</span><span class="p">(</span><span class="n">bitstring</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<a id="__codelineno-0-270" name="__codelineno-0-270"></a>        <span class="k">for</span> <span class="n">fixation_dict</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">reduced_instance</span><span class="o">.</span><span class="n">_fixed_indices</span><span class="p">):</span>
-<a id="__codelineno-0-271" name="__codelineno-0-271"></a>            <span class="k">for</span> <span class="n">position</span><span class="p">,</span> <span class="n">bit_value</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">fixation_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
-<a id="__codelineno-0-272" name="__codelineno-0-272"></a>                <span class="n">bitstring</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">bit_value</span><span class="p">)</span>
-<a id="__codelineno-0-273" name="__codelineno-0-273"></a>        <span class="k">return</span> <span class="n">bitstring</span>
+<span class="normal"><a href="#__codelineno-0-292">292</a></span>
+<span class="normal"><a href="#__codelineno-0-293">293</a></span>
+<span class="normal"><a href="#__codelineno-0-294">294</a></span>
+<span class="normal"><a href="#__codelineno-0-295">295</a></span>
+<span class="normal"><a href="#__codelineno-0-296">296</a></span>
+<span class="normal"><a href="#__codelineno-0-297">297</a></span>
+<span class="normal"><a href="#__codelineno-0-298">298</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="k">def</span><span class="w"> </span><span class="nf">lift</span><span class="p">(</span><span class="n">reduced_solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">,</span> <span class="n">reduced_instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<a id="__codelineno-0-251" name="__codelineno-0-251"></a><span class="w">    </span><span class="sd">"""Reconstruct the full solution by reinserting fixed variables.</span>
+<a id="__codelineno-0-252" name="__codelineno-0-252"></a>
+<a id="__codelineno-0-253" name="__codelineno-0-253"></a><span class="sd">    Reverses the fixation history stored in `reduced_instance`: fixed variables</span>
+<a id="__codelineno-0-254" name="__codelineno-0-254"></a><span class="sd">    are reinserted at their original positions in each bitstring, and costs</span>
+<a id="__codelineno-0-255" name="__codelineno-0-255"></a><span class="sd">    are recomputed against the original (unreduced) QUBO matrix.</span>
+<a id="__codelineno-0-256" name="__codelineno-0-256"></a>
+<a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="sd">    If no variables were fixed, returns a deep copy of `reduced_solution`</span>
+<a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="sd">    unchanged.</span>
+<a id="__codelineno-0-259" name="__codelineno-0-259"></a>
+<a id="__codelineno-0-260" name="__codelineno-0-260"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-261" name="__codelineno-0-261"></a><span class="sd">        reduced_solution: Solution obtained from solving the reduced QUBO.</span>
+<a id="__codelineno-0-262" name="__codelineno-0-262"></a><span class="sd">        reduced_instance: The reduced instance carrying the fixation</span>
+<a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="sd">            history and a reference to the original instance.</span>
+<a id="__codelineno-0-264" name="__codelineno-0-264"></a>
+<a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-266" name="__codelineno-0-266"></a><span class="sd">        A new solution with full-length</span>
+<a id="__codelineno-0-267" name="__codelineno-0-267"></a><span class="sd">            bitstrings and costs evaluated against the original QUBO matrix.</span>
+<a id="__codelineno-0-268" name="__codelineno-0-268"></a><span class="sd">            Counts and probabilities are carried over from `reduced_solution`.</span>
+<a id="__codelineno-0-269" name="__codelineno-0-269"></a><span class="sd">    """</span>
+<a id="__codelineno-0-270" name="__codelineno-0-270"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">reduced_solution</span><span class="p">:</span>
+<a id="__codelineno-0-271" name="__codelineno-0-271"></a>        <span class="k">return</span> <span class="n">Solution</span><span class="p">()</span>
+<a id="__codelineno-0-272" name="__codelineno-0-272"></a>
+<a id="__codelineno-0-273" name="__codelineno-0-273"></a>    <span class="n">bitstrings_list</span> <span class="o">=</span> <span class="n">reduced_solution</span><span class="o">.</span><span class="n">bitstrings</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 <a id="__codelineno-0-274" name="__codelineno-0-274"></a>
-<a id="__codelineno-0-275" name="__codelineno-0-275"></a>    <span class="n">bits_to_reinsert</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fixation_dict</span><span class="p">)</span> <span class="k">for</span> <span class="n">fixation_dict</span> <span class="ow">in</span> <span class="n">reduced_instance</span><span class="o">.</span><span class="n">_fixed_indices</span><span class="p">)</span>
-<a id="__codelineno-0-276" name="__codelineno-0-276"></a>    <span class="k">assert</span> <span class="p">(</span><span class="n">bits_to_reinsert</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">bitstrings_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">==</span> <span class="n">reduced_instance</span><span class="o">.</span><span class="n">_parent_instance</span><span class="o">.</span><span class="n">size</span>  <span class="c1"># nosec B101</span>
-<a id="__codelineno-0-277" name="__codelineno-0-277"></a>
-<a id="__codelineno-0-278" name="__codelineno-0-278"></a>    <span class="k">if</span> <span class="n">bits_to_reinsert</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<a id="__codelineno-0-279" name="__codelineno-0-279"></a>        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">reduced_solution</span><span class="p">)</span>
+<a id="__codelineno-0-275" name="__codelineno-0-275"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">reinsert_fixed_variables</span><span class="p">(</span><span class="n">bitstring</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<a id="__codelineno-0-276" name="__codelineno-0-276"></a>        <span class="k">for</span> <span class="n">fixation_dict</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">reduced_instance</span><span class="o">.</span><span class="n">_fixed_indices</span><span class="p">):</span>
+<a id="__codelineno-0-277" name="__codelineno-0-277"></a>            <span class="k">for</span> <span class="n">position</span><span class="p">,</span> <span class="n">bit_value</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">fixation_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+<a id="__codelineno-0-278" name="__codelineno-0-278"></a>                <span class="n">bitstring</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">bit_value</span><span class="p">)</span>
+<a id="__codelineno-0-279" name="__codelineno-0-279"></a>        <span class="k">return</span> <span class="n">bitstring</span>
 <a id="__codelineno-0-280" name="__codelineno-0-280"></a>
-<a id="__codelineno-0-281" name="__codelineno-0-281"></a>    <span class="n">solution</span> <span class="o">=</span> <span class="n">Solution</span><span class="p">()</span>
-<a id="__codelineno-0-282" name="__codelineno-0-282"></a>
-<a id="__codelineno-0-283" name="__codelineno-0-283"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">bitstrings</span> <span class="o">=</span> <span class="n">bitstrings</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-<a id="__codelineno-0-284" name="__codelineno-0-284"></a>        <span class="p">[</span><span class="n">reinsert_fixed_variables</span><span class="p">(</span><span class="n">bitstring</span><span class="p">)</span> <span class="k">for</span> <span class="n">bitstring</span> <span class="ow">in</span> <span class="n">bitstrings_list</span><span class="p">]</span>
-<a id="__codelineno-0-285" name="__codelineno-0-285"></a>    <span class="p">)</span>
-<a id="__codelineno-0-286" name="__codelineno-0-286"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">costs</span> <span class="o">=</span> <span class="n">vector</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-<a id="__codelineno-0-287" name="__codelineno-0-287"></a>        <span class="p">[</span><span class="n">reduced_instance</span><span class="o">.</span><span class="n">_parent_instance</span><span class="o">.</span><span class="n">cost</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">bitstrings</span><span class="p">]</span>
-<a id="__codelineno-0-288" name="__codelineno-0-288"></a>    <span class="p">)</span>
-<a id="__codelineno-0-289" name="__codelineno-0-289"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">counts</span> <span class="o">=</span> <span class="n">reduced_solution</span><span class="o">.</span><span class="n">counts</span>
-<a id="__codelineno-0-290" name="__codelineno-0-290"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">probabilities</span> <span class="o">=</span> <span class="n">reduced_solution</span><span class="o">.</span><span class="n">probabilities</span>
-<a id="__codelineno-0-291" name="__codelineno-0-291"></a>
-<a id="__codelineno-0-292" name="__codelineno-0-292"></a>    <span class="k">return</span> <span class="n">solution</span>
+<a id="__codelineno-0-281" name="__codelineno-0-281"></a>    <span class="n">bits_to_reinsert</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fixation_dict</span><span class="p">)</span> <span class="k">for</span> <span class="n">fixation_dict</span> <span class="ow">in</span> <span class="n">reduced_instance</span><span class="o">.</span><span class="n">_fixed_indices</span><span class="p">)</span>
+<a id="__codelineno-0-282" name="__codelineno-0-282"></a>    <span class="k">assert</span> <span class="p">(</span><span class="n">bits_to_reinsert</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">bitstrings_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">==</span> <span class="n">reduced_instance</span><span class="o">.</span><span class="n">_parent_instance</span><span class="o">.</span><span class="n">size</span>  <span class="c1"># nosec B101</span>
+<a id="__codelineno-0-283" name="__codelineno-0-283"></a>
+<a id="__codelineno-0-284" name="__codelineno-0-284"></a>    <span class="k">if</span> <span class="n">bits_to_reinsert</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-0-285" name="__codelineno-0-285"></a>        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">reduced_solution</span><span class="p">)</span>
+<a id="__codelineno-0-286" name="__codelineno-0-286"></a>
+<a id="__codelineno-0-287" name="__codelineno-0-287"></a>    <span class="n">solution</span> <span class="o">=</span> <span class="n">Solution</span><span class="p">()</span>
+<a id="__codelineno-0-288" name="__codelineno-0-288"></a>
+<a id="__codelineno-0-289" name="__codelineno-0-289"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">bitstrings</span> <span class="o">=</span> <span class="n">bitstrings</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+<a id="__codelineno-0-290" name="__codelineno-0-290"></a>        <span class="p">[</span><span class="n">reinsert_fixed_variables</span><span class="p">(</span><span class="n">bitstring</span><span class="p">)</span> <span class="k">for</span> <span class="n">bitstring</span> <span class="ow">in</span> <span class="n">bitstrings_list</span><span class="p">]</span>
+<a id="__codelineno-0-291" name="__codelineno-0-291"></a>    <span class="p">)</span>
+<a id="__codelineno-0-292" name="__codelineno-0-292"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">costs</span> <span class="o">=</span> <span class="n">vector</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+<a id="__codelineno-0-293" name="__codelineno-0-293"></a>        <span class="p">[</span><span class="n">reduced_instance</span><span class="o">.</span><span class="n">_parent_instance</span><span class="o">.</span><span class="n">cost</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">bitstrings</span><span class="p">]</span>
+<a id="__codelineno-0-294" name="__codelineno-0-294"></a>    <span class="p">)</span>
+<a id="__codelineno-0-295" name="__codelineno-0-295"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">counts</span> <span class="o">=</span> <span class="n">reduced_solution</span><span class="o">.</span><span class="n">counts</span>
+<a id="__codelineno-0-296" name="__codelineno-0-296"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">probabilities</span> <span class="o">=</span> <span class="n">reduced_solution</span><span class="o">.</span><span class="n">probabilities</span>
+<a id="__codelineno-0-297" name="__codelineno-0-297"></a>
+<a id="__codelineno-0-298" name="__codelineno-0-298"></a>    <span class="k">return</span> <span class="n">solution</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
