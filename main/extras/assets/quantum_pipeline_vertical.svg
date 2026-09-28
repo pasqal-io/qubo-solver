@@ -1,0 +1,41 @@
+<svg viewBox="0 0 470 535" xmlns="http://www.w3.org/2000/svg" style="max-width: 400px; width: 100%; font-family: var(--md-text-font, sans-serif);">
+  <defs>
+    <marker id="arrow2v" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5f6368"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="#5f6368" stroke-width="2.5">
+    <path d="M160,90 L100,155" marker-end="url(#arrow2v)"/>
+    <path d="M240,90 L300,155" marker-end="url(#arrow2v)"/>
+    <path d="M100,205 L160,270" marker-end="url(#arrow2v)"/>
+    <path d="M300,205 L240,270" marker-end="url(#arrow2v)"/>
+  </g>
+  <path d="M285,295 L330,295" fill="none" stroke="#5f6368" stroke-width="2.5" marker-end="url(#arrow2v)"/>
+  <path d="M330,375 L285,375" fill="none" stroke="#5f6368" stroke-width="2.5" marker-end="url(#arrow2v)"/>
+  <path d="M200,400 L200,465" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-dasharray="6,5" marker-end="url(#arrow2v)"/>
+  <path d="M403,399 L403,433 L200,433" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-dasharray="6,5"/>
+  <g font-size="15" fill="#5f6368">
+    <text x="70" y="130" text-anchor="middle">embedding</text>
+    <text x="340" y="130" text-anchor="middle">drive-shaping</text>
+    <text x="200" y="245" text-anchor="middle">compile</text>
+    <text x="307" y="340" text-anchor="middle">run</text>
+    <text x="330" y="426" text-anchor="middle">async fetch</text>
+  </g>
+  <g font-size="17" text-anchor="middle">
+    <rect x="135" y="40" width="130" height="50" rx="8" fill="#e8f0fe" stroke="#4285f4" stroke-width="1.5"/>
+    <text x="200" y="71" fill="#1a1a1a">Instance</text>
+    <rect x="15" y="155" width="135" height="50" rx="8" fill="#f3e8fd" stroke="#8e44ec" stroke-width="1.5"/>
+    <text x="82" y="186" fill="#1a1a1a">Register</text>
+    <rect x="250" y="155" width="135" height="50" rx="8" fill="#f3e8fd" stroke="#8e44ec" stroke-width="1.5"/>
+    <text x="317" y="186" fill="#1a1a1a">Drive</text>
+    <rect x="115" y="270" width="170" height="50" rx="8" fill="#f3e8fd" stroke="#8e44ec" stroke-width="1.5"/>
+    <text x="200" y="301" fill="#1a1a1a">QuantumProgram</text>
+    <rect x="330" y="271" width="120" height="128" rx="8" fill="#e8f0fe" stroke="#4285f4" stroke-width="1.5"/>
+    <text x="390" y="329" fill="#1a1a1a" font-size="15">Backend</text>
+    <text x="390" y="349" fill="#1a1a1a" font-size="12">(QPU or Emulator)</text>
+    <rect x="115" y="350" width="170" height="50" rx="8" fill="#f3e8fd" stroke="#8e44ec" stroke-width="1.5"/>
+    <text x="200" y="381" fill="#1a1a1a">Job</text>
+    <rect x="115" y="465" width="170" height="50" rx="8" fill="#fce8e6" stroke="#ea4335" stroke-width="1.5"/>
+    <text x="200" y="496" fill="#1a1a1a">Solution</text>
+  </g>
+</svg>

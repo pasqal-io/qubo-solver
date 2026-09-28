@@ -1,0 +1,133 @@
+site_name: Qubo Solver
+repo_url: "https://pasqal-io.github.io/qubo-solver/latest/"
+repo_name: "Qubo Solver"
+
+nav:
+  - Home: index.md
+
+  - Contents:
+    - Overview:
+      - QUBO instances and datasets: content/qubo_instance.md
+      - Solving QUBOs with QUBOSolver: content/solver.md
+      - Configuration of a Solver: content/config.md
+      - Using quantum backends: content/backend.md
+      - Analyzing QUBO solutions: content/qubo_analyzer.md
+      - Utilities: content/utilities.md
+    - Quantum solver components:
+      - Pulse Shaping:
+        - Adiabatic Pulse: content/pulseshaping/adiabatic.md
+        - Optimized Pulse: content/pulseshaping/optimized.md
+        - Custom: content/pulseshaping/custom.md
+      - Embedding: content/embedding.md
+    - Classical solvers:
+      - CPLEX Solver: content/classical/cplex_solver/cplex_solving.md
+      - Heuristics:
+        - Tabu Search: content/classical/heuristics/tabu.md
+        - Simulated Annealing: content/classical/heuristics/simulatedannealing.md
+    - Pre and Post Processing:
+      - Post-processing: content/classical/post-and-pre_processing/postprocessing.md
+      - Pre-processing: content/classical/post-and-pre_processing/preprocessing.md
+
+  - Tutorials:
+    - Dataset generation and loading: tutorial/01-dataset-generation-and-loading.ipynb
+    - Pre-processing: tutorial/02-preprocessing.ipynb
+    - Post-processing: tutorial/03-postprocessing.ipynb
+    - Qubo embedding: tutorial/04-qubo-embedding.ipynb
+    - Pulse shaping methods: tutorial/05-pulse-shaping-methods.ipynb
+    - Classical Heuristics: tutorial/06-classical-heuristics.ipynb
+    - CPLEX: tutorial/07-classical-cplex.ipynb
+    - Qubo Analyzer: tutorial/08-qubo_analyzer.ipynb
+
+  - API:
+    - QUBOInstance: api/qubo_instance.md
+    - Solvers: api/solver.md
+    - Configs: api/config.md
+    - Data: api/data.md
+    - Quantum: api/quantum.md
+
+  - Open-source:
+    - Licence (MIT-Derived): LICENSE.md
+    - Contributor Agreement: CONTRIBUTOR AGREEMENT.md
+
+  - Contributing:
+    - First contact: contributing/first contact.md
+    - How to contribute: contributing/how to contribute.md
+    - Contributor Agreement: CONTRIBUTOR AGREEMENT.md
+    - Release process: contributing/releasing.md
+
+
+theme:
+  name: material
+  features:
+  - content.code.annotate
+  - content.action.view
+  - content.action.edit
+  - navigation.tabs
+  - navigation.indexes
+  - navigation.sections
+  - content.code.copy
+
+  palette:
+  - media: "(prefers-color-scheme: light)"
+    scheme: default
+    primary: light green
+    accent: purple
+    toggle:
+      icon: material/weather-sunny
+      name: Switch to dark mode
+  - media: "(prefers-color-scheme: dark)"
+    scheme: slate
+    primary: black
+    accent: light green
+    toggle:
+      icon: material/weather-night
+      name: Switch to light mode
+
+markdown_extensions:
+- admonition  # for notes
+- footnotes
+- pymdownx.arithmatex: # for mathjax
+    generic: true
+- pymdownx.highlight:
+    anchor_linenums: true
+- pymdownx.inlinehilite
+- pymdownx.snippets
+- pymdownx.superfences
+
+plugins:
+- search
+- section-index
+- markdown-exec
+- mkdocstrings:
+    default_handler: python
+    handlers:
+      python:
+        selection:
+          filters:
+            - "!^_"  # exlude all members starting with _
+            - "^__init__$"  # but always include __init__ modules and methods
+        options:
+          show_root_toc_entry: false
+          heading_level: 3
+          merge_init_into_class: true
+          docstring_section_style: spacy
+- mkdocs-jupyter:
+    theme: light
+
+
+watch:
+  - qubosolver
+
+extra:
+ version:
+   provider: mike
+
+# To get nice tabs
+extra_css:
+- css/mkdocstrings.css
+
+# For mathjax
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

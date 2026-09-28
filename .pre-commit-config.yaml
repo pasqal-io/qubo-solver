@@ -1,0 +1,34 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+-   repo: https://github.com/ambv/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+
+-   repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: "v0.5.6"
+    hooks:
+      - id: ruff
+        args: [--fix]
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.1
+    hooks:
+      - id: mypy
+        exclude: examples|docs
+
+# Cleanup jupyter notebooks
+-   repo: https://github.com/srstevenson/nb-clean
+    rev: 4.0.1
+    hooks:
+      - id: nb-clean
+        args:
+          - --remove-empty-cells
+          - --preserve-cell-outputs
