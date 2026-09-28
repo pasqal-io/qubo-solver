@@ -36,10 +36,9 @@ def test_default_classical_config() -> None:
 
 def test_drive_shaping_config() -> None:
     default_drive_shaping_config = DriveShapingConfig()
-    check.equal(default_drive_shaping_config.algorithm, "proportional_diagonal")
+    check.equal(default_drive_shaping_config.algorithm, "local_energy_scale")
 
-    check.equal(len(default_drive_shaping_config.bayesian_search_initial_detuning_parameters), 3)
-    check.equal(len(default_drive_shaping_config.bayesian_search_initial_omega_parameters), 3)
+    check.equal(default_drive_shaping_config.bayesian_search_n_calls, 20)
 
     with pytest.raises(ValueError):
         DriveShapingConfig(algorithm="dummy")  # type: ignore[arg-type]
@@ -58,7 +57,7 @@ def test_embdedding_config() -> None:
     default_embedding_config = EmbeddingConfig()
     check.equal(default_embedding_config.algorithm, "blade")
     check.equal(default_embedding_config.greedy_layout_lattice, "triangular")
-    check.is_true(default_embedding_config.greedy_layout_traps)
+    check.equal(default_embedding_config.blade_steps_per_round, 200)
 
     with pytest.raises(ValueError):
         EmbeddingConfig(algorithm="dummy")  # type: ignore[arg-type]
@@ -92,7 +91,7 @@ def test_solving_mode_non_default_config() -> None:
 
     quantum_solver_config = SolverConfig(
         solving=QuantumSolvingConfig(
-            embedding=EmbeddingConfig(algorithm="blade", blade_dimensions=[2]),
+            embedding=EmbeddingConfig(algorithm="blade", blade_steps_per_round=100),
         ),
     )
     check.equal(quantum_solver_config.solving_mode, "quantum")
@@ -127,17 +126,11 @@ def test_qutip_config_backend() -> None:
 
 
 def test_blade_config() -> None:
-    embed_method = EmbeddingConfig(algorithm="blade", blade_dimensions=[2])
+    embed_method = EmbeddingConfig(algorithm="blade", blade_steps_per_round=100)
     blade_config = QuantumSolvingConfig(embedding=embed_method)
     check.equal(blade_config.embedding.algorithm, "blade")
     check.equal(type(blade_config.device), AnalogDeviceWithDMM)
-    check.equal(blade_config.embedding.blade_dimensions, [2])
-
-
-def test_blade_clear_dimensions_config() -> None:
-    embed_method = EmbeddingConfig(blade_dimensions=[6, 5, 4, 3, 2])
-    blade_clear_dimensions_config = QuantumSolvingConfig(embedding=embed_method)
-    check.equal(blade_clear_dimensions_config.embedding.blade_dimensions, [6, 5, 4, 3, 2])
+    check.equal(blade_config.embedding.blade_steps_per_round, 100)
 
 
 def test_greedy_embedding_config() -> None:
@@ -145,7 +138,6 @@ def test_greedy_embedding_config() -> None:
     embedding_config = EmbeddingConfig(
         algorithm="greedy_layout",
         greedy_layout_lattice="square",
-        greedy_layout_traps=10,
     )
     config = QuantumSolvingConfig(
         embedding=embedding_config,
@@ -153,10 +145,9 @@ def test_greedy_embedding_config() -> None:
     check.equal(config.embedding.algorithm, "greedy_layout")
     check.is_instance(config.device, AnalogDeviceWithDMM)
     check.equal(config.embedding.greedy_layout_lattice, "square")
-    check.equal(config.embedding.greedy_layout_traps, 10)
 
 
 def test_initialization_device() -> None:
 
     solver = QuantumSolvingConfig()
-    check.equal(solver.embedding.greedy_layout_traps, "device")
+    check.equal(solver.embedding.algorithm, "blade")

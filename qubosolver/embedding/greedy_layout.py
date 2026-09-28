@@ -89,23 +89,16 @@ class Config:
         """Create a [`Config`][] from a user-facing [`EmbeddingConfig`][].
 
         Maps the ``greedy_*`` fields of *config* onto the corresponding
-        `Config` attributes. Wherever *config* uses the ``"device"`` sentinel
-        (for ``greedy_layout_traps`` or ``max_min_dist_ratio``), the value is
-        instead derived from *device* via `Config.from_device`.
+        `Config` attributes.
 
         Args:
             config: The embedding configuration to convert.
-            device: Target quantum device, used to resolve any ``"device"``
-                sentinel in *config*.
+            device: Target quantum device.
 
         Returns:
             A configuration fully populated from the ``greedy_*`` embedding settings of *config*.
         """
         cfg = Config.from_device(device)
-
-        if config.greedy_layout_traps != "device":
-            cfg.traps = config.greedy_layout_traps
-        cfg.max_possible_term = config.greedy_layout_max_possible_term
 
         match config.greedy_layout_lattice:
             case "triangular":
@@ -117,9 +110,6 @@ class Config:
                     f"Unknown lattice type: {config.greedy_layout_lattice!r}. "
                     f"Expected 'triangular' or 'square'."
                 )
-
-        if config.max_min_dist_ratio != "device":
-            cfg.max_min_dist_ratio = config.max_min_dist_ratio
 
         return cfg
 

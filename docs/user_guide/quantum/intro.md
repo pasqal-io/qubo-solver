@@ -75,9 +75,9 @@ manual_seed(147)
 instance = Instance(
     matrix.tensor(
         [
-            [-2.0, 1.0, 1.0],
-            [1.0, -4.0, 1.0],
-            [1.0, 1.0, -1.0],
+            [-0.2, 0.0, 1.0],
+            [0.0, -1.0, 1.5],
+            [1.0, 1.5, -0.1],
         ]
     )
 )
@@ -86,7 +86,7 @@ device = qoolqit.AnalogDeviceWithDMM()
 backend = LocalEmulator()
 
 # 1. Embedding: map the instance onto a register of atoms.
-register = embedding.blade.embed(instance)
+register = embedding.blade.embed_for_device(instance, device)
 
 # 2. Drive shaping: build the drive Hamiltonian for that register.
 drive = drive_shaping.proportional_diagonal.build_drive(instance, register, device=device, dmm=True)
@@ -149,9 +149,9 @@ manual_seed(147)
 instance = Instance(
     matrix.tensor(
         [
-            [-2.0, 1.0, 1.0],
-            [1.0, -4.0, 1.0],
-            [1.0, 1.0, -1.0],
+            [-0.2, 0.0, 1.0],
+            [0.0, -1.0, 1.5],
+            [1.0, 1.5, -0.1],
         ]
     )
 )

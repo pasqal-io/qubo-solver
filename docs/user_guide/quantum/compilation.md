@@ -29,7 +29,7 @@ instance = Instance(
 )
 device = qoolqit.AnalogDeviceWithDMM()
 
-register = embedding.blade.embed(instance)
+register = embedding.blade.embed_for_device(instance, device)
 drive = drive_shaping.proportional_diagonal.build_drive(instance, register, device=device, dmm=True)
 
 program = solving.analog_quantum_sampling.compile(register, drive, device)

@@ -180,3 +180,7 @@ def detuning_amplitude_ratio(device: qoolqit.Device) -> float:
     max_amplitude: float = specs["max_amplitude"] or 1e4
     max_detuning: float = specs["max_abs_detuning"] or 1e4
     return max_detuning / max_amplitude
+
+
+def support_dmm(device: qoolqit.Device) -> bool:
+    return pulser_specs(device)["dmm_bottom_detuning"] is not None

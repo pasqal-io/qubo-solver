@@ -6,6 +6,7 @@ import qoolqit
 import torch
 
 from qubosolver import drive_shaping, solving
+from qubosolver.drive_shaping._device_specs import support_dmm
 from qubosolver.types import Instance, Solution, protocols
 
 from .config import QuantumSolvingConfig
@@ -40,11 +41,6 @@ class _BaseDriveShaper(ABC):
         self.config: QuantumSolvingConfig = config
         self.backend = backend
         self.device = self.config.device
-
-        # check if device allow DMM
-        self.dmm = self.config.drive_shaping.dmm and (
-            len(list(self.config.device._device.dmm_channels.keys())) > 0
-        )
 
     @property
     def qubo_coefficients(self) -> torch.Tensor:
@@ -105,7 +101,7 @@ class ProportionalDiagonalDriveShaper(_BaseDriveShaper):
             and an empty QUBO solution (no optimization is performed).
         """
         device = self.config.device
-        dmm = self.config.drive_shaping.dmm
+        dmm = support_dmm(device)
         # Proportional-diagonal coefficient for omega
         kappa = self.config.drive_shaping.proportional_diagonal_kappa
         return (
@@ -145,7 +141,7 @@ class LocalEnergyScaleDriveShaper(_BaseDriveShaper):
             pulse-parameter optimization is performed.
         """
         device = self.config.device
-        dmm = self.config.drive_shaping.dmm
+        dmm = support_dmm(device)
         kappa = self.config.drive_shaping.local_energy_scale_kappa
 
         return (
@@ -207,7 +203,7 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
             register,
             backend=self.backend,
             device=self.device,
-            dmm=self.dmm,
+            dmm=support_dmm(self.device),
             config=config,
         )
 

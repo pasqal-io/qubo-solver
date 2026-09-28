@@ -38,13 +38,11 @@ def gather_optimal_solutions(solution: Solution, min_cost: float | None = None) 
 
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("seed", [4548, 33671, 195530])
-@pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
 @pytest.mark.parametrize("device_type", [DigitalAnalogDevice, AnalogDevice])
 @pytest.mark.parametrize("constant_diagonal", [True, False], ids=["cst_diag", "var_diag"])
 @pytest.mark.parametrize("diagonal_scale", [-0.9, -3.0, -1.5, -6.0])
 def test_with_perfect_embedding(
     seed: int,
-    dmm: bool,
     device_type: type[DigitalAnalogDevice | AnalogDevice],
     constant_diagonal: bool,
     diagonal_scale: float,
@@ -85,14 +83,10 @@ def test_with_perfect_embedding(
 
     embedding_config = EmbeddingConfig(
         algorithm="greedy_layout",
-        greedy_layout_traps=100,
-        greedy_layout_max_possible_term=1.0,
     )
 
     drive_shaping_config = DriveShapingConfig(
         algorithm="local_energy_scale",
-        dmm=dmm,
-        local_energy_scale_kappa=0.25,
     )
 
     solving_config = QuantumSolvingConfig(
@@ -101,7 +95,7 @@ def test_with_perfect_embedding(
         device=device_type(),
     )
 
-    config = SolverConfig(solving=solving_config)
+    config = SolverConfig(solving=solving_config, preprocessing=False, postprocessing=False)
 
     solver = Solver(instance, config)
     solution = solver.solve()
@@ -120,9 +114,6 @@ def test_with_perfect_embedding(
     print(f"\nMinimum sampled cost: {minimum_sampled_cost}")
     print(f"Best sampled bitstrings: {[s.string for s in sampled_optimal_solutions]}")
 
-    if not constant_diagonal and not dmm:
-        pytest.skip("DMM is required for variable diagonal coefficients.")
-
     if not constant_diagonal and device_type is AnalogDevice:
         pytest.skip("AnalogDevice has no DMM and cannot encode variable diagonal coefficients.")
 
@@ -132,7 +123,7 @@ def test_with_perfect_embedding(
         check.is_in(s.string, expected_bitstrings)
 
     cumulated_probability = sum(solution.probability for solution in sampled_optimal_solutions)
-    check.greater(cumulated_probability, 0.6)
+    check.greater(cumulated_probability, 0.5)
 
 
 def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:

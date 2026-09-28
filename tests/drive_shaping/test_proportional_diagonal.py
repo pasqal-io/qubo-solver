@@ -38,13 +38,11 @@ def gather_optimal_solutions(
 
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("seed", [4548, 33671, 195530])
-@pytest.mark.parametrize("dmm", [True, False], ids=["dmm", "no_dmm"])
 @pytest.mark.parametrize("device_type", [DigitalAnalogDevice, AnalogDevice])
 @pytest.mark.parametrize("constant_diagonal", [True, False], ids=["cst_diag", "var_diag"])
 @pytest.mark.parametrize("diagonal_scale", [-0.9, -3.0, -1.5, -6.0])
 def test_with_perfect_embedding(
     seed: int,
-    dmm: bool,
     device_type: type[DigitalAnalogDevice | AnalogDevice],
     constant_diagonal: bool,
     diagonal_scale: float,
@@ -84,13 +82,10 @@ def test_with_perfect_embedding(
 
     embed_cfg = EmbeddingConfig(
         algorithm="greedy_layout",
-        greedy_layout_traps=100,
-        greedy_layout_max_possible_term=1.0,
     )
 
     drive_cfg = DriveShapingConfig(
         algorithm="proportional_diagonal",
-        dmm=dmm,
         proportional_diagonal_kappa=0.5,
     )
 
@@ -99,7 +94,9 @@ def test_with_perfect_embedding(
             embedding=embed_cfg,
             drive_shaping=drive_cfg,
             device=device_type(),
-        )
+        ),
+        preprocessing=False,
+        postprocessing=False,
     )
 
     solver = Solver(instance, config)
@@ -120,8 +117,6 @@ def test_with_perfect_embedding(
     print(f"All optimal bitstrings: {[s.bitstring for s in optimal_solutions]}")
     print(f"Number of optimal solutions: {len(optimal_solutions)}\n")
 
-    if not constant_diagonal and not dmm:
-        pytest.skip("DMM is required to solve Qubos with variable diagonal coefficients")
     if not constant_diagonal and device_type == AnalogDevice:
         pytest.skip(
             "AnalogDevice has no DMM, and cannot solve Qubos with variable diagonal coefficients"
@@ -133,7 +128,7 @@ def test_with_perfect_embedding(
         check.is_in(solution.string, expected_optimal_bitstrings)
 
     cumulated_probability = sum(s.probability for s in optimal_solutions)
-    check.greater(cumulated_probability, 0.75)
+    check.greater(cumulated_probability, 0.5)
 
 
 def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:

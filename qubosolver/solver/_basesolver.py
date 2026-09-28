@@ -102,7 +102,7 @@ class BaseSolver(ABC):
             embedding,
             drive,
             self.config.quantum.device,
-            default_sequence_duration=self.config.quantum.drive_shaping.default_sequence_duration,
+            default_sequence_duration=6000,
         )
         return self.config.quantum.backend.run(program)
 
@@ -139,7 +139,7 @@ class BaseSolver(ABC):
                 embedding,
                 drive,
                 quantum_config.device,
-                default_sequence_duration=quantum_config.drive_shaping.default_sequence_duration,
+                default_sequence_duration=6000,
             )
             program.draw(compiled=True)
 
@@ -246,5 +246,5 @@ class BaseSolver(ABC):
             starts=solution,
             strategy="greedy_sweep",
             max_iterations=1,
-            time_limit=self.config.postprocessing_time_limit,
+            time_limit=600.0,
         )

@@ -210,7 +210,6 @@ Q_hard = Instance(
 config = SolverConfig(
     solving=QuantumSolvingConfig(),
     preprocessing=True,
-    activate_trivial_solutions=False,
 )
 
 # Bit-flip preprocessing cannot remove every negative off-diagonal coefficient here;

@@ -141,7 +141,6 @@ def test_quantum_solve(
     elif embedding_method == "greedy_layout":
         embedding_config = EmbeddingConfig(
             algorithm="greedy_layout",
-            greedy_layout_traps=100,
         )
     else:
         raise ValueError(f"Invalid embedding method: {embedding_method}")
@@ -150,14 +149,11 @@ def test_quantum_solve(
         drive_shaping_config = DriveShapingConfig(
             algorithm="bayesian_search",
             bayesian_search_n_calls=11,
-            bayesian_search_seed=seed,
-            dmm=False,
         )
     elif drive_shaping_method == "proportional_diagonal":
         drive_shaping_config = DriveShapingConfig(
             algorithm="proportional_diagonal",
             proportional_diagonal_kappa=0.25,
-            dmm=False,
         )
     else:
         raise ValueError(f"Invalid drive shaping method: {drive_shaping_method}")
@@ -217,7 +213,6 @@ def test_classical_solve(
     classical_config = ClassicalSolvingConfig(
         algorithm=classical_solvers[solving_method],
         max_bitstrings=1,
-        sa_seed=seed,
     )
 
     config = SolverConfig(

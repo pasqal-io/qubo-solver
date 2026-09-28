@@ -13,9 +13,7 @@ from qubosolver import Instance
 from ._device_specs import (
     detuning_amplitude_ratio,
     max_virtual_amplitude,
-)
-from ._device_specs import (
-    pulser_specs as _pulser_specs,
+    support_dmm,
 )
 from ._waveforms import constant_weighted_dmm
 
@@ -27,8 +25,8 @@ def build_drive(
     register: qoolqit.Register,
     *,
     device: qoolqit.Device,
-    dmm: bool = False,
-    kappa: float = 0.25,
+    dmm: bool = True,
+    kappa: float = 1.0,
 ) -> qoolqit.Drive:
     """Generate a proportional-diagonal drive schedule for QUBO solving.
 
@@ -51,8 +49,14 @@ def build_drive(
     # Hardware bounds
     specs = device.specs
     max_seq_duration: float = specs["max_duration"] or 1000.0
-    pulser_specs = _pulser_specs(device)
-    use_dmm = dmm and (pulser_specs["dmm_bottom_detuning"] is not None)
+    use_dmm = dmm
+    if use_dmm and not support_dmm(device):
+        logging.warning(
+            "dmm=True was requested but device %r does not support a DMM channel; "
+            "falling back to a global detuning drive.",
+            device,
+        )
+        use_dmm = False
 
     if specs.get("max_amplitude") is not None and specs.get("max_abs_detuning") is not None:
         max_amplitude = specs["max_amplitude"]

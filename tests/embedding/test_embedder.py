@@ -23,7 +23,7 @@ def test_embeddings_different_devices(
 ) -> None:
     config = SolverConfig(
         solving=QuantumSolvingConfig(
-            embedding=EmbeddingConfig(algorithm=embedding_method, greedy_layout_traps="device"),
+            embedding=EmbeddingConfig(algorithm=embedding_method),
             device=local_device,
         ),
         postprocessing=False,

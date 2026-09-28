@@ -10,6 +10,7 @@ method to produce a tuned [`qoolqit.Drive`][] for another solver.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
@@ -19,7 +20,11 @@ import qoolqit
 import torch
 from skopt import gp_minimize
 
-from qubosolver.drive_shaping._device_specs import detuning_amplitude_ratio, max_virtual_amplitude
+from qubosolver.drive_shaping._device_specs import (
+    detuning_amplitude_ratio,
+    max_virtual_amplitude,
+    support_dmm,
+)
 from qubosolver.drive_shaping._waveforms import constant_weighted_dmm
 from qubosolver.types import (
     Instance,
@@ -83,11 +88,7 @@ class Config:
             A configuration populated from the drive-shaping settings.
         """
         cfg = Config()
-        cfg.initial_amplitude_knots = config.bayesian_search_initial_omega_parameters
-        cfg.initial_detuning_knots = config.bayesian_search_initial_detuning_parameters
         cfg.n_evaluations = config.bayesian_search_n_calls
-        cfg.seed = config.bayesian_search_seed
-        cfg.default_sequence_duration = config.default_sequence_duration
 
         return cfg
 
@@ -246,7 +247,7 @@ def solve(
     *,
     backend: protocols.Backend,
     device: qoolqit.Device,
-    dmm: bool = False,
+    dmm: bool = True,
     config: Config | None = None,
 ) -> tuple[Solution, qoolqit.Drive]:
     """Solve a QUBO instance via Bayesian optimization of a drive schedule.
@@ -272,6 +273,15 @@ def solve(
             [`Solution`][].
     """
     config = config or Config()
+
+    if dmm and not support_dmm(device):
+        logging.warning(
+            "dmm=True was requested but device %r does not support a DMM channel; "
+            "falling back to a global detuning drive.",
+            device,
+        )
+        dmm = False
+
     n_amp = 3
     n_det = 3
 

@@ -167,7 +167,7 @@ print('<figure><figcaption>Register</figcaption><img src="quantum_embedding_cust
 
 Rather than calling `embedding.blade.embed` or `embedding.greedy_layout.embed` directly, you can select and configure the embedding algorithm through `EmbeddingConfig`, nested in `QuantumSolvingConfig` and `SolverConfig`; `Solver` then runs it as part of the full quantum pipeline. Leaving `EmbeddingConfig` unset falls back to the BLaDE embedder — see [`SolverConfig`][qubosolver.SolverConfig] for the full set of defaults.
 
-`EmbeddingConfig` only exposes the most commonly tuned parameters of each algorithm (e.g. `blade_dimensions`, `blade_steps_per_round`, `greedy_layout_lattice`). Finer-grained parameters — such as BLaDE's `pca` flag or its `compute_*` schedule functions — are not settable this way; call `embedding.blade.embed`/`embedding.greedy_layout.embed` directly with a full `BladeConfig`/`greedy_layout.Config` if you need those.
+`EmbeddingConfig` only exposes the most commonly tuned parameters of each algorithm (e.g. `blade_steps_per_round`, `greedy_layout_lattice`). Finer-grained parameters — such as BLaDE's `pca` flag or its `compute_*` schedule functions — are not settable this way; call `embedding.blade.embed`/`embedding.greedy_layout.embed` directly with a full `BladeConfig`/`greedy_layout.Config` if you need those.
 
 ```python exec="on" source="tabbed-left" session="embedding" result="text"
 from qubosolver import SolverConfig, QuantumSolvingConfig, EmbeddingConfig
