@@ -49,7 +49,7 @@ def get_layout(*, layout_type: Lattice | str = Lattice.TRIANGULAR, n_traps: int)
 
         case Lattice.SQUARE | "square":
             n = int(torch.ceil(torch.sqrt(2 * torch.tensor(n_traps))).item())
-            coords = torch.tensor(SquareLatticeLayout(n, n, spacing=1).coords)
+            coords = tensor.tensor(SquareLatticeLayout(n, n, spacing=1).coords)
             squared_distances = coords.square().sum(dim=1)
             return coords[torch.argsort(squared_distances)[:n_traps]]
 
