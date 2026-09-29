@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 import numpy as np
 import pytest
 import pytest_check as check
@@ -344,12 +346,47 @@ def test_resolve_max_possible_term_factor() -> None:
 
 def test_resolve_max_possible_term_invalid_kind() -> None:
     instance = Instance(matrix.as_tensor(triangular_qubo()))
-    with pytest.raises(ValueError, match="must be 'factor'"):
+    with pytest.raises(ValueError, match="must be 'quantile' or 'factor'"):
         _resolve_max_possible_term(("bogus", 2.0), instance)  # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize("size", [0, 1])
-def test_resolve_max_possible_term_factor_no_off_diag_entries(size: int) -> None:
+def test_resolve_max_possible_term_quantile() -> None:
+    qubo = torch.tensor(
+        [
+            [5.0, 1.0, 0.0],
+            [1.0, 5.0, 3.0],
+            [0.0, 3.0, 5.0],
+        ]
+    )
+    instance = Instance(matrix.as_tensor(qubo))
+    check.almost_equal(_resolve_max_possible_term(("quantile", 0.5), instance), 2.0)
+    check.almost_equal(_resolve_max_possible_term(("quantile", 1.0), instance), 3.0)
+
+
+@pytest.mark.parametrize("kind", ["quantile", "factor"])
+@pytest.mark.parametrize("size", [0, 1, 3])
+def test_resolve_max_possible_term_no_positive_off_diag(kind: str, size: int) -> None:
     instance = Instance(matrix.zeros(size))
-    with pytest.raises(ValueError, match="fewer than"):
-        _resolve_max_possible_term(("factor", 2.0), instance)
+    with pytest.raises(ValueError, match="no strictly positive off-diagonal"):
+        _resolve_max_possible_term((kind, 0.5), instance)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("max_possible_term", [0.0, -1.0, ("factor", 0.0), ("factor", -2.0)])
+def test_resolve_max_possible_term_not_positive(
+    max_possible_term: tuple[Literal["quantile", "factor"], float] | float,
+) -> None:
+    instance = Instance(matrix.as_tensor(triangular_qubo()))
+    with pytest.raises(ValueError, match="strictly positive value"):
+        _resolve_max_possible_term(max_possible_term, instance)
+
+
+def test_embed_no_positive_off_diag_raises() -> None:
+    instance = Instance(matrix.as_tensor(torch.diag(torch.tensor([1.0, 2.0, 3.0]))))
+    with pytest.raises(ValueError, match="no strictly positive off-diagonal"):
+        embedding.greedy_layout.embed(instance, config=embedding.greedy_layout.Config(traps=3))
+
+
+def test_embed_no_positive_off_diag_float_max_possible_term() -> None:
+    instance = Instance(matrix.zeros(3))
+    config = embedding.greedy_layout.Config(traps=3, max_possible_term=1.0)
+    check.equal(len(embedding.greedy_layout.embed(instance, config=config)), 3)
