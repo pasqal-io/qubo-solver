@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Literal
+from collections.abc import Callable
+from typing import Any, Literal
 
 import numpy as np
 import pytest
@@ -319,6 +320,127 @@ def test_max_distance_constraint() -> None:
 
     with pytest.raises(ValueError):
         Greedy().launch_greedy(Q=Q.matrix, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
+
+
+def norm_tradeoff_qubo() -> torch.Tensor:
+    """A 3-node QUBO whose best embedding depends on the norm.
+
+    Embedded on a unit square lattice, two of its couplings are exactly
+    representable: ``Q[0,1] = 1`` at distance 1, and ``Q[1,2] = 1/8`` at
+    distance sqrt(2). Only ``Q[0,2] = 0.53`` has no good option, since it falls
+    between those same two interactions.
+
+    Nodes 0 and 1 therefore land on (0, 0) and (1, 0), and the whole choice is
+    where node 2 goes. Two placements compete::
+
+        node 2     interactions (01, 02, 12)     deviations            L1     L2
+        (0, 1)     (1,     1,     1/8)           (0, 0.47,  0)         0.470  0.470
+        (-1, 1)    (1,     1/8,   1/125)         (0, 0.405, 0.117)     0.522  0.422
+
+    Sitting next to node 0 leaves one large error on the pair (0, 2) and none
+    elsewhere. Moving away spreads that error over two pairs, for a larger total
+    but a smaller worst case. L1 minimizes the total and takes the first; L2
+    penalizes the large error and takes the second.
+    """
+    return torch.tensor(
+        [
+            [0.00, 1.000, 0.530],
+            [1.00, 0.000, 0.125],
+            [0.53, 0.125, 0.000],
+        ],
+        dtype=torch.float32,
+    )
+
+
+def run_greedy(
+    Q: torch.Tensor, max_min_dist_ratio: float, **params: object
+) -> tuple[Any, torch.Tensor]:
+    """Run the greedy embedder on the unit square lattice the norm tests use."""
+    parameters = {"layout": embedding.Lattice.SQUARE, "traps": 9, "spacing": 1.0, **params}
+    return Greedy().launch_greedy(Q=Q, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
+
+
+def squared_pair_distances(vertices: torch.Tensor) -> torch.Tensor:
+    """Squared distances over the pairs (0,1), (0,2), (1,2), in that order.
+
+    The square lattice is invariant under rotations by pi/2, so the raw
+    coordinates are not stable but these distances are.
+    """
+    squared = (vertices[:, None, :] - vertices[None, :, :]).square().sum(dim=-1)
+    upper = torch.triu(torch.ones_like(squared, dtype=torch.bool), diagonal=1)
+    return squared[upper]
+
+
+@pytest.mark.parametrize(
+    "norm, expected_squared_distances, expected_distance",
+    [
+        (embedding.Norm.L1, [1.0, 1.0, 2.0], 0.470),
+        (embedding.Norm.L2, [1.0, 2.0, 5.0], 0.421561),
+    ],
+    ids=["l1", "l2"],
+)
+def test_greedy_norm_picks_its_own_optimum(
+    norm: embedding.Norm,
+    expected_squared_distances: list[float],
+    expected_distance: float,
+    max_min_dist_ratio: float,
+) -> None:
+    """Each norm reaches the embedding worked out in `norm_tradeoff_qubo`.
+
+    L1 places node 2 next to node 0, at squared distances (1, 1, 2); L2 moves it
+    away, to (1, 2, 5).
+    """
+    Q = norm_tradeoff_qubo()
+
+    best, vertices = run_greedy(Q, max_min_dist_ratio, norm=norm)
+
+    torch.testing.assert_close(
+        squared_pair_distances(vertices),
+        torch.tensor(expected_squared_distances, dtype=vertices.dtype),
+    )
+    check.almost_equal(best[1]["distance"], expected_distance, rel=1e-5)
+
+
+def embedding_deviations(vertices: torch.Tensor, Q: torch.Tensor) -> torch.Tensor:
+    """The ``Q - U`` deviations over the distinct pairs of an embedding."""
+    U = interaction_matrix_from_vertices(vertices)
+    upper = torch.triu(torch.ones_like(U, dtype=torch.bool), diagonal=1)
+    return (Q - U).double()[upper]
+
+
+def l1_norm(deviations: torch.Tensor) -> float:
+    return float(deviations.abs().sum())
+
+
+def l2_norm(deviations: torch.Tensor) -> float:
+    return float(deviations.square().sum().sqrt())
+
+
+@pytest.mark.parametrize(
+    "norm, reference_norm",
+    [(embedding.Norm.L1, l1_norm), (embedding.Norm.L2, l2_norm)],
+    ids=["l1", "l2"],
+)
+def test_greedy_norm_reported_distance(
+    norm: embedding.Norm,
+    reference_norm: Callable[[torch.Tensor], float],
+    max_min_dist_ratio: float,
+) -> None:
+    """The reported distance is the norm of the returned embedding's deviations.
+
+    This is what pins the square root to the right place: the algorithm sums
+    squared deviations across placement steps and takes the root once at the
+    end, so dropping it, or applying it per step, shows up here. Recomputing the
+    norm from the returned coordinates keeps this independent of how the
+    algorithm accumulates.
+    """
+    Q = norm_tradeoff_qubo()
+
+    best, vertices = run_greedy(Q, max_min_dist_ratio, norm=norm)
+
+    check.almost_equal(
+        best[1]["distance"], reference_norm(embedding_deviations(vertices, Q)), rel=1e-5
+    )
 
 
 def test_empty_embedding() -> None:
