@@ -346,7 +346,7 @@ def test_resolve_max_possible_term_factor() -> None:
 
 def test_resolve_max_possible_term_invalid_kind() -> None:
     instance = Instance(matrix.as_tensor(triangular_qubo()))
-    with pytest.raises(ValueError, match="must be 'factor'"):
+    with pytest.raises(ValueError, match="must be 'quantile' or 'factor'"):
         _resolve_max_possible_term(("bogus", 2.0), instance)  # type: ignore[arg-type]
 
 
@@ -363,7 +363,7 @@ def test_resolve_max_possible_term_quantile() -> None:
     check.almost_equal(_resolve_max_possible_term(("quantile", 1.0), instance), 3.0)
 
 
-@pytest.mark.parametrize("kind", ["factor", "quantile"])
+@pytest.mark.parametrize("kind", ["quantile", "factor"])
 @pytest.mark.parametrize("size", [0, 1, 3])
 def test_resolve_max_possible_term_no_positive_off_diag(kind: str, size: int) -> None:
     instance = Instance(matrix.zeros(size))
@@ -373,7 +373,7 @@ def test_resolve_max_possible_term_no_positive_off_diag(kind: str, size: int) ->
 
 @pytest.mark.parametrize("max_possible_term", [0.0, -1.0, ("factor", 0.0), ("factor", -2.0)])
 def test_resolve_max_possible_term_not_positive(
-    max_possible_term: float | tuple[Literal["factor", "quantile"], float],
+    max_possible_term: tuple[Literal["quantile", "factor"], float] | float,
 ) -> None:
     instance = Instance(matrix.as_tensor(triangular_qubo()))
     with pytest.raises(ValueError, match="strictly positive value"):

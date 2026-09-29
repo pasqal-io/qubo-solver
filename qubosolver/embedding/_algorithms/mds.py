@@ -27,8 +27,8 @@ def reduce_distances_by_shortest_paths(
         finite = ~np.isinf(distances)
         processed[finite] = distances[finite]
 
-    finite = np.isfinite(processed)
-    processed[~finite] = 2 * processed[finite].max()
+    infinite = np.isinf(processed)
+    processed[infinite] = 2 * processed[~infinite].max()
 
     return np.asarray(processed)
 
@@ -56,5 +56,5 @@ def embed_mds(
     distances = reduce_distances_by_shortest_paths(
         distances, infinite_only=shortest_path_infinite_only
     )
-    coords, _ = smacof(distances, n_components=2, max_iter=max_iter, eps=1e-9)
+    coords, _ = smacof(distances, n_components=2, n_init=4, max_iter=max_iter, eps=1e-9)
     return np.asarray(coords)

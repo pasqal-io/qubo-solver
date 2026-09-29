@@ -62,7 +62,7 @@ def test_explicit_starting_positions_override_mds(monkeypatch: pytest.MonkeyPatc
 
 
 def test_mds_skipped_without_positive_coupling(monkeypatch: pytest.MonkeyPatch) -> None:
-    instance = Instance(matrix.as_tensor(np.diag([1.0, 2.0, 3.0]).tolist()))
+    instance = Instance(matrix.as_tensor(np.diag([1.0, 2.0, 3.0])))
     config = blade.Config(steps_per_round=10)
     check.is_none(captured_starting_positions(monkeypatch, instance, config))
 

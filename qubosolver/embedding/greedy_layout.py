@@ -45,14 +45,16 @@ class Config:
     Attributes:
         traps: Number of trap sites in the layout.
         max_possible_term: Largest QUBO interaction term representable at the
-            minimum trap-trap distance, in adimensional units. If a float, it
-            is used directly. If a tuple, the first element is either
-            ``'factor'``, the second element then being a multiplier on the QUBO
-            instance's largest off-diagonal coefficient, or ``'quantile'``, the
-            second element then being the quantile (in ``[0, 1]``) of the QUBO
-            instance's strictly positive off-diagonal coefficients. The corresponding
-            spacing is ``max_possible_term ** (-1 / 6)``, since interactions
-            scale as ``1 / distance ** 6``.
+            minimum trap-trap distance, in adimensional units. One of:
+
+            - ``('quantile', q)``: the ``q`` quantile (in ``[0, 1]``) of the QUBO
+              instance's strictly positive off-diagonal coefficients.
+            - ``('factor', f)``: ``f`` times the QUBO instance's largest
+              off-diagonal coefficient.
+            - A float, used directly.
+
+            The corresponding spacing is ``max_possible_term ** (-1 / 6)``, since
+            interactions scale as ``1 / distance ** 6``.
         lattice: Lattice pattern (square or triangular).
         max_min_dist_ratio: Maximum allowed ratio between the largest and
             the smallest inter-atom distance in the resulting register.
@@ -60,7 +62,7 @@ class Config:
 
     traps: int = 200
     max_min_dist_ratio: float = float("inf")
-    max_possible_term: float | tuple[Literal["factor", "quantile"], float] = ("quantile", 0.95)
+    max_possible_term: tuple[Literal["quantile", "factor"], float] | float = ("quantile", 0.95)
     lattice: Lattice = Lattice.TRIANGULAR
 
     def __post_init__(self) -> None:
@@ -117,16 +119,18 @@ class Config:
 
 
 def _resolve_max_possible_term(
-    max_possible_term: float | tuple[Literal["factor", "quantile"], float], instance: Instance
+    max_possible_term: tuple[Literal["quantile", "factor"], float] | float, instance: Instance
 ) -> float:
     """Resolve a `Config.max_possible_term` value to a plain float.
 
     Args:
-        max_possible_term: If a float, returned as-is. If a tuple, the first
-            element is either ``'factor'``, the second element then being a
-            multiplier on *instance*'s largest off-diagonal coefficient, or
-            ``'quantile'``, the second element then being the quantile (in
-            ``[0, 1]``) of *instance*'s strictly positive off-diagonal coefficients.
+        max_possible_term: One of:
+
+            - ``('quantile', q)``: resolved as the ``q`` quantile (in ``[0, 1]``)
+              of *instance*'s strictly positive off-diagonal coefficients.
+            - ``('factor', f)``: resolved as ``f`` times *instance*'s largest
+              off-diagonal coefficient.
+            - A float, returned as-is.
         instance: The QUBO instance being embedded, used to resolve the
             tuple forms.
 
@@ -135,7 +139,7 @@ def _resolve_max_possible_term(
 
     Raises:
         ValueError: If *max_possible_term* is a tuple whose first element is
-            neither ``'factor'`` nor ``'quantile'``, if *instance* has no
+            neither ``'quantile'`` nor ``'factor'``, if *instance* has no
             strictly positive off-diagonal coefficient to resolve it from, or
             if the resolved value is not strictly positive.
     """
@@ -143,10 +147,10 @@ def _resolve_max_possible_term(
         return _check_positive_max_possible_term(max_possible_term)
 
     kind, value = max_possible_term
-    if kind not in ("factor", "quantile"):
+    if kind not in ("quantile", "factor"):
         raise ValueError(
             "When it is a tuple, the first value of `max_possible_term` must be "
-            "'factor' or 'quantile'."
+            "'quantile' or 'factor'."
         )
     off_diag = instance.matrix.numpy()[np.triu_indices(instance.size, k=1)]
     positive = off_diag[off_diag > 0]

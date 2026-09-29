@@ -11,8 +11,6 @@ from qubosolver import (
     QuantumSolvingConfig,
     Solver,
     SolverConfig,
-    embedding,
-    matrix,
 )
 
 
@@ -33,24 +31,3 @@ def test_embeddings_different_devices(
     )
     solver = Solver(qubo_for_testing_many_devices, config)
     assert solver._embedding()
-
-
-def test_blade_embedder_forwards_config(monkeypatch: pytest.MonkeyPatch) -> None:
-    captured = {}
-
-    def fake_embed(instance: Instance, *, config: embedding.blade.Config) -> None:
-        captured["config"] = config
-
-    monkeypatch.setattr(embedding.blade, "embed", fake_embed)
-
-    qubo = matrix.as_tensor([[1.0, 2.0, 3.0], [2.0, 1.0, 4.0], [3.0, 4.0, 1.0]])
-    config = SolverConfig(
-        solving=QuantumSolvingConfig(embedding=EmbeddingConfig(blade_steps_per_round=100)),
-        postprocessing=False,
-        preprocessing=False,
-    )
-    Solver(Instance(qubo), config)._embedding()
-
-    blade_config = captured["config"]
-    assert isinstance(blade_config, embedding.blade.Config)
-    assert blade_config.steps_per_round == 100

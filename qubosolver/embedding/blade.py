@@ -48,7 +48,7 @@ class Config(BladeConfig):
 
     Attributes:
         initialize_with_mds: Whether BLaDE starts from a multi-dimensional scaling
-            (MDS) of the QUBO when `starting_positions` is `None`. MDS is skipped
+            (MDS) of the QUBO. MDS is skipped when `starting_positions` is set, and
             for instances without positive off-diagonal coefficient. Defaults to `True`.
 
     Warning:
@@ -63,6 +63,13 @@ class Config(BladeConfig):
     )
     compute_regulation_cursor: Callable[[float], float] = _constant_regulation_cursor
     initialize_with_mds: bool = True
+
+    def _to_qoolqit(self) -> BladeConfig:
+        """Return the equivalent [`qoolqit.embedding.BladeConfig`][].
+
+        qoolqit passes every config field to BLaDE, so `initialize_with_mds` is dropped.
+        """
+        return BladeConfig(**{f.name: getattr(self, f.name) for f in fields(BladeConfig)})
 
 
 def embed(
@@ -111,13 +118,12 @@ def embed(
 
     qubo = instance.matrix.numpy()
 
-    blade_config = BladeConfig(**{f.name: getattr(config, f.name) for f in fields(BladeConfig)})
-    if (
-        blade_config.starting_positions is None
-        and config.initialize_with_mds
-        and (np.triu(qubo, k=1) > 0).any()
-    ):
-        blade_config.starting_positions = embed_mds(qubo)
+    blade_config = config._to_qoolqit()
+    if config.initialize_with_mds:
+        if blade_config.starting_positions is not None:
+            logger.info("`starting_positions` is set: skipping the MDS initialization.")
+        elif (np.triu(qubo, k=1) > 0).any():
+            blade_config.starting_positions = embed_mds(qubo)
 
     _blade = Blade(blade_config)
     graph = _blade.embed(qubo)
