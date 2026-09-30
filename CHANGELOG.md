@@ -10,6 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-08-20
+
+### Fixed
+- Republish of 0.8.1: the previous release failed to publish to PyPI due to a metadata-version validation error in the publish workflow. No package changes since 0.8.1. ([#267](https://github.com/pasqal-io/qubo-solver/pull/267))
+
+## [0.8.1] - 2026-08-19
+
+### Fixed
+- Clamp `qoolqit`, `pulser`, `pulser-pasqal`, `emu-base`, `emu-sv`, and `emu-mps` upper bounds: newer releases of these packages break `qubo-solver` 0.8.0, and the incompatibility will only be fixed in v1. ([#263](https://github.com/pasqal-io/qubo-solver/pull/263))
+
 ## [0.8.0] - 2026-06-29
 
 ### Added
@@ -87,6 +97,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
 [Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.0...HEAD
+[0.8.2]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.1...v0.8.2
+[0.8.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.0...v0.7.1
