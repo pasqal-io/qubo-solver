@@ -456,6 +456,26 @@ def test_single_atom_embedding() -> None:
     check.equal(len(register), 1)
 
 
+@pytest.mark.parametrize(
+    "Q, traps",
+    [
+        (matrix.zeros(1), 1),
+        (matrix.zeros(1), 2),
+        (matrix.as_tensor(torch.tensor([[0.0, 1.0], [1.0, 0.0]])), 2),
+    ],
+    ids=["1-node-1-trap", "1-node-2-traps", "2-nodes-2-traps"],
+)
+def test_greedy_on_minimal_layouts(Q: torch.Tensor, traps: int) -> None:
+    best, coords = Greedy().launch_greedy(
+        Q=Q,
+        params={"layout": embedding.Lattice.SQUARE, "traps": traps, "spacing": 1.0},
+        max_min_dist_ratio=float("inf"),
+    )
+
+    check.equal(tuple(coords.shape), (Q.shape[0], 2))
+    check.almost_equal(best[1]["distance"], 0.0, abs=1e-6)
+
+
 def test_resolve_max_possible_term_float() -> None:
     instance = Instance(matrix.as_tensor(triangular_qubo()))
     check.equal(_resolve_max_possible_term(2.5, instance), 2.5)

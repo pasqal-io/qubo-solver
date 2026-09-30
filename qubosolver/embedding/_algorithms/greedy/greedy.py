@@ -63,7 +63,7 @@ class Greedy:
     # ----------------------------
     # Layout utilities
     # ----------------------------
-    def get_predefined_coordinates(self, params: dict) -> Tensor:
+    def _get_predefined_coordinates(self, params: dict) -> Tensor:
         """Build the initial lattice of trap coordinates.
 
         Expected `params` keys:
@@ -80,17 +80,16 @@ class Greedy:
     # ----------------------------
     # Interaction matrix
     # ----------------------------
-    def interaction_matrix(self, coordinates: Tensor) -> Matrix:
+    def _interaction_matrix(self, coordinates: Tensor) -> Matrix:
         """Interaction between traps, U[p, q] = 1 / ||r_p - r_q|| ** 6.
 
         The diagonal is left at zero: a trap holds at most one node, so a node
-        is never compared against itself.
+        is never compared against itself. Masking it out also leaves the whole
+        matrix at zero when there are fewer than two traps, with no pair to
+        divide a distance by.
         """
         n_traps = len(coordinates)
         U = matrix.zeros(n_traps)
-        if n_traps < 2:
-            return U
-
         distances = (coordinates[:, None, :] - coordinates[None, :, :]).norm(dim=-1)
         off_diagonal = ~torch.eye(n_traps, dtype=torch.bool, device=U.device)
         U[off_diagonal] = 1.0 / distances[off_diagonal] ** 6
@@ -99,7 +98,7 @@ class Greedy:
     # ----------------------------
     # Next node heuristic
     # ----------------------------
-    def get_best(self, couplings: Vector, placed: Tensor) -> int:
+    def _get_best(self, couplings: Vector, placed: Tensor) -> int:
         """Pick the next logical node: the unplaced one most coupled to the placed set.
 
         Args:
@@ -115,7 +114,7 @@ class Greedy:
     # ----------------------------
     # Best trap for a node
     # ----------------------------
-    def optimize_position(
+    def _optimize_position(
         self,
         U: Matrix,
         Q: Matrix,
@@ -175,7 +174,7 @@ class Greedy:
     # ----------------------------
     # Main greedy pass for one start node
     # ----------------------------
-    def greedy_algorithm(
+    def _greedy_algorithm(
         self,
         U: Matrix,
         Q: Matrix,
@@ -250,9 +249,9 @@ class Greedy:
         want_candidates = bool(params.get("draw_steps", False) or (on_step is not None))
 
         while n_placed < n_nodes:
-            u = self.get_best(couplings, placed_mask)
+            u = self._get_best(couplings, placed_mask)
             available_traps = torch.nonzero(free_traps).squeeze(1)
-            p, inc_val, candidates = self.optimize_position(
+            p, inc_val, candidates = self._optimize_position(
                 U,
                 Q,
                 u,
@@ -586,8 +585,8 @@ class Greedy:
         if n_traps < n_nodes:
             raise ValueError(f"Not enough traps ({n_traps}) to position {n_nodes} nodes.")
 
-        coordinates = self.get_predefined_coordinates(params)
-        U = self.interaction_matrix(coordinates)
+        coordinates = self._get_predefined_coordinates(params)
+        U = self._interaction_matrix(coordinates)
         max_radial_distance = max_min_dist_ratio * float(params["spacing"])
         norm = Norm(params.get("norm", Norm.L1))
 
@@ -616,7 +615,7 @@ class Greedy:
             cb = None
 
         for node in range(n_nodes):
-            self.greedy_algorithm(
+            self._greedy_algorithm(
                 U,
                 Q,
                 coords=coordinates,
