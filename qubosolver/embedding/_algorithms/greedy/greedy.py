@@ -285,8 +285,8 @@ class Greedy:
                 self._emit_step(on_step, **_snapshot(u, p, inc_val, candidates))
 
         # finalize coordinates tensor
-        final_coords = tensor.zeros(n_nodes, 2)
-        final_coords[placed_nodes] = coords[placed_traps]
+        final_coords = torch.zeros((n_nodes, 2), dtype=torch.float32)
+        final_coords[placed_nodes] = coords[placed_traps].to(final_coords.dtype)
 
         iu, ju = torch.triu_indices(n_nodes, n_nodes, offset=1)
         uij = 1 / torch.cdist(final_coords, final_coords)[iu, ju] ** 6
