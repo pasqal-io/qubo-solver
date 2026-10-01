@@ -22,7 +22,7 @@ from pulser.backend.results import Results
 from pulser.sequence import Sequence as PulserSequence
 from pulser_simulation import QutipBackendV2
 
-from qubosolver.types._checks import no_runtime_typecheck
+from qubosolver._checks import no_runtime_typecheck
 from qubosolver.types.backends import _SV_THRESHOLD
 
 # From this register size on, QuTiP emulation becomes intractable.

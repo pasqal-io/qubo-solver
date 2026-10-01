@@ -7,8 +7,8 @@ from contextlib import contextmanager
 import numpy as np
 import torch
 
+from qubosolver._checks import no_runtime_typecheck
 from qubosolver.types import torch_rng
-from qubosolver.types._checks import no_runtime_typecheck
 
 
 def manual_seed(seed: int) -> torch.Generator:

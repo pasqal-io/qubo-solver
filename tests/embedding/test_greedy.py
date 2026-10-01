@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 import pytest_check as check
 import torch
+from beartype.roar import BeartypeCallHintParamViolation
 from qoolqit import AnalogDeviceWithDMM
 from qoolqit.devices.device import BaseDevice
 
@@ -486,7 +487,10 @@ def test_resolve_max_possible_term_factor() -> None:
 
 def test_resolve_max_possible_term_invalid_kind() -> None:
     instance = Instance(triangular_qubo())
-    with pytest.raises(ValueError, match="must be 'quantile' or 'factor'"):
+    with pytest.raises(
+        (ValueError, BeartypeCallHintParamViolation),
+        match=r"must be 'quantile' or 'factor'|violates type hint",
+    ):
         _resolve_max_possible_term(("bogus", 2.0), instance)  # type: ignore[arg-type]
 
 

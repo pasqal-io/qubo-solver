@@ -74,14 +74,12 @@ def test_tensor_creates_int64_tensor_on_specified_device() -> None:
     torch.testing.assert_close(result, torch.tensor(data, dtype=torch.int64, device=custom_device))
 
 
-def test_tensor_propagates_kwargs_to_vector_tensor() -> None:
+def test_tensor_propagates_kwargs_to_torch_tensor() -> None:
     data = [1, 2, 3]
-    with patch("qubosolver.types.vectori.vector.tensor") as mock_vector_tensor:
-        mock_vector_tensor.return_value = torch.tensor(data, dtype=torch.int64)
+    with patch("qubosolver.types.vectori.torch.tensor", wraps=torch.tensor) as mock_tensor:
         vectori.tensor(data, requires_grad=False)
-        mock_vector_tensor.assert_called_once()
-        call_kwargs = mock_vector_tensor.call_args
-        check.is_false(call_kwargs.kwargs.get("requires_grad"))
+    mock_tensor.assert_called_once()
+    check.is_false(mock_tensor.call_args.kwargs.get("requires_grad"))
 
 
 def test_as_tensor_converts_dtype_and_device() -> None:

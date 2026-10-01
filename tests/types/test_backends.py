@@ -10,6 +10,7 @@ import pytest
 import pytest_check as check
 import qoolqit
 import torch
+from beartype.roar import BeartypeCallHintParamViolation
 from emu_mps import MPSBackend
 from emu_sv import SVBackend
 from mock.connection import MockConnection
@@ -321,7 +322,9 @@ def test_get_remote_backend_type(
 
 def test_get_backend_type_invalid_backend_id() -> None:
     """Test that _get_backend_type raises ValueError for invalid backend_id."""
-    with pytest.raises(ValueError, match="not recognized"):
+    with pytest.raises(
+        (ValueError, BeartypeCallHintParamViolation), match=r"not recognized|violates type hint"
+    ):
         _get_backend_type("invalid", False)  # type: ignore[arg-type]
 
 

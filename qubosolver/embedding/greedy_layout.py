@@ -17,6 +17,7 @@ import numpy as np
 import qoolqit
 
 from qubosolver import Instance, tensor
+from qubosolver._checks import _RUNTIME_TYPE_CHECKING
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from qubosolver.utils.quantum import _max_min_distance_ratio
 
@@ -25,6 +26,13 @@ from .enums import Lattice
 
 if TYPE_CHECKING:
     from qubosolver import EmbeddingConfig
+elif _RUNTIME_TYPE_CHECKING:
+    from typing import TypeAliasType  # Runtime checks require Python >= 3.14.
+
+    import qubosolver
+
+    # Lazy absolute reference for beartype: importing `EmbeddingConfig` eagerly is circular.
+    EmbeddingConfig = TypeAliasType("EmbeddingConfig", "qubosolver.EmbeddingConfig")
 
 logger = logging.getLogger(__name__)
 

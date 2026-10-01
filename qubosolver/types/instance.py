@@ -13,16 +13,15 @@ from typing import ClassVar, TypeVar
 
 import torch
 
+from qubosolver._checks import (
+    _RUNTIME_TYPE_CHECKING,
+    TYPE_CHECKING,
+    no_runtime_typecheck,
+)
 from qubosolver._io import utils as io_utils
 from qubosolver._io.utils import FileLike, Stream
 
 from . import matrix
-from ._checks import (
-    _RUNTIME_TYPE_CHECKING,
-    TYPE_CHECKING,
-    debug_runtime_typecheck,
-    no_runtime_typecheck,
-)
 from ._enums import _DensityType
 from .linalg import Bitstring, Matrix
 
@@ -37,7 +36,6 @@ if TYPE_CHECKING:
 _InstanceT = TypeVar("_InstanceT", bound="Instance")
 
 
-@debug_runtime_typecheck
 class Instance:
     r"""A single QUBO problem instance.
 

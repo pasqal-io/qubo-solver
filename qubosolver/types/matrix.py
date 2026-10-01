@@ -15,9 +15,11 @@ Typical usage:
 from __future__ import annotations
 
 from dataclasses import field
-from typing import Any
+from typing import Any, overload
 
 import torch
+
+from qubosolver._checks import no_runtime_typecheck
 
 from . import linalg
 from .linalg import Matrix
@@ -37,9 +39,17 @@ _dtype = dtype  # alias so shadowed `dtype` params can still call the module fun
 _device = device  # alias so shadowed `device` params can still call the module function
 
 
+@overload
+def zeros(n: int, *, dtype: None = None, device: torch.device | None = None) -> Matrix: ...
+
+
+@overload
+def zeros(n: int, *, dtype: torch.dtype, device: torch.device | None = None) -> torch.Tensor: ...
+
+
 def zeros(
     n: int, *, dtype: torch.dtype | None = None, device: torch.device | None = None
-) -> Matrix:
+) -> torch.Tensor:
     """Creates a zero-filled square matrix of shape ``(n, n)``.
 
     Args:
@@ -55,13 +65,33 @@ def zeros(
     return torch.zeros((n, n), dtype=dtype, device=device)
 
 
+@overload
 def tensor(
     data: Any,  # noqa: ANN401 (array-like input forwarded to torch.tensor)
     *,
-    dtype: torch.dtype | None = None,
+    dtype: None = None,
     device: torch.device | None = None,
     **kwargs: Any,  # noqa: ANN401 (forwarded to torch.tensor)
-) -> Matrix:
+) -> Matrix: ...
+
+
+@overload
+def tensor(
+    data: Any,  # noqa: ANN401 (array-like input forwarded to torch.tensor)
+    *,
+    dtype: torch.dtype,
+    device: torch.device | None = None,
+    **kwargs: Any,  # noqa: ANN401 (forwarded to torch.tensor)
+) -> torch.Tensor: ...
+
+
+def tensor(
+    data: Any,
+    *,
+    dtype: torch.dtype | None = None,
+    device: torch.device | None = None,
+    **kwargs: Any,
+) -> torch.Tensor:
     """Creates a matrix tensor from the given data.
 
     Args:
@@ -75,7 +105,9 @@ def tensor(
     """
     dtype = dtype or _dtype()
     device = device or _device()
-    return torch.tensor(data, dtype=dtype, device=device, **kwargs)
+    result = torch.tensor(data, dtype=dtype, device=device, **kwargs)
+    # `torch.tensor([])` is 1-D: keep an empty matrix 2-D.
+    return result.reshape(0, 0) if result.shape == (0,) else result
 
 
 def as_tensor(data: Any) -> Matrix:  # noqa: ANN401 (array-like input forwarded to torch.as_tensor)
@@ -96,6 +128,8 @@ def as_tensor(data: Any) -> Matrix:  # noqa: ANN401 (array-like input forwarded 
     return torch.as_tensor(data, dtype=dtype(), device=device())
 
 
+# Returns a dataclass `Field`, typed as the tensor for static type checkers only.
+@no_runtime_typecheck
 def zeros_field(
     n: int, *, dtype: torch.dtype | None = None, device: torch.device | None = None
 ) -> Matrix:

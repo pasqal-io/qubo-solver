@@ -324,7 +324,7 @@ def test_simulated_annealing_zero_max_iter_returns_start(
     )
 
     check.equal(len(solution), 1)
-    check.equal(solution[0].string, bitstring.to_string(start))
+    check.equal(solution[0].string, bitstring.to_string(start[0]))
     check.equal(solution[0].count, 1)
 
 
@@ -350,7 +350,7 @@ def test_simulated_annealing_zero_time_limit_returns_start(
     )
 
     check.equal(len(solution), 1)
-    check.equal(solution[0].string, bitstring.to_string(start))
+    check.equal(solution[0].string, bitstring.to_string(start[0]))
 
 
 @pytest.mark.parametrize("instance", instances, ids=instance_ids)

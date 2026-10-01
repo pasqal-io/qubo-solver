@@ -70,7 +70,7 @@ def test_tensor_creates_int8_tensor_from_2d_list() -> None:
 def test_tensor_creates_int8_tensor_from_empty_list() -> None:
     result = bitstrings.tensor([])
     check.equal(result.dtype, torch.int8)
-    check.equal(len(result), 0)
+    check.equal(result.shape, (0, 0))
 
 
 def test_tensor_creates_int8_tensor_on_specified_device() -> None:
@@ -337,7 +337,7 @@ def test_round_creates_tensor_on_specified_device() -> None:
 def test_round_returns_empty_tensor_for_empty_list() -> None:
     result = bitstrings.round([])
     check.equal(result.dtype, torch.int8)
-    check.equal(result.shape, (0,))
+    check.equal(result.shape, (0, 0))
 
 
 def test_round_accepts_a_2d_float_tensor() -> None:

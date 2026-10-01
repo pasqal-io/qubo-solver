@@ -6,6 +6,7 @@ embedding strategy and QUBO matrix density.
 
 from __future__ import annotations
 
+import builtins
 from enum import Enum
 
 
@@ -18,11 +19,11 @@ class _StrEnum(str, Enum):
         return ret
 
     @classmethod
-    def names(cls) -> list[str]:
+    def names(cls) -> builtins.list[str]:
         return list(map(lambda c: c.name, cls))
 
     @classmethod
-    def list(cls) -> list[str]:
+    def list(cls) -> builtins.list[str]:  # `list` is shadowed by this method
         return list(map(lambda c: c.value, cls))
 
 

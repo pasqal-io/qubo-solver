@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
 from qoolqit.execution import job
 
 from qubosolver import solving, transforms
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver.types import Instance, Solution
 
 from .config import SolverConfig

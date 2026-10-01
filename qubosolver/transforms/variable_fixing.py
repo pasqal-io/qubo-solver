@@ -31,7 +31,6 @@ import qubosolver
 from qubosolver._io import utils as io_utils
 from qubosolver._io.utils import Stream
 from qubosolver.types import Solution, bitstrings, vector
-from qubosolver.types._checks import debug_runtime_typecheck
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +75,6 @@ def hansen_fixing(instance: qubosolver.Instance) -> dict[int, int]:
     return fixed_dict
 
 
-@debug_runtime_typecheck
 class Instance(qubosolver.Instance):
     """A QUBO instance with variable-fixing history.
 

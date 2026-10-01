@@ -8,13 +8,13 @@ import numpy as np
 import pytest
 import torch
 
-from qubosolver import embedding
+from qubosolver import Matrix, embedding, matrix
 from qubosolver.embedding._algorithms.greedy import Greedy
 
 
-def _toy_qubo() -> torch.Tensor:
+def _toy_qubo() -> Matrix:
     # Petit QUBO dense et déterministe (5x5)
-    return torch.tensor(
+    return matrix.tensor(
         [
             [-4.0, 1.0, 2.0, 1.5, 2.3],
             [1.0, -3.2, 1.7, 2.1, 0.8],
@@ -22,7 +22,6 @@ def _toy_qubo() -> torch.Tensor:
             [1.5, 2.1, 0.7, -2.7, 1.2],
             [2.3, 0.8, 2.5, 1.2, -6.3],
         ],
-        dtype=torch.float32,
     )
 
 

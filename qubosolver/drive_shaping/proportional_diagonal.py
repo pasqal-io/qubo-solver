@@ -73,10 +73,10 @@ def build_drive(
 
     # Target local final detunings
     d = (-0.5 * torch.diag(instance.matrix)).cpu().numpy()
-    d_min = np.min(d)
-    d_max = np.max(d)
+    d_min = float(np.min(d))
+    d_max = float(np.max(d))
 
-    omega_max = kappa * np.max(np.abs(d))
+    omega_max = kappa * float(np.max(np.abs(d)))
 
     max_amplitude = max_virtual_amplitude(device, register)
     if omega_max > max_amplitude:
@@ -96,8 +96,8 @@ def build_drive(
             f"scaling the detuning down."
         )
         d = d * (max_detuning / max_abs_d)
-        d_min = np.min(d)
-        d_max = np.max(d)
+        d_min = float(np.min(d))
+        d_max = float(np.max(d))
 
     if use_dmm:
         # Final global detuning is the top value, DMM pulls down locally

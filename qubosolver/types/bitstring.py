@@ -19,7 +19,9 @@ from typing import Any
 
 import torch
 
-from . import bitstrings, vector
+from qubosolver._checks import no_runtime_typecheck
+
+from . import bitstrings
 from .linalg import Bitstring
 from .random import torch_rng
 
@@ -48,7 +50,7 @@ def zeros(n: int, *, device: torch.device | None = None) -> Bitstring:
         A 1-D ``int8`` tensor of zeros.
     """
     device = device or _device()
-    return vector.zeros(n, dtype=dtype(), device=device)
+    return torch.zeros(n, dtype=dtype(), device=device)
 
 
 def tensor(
@@ -68,7 +70,7 @@ def tensor(
         A 1-D ``int8`` tensor.
     """
     device = device or _device()
-    return vector.tensor(data, dtype=dtype(), device=device, **kwargs)
+    return torch.tensor(data, dtype=dtype(), device=device, **kwargs)
 
 
 def from_string(s: str, *, device: torch.device | None = None) -> Bitstring:
@@ -163,6 +165,8 @@ def as_tensor(data: Any) -> Bitstring:  # noqa: ANN401 (array-like input forward
     return torch.as_tensor(data, dtype=dtype(), device=device())
 
 
+# Returns a dataclass `Field`, typed as the tensor for static type checkers only.
+@no_runtime_typecheck
 def zeros_field(n: int, *, device: torch.device | None = None) -> Bitstring:
     """Creates a dataclass field defaulting to a zero-filled bitstring.
 

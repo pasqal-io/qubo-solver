@@ -15,9 +15,13 @@ import logging
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
-from importlib.metadata import version  # noqa: E402
+from qubosolver._checks import _RUNTIME_TYPE_CHECKING  # noqa: E402
 
-from pulser.sequence import store_package_version_metadata  # noqa: E402
+if _RUNTIME_TYPE_CHECKING:
+    from beartype import BeartypeConf  # deptry: ignore[DEP004]
+    from beartype.claw import beartype_this_package  # deptry: ignore[DEP004]
+
+    beartype_this_package(conf=BeartypeConf(warning_cls_on_decorator_exception=None))
 
 # isort: split
 # qubosolver.types must be imported (and fully initialized) before qubosolver.drive_shaping,
@@ -53,7 +57,6 @@ from qubosolver.types import (  # noqa: E402
     vector,
     vectori,
 )
-from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING  # noqa: E402
 
 # isort: split
 from qubosolver import drive_shaping, embedding, solving, transforms  # noqa: E402
@@ -105,11 +108,9 @@ __all__ = [
     "vectori",
 ]
 
+from importlib.metadata import version  # noqa: E402
+
+from pulser.sequence import store_package_version_metadata  # noqa: E402
+
 __version__ = version("qubo-solver")
 store_package_version_metadata("qubosolver", __version__)
-
-if _RUNTIME_TYPE_CHECKING:
-    from beartype import BeartypeConf  # deptry: ignore[DEP004]
-    from beartype.claw import beartype_this_package  # deptry: ignore[DEP004]
-
-    beartype_this_package(conf=BeartypeConf(warning_cls_on_decorator_exception=None))

@@ -10,7 +10,7 @@ from scipy.optimize import OptimizeResult, minimize
 from shapely.geometry import MultiPolygon, Point, Polygon
 
 from qubosolver import Bitstring, Matrix, Vector, matrix, vector
-from qubosolver.types._checks import no_runtime_typecheck
+from qubosolver._checks import no_runtime_typecheck
 
 
 # Find a better way to compute this ?
