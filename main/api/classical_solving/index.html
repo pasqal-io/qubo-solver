@@ -4352,8 +4352,7 @@ optimal) solution found by CPLEX.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/solving/classical/cplex.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-167">167</a></span>
-<span class="normal"><a href="#__codelineno-0-168">168</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-168">168</a></span>
 <span class="normal"><a href="#__codelineno-0-169">169</a></span>
 <span class="normal"><a href="#__codelineno-0-170">170</a></span>
 <span class="normal"><a href="#__codelineno-0-171">171</a></span>
@@ -4384,39 +4383,40 @@ optimal) solution found by CPLEX.</p>
 <span class="normal"><a href="#__codelineno-0-196">196</a></span>
 <span class="normal"><a href="#__codelineno-0-197">197</a></span>
 <span class="normal"><a href="#__codelineno-0-198">198</a></span>
-<span class="normal"><a href="#__codelineno-0-199">199</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">time_limit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">),</span> <span class="n">log_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
-<a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="w">    </span><span class="sd">"""Solve a QUBO instance to optimality (or time limit) using IBM CPLEX.</span>
-<a id="__codelineno-0-169" name="__codelineno-0-169"></a>
-<a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">        instance: The QUBO instance to solve.</span>
-<a id="__codelineno-0-172" name="__codelineno-0-172"></a><span class="sd">        time_limit: Wall-clock time limit for CPLEX in seconds. CPLEX returns</span>
-<a id="__codelineno-0-173" name="__codelineno-0-173"></a><span class="sd">            the best feasible solution found so far when the limit is</span>
-<a id="__codelineno-0-174" name="__codelineno-0-174"></a><span class="sd">            reached.</span>
-<a id="__codelineno-0-175" name="__codelineno-0-175"></a><span class="sd">        log_path: File path where CPLEX log output (progress, warnings,</span>
-<a id="__codelineno-0-176" name="__codelineno-0-176"></a><span class="sd">            errors) is written, opened in write mode (``"w"``), so any</span>
-<a id="__codelineno-0-177" name="__codelineno-0-177"></a><span class="sd">            existing file is overwritten. When empty (the default), logging</span>
-<a id="__codelineno-0-178" name="__codelineno-0-178"></a><span class="sd">            is suppressed and no file is created.</span>
-<a id="__codelineno-0-179" name="__codelineno-0-179"></a>
-<a id="__codelineno-0-180" name="__codelineno-0-180"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="sd">        A solution containing exactly one bitstring — the best (or</span>
-<a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="sd">            optimal) solution found by CPLEX.</span>
-<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">    """</span>
-<a id="__codelineno-0-184" name="__codelineno-0-184"></a>    <span class="c1"># If there are no variables, return an empty solution.</span>
-<a id="__codelineno-0-185" name="__codelineno-0-185"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">instance</span><span class="p">:</span>
-<a id="__codelineno-0-186" name="__codelineno-0-186"></a>        <span class="k">return</span> <span class="n">Solution</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-0-187" name="__codelineno-0-187"></a>
-<a id="__codelineno-0-188" name="__codelineno-0-188"></a>    <span class="c1"># Open a log file, or a no-op context manager if none was requested.</span>
-<a id="__codelineno-0-189" name="__codelineno-0-189"></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">if</span> <span class="n">log_path</span> <span class="k">else</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">nullcontext</span><span class="p">()</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
-<a id="__codelineno-0-190" name="__codelineno-0-190"></a>        <span class="n">problem</span> <span class="o">=</span> <span class="n">_to_cplex</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">log_file</span><span class="o">=</span><span class="n">log_file</span><span class="p">)</span>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a>        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">time_limit</span><span class="p">):</span>
-<a id="__codelineno-0-192" name="__codelineno-0-192"></a>            <span class="n">problem</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">timelimit</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">time_limit</span><span class="p">)</span>
-<a id="__codelineno-0-193" name="__codelineno-0-193"></a>
-<a id="__codelineno-0-194" name="__codelineno-0-194"></a>        <span class="n">problem</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
-<a id="__codelineno-0-195" name="__codelineno-0-195"></a>
-<a id="__codelineno-0-196" name="__codelineno-0-196"></a>        <span class="c1"># Retrieve solution.</span>
-<a id="__codelineno-0-197" name="__codelineno-0-197"></a>        <span class="n">solution</span> <span class="o">=</span> <span class="n">_to_solution</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">solution</span><span class="p">)</span>
-<a id="__codelineno-0-198" name="__codelineno-0-198"></a>
-<a id="__codelineno-0-199" name="__codelineno-0-199"></a>    <span class="k">return</span> <span class="n">solution</span>
+<span class="normal"><a href="#__codelineno-0-199">199</a></span>
+<span class="normal"><a href="#__codelineno-0-200">200</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">time_limit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">),</span> <span class="n">log_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<a id="__codelineno-0-169" name="__codelineno-0-169"></a><span class="w">    </span><span class="sd">"""Solve a QUBO instance to optimality (or time limit) using IBM CPLEX.</span>
+<a id="__codelineno-0-170" name="__codelineno-0-170"></a>
+<a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-172" name="__codelineno-0-172"></a><span class="sd">        instance: The QUBO instance to solve.</span>
+<a id="__codelineno-0-173" name="__codelineno-0-173"></a><span class="sd">        time_limit: Wall-clock time limit for CPLEX in seconds. CPLEX returns</span>
+<a id="__codelineno-0-174" name="__codelineno-0-174"></a><span class="sd">            the best feasible solution found so far when the limit is</span>
+<a id="__codelineno-0-175" name="__codelineno-0-175"></a><span class="sd">            reached.</span>
+<a id="__codelineno-0-176" name="__codelineno-0-176"></a><span class="sd">        log_path: File path where CPLEX log output (progress, warnings,</span>
+<a id="__codelineno-0-177" name="__codelineno-0-177"></a><span class="sd">            errors) is written, opened in write mode (``"w"``), so any</span>
+<a id="__codelineno-0-178" name="__codelineno-0-178"></a><span class="sd">            existing file is overwritten. When empty (the default), logging</span>
+<a id="__codelineno-0-179" name="__codelineno-0-179"></a><span class="sd">            is suppressed and no file is created.</span>
+<a id="__codelineno-0-180" name="__codelineno-0-180"></a>
+<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="sd">        A solution containing exactly one bitstring — the best (or</span>
+<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">            optimal) solution found by CPLEX.</span>
+<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="sd">    """</span>
+<a id="__codelineno-0-185" name="__codelineno-0-185"></a>    <span class="c1"># If there are no variables, return an empty solution.</span>
+<a id="__codelineno-0-186" name="__codelineno-0-186"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">instance</span><span class="p">:</span>
+<a id="__codelineno-0-187" name="__codelineno-0-187"></a>        <span class="k">return</span> <span class="n">Solution</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-0-188" name="__codelineno-0-188"></a>
+<a id="__codelineno-0-189" name="__codelineno-0-189"></a>    <span class="c1"># Open a log file, or a no-op context manager if none was requested.</span>
+<a id="__codelineno-0-190" name="__codelineno-0-190"></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">if</span> <span class="n">log_path</span> <span class="k">else</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">nullcontext</span><span class="p">()</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a>        <span class="n">problem</span> <span class="o">=</span> <span class="n">_to_cplex</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">log_file</span><span class="o">=</span><span class="n">log_file</span><span class="p">)</span>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a>        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">time_limit</span><span class="p">):</span>
+<a id="__codelineno-0-193" name="__codelineno-0-193"></a>            <span class="n">problem</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">timelimit</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">time_limit</span><span class="p">)</span>
+<a id="__codelineno-0-194" name="__codelineno-0-194"></a>
+<a id="__codelineno-0-195" name="__codelineno-0-195"></a>        <span class="n">problem</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a>        <span class="c1"># Retrieve solution.</span>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a>        <span class="n">solution</span> <span class="o">=</span> <span class="n">_to_solution</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">solution</span><span class="p">)</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a>    <span class="k">return</span> <span class="n">solution</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
