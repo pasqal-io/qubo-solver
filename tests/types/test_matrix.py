@@ -67,7 +67,7 @@ def test_tensor_creates_float_tensor_from_2d_list() -> None:
 def test_tensor_creates_tensor_from_empty_list() -> None:
     result = matrix.tensor([])
     check.equal(result.dtype, linalg.dtype())
-    check.equal(len(result), 0)
+    check.equal(result.shape, (0, 0))
 
 
 def test_tensor_creates_tensor_on_specified_device() -> None:

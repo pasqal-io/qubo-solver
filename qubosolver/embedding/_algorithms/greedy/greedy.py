@@ -565,7 +565,7 @@ class Greedy:
     # ----------------------------
     def launch_greedy(
         self,
-        Q: torch.Tensor,
+        Q: Matrix,
         *,
         max_min_dist_ratio: float,
         params: dict,

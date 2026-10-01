@@ -12,7 +12,7 @@ from contextlib import nullcontext
 from importlib.metadata import version
 from typing import IO, TYPE_CHECKING, TypeVar, overload
 
-from qubosolver.types._checks import _RUNTIME_TYPE_CHECKING
+from qubosolver._checks import _RUNTIME_TYPE_CHECKING
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +29,11 @@ _MAX_STRING_SIZE = 1 << 10
 if multibyte. Strings in these formats are type tags and version numbers, the
 longest around 50 bytes."""
 
-if TYPE_CHECKING:
+if TYPE_CHECKING or _RUNTIME_TYPE_CHECKING:
     from contextlib import AbstractContextManager
     from typing import Any, Literal
 
-    from typing_extensions import Buffer
+    from typing_extensions import Buffer  # deptry: ignore[DEP004]
 
 _T = TypeVar("_T", bytes, str)
 

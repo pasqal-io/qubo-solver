@@ -12,7 +12,7 @@ import os
 
 import torch
 
-from ._checks import TYPE_CHECKING
+from qubosolver._checks import TYPE_CHECKING
 
 _FLOAT_DTYPE_MAP: dict[str, torch.dtype] = {
     "float16": torch.float16,

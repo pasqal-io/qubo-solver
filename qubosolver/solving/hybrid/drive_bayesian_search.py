@@ -20,6 +20,7 @@ import qoolqit
 import torch
 from skopt import gp_minimize
 
+from qubosolver._checks import _RUNTIME_TYPE_CHECKING
 from qubosolver.drive_shaping._device_specs import (
     detuning_amplitude_ratio,
     max_virtual_amplitude,
@@ -34,6 +35,13 @@ from qubosolver.types import (
 
 if TYPE_CHECKING:
     from qubosolver import DriveShapingConfig
+elif _RUNTIME_TYPE_CHECKING:
+    from typing import TypeAliasType  # Runtime checks require Python >= 3.14.
+
+    import qubosolver
+
+    # Lazy absolute reference for beartype: importing `DriveShapingConfig` eagerly is circular.
+    DriveShapingConfig = TypeAliasType("DriveShapingConfig", "qubosolver.DriveShapingConfig")
 
 
 def _default_objective(solution: Solution) -> float:

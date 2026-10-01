@@ -18,9 +18,11 @@ For higher-rank variants see [`qubosolver.matrix`][qubosolver.matrix] (2-D squar
 from __future__ import annotations
 
 from dataclasses import field
-from typing import Any
+from typing import Any, overload
 
 import torch
+
+from qubosolver._checks import no_runtime_typecheck
 
 from . import linalg
 from .linalg import Vector
@@ -40,9 +42,17 @@ _dtype = dtype  # alias so shadowed `dtype` params can still call the module fun
 _device = device  # alias so shadowed `device` params can still call the module function
 
 
+@overload
+def zeros(n: int, *, dtype: None = None, device: torch.device | None = None) -> Vector: ...
+
+
+@overload
+def zeros(n: int, *, dtype: torch.dtype, device: torch.device | None = None) -> torch.Tensor: ...
+
+
 def zeros(
     n: int, *, dtype: torch.dtype | None = None, device: torch.device | None = None
-) -> Vector:
+) -> torch.Tensor:
     """Creates a zero-filled 1-D vector of length *n*.
 
     Args:
@@ -58,13 +68,33 @@ def zeros(
     return torch.zeros(n, dtype=dtype, device=device)
 
 
+@overload
 def tensor(
     data: Any,  # noqa: ANN401 (array-like input forwarded to torch.tensor)
     *,
-    dtype: torch.dtype | None = None,
+    dtype: None = None,
     device: torch.device | None = None,
     **kwargs: Any,  # noqa: ANN401 (forwarded to torch.tensor)
-) -> Vector:
+) -> Vector: ...
+
+
+@overload
+def tensor(
+    data: Any,  # noqa: ANN401 (array-like input forwarded to torch.tensor)
+    *,
+    dtype: torch.dtype,
+    device: torch.device | None = None,
+    **kwargs: Any,  # noqa: ANN401 (forwarded to torch.tensor)
+) -> torch.Tensor: ...
+
+
+def tensor(
+    data: Any,
+    *,
+    dtype: torch.dtype | None = None,
+    device: torch.device | None = None,
+    **kwargs: Any,
+) -> torch.Tensor:
     """Creates a 1-D vector tensor from the given data.
 
     Args:
@@ -99,6 +129,8 @@ def as_tensor(data: Any) -> Vector:  # noqa: ANN401 (array-like input forwarded 
     return torch.as_tensor(data, dtype=dtype(), device=device())
 
 
+# Returns a dataclass `Field`, typed as the tensor for static type checkers only.
+@no_runtime_typecheck
 def zeros_field(
     n: int, *, dtype: torch.dtype | None = None, device: torch.device | None = None
 ) -> Vector:

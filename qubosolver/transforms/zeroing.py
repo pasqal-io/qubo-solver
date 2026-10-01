@@ -29,7 +29,7 @@ import torch
 import qubosolver
 from qubosolver._io import utils as io_utils
 from qubosolver._io.utils import Stream
-from qubosolver.types import Matrix, Solution, Vectori, vector, vectori
+from qubosolver.types import Matrix, Solution, vector, vectori
 
 
 class Instance(qubosolver.Instance):
@@ -77,14 +77,14 @@ class Instance(qubosolver.Instance):
         return instance
 
     @property
-    def zeroed_edges(self) -> Vectori:
+    def zeroed_edges(self) -> torch.Tensor:
         """The zeroed interactions as an ``(N, 2)`` tensor of ``(i, j)`` index pairs.
 
         Each symmetric pair is reported once (``i < j``); ``N`` is the number of
         zeroed off-diagonal interactions.
         """
         upper = torch.triu(self.negative_matrix != 0, diagonal=1)
-        return vectori.as_tensor(upper.nonzero())
+        return upper.nonzero().to(dtype=vectori.dtype(), device=vectori.device())
 
 
 def apply(instance: qubosolver.Instance) -> Instance:

@@ -150,7 +150,7 @@ def _compute_negative_weight_metrics(
         "n_edges": len(edges),
         "neg_count_before": neg_count_before,
         "neg_count_after": neg_count_after,
-        "neg_count_reduction_pct": reduction_pct(neg_count_before, neg_count_after),
+        "neg_count_reduction_pct": reduction_pct(float(neg_count_before), float(neg_count_after)),
         "neg_weight_before": neg_weight_before,
         "neg_weight_after": neg_weight_after,
         "neg_weight_reduction_pct": reduction_pct(neg_weight_before, neg_weight_after),

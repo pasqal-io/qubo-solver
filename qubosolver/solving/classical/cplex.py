@@ -14,12 +14,13 @@ from __future__ import annotations
 
 import contextlib
 import math
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from qubosolver import Instance, Solution, bitstrings, vector, vectori
+from qubosolver._checks import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import cplex as CPLEX
+    import cplex
 
 
 def _import_cplex() -> Any:  # noqa: ANN401 (dynamically imported optional module)
@@ -41,7 +42,7 @@ def _import_cplex() -> Any:  # noqa: ANN401 (dynamically imported optional modul
 
 def _qubo_instance_to_sparsepairs(
     instance: Instance, *, tol: float = 1e-8
-) -> list[CPLEX.SparsePair]:
+) -> list[cplex.SparsePair]:
     r"""Convert an [`Instance`][] coefficient matrix to CPLEX sparse-pair format.
 
     CPLEX evaluates quadratic objectives as $\\frac{1}{2} x^T Q_{cplex} x$, so
@@ -67,7 +68,7 @@ def _qubo_instance_to_sparsepairs(
 
     size = instance.size
 
-    sparsepairs: list[CPLEX.SparsePair] = []
+    sparsepairs: list[cplex.SparsePair] = []
     matrix = instance.matrix.cpu().numpy()
 
     for i in range(size):
@@ -87,7 +88,7 @@ def _to_cplex(
     instance: Instance,
     *,
     log_file: Any = None,  # noqa: ANN401 (file-like object forwarded to CPLEX's log streams)
-) -> CPLEX.Cplex:
+) -> cplex.Cplex:
     """Build the minimal CPLEX problem representing a QUBO instance.
 
     Sets only what is needed to represent the QUBO instance as a CPLEX
@@ -108,7 +109,7 @@ def _to_cplex(
     cplex_module = _import_cplex()
 
     # Convert the coefficient matrix into CPLEX sparse pairs format using the conversion tool.
-    sparsepairs: list[CPLEX.SparsePair] = _qubo_instance_to_sparsepairs(instance)
+    sparsepairs: list[cplex.SparsePair] = _qubo_instance_to_sparsepairs(instance)
 
     problem = cplex_module.Cplex()
 
@@ -129,7 +130,7 @@ def _to_cplex(
     return problem
 
 
-def _to_solution(cplex_solution: CPLEX.SolutionInterface) -> Solution:
+def _to_solution(cplex_solution: cplex.SolutionInterface) -> Solution:
     """Extract a [`Solution`][] from a solved CPLEX solution interface.
 
     Args:

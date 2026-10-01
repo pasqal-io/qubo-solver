@@ -23,8 +23,15 @@ import qoolqit
 from qoolqit.embedding import Blade, BladeConfig
 
 from qubosolver import Instance, tensor
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver.embedding._algorithms.mds import embed_mds
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
+
+if TYPE_CHECKING:
+    # Resolves the `device: InitVar[Device | None]` field inherited from `BladeConfig`.
+    from dataclasses import InitVar  # noqa: F401 (only read by beartype)
+
+    from qoolqit import Device  # noqa: F401 (only read by beartype)
 
 logger = logging.getLogger(__name__)
 

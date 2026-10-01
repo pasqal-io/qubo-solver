@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 import pytest_check as check
+from beartype.roar import BeartypeCallHintParamViolation
 from pulser_simulation import QutipBackendV2
 from qoolqit import AnalogDeviceWithDMM
 
@@ -30,7 +31,7 @@ def test_default_config() -> None:
 def test_default_classical_config() -> None:
     default_classical = ClassicalSolvingConfig()
     check.equal(default_classical.algorithm, "tabu_search")
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError, BeartypeCallHintParamViolation)):
         ClassicalSolvingConfig(algorithm=1)  # type: ignore[arg-type]
 
 
@@ -40,7 +41,7 @@ def test_drive_shaping_config() -> None:
 
     check.equal(default_drive_shaping_config.bayesian_search_n_calls, 20)
 
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError, BeartypeCallHintParamViolation)):
         DriveShapingConfig(algorithm="dummy")  # type: ignore[arg-type]
 
     check.equal(
@@ -59,9 +60,9 @@ def test_embdedding_config() -> None:
     check.equal(default_embedding_config.greedy_layout_lattice, "triangular")
     check.equal(default_embedding_config.blade_steps_per_round, 200)
 
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError, BeartypeCallHintParamViolation)):
         EmbeddingConfig(algorithm="dummy")  # type: ignore[arg-type]
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError, BeartypeCallHintParamViolation)):
         EmbeddingConfig(greedy_layout_lattice="dummy")  # type: ignore[arg-type]
 
 

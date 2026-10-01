@@ -15,7 +15,7 @@ from dataclasses import dataclass
 
 import torch
 
-from ._checks import TYPE_CHECKING, debug_runtime_typecheck
+from qubosolver._checks import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -33,7 +33,6 @@ from .linalg import Bitstring, Bitstrings, Matrix, Vector, Vectori
 logger = logging.getLogger(__name__)
 
 
-@debug_runtime_typecheck
 @dataclass
 class Candidate:
     r"""A single candidate solution extracted from a [`Solution`][].
@@ -63,7 +62,6 @@ class Candidate:
         return bitstring.to_string(self.bitstring)
 
 
-@debug_runtime_typecheck
 @dataclass
 class Solution:
     r"""A collection of candidate solutions for a QUBO problem.

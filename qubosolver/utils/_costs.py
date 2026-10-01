@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 
-from qubosolver.types import Matrix, Tensor
+from qubosolver.types import Matrix, Tensor, Vector
 
 
 def quadratic_cost(x: torch.Tensor, Q: Matrix) -> float:
@@ -34,7 +34,7 @@ def quadratic_cost(x: torch.Tensor, Q: Matrix) -> float:
     return float(torch.linalg.multi_dot([x_, Q, x_]).item())
 
 
-def batched_quadratic_cost(x: Matrix, Q: Matrix) -> Matrix:
+def batched_quadratic_cost(x: Tensor, Q: Matrix) -> Vector:
     """Compute the quadratic cost for a batch of binary vectors under a QUBO matrix.
 
     The cost for each vector is defined as the quadratic form :math:`x_i^T Q x_i`.
@@ -45,7 +45,7 @@ def batched_quadratic_cost(x: Matrix, Q: Matrix) -> Matrix:
         Q: Symmetric QUBO coefficient matrix of shape ``(n, n)``.
 
     Returns:
-        Matrix: A 1-D tensor of shape ``(b,)`` containing one cost value per
+        Vector: A 1-D tensor of shape ``(b,)`` containing one cost value per
         input vector in the batch.
 
     Example:

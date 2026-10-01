@@ -24,7 +24,9 @@ from typing import Any
 
 import torch
 
-from . import linalg, vector
+from qubosolver._checks import no_runtime_typecheck
+
+from . import linalg
 from .linalg import Vectori
 
 
@@ -52,7 +54,7 @@ def zeros(n: int, *, device: torch.device | None = None) -> Vectori:
         A 1-D ``int64`` tensor of zeros.
     """
     device = device or _device()
-    return vector.zeros(n, dtype=dtype(), device=device)
+    return torch.zeros(n, dtype=dtype(), device=device)
 
 
 def tensor(
@@ -72,7 +74,7 @@ def tensor(
         A 1-D ``int64`` tensor.
     """
     device = device or _device()
-    return vector.tensor(data, dtype=dtype(), device=device, **kwargs)
+    return torch.tensor(data, dtype=dtype(), device=device, **kwargs)
 
 
 def as_tensor(data: Any) -> Vectori:  # noqa: ANN401 (array-like input forwarded to torch.as_tensor)
@@ -93,6 +95,8 @@ def as_tensor(data: Any) -> Vectori:  # noqa: ANN401 (array-like input forwarded
     return torch.as_tensor(data, dtype=dtype(), device=device())
 
 
+# Returns a dataclass `Field`, typed as the tensor for static type checkers only.
+@no_runtime_typecheck
 def zeros_field(n: int, *, device: torch.device | None = None) -> Vectori:
     """Creates a dataclass field defaulting to a zero-filled integer vector.
 

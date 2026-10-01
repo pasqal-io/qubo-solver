@@ -7,6 +7,7 @@ from typing import Literal
 import pytest
 import pytest_check as check
 import torch
+from beartype.roar import BeartypeCallHintParamViolation
 
 from qubosolver import (
     Instance,
@@ -114,7 +115,7 @@ def test_unknown_strategy_raises() -> None:
     solution = Solution(bitstrings.zeros(1, 2), counts=vectori.tensor([1]))
     solution._update(instance)
 
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError, BeartypeCallHintParamViolation)):
         solving.iterative_bitflip_local_search.solve(
             instance,
             starts=solution,

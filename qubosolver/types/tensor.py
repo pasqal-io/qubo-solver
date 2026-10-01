@@ -18,9 +18,11 @@ For rank-specific aliases see [`qubosolver.vector`][qubosolver.vector] (1-D) and
 from __future__ import annotations
 
 from dataclasses import field
-from typing import Any
+from typing import Any, overload
 
 import torch
+
+from qubosolver._checks import no_runtime_typecheck
 
 from . import linalg
 from .linalg import Tensor
@@ -40,12 +42,30 @@ _dtype = dtype  # alias so shadowed `dtype` params can still call the module fun
 _device = device  # alias so shadowed `device` params can still call the module function
 
 
+@overload
 def zeros(
     *args: Any,  # noqa: ANN401 (forwarded to torch.zeros)
-    dtype: torch.dtype | None = None,
+    dtype: None = None,
     device: torch.device | None = None,
     **kwargs: Any,  # noqa: ANN401 (forwarded to torch.zeros)
-) -> Tensor:
+) -> Tensor: ...
+
+
+@overload
+def zeros(
+    *args: Any,  # noqa: ANN401 (forwarded to torch.zeros)
+    dtype: torch.dtype,
+    device: torch.device | None = None,
+    **kwargs: Any,  # noqa: ANN401 (forwarded to torch.zeros)
+) -> torch.Tensor: ...
+
+
+def zeros(
+    *args: Any,
+    dtype: torch.dtype | None = None,
+    device: torch.device | None = None,
+    **kwargs: Any,
+) -> torch.Tensor:
     """Creates a zero-filled tensor with the given shape.
 
     Args:
@@ -62,13 +82,33 @@ def zeros(
     return torch.zeros(*args, dtype=dtype, device=device, **kwargs)
 
 
+@overload
 def tensor(
     data: Any,  # noqa: ANN401 (array-like input forwarded to torch.tensor)
     *,
-    dtype: torch.dtype | None = None,
+    dtype: None = None,
     device: torch.device | None = None,
     **kwargs: Any,  # noqa: ANN401 (forwarded to torch.tensor)
-) -> Tensor:
+) -> Tensor: ...
+
+
+@overload
+def tensor(
+    data: Any,  # noqa: ANN401 (array-like input forwarded to torch.tensor)
+    *,
+    dtype: torch.dtype,
+    device: torch.device | None = None,
+    **kwargs: Any,  # noqa: ANN401 (forwarded to torch.tensor)
+) -> torch.Tensor: ...
+
+
+def tensor(
+    data: Any,
+    *,
+    dtype: torch.dtype | None = None,
+    device: torch.device | None = None,
+    **kwargs: Any,
+) -> torch.Tensor:
     """Creates a tensor from the given data.
 
     Args:
@@ -103,6 +143,8 @@ def as_tensor(data: Any) -> Tensor:  # noqa: ANN401 (array-like input forwarded 
     return torch.as_tensor(data, dtype=dtype(), device=device())
 
 
+# Returns a dataclass `Field`, typed as the tensor for static type checkers only.
+@no_runtime_typecheck
 def zeros_field(
     *args: Any,  # noqa: ANN401 (forwarded to torch.zeros)
     dtype: torch.dtype | None = None,

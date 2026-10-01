@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import pytest_check as check
 import qoolqit
@@ -159,18 +159,21 @@ def test_max_min_distance_ratio_from_device_specs() -> None:
 
 
 def test_max_min_distance_ratio_is_infinite_without_min_distance() -> None:
-    device = SimpleNamespace(specs={"min_distance": None, "max_radial_distance": 7.6})
+    device = MagicMock(spec=qoolqit.Device)
+    device.specs = {"min_distance": None, "max_radial_distance": 7.6}
 
-    check.equal(_max_min_distance_ratio(device), float("inf"))  # type: ignore[arg-type]
+    check.equal(_max_min_distance_ratio(device), float("inf"))
 
 
 def test_max_min_distance_ratio_is_infinite_without_max_radial_distance() -> None:
-    device = SimpleNamespace(specs={"min_distance": 1.0, "max_radial_distance": None})
+    device = MagicMock(spec=qoolqit.Device)
+    device.specs = {"min_distance": 1.0, "max_radial_distance": None}
 
-    check.equal(_max_min_distance_ratio(device), float("inf"))  # type: ignore[arg-type]
+    check.equal(_max_min_distance_ratio(device), float("inf"))
 
 
 def test_max_min_distance_ratio_is_infinite_when_min_distance_is_zero() -> None:
-    device = SimpleNamespace(specs={"min_distance": 0.0, "max_radial_distance": 7.6})
+    device = MagicMock(spec=qoolqit.Device)
+    device.specs = {"min_distance": 0.0, "max_radial_distance": 7.6}
 
-    check.equal(_max_min_distance_ratio(device), float("inf"))  # type: ignore[arg-type]
+    check.equal(_max_min_distance_ratio(device), float("inf"))
