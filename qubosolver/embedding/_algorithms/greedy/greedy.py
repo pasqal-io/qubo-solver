@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import contextlib
-import copy
-import typing
+import math
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import torch
 
-from qubosolver import Matrix, Tensor, matrix, tensor
+from qubosolver import Matrix, Tensor, Vector, Vectori, matrix, tensor, vector, vectori
+from qubosolver.types.linalg import Tensord
 
 from .layout import get_layout
 
@@ -23,7 +23,29 @@ except Exception:  # pragma: no cover
     _VIZ_OK = False
 
 
-@typing.no_type_check
+def _mismatch_terms(deviations: Tensor, p: Literal[1, 2], dim: int) -> Tensord:
+    """Reduce pair *deviations* into their additive contribution to `‖U - Q‖_p`.
+
+    The 1-norm sums absolute deviations, the 2-norm sums squared ones.
+
+    Args:
+        deviations: Pairwise `Q[i, j] - U[p, q]` deviations.
+        p: Order of the norm being minimized, 1 or 2.
+        dim: Dimension to reduce over.
+
+    Returns:
+        The reduced contributions, accumulated in float64 so that they do not
+        depend on the summation order.
+    """
+    terms = deviations.abs() if p == 1 else deviations.square()
+    return terms.sum(dim=dim, dtype=torch.float64)
+
+
+def _mismatch_norm(total: float, p: Literal[1, 2]) -> float:
+    """Turn a total accumulated by `_mismatch_terms` back into `‖U - Q‖_p`."""
+    return total if p == 1 else math.sqrt(total)
+
+
 class Greedy:
     """Greedy embedding on a fixed lattice (triangular or square).
 
@@ -36,15 +58,10 @@ class Greedy:
       - post-run animation when params["animation"] or params["draw_steps"] is True
     """
 
-    def __init__(self) -> None:
-        """Initialize the per-instance coordinate <-> trap index maps."""
-        self.MAPPING_COORDS_POSITIONS: dict = {}
-        self.MAPPING_POSITIONS_COORDS: dict = {}
-
     # ----------------------------
     # Layout utilities
     # ----------------------------
-    def get_predefined_coordinates(self, params: dict) -> Tensor:
+    def _get_predefined_coordinates(self, params: dict) -> Tensor:
         """Build the initial lattice of trap coordinates.
 
         Expected `params` keys:
@@ -56,108 +73,92 @@ class Greedy:
         n_traps: int = params["traps"]
         spacing: float = params["spacing"]
 
-        coords = spacing * get_layout(layout_type=type_layout, n_traps=n_traps)
-
-        # build fast maps coord <-> trap index
-        self.MAPPING_COORDS_POSITIONS.clear()
-        self.MAPPING_POSITIONS_COORDS.clear()
-        for i, coord in enumerate(coords.tolist()):
-            self.MAPPING_COORDS_POSITIONS[tuple(coord)] = i
-            self.MAPPING_POSITIONS_COORDS[i] = coord
-
-        return coords
+        return spacing * get_layout(layout_type=type_layout, n_traps=n_traps)
 
     # ----------------------------
-    # Precompute mismatch tensor
+    # Interaction matrix
     # ----------------------------
-    def precompute_coefficients(self, Q: Matrix, coordinates: Tensor) -> Tensor:
-        """Precompute Z[i,j,p,q] = | Q[i,j] - U[p,q] |.
+    def _interaction_matrix(self, coordinates: Tensor) -> Matrix:
+        """Interaction between traps, U[p, q] = 1 / ||r_p - r_q|| ** 6.
 
-        U[p,q] is the physical interaction between traps p and q (1 / r^6).
+        The diagonal is left at zero: a trap holds at most one node, so a node
+        is never compared against itself. Masking it out also leaves the whole
+        matrix at zero when there are fewer than two traps, with no pair to
+        divide a distance by.
         """
-        n_nodes = Q.shape[0]
         n_traps = len(coordinates)
-
-        # Physical interaction matrix U on traps
         U = matrix.zeros(n_traps)
-        for p in range(n_traps):
-            for q in range(p + 1, n_traps):
-                U[p, q] = 1 / torch.norm(coordinates[p] - coordinates[q]) ** 6
-                U[q, p] = U[p, q]
-
-        # Z: node-node vs trap-trap mismatch
-        Z = tensor.zeros((n_nodes, n_nodes, n_traps, n_traps))
-        p_idx, q_idx = torch.triu_indices(n_traps, n_traps, offset=1)
-        # broadcast Q to all trap pairs, compare to U[p,q]
-        diffs = torch.abs(Q[:, :, None].detach().clone() - U[p_idx, q_idx])
-        Z[:, :, p_idx, q_idx] = diffs
-        Z[:, :, q_idx, p_idx] = diffs
-
-        return Z
+        distances = torch.cdist(
+            coordinates, coordinates, compute_mode="donot_use_mm_for_euclid_dist"
+        )
+        off_diagonal = ~torch.eye(n_traps, dtype=torch.bool, device=U.device)
+        U[off_diagonal] = 1.0 / distances[off_diagonal] ** 6
+        return U
 
     # ----------------------------
     # Next node heuristic
     # ----------------------------
-    def get_best(self, Q: torch.Tensor, positioned: set, all_vertices: set) -> int:
-        """Pick the next logical node: the one with the largest total coupling to positioned.
+    def _get_best(self, couplings: Vector, placed: torch.Tensor) -> int:
+        """Pick the next logical node: the unplaced one most coupled to the placed set.
 
-        The coupling is computed against the already-positioned set.
+        Args:
+            couplings: `couplings[i] = sum of Q[i, j] over the placed nodes j`,
+                maintained incrementally by the caller.
+            placed: Boolean mask of the already-placed nodes.
+
+        Returns:
+            The index of the chosen node. Ties go to the lowest index.
         """
-        all_vertices = all_vertices.difference(positioned)
-        node_contributes: list[tuple[int, float]] = []
-        for u in all_vertices:
-            s: float = 0.0
-            for j in positioned:
-                s += float(Q[u, j].item())
-            node_contributes.append((u, s))
-        u = max(node_contributes, key=lambda x: x[1])[0]
-        return u
+        return int(torch.argmax(couplings.masked_fill(placed, -torch.inf)))
 
     # ----------------------------
     # Best trap for a node
     # ----------------------------
-    def optimize_position(
+    def _optimize_position(
         self,
-        Z: torch.Tensor,
+        U: Matrix,
+        Q: Matrix,
         u: int,
-        positioned: set,
-        positioned_coords: dict,
-        all_traps: set,
-        used_traps: set,
+        placed_nodes: Vectori,
+        placed_traps: Vectori,
+        available_traps: Vectori,
+        p: Literal[1, 2] = 1,
         return_candidates: bool = False,
-    ) -> tuple[Any, Any, Any, list[tuple[int, float]]]:
-        """Evaluate all available traps p for node u and pick the one that minimizes s(p).
+    ) -> tuple[int, float, list[tuple[int, float]]]:
+        """Evaluate every free trap t for node u and pick the one that minimizes s(t).
 
-            s(p) = sum_{j in positioned} Z[u, j, p, trap(j)].
+            s(t) = sum_{j placed} | Q[u, j] - U[t, trap(j)] |^p.
 
-        Returns (choice_p, choice_coordinates, min_val)
-        or, if return_candidates=True:
-                (choice_p, choice_coordinates, min_val, candidates)
-            where candidates = [(trap_index, incremental_mismatch), ...]
+        Args:
+            U: Trap-trap interaction matrix.
+            Q: Logical QUBO matrix.
+            u: Node to place.
+            placed_nodes: Indices of the already-placed nodes.
+            placed_traps: `placed_traps[k]` is the trap holding `placed_nodes[k]`.
+            available_traps: Indices of the free traps, in ascending order.
+            p: Order of the norm being minimized, 1 or 2.
+            return_candidates: Also report the score of every free trap.
+
+        Returns:
+            `(choice_p, min_val, candidates)`, where `candidates` is
+            `[(trap_index, incremental_mismatch), ...]` when *return_candidates*
+            is set and empty otherwise. Ties go to the lowest trap index.
         """
-        available_traps = all_traps.difference(used_traps)
+        # (n_available, n_placed) block of deviations, reduced over the placed nodes.
+        u_couplings = Q[u].index_select(0, placed_nodes)
+        trap_couplings = U.index_select(0, available_traps).index_select(1, placed_traps)
+        scores = _mismatch_terms(u_couplings - trap_couplings, p=p, dim=1)
 
-        i = u
-        choice_p: int = -1
-        choice_coordinates: tuple = (None, None)
-        min_val: float = float("inf")
-        candidates: list[tuple[int, float]] = []
+        best = int(torch.argmin(scores))
+        choice_p = int(available_traps[best])
+        min_val = float(scores[best])
 
-        for p in available_traps:
-            s = 0.0
-            for j in positioned:
-                q = self.MAPPING_COORDS_POSITIONS[positioned_coords[j]]
-                s += Z[i, j, p, q].item()
-
-            if return_candidates:
-                candidates.append((p, float(s)))
-
-            if s < min_val:
-                min_val = float(s)
-                choice_coordinates = tuple(self.MAPPING_POSITIONS_COORDS[p])
-                choice_p = p
-
-        return choice_p, choice_coordinates, min_val, candidates
+        candidates = (
+            list(zip(available_traps.tolist(), scores.tolist(), strict=True))
+            if return_candidates
+            else []
+        )
+        return choice_p, min_val, candidates
 
     @staticmethod
     def _emit_step(
@@ -173,158 +174,126 @@ class Greedy:
     # ----------------------------
     # Main greedy pass for one start node
     # ----------------------------
-    def greedy_algorithm(
+    def _greedy_algorithm(
         self,
-        Z: torch.Tensor,
-        Q: torch.Tensor,
+        U: Matrix,
+        Q: Matrix,
         coords: Tensor,
         v: int,
         results: dict,
         params: dict,
         on_step: Callable[[dict[str, Any]], None] | None = None,
         max_radial_distance: float = torch.inf,
+        p: Literal[1, 2] = 1,
     ) -> dict:
         """Greedy loop starting from node v.
 
         If `on_step` is provided, emit a state snapshot after each placement (and an initial
         snapshot).
         """
-        nodes = list(range(Q.shape[0]))
-
-        vertices = set(nodes)
+        n_nodes: int = Q.shape[0]
         n_traps: int = len(coords)
-        all_traps = set(range(n_traps))
+        n_extra_traps: int = max(n_traps - n_nodes, 0)
 
-        n: int = len(Q)
-        n_extra_traps: int = 0
-        init_coord: tuple = (0, 0)
-        positioned: set = set([v])
-        positioned_coords: dict = {v: init_coord}
-        used_coords: set = set([init_coord])
-        used_traps: set = set([self.MAPPING_COORDS_POSITIONS[init_coord]])
+        # Placement state, in placement order: only the first `n_placed` entries
+        # of `placed_nodes` / `placed_traps` are meaningful.
+        placed_nodes: Vectori = vectori.zeros(n_nodes)
+        placed_traps: Vectori = vectori.zeros(n_nodes)
+        n_placed: int = 0
+        placed_mask = torch.zeros(n_nodes, dtype=torch.bool, device=tensor.device())
+        free_traps = torch.ones(n_traps, dtype=torch.bool, device=tensor.device())
+        # couplings[i] = sum of Q[i, j] over the placed nodes j, kept incrementally
+        couplings: Vector = vector.zeros(n_nodes)
 
-        if n_traps > n:
-            n_extra_traps = n_traps - n
-
-        # helpers for instrumentation
-        def _trap_of_from_coords() -> dict[int, int]:  # pragma: no cover
-            out: dict[int, int] = {}
-            for node_id, coord in positioned_coords.items():
-                out[node_id] = int(self.MAPPING_COORDS_POSITIONS[coord])
-            return out
+        def _place(node: int, trap: int) -> None:
+            nonlocal n_placed
+            placed_nodes[n_placed] = node
+            placed_traps[n_placed] = trap
+            n_placed += 1
+            placed_mask[node] = True
+            free_traps[trap] = False
+            couplings.add_(Q[:, node])
 
         step_id = 0
         total_mismatch = 0.0
 
-        # initial snapshot (optional)
-        self._emit_step(
-            on_step,
-            step=step_id,
-            picked_node=int(v),
-            picked_trap=int(self.MAPPING_COORDS_POSITIONS.get(init_coord, -1)),
-            placed_nodes=list(positioned),
-            used_traps=list(used_traps),
-            inc_mismatch=0.0,
-            total_mismatch=0.0,
-            per_trap_candidates=[],
-            positioned_coords=positioned_coords.copy(),
-            trap_of=_trap_of_from_coords(),
-        )
+        def _snapshot(  # pragma: no cover
+            node: int, trap: int, inc_mismatch: float, candidates: list[tuple[int, float]]
+        ) -> dict[str, Any]:
+            """Build the instrumentation payload for the current state."""
+            nodes_so_far = placed_nodes[:n_placed].tolist()
+            traps_so_far = placed_traps[:n_placed].tolist()
+            return {
+                "step": step_id,
+                "picked_node": int(node),
+                "picked_trap": int(trap),
+                "placed_nodes": nodes_so_far,
+                "used_traps": torch.nonzero(~free_traps).squeeze(1).tolist(),
+                "inc_mismatch": float(inc_mismatch),
+                "total_mismatch": float(total_mismatch),
+                "per_trap_candidates": candidates,
+                "positioned_coords": {
+                    node_id: tuple(coords[trap_id].tolist())
+                    for node_id, trap_id in zip(nodes_so_far, traps_so_far, strict=True)
+                },
+                "trap_of": dict(zip(nodes_so_far, traps_so_far, strict=True)),
+            }
 
-        while len(positioned) < len(nodes):
-            u = self.get_best(Q, positioned, copy.deepcopy(vertices))
+        # the start node goes to the trap closest to the origin
+        origin_trap = int(torch.argmin(coords.square().sum(dim=1)))
+        _place(v, origin_trap)
+        if on_step is not None:  # pragma: no cover
+            self._emit_step(on_step, **_snapshot(v, origin_trap, 0.0, []))
 
-            # If visualization is enabled, ask for candidates too
-            want_candidates = bool(params.get("draw_steps", False) or (on_step is not None))
-            _, u_coordinates, _, candidates = self.optimize_position(
-                Z=Z,
-                u=u,
-                positioned=positioned,
-                positioned_coords=positioned_coords,
-                all_traps=copy.deepcopy(all_traps),
-                used_traps=used_traps,
+        # If visualization is enabled, ask for the per-trap scores too
+        want_candidates = bool(params.get("draw_steps", False) or (on_step is not None))
+
+        while n_placed < n_nodes:
+            u = self._get_best(couplings, placed_mask)
+            available_traps = torch.nonzero(free_traps).squeeze(1)
+            trap, inc_val, candidates = self._optimize_position(
+                U,
+                Q,
+                u,
+                placed_nodes[:n_placed],
+                placed_traps[:n_placed],
+                available_traps,
+                p,
                 return_candidates=want_candidates,
             )
             candidates.sort(key=lambda t: t[1])  # ascending by mismatch
 
-            distance = torch.tensor(u_coordinates).norm().item()
-
             # check whether trap coordinate is within the maximal radial distance
-            if distance >= max_radial_distance:
+            if float(coords[trap].norm()) >= max_radial_distance:
                 if n_extra_traps == 0:
                     raise ValueError(
                         f"no traps found to place qubit '{u}' "
                         f"within {max_radial_distance} of origin."
                     )
 
-                used_coords.add(u_coordinates)
-                used_traps.add(self.MAPPING_COORDS_POSITIONS[u_coordinates])
+                free_traps[trap] = False
                 n_extra_traps -= 1
-                # snapshot of the skip (optional)
-                self._emit_step(
-                    on_step,
-                    step=step_id,
-                    picked_node=int(u),
-                    picked_trap=int(self.MAPPING_COORDS_POSITIONS[u_coordinates]),
-                    placed_nodes=list(positioned),
-                    used_traps=list(used_traps),
-                    inc_mismatch=0.0,
-                    total_mismatch=float(total_mismatch),
-                    per_trap_candidates=candidates,
-                    positioned_coords=positioned_coords.copy(),
-                    trap_of=_trap_of_from_coords(),
-                )
+                if on_step is not None:  # pragma: no cover
+                    self._emit_step(on_step, **_snapshot(u, trap, 0.0, candidates))
                 continue
 
-            # commit placement
-            positioned_coords[u] = u_coordinates
-            positioned.add(u)
-            used_coords.add(u_coordinates)
-            used_traps.add(self.MAPPING_COORDS_POSITIONS[u_coordinates])
-
-            # incremental mismatch (recompute from Z for clarity)
-            inc_val = 0.0
-            for j in positioned:
-                if j == u:
-                    continue
-                q = self.MAPPING_COORDS_POSITIONS[positioned_coords[j]]
-                p = self.MAPPING_COORDS_POSITIONS[u_coordinates]
-                inc_val += float(Z[u, j, p, q])
-
-            total_mismatch += float(inc_val)
+            # commit placement; the winning score is exactly the incremental mismatch
+            _place(u, trap)
+            total_mismatch += inc_val
             step_id += 1
-
-            # emit snapshot
-            self._emit_step(
-                on_step,
-                step=step_id,
-                picked_node=int(u),
-                picked_trap=int(self.MAPPING_COORDS_POSITIONS[u_coordinates]),
-                placed_nodes=list(positioned),
-                used_traps=list(used_traps),
-                inc_mismatch=float(inc_val),
-                total_mismatch=float(total_mismatch),
-                per_trap_candidates=candidates,
-                positioned_coords=positioned_coords.copy(),
-                trap_of=_trap_of_from_coords(),
-            )
+            if on_step is not None:  # pragma: no cover
+                self._emit_step(on_step, **_snapshot(u, trap, inc_val, candidates))
 
         # finalize coordinates tensor
-        final_coords = torch.zeros((Q.shape[0], 2), dtype=torch.float32)
-        for v2, coord in positioned_coords.items():
-            final_coords[v2, 0] = coord[0]
-            final_coords[v2, 1] = coord[1]
+        final_coords = tensor.zeros((n_nodes, 2))
+        final_coords[placed_nodes] = coords[placed_traps]
 
-        positioned_coords.clear()
-        positioned.clear()
-        used_coords.clear()
-        used_traps.clear()
-
-        # compute final total distance (as in original code)
-        n_qubits = Q.shape[0]
-        iu, ju = torch.triu_indices(n_qubits, n_qubits, offset=1)
-        uij = 1 / torch.cdist(final_coords, final_coords)[iu, ju] ** 6
-        diff = torch.abs(Q[iu, ju] - uij).sum()
+        iu, ju = torch.triu_indices(n_nodes, n_nodes, offset=1)
+        distances = torch.cdist(
+            final_coords, final_coords, compute_mode="donot_use_mm_for_euclid_dist"
+        )
+        uij = 1 / distances[iu, ju] ** 6
+        diff = _mismatch_norm(float(_mismatch_terms(Q[iu, ju] - uij, p=p, dim=0)), p=p)
 
         results[v] = {"coords": final_coords, "distance": diff}
         return results
@@ -619,12 +588,12 @@ class Greedy:
         if n_traps < n_nodes:
             raise ValueError(f"Not enough traps ({n_traps}) to position {n_nodes} nodes.")
 
-        coordinates = self.get_predefined_coordinates(params)
-        predefined_coordinates = coordinates.detach().clone()
-
-        Z = self.precompute_coefficients(Q, predefined_coordinates)
-        nodes = list(range(n_nodes))
+        coordinates = self._get_predefined_coordinates(params)
+        U = self._interaction_matrix(coordinates)
         max_radial_distance = max_min_dist_ratio * float(params["spacing"])
+        p = params.get("p", 1)
+        if p not in (1, 2):
+            raise ValueError(f"Only the 1-norm and 2-norm are supported, got p={p}.")
 
         results: dict = {}
 
@@ -650,16 +619,17 @@ class Greedy:
         else:
             cb = None
 
-        for node in nodes:
-            self.greedy_algorithm(
-                Z,
+        for node in range(n_nodes):
+            self._greedy_algorithm(
+                U,
                 Q,
-                coords=predefined_coordinates,
+                coords=coordinates,
                 v=node,
                 results=results,
                 params=params,
                 on_step=cb,
                 max_radial_distance=max_radial_distance,
+                p=p,
             )
 
         best_result = min(results.items(), key=lambda x: x[1]["distance"])
@@ -668,11 +638,9 @@ class Greedy:
         # Post-run animation if requested
         if anim_flag and frames and _VIZ_OK:  # pragma: no cover
             # Rebuild full lattice coords to show ALL traps (including extras)
-            all_coords_t = self.get_predefined_coordinates(params)
-            if hasattr(all_coords_t, "numpy"):
-                all_coords_np = all_coords_t.numpy()
-            else:
-                all_coords_np = np.array(all_coords_t)
+            all_coords_np = (
+                coordinates.numpy() if hasattr(coordinates, "numpy") else np.array(coordinates)
+            )
             self._render_animation(
                 frames=frames,
                 all_coords_np=all_coords_np,

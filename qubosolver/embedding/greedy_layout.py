@@ -58,12 +58,17 @@ class Config:
         lattice: Lattice pattern (square or triangular).
         max_min_dist_ratio: Maximum allowed ratio between the largest and
             the smallest inter-atom distance in the resulting register.
+        p: Order of the norm minimized when making the QUBO coefficients
+            approach the physical interactions through `‖U - Q‖_p`. `p = 1` sums
+            absolute deviations and spreads the error evenly; `p = 2`
+            penalizes large individual errors more. Defaults to 1.
     """
 
     traps: int = 200
     max_min_dist_ratio: float = float("inf")
     max_possible_term: tuple[Literal["quantile", "factor"], float] | float = ("quantile", 0.95)
     lattice: Lattice = Lattice.TRIANGULAR
+    p: Literal[1, 2] = 1
 
     def __post_init__(self) -> None:
         """Initialize the private animation-related attributes."""
@@ -293,6 +298,7 @@ def embed(
         "layout": config.lattice,
         "traps": config.traps,
         "spacing": spacing,
+        "p": config.p,
         # animation controls (all read by Greedy)
         "draw_steps": config._draw_steps,  # collect per-step data
         "animation": config._draw_steps,  # render animation after run
