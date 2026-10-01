@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from qubosolver.embedding import blade, greedy_layout
-from qubosolver.embedding.enums import Lattice, Norm
+from qubosolver.embedding.enums import Lattice
 
 __all__ = [
     "Lattice",
-    "Norm",
     "blade",
     "greedy_layout",
 ]

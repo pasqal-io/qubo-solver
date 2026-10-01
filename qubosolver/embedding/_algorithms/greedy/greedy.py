@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import contextlib
 import math
-import typing
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import torch
 
 from qubosolver import Matrix, Tensor, Vector, Vectori, matrix, tensor, vector, vectori
-from qubosolver.embedding.enums import Norm
+from qubosolver.types.linalg import Tensord
 
 from .layout import get_layout
 
@@ -24,30 +23,29 @@ except Exception:  # pragma: no cover
     _VIZ_OK = False
 
 
-def _mismatch_terms(deviations: Tensor, norm: Norm, dim: int) -> Tensor:
-    """Reduce pair *deviations* into their additive contribution to `‖U - Q‖`.
+def _mismatch_terms(deviations: Tensor, p: Literal[1, 2], dim: int) -> Tensord:
+    """Reduce pair *deviations* into their additive contribution to `‖U - Q‖_p`.
 
-    L1 sums absolute deviations, L2 sums squared ones.
+    The 1-norm sums absolute deviations, the 2-norm sums squared ones.
 
     Args:
         deviations: Pairwise `Q[i, j] - U[p, q]` deviations.
-        norm: Norm being minimized.
+        p: Order of the norm being minimized, 1 or 2.
         dim: Dimension to reduce over.
 
     Returns:
-        The reduced contributions, in float64 so that they do not depend on the
-        summation order.
+        The reduced contributions, accumulated in float64 so that they do not
+        depend on the summation order.
     """
-    terms = deviations.abs() if norm is Norm.L1 else deviations.square()
+    terms = deviations.abs() if p == 1 else deviations.square()
     return terms.sum(dim=dim, dtype=torch.float64)
 
 
-def _mismatch_norm(total: float, norm: Norm) -> float:
-    """Turn a total accumulated by `_mismatch_terms` back into `‖U - Q‖`."""
-    return total if norm is Norm.L1 else math.sqrt(total)
+def _mismatch_norm(total: float, p: Literal[1, 2]) -> float:
+    """Turn a total accumulated by `_mismatch_terms` back into `‖U - Q‖_p`."""
+    return total if p == 1 else math.sqrt(total)
 
 
-@typing.no_type_check
 class Greedy:
     """Greedy embedding on a fixed lattice (triangular or square).
 
@@ -90,7 +88,9 @@ class Greedy:
         """
         n_traps = len(coordinates)
         U = matrix.zeros(n_traps)
-        distances = (coordinates[:, None, :] - coordinates[None, :, :]).norm(dim=-1)
+        distances = torch.cdist(
+            coordinates, coordinates, compute_mode="donot_use_mm_for_euclid_dist"
+        )
         off_diagonal = ~torch.eye(n_traps, dtype=torch.bool, device=U.device)
         U[off_diagonal] = 1.0 / distances[off_diagonal] ** 6
         return U
@@ -98,7 +98,7 @@ class Greedy:
     # ----------------------------
     # Next node heuristic
     # ----------------------------
-    def _get_best(self, couplings: Vector, placed: Tensor) -> int:
+    def _get_best(self, couplings: Vector, placed: torch.Tensor) -> int:
         """Pick the next logical node: the unplaced one most coupled to the placed set.
 
         Args:
@@ -122,12 +122,12 @@ class Greedy:
         placed_nodes: Vectori,
         placed_traps: Vectori,
         available_traps: Vectori,
-        norm: Norm = Norm.L1,
+        p: Literal[1, 2] = 1,
         return_candidates: bool = False,
     ) -> tuple[int, float, list[tuple[int, float]]]:
-        """Evaluate every free trap p for node u and pick the one that minimizes s(p).
+        """Evaluate every free trap t for node u and pick the one that minimizes s(t).
 
-            s(p) = sum_{j placed} | Q[u, j] - U[p, trap(j)] |.
+            s(t) = sum_{j placed} | Q[u, j] - U[t, trap(j)] |^p.
 
         Args:
             U: Trap-trap interaction matrix.
@@ -136,7 +136,7 @@ class Greedy:
             placed_nodes: Indices of the already-placed nodes.
             placed_traps: `placed_traps[k]` is the trap holding `placed_nodes[k]`.
             available_traps: Indices of the free traps, in ascending order.
-            norm: Norm being minimized.
+            p: Order of the norm being minimized, 1 or 2.
             return_candidates: Also report the score of every free trap.
 
         Returns:
@@ -147,7 +147,7 @@ class Greedy:
         # (n_available, n_placed) block of deviations, reduced over the placed nodes.
         u_couplings = Q[u].index_select(0, placed_nodes)
         trap_couplings = U.index_select(0, available_traps).index_select(1, placed_traps)
-        scores = _mismatch_terms(u_couplings - trap_couplings, norm=norm, dim=1)
+        scores = _mismatch_terms(u_couplings - trap_couplings, p=p, dim=1)
 
         best = int(torch.argmin(scores))
         choice_p = int(available_traps[best])
@@ -184,7 +184,7 @@ class Greedy:
         params: dict,
         on_step: Callable[[dict[str, Any]], None] | None = None,
         max_radial_distance: float = torch.inf,
-        norm: Norm = Norm.L1,
+        p: Literal[1, 2] = 1,
     ) -> dict:
         """Greedy loop starting from node v.
 
@@ -251,46 +251,49 @@ class Greedy:
         while n_placed < n_nodes:
             u = self._get_best(couplings, placed_mask)
             available_traps = torch.nonzero(free_traps).squeeze(1)
-            p, inc_val, candidates = self._optimize_position(
+            trap, inc_val, candidates = self._optimize_position(
                 U,
                 Q,
                 u,
                 placed_nodes[:n_placed],
                 placed_traps[:n_placed],
                 available_traps,
-                norm,
+                p,
                 return_candidates=want_candidates,
             )
             candidates.sort(key=lambda t: t[1])  # ascending by mismatch
 
             # check whether trap coordinate is within the maximal radial distance
-            if float(coords[p].norm()) >= max_radial_distance:
+            if float(coords[trap].norm()) >= max_radial_distance:
                 if n_extra_traps == 0:
                     raise ValueError(
                         f"no traps found to place qubit '{u}' "
                         f"within {max_radial_distance} of origin."
                     )
 
-                free_traps[p] = False
+                free_traps[trap] = False
                 n_extra_traps -= 1
                 if on_step is not None:  # pragma: no cover
-                    self._emit_step(on_step, **_snapshot(u, p, 0.0, candidates))
+                    self._emit_step(on_step, **_snapshot(u, trap, 0.0, candidates))
                 continue
 
             # commit placement; the winning score is exactly the incremental mismatch
-            _place(u, p)
+            _place(u, trap)
             total_mismatch += inc_val
             step_id += 1
             if on_step is not None:  # pragma: no cover
-                self._emit_step(on_step, **_snapshot(u, p, inc_val, candidates))
+                self._emit_step(on_step, **_snapshot(u, trap, inc_val, candidates))
 
         # finalize coordinates tensor
-        final_coords = torch.zeros((n_nodes, 2), dtype=torch.float32)
-        final_coords[placed_nodes] = coords[placed_traps].to(final_coords.dtype)
+        final_coords = tensor.zeros((n_nodes, 2))
+        final_coords[placed_nodes] = coords[placed_traps]
 
         iu, ju = torch.triu_indices(n_nodes, n_nodes, offset=1)
-        uij = 1 / torch.cdist(final_coords, final_coords)[iu, ju] ** 6
-        diff = _mismatch_norm(float(_mismatch_terms(Q[iu, ju] - uij, norm, dim=0)), norm)
+        distances = torch.cdist(
+            final_coords, final_coords, compute_mode="donot_use_mm_for_euclid_dist"
+        )
+        uij = 1 / distances[iu, ju] ** 6
+        diff = _mismatch_norm(float(_mismatch_terms(Q[iu, ju] - uij, p=p, dim=0)), p=p)
 
         results[v] = {"coords": final_coords, "distance": diff}
         return results
@@ -588,7 +591,9 @@ class Greedy:
         coordinates = self._get_predefined_coordinates(params)
         U = self._interaction_matrix(coordinates)
         max_radial_distance = max_min_dist_ratio * float(params["spacing"])
-        norm = Norm(params.get("norm", Norm.L1))
+        p = params.get("p", 1)
+        if p not in (1, 2):
+            raise ValueError(f"Only the 1-norm and 2-norm are supported, got p={p}.")
 
         results: dict = {}
 
@@ -624,7 +629,7 @@ class Greedy:
                 params=params,
                 on_step=cb,
                 max_radial_distance=max_radial_distance,
-                norm=norm,
+                p=p,
             )
 
         best_result = min(results.items(), key=lambda x: x[1]["distance"])
