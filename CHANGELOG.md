@@ -10,6 +10,54 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-05
+
+This release is a major refactoring towards v1.0 and contains many breaking API changes.
+
+### Added
+- Add `extract_qubo` to reconstruct a QUBO from a register and a drive. ([#225](https://github.com/pasqal-io/qubo-solver/pull/225))
+- Handle negative off-diagonal QUBO coefficients through GLPK-based bit-flip preprocessing, with a zeroing fallback. ([#229](https://github.com/pasqal-io/qubo-solver/pull/229), [#238](https://github.com/pasqal-io/qubo-solver/pull/238))
+- Add the Local-Energy-Scale drive shaper (`DriveType.LOCAL_ENERGY_SCALE`). ([#258](https://github.com/pasqal-io/qubo-solver/pull/258))
+- Add first-improvement and greedy-sweep strategies to the bit-flip post-processing local search, and a time budget shared across the batch. ([#259](https://github.com/pasqal-io/qubo-solver/pull/259), [#277](https://github.com/pasqal-io/qubo-solver/pull/277))
+- Report per-bitstring visit counts in simulated annealing solutions. ([#253](https://github.com/pasqal-io/qubo-solver/pull/253))
+- Add `Solution.check_consistency()` to validate solutions. ([#240](https://github.com/pasqal-io/qubo-solver/pull/240))
+- Add a `("quantile", q)` option for the greedy layout `max_possible_term`, and start BLaDE from a multi-dimensional scaling (MDS) of the QUBO. ([#315](https://github.com/pasqal-io/qubo-solver/pull/315))
+- Add an L2 norm option (`p=2`) to the greedy layout embedding cost function. ([#317](https://github.com/pasqal-io/qubo-solver/pull/317))
+- Support Python 3.13 and 3.14. ([#279](https://github.com/pasqal-io/qubo-solver/pull/279))
+
+### Changed
+- Restructure the `qubosolver` package and overhaul the documentation. ([#220](https://github.com/pasqal-io/qubo-solver/pull/220), [#279](https://github.com/pasqal-io/qubo-solver/pull/279))
+- Make embedding and drive shaping adimensional, so the register and the drive share a single unit system. ([#223](https://github.com/pasqal-io/qubo-solver/pull/223))
+- Rename algorithms, config fields and types to more meaningful names (e.g. `HeuristicDriveShaper` → `ProportionalDiagonalDriveShaper`, `OptimizedDriveShaper` → `BayesianSearchDriveShaper`, `SingleSolution` → `Candidate`). ([#249](https://github.com/pasqal-io/qubo-solver/pull/249), [#279](https://github.com/pasqal-io/qubo-solver/pull/279))
+- Simplify `SolverConfig`: drop rarely-used tunables, add a single `ClassicalConfig.time_limit`, enable preprocessing and post-processing by default, and use the local-energy-scale drive shaper by default. ([#310](https://github.com/pasqal-io/qubo-solver/pull/310))
+- Make BLaDE the default embedding algorithm, and tune the BLaDE and greedy layout defaults. ([#293](https://github.com/pasqal-io/qubo-solver/pull/293), [#315](https://github.com/pasqal-io/qubo-solver/pull/315))
+- Speed up the greedy layout embedding and drastically reduce its memory usage. ([#317](https://github.com/pasqal-io/qubo-solver/pull/317))
+- Speed up simulated annealing and tabu search with incremental cost tracking. ([#275](https://github.com/pasqal-io/qubo-solver/pull/275), [#276](https://github.com/pasqal-io/qubo-solver/pull/276))
+- Make `cplex` an optional dependency, installable with `qubo-solver[extras]`. ([#286](https://github.com/pasqal-io/qubo-solver/pull/286))
+- Declare missing runtime dependencies (`scipy`, `pasqal-cloud`, `pulser`, `emu-mps`, `emu-sv`) and move dev/doc dependencies to dependency groups. ([#280](https://github.com/pasqal-io/qubo-solver/pull/280))
+- Require `qoolqit>=1.4.0`. ([#245](https://github.com/pasqal-io/qubo-solver/pull/245), [#279](https://github.com/pasqal-io/qubo-solver/pull/279))
+
+### Removed
+- Remove the ability to select the decomposition solver directly from `Solver`/`SolverConfig`. ([#301](https://github.com/pasqal-io/qubo-solver/pull/301))
+- Remove the `energy_tol` parameter of simulated annealing. ([#253](https://github.com/pasqal-io/qubo-solver/pull/253))
+
+### Fixed
+- Fix bitstring/cost mispairing in simulated annealing. ([#231](https://github.com/pasqal-io/qubo-solver/pull/231))
+- Use a different start for each independent tabu search run. ([#233](https://github.com/pasqal-io/qubo-solver/pull/233))
+- Round CPLEX bitstrings instead of truncating them. ([#240](https://github.com/pasqal-io/qubo-solver/pull/240))
+- Handle empty, single-variable and zero-variable (e.g. after preprocessing) instances across the solvers. ([#247](https://github.com/pasqal-io/qubo-solver/pull/247), [#303](https://github.com/pasqal-io/qubo-solver/pull/303), [#314](https://github.com/pasqal-io/qubo-solver/pull/314))
+- Fix runtime type checks (`QUBO_SOLVER_RUNTIME_CHECKS=1`), which were not applied to the whole package. ([#318](https://github.com/pasqal-io/qubo-solver/pull/318))
+
+## [0.8.2] - 2026-08-20
+
+### Fixed
+- Republish of 0.8.1: the previous release failed to publish to PyPI due to a metadata-version validation error in the publish workflow. No package changes since 0.8.1. ([#267](https://github.com/pasqal-io/qubo-solver/pull/267))
+
+## [0.8.1] - 2026-08-19
+
+### Fixed
+- Clamp `qoolqit`, `pulser`, `pulser-pasqal`, `emu-base`, `emu-sv`, and `emu-mps` upper bounds: newer releases of these packages break `qubo-solver` 0.8.0, and the incompatibility will only be fixed in v1. ([#263](https://github.com/pasqal-io/qubo-solver/pull/263))
+
 ## [0.8.0] - 2026-06-29
 
 ### Added
@@ -86,7 +134,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove references to D-Wave ([#118](https://github.com/pasqal-io/qubo-solver/pull/118))
 
 
-[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.2...v0.9.0
+[0.8.2]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.1...v0.8.2
+[0.8.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.7.0...v0.7.1
