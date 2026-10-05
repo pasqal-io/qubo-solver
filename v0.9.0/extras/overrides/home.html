@@ -1,0 +1,37 @@
+<!-- Custom HTML site displayed as the Home chapter -->
+
+{% extends "main.html" %}
+{% block tabs %}
+{{ super() }}
+
+<link rel="css" type="text/css" href="./extras/css/home.css" />
+
+<!-- Main site Entry button descriptions -->
+<section class="hero-container">
+    <div class="md-grid md-typeset">
+        <div class="hero-section">
+            <div class="logo-container">
+                <div class="logo-image">
+                    <img src="extras/assets/logo/qubosolver_logo_white.svg" draggable="false">
+                </div>
+            </div>
+            <div class="button-container">
+                <a href="{{ page.next_page.url | url }}" class="md-button md-button--primary">
+                    Get started
+                </a>
+                <a href="{{ config.repo_url }}" class="md-button">
+                    Go to GitHub
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block content %}
+    {{ page.content }}
+{% endblock %}
+{% block footer %}
+    {{ super() }}
+{% endblock %}

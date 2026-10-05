@@ -1,0 +1,42 @@
+<svg viewBox="0 0 950 245" xmlns="http://www.w3.org/2000/svg" style="max-width: 700px; width: 100%; font-family: var(--md-text-font, sans-serif);">
+  <defs>
+    <marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5f6368"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="#5f6368" stroke-width="2.5">
+    <path d="M140,120 L195,80" marker-end="url(#arrow2)"/>
+    <path d="M140,160 L195,200" marker-end="url(#arrow2)"/>
+    <path d="M335,80 L390,120" marker-end="url(#arrow2)"/>
+    <path d="M335,200 L390,160" marker-end="url(#arrow2)"/>
+  </g>
+  <path d="M540,115 L540,72" fill="none" stroke="#5f6368" stroke-width="2.5" marker-end="url(#arrow2)"/>
+  <path d="M620,72 L620,115" fill="none" stroke="#5f6368" stroke-width="2.5" marker-end="url(#arrow2)"/>
+  <path d="M655,45 L667,45 L667,80" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-dasharray="6,5"/>
+  <path d="M667,115 L667,80 L860,80" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-dasharray="6,5"/>
+  <path d="M860,80 L860,115" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-dasharray="6,5" marker-end="url(#arrow2)"/>
+  <g font-size="15" fill="#5f6368">
+    <text x="120" y="90" text-anchor="middle">embedding</text>
+    <text x="120" y="190" text-anchor="middle">drive-shaping</text>
+    <text x="355" y="145" text-anchor="middle">compile</text>
+    <text x="580" y="100" text-anchor="middle" font-size="13">run</text>
+    <text x="763" y="72" text-anchor="middle" font-size="13">async fetch</text>
+  </g>
+  <g font-size="17" text-anchor="middle">
+    <rect x="10" y="115" width="130" height="50" rx="8" fill="#e8f0fe" stroke="#4285f4" stroke-width="1.5"/>
+    <text x="75" y="146" fill="#1a1a1a">Instance</text>
+    <rect x="200" y="40" width="135" height="50" rx="8" fill="#f3e8fd" stroke="#8e44ec" stroke-width="1.5"/>
+    <text x="267" y="71" fill="#1a1a1a">Register</text>
+    <rect x="200" y="190" width="135" height="50" rx="8" fill="#f3e8fd" stroke="#8e44ec" stroke-width="1.5"/>
+    <text x="267" y="221" fill="#1a1a1a">Drive</text>
+    <rect x="395" y="115" width="170" height="50" rx="8" fill="#f3e8fd" stroke="#8e44ec" stroke-width="1.5"/>
+    <text x="480" y="146" fill="#1a1a1a">QuantumProgram</text>
+    <rect x="505" y="8" width="150" height="64" rx="8" fill="#e8f0fe" stroke="#4285f4" stroke-width="1.5"/>
+    <text x="580" y="34" fill="#1a1a1a">Backend</text>
+    <text x="580" y="56" fill="#1a1a1a" font-size="14">(QPU or Emulator)</text>
+    <rect x="595" y="115" width="145" height="50" rx="8" fill="#f3e8fd" stroke="#8e44ec" stroke-width="1.5"/>
+    <text x="667" y="146" fill="#1a1a1a">Job</text>
+    <rect x="790" y="115" width="140" height="50" rx="8" fill="#fce8e6" stroke="#ea4335" stroke-width="1.5"/>
+    <text x="860" y="146" fill="#1a1a1a">Solution</text>
+  </g>
+</svg>
