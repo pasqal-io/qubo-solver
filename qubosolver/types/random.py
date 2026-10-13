@@ -17,12 +17,14 @@ def torch_rng(seed: int | None = None) -> torch.Generator:
 
     Args:
         seed: Optional seed for reproducibility. If ``None``, the generator
-            is left with its default (non-deterministic) state.
+            is seeded from a non-deterministic source (a fresh
+            `torch.Generator` otherwise always starts from the same fixed seed).
 
     Returns:
         A `torch.Generator` instance, optionally seeded.
     """
     generator = torch.Generator(linalg.device())
     if seed is None:
+        generator.seed()
         return generator
     return generator.manual_seed(seed)
