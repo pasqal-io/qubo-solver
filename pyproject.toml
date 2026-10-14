@@ -75,13 +75,10 @@ dev = [
   "tqdm",
   "mypy",
   "jaxtyping",
-  "beartype",
+  "beartype>=0.23",
   "typing_extensions",
   "bandit[sarif,toml]>=1.9.4",
   "deptry",
-  { include-group = "prek" },
-]
-prek = [
   "prek",
 ]
 doc = [

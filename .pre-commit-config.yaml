@@ -29,16 +29,18 @@ repos:
         args: [-c, pyproject.toml]
         additional_dependencies: ["bandit[toml]"]
 
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 7ff8d35ae36a7d2b968f2f90b4c723e292e594ee # frozen: v2.3.1
+# Runs mypy from the project venv (`uv run`), so it checks against the real
+# dependencies and needs no separate hook environment.
+-   repo: local
     hooks:
       - &mypy_base
         id: mypy
         name: mypy (float32)
+        entry: uv run mypy
+        language: system
+        types_or: [python, pyi]
         exclude: examples|docs
-        additional_dependencies:
-          - "qoolqit[extras]>=1.4.0" # The version in pyproject.toml must match
-          - "jaxtyping"
+        require_serial: true
         args: [--always-false=_USE_DOUBLE_PRECISION, --cache-dir=.mypy_cache_f32]
 
       - <<: *mypy_base

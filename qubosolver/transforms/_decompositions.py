@@ -22,7 +22,6 @@ import torch
 
 from qubosolver import Bitstring, Matrix, Solution, bitstring, matrix, torch_rng, vectori
 from qubosolver import Instance as QUBOInstanceBase
-from qubosolver.solver.config.config import _DecompositionConfig
 
 from ._algorithms.decompose import (
     VertexToPlace,
@@ -59,20 +58,6 @@ class Config:
     decompose_threshold: float = 250
     decompose_break_placement: int = 3
     max_min_dist_ratio: float = float("inf")
-
-    @staticmethod
-    def _from_decomposition_config(
-        config: _DecompositionConfig, *, max_min_dist_ratio: float
-    ) -> Config:
-        """Create a :class:`Config` from a user-facing :class:`_DecompositionConfig`."""
-        return Config(
-            neglecting_inter_distance=config.neglecting_inter_distance,
-            neglecting_max_coefficient=config.neglecting_max_coefficient,
-            decompose_stop_number=config.decompose_stop_number,
-            decompose_threshold=config.decompose_threshold,
-            decompose_break_placement=config.decompose_break_placement,
-            max_min_dist_ratio=max_min_dist_ratio,
-        )
 
 
 class Instance(QUBOInstanceBase):

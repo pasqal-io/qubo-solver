@@ -19,9 +19,13 @@ from qubosolver._checks import _RUNTIME_TYPE_CHECKING  # noqa: E402
 
 if _RUNTIME_TYPE_CHECKING:
     from beartype import BeartypeConf  # deptry: ignore[DEP004]
-    from beartype.claw import beartype_this_package  # deptry: ignore[DEP004]
+    from beartype.claw import (  # deptry: ignore[DEP004]
+        beartype_this_package,
+        warn_if_beartype_claw_inactive,
+    )
 
     beartype_this_package(conf=BeartypeConf(warning_cls_on_decorator_exception=None))
+    warn_if_beartype_claw_inactive()
 
 # isort: split
 # qubosolver.types must be imported (and fully initialized) before qubosolver.drive_shaping,

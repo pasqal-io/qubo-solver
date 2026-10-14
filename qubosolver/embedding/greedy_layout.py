@@ -11,28 +11,17 @@ from __future__ import annotations
 import logging
 import pathlib
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import numpy as np
 import qoolqit
 
 from qubosolver import Instance, tensor
-from qubosolver._checks import _RUNTIME_TYPE_CHECKING
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from qubosolver.utils.quantum import _max_min_distance_ratio
 
 from ._algorithms import greedy
 from .enums import Lattice
-
-if TYPE_CHECKING:
-    from qubosolver import EmbeddingConfig
-elif _RUNTIME_TYPE_CHECKING:
-    from typing import TypeAliasType  # Runtime checks require Python >= 3.14.
-
-    import qubosolver
-
-    # Lazy absolute reference for beartype: importing `EmbeddingConfig` eagerly is circular.
-    EmbeddingConfig = TypeAliasType("EmbeddingConfig", "qubosolver.EmbeddingConfig")
 
 logger = logging.getLogger(__name__)
 
@@ -100,35 +89,6 @@ class Config:
             traps=_number_of_traps_from_device(device),
             max_min_dist_ratio=_max_min_distance_ratio(device),
         )
-
-    @staticmethod
-    def _from_embedding_config(config: EmbeddingConfig, device: qoolqit.Device) -> Config:
-        """Create a [`Config`][] from a user-facing [`EmbeddingConfig`][].
-
-        Maps the ``greedy_*`` fields of *config* onto the corresponding
-        `Config` attributes.
-
-        Args:
-            config: The embedding configuration to convert.
-            device: Target quantum device.
-
-        Returns:
-            A configuration fully populated from the ``greedy_*`` embedding settings of *config*.
-        """
-        cfg = Config.from_device(device)
-
-        match config.greedy_layout_lattice:
-            case "triangular":
-                cfg.lattice = Lattice.TRIANGULAR
-            case "square":
-                cfg.lattice = Lattice.SQUARE
-            case _:
-                raise ValueError(
-                    f"Unknown lattice type: {config.greedy_layout_lattice!r}. "
-                    f"Expected 'triangular' or 'square'."
-                )
-
-        return cfg
 
 
 def _resolve_max_possible_term(
