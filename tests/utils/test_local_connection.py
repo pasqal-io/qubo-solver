@@ -196,6 +196,7 @@ def test_runs_through_remote_emulator(num_shots: int) -> None:
     check.equal(sum(counts.values()), num_shots)
 
 
+@pytest.mark.duration(9)
 def test_end_to_end() -> None:
 
     Q = matrix.tensor(

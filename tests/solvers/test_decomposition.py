@@ -39,7 +39,7 @@ def manual_seed(seed: int) -> torch.Generator:
     return torch_rng(seed)
 
 
-@pytest.mark.priority(120)
+@pytest.mark.duration(120)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("use_quantum", [True, False], ids=["quantum", "classical"])
 def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) -> None:
@@ -157,7 +157,7 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
     assert len(current_vertices_dict) < size
 
 
-@pytest.mark.priority(120)
+@pytest.mark.duration(120)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("use_quantum", [True, False], ids=["quantum", "classical"])
 def test_decomp_solver(decomposable_qubo: Instance, use_quantum: bool) -> None:

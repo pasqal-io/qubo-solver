@@ -14,7 +14,7 @@ from qubosolver import (
 )
 
 
-@pytest.mark.priority(40)
+@pytest.mark.duration(40)
 @pytest.mark.parametrize("embedding_method", ["greedy_layout", "blade"])
 def test_embeddings_different_devices(
     qubo_for_testing_many_devices: Instance,

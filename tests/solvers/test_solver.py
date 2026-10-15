@@ -52,6 +52,7 @@ def test_implicit_solver_config(
     assert isinstance(implicit_default_qubo_solver_config._solver, _QuboSolverQuantum)
 
 
+@pytest.mark.duration(21)
 def test_different_shots(simple_qubo_instance: Instance) -> None:
     from pulser_simulation import QutipBackendV2
 
@@ -82,7 +83,7 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
     assert solutions.counts.sum() == 100
 
 
-@pytest.mark.priority(40)
+@pytest.mark.duration(40)
 @pytest.mark.flaky(reruns=5)
 def test_run_local_backends(simple_qubo_instance: Instance, local_backend: LocalEmulator) -> None:
     from pulser_simulation import QutipBackendV2
@@ -111,7 +112,7 @@ def test_run_local_backends(simple_qubo_instance: Instance, local_backend: Local
     assert solutions.costs.min().item() <= -3.0
 
 
-@pytest.mark.priority(150)
+@pytest.mark.duration(150)
 def test_solver_different_devices(
     request: pytest.FixtureRequest,
     qubo_for_testing_many_devices: Instance,
@@ -235,6 +236,7 @@ def trivial_triangular_qubo(connection: RemoteConnection | None = None) -> Solve
     return solver
 
 
+@pytest.mark.duration(25)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("wait", [True, False], ids=["wait", "dont_wait"])
 def test_submit_integration(make_mock_connection: type[MockConnection], wait: bool) -> None:
@@ -289,6 +291,7 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
     torch.testing.assert_close(solution_remote.counts, solution.counts)
 
 
+@pytest.mark.duration(19)
 def test_respects_total_bottom_detuning(caplog: pytest.LogCaptureFixture) -> None:
     n = 6
     Q = matrix.zeros(n)
@@ -327,6 +330,7 @@ def _triangular_register_qubo() -> Instance:
     return Instance(matrix.as_tensor(np.asarray(qubo, dtype=float)))
 
 
+@pytest.mark.duration(24)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("algorithm", ["greedy_layout", "blade"])
 def test_quantum_matches_classical_triangular(algorithm: _EmbeddingAlgorithm) -> None:

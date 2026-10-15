@@ -98,6 +98,7 @@ def test_time_limit_returns_best_so_far_without_enumerating_all() -> None:
         check.is_true(torch.isfinite(torch.tensor(instance.cost(b))))
 
 
+@pytest.mark.duration(4)
 def test_large_instance_with_no_time_limit_logs_warning(
     caplog: pytest.LogCaptureFixture,
 ) -> None:

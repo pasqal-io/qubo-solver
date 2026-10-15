@@ -28,23 +28,26 @@ from qubosolver import (
 )
 
 
+SLOW_THRESHOLD_S = 15
+
+
+@pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """Reorder collected pytest items so higher-priority tests run first.
+    """Order collected tests longest-first and tag them `fast` or `slow`.
 
-        This hook is called by pytest after test collection and before execution.
-        It sorts the collected `items` list in-place by the numeric value of the
-        closest `priority` marker attached to each test.
+    This hook is called by pytest after test collection and before execution.
 
-        Marker convention:
-                @pytest.mark.priority(<int>)
+    Marker convention:
+        @pytest.mark.duration(<seconds>)
 
-        Behavior:
-        - Tests with a larger priority value are executed earlier (descending order).
-        - Tests without a `priority` marker are treated as priority 0.
-
-    Example (prioritizing long tests using estimated duration in seconds):
-                Use the test's expected runtime (in seconds) as the `priority` value so
-                long-running tests start earlier and overall wall-clock time is reduced.
+    Behavior:
+    - Tests are sorted in-place by their expected runtime, longest first, so
+      long-running tests start earlier and overall wall-clock time is reduced.
+    - Tests without a `duration` marker are treated as duration 0.
+    - Tests with duration >= `SLOW_THRESHOLD_S` get the `slow` marker, the
+      others get `fast`, so `pytest -m fast` / `pytest -m slow` select them.
+      Do not apply `fast` / `slow` manually; set `duration` instead.
+    - Runs `tryfirst` so the markers exist before pytest's `-m` deselection.
 
     Args:
         items (list[pytest.Item]):
@@ -52,11 +55,13 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             mutated in-place.
     """
 
-    def priority(item: pytest.Item) -> int:
-        marker = item.get_closest_marker("priority")
+    def duration(item: pytest.Item) -> int:
+        marker = item.get_closest_marker("duration")
         return int(marker.args[0]) if marker else 0
 
-    items.sort(key=priority, reverse=True)
+    items.sort(key=duration, reverse=True)
+    for item in items:
+        item.add_marker(pytest.mark.slow if duration(item) >= SLOW_THRESHOLD_S else pytest.mark.fast)
 
     # QUBOSOLVER_WITHOUT_EXTRAS explicitly declares that extras (e.g. cplex) are
     # not installed, so extras-marked tests are skipped rather than failing.
