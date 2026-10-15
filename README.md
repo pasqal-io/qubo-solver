@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./docs/extras/assets/logo/qubosolver_logo_white.svg" width="60%">
-    <source media="(prefers-color-scheme: light)" srcset="./docs/extras/assets/logo/qubosolver_logo_darkgreen.svg" width="60%">
-    <img alt="Qubo Solver logo" src="./docs/extras/assets/logo/qubosolver_logo_darkgreen.svg" width="60%">
+    <source media="(prefers-color-scheme: dark)" srcset="https://pasqal-io.github.io/qubo-solver/latest/extras/assets/logo/qubosolver_logo_white.svg" width="60%">
+    <source media="(prefers-color-scheme: light)" srcset="https://pasqal-io.github.io/qubo-solver/latest/extras/assets/logo/qubosolver_logo_darkgreen.svg" width="60%">
+    <img alt="Qubo Solver logo" src="https://pasqal-io.github.io/qubo-solver/latest/extras/assets/logo/qubosolver_logo_darkgreen.svg" width="60%">
   </picture>
 </p>
 
