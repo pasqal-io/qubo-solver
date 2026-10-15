@@ -27,7 +27,6 @@ from qubosolver import (
     vectori,
 )
 
-
 SLOW_THRESHOLD_S = 15
 
 
@@ -61,7 +60,9 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 
     items.sort(key=duration, reverse=True)
     for item in items:
-        item.add_marker(pytest.mark.slow if duration(item) >= SLOW_THRESHOLD_S else pytest.mark.fast)
+        item.add_marker(
+            pytest.mark.slow if duration(item) >= SLOW_THRESHOLD_S else pytest.mark.fast
+        )
 
     # QUBOSOLVER_WITHOUT_EXTRAS explicitly declares that extras (e.g. cplex) are
     # not installed, so extras-marked tests are skipped rather than failing.
