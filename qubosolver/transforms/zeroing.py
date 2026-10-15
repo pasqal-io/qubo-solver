@@ -29,7 +29,7 @@ import torch
 import qubosolver
 from qubosolver._io import utils as io_utils
 from qubosolver._io.utils import Stream
-from qubosolver.types import Matrix, Solution, vector, vectori
+from qubosolver.types import Matrix, Solution, vectori
 
 
 class Instance(qubosolver.Instance):
@@ -119,27 +119,27 @@ def lift(zeroed_solution: Solution, zeroed_instance: Instance) -> Solution:
     """Map a solution of the zeroed QUBO back onto the pre-zeroing problem.
 
     Zeroing only drops coefficients; it does not rename or remove variables, so
-    the bitstrings are carried over unchanged.  Costs are recomputed against the
+    the bitstrings themselves are kept.  Costs are recomputed against the
     pre-zeroing matrix (``_parent_instance``) so they reflect the true, non-
-    approximated objective rather than the zeroed one.  When nothing was zeroed,
-    returns a deep copy of `zeroed_solution` unchanged.
+    approximated objective rather than the zeroed one, and the candidates are
+    re-sorted by that cost, since the order on the zeroed matrix may differ.
+    When nothing was zeroed, returns a deep copy of `zeroed_solution` unchanged.
 
     Args:
         zeroed_solution: Solution obtained on the zeroed QUBO.
         zeroed_instance: The zeroed instance produced by [`apply`][].
 
     Returns:
-        A new solution with costs evaluated against the pre-zeroing matrix.
+        A new solution with costs evaluated against the pre-zeroing matrix,
+            sorted by ascending cost.
     """
     if not zeroed_instance.zeroed_edges.numel():
         return copy.deepcopy(zeroed_solution)
 
     solution = Solution()
     solution.bitstrings = zeroed_solution.bitstrings
-    solution.costs = vector.tensor(
-        [zeroed_instance._parent_instance.cost(b) for b in solution.bitstrings]
-    )
     solution.counts = zeroed_solution.counts
     solution.probabilities = zeroed_solution.probabilities
+    solution._compute_costs(zeroed_instance._parent_instance.matrix)._sort_by_cost()
 
     return solution

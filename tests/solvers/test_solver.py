@@ -35,7 +35,7 @@ from qubosolver import (
 )
 from qubosolver.solver.config.embedding import _EmbeddingAlgorithm
 from qubosolver.solver.solver import _QuboSolverQuantum
-from qubosolver.utils import analysis
+from qubosolver.utils import _random, analysis
 
 
 @pytest.fixture
@@ -83,7 +83,7 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
 
 
 @pytest.mark.priority(40)
-@pytest.mark.flaky(max_runs=5)
+@pytest.mark.flaky(reruns=5)
 def test_run_local_backends(simple_qubo_instance: Instance, local_backend: LocalEmulator) -> None:
     from pulser_simulation import QutipBackendV2
 
@@ -312,10 +312,10 @@ def test_respects_total_bottom_detuning(caplog: pytest.LogCaptureFixture) -> Non
     check.is_true(solution)
 
 
-def _triangular_register_qubo() -> np.ndarray:
+def _triangular_register_qubo() -> Instance:
     data_graph = DataGraph.triangular(4, 4, 1)
-    np.random.seed(0)
-    removed = np.random.choice(
+    rng = np.random.default_rng(0)
+    removed = rng.choice(
         data_graph.number_of_nodes(), data_graph.number_of_nodes() - 8, replace=False
     )
     data_graph.remove_nodes_from(removed)
@@ -324,14 +324,14 @@ def _triangular_register_qubo() -> np.ndarray:
     with np.errstate(divide="ignore"):
         qubo = 1.0 / dist_matrix**6
     np.fill_diagonal(qubo, -0.5)
-    return np.asarray(qubo, dtype=float)
+    return Instance(matrix.as_tensor(np.asarray(qubo, dtype=float)))
 
 
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("algorithm", ["greedy_layout", "blade"])
 def test_quantum_matches_classical_triangular(algorithm: _EmbeddingAlgorithm) -> None:
-    qubo = _triangular_register_qubo()
-    instance = Instance(matrix.tensor(qubo))
+    _random.manual_seed(25)
+    instance = _triangular_register_qubo()
 
     quantum_config = SolverConfig(
         solving=QuantumSolvingConfig(
@@ -342,22 +342,28 @@ def test_quantum_matches_classical_triangular(algorithm: _EmbeddingAlgorithm) ->
         postprocessing=False,
     )
     quantum_solution = Solver(instance, quantum_config).solve()
-    quantum_solution._sort_by_cost()
 
     classical_config = SolverConfig(
         solving=ClassicalSolvingConfig(max_bitstrings=4),
     )
     classical_solution = Solver(instance, classical_config).solve()
-    classical_solution._sort_by_cost()
 
     check.almost_equal(
-        quantum_solution.costs[0].item(),
-        classical_solution.costs[0].item(),
-        abs=1e-4,
+        quantum_solution[0].cost,
+        classical_solution[0].cost,
     )
 
-    assert quantum_solution.probabilities is not None
-    check.greater_equal(quantum_solution.probabilities[0], 0.1)
+    classical_solution.check_consistency(instance=instance, throw=True)
+    quantum_solution.check_consistency(instance=instance, throw=True)
+
+    check.greater_equal(quantum_solution[0].probability, 0.1)
+
+    print()
+    print(
+        analysis.to_dataframe(
+            [classical_solution, quantum_solution], labels=["classical", "quantum"]
+        )
+    )
 
 
 def test_quantum_solver_skips_pipeline_when_preprocessing_fixes_every_variable(
@@ -386,4 +392,4 @@ def test_quantum_solver_skips_pipeline_when_preprocessing_fixes_every_variable(
     assert len(solution) == 1
     check.equal(len(solution[0].string), instance.size)
     check.almost_equal(solution[0].cost, -5.0)
-    check.is_true(solution.check_consistency(instance=instance, throw=True))
+    solution.check_consistency(instance=instance, throw=True)

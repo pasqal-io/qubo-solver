@@ -238,8 +238,6 @@ class _QuboSolverQuantum(BaseSolver):
         solution = self._post_process_fixation(solution)
         solution = self._post_process(solution)
 
-        solution._update(self.instance)
-
         return solution
 
 
@@ -380,9 +378,6 @@ class _DecomposeQuboSolver(BaseSolver):
             A [`Solution`][qubosolver.Solution] containing exactly one
                 bitstring — the merged result of all subproblem solutions.
         """
-        # Create a local Generator that inherits whatever seeding you did via
-        # torch.manual_seed(...) (copies the current global RNG state).
-        rng = torch_rng().set_state(torch.get_rng_state())
         self.number_iterations = 0
         assert self.instance.size  # nosec B101
         if self.instance.size <= self.decomposition_config.decompose_stop_number:
@@ -406,6 +401,7 @@ class _DecomposeQuboSolver(BaseSolver):
             decomposed_qubo = _decompositions.Instance(self.instance, config=config)
             solution = Solution()
 
+            rng = torch_rng("global")
             while len(decomposed_qubo._vertices_to_place) > config.decompose_stop_number:
                 subqubo = _decompositions.extract_subqubo(decomposed_qubo, config, rng=rng)
 
@@ -417,7 +413,7 @@ class _DecomposeQuboSolver(BaseSolver):
 
                 # only one bitstring is kept as per design choice of the
                 # decomposition algorithm
-                subsolution = subsolver.solve()._compute_costs(subqubo.matrix)._sort_by_cost()
+                subsolution = subsolver.solve()._update(subqubo)
                 solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)
 
             # classical resolution of last matrix
@@ -432,7 +428,7 @@ class _DecomposeQuboSolver(BaseSolver):
                     subqubo,
                     SolverConfig(solving=ClassicalSolvingConfig()),
                 )
-                subsolution = lastsolver.solve()._compute_costs(subqubo.matrix)._sort_by_cost()
+                subsolution = lastsolver.solve()._update(subqubo)
                 solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)
 
             self._decomposition = decomposed_qubo._decomposition

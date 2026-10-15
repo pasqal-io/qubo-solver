@@ -133,6 +133,23 @@ def test_lift_keeps_bitstrings_and_recomputes_costs_against_pre_zeroing() -> Non
         check.almost_equal(sol.cost, expected_cost)
 
 
+def test_lift_sorts_by_pre_zeroing_cost() -> None:
+    instance = non_bipartisable_negative_qubo()
+    zeroed = transforms.zeroing.apply(instance)
+
+    # Sorted against the zeroed matrix: "0000" (cost 0) before "1110" (cost 2).
+    # Against the pre-zeroing matrix "1110" costs -6, so the order must flip.
+    solution = Solution(
+        bitstrings=bitstrings.from_strings(["1110", "0000"]),
+        counts=vectori.tensor([1, 1]),
+    )._update(zeroed)
+
+    restored = transforms.zeroing.lift(solution, zeroed)
+
+    torch.testing.assert_close(restored.bitstrings, bitstrings.from_strings(["1110", "0000"]))
+    torch.testing.assert_close(restored.costs, restored.costs.sort().values)
+
+
 def test_lift_is_identity_when_nothing_zeroed() -> None:
     zeroed = transforms.zeroing.apply(positive_qubo())
 
