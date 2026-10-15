@@ -7,22 +7,29 @@ tensor-sampling calls.
 
 from __future__ import annotations
 
+from typing import Literal
+
 import torch
 
 from . import linalg
 
 
-def torch_rng(seed: int | None = None) -> torch.Generator:
+def torch_rng(seed: int | Literal["global"] | None = None) -> torch.Generator:
     """Creates a [`torch.Generator`][] compatible with [`qubosolver`][]'s torch typing.
 
     Args:
         seed: Optional seed for reproducibility. If ``None``, the generator
             is seeded from a non-deterministic source (a fresh
             `torch.Generator` otherwise always starts from the same fixed seed).
+            If ``"global"``, the seed is drawn from the global PyTorch RNG,
+            which advances it: after `torch.manual_seed(...)`, successive
+            calls return different generators, and the sequence is reproducible.
 
     Returns:
         A `torch.Generator` instance, optionally seeded.
     """
+    if seed == "global":
+        seed = int(torch.randint(2**62, ()).item())
     generator = torch.Generator(linalg.device())
     if seed is None:
         generator.seed()

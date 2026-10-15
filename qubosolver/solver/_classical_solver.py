@@ -17,8 +17,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-import torch
-
 from qubosolver import solving
 from qubosolver.types import Instance, Solution, bitstrings, torch_rng
 
@@ -105,7 +103,8 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
             A :class:`~qubosolver.types.Solution` containing up to
             ``config.max_bitstrings`` best bitstrings found during the search.
         """
-        starts = bitstrings.rand(1, self.instance.size)
+        rng = torch_rng("global")
+        starts = bitstrings.rand(1, self.instance.size, rng=rng)
 
         return solving.simulated_annealing.solve(
             instance=self.instance,
@@ -114,6 +113,7 @@ class SimulatedAnnealingSolver(BaseClassicalSolver):
             starts=starts,
             time_limit=self.config.time_limit,
             stats="per_run",
+            rng=rng,
         )
 
 
@@ -137,7 +137,8 @@ class TabuSearchSolver(BaseClassicalSolver):
             A :class:`~qubosolver.types.Solution` containing up to
             ``config.max_bitstrings`` best bitstrings found during the search.
         """
-        starts = bitstrings.rand(1, self.instance.size)
+        rng = torch_rng("global")
+        starts = bitstrings.rand(1, self.instance.size, rng=rng)
         tabu_search_solution = solving.tabu_search.solve(
             instance=self.instance,
             starts=starts,
@@ -156,14 +157,14 @@ class RandomSolver(BaseClassicalSolver):
     """
 
     def solve(self) -> Solution:
-        """Sample random bitstrings from the current global PyTorch RNG state.
+        """Sample random bitstrings with a generator seeded from the global PyTorch RNG.
 
         Returns:
             A :class:`~qubosolver.types.Solution` with
             ``config.max_bitstrings`` uniformly sampled binary vectors and
             their corresponding QUBO costs.
         """
-        rng = torch_rng().set_state(torch.get_rng_state())
+        rng = torch_rng("global")
         return solving.classical.random_sampling.solve(
             self.instance, rng=rng, max_bitstrings=self.config.max_bitstrings
         )
