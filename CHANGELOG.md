@@ -10,6 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-10-15
+
+### Added
+- Add `torch_rng("global")` to draw the seed from the global PyTorch RNG, so that a sequence of calls after `torch.manual_seed(...)` is reproducible. ([#324](https://github.com/pasqal-io/qubo-solver/pull/324))
+
+### Fixed
+- Seed `torch_rng()` from a non-deterministic source when no seed is given: unseeded calls used to all return the same random stream. ([#321](https://github.com/pasqal-io/qubo-solver/pull/321))
+- Make the simulated annealing, tabu search and random sampling solvers follow `torch.manual_seed`: simulated annealing and tabu search ignored it, and random sampling repeated the same random stream on every call after a seed. ([#324](https://github.com/pasqal-io/qubo-solver/pull/324))
+- Keep the candidates returned by `zeroing.lift` sorted by cost. ([#324](https://github.com/pasqal-io/qubo-solver/pull/324))
+
 ## [0.9.0] - 2026-10-05
 
 This release is a major refactoring towards v1.0 and contains many breaking API changes.
@@ -134,7 +144,8 @@ This release is a major refactoring towards v1.0 and contains many breaking API 
 - Remove references to D-Wave ([#118](https://github.com/pasqal-io/qubo-solver/pull/118))
 
 
-[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.2...v0.9.0
 [0.8.2]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.0...v0.8.1
