@@ -3484,10 +3484,11 @@
 </ul>
 <h2 id="composition-of-solvers-and-transforms">Composition of solvers and transforms</h2>
 <p>A solve is a pipeline: an optional chain of transforms reduces or adapts the instance, a solver produces a solution for the transformed instance, and each transform is "lifted" in reverse to map that solution back to the original instance.</p>
-<figure>
-<p><img src="../../extras/assets/pipeline_composition.svg" alt="Composition of solvers and transforms" style="max-width: 700px; width: 100%;"></p>
+<figure markdown>
+<img src="../../extras/assets/pipeline_composition.svg" alt="Composition of solvers and transforms" style="max-width: 700px; width: 100%;">
 <figcaption>An optional chain of transforms reduces the instance, a solver produces a solution, then each transform is lifted in reverse to map that solution back to the original instance.</figcaption>
 </figure>
+
 <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Solver&lt;/span&gt;" href="../../api/solver/#qubosolver.solver.Solver"><code>Solver</code></a>/<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SolverConfig&lt;/span&gt;
 
 
@@ -3496,10 +3497,11 @@
   &lt;/span&gt;" href="../../api/solver/#qubosolver.solver.SolverConfig"><code>SolverConfig</code></a> builds this pipeline for you: <code>preprocessing=True</code> chains the configured transforms before solving, <code>postprocessing=True</code> chains refinement solvers after, and the solver itself is either the <a href="../classical/intro/">classical</a> or <a href="../quantum/intro/">quantum</a> pipeline depending on <code>solving</code>. See <a href="../classical/transforms/">Transforms</a> and <a href="../classical/solvers/">Solvers</a> for the building blocks.</p>
 <h2 id="the-quantum-pipeline">The quantum pipeline</h2>
 <p>Solving with a quantum approach turns the instance into a program that runs on a neutral-atom device — an <a href="../quantum/embedding/">embedding</a> step maps variables onto atoms, <a href="../quantum/drive_shaping/">drive shaping</a> builds the laser pulse, and the result is compiled and run on a <a href="../quantum/backend/">backend</a> (a local emulator, a remote emulator, or a real QPU).</p>
-<figure>
-<p><img src="../../extras/assets/quantum_pipeline_vertical.svg" alt="The quantum pipeline" style="max-width: 400px; width: 100%;"></p>
+<figure markdown>
+<img src="../../extras/assets/quantum_pipeline_vertical.svg" alt="The quantum pipeline" style="max-width: 400px; width: 100%;">
 <figcaption>Embedding maps the instance onto a register of atoms; drive shaping builds the drive from that register; both feed into a compiled <code>QuantumProgram</code>, which a backend (a QPU or an emulator) runs. <code>run</code> returns a <code>Job</code> as soon as it's queued — the <code>Solution</code> is fetched later through that job, via an async fetch, once it's ready.</figcaption>
 </figure>
+
 <p>See <a href="../quantum/intro/">The quantum pipeline</a> for the full walkthrough, including a runnable example and how to plot the register and drive.</p>
 <h2 id="where-to-go-next">Where to go next</h2>
 <ul>

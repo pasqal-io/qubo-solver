@@ -9574,7 +9574,8 @@ encodes the QUBO's diagonal coefficients.</p>
           –
           <div class="doc-md-description">
             <p>Optional seed for reproducibility. If <code>None</code>, the generator
-is left with its default (non-deterministic) state.</p>
+is seeded from a non-deterministic source (a fresh
+<code>torch.Generator</code> otherwise always starts from the same fixed seed).</p>
           </div>
         </li>
     </ul>
@@ -9607,20 +9608,24 @@ is left with its default (non-deterministic) state.</p>
 <span class="normal"><a href="#__codelineno-0-25">25</a></span>
 <span class="normal"><a href="#__codelineno-0-26">26</a></span>
 <span class="normal"><a href="#__codelineno-0-27">27</a></span>
-<span class="normal"><a href="#__codelineno-0-28">28</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="k">def</span><span class="w"> </span><span class="nf">torch_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-28">28</a></span>
+<span class="normal"><a href="#__codelineno-0-29">29</a></span>
+<span class="normal"><a href="#__codelineno-0-30">30</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="k">def</span><span class="w"> </span><span class="nf">torch_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span><span class="p">:</span>
 <a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="w">    </span><span class="sd">"""Creates a [`torch.Generator`][] compatible with [`qubosolver`][]'s torch typing.</span>
 <a id="__codelineno-0-17" name="__codelineno-0-17"></a>
 <a id="__codelineno-0-18" name="__codelineno-0-18"></a><span class="sd">    Args:</span>
 <a id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="sd">        seed: Optional seed for reproducibility. If ``None``, the generator</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="sd">            is left with its default (non-deterministic) state.</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21"></a>
-<a id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="sd">        A `torch.Generator` instance, optionally seeded.</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="sd">    """</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25"></a>    <span class="n">generator</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span><span class="p">(</span><span class="n">linalg</span><span class="o">.</span><span class="n">device</span><span class="p">())</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27"></a>        <span class="k">return</span> <span class="n">generator</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="k">return</span> <span class="n">generator</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="sd">            is seeded from a non-deterministic source (a fresh</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="sd">            `torch.Generator` otherwise always starts from the same fixed seed).</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22"></a>
+<a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="sd">        A `torch.Generator` instance, optionally seeded.</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="sd">    """</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="n">generator</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span><span class="p">(</span><span class="n">linalg</span><span class="o">.</span><span class="n">device</span><span class="p">())</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28"></a>        <span class="n">generator</span><span class="o">.</span><span class="n">seed</span><span class="p">()</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29"></a>        <span class="k">return</span> <span class="n">generator</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="k">return</span> <span class="n">generator</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
