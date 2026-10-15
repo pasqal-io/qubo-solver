@@ -164,7 +164,7 @@ def remote_auto_backend() -> tuple[RemoteEmulator, pulser.backend.RemoteResults]
     )
 
 
-@pytest.mark.priority(120)
+@pytest.mark.duration(120)
 @pytest.mark.parametrize(
     "size, backend_and_results, expected_type, optimal_type",
     [
@@ -236,6 +236,7 @@ def test_default_remote_emulator_backend() -> None:
     check.is_(emulator._backend_type, RemoteEmuFreeBackend)
 
 
+@pytest.mark.duration(3)
 def test_remote_emulator_warning() -> None:
     """Test that RemoteEmulator warns when using suboptimal backend."""
     size = 2
@@ -261,6 +262,7 @@ def test_remote_emulator_warning() -> None:
         mock_run.assert_called_once()
 
 
+@pytest.mark.duration(3)
 def test_local_emulator_warning() -> None:
     """Test that LocalEmulator warns when using suboptimal backend."""
     size = 2

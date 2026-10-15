@@ -175,6 +175,7 @@ def test_max_iterations_limits_progress() -> None:
     check.less_equal(unlimited[0].cost, limited[0].cost)
 
 
+@pytest.mark.duration(4)
 @pytest.mark.parametrize("n", [2, 10, 50, 200])
 @pytest.mark.parametrize("strategy", ["best_improvement", "first_improvement", "greedy_sweep"])
 def test_solve_reaches_a_consistent_local_minimum(
@@ -340,7 +341,7 @@ def test_best_improvement_batch_matches_per_row_result() -> None:
         check.is_true(torch.equal(batched[i], solo[0]))
 
 
-@pytest.mark.priority(10)
+@pytest.mark.duration(7)
 @pytest.mark.parametrize(
     "variables, starts, strategy, expected_elapsed, expected_cplex_gap",
     [

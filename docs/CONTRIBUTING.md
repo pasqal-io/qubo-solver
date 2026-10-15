@@ -74,6 +74,13 @@ prek run --all-files
 pytest
 ```
 
+While iterating, you can run only the fast tests:
+
+```shell
+pytest -m fast   # tests expected to take less than 15 s
+pytest -m slow   # the long-running ones
+```
+
 ## A Word on Patents
 
 Quantum computing is a heavily patented field. If your contribution introduces a new quantum algorithm, rather than an improvement to the existing library, please check beforehand that it is not covered by an existing patent.

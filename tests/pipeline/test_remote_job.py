@@ -97,6 +97,7 @@ def _post_remote_job(
     return solution
 
 
+@pytest.mark.duration(71)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("drive_method", get_args(_DriveShapingAlgorithm))
 @pytest.mark.parametrize("embedding_method", get_args(_EmbeddingAlgorithm))

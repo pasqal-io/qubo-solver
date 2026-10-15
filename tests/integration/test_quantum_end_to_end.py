@@ -100,6 +100,7 @@ def check_hamiltonian_qubo(
     return rel_diagonal_error, rel_offdiagonal_error
 
 
+@pytest.mark.duration(33)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("seed", [16844214, 650], ids=[f"seed{i}" for i in range(2)])
 @pytest.mark.parametrize(

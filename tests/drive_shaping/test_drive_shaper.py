@@ -75,7 +75,7 @@ def test_generate_returns_drive_and_solution_bayesian_search(
     assert not solution
 
 
-@pytest.mark.priority(35)
+@pytest.mark.duration(35)
 def test_generate_bayesian_search_drive_shaper(
     dummy_register: qoolqit.Register,
     simple_qubo_instance: Instance,
@@ -100,7 +100,7 @@ def test_generate_bayesian_search_drive_shaper(
         assert solution.counts.numel() > 0
 
 
-@pytest.mark.priority(25)
+@pytest.mark.duration(52)
 @pytest.mark.parametrize("drive_method", ["bayesian_search"])
 def test_normalized_weights_in_drive(
     drive_method: _DriveShapingAlgorithm,
@@ -208,6 +208,7 @@ def _embedding_drive_ratio(solver: Solver) -> float:
     return float(interaction / detuning)
 
 
+@pytest.mark.duration(10)
 @pytest.mark.parametrize("embedding_method", ["greedy_layout", "blade"])
 def test_proportional_diagonal_register_and_drive_shape_normalization(
     embedding_method: Literal["greedy_layout", "blade"],

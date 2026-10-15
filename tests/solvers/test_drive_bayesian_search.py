@@ -61,6 +61,7 @@ def probability_based_ojective(
     return weighted_cost
 
 
+@pytest.mark.duration(8)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("seed", [44445, 1218, 990])
 @pytest.mark.parametrize("use_probability_based_objective", [True, False])
@@ -134,6 +135,7 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
     print(f"Number of optimal solutions: {len(optimal_solutions)}\n")
 
 
+@pytest.mark.duration(29)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("seed", [600, 6983, 5674])
 @pytest.mark.parametrize("use_probability_based_objective", [True, False])
@@ -368,6 +370,7 @@ def test_failed_skopt() -> None:
         check.is_true(qubo_solution)
 
 
+@pytest.mark.duration(19)
 def test_dmm_labels_are_ints() -> None:
 
     vertices = tensor.tensor([[0.0, 0.0], [1.0, 0.0]])

@@ -7,6 +7,7 @@ import qoolqit
 from qubosolver import Instance, embedding, matrix, solving, tensor
 
 
+@pytest.mark.duration(6)
 def test_too_large_register() -> None:
     # In the quantum pipeline, it's easy to forget to pass the target device to blade's
     # embedding config. The resulting register can then have a too high max/min distance

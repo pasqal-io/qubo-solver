@@ -131,6 +131,7 @@ addopts = [
     "--cov-config=pyproject.toml",
     "--cov=qubosolver",
     "--cov=tests",
+    "--strict-markers",
 ]
 xfail_strict = true
 filterwarnings = [
@@ -138,7 +139,9 @@ filterwarnings = [
 asyncio_mode="auto"
 asyncio_default_fixture_loop_scope="function"
 markers = [
-	"priority(n): run higher priority tests first.",
+	"duration(seconds): expected runtime; longer tests run first.",
+	"fast: auto-applied when duration < 15 s; do not set manually.",
+	"slow: auto-applied when duration >= 15 s; do not set manually.",
 	"extras: requires optional extras (e.g. cplex) to be installed.",
 ]
 log_cli = true
