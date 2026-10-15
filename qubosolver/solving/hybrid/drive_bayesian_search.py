@@ -13,14 +13,12 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 import numpy as np
 import qoolqit
 import torch
 from skopt import gp_minimize
 
-from qubosolver._checks import _RUNTIME_TYPE_CHECKING
 from qubosolver.drive_shaping._device_specs import (
     detuning_amplitude_ratio,
     max_virtual_amplitude,
@@ -32,16 +30,6 @@ from qubosolver.types import (
     Solution,
     protocols,
 )
-
-if TYPE_CHECKING:
-    from qubosolver import DriveShapingConfig
-elif _RUNTIME_TYPE_CHECKING:
-    from typing import TypeAliasType  # Runtime checks require Python >= 3.14.
-
-    import qubosolver
-
-    # Lazy absolute reference for beartype: importing `DriveShapingConfig` eagerly is circular.
-    DriveShapingConfig = TypeAliasType("DriveShapingConfig", "qubosolver.DriveShapingConfig")
 
 
 def _default_objective(solution: Solution) -> float:
@@ -84,21 +72,6 @@ class Config:
         default_factory=lambda: lambda data: None, init=False
     )
     default_sequence_duration: int = 50000
-
-    @staticmethod
-    def _from_drive_shaping_config(config: DriveShapingConfig) -> Config:
-        """Create a [`Config`][] from a higher-level [`drive_shaping.Config`][].
-
-        Args:
-            config: The drive-shaping configuration to convert.
-
-        Returns:
-            A configuration populated from the drive-shaping settings.
-        """
-        cfg = Config()
-        cfg.n_evaluations = config.bayesian_search_n_calls
-
-        return cfg
 
 
 def _compute_norm_weights(instance: Instance) -> list[float]:

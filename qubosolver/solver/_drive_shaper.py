@@ -194,9 +194,7 @@ class BayesianSearchDriveShaper(_BaseDriveShaper):
             associated QUBO solution containing bitstrings, costs, and
             probabilities from the final simulation run.
         """
-        config = solving.drive_bayesian_search.Config._from_drive_shaping_config(
-            self.config.drive_shaping
-        )
+        config = self.config.drive_shaping._to_bayesian_search_config()
 
         solution, drive = solving.drive_bayesian_search.solve(
             self.instance,

@@ -75,5 +75,5 @@ def no_runtime_typecheck(target: _T) -> _T:
     if _RUNTIME_TYPE_CHECKING:
         from beartype import BeartypeConf, BeartypeStrategy, beartype  # deptry: ignore[DEP004]
 
-        return beartype(target, conf=BeartypeConf(strategy=BeartypeStrategy.O0))  # type: ignore[no-any-return]
+        return beartype(conf=BeartypeConf(strategy=BeartypeStrategy.O0))(target)  # type: ignore[type-var]
     return target

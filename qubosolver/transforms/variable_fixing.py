@@ -23,7 +23,7 @@ import copy
 import json
 import logging
 from collections.abc import Callable, Sequence
-from typing import TypeAlias, cast
+from typing import cast
 
 import torch
 
@@ -35,7 +35,7 @@ from qubosolver.types import Solution, bitstrings, vector
 logger = logging.getLogger(__name__)
 
 # TODO: Using `type` statement when Python >= 3.12
-Rule: TypeAlias = Callable[[qubosolver.Instance], dict[int, int]]
+Rule = Callable[[qubosolver.Instance], dict[int, int]]
 """A function that inspects a QUBO instance and returns the variables it can fix,
 as a mapping from variable index to the value (0 or 1) it is fixed to."""
 

@@ -56,5 +56,8 @@ def register_seeded_magic() -> None:
     @register_cell_magic
     def seeded(line: str, cell: str) -> None:
         seed = int(line.strip())
+        shell = get_ipython()
+        if shell is None:
+            raise RuntimeError("%%seeded requires a running IPython shell.")
         with seed_context(seed):
-            get_ipython().run_cell(cell)
+            shell.run_cell(cell)

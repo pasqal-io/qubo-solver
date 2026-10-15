@@ -400,8 +400,8 @@ class _DecomposeQuboSolver(BaseSolver):
             else:
                 max_min_dist_ratio = self.decomposition_config.classical_max_min_dist_ratio
 
-            config = _decompositions.Config._from_decomposition_config(
-                self.decomposition_config, max_min_dist_ratio=max_min_dist_ratio
+            config = self.decomposition_config._to_decomposition_config(
+                max_min_dist_ratio=max_min_dist_ratio
             )
             decomposed_qubo = _decompositions.Instance(self.instance, config=config)
             solution = Solution()

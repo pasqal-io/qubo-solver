@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, get_args
 
+from qubosolver.solving.hybrid import drive_bayesian_search
+
 _DriveShapingAlgorithm = Literal["local_energy_scale", "proportional_diagonal", "bayesian_search"]
 
 
@@ -45,3 +47,11 @@ class Config:
         """Validate `algorithm`."""
         if self.algorithm not in get_args(_DriveShapingAlgorithm):
             raise ValueError(f"Invalid drive shaping method '{self.algorithm}'.")
+
+    def _to_bayesian_search_config(self) -> drive_bayesian_search.Config:
+        """Create a [`drive_bayesian_search.Config`][] from this configuration.
+
+        Returns:
+            A Bayesian search configuration populated from the drive-shaping settings.
+        """
+        return drive_bayesian_search.Config(n_evaluations=self.bayesian_search_n_calls)
