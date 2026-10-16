@@ -134,8 +134,7 @@ addopts = [
     "--strict-markers",
 ]
 xfail_strict = true
-filterwarnings = [
-]
+filterwarnings = ["error"]
 asyncio_mode="auto"
 asyncio_default_fixture_loop_scope="function"
 markers = [
@@ -178,6 +177,7 @@ select = [
     "C90", # mccabe
     "RUF", # ruff-specific rules
     "PYI", # flake8-pyi
+    "T10", # flake8-debugger
 ]
 isort = { required-imports = ["from __future__ import annotations"] }
 mccabe = { max-complexity = 10 }
@@ -207,5 +207,4 @@ follow_untyped_imports = true
 extend_exclude = ["docs/tutorials/retired"]
 
 [tool.deptry.package_module_name_map]
-scikit-learn = "sklearn"
 pulser = ["pulser", "pulser_simulation"]
