@@ -1,7 +1,7 @@
 repos:
 
 -   repo: https://github.com/betterleaks/betterleaks
-    rev: 5eab48332cc48565864514e3bc6de89df091a7c4 # frozen: v1.8.1
+    rev: 81aff7a638638aae3a659845d089043e1d8fe9ac # frozen: v1.9.0
     hooks:
       - id: betterleaks
 
