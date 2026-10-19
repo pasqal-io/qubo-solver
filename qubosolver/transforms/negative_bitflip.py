@@ -31,6 +31,7 @@ import copy
 import io
 import json
 import logging
+import warnings
 from dataclasses import dataclass
 from typing import Any
 
@@ -42,6 +43,23 @@ from qubosolver._io.utils import Stream
 from qubosolver.types import Bitstring, Bitstrings, Matrix, Solution, bitstring, vector
 
 logger = logging.getLogger(__name__)
+
+
+def _import_swiglpk() -> Any:  # noqa: ANN401 (SWIG module has no type stubs)
+    """Import ``swiglpk`` with its import-time SWIG warnings silenced.
+
+    SWIG-generated extensions emit ``DeprecationWarning: builtin type ... has
+    no __module__ attribute`` while initializing on Python 3.12+.  If warnings
+    are turned into errors (``-W error``, or pytest's ``filterwarnings =
+    ["error"]``), that warning aborts the extension's initialization half-way
+    and the next GLPK call segfaults.  Once imported, the module is cached in
+    ``sys.modules`` so later imports are safe.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        import swiglpk
+
+    return swiglpk
 
 
 @dataclass(frozen=True)
@@ -176,7 +194,7 @@ def _solve_bitflip_preprocessing_glpk(  # noqa: C901
         minimize the total absolute weight of negative off-diagonal coefficients
         remaining after applying the variable flips.
     """
-    import swiglpk as glp
+    glp = _import_swiglpk()
 
     n = Q.shape[0]
     edges = _extract_upper_edges(Q, eps=eps)
