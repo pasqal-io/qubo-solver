@@ -32,6 +32,25 @@ def test_valid_qubo_passes_without_error() -> None:
     assert qi.matrix.shape == (5, 5)
 
 
+def test_non_symmetric_matrix_raises() -> None:
+    coeffs = matrix.tensor([[1.0, 2.0], [0.0, 3.0]])
+    with pytest.raises(ValueError, match="symmetric"):
+        Instance(coeffs)
+
+
+def test_symmetrize_uses_symmetrized_matrix() -> None:
+    coeffs = matrix.tensor([[1.0, 2.0], [0.0, 3.0]])
+    qi = Instance(coeffs, symmetrize=True)
+    torch.testing.assert_close(qi.matrix, matrix.tensor([[1.0, 1.0], [1.0, 3.0]]))
+    # The original matrix is left untouched.
+    torch.testing.assert_close(coeffs, matrix.tensor([[1.0, 2.0], [0.0, 3.0]]))
+
+
+def test_symmetrize_keeps_symmetric_matrix_unchanged() -> None:
+    coeffs = matrix.tensor([[1.0, 2.0], [2.0, 3.0]])
+    torch.testing.assert_close(Instance(coeffs, symmetrize=True).matrix, coeffs)
+
+
 def test_len_matches_size() -> None:
     qi = Instance(matrix.as_tensor(torch.eye(5)))
     check.equal(len(qi), 5)

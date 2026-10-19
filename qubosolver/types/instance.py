@@ -48,14 +48,35 @@ class Instance:
         matrix: Symmetric matrix $Q$ of shape ``(n, n)``.
             Defaults to an empty ``(0, 0)`` zero matrix, which represents
             a trivial problem with no variables.
+        symmetrize: If true, replace ``matrix`` by ``(Q + Q^T) / 2``, which leaves
+            the cost $x^T Q x$ unchanged. If false (default), a non-symmetric
+            matrix raises [`ValueError`][].
+
+    Note:
+        With ``symmetrize=True``, the instance stores and uses the symmetrized
+        matrix, not the original one: [`matrix`][] returns ``(Q + Q^T) / 2``.
     """
 
     def __init__(
         self,
         matrix: Matrix | None = None,
+        *,
+        symmetrize: bool = False,
     ) -> None:
-        """Wrap `matrix` as a QUBO instance."""
-        self._matrix: Matrix = matrix if matrix is not None else _matrix_module.zeros(0)
+        """Wrap `matrix` as a QUBO instance.
+
+        Raises:
+            ValueError: If `matrix` is not symmetric and `symmetrize` is false.
+        """
+        if matrix is None:
+            matrix = _matrix_module.zeros(0)
+        elif symmetrize:
+            matrix = (matrix + matrix.T) / 2
+        elif not torch.allclose(matrix, matrix.T):
+            raise ValueError(
+                "QUBO matrix must be symmetric; pass `symmetrize=True` to use (Q + Q^T) / 2."
+            )
+        self._matrix: Matrix = matrix
 
     @property
     def size(self) -> int:

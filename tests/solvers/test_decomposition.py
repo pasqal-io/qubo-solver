@@ -232,8 +232,8 @@ def test_scope(decomposable_qubo: Instance) -> None:
     )
 
     # check negative off-diagonal are not supported
-    coeffs = decomposable_qubo.matrix
-    coeffs[0][1] = -1.0
+    coeffs = decomposable_qubo.matrix.clone()
+    coeffs[0][1] = coeffs[1][0] = -1.0
 
     with pytest.raises(
         ValueError, match="Decomposition does not handle off-diagonal negative coefficients"
