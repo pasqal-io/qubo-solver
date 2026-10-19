@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Enum types used throughout the QUBO solver pipeline.
 
 This module defines all enumeration classes that control solver behaviour —

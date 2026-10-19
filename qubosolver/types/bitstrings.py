@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Batch bitstring utilities for QUBO solvers.
 
 A [`Bitstrings`][qubosolver.Bitstrings] collection is a 2-D ``torch.int8`` tensor of shape

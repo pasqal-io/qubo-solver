@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Variable-fixing transforms for QUBO problem reduction.
 
 Variable fixing eliminates variables from a QUBO instance before solving by

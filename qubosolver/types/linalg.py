@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Type aliases for tensors used throughout the QUBO solver, and global precision/device config.
 
 Defines the `Vector`, `Matrix`, `Tensor`, `Bitstring`, and `Bitstrings` aliases (and their

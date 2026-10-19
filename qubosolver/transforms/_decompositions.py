@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Internal building blocks for the QUBO decomposition algorithm.
 
 The decomposition algorithm iteratively extracts small sub-problems from a

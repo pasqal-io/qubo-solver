@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Local and remote quantum backend implementation with automatic backend selection.
 
 This module provides wrapper classes for quantum emulators that automatically

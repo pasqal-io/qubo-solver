@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Zeroing fallback for QUBO negative off-diagonal coefficients.
 
 Bit-flip preprocessing (see

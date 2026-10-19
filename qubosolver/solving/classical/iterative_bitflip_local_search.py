@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Bit-flip local search for QUBO solutions.
 
 This module provides greedy single-bit-flip local search strategies that

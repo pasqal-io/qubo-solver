@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Greedy layout-based embedding algorithm for QUBO instances.
 
 The greedy algorithm places logical QUBO nodes one at a time onto trap sites

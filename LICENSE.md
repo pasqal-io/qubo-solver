@@ -1,5 +1,7 @@
 PASQAL OPEN-SOURCE SOFTWARE LICENSE AGREEMENT (MIT-derived)
 
+Copyright (c) Pasqal
+
 The author of the License is:
   Pasqal, a Société par Actions Simplifiée (Simplified Joint Stock Company) registered under number 849 441 522 at the Registre du commerce et des sociétés (Trade and Companies Register) of Evry – France, headquartered at 24 rue Émile Baudot – 91120 – Palaiseau – France, duly represented by its Président, M. Georges-Olivier REYMOND, Hereafter referred to as « the Licensor »
 

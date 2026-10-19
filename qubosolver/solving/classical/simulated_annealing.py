@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 r"""Simulated Annealing solver for QUBO problems.
 
 Implements a bit-flip annealer that minimizes the quadratic objective
