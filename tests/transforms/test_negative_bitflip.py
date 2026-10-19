@@ -19,6 +19,7 @@ from qubosolver import (
 from qubosolver.transforms.negative_bitflip import (
     _apply_bitflips,
     _has_negative_offdiagonal,
+    _import_swiglpk,
     _solve_bitflip_preprocessing_glpk,
     _transform_qubo_with_bitflips,
 )
@@ -422,7 +423,7 @@ def test_glpk_solve_survives_internal_exception(monkeypatch: pytest.MonkeyPatch)
     # propagating the exception, since apply() has no outer safety net.
     instance, _ = non_bipartisable_negative_qubo()
 
-    import swiglpk as glp
+    glp = _import_swiglpk()
 
     def _raise(
         *args: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
