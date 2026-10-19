@@ -178,14 +178,17 @@ select = [
     "RUF", # ruff-specific rules
     "PYI", # flake8-pyi
     "T10", # flake8-debugger
+    "CPY", # flake8-copyright
 ]
 isort = { required-imports = ["from __future__ import annotations"] }
 mccabe = { max-complexity = 10 }
 flake8-quotes = { docstring-quotes = "double" }
 pydocstyle = { convention = "google" }
+flake8-copyright = { notice-rgx = "(?i)Copyright \\(c\\) Pasqal", min-file-size = 1 }
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D100", "D101", "D102", "D103", "D104", "D105", "D107"]
+"*.ipynb" = ["CPY001"]
 
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "examples"]

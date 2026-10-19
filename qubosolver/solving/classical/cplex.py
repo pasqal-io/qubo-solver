@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """QUBO solver backed by IBM CPLEX.
 
 Formulates the QUBO problem as a Binary Quadratic Program (BQP) and solves it

@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """BLaDE (Balanced Layout and Distance Embedding) adapter for QUBO instances.
 
 This module is a thin wrapper around [`qoolqit.embedding.Blade`][] that

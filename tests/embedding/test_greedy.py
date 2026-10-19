@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 from __future__ import annotations
 
 from collections.abc import Callable

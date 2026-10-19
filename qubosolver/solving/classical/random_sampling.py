@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Uniform random bitstring sampler for QUBO instances."""
 
 from __future__ import annotations

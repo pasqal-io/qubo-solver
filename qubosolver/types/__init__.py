@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Core data types for the QUBO solver: tensors, solutions, and backends.
 
 This subpackage re-exports the tensor submodules (`bitstring`, `bitstrings`,

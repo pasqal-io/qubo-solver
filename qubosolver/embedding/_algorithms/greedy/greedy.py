@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Greedy embedding of a QUBO matrix onto a fixed lattice of traps."""
 
 from __future__ import annotations

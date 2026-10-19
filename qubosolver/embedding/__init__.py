@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Embedding algorithms for mapping QUBO variables onto quantum hardware registers."""
 
 from __future__ import annotations

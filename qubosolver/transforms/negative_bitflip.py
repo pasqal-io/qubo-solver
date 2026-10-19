@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Bit-flip preprocessing transforms for QUBO instances with negative interactions.
 
 Quantum (Rydberg) solvers cannot encode attractive interactions, so a QUBO must

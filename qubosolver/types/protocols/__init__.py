@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Structural protocols for the QUBO solver, using PEP 544 [`Protocol`][typing.Protocol] typing.
 
 Unlike nominal typing (C++/Java), where a class must explicitly inherit from an

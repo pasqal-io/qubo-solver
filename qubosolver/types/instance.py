@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 r"""QUBO problem instances.
 
 An [`Instance`][qubosolver.types.instance.Instance] wraps a symmetric square coefficient matrix

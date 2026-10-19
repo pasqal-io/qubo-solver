@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Concrete QUBO solver implementations built on top of [`BaseSolver`][].
 
 This module provides two internal solver classes and the public

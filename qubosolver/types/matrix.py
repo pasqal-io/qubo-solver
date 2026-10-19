@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal
+#
+# Licensed under the Pasqal Open-Source Software License (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Square matrix utilities for QUBO solvers.
 
 A [`Matrix`][qubosolver.Matrix] is a 2-D tensor of shape ``(n, n)`` using the globally configured
