@@ -3895,211 +3895,217 @@ number of evaluations, and objective function.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/solving/hybrid/drive_bayesian_search.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-225">225</a></span>
-<span class="normal"><a href="#__codelineno-0-226">226</a></span>
-<span class="normal"><a href="#__codelineno-0-227">227</a></span>
-<span class="normal"><a href="#__codelineno-0-228">228</a></span>
-<span class="normal"><a href="#__codelineno-0-229">229</a></span>
-<span class="normal"><a href="#__codelineno-0-230">230</a></span>
-<span class="normal"><a href="#__codelineno-0-231">231</a></span>
-<span class="normal"><a href="#__codelineno-0-232">232</a></span>
-<span class="normal"><a href="#__codelineno-0-233">233</a></span>
-<span class="normal"><a href="#__codelineno-0-234">234</a></span>
-<span class="normal"><a href="#__codelineno-0-235">235</a></span>
-<span class="normal"><a href="#__codelineno-0-236">236</a></span>
-<span class="normal"><a href="#__codelineno-0-237">237</a></span>
-<span class="normal"><a href="#__codelineno-0-238">238</a></span>
-<span class="normal"><a href="#__codelineno-0-239">239</a></span>
-<span class="normal"><a href="#__codelineno-0-240">240</a></span>
-<span class="normal"><a href="#__codelineno-0-241">241</a></span>
-<span class="normal"><a href="#__codelineno-0-242">242</a></span>
-<span class="normal"><a href="#__codelineno-0-243">243</a></span>
-<span class="normal"><a href="#__codelineno-0-244">244</a></span>
-<span class="normal"><a href="#__codelineno-0-245">245</a></span>
-<span class="normal"><a href="#__codelineno-0-246">246</a></span>
-<span class="normal"><a href="#__codelineno-0-247">247</a></span>
-<span class="normal"><a href="#__codelineno-0-248">248</a></span>
-<span class="normal"><a href="#__codelineno-0-249">249</a></span>
-<span class="normal"><a href="#__codelineno-0-250">250</a></span>
-<span class="normal"><a href="#__codelineno-0-251">251</a></span>
-<span class="normal"><a href="#__codelineno-0-252">252</a></span>
-<span class="normal"><a href="#__codelineno-0-253">253</a></span>
-<span class="normal"><a href="#__codelineno-0-254">254</a></span>
-<span class="normal"><a href="#__codelineno-0-255">255</a></span>
-<span class="normal"><a href="#__codelineno-0-256">256</a></span>
-<span class="normal"><a href="#__codelineno-0-257">257</a></span>
-<span class="normal"><a href="#__codelineno-0-258">258</a></span>
-<span class="normal"><a href="#__codelineno-0-259">259</a></span>
-<span class="normal"><a href="#__codelineno-0-260">260</a></span>
-<span class="normal"><a href="#__codelineno-0-261">261</a></span>
-<span class="normal"><a href="#__codelineno-0-262">262</a></span>
-<span class="normal"><a href="#__codelineno-0-263">263</a></span>
-<span class="normal"><a href="#__codelineno-0-264">264</a></span>
-<span class="normal"><a href="#__codelineno-0-265">265</a></span>
-<span class="normal"><a href="#__codelineno-0-266">266</a></span>
-<span class="normal"><a href="#__codelineno-0-267">267</a></span>
-<span class="normal"><a href="#__codelineno-0-268">268</a></span>
-<span class="normal"><a href="#__codelineno-0-269">269</a></span>
-<span class="normal"><a href="#__codelineno-0-270">270</a></span>
-<span class="normal"><a href="#__codelineno-0-271">271</a></span>
-<span class="normal"><a href="#__codelineno-0-272">272</a></span>
-<span class="normal"><a href="#__codelineno-0-273">273</a></span>
-<span class="normal"><a href="#__codelineno-0-274">274</a></span>
-<span class="normal"><a href="#__codelineno-0-275">275</a></span>
-<span class="normal"><a href="#__codelineno-0-276">276</a></span>
-<span class="normal"><a href="#__codelineno-0-277">277</a></span>
-<span class="normal"><a href="#__codelineno-0-278">278</a></span>
-<span class="normal"><a href="#__codelineno-0-279">279</a></span>
-<span class="normal"><a href="#__codelineno-0-280">280</a></span>
-<span class="normal"><a href="#__codelineno-0-281">281</a></span>
-<span class="normal"><a href="#__codelineno-0-282">282</a></span>
-<span class="normal"><a href="#__codelineno-0-283">283</a></span>
-<span class="normal"><a href="#__codelineno-0-284">284</a></span>
-<span class="normal"><a href="#__codelineno-0-285">285</a></span>
-<span class="normal"><a href="#__codelineno-0-286">286</a></span>
-<span class="normal"><a href="#__codelineno-0-287">287</a></span>
-<span class="normal"><a href="#__codelineno-0-288">288</a></span>
-<span class="normal"><a href="#__codelineno-0-289">289</a></span>
-<span class="normal"><a href="#__codelineno-0-290">290</a></span>
-<span class="normal"><a href="#__codelineno-0-291">291</a></span>
-<span class="normal"><a href="#__codelineno-0-292">292</a></span>
-<span class="normal"><a href="#__codelineno-0-293">293</a></span>
-<span class="normal"><a href="#__codelineno-0-294">294</a></span>
-<span class="normal"><a href="#__codelineno-0-295">295</a></span>
-<span class="normal"><a href="#__codelineno-0-296">296</a></span>
-<span class="normal"><a href="#__codelineno-0-297">297</a></span>
-<span class="normal"><a href="#__codelineno-0-298">298</a></span>
-<span class="normal"><a href="#__codelineno-0-299">299</a></span>
-<span class="normal"><a href="#__codelineno-0-300">300</a></span>
-<span class="normal"><a href="#__codelineno-0-301">301</a></span>
-<span class="normal"><a href="#__codelineno-0-302">302</a></span>
-<span class="normal"><a href="#__codelineno-0-303">303</a></span>
-<span class="normal"><a href="#__codelineno-0-304">304</a></span>
-<span class="normal"><a href="#__codelineno-0-305">305</a></span>
-<span class="normal"><a href="#__codelineno-0-306">306</a></span>
-<span class="normal"><a href="#__codelineno-0-307">307</a></span>
-<span class="normal"><a href="#__codelineno-0-308">308</a></span>
-<span class="normal"><a href="#__codelineno-0-309">309</a></span>
-<span class="normal"><a href="#__codelineno-0-310">310</a></span>
-<span class="normal"><a href="#__codelineno-0-311">311</a></span>
-<span class="normal"><a href="#__codelineno-0-312">312</a></span>
-<span class="normal"><a href="#__codelineno-0-313">313</a></span>
-<span class="normal"><a href="#__codelineno-0-314">314</a></span>
-<span class="normal"><a href="#__codelineno-0-315">315</a></span>
-<span class="normal"><a href="#__codelineno-0-316">316</a></span>
-<span class="normal"><a href="#__codelineno-0-317">317</a></span>
-<span class="normal"><a href="#__codelineno-0-318">318</a></span>
-<span class="normal"><a href="#__codelineno-0-319">319</a></span>
-<span class="normal"><a href="#__codelineno-0-320">320</a></span>
-<span class="normal"><a href="#__codelineno-0-321">321</a></span>
-<span class="normal"><a href="#__codelineno-0-322">322</a></span>
-<span class="normal"><a href="#__codelineno-0-323">323</a></span>
-<span class="normal"><a href="#__codelineno-0-324">324</a></span>
-<span class="normal"><a href="#__codelineno-0-325">325</a></span>
-<span class="normal"><a href="#__codelineno-0-326">326</a></span>
-<span class="normal"><a href="#__codelineno-0-327">327</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-225" name="__codelineno-0-225"></a><span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
-<a id="__codelineno-0-226" name="__codelineno-0-226"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
-<a id="__codelineno-0-227" name="__codelineno-0-227"></a>    <span class="n">register</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="p">,</span>
-<a id="__codelineno-0-228" name="__codelineno-0-228"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-229" name="__codelineno-0-229"></a>    <span class="n">backend</span><span class="p">:</span> <span class="n">protocols</span><span class="o">.</span><span class="n">Backend</span><span class="p">,</span>
-<a id="__codelineno-0-230" name="__codelineno-0-230"></a>    <span class="n">device</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Device</span><span class="p">,</span>
-<a id="__codelineno-0-231" name="__codelineno-0-231"></a>    <span class="n">dmm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-0-232" name="__codelineno-0-232"></a>    <span class="n">config</span><span class="p">:</span> <span class="n">Config</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-233" name="__codelineno-0-233"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Drive</span><span class="p">]:</span>
-<a id="__codelineno-0-234" name="__codelineno-0-234"></a><span class="w">    </span><span class="sd">"""Solve a QUBO instance via Bayesian optimization of a drive schedule.</span>
-<a id="__codelineno-0-235" name="__codelineno-0-235"></a>
-<a id="__codelineno-0-236" name="__codelineno-0-236"></a><span class="sd">    Uses [`skopt.gp_minimize`](https://scikit-optimize.github.io/stable/modules/generated/skopt.gp_minimize.html)</span>
-<a id="__codelineno-0-237" name="__codelineno-0-237"></a><span class="sd">    to search over waveform parameters, running a</span>
-<a id="__codelineno-0-238" name="__codelineno-0-238"></a><span class="sd">    quantum simulation at each evaluation and minimizing [`config.objective_fn`][Config]</span>
-<a id="__codelineno-0-239" name="__codelineno-0-239"></a><span class="sd">    of the resulting [`Solution`][]. This is a hybrid quantum-classical solving</span>
-<a id="__codelineno-0-240" name="__codelineno-0-240"></a><span class="sd">    algorithm in its own right, and its returned drive can also be reused as</span>
-<a id="__codelineno-0-241" name="__codelineno-0-241"></a><span class="sd">    the output of a drive-shaping step for another solver.</span>
-<a id="__codelineno-0-242" name="__codelineno-0-242"></a>
-<a id="__codelineno-0-243" name="__codelineno-0-243"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-244" name="__codelineno-0-244"></a><span class="sd">        instance: The QUBO [`Instance`][] to solve.</span>
-<a id="__codelineno-0-245" name="__codelineno-0-245"></a><span class="sd">        register: The physical atom register.</span>
-<a id="__codelineno-0-246" name="__codelineno-0-246"></a><span class="sd">        backend: Execution backend for running simulations during optimization.</span>
-<a id="__codelineno-0-247" name="__codelineno-0-247"></a><span class="sd">        device: Target quantum device.</span>
-<a id="__codelineno-0-248" name="__codelineno-0-248"></a><span class="sd">        dmm: Whether to use the Detuning Map Modulator.</span>
-<a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="sd">        config: Optimization parameters, including the initial waveform knots,</span>
-<a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="sd">            number of evaluations, and objective function.</span>
-<a id="__codelineno-0-251" name="__codelineno-0-251"></a>
-<a id="__codelineno-0-252" name="__codelineno-0-252"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-253" name="__codelineno-0-253"></a><span class="sd">        A tuple of the best [`qoolqit.Drive`][] found and the corresponding</span>
-<a id="__codelineno-0-254" name="__codelineno-0-254"></a><span class="sd">            [`Solution`][].</span>
-<a id="__codelineno-0-255" name="__codelineno-0-255"></a><span class="sd">    """</span>
-<a id="__codelineno-0-256" name="__codelineno-0-256"></a>    <span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">Config</span><span class="p">()</span>
-<a id="__codelineno-0-257" name="__codelineno-0-257"></a>
-<a id="__codelineno-0-258" name="__codelineno-0-258"></a>    <span class="k">if</span> <span class="n">dmm</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">support_dmm</span><span class="p">(</span><span class="n">device</span><span class="p">):</span>
-<a id="__codelineno-0-259" name="__codelineno-0-259"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-<a id="__codelineno-0-260" name="__codelineno-0-260"></a>            <span class="s2">"dmm=True was requested but device </span><span class="si">%r</span><span class="s2"> does not support a DMM channel; "</span>
-<a id="__codelineno-0-261" name="__codelineno-0-261"></a>            <span class="s2">"falling back to a global detuning drive."</span><span class="p">,</span>
-<a id="__codelineno-0-262" name="__codelineno-0-262"></a>            <span class="n">device</span><span class="p">,</span>
-<a id="__codelineno-0-263" name="__codelineno-0-263"></a>        <span class="p">)</span>
-<a id="__codelineno-0-264" name="__codelineno-0-264"></a>        <span class="n">dmm</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-265" name="__codelineno-0-265"></a>
-<a id="__codelineno-0-266" name="__codelineno-0-266"></a>    <span class="n">n_amp</span> <span class="o">=</span> <span class="mi">3</span>
-<a id="__codelineno-0-267" name="__codelineno-0-267"></a>    <span class="n">n_det</span> <span class="o">=</span> <span class="mi">3</span>
-<a id="__codelineno-0-268" name="__codelineno-0-268"></a>
-<a id="__codelineno-0-269" name="__codelineno-0-269"></a>    <span class="n">eps</span> <span class="o">=</span> <span class="mf">0.0001</span>
-<a id="__codelineno-0-270" name="__codelineno-0-270"></a>    <span class="n">zero</span> <span class="o">=</span> <span class="n">eps</span>
-<a id="__codelineno-0-271" name="__codelineno-0-271"></a>    <span class="n">one</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">eps</span>
-<a id="__codelineno-0-272" name="__codelineno-0-272"></a>
-<a id="__codelineno-0-273" name="__codelineno-0-273"></a>    <span class="n">bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">)]</span> <span class="o">*</span> <span class="n">n_amp</span> <span class="o">+</span> <span class="p">[(</span><span class="o">-</span><span class="n">one</span><span class="p">,</span> <span class="o">-</span><span class="n">zero</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[(</span><span class="o">-</span><span class="n">one</span><span class="p">,</span> <span class="n">one</span><span class="p">)]</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_det</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">[(</span><span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">)]</span>
-<a id="__codelineno-0-274" name="__codelineno-0-274"></a>
-<a id="__codelineno-0-275" name="__codelineno-0-275"></a>    <span class="n">initial_params</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">initial_amplitude_knots</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="n">initial_detuning_knots</span>
-<a id="__codelineno-0-276" name="__codelineno-0-276"></a>
-<a id="__codelineno-0-277" name="__codelineno-0-277"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Solution</span><span class="p">,</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Drive</span><span class="p">]:</span>
-<a id="__codelineno-0-278" name="__codelineno-0-278"></a>
-<a id="__codelineno-0-279" name="__codelineno-0-279"></a>        <span class="n">solution</span> <span class="o">=</span> <span class="n">Solution</span><span class="p">()</span>
-<a id="__codelineno-0-280" name="__codelineno-0-280"></a>        <span class="n">drive</span> <span class="o">=</span> <span class="n">_build_drive</span><span class="p">(</span>
-<a id="__codelineno-0-281" name="__codelineno-0-281"></a>            <span class="n">instance</span><span class="p">,</span>
-<a id="__codelineno-0-282" name="__codelineno-0-282"></a>            <span class="n">x</span><span class="p">,</span>
-<a id="__codelineno-0-283" name="__codelineno-0-283"></a>            <span class="n">dmm</span><span class="o">=</span><span class="n">dmm</span><span class="p">,</span>
-<a id="__codelineno-0-284" name="__codelineno-0-284"></a>            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
-<a id="__codelineno-0-285" name="__codelineno-0-285"></a>            <span class="n">register</span><span class="o">=</span><span class="n">register</span><span class="p">,</span>
-<a id="__codelineno-0-286" name="__codelineno-0-286"></a>        <span class="p">)</span>
-<a id="__codelineno-0-287" name="__codelineno-0-287"></a>
-<a id="__codelineno-0-288" name="__codelineno-0-288"></a>        <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-289" name="__codelineno-0-289"></a>            <span class="n">solution</span> <span class="o">=</span> <span class="n">_run_simulation</span><span class="p">(</span>
-<a id="__codelineno-0-290" name="__codelineno-0-290"></a>                <span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span>
-<a id="__codelineno-0-291" name="__codelineno-0-291"></a>                <span class="n">register</span><span class="p">,</span>
-<a id="__codelineno-0-292" name="__codelineno-0-292"></a>                <span class="n">drive</span><span class="p">,</span>
-<a id="__codelineno-0-293" name="__codelineno-0-293"></a>                <span class="n">device</span><span class="p">,</span>
-<a id="__codelineno-0-294" name="__codelineno-0-294"></a>                <span class="n">backend</span><span class="p">,</span>
-<a id="__codelineno-0-295" name="__codelineno-0-295"></a>                <span class="n">config</span><span class="p">,</span>
-<a id="__codelineno-0-296" name="__codelineno-0-296"></a>            <span class="p">)</span>
-<a id="__codelineno-0-297" name="__codelineno-0-297"></a>            <span class="k">if</span> <span class="nb">eval</span><span class="p">:</span>
-<a id="__codelineno-0-298" name="__codelineno-0-298"></a>                <span class="n">cost_eval</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">objective_fn</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
-<a id="__codelineno-0-299" name="__codelineno-0-299"></a>                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">cost_eval</span><span class="p">):</span>
-<a id="__codelineno-0-300" name="__codelineno-0-300"></a>                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[Warning] Non-finite cost encountered: </span><span class="si">{</span><span class="n">cost_eval</span><span class="si">}</span><span class="s2"> at x=</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<a id="__codelineno-0-301" name="__codelineno-0-301"></a>                    <span class="n">cost_eval</span> <span class="o">=</span> <span class="mf">1e4</span>
-<a id="__codelineno-0-302" name="__codelineno-0-302"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-303" name="__codelineno-0-303"></a>                <span class="n">cost_eval</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
-<a id="__codelineno-0-304" name="__codelineno-0-304"></a>
-<a id="__codelineno-0-305" name="__codelineno-0-305"></a>        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-<a id="__codelineno-0-306" name="__codelineno-0-306"></a>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[Exception] Error during simulation at x=</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<a id="__codelineno-0-307" name="__codelineno-0-307"></a>            <span class="n">cost_eval</span> <span class="o">=</span> <span class="mf">1e4</span>
-<a id="__codelineno-0-308" name="__codelineno-0-308"></a>        <span class="k">return</span> <span class="n">cost_eval</span><span class="p">,</span> <span class="n">solution</span><span class="p">,</span> <span class="n">drive</span>
-<a id="__codelineno-0-309" name="__codelineno-0-309"></a>
-<a id="__codelineno-0-310" name="__codelineno-0-310"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">objective</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-0-311" name="__codelineno-0-311"></a>        <span class="n">cost_eval</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<a id="__codelineno-0-312" name="__codelineno-0-312"></a>        <span class="n">config</span><span class="o">.</span><span class="n">_callback_fn</span><span class="p">(</span><span class="n">_CallbackInfo</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">cost_eval</span><span class="o">=</span><span class="n">cost_eval</span><span class="p">))</span>
-<a id="__codelineno-0-313" name="__codelineno-0-313"></a>
-<a id="__codelineno-0-314" name="__codelineno-0-314"></a>        <span class="k">return</span> <span class="n">cost_eval</span>
-<a id="__codelineno-0-315" name="__codelineno-0-315"></a>
-<a id="__codelineno-0-316" name="__codelineno-0-316"></a>    <span class="n">opt_result</span> <span class="o">=</span> <span class="n">gp_minimize</span><span class="p">(</span>
-<a id="__codelineno-0-317" name="__codelineno-0-317"></a>        <span class="n">objective</span><span class="p">,</span>
-<a id="__codelineno-0-318" name="__codelineno-0-318"></a>        <span class="n">bounds</span><span class="p">,</span>
-<a id="__codelineno-0-319" name="__codelineno-0-319"></a>        <span class="n">x0</span><span class="o">=</span><span class="n">initial_params</span><span class="p">,</span>
-<a id="__codelineno-0-320" name="__codelineno-0-320"></a>        <span class="n">n_calls</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">n_evaluations</span><span class="p">,</span>
-<a id="__codelineno-0-321" name="__codelineno-0-321"></a>        <span class="n">random_state</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
-<a id="__codelineno-0-322" name="__codelineno-0-322"></a>    <span class="p">)</span>
-<a id="__codelineno-0-323" name="__codelineno-0-323"></a>
-<a id="__codelineno-0-324" name="__codelineno-0-324"></a>    <span class="n">best_params</span> <span class="o">=</span> <span class="n">opt_result</span><span class="o">.</span><span class="n">x</span> <span class="k">if</span> <span class="n">opt_result</span> <span class="k">else</span> <span class="n">initial_params</span>
-<a id="__codelineno-0-325" name="__codelineno-0-325"></a>    <span class="n">_</span><span class="p">,</span> <span class="n">solution</span><span class="p">,</span> <span class="n">drive</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">best_params</span><span class="p">,</span> <span class="nb">eval</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<a id="__codelineno-0-326" name="__codelineno-0-326"></a>
-<a id="__codelineno-0-327" name="__codelineno-0-327"></a>    <span class="k">return</span> <span class="n">solution</span><span class="p">,</span> <span class="n">drive</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-226">226</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-227">227</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-228">228</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-229">229</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-230">230</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-231">231</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-232">232</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-233">233</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-234">234</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-235">235</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-236">236</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-237">237</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-238">238</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-239">239</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-240">240</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-241">241</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-242">242</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-243">243</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-244">244</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-245">245</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-246">246</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-247">247</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-248">248</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-249">249</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-250">250</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-251">251</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-252">252</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-253">253</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-254">254</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-255">255</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-256">256</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-257">257</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-258">258</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-259">259</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-260">260</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-261">261</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-262">262</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-263">263</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-264">264</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-265">265</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-266">266</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-267">267</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-268">268</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-269">269</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-270">270</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-271">271</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-272">272</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-273">273</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-274">274</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-275">275</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-276">276</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-277">277</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-278">278</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-279">279</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-280">280</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-281">281</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-282">282</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-283">283</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-284">284</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-285">285</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-286">286</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-287">287</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-288">288</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-289">289</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-290">290</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-291">291</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-292">292</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-293">293</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-294">294</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-295">295</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-296">296</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-297">297</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-298">298</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-299">299</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-300">300</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-301">301</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-302">302</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-303">303</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-304">304</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-305">305</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-306">306</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-307">307</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-308">308</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-309">309</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-310">310</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-311">311</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-312">312</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-313">313</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-314">314</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-315">315</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-316">316</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-317">317</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-318">318</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-319">319</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-320">320</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-321">321</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-322">322</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-323">323</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-324">324</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-325">325</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-326">326</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-327">327</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-328">328</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-329">329</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-330">330</a></span>
+<span class="normal"><a href="#qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-331">331</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-226" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-226"></a><span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>  <span class="c1"># noqa: PLR0913</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-227" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-227"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-228" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-228"></a>    <span class="n">register</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-229" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-229"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-230" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-230"></a>    <span class="n">backend</span><span class="p">:</span> <span class="n">protocols</span><span class="o">.</span><span class="n">Backend</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-231" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-231"></a>    <span class="n">device</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Device</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-232" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-232"></a>    <span class="n">dmm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-233" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-233"></a>    <span class="n">config</span><span class="p">:</span> <span class="n">Config</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-234" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-234"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Drive</span><span class="p">]:</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-235" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-235"></a><span class="w">    </span><span class="sd">"""Solve a QUBO instance via Bayesian optimization of a drive schedule.</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-236" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-236"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-237" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-237"></a><span class="sd">    Uses [`skopt.gp_minimize`](https://scikit-optimize.github.io/stable/modules/generated/skopt.gp_minimize.html)</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-238" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-238"></a><span class="sd">    to search over waveform parameters, running a</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-239" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-239"></a><span class="sd">    quantum simulation at each evaluation and minimizing [`config.objective_fn`][Config]</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-240" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-240"></a><span class="sd">    of the resulting [`Solution`][]. This is a hybrid quantum-classical solving</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-241" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-241"></a><span class="sd">    algorithm in its own right, and its returned drive can also be reused as</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-242" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-242"></a><span class="sd">    the output of a drive-shaping step for another solver.</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-243" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-243"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-244" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-244"></a><span class="sd">    Args:</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-245" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-245"></a><span class="sd">        instance: The QUBO [`Instance`][] to solve.</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-246" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-246"></a><span class="sd">        register: The physical atom register.</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-247" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-247"></a><span class="sd">        backend: Execution backend for running simulations during optimization.</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-248" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-248"></a><span class="sd">        device: Target quantum device.</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-249" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-249"></a><span class="sd">        dmm: Whether to use the Detuning Map Modulator.</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-250" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-250"></a><span class="sd">        config: Optimization parameters, including the initial waveform knots,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-251" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-251"></a><span class="sd">            number of evaluations, and objective function.</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-252" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-252"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-253" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-253"></a><span class="sd">    Returns:</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-254" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-254"></a><span class="sd">        A tuple of the best [`qoolqit.Drive`][] found and the corresponding</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-255" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-255"></a><span class="sd">            [`Solution`][].</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-256" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-256"></a><span class="sd">    """</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-257" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-257"></a>    <span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">Config</span><span class="p">()</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-258" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-258"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-259" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-259"></a>    <span class="k">if</span> <span class="n">dmm</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">support_dmm</span><span class="p">(</span><span class="n">device</span><span class="p">):</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-260" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-260"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-261" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-261"></a>            <span class="s2">"dmm=True was requested but device </span><span class="si">%r</span><span class="s2"> does not support a DMM channel; "</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-262" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-262"></a>            <span class="s2">"falling back to a global detuning drive."</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-263" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-263"></a>            <span class="n">device</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-264" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-264"></a>        <span class="p">)</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-265" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-265"></a>        <span class="n">dmm</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-266" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-266"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-267" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-267"></a>    <span class="n">n_amp</span> <span class="o">=</span> <span class="mi">3</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-268" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-268"></a>    <span class="n">n_det</span> <span class="o">=</span> <span class="mi">3</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-269" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-269"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-270" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-270"></a>    <span class="n">eps</span> <span class="o">=</span> <span class="mf">0.0001</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-271" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-271"></a>    <span class="n">zero</span> <span class="o">=</span> <span class="n">eps</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-272" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-272"></a>    <span class="n">one</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">eps</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-273" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-273"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-274" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-274"></a>    <span class="n">bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">)]</span> <span class="o">*</span> <span class="n">n_amp</span> <span class="o">+</span> <span class="p">[(</span><span class="o">-</span><span class="n">one</span><span class="p">,</span> <span class="o">-</span><span class="n">zero</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[(</span><span class="o">-</span><span class="n">one</span><span class="p">,</span> <span class="n">one</span><span class="p">)]</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_det</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">[(</span><span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">)]</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-275" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-275"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-276" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-276"></a>    <span class="n">initial_params</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">initial_amplitude_knots</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="n">initial_detuning_knots</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-277" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-277"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-278" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-278"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">evaluate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Solution</span><span class="p">,</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Drive</span><span class="p">]:</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-279" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-279"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-280" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-280"></a>        <span class="n">solution</span> <span class="o">=</span> <span class="n">Solution</span><span class="p">()</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-281" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-281"></a>        <span class="n">drive</span> <span class="o">=</span> <span class="n">_build_drive</span><span class="p">(</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-282" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-282"></a>            <span class="n">instance</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-283" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-283"></a>            <span class="n">x</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-284" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-284"></a>            <span class="n">dmm</span><span class="o">=</span><span class="n">dmm</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-285" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-285"></a>            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-286" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-286"></a>            <span class="n">register</span><span class="o">=</span><span class="n">register</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-287" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-287"></a>        <span class="p">)</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-288" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-288"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-289" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-289"></a>        <span class="k">try</span><span class="p">:</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-290" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-290"></a>            <span class="n">solution</span> <span class="o">=</span> <span class="n">_run_simulation</span><span class="p">(</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-291" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-291"></a>                <span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-292" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-292"></a>                <span class="n">register</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-293" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-293"></a>                <span class="n">drive</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-294" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-294"></a>                <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-295" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-295"></a>                <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-296" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-296"></a>                <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-297" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-297"></a>            <span class="p">)</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-298" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-298"></a>            <span class="k">if</span> <span class="n">evaluate</span><span class="p">:</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-299" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-299"></a>                <span class="n">cost_eval</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">objective_fn</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-300" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-300"></a>                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">cost_eval</span><span class="p">):</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-301" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-301"></a>                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-302" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-302"></a>                        <span class="s2">"Non-finite cost </span><span class="si">%s</span><span class="s2"> at x=</span><span class="si">%s</span><span class="s2">; using penalty cost 1e4."</span><span class="p">,</span> <span class="n">cost_eval</span><span class="p">,</span> <span class="n">x</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-303" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-303"></a>                    <span class="p">)</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-304" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-304"></a>                    <span class="n">cost_eval</span> <span class="o">=</span> <span class="mf">1e4</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-305" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-305"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-306" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-306"></a>                <span class="n">cost_eval</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-307" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-307"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-308" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-308"></a>        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-309" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-309"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Evaluation failed at x=</span><span class="si">%s</span><span class="s2"> (</span><span class="si">%r</span><span class="s2">); using penalty cost 1e4."</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-310" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-310"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Evaluation failure traceback"</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-311" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-311"></a>            <span class="n">cost_eval</span> <span class="o">=</span> <span class="mf">1e4</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-312" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-312"></a>        <span class="k">return</span> <span class="n">cost_eval</span><span class="p">,</span> <span class="n">solution</span><span class="p">,</span> <span class="n">drive</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-313" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-313"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-314" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-314"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">objective</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-315" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-315"></a>        <span class="n">cost_eval</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-316" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-316"></a>        <span class="n">config</span><span class="o">.</span><span class="n">_callback_fn</span><span class="p">(</span><span class="n">_CallbackInfo</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">cost_eval</span><span class="o">=</span><span class="n">cost_eval</span><span class="p">))</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-317" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-317"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-318" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-318"></a>        <span class="k">return</span> <span class="n">cost_eval</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-319" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-319"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-320" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-320"></a>    <span class="n">opt_result</span> <span class="o">=</span> <span class="n">gp_minimize</span><span class="p">(</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-321" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-321"></a>        <span class="n">objective</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-322" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-322"></a>        <span class="n">bounds</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-323" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-323"></a>        <span class="n">x0</span><span class="o">=</span><span class="n">initial_params</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-324" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-324"></a>        <span class="n">n_calls</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">n_evaluations</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-325" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-325"></a>        <span class="n">random_state</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-326" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-326"></a>    <span class="p">)</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-327" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-327"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-328" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-328"></a>    <span class="n">best_params</span> <span class="o">=</span> <span class="n">opt_result</span><span class="o">.</span><span class="n">x</span> <span class="k">if</span> <span class="n">opt_result</span> <span class="k">else</span> <span class="n">initial_params</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-329" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-329"></a>    <span class="n">_</span><span class="p">,</span> <span class="n">solution</span><span class="p">,</span> <span class="n">drive</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">best_params</span><span class="p">,</span> <span class="n">evaluate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-330" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-330"></a>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-331" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-331"></a>    <span class="k">return</span> <span class="n">solution</span><span class="p">,</span> <span class="n">drive</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

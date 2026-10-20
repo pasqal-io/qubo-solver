@@ -3512,16 +3512,16 @@ regardless of its inheritance tree. mypy validates the full method contract
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Speaker</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">talk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="o">...</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">entity</span><span class="p">:</span> <span class="n">Speaker</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">talk</span><span class="p">(</span><span class="s2">"Hello"</span><span class="p">))</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Any class implementing `talk(self, message: str) -&gt; str`</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># is accepted by mypy here, without inheriting from Speaker.</span>
+  <div class="highlight"><pre><span></span><code><a id="qubosolver.protocols--__codelineno-0-1" name="qubosolver.protocols--__codelineno-0-1" href="#qubosolver.protocols--__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span>
+<a id="qubosolver.protocols--__codelineno-0-2" name="qubosolver.protocols--__codelineno-0-2" href="#qubosolver.protocols--__codelineno-0-2"></a>
+<a id="qubosolver.protocols--__codelineno-0-3" name="qubosolver.protocols--__codelineno-0-3" href="#qubosolver.protocols--__codelineno-0-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Speaker</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<a id="qubosolver.protocols--__codelineno-0-4" name="qubosolver.protocols--__codelineno-0-4" href="#qubosolver.protocols--__codelineno-0-4"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">talk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="o">...</span>
+<a id="qubosolver.protocols--__codelineno-0-5" name="qubosolver.protocols--__codelineno-0-5" href="#qubosolver.protocols--__codelineno-0-5"></a>
+<a id="qubosolver.protocols--__codelineno-0-6" name="qubosolver.protocols--__codelineno-0-6" href="#qubosolver.protocols--__codelineno-0-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">entity</span><span class="p">:</span> <span class="n">Speaker</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="qubosolver.protocols--__codelineno-0-7" name="qubosolver.protocols--__codelineno-0-7" href="#qubosolver.protocols--__codelineno-0-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">talk</span><span class="p">(</span><span class="s2">"Hello"</span><span class="p">))</span>
+<a id="qubosolver.protocols--__codelineno-0-8" name="qubosolver.protocols--__codelineno-0-8" href="#qubosolver.protocols--__codelineno-0-8"></a>
+<a id="qubosolver.protocols--__codelineno-0-9" name="qubosolver.protocols--__codelineno-0-9" href="#qubosolver.protocols--__codelineno-0-9"></a><span class="c1"># Any class implementing `talk(self, message: str) -&gt; str`</span>
+<a id="qubosolver.protocols--__codelineno-0-10" name="qubosolver.protocols--__codelineno-0-10" href="#qubosolver.protocols--__codelineno-0-10"></a><span class="c1"># is accepted by mypy here, without inheriting from Speaker.</span>
 </code></pre></div>
 </details>
 
@@ -3666,27 +3666,25 @@ that will be populated upon completion.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/protocols/backend.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-29">29</a></span>
-<span class="normal"><a href="#__codelineno-0-30">30</a></span>
-<span class="normal"><a href="#__codelineno-0-31">31</a></span>
-<span class="normal"><a href="#__codelineno-0-32">32</a></span>
-<span class="normal"><a href="#__codelineno-0-33">33</a></span>
-<span class="normal"><a href="#__codelineno-0-34">34</a></span>
-<span class="normal"><a href="#__codelineno-0-35">35</a></span>
-<span class="normal"><a href="#__codelineno-0-36">36</a></span>
-<span class="normal"><a href="#__codelineno-0-37">37</a></span>
-<span class="normal"><a href="#__codelineno-0-38">38</a></span>
-<span class="normal"><a href="#__codelineno-0-39">39</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="n">program</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">QuantumProgram</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">job</span><span class="o">.</span><span class="n">Job</span><span class="p">[</span><span class="n">Results</span><span class="p">]:</span>
-<a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="w">    </span><span class="sd">"""Submit a quantum program for execution.</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31"></a>
-<a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">        program: The compiled quantum program to execute.</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">        A job wrapping the [`qoolqit.execution.Results`][]</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">            that will be populated upon completion.</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">    """</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>    <span class="o">...</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-30">30</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-31">31</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-32">32</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-33">33</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-34">34</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-35">35</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-36">36</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-37">37</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-38">38</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-39">39</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.protocols.Backend.run--source--__codelineno-0-30" name="qubosolver.protocols.Backend.run--source--__codelineno-0-30"></a><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="n">program</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">QuantumProgram</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">job</span><span class="o">.</span><span class="n">Job</span><span class="p">[</span><span class="n">Results</span><span class="p">]:</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-31" name="qubosolver.protocols.Backend.run--source--__codelineno-0-31"></a><span class="w">    </span><span class="sd">"""Submit a quantum program for execution.</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-32" name="qubosolver.protocols.Backend.run--source--__codelineno-0-32"></a>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-33" name="qubosolver.protocols.Backend.run--source--__codelineno-0-33"></a><span class="sd">    Args:</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-34" name="qubosolver.protocols.Backend.run--source--__codelineno-0-34"></a><span class="sd">        program: The compiled quantum program to execute.</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-35" name="qubosolver.protocols.Backend.run--source--__codelineno-0-35"></a>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-36" name="qubosolver.protocols.Backend.run--source--__codelineno-0-36"></a><span class="sd">    Returns:</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-37" name="qubosolver.protocols.Backend.run--source--__codelineno-0-37"></a><span class="sd">        A job wrapping the [`qoolqit.execution.Results`][]</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-38" name="qubosolver.protocols.Backend.run--source--__codelineno-0-38"></a><span class="sd">            that will be populated upon completion.</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-39" name="qubosolver.protocols.Backend.run--source--__codelineno-0-39"></a><span class="sd">    """</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

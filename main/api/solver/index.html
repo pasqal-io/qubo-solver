@@ -4187,13 +4187,15 @@ annealing, or tabu search). Defaults to <code>float("inf")</code>, meaning no ti
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/solver/config/solving.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-48">48</a></span>
-<span class="normal"><a href="#__codelineno-0-49">49</a></span>
-<span class="normal"><a href="#__codelineno-0-50">50</a></span>
-<span class="normal"><a href="#__codelineno-0-51">51</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="w">    </span><span class="sd">"""Validate `algorithm`."""</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">_ClassicalAlgorithm</span><span class="p">):</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid classical algorithm '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="si">}</span><span class="s2">'."</span><span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-49">49</a></span>
+<span class="normal"><a href="#qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-50">50</a></span>
+<span class="normal"><a href="#qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-51">51</a></span>
+<span class="normal"><a href="#qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-52">52</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-48" name="qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-48"></a><span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-49" name="qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-49"></a><span class="w">    </span><span class="sd">"""Validate `algorithm`."""</span>
+<a id="qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-50" name="qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-50"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">_ClassicalAlgorithm</span><span class="p">):</span>
+<a id="qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-51" name="qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-51"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Invalid classical algorithm '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="si">}</span><span class="s2">'."</span>
+<a id="qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-52" name="qubosolver.solver.ClassicalSolvingConfig.__post_init__--source--__codelineno-0-52"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4338,13 +4340,15 @@ the local-energy-scale drive shaper. Defaults to <code>0.1</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/solver/config/drive_shaping.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-46">46</a></span>
-<span class="normal"><a href="#__codelineno-0-47">47</a></span>
-<span class="normal"><a href="#__codelineno-0-48">48</a></span>
-<span class="normal"><a href="#__codelineno-0-49">49</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="w">    </span><span class="sd">"""Validate `algorithm`."""</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">_DriveShapingAlgorithm</span><span class="p">):</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid drive shaping method '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="si">}</span><span class="s2">'."</span><span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-46">46</a></span>
+<span class="normal"><a href="#qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-47">47</a></span>
+<span class="normal"><a href="#qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-49">49</a></span>
+<span class="normal"><a href="#qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-50">50</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-46" name="qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-46"></a><span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-47" name="qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-47"></a><span class="w">    </span><span class="sd">"""Validate `algorithm`."""</span>
+<a id="qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-48" name="qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-48"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">_DriveShapingAlgorithm</span><span class="p">):</span>
+<a id="qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-49" name="qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-49"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Invalid drive shaping method '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="si">}</span><span class="s2">'."</span>
+<a id="qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-50" name="qubosolver.solver.DriveShapingConfig.__post_init__--source--__codelineno-0-50"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4479,17 +4483,21 @@ Defaults to <code>"triangular"</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/solver/config/embedding.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-42">42</a></span>
-<span class="normal"><a href="#__codelineno-0-43">43</a></span>
-<span class="normal"><a href="#__codelineno-0-44">44</a></span>
-<span class="normal"><a href="#__codelineno-0-45">45</a></span>
-<span class="normal"><a href="#__codelineno-0-46">46</a></span>
-<span class="normal"><a href="#__codelineno-0-47">47</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="w">    </span><span class="sd">"""Validate `algorithm` and `greedy_layout_lattice`."""</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">_EmbeddingAlgorithm</span><span class="p">):</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid embedding method '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="si">}</span><span class="s2">'."</span><span class="p">)</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">greedy_layout_lattice</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">_GreedyLayoutLattice</span><span class="p">):</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid lattice '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">greedy_layout_lattice</span><span class="si">}</span><span class="s2">'."</span><span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-44">44</a></span>
+<span class="normal"><a href="#qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-45">45</a></span>
+<span class="normal"><a href="#qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-46">46</a></span>
+<span class="normal"><a href="#qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-47">47</a></span>
+<span class="normal"><a href="#qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-49">49</a></span>
+<span class="normal"><a href="#qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-50">50</a></span>
+<span class="normal"><a href="#qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-51">51</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-44" name="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-44"></a><span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-45" name="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-45"></a><span class="w">    </span><span class="sd">"""Validate `algorithm` and `greedy_layout_lattice`."""</span>
+<a id="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-46" name="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-46"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">_EmbeddingAlgorithm</span><span class="p">):</span>
+<a id="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-47" name="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-47"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Invalid embedding method '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="si">}</span><span class="s2">'."</span>
+<a id="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-48" name="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-48"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+<a id="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-49" name="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-49"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">greedy_layout_lattice</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">_GreedyLayoutLattice</span><span class="p">):</span>
+<a id="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-50" name="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-50"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Invalid lattice '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">greedy_layout_lattice</span><span class="si">}</span><span class="s2">'."</span>
+<a id="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-51" name="qubosolver.solver.EmbeddingConfig.__post_init__--source--__codelineno-0-51"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4702,12 +4710,12 @@ specs (or <code>inf</code> when the device imposes no such limits).</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">Solver</span><span class="p">,</span> <span class="n">SolverConfig</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">()</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">solution</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+  <div class="highlight"><pre><span></span><code><a id="qubosolver.solver.Solver--__codelineno-0-1" name="qubosolver.solver.Solver--__codelineno-0-1" href="#qubosolver.solver.Solver--__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">Solver</span><span class="p">,</span> <span class="n">SolverConfig</span>
+<a id="qubosolver.solver.Solver--__codelineno-0-2" name="qubosolver.solver.Solver--__codelineno-0-2" href="#qubosolver.solver.Solver--__codelineno-0-2"></a>
+<a id="qubosolver.solver.Solver--__codelineno-0-3" name="qubosolver.solver.Solver--__codelineno-0-3" href="#qubosolver.solver.Solver--__codelineno-0-3"></a><span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
+<a id="qubosolver.solver.Solver--__codelineno-0-4" name="qubosolver.solver.Solver--__codelineno-0-4" href="#qubosolver.solver.Solver--__codelineno-0-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">()</span>
+<a id="qubosolver.solver.Solver--__codelineno-0-5" name="qubosolver.solver.Solver--__codelineno-0-5" href="#qubosolver.solver.Solver--__codelineno-0-5"></a><span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<a id="qubosolver.solver.Solver--__codelineno-0-6" name="qubosolver.solver.Solver--__codelineno-0-6" href="#qubosolver.solver.Solver--__codelineno-0-6"></a><span class="n">solution</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
 </code></pre></div>
 </details>
 
@@ -4764,37 +4772,37 @@ is used and how it behaves.</p>
 
                   <details class="mkdocstrings-source">
                     <summary>Source code in <code>qubosolver/solver/solver.py</code></summary>
-                    <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-54">54</a></span>
-<span class="normal"><a href="#__codelineno-0-55">55</a></span>
-<span class="normal"><a href="#__codelineno-0-56">56</a></span>
-<span class="normal"><a href="#__codelineno-0-57">57</a></span>
-<span class="normal"><a href="#__codelineno-0-58">58</a></span>
-<span class="normal"><a href="#__codelineno-0-59">59</a></span>
-<span class="normal"><a href="#__codelineno-0-60">60</a></span>
-<span class="normal"><a href="#__codelineno-0-61">61</a></span>
-<span class="normal"><a href="#__codelineno-0-62">62</a></span>
-<span class="normal"><a href="#__codelineno-0-63">63</a></span>
-<span class="normal"><a href="#__codelineno-0-64">64</a></span>
-<span class="normal"><a href="#__codelineno-0-65">65</a></span>
-<span class="normal"><a href="#__codelineno-0-66">66</a></span>
-<span class="normal"><a href="#__codelineno-0-67">67</a></span>
-<span class="normal"><a href="#__codelineno-0-68">68</a></span>
-<span class="normal"><a href="#__codelineno-0-69">69</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">SolverConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="w">    </span><span class="sd">"""Initialize the solver.</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">        instance: The QUBO problem to solve.</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">        config: Solver configuration controlling which solving strategy</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">            is used and how it behaves.</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">    """</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a>    <span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">SolverConfig</span><span class="p">()</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="p">:</span> <span class="n">BaseSolver</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">solving_mode</span> <span class="o">==</span> <span class="s2">"quantum"</span><span class="p">:</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span> <span class="o">=</span> <span class="n">_QuboSolverQuantum</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a>    <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span> <span class="o">=</span> <span class="n">_QuboSolverClassical</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+                    <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-60">60</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-61">61</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-62">62</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-63">63</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-64">64</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-65">65</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-66">66</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-67">67</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-68">68</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-69">69</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-70">70</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-71">71</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-72">72</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-73">73</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-74">74</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver--source--__codelineno-0-75">75</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.solver.Solver--source--__codelineno-0-60" name="qubosolver.solver.Solver--source--__codelineno-0-60"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">SolverConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-61" name="qubosolver.solver.Solver--source--__codelineno-0-61"></a><span class="w">    </span><span class="sd">"""Initialize the solver.</span>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-62" name="qubosolver.solver.Solver--source--__codelineno-0-62"></a>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-63" name="qubosolver.solver.Solver--source--__codelineno-0-63"></a><span class="sd">    Args:</span>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-64" name="qubosolver.solver.Solver--source--__codelineno-0-64"></a><span class="sd">        instance: The QUBO problem to solve.</span>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-65" name="qubosolver.solver.Solver--source--__codelineno-0-65"></a><span class="sd">        config: Solver configuration controlling which solving strategy</span>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-66" name="qubosolver.solver.Solver--source--__codelineno-0-66"></a><span class="sd">            is used and how it behaves.</span>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-67" name="qubosolver.solver.Solver--source--__codelineno-0-67"></a><span class="sd">    """</span>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-68" name="qubosolver.solver.Solver--source--__codelineno-0-68"></a>    <span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">SolverConfig</span><span class="p">()</span>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-69" name="qubosolver.solver.Solver--source--__codelineno-0-69"></a>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-70" name="qubosolver.solver.Solver--source--__codelineno-0-70"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="p">:</span> <span class="n">BaseSolver</span>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-71" name="qubosolver.solver.Solver--source--__codelineno-0-71"></a>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-72" name="qubosolver.solver.Solver--source--__codelineno-0-72"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">solving_mode</span> <span class="o">==</span> <span class="s2">"quantum"</span><span class="p">:</span>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-73" name="qubosolver.solver.Solver--source--__codelineno-0-73"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span> <span class="o">=</span> <span class="n">_QuboSolverQuantum</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-74" name="qubosolver.solver.Solver--source--__codelineno-0-74"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="qubosolver.solver.Solver--source--__codelineno-0-75" name="qubosolver.solver.Solver--source--__codelineno-0-75"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span> <span class="o">=</span> <span class="n">_QuboSolverClassical</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
                   </details>
 
@@ -4851,19 +4859,19 @@ is used and how it behaves.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/solver/solver.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-90">90</a></span>
-<span class="normal"><a href="#__codelineno-0-91">91</a></span>
-<span class="normal"><a href="#__codelineno-0-92">92</a></span>
-<span class="normal"><a href="#__codelineno-0-93">93</a></span>
-<span class="normal"><a href="#__codelineno-0-94">94</a></span>
-<span class="normal"><a href="#__codelineno-0-95">95</a></span>
-<span class="normal"><a href="#__codelineno-0-96">96</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="w">    </span><span class="sd">"""Solve the QUBO instance.</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="sd">        The solution.</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">    """</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.solver.Solver.solve--source--__codelineno-0-96"> 96</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver.solve--source--__codelineno-0-97"> 97</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver.solve--source--__codelineno-0-98"> 98</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver.solve--source--__codelineno-0-99"> 99</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver.solve--source--__codelineno-0-100">100</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver.solve--source--__codelineno-0-101">101</a></span>
+<span class="normal"><a href="#qubosolver.solver.Solver.solve--source--__codelineno-0-102">102</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.solver.Solver.solve--source--__codelineno-0-96" name="qubosolver.solver.Solver.solve--source--__codelineno-0-96"></a><span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<a id="qubosolver.solver.Solver.solve--source--__codelineno-0-97" name="qubosolver.solver.Solver.solve--source--__codelineno-0-97"></a><span class="w">    </span><span class="sd">"""Solve the QUBO instance.</span>
+<a id="qubosolver.solver.Solver.solve--source--__codelineno-0-98" name="qubosolver.solver.Solver.solve--source--__codelineno-0-98"></a>
+<a id="qubosolver.solver.Solver.solve--source--__codelineno-0-99" name="qubosolver.solver.Solver.solve--source--__codelineno-0-99"></a><span class="sd">    Returns:</span>
+<a id="qubosolver.solver.Solver.solve--source--__codelineno-0-100" name="qubosolver.solver.Solver.solve--source--__codelineno-0-100"></a><span class="sd">        The solution.</span>
+<a id="qubosolver.solver.Solver.solve--source--__codelineno-0-101" name="qubosolver.solver.Solver.solve--source--__codelineno-0-101"></a><span class="sd">    """</span>
+<a id="qubosolver.solver.Solver.solve--source--__codelineno-0-102" name="qubosolver.solver.Solver.solve--source--__codelineno-0-102"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5419,11 +5427,11 @@ the configuration of that approach. Defaults to a <code>QuantumSolvingConfig</co
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/solver/config/config.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-85">85</a></span>
-<span class="normal"><a href="#__codelineno-0-86">86</a></span>
-<span class="normal"><a href="#__codelineno-0-87">87</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="w">    </span><span class="sd">"""Return the configuration's name."""</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_name</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.solver.SolverConfig.__repr__--source--__codelineno-0-85">85</a></span>
+<span class="normal"><a href="#qubosolver.solver.SolverConfig.__repr__--source--__codelineno-0-86">86</a></span>
+<span class="normal"><a href="#qubosolver.solver.SolverConfig.__repr__--source--__codelineno-0-87">87</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.solver.SolverConfig.__repr__--source--__codelineno-0-85" name="qubosolver.solver.SolverConfig.__repr__--source--__codelineno-0-85"></a><span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="qubosolver.solver.SolverConfig.__repr__--source--__codelineno-0-86" name="qubosolver.solver.SolverConfig.__repr__--source--__codelineno-0-86"></a><span class="w">    </span><span class="sd">"""Return the configuration's name."""</span>
+<a id="qubosolver.solver.SolverConfig.__repr__--source--__codelineno-0-87" name="qubosolver.solver.SolverConfig.__repr__--source--__codelineno-0-87"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_name</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
