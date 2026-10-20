@@ -27,9 +27,12 @@ import io
 import torch
 
 import qubosolver
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver._io import utils as io_utils
-from qubosolver._io.utils import Stream
 from qubosolver.types import Matrix, Solution, vectori
+
+if TYPE_CHECKING:
+    from qubosolver._io.utils import Stream
 
 
 class Instance(qubosolver.Instance):

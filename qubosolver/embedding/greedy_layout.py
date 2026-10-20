@@ -9,7 +9,6 @@ coefficient matrix and the physical interaction matrix (∝ 1/‖rᵢ - rⱼ‖�
 from __future__ import annotations
 
 import logging
-import pathlib
 from dataclasses import dataclass
 from typing import Literal
 
@@ -17,11 +16,15 @@ import numpy as np
 import qoolqit
 
 from qubosolver import Instance, tensor
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from qubosolver.utils.quantum import _max_min_distance_ratio
 
 from ._algorithms import greedy
 from .enums import Lattice
+
+if TYPE_CHECKING:
+    import pathlib
 
 logger = logging.getLogger(__name__)
 
@@ -121,17 +124,19 @@ def _resolve_max_possible_term(
 
     kind, value = max_possible_term
     if kind not in ("quantile", "factor"):
-        raise ValueError(
+        msg = (
             "When it is a tuple, the first value of `max_possible_term` must be "
             "'quantile' or 'factor'."
         )
+        raise ValueError(msg)
     off_diag = instance.matrix.numpy()[np.triu_indices(instance.size, k=1)]
     positive = off_diag[off_diag > 0]
     if not positive.size:
-        raise ValueError(
+        msg = (
             f"Cannot resolve a '{kind}' `max_possible_term` for an instance with no strictly "
             "positive off-diagonal coefficient: set `max_possible_term` to a float instead."
         )
+        raise ValueError(msg)
     if kind == "factor":
         return _check_positive_max_possible_term(instance._max_off_diag * value)
 
@@ -140,10 +145,11 @@ def _resolve_max_possible_term(
 
 def _check_positive_max_possible_term(max_possible_term: float) -> float:
     if max_possible_term <= 0:
-        raise ValueError(
+        msg = (
             f"`max_possible_term` must resolve to a strictly positive value, got "
             f"{max_possible_term}."
         )
+        raise ValueError(msg)
     return max_possible_term
 
 
@@ -240,15 +246,16 @@ def embed(
     config = config or Config()
     logger.debug("embed: instance size=%d, config=%r", instance.size, config)
     if not instance:
-        raise ValueError("Cannot embed an empty instance (size=0): nothing to place.")
+        msg = "Cannot embed an empty instance (size=0): nothing to place."
+        raise ValueError(msg)
 
     if _has_negative_offdiagonal(instance.matrix):
-        raise ValueError("QUBOs with negative off-diagonal coefficients cannot be embedded.")
+        msg = "QUBOs with negative off-diagonal coefficients cannot be embedded."
+        raise ValueError(msg)
 
     if config.traps < instance.size:
-        raise ValueError(
-            "Number of traps must be at least equal to the number of atoms on the register."
-        )
+        msg = "Number of traps must be at least equal to the number of atoms on the register."
+        raise ValueError(msg)
 
     if instance.size == 1:
         # A single atom has no off-diagonal term to place it relative to,
@@ -279,5 +286,4 @@ def embed(
         max_min_dist_ratio=config.max_min_dist_ratio,
         params=params,
     )
-    register = qoolqit.Register.from_coordinates(coords)
-    return register
+    return qoolqit.Register.from_coordinates(coords)

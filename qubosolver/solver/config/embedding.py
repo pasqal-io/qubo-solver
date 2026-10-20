@@ -5,10 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, get_args
 
-import qoolqit
-
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver.embedding import greedy_layout
 from qubosolver.embedding.enums import Lattice
+
+if TYPE_CHECKING:
+    import qoolqit
 
 _EmbeddingAlgorithm = Literal["blade", "greedy_layout"]
 _GreedyLayoutLattice = Literal["square", "triangular"]
@@ -42,9 +44,11 @@ class Config:
     def __post_init__(self) -> None:
         """Validate `algorithm` and `greedy_layout_lattice`."""
         if self.algorithm not in get_args(_EmbeddingAlgorithm):
-            raise ValueError(f"Invalid embedding method '{self.algorithm}'.")
+            msg = f"Invalid embedding method '{self.algorithm}'."
+            raise ValueError(msg)
         if self.greedy_layout_lattice not in get_args(_GreedyLayoutLattice):
-            raise ValueError(f"Invalid lattice '{self.greedy_layout_lattice}'.")
+            msg = f"Invalid lattice '{self.greedy_layout_lattice}'."
+            raise ValueError(msg)
 
     def _to_greedy_layout_config(self, device: qoolqit.Device) -> greedy_layout.Config:
         """Create a [`greedy_layout.Config`][] from this configuration.
@@ -65,9 +69,10 @@ class Config:
             case "square":
                 cfg.lattice = Lattice.SQUARE
             case _:
-                raise ValueError(
+                msg = (
                     f"Unknown lattice type: {self.greedy_layout_lattice!r}. "
                     f"Expected 'triangular' or 'square'."
                 )
+                raise ValueError(msg)
 
         return cfg

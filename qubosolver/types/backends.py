@@ -21,8 +21,6 @@ import logging
 import warnings
 from typing import Any, Literal, cast
 
-import pulser
-import qoolqit
 from emu_mps import MPSBackend
 from emu_sv import SVBackend
 from pasqal_cloud.backends import (
@@ -39,6 +37,12 @@ from qoolqit.execution import (
 from qoolqit.execution import (
     RemoteEmulator as QoolqitRemoteEmulator,
 )
+
+from qubosolver._checks import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pulser
+    import qoolqit
 
 logger = logging.getLogger(__name__)
 
@@ -70,13 +74,14 @@ def _get_backend_type(
         case ("emu_sv", True):
             return RemoteSVBackend
         case ("emu_sv", False):
-            return cast(type[EmulatorBackend], SVBackend)
+            return cast("type[EmulatorBackend]", SVBackend)
         case ("emu_mps", True):
             return RemoteMPSBackend
         case ("emu_mps", False):
-            return cast(type[EmulatorBackend], MPSBackend)
+            return cast("type[EmulatorBackend]", MPSBackend)
         case _:
-            raise ValueError(f"Backend ID '{backend_id}' is not recognized")
+            msg = f"Backend ID '{backend_id}' is not recognized"
+            raise ValueError(msg)
 
 
 def _select_backend_type(
@@ -94,10 +99,9 @@ def _select_backend_type(
     """
     if n_qubits >= _MPS_THRESHOLD:
         return _get_backend_type("emu_mps", remote)
-    elif n_qubits >= _SV_THRESHOLD:
+    if n_qubits >= _SV_THRESHOLD:
         return _get_backend_type("emu_sv", remote)
-    else:
-        return _get_backend_type("qutip", remote)
+    return _get_backend_type("qutip", remote)
 
 
 class AutoLocalEmulatorBackend(EmulatorBackend):

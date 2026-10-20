@@ -6,25 +6,24 @@ embedding strategy and QUBO matrix density.
 
 from __future__ import annotations
 
-import builtins
-from enum import Enum
+from enum import StrEnum
+
+from qubosolver._checks import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import builtins
 
 
-class _StrEnum(str, Enum):
+class _StrEnum(StrEnum):
     """String-based Enums class implementation."""
-
-    def __str__(self) -> str:
-        """Used when dumping enum fields in a schema."""
-        ret: str = self.value
-        return ret
 
     @classmethod
     def names(cls) -> builtins.list[str]:
-        return list(map(lambda c: c.name, cls))
+        return [c.name for c in cls]
 
     @classmethod
     def list(cls) -> builtins.list[str]:  # `list` is shadowed by this method
-        return list(map(lambda c: c.value, cls))
+        return [c.value for c in cls]
 
 
 class _DensityType(_StrEnum):

@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
-import qoolqit
 import torch
 
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver.types import matrix, vector
 from qubosolver.types.instance import Instance
-from qubosolver.types.linalg import Vector
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    import qoolqit
+
+    from qubosolver.types.linalg import Vector
 
 
 def _detuning(
@@ -23,7 +27,8 @@ def _detuning(
         if not qubit_ids:
             qubit_ids = list(drive.dmm.weights.keys())
         if set(qubit_ids) != set(drive.dmm.weights):
-            raise ValueError("drive.dmm.weights must have exactly the register's qubit ids.")
+            msg = "drive.dmm.weights must have exactly the register's qubit ids."
+            raise ValueError(msg)
         weights = vector.tensor([drive.dmm.weights[i] for i in qubit_ids])
         delta += drive.dmm.waveform(t) * weights
 
@@ -56,5 +61,4 @@ def _max_min_distance_ratio(device: qoolqit.Device) -> float:
     max_radial_distance = specs["max_radial_distance"]
     if min_distance is not None and min_distance > 0 and max_radial_distance is not None:
         return max_radial_distance / min_distance
-    else:
-        return float("inf")
+    return float("inf")

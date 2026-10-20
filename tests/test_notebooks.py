@@ -20,10 +20,10 @@ skip: dict[str, str] = {
 }
 
 
-def get_ipynb_files(dir: Path) -> list[Path]:
+def get_ipynb_files(directory: Path) -> list[Path]:
     files = []
 
-    for it in dir.iterdir():
+    for it in directory.iterdir():
         if it.suffix == ".ipynb" and not it.match("*.ipynb_checkpoints*"):
             files.append(it)
         elif it.is_dir() and it.name != "retired":
@@ -61,11 +61,11 @@ for file in notebooks_files:
 def test_notebooks(notebook: Path) -> None:
     """Execute docs notebooks as a test, passes if it returns 0."""
     jupyter_cmd = ["-m", "jupyter", "nbconvert", "--to", "python", "--execute"]
-    cmd = [sys.executable, *jupyter_cmd, notebook]
+    cmd: list[str | Path] = [sys.executable, *jupyter_cmd, notebook]
     py_file = notebook.with_suffix(".py")
     try:
-        with subprocess.Popen(
-            cmd,  # type: ignore
+        with subprocess.Popen(  # noqa: S603 (runs nbconvert on the repo's own notebooks)
+            cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env={**os.environ},
@@ -78,7 +78,7 @@ def test_notebooks(notebook: Path) -> None:
             )
 
         if run_example.returncode != 0:
-            raise Exception(error_string)
+            pytest.fail(error_string)
 
     finally:
         # Cleanup always runs, even if errors happen

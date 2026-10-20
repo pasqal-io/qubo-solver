@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pytest
@@ -25,8 +25,10 @@ from qubosolver.solver._drive_shaper import (
     ProportionalDiagonalDriveShaper,
     _get_drive_shaper,
 )
-from qubosolver.solver.config.drive_shaping import _DriveShapingAlgorithm
 from qubosolver.solver.solver import _QuboSolverQuantum
+
+if TYPE_CHECKING:
+    from qubosolver.solver.config.drive_shaping import _DriveShapingAlgorithm
 
 
 @pytest.fixture
@@ -36,8 +38,7 @@ def dummy_register() -> qoolqit.Register:
         1: (1.0, 0.0),
         2: (2.0, 3.0),
     }
-    register = qoolqit.Register(qubits)
-    return register
+    return qoolqit.Register(qubits)
 
 
 def test_generate_returns_drive_and_solution_proportional_diagonal(

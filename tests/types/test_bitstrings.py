@@ -150,7 +150,7 @@ def test_from_strings_returns_empty_tensor_for_empty_list() -> None:
 @pytest.mark.parametrize("count", [1, 2, 5, 10])
 @pytest.mark.parametrize("length", [1, 2, 5, 10, 50])
 def test_from_strings_roundtrips_with_to_strings_random(seed: int, count: int, length: int) -> None:
-    rng = random.Random(seed)
+    rng = random.Random(seed)  # noqa: S311 (seeded test data, not cryptographic)
     original = ["".join(rng.choice("01") for _ in range(length)) for _ in range(count)]
     roundtripped = bitstrings.to_strings(bitstrings.from_strings(original))
     check.equal(roundtripped, original)
@@ -373,7 +373,7 @@ def test_round_raises_when_custom_tolerance_is_tighter_than_the_error() -> None:
 @pytest.mark.parametrize("count", [1, 2, 5])
 @pytest.mark.parametrize("length", [1, 2, 5, 10, 50])
 def test_round_matches_from_strings_on_perturbed_bits(seed: int, count: int, length: int) -> None:
-    rng = random.Random(seed)
+    rng = random.Random(seed)  # noqa: S311 (seeded test data, not cryptographic)
     strings = ["".join(rng.choice("01") for _ in range(length)) for _ in range(count)]
     perturbed = [[int(c) + rng.uniform(-1e-7, 1e-7) for c in s] for s in strings]
     torch.testing.assert_close(bitstrings.round(perturbed), bitstrings.from_strings(strings))

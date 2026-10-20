@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pytest
@@ -9,12 +8,17 @@ import pytest_check as check
 import torch
 from beartype.roar import BeartypeCallHintParamViolation
 from qoolqit import AnalogDeviceWithDMM
-from qoolqit.devices.device import BaseDevice
 
 from qubosolver import Dataset, Instance, Matrix, Tensor, embedding, matrix, tensor, vector
 from qubosolver.embedding._algorithms.greedy import Greedy
 from qubosolver.embedding.greedy_layout import _resolve_max_possible_term
-from qubosolver.types.linalg import Tensord
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from qoolqit.devices.device import BaseDevice
+
+    from qubosolver.types.linalg import Tensord
 
 
 def triangular_qubo() -> Matrix:
@@ -200,11 +204,11 @@ def test_too_large_spacing(
     # Only the origin is within the device's maximum radial distance
     if too_large == "extremely":
         spacing = device.max_radial_distance * 3.0
-        # max_min_dist_ratio = 1/3
+        # i.e. a max/min distance ratio of 1/3
     # Only the inner square is within the device's maximum radial distance
     elif too_large == "barely":
-        # max_min_dist_ratio = np.sqrt(2)
         spacing = device.max_radial_distance / np.sqrt(2) - 0.1
+        # i.e. a max/min distance ratio of sqrt(2)
     # All traps are within the device's maximum radial distance
     else:
         spacing = 7.0

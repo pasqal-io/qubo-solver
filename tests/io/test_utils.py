@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import logging
 import struct
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import pytest_check as check
@@ -23,6 +23,9 @@ from qubosolver._io.utils import (
     save_string,
 )
 from qubosolver._io.utils import open as io_utils_open
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestReadExact:
@@ -86,9 +89,7 @@ class TestSaveLoad:
             save(stream, ">I", value)
 
         stream.seek(0)
-        results = []
-        for _ in values:
-            results.append(load(stream, ">I"))
+        results = [load(stream, ">I") for _ in values]
 
         check.equal(results, values)
 

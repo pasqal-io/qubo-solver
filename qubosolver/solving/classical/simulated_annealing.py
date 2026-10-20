@@ -63,15 +63,18 @@ def _cooling_rate(
     *, max_iter: int, initial_temp: float, final_temp: float, cooling_rate: float | None
 ) -> float:
     if initial_temp <= 0:
-        raise ValueError("initial_temp must be > 0.")
+        msg = "initial_temp must be > 0."
+        raise ValueError(msg)
     if cooling_rate is None and final_temp <= 0:
-        raise ValueError("final_temp must be > 0 when cooling_rate is None.")
+        msg = "final_temp must be > 0 when cooling_rate is None."
+        raise ValueError(msg)
     if max_iter <= 1:
         return 1.0
     if cooling_rate is not None:
         alpha = cooling_rate
         if not (0.0 < alpha < 1.0):
-            raise ValueError("cooling_rate (alpha) must be in (0, 1).")
+            msg = "cooling_rate (alpha) must be in (0, 1)."
+            raise ValueError(msg)
         return alpha
     return float((final_temp / initial_temp) ** (1.0 / (max_iter - 1)))
 
@@ -120,7 +123,7 @@ def solve(
 
 
 @torch.no_grad()
-def solve(
+def solve(  # noqa: PLR0913
     instance: Instance,
     starts: Bitstrings | int = 1,
     *,
@@ -232,13 +235,15 @@ def solve(
         ValueError: If `starts` bitstrings do not have length `instance.size`.
     """
     if top_k <= 0:
-        raise ValueError("top_k must be >= 1.")
+        msg = "top_k must be >= 1."
+        raise ValueError(msg)
     if rng is None:
         rng = torch_rng()
     if stats == "per_run" and top_k > 1:
         logger.info(
-            f"stats='per_run' with top_k={top_k}: per-run counts are set to 1, but merging "
-            "sums them across runs, so merged counts are not simply 1 per run."
+            "stats='per_run' with top_k=%s: per-run counts are set to 1, but merging "
+            "sums them across runs, so merged counts are not simply 1 per run.",
+            top_k,
         )
 
     n = instance.size
@@ -257,9 +262,8 @@ def solve(
         return Solution() if merge else []
 
     if starts.shape[1] != n:
-        raise ValueError(
-            f"starts has bitstrings of length {starts.shape[1]}, but instance.size is {n}."
-        )
+        msg = f"starts has bitstrings of length {starts.shape[1]}, but instance.size is {n}."
+        raise ValueError(msg)
 
     if instance.size == 0:
         count = starts.shape[0]
@@ -286,7 +290,7 @@ def solve(
     return solutions
 
 
-def _run_sequential(
+def _run_sequential(  # noqa: PLR0913
     instance: Instance,
     starts: Bitstrings,
     *,
@@ -387,8 +391,7 @@ def _run_sequential(
                 _shrink(visited_solutions, top_k=top_k)
 
             temperature *= alpha
-            if temperature < 1e-12:
-                temperature = 1e-12
+            temperature = max(temperature, 1e-12)
 
         _shrink(visited_solutions, top_k=top_k)
 
@@ -411,7 +414,7 @@ def _run_sequential(
     return solutions
 
 
-def _run_vectorized(
+def _run_vectorized(  # noqa: PLR0913
     instance: Instance,
     starts: Bitstrings,
     *,
@@ -518,8 +521,7 @@ def _run_vectorized(
         visits += 1
 
         temperature *= alpha
-        if temperature < 1e-12:
-            temperature = 1e-12
+        temperature = max(temperature, 1e-12)
 
     # (visits, n_runs, n) and (visits, n_runs): one entry per recorded state.
     visited_bits = visited_bits[:visits]

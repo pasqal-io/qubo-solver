@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import random
 import time
-from types import ModuleType
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -26,8 +26,12 @@ from qubosolver.solver._classical_solver import (
     TabuSearchSolver,
     get_classical_solver,
 )
-from qubosolver.solver.config.solving import _ClassicalAlgorithm
 from qubosolver.utils import _costs
+
+if TYPE_CHECKING:
+    from types import ModuleType
+
+    from qubosolver.solver.config.solving import _ClassicalAlgorithm
 
 class_solvers = {
     "simulated_annealing": SimulatedAnnealingSolver,

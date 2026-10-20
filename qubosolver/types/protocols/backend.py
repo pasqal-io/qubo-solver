@@ -6,9 +6,10 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Self
-import qoolqit
-from pulser.backend import Results
-from qoolqit.execution import job
+
+    import qoolqit
+    from pulser.backend import Results
+    from qoolqit.execution import job
 
 from ._protocol import Protocol
 
@@ -36,4 +37,3 @@ class Backend(Protocol):
             A job wrapping the [`qoolqit.execution.Results`][]
                 that will be populated upon completion.
         """
-        ...

@@ -11,7 +11,6 @@ Example:
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import Literal
 
 import numpy as np
@@ -19,6 +18,10 @@ import pandas as pd
 import seaborn as sns
 
 from qubosolver import Solution, bitstrings
+from qubosolver._checks import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 _BITSTRINGS = "bitstrings"
 _COSTS = "costs"
@@ -78,7 +81,8 @@ def to_dataframe(
     if labels == "auto":
         labels = [str(i) for i in range(len(solutions))]
     elif len(labels) != len(solutions):
-        raise ValueError("The number of labels must equal the number of QUBOSolutions provided.")
+        msg = "The number of labels must equal the number of QUBOSolutions provided."
+        raise ValueError(msg)
 
     df_list = []
     df_list.append(_solution_to_dataframe(Solution(), solution_label=""))
@@ -120,13 +124,13 @@ def _filter_by_percentage(
             or if top_percent is not in (0, 1].
     """
     if column not in df.columns:
-        raise ValueError(
-            f"{column} data is not available. \
+        msg = f"{column} data is not available. \
                          Please add {column} before filtering."
-        )
+        raise ValueError(msg)
 
     if not (0 < top_percent <= 1):
-        raise ValueError("top_percent must be a float between 0 and 1.")
+        msg = "top_percent must be a float between 0 and 1."
+        raise ValueError(msg)
 
     sorted_df = df.sort_values(by=column, ascending=(order == "ascending"))
     # Cumulative probability of all *previous* rows in each group.
@@ -183,8 +187,7 @@ def _best_bitstrings(df: pd.DataFrame, *, atol: float = 0.0, rtol: float = 0.0) 
         # Optionally, drop duplicate bitstring entries (if bitstrings are duplicated)
         best = best.drop_duplicates(subset=[_BITSTRINGS])
         best_list.append(best)
-    best_rows = pd.concat(best_list, ignore_index=True)
-    return best_rows
+    return pd.concat(best_list, ignore_index=True)
 
 
 def _add_gaps(df: pd.DataFrame, *, opt_cost: float) -> pd.DataFrame:
@@ -228,12 +231,12 @@ def _plot_vs_bitstrings(
     """
     # Check if the y_axis is available
     if y_axis not in df.columns:
-        raise ValueError(
-            f"{y_axis} data is not available.\
+        msg = f"{y_axis} data is not available.\
                           Please add {y_axis} before plotting."
-        )
+        raise ValueError(msg)
     if sort_by and sort_by not in df.columns:
-        raise ValueError(f"{sort_by} is not a valid column for sorting.")
+        msg = f"{sort_by} is not a valid column for sorting."
+        raise ValueError(msg)
 
     if sort_by == y_axis:
         df = df.pivot_table(
@@ -276,7 +279,7 @@ def _plot_vs_bitstrings(
     return g
 
 
-def _plot_no_bitstrings(
+def _plot_no_bitstrings(  # noqa: PLR0913, PLR0917
     df: pd.DataFrame,
     x_axis: str,
     y_axis: str,
@@ -305,13 +308,16 @@ def _plot_no_bitstrings(
             *sort_by* is not one of *x_axis* or *y_axis*.
     """
     if x_axis not in df.columns:
-        raise ValueError(f"{x_axis} data is not available. Please add {x_axis} before plotting.")
+        msg = f"{x_axis} data is not available. Please add {x_axis} before plotting."
+        raise ValueError(msg)
 
     if y_axis not in df.columns:
-        raise ValueError(f"{y_axis} data is not available. Please add {y_axis} before plotting.")
+        msg = f"{y_axis} data is not available. Please add {y_axis} before plotting."
+        raise ValueError(msg)
 
     if sort_by and sort_by not in [x_axis, y_axis]:
-        raise ValueError(f"{sort_by} is not a valid column for sorting.")
+        msg = f"{sort_by} is not a valid column for sorting."
+        raise ValueError(msg)
 
     df = df.groupby([_LABELS, x_axis], as_index=False).agg({y_axis: "sum"})
     df = df.pivot_table(
@@ -345,7 +351,7 @@ def _plot_no_bitstrings(
     return g
 
 
-def _plot(
+def _plot(  # noqa: PLR0913
     df: pd.DataFrame,
     x_axis: str,
     y_axis: str,
@@ -390,10 +396,9 @@ def _plot(
     df = df.copy()
 
     if x_axis not in df.columns:
-        raise ValueError(
-            f"{x_axis} data is not available.\
+        msg = f"{x_axis} data is not available.\
                             Please add {x_axis} before plotting."
-        )
+        raise ValueError(msg)
 
     if labels:
         df = df[df[_LABELS].isin(labels)]
@@ -408,21 +413,18 @@ def _plot(
         df = _filter_by_percentage(df, top_percent=top_percent)
 
     if x_axis == _BITSTRINGS:
-        g = _plot_vs_bitstrings(
+        return _plot_vs_bitstrings(
             df=df,
             y_axis=y_axis,
             sort_by=sort_by,
             sort_order=sort_order,
             context=context,
         )
-        return g
-    else:
-        g = _plot_no_bitstrings(
-            df=df,
-            x_axis=x_axis,
-            y_axis=y_axis,
-            sort_by=sort_by,
-            sort_order=sort_order,
-            context=context,
-        )
-        return g
+    return _plot_no_bitstrings(
+        df=df,
+        x_axis=x_axis,
+        y_axis=y_axis,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        context=context,
+    )

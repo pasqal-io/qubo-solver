@@ -151,7 +151,8 @@ def test_quantum_solve(
         greedy_config.traps = 100
         register = embedding.greedy_layout.embed(effective_qubo, config=greedy_config)
     else:
-        raise ValueError(f"Invalid embedding method: {embedding_method}")
+        msg = f"Invalid embedding method: {embedding_method}"
+        raise ValueError(msg)
     print(f"Register: {register.qubits}")
     print(f"Distances: {register.distances()}")
 
@@ -173,7 +174,8 @@ def test_quantum_solve(
             config=solving.drive_bayesian_search.Config(n_evaluations=11, seed=seed),
         )
     else:
-        raise ValueError(f"Invalid drive shaping method: {drive_shaping_method}")
+        msg = f"Invalid drive shaping method: {drive_shaping_method}"
+        raise ValueError(msg)
 
     program = solving.analog_quantum_sampling.compile(register, drive, device)
     job = emulator.run(program)
@@ -188,7 +190,7 @@ def test_quantum_solve(
         solution = solving.iterative_bitflip_local_search.solve(qubo, starts=solution)
 
     expected_optimal_probability = 0.75
-    if drive_shaping_method in ["bayesian_search"]:
+    if drive_shaping_method == "bayesian_search":
         expected_optimal_probability = 0.0
 
     check_solution(
@@ -242,7 +244,8 @@ def test_classical_solve(
     elif solving_method == "random":
         solution = solving.random_sampling.solve(effective_qubo, rng=rng)
     else:
-        raise ValueError(f"Invalid solving method: {solving_method}")
+        msg = f"Invalid solving method: {solving_method}"
+        raise ValueError(msg)
 
     if preprocessing:
         assert isinstance(effective_qubo, transforms.variable_fixing.Instance)
@@ -252,7 +255,7 @@ def test_classical_solve(
         solution = solving.iterative_bitflip_local_search.solve(qubo, starts=solution)
 
     expected_optimal_probability = 0.75
-    if solving_method in ["random"]:
+    if solving_method == "random":
         expected_optimal_probability = 0.0
 
     check_solution(

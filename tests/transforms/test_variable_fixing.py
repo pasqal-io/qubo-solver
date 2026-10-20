@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import io
 import logging
+from typing import TYPE_CHECKING
 
-import pytest
 import pytest_check as check
 import torch
 
 from qubosolver import Instance, Solution, bitstrings, matrix, solving, transforms, vectori
 from qubosolver.transforms.variable_fixing import hansen_fixing
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def fully_fixable_qubo() -> Instance:

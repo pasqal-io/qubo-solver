@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
 
 import numpy as np
 import qoolqit
 from qoolqit import ConstantWaveform
+
+from qubosolver._checks import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +55,13 @@ def _clip_final_detuning_to_dmm_budget(
     if abs(final_detuning) > max_abs_final_detuning:
         logger.info(
             "DMM final detuning would exceed the device's total_bottom_detuning "
-            f"budget ({total_bottom_detuning} rad/us) once compiled "
-            f"(sum(weights)={sum_weight:.3f}); clipping from {final_detuning:.3f} to "
-            f"{-max_abs_final_detuning:.3f}. Local detuning precision is reduced for this instance."
+            "budget (%s rad/us) once compiled "
+            "(sum(weights)=%.3f); clipping from %.3f to "
+            "%.3f. Local detuning precision is reduced for this instance.",
+            total_bottom_detuning,
+            sum_weight,
+            final_detuning,
+            -max_abs_final_detuning,
         )
         return -max_abs_final_detuning
 
@@ -102,6 +110,6 @@ def constant_weighted_dmm(
 
     waveform = ConstantWaveform(duration, final_detuning)
     return qoolqit.drive.DetuningMapModulator(
-        weights={i: w for i, w in enumerate(norm_weights)},
+        weights=dict(enumerate(norm_weights)),
         waveform=waveform,
     )

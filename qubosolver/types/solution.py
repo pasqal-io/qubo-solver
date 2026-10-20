@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import io
 import logging
-from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 
 import torch
@@ -18,17 +17,21 @@ import torch
 from qubosolver._checks import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from collections.abc import Iterable, Iterator
+    from typing import Self
 
-from pulser.backend.results import Results
+    from pulser.backend.results import Results
+
+    from qubosolver._io.utils import FileLike
+
+    from .instance import Instance
+    from .linalg import Bitstring, Bitstrings, Matrix, Vector, Vectori
+
 
 from qubosolver._io import utils as io_utils
-from qubosolver._io.utils import FileLike
 
 from . import bitstring, vector, vectori
 from . import bitstrings as _bitstrings
-from .instance import Instance
-from .linalg import Bitstring, Bitstrings, Matrix, Vector, Vectori
 
 logger = logging.getLogger(__name__)
 
@@ -138,10 +141,10 @@ class Solution:
         Returns:
             The same [`Solution`][] instance, allowing method chaining.
         """
-        # Import here to avoid circular imports
-        from qubosolver.utils import _costs
-
         dtype = matrix.dtype
+        # Import here to avoid circular imports
+        from qubosolver.utils import _costs  # noqa: PLC0415 (import cycle)
+
         self.costs = _costs.batched_quadratic_cost(self.bitstrings.to(dtype), matrix)
         return self
 
@@ -389,9 +392,7 @@ class Solution:
             bitstrings = _bitstrings.zeros(0, 0)
         counts = vectori.tensor(list(map(int, list(counter.values()))))
 
-        solution = Solution(bitstrings=bitstrings, counts=counts)._update(instance)
-
-        return solution
+        return Solution(bitstrings=bitstrings, counts=counts)._update(instance)
 
     def save(self, file_like: FileLike[bytes]) -> None:
         """Serialize this solution to `file_like` using `torch.save`.
@@ -546,7 +547,7 @@ class Solution:
         if not full:
             return valid
 
-        from qubosolver.utils import _costs
+        from qubosolver.utils import _costs  # noqa: PLC0415 (import cycle)
 
         if instance is not None:
             expected_costs = _costs.batched_quadratic_cost(

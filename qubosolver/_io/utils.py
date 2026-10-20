@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 import io
 import logging
 import os
@@ -10,6 +9,7 @@ import struct
 from collections.abc import Sized
 from contextlib import nullcontext
 from importlib.metadata import version
+from pathlib import Path
 from typing import IO, TYPE_CHECKING, TypeVar, overload
 
 from qubosolver._checks import _RUNTIME_TYPE_CHECKING
@@ -74,17 +74,19 @@ def read_exact(src: Stream[bytes], length: int) -> bytes:
         EOFError: If fewer bytes are available than requested.
     """
     if length < 0:
-        raise ValueError("Length must be non-negative")
+        msg = "Length must be non-negative"
+        raise ValueError(msg)
     data = src.read(length)
     actual_length = len(data)
     if actual_length != length:
-        raise EOFError(f"Expected {length} bytes, got {actual_length}")
+        msg = f"Expected {length} bytes, got {actual_length}"
+        raise EOFError(msg)
     return data
 
 
 def save(
     output: Stream[bytes],
-    format: str,
+    format: str,  # noqa: A002 (public API keyword)
     data: Any,  # noqa: ANN401 (struct.pack value type depends on format string)
 ) -> None:
     """Pack `data` with `struct.pack` and write it to a binary stream.
@@ -99,7 +101,7 @@ def save(
     output.write(struct.pack(format, data))
 
 
-def load(src: Stream[bytes], format: str) -> Any:  # noqa: ANN401 (unpack type depends on format)
+def load(src: Stream[bytes], format: str) -> Any:  # noqa: A002, ANN401 (public API keyword; unpack type depends on format)
     """Read and unpack a single value from a binary stream with `struct`.
 
     Reads exactly the number of bytes required by `format` and returns the
@@ -165,9 +167,8 @@ def load_sized_buffer(src: Stream[bytes], *, max_size: int = _MAX_BUFFER_SIZE) -
     # Checked before `read_exact` so an implausible prefix is rejected rather
     # than allocated.
     if length > max_size:
-        raise ValueError(
-            f"Refusing to read a {length}-byte payload: exceeds the {max_size}-byte limit."
-        )
+        msg = f"Refusing to read a {length}-byte payload: exceeds the {max_size}-byte limit."
+        raise ValueError(msg)
     return read_exact(src, length)
 
 
@@ -262,7 +263,8 @@ def load_header(src: Stream[bytes]) -> str:
     """
     magic = read_exact(src, len(_MAGIC))
     if magic != _MAGIC:
-        raise ValueError(f"Not a qubosolver file: expected magic {_MAGIC!r}, got {magic!r}.")
+        msg = f"Not a qubosolver file: expected magic {_MAGIC!r}, got {magic!r}."
+        raise ValueError(msg)
     writer_version = load_string(src)
     current_version = _package_version()
     # Compared by equality only. Ordering PEP 440 strings would imply a
@@ -279,24 +281,24 @@ def load_header(src: Stream[bytes]) -> str:
 
 
 @overload
-def open(
+def open(  # noqa: A001 (public API, mirrors builtins.open)
     file_like: FileLike[bytes],
 ) -> AbstractContextManager[IO[bytes]]: ...  # pragma: no cover # fmt: skip
 
 
 @overload
-def open(
+def open(  # noqa: A001 (public API, mirrors builtins.open)
     file_like: FileLike[bytes], mode: Literal["rb", "wb"]
 ) -> AbstractContextManager[IO[bytes]]: ...  # pragma: no cover # fmt: skip
 
 
 @overload
-def open(
+def open(  # noqa: A001 (public API, mirrors builtins.open)
     file_like: FileLike[str], mode: Literal["r", "w"]
 ) -> AbstractContextManager[IO[str]]: ...  # pragma: no cover # fmt: skip
 
 
-def open(
+def open(  # noqa: A001 (public API, mirrors builtins.open)
     file_like: FileLike[bytes] | FileLike[str],
     mode: Literal["rb", "wb", "r", "w"] = "wb",
 ) -> AbstractContextManager[IO[bytes]] | AbstractContextManager[IO[str]]:
@@ -327,13 +329,14 @@ def open(
     """
     if "b" in mode:
         if isinstance(file_like, (str, os.PathLike)):
-            return builtins.open(file_like, mode)
+            return Path(file_like).open(mode)
         if not isinstance(file_like, (io.RawIOBase, io.BufferedIOBase)):
-            raise TypeError("Expected a binary file-like object.")
+            msg = "Expected a binary file-like object."
+            raise TypeError(msg)
         return nullcontext(file_like)
-    else:
-        if isinstance(file_like, (str, os.PathLike)):
-            return builtins.open(file_like, mode, encoding="utf-8")
-        if not isinstance(file_like, io.TextIOBase):
-            raise TypeError("Expected a text file-like object.")
-        return nullcontext(file_like)
+    if isinstance(file_like, (str, os.PathLike)):
+        return Path(file_like).open(mode, encoding="utf-8")
+    if not isinstance(file_like, io.TextIOBase):
+        msg = "Expected a text file-like object."
+        raise TypeError(msg)
+    return nullcontext(file_like)

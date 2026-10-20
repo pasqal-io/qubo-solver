@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -25,6 +25,9 @@ from qubosolver import (
     vector,
 )
 from qubosolver.utils import analysis
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def interaction_matrix_from_vertices(vertices: Tensor) -> Matrix:
@@ -225,9 +228,10 @@ def test_errors(raise_exception: bool) -> None:
     Q = matrix.as_tensor(register.interaction_matrix()) - matrix.as_tensor(torch.eye(3))
     instance = Instance(Q)
 
-    def error(solution: Solution) -> float:
+    def error(_solution: Solution) -> float:
         if raise_exception:
-            raise RuntimeError("Error occurred")
+            msg = "Error occurred"
+            raise RuntimeError(msg)
         return float("inf")
 
     mock_error = MagicMock(wraps=error)

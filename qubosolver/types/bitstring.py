@@ -19,11 +19,13 @@ from typing import Any
 
 import torch
 
-from qubosolver._checks import no_runtime_typecheck
+from qubosolver._checks import TYPE_CHECKING, no_runtime_typecheck
 
 from . import bitstrings
-from .linalg import Bitstring
 from .random import torch_rng
+
+if TYPE_CHECKING:
+    from .linalg import Bitstring
 
 
 def dtype() -> torch.dtype:
@@ -87,7 +89,7 @@ def from_string(s: str, *, device: torch.device | None = None) -> Bitstring:
     return bitstrings.from_strings([s], device=device)[0]
 
 
-def round(
+def round(  # noqa: A001 (public API, mirrors builtins.round)
     data: Any,  # noqa: ANN401 (array-like input forwarded to torch.as_tensor)
     *,
     atol: float = 1e-6,

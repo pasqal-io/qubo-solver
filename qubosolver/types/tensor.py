@@ -22,10 +22,12 @@ from typing import Any, overload
 
 import torch
 
-from qubosolver._checks import no_runtime_typecheck
+from qubosolver._checks import TYPE_CHECKING, no_runtime_typecheck
 
 from . import linalg
-from .linalg import Tensor
+
+if TYPE_CHECKING:
+    from .linalg import Tensor
 
 
 def dtype() -> torch.dtype:

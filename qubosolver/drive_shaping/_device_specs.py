@@ -3,7 +3,10 @@ from __future__ import annotations
 import math
 import warnings
 
-import qoolqit
+from qubosolver._checks import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import qoolqit
 
 
 def compare_specs(a: dict, b: dict) -> None:

@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import random
-from collections.abc import Generator
 from contextlib import contextmanager
 
 import numpy as np
 import torch
 
-from qubosolver._checks import no_runtime_typecheck
+from qubosolver._checks import TYPE_CHECKING, no_runtime_typecheck
 from qubosolver.types import torch_rng
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 def manual_seed(seed: int) -> torch.Generator:
@@ -45,19 +47,25 @@ def seed_context(seed: int) -> Generator[torch.Generator]:
 def register_seeded_magic() -> None:
     """Register the ``%%seeded <seed>`` cell magic in the running IPython kernel."""
     try:
-        from IPython.core.getipython import get_ipython  # deptry: ignore[DEP004]
-        from IPython.core.magic import register_cell_magic  # deptry: ignore[DEP004]
+        from IPython.core.getipython import (  # noqa: PLC0415 (optional dependency)  # deptry: ignore[DEP004]
+            get_ipython,
+        )
+        from IPython.core.magic import (  # noqa: PLC0415 (optional dependency)  # deptry: ignore[DEP004]
+            register_cell_magic,
+        )
     except ImportError as e:
-        raise ImportError(
+        msg = (
             "register_seeded_magic() requires IPython. "
             "Install it with: pip install 'qubo-solver[dev]'"
-        ) from e
+        )
+        raise ImportError(msg) from e
 
     @register_cell_magic
     def seeded(line: str, cell: str) -> None:
         seed = int(line.strip())
         shell = get_ipython()
         if shell is None:
-            raise RuntimeError("%%seeded requires a running IPython shell.")
+            msg = "%%seeded requires a running IPython shell."
+            raise RuntimeError(msg)
         with seed_context(seed):
             shell.run_cell(cell)

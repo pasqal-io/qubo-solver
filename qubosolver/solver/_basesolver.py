@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from qoolqit.execution import job
-
 from qubosolver import solving, transforms
 from qubosolver._checks import TYPE_CHECKING
 from qubosolver.types import Instance, Solution
@@ -12,6 +10,7 @@ from .config import SolverConfig
 
 if TYPE_CHECKING:
     from qoolqit import Drive, Register
+    from qoolqit.execution import job
 
 
 class BaseSolver(ABC):
@@ -53,7 +52,6 @@ class BaseSolver(ABC):
         Returns:
             Solution: The result of the optimization.
         """
-        pass
 
     @abstractmethod
     def _embedding(self) -> Register:
@@ -62,7 +60,6 @@ class BaseSolver(ABC):
         Returns:
             Register: The atom register layout for the instance.
         """
-        pass
 
     @abstractmethod
     def _drive(self, embedding: Register) -> tuple[Drive, Solution]:
@@ -78,7 +75,6 @@ class BaseSolver(ABC):
             * **Solution** — an initial solution produced as a by-product
               of drive shaping (may be empty if drive shaping does not sample).
         """
-        pass
 
     def _submit(
         self,

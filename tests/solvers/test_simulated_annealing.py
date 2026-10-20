@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import copy
 import inspect
-import sys
+from typing import assert_type, get_overloads
 
 import pytest
 import pytest_check as check
 import torch
-from typing_extensions import assert_type, get_overloads
 
 from qubosolver import (
     Dataset,
@@ -26,6 +25,7 @@ from qubosolver.solving.classical.simulated_annealing import (
     _item_energy,
     _shrink,
     _to_key,
+    solve,
 )
 
 instance_symmetric = Instance(
@@ -764,15 +764,6 @@ def test_simulated_annealing_stats_per_run_top_k_one_does_not_log(
     check.equal(caplog.records, [])
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 11),
-    reason=(
-        "typing_extensions.get_overloads only sees overloads registered via "
-        "typing.overload starting on Python 3.11 (it delegates to typing's "
-        "own registry); on 3.10 it maintains a separate registry that only "
-        "typing_extensions.overload writes into."
-    ),
-)
 def test_simulated_annealing_overloads_match_implementation_signature() -> None:
     """Every @overload stub of simulated_annealing must match the real implementation exactly.
 
@@ -785,8 +776,6 @@ def test_simulated_annealing_overloads_match_implementation_signature() -> None:
     select that overload), unlike the impl and the merge=True overload
     where it defaults to True.
     """
-    from qubosolver.solving.classical.simulated_annealing import solve
-
     impl_params = inspect.signature(solve).parameters
     overloads = get_overloads(solve)
 

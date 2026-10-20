@@ -8,18 +8,22 @@ random dataset generation and binary (de)serialization helpers.
 from __future__ import annotations
 
 import io
-from collections.abc import Iterator, Sequence
 from copy import deepcopy
 
 import torch
 
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver._io import utils as io_utils
-from qubosolver._io.utils import FileLike
 
 from . import matrix
 from .instance import Instance
 from .random import torch_rng
 from .solution import Solution
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+
+    from qubosolver._io.utils import FileLike
 
 
 class Dataset:
@@ -91,7 +95,7 @@ class Dataset:
         return map(self.__getitem__, range(len(self)))
 
     @classmethod
-    def from_random(
+    def from_random(  # noqa: PLR0913, PLR0915
         cls,
         n_matrices: int,
         matrix_dim: int,

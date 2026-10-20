@@ -38,7 +38,8 @@ def get_layout(*, layout_type: Lattice | str = Lattice.TRIANGULAR, n_traps: int)
         Lattice.SQUARE,
         "square",
     ]:
-        raise ValueError(f"Unsupported layout_type: {layout_type!r}")
+        msg = f"Unsupported layout_type: {layout_type!r}"
+        raise ValueError(msg)
 
     if n_traps == 0:
         return tensor.zeros(0, 2)
@@ -55,4 +56,5 @@ def get_layout(*, layout_type: Lattice | str = Lattice.TRIANGULAR, n_traps: int)
 
         case _:
             # Unreachable: layout_type was already validated above.
-            raise AssertionError(f"Unhandled layout_type: {layout_type!r}")
+            msg = f"Unhandled layout_type: {layout_type!r}"
+            raise AssertionError(msg)

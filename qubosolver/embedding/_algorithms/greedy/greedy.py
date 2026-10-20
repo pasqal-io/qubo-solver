@@ -3,23 +3,31 @@
 from __future__ import annotations
 
 import contextlib
+import logging
 import math
-from collections.abc import Callable
+from pathlib import Path
 from typing import Any, Literal, cast
 
 import torch
 
 from qubosolver import Matrix, Tensor, Vector, Vectori, matrix, tensor, vector, vectori
-from qubosolver.types.linalg import Tensord
+from qubosolver._checks import TYPE_CHECKING
 
 from .layout import get_layout
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from qubosolver.types.linalg import Tensord
+
+logger = logging.getLogger(__name__)
 
 # Optional imports for animation; guarded so library usage stays safe in non-notebook envs.
 try:  # pragma: no cover
     import numpy as np
 
     _VIZ_OK = True
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     _VIZ_OK = False
 
 
@@ -114,7 +122,7 @@ class Greedy:
     # ----------------------------
     # Best trap for a node
     # ----------------------------
-    def _optimize_position(
+    def _optimize_position(  # noqa: PLR0913, PLR0917
         self,
         U: Matrix,
         Q: Matrix,
@@ -174,7 +182,7 @@ class Greedy:
     # ----------------------------
     # Main greedy pass for one start node
     # ----------------------------
-    def _greedy_algorithm(
+    def _greedy_algorithm(  # noqa: PLR0913, PLR0915, PLR0917
         self,
         U: Matrix,
         Q: Matrix,
@@ -266,10 +274,11 @@ class Greedy:
             # check whether trap coordinate is within the maximal radial distance
             if float(coords[trap].norm()) >= max_radial_distance:
                 if n_extra_traps == 0:
-                    raise ValueError(
+                    msg = (
                         f"no traps found to place qubit '{u}' "
                         f"within {max_radial_distance} of origin."
                     )
+                    raise ValueError(msg)
 
                 free_traps[trap] = False
                 n_extra_traps -= 1
@@ -301,12 +310,11 @@ class Greedy:
     # ----------------------------
     # Internal: post-run animation (only if animation=True)
     # ----------------------------
-    def _render_animation(  # pragma: no cover  # noqa: C901 (viz setup, not worth splitting)
+    def _render_animation(  # noqa: C901, PLR0913, PLR0915, PLR0917 (viz setup, not worth splitting)  # pragma: no cover
         self,
         frames: list[dict[str, Any]],
         all_coords_np: np.ndarray,
         spacing: float,
-        layout_name: str,
         top_k: int = 5,
         save_path: str | None = None,
         fps: float = 1.25,
@@ -315,20 +323,26 @@ class Greedy:
         if not _VIZ_OK:
             return None  # numpy not available
 
-        import os
-
-        import numpy as np
-
         try:
-            import matplotlib.pyplot as plt  # deptry: ignore[DEP004]
-            from IPython.display import HTML, display  # deptry: ignore[DEP004]
-            from matplotlib import animation, gridspec  # deptry: ignore[DEP004]
-            from matplotlib.animation import FFMpegWriter, PillowWriter  # deptry: ignore[DEP004]
+            import matplotlib.pyplot as plt  # noqa: PLC0415 (optional dependency)  # deptry: ignore[DEP004]
+            from IPython.display import (  # noqa: PLC0415 (optional dependency)  # deptry: ignore[DEP004]
+                HTML,
+                display,
+            )
+            from matplotlib import (  # noqa: PLC0415 (optional dependency)  # deptry: ignore[DEP004]
+                animation,
+                gridspec,
+            )
+            from matplotlib.animation import (  # noqa: PLC0415 (optional dependency)  # deptry: ignore[DEP004]
+                FFMpegWriter,
+                PillowWriter,
+            )
         except ImportError as e:
-            raise ImportError(
+            msg = (
                 "Rendering the greedy-embedding animation requires 'matplotlib' and "
                 "'ipython'. Install them with: pip install 'qubo-solver[dev]'"
-            ) from e
+            )
+            raise ImportError(msg) from e
 
         X, Y = all_coords_np[:, 0], all_coords_np[:, 1]
         xmin, xmax = X.min() - spacing, X.max() + spacing
@@ -445,7 +459,7 @@ class Greedy:
             # Update placed points + labels
             trap_of = st.get("trap_of", {})
             pos = []
-            for _, trap_idx in trap_of.items():
+            for trap_idx in trap_of.values():
                 if trap_idx is None or trap_idx < 0 or trap_idx >= len(all_coords_np):
                     continue
                 pos.append(all_coords_np[trap_idx])
@@ -504,56 +518,41 @@ class Greedy:
             repeat=False,
         )
 
-        # ---- Save to disk if requested
+        # ---- Save to disk if requested (a failed save must not lose the embedding)
         if save_path is not None:
-            try:
-                # Ensure directory exists
-                folder = os.path.dirname(save_path)
-                if folder and not os.path.exists(folder):
-                    os.makedirs(folder, exist_ok=True)
-
-                ext = os.path.splitext(save_path)[1].lower()
-
-                if ext in (".mp4", ""):
-                    # Prefer explicit FFMpegWriter for clearer errors.
-                    if animation.writers.is_available("ffmpeg"):
-                        ffmpeg_writer = FFMpegWriter(
-                            fps=cast(int, fps), bitrate=1800, metadata={"artist": "qubo-solver"}
-                        )
-                        target = save_path if ext == ".mp4" else save_path + ".mp4"
-                        anim.save(target, writer=ffmpeg_writer, dpi=180)
-                        print(f"[anim] MP4 saved to: {target}")
-                    else:
-                        raise RuntimeError(
-                            "ffmpeg is not available in PATH. Install ffmpeg or export GIF instead."
-                        )
-                elif ext == ".gif":
-                    # PillowWriter avoids requiring ImageMagick.
-                    pillow_writer = PillowWriter(fps=cast(int, fps))
-                    anim.save(save_path, writer=pillow_writer, dpi=180)
-                    print(f"[anim] GIF saved to: {save_path}")
-                else:
-                    # Unknown extension -> default to MP4
-                    if animation.writers.is_available("ffmpeg"):
-                        ffmpeg_writer = FFMpegWriter(
-                            fps=cast(int, fps), bitrate=1800, metadata={"artist": "qubo-solver"}
-                        )
-                        target = save_path + ".mp4"
-                        anim.save(target, writer=ffmpeg_writer, dpi=180)
-                        print(f"[anim] MP4 (default) saved to: {target}")
-                    else:
-                        raise RuntimeError(
-                            f"Unsupported extension '{ext}' and ffmpeg not available."
-                        )
-            except Exception as e:
-                # Do not swallow errors; print a helpful message instead
-                print(f"[anim] Save failed: {e}")
+            ext = Path(save_path).suffix.lower()
+            target = save_path
+            writer: Any = None
+            if ext == ".gif":
+                # PillowWriter avoids requiring ImageMagick.
+                writer = PillowWriter(fps=cast("int", fps))
+            elif animation.writers.is_available("ffmpeg"):
+                # MP4 is the default, also for missing or unknown extensions.
+                writer = FFMpegWriter(
+                    fps=cast("int", fps), bitrate=1800, metadata={"artist": "qubo-solver"}
+                )
+                if ext != ".mp4":
+                    target = save_path + ".mp4"
+            else:
+                logger.warning(
+                    "Cannot save the animation to %r: ffmpeg is not available in PATH. "
+                    "Install ffmpeg or export GIF instead.",
+                    save_path,
+                )
+            if writer is not None:
+                try:
+                    # Ensure directory exists
+                    Path(target).parent.mkdir(parents=True, exist_ok=True)
+                    anim.save(target, writer=writer, dpi=180)
+                    logger.info("Animation saved to: %s", target)
+                except Exception:
+                    logger.warning("Saving the animation to %r failed.", target, exc_info=True)
 
         # ---- Inline HTML preview (safe to fail)
         try:
             display(HTML(anim.to_jshtml()))
-        except Exception as e:
-            print(f"[anim] to_jshtml failed: {e}")
+        except Exception:
+            logger.warning("Inline HTML preview of the animation failed.", exc_info=True)
 
         # Close the figure ONLY after saving and HTML rendering
         plt.close(fig)
@@ -586,14 +585,16 @@ class Greedy:
         n_nodes = Q.shape[0]
 
         if n_traps < n_nodes:
-            raise ValueError(f"Not enough traps ({n_traps}) to position {n_nodes} nodes.")
+            msg = f"Not enough traps ({n_traps}) to position {n_nodes} nodes."
+            raise ValueError(msg)
 
         coordinates = self._get_predefined_coordinates(params)
         U = self._interaction_matrix(coordinates)
         max_radial_distance = max_min_dist_ratio * float(params["spacing"])
         p = params.get("p", 1)
         if p not in (1, 2):
-            raise ValueError(f"Only the 1-norm and 2-norm are supported, got p={p}.")
+            msg = f"Only the 1-norm and 2-norm are supported, got p={p}."
+            raise ValueError(msg)
 
         results: dict = {}
 
@@ -610,10 +611,7 @@ class Greedy:
                     with contextlib.suppress(Exception):  # never let viz crash
                         on_step(state)
                 if anim_flag:
-                    try:
-                        frames.append(state.copy())
-                    except Exception:
-                        frames.append(state)
+                    frames.append(state.copy())
 
             cb = _collector
         else:
@@ -645,7 +643,6 @@ class Greedy:
                 frames=frames,
                 all_coords_np=all_coords_np,
                 spacing=float(params["spacing"]),
-                layout_name=str(params["layout"]),
                 top_k=int(params.get("animation_top_k", 5)),
                 save_path=params.get("animation_save_path"),
                 fps=0.5,

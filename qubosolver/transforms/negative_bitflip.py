@@ -38,9 +38,12 @@ from typing import Any
 import torch
 
 import qubosolver
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver._io import utils as io_utils
-from qubosolver._io.utils import Stream
 from qubosolver.types import Bitstring, Bitstrings, Matrix, Solution, bitstring, vector
+
+if TYPE_CHECKING:
+    from qubosolver._io.utils import Stream
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +60,7 @@ def _import_swiglpk() -> Any:  # noqa: ANN401 (SWIG module has no type stubs)
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        import swiglpk
+        import swiglpk  # noqa: PLC0415 (imported with SWIG deprecation warnings silenced)
 
     return swiglpk
 
@@ -175,7 +178,7 @@ def _compute_negative_weight_metrics(
     }
 
 
-def _solve_bitflip_preprocessing_glpk(  # noqa: C901
+def _solve_bitflip_preprocessing_glpk(  # noqa: C901, PLR0915
     # This function is planned to be reimplemented without GLPK; complexity
     # should be addressed as part of that rewrite rather than fixed here.
     Q: Matrix,
@@ -242,7 +245,7 @@ def _solve_bitflip_preprocessing_glpk(  # noqa: C901
 
         row = 1
 
-        def set_three_term_row(
+        def set_three_term_row(  # noqa: PLR0913, PLR0917
             row_index: int,
             bound_type: int,
             lower_bound: float,
@@ -363,8 +366,10 @@ def _solve_bitflip_preprocessing_glpk(  # noqa: C901
                 else ""
             )
             logger.warning(
-                f"Bit-flip preprocessing ILP did not reach a feasible solution "
-                f"(status={status}); falling back to no-op flips.{hint}"
+                "Bit-flip preprocessing ILP did not reach a feasible solution "
+                "(status=%s); falling back to no-op flips.%s",
+                status,
+                hint,
             )
 
     except Exception:
@@ -491,9 +496,11 @@ def apply(
     if metrics["neg_weight_reduction_pct"] < 0.0:
         reduction_pct = metrics["neg_weight_reduction_pct"]
         logger.warning(
-            f"Bit-flip preprocessing (status={status}) increased the remaining negative "
-            f"off-diagonal weight instead of reducing it ({reduction_pct:.2f}% change); "
-            f"falling back to no-op flips."
+            "Bit-flip preprocessing (status=%s) increased the remaining negative "
+            "off-diagonal weight instead of reducing it (%.2f%% change); "
+            "falling back to no-op flips.",
+            status,
+            reduction_pct,
         )
         flips.fill_(0)
         objective_value = float("nan")

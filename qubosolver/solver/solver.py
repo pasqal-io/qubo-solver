@@ -18,10 +18,11 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 
-import qoolqit
 import torch
 
 from qubosolver import Instance, Solution, torch_rng, transforms
+from qubosolver._checks import TYPE_CHECKING
+from qubosolver.transforms import _decompositions
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
 from ._basesolver import BaseSolver
@@ -31,7 +32,12 @@ from ._embedder import _get_embedder
 from .config import ClassicalSolvingConfig, SolverConfig
 from .config.config import _DecompositionConfig
 
+if TYPE_CHECKING:
+    import qoolqit
+
 logger = logging.getLogger(__name__)
+
+_MAX_QUBO_SIZE = 80  # device atom-number limit
 
 
 class Solver(BaseSolver):
@@ -148,11 +154,12 @@ class _QuboSolverQuantum(BaseSolver):
         Raises:
             ValueError: If ``self.instance.size > 80``.
         """
-        if self.instance.size > 80:
-            raise ValueError(
+        if self.instance.size > _MAX_QUBO_SIZE:
+            msg = (
                 f"QUBO size {self.instance.size}x{self.instance.size}"
-                + " exceeds the maximum supported size of 80x80."
+                f" exceeds the maximum supported size of {_MAX_QUBO_SIZE}x{_MAX_QUBO_SIZE}."
             )
+            raise ValueError(msg)
 
     def _embedding(self) -> qoolqit.Register:
         """Embed QUBO variables onto physical atom positions.
@@ -236,9 +243,7 @@ class _QuboSolverQuantum(BaseSolver):
 
         # Post-process fixations of the preprocessing and restore the original QUBO
         solution = self._post_process_fixation(solution)
-        solution = self._post_process(solution)
-
-        return solution
+        return self._post_process(solution)
 
 
 class _QuboSolverClassical(BaseSolver):
@@ -263,7 +268,7 @@ class _QuboSolverClassical(BaseSolver):
         """
         return  # type: ignore[return-value]
 
-    def _drive(self, embedding: qoolqit.Register) -> tuple:
+    def _drive(self, embedding: qoolqit.Register) -> tuple:  # noqa: ARG002 (no-op override)
         """No-op — classical solvers do not use a pulse drive.
 
         Returns:
@@ -290,9 +295,7 @@ class _QuboSolverClassical(BaseSolver):
         solution = classical_solver.solve()
 
         solution = self._post_process_fixation(solution)
-        solution = self._post_process(solution)
-
-        return solution
+        return self._post_process(solution)
 
 
 class _DecomposeQuboSolver(BaseSolver):
@@ -339,7 +342,8 @@ class _DecomposeQuboSolver(BaseSolver):
                 ``instance.matrix`` is negative.
         """
         if (instance.matrix[~torch.eye(*instance.matrix.shape, dtype=torch.bool)] < 0).any():
-            raise ValueError("Decomposition does not handle off-diagonal negative coefficients")
+            msg = "Decomposition does not handle off-diagonal negative coefficients"
+            raise ValueError(msg)
 
         # default is a quantum solver as we apply device-dependent decomposition
         super().__init__(
@@ -361,7 +365,7 @@ class _DecomposeQuboSolver(BaseSolver):
         Raises:
             NotImplementedError: Always.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _drive(self, embedding: qoolqit.Register) -> tuple:
         """Not supported — decomposition manages drives per subproblem.
@@ -369,7 +373,7 @@ class _DecomposeQuboSolver(BaseSolver):
         Raises:
             NotImplementedError: Always.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def solve(self) -> Solution:
         """Solve the QUBO by iterative decomposition into device-sized subproblems.
@@ -387,50 +391,47 @@ class _DecomposeQuboSolver(BaseSolver):
             )
             return solver.solve()
 
+        if self.config.solving_mode == "quantum":
+            max_min_dist_ratio = self.config.quantum.max_min_dist_ratio
         else:
-            from qubosolver.transforms import _decompositions
+            max_min_dist_ratio = self.decomposition_config.classical_max_min_dist_ratio
 
-            if self.config.solving_mode == "quantum":
-                max_min_dist_ratio = self.config.quantum.max_min_dist_ratio
-            else:
-                max_min_dist_ratio = self.decomposition_config.classical_max_min_dist_ratio
+        config = self.decomposition_config._to_decomposition_config(
+            max_min_dist_ratio=max_min_dist_ratio
+        )
+        decomposed_qubo = _decompositions.Instance(self.instance, config=config)
+        solution = Solution()
 
-            config = self.decomposition_config._to_decomposition_config(
-                max_min_dist_ratio=max_min_dist_ratio
+        rng = torch_rng("global")
+        while len(decomposed_qubo._vertices_to_place) > config.decompose_stop_number:
+            subqubo = _decompositions.extract_subqubo(decomposed_qubo, config, rng=rng)
+
+            if subqubo.size == 0:
+                break
+            self.number_iterations += 1
+
+            subsolver = Solver(subqubo, self._config_subproblems)
+
+            # only one bitstring is kept as per design choice of the
+            # decomposition algorithm
+            subsolution = subsolver.solve()._update(subqubo)
+            solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)
+
+        # classical resolution of last matrix
+        subqubo = _decompositions.extract_subqubo(
+            decomposed_qubo,
+            config,
+            last=True,
+            rng=rng,
+        )
+        if subqubo.size != 0:
+            lastsolver = _QuboSolverClassical(
+                subqubo,
+                SolverConfig(solving=ClassicalSolvingConfig()),
             )
-            decomposed_qubo = _decompositions.Instance(self.instance, config=config)
-            solution = Solution()
+            subsolution = lastsolver.solve()._update(subqubo)
+            solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)
 
-            rng = torch_rng("global")
-            while len(decomposed_qubo._vertices_to_place) > config.decompose_stop_number:
-                subqubo = _decompositions.extract_subqubo(decomposed_qubo, config, rng=rng)
+        self._decomposition = decomposed_qubo._decomposition
 
-                if subqubo.size == 0:
-                    break
-                self.number_iterations += 1
-
-                subsolver = Solver(subqubo, self._config_subproblems)
-
-                # only one bitstring is kept as per design choice of the
-                # decomposition algorithm
-                subsolution = subsolver.solve()._update(subqubo)
-                solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)
-
-            # classical resolution of last matrix
-            subqubo = _decompositions.extract_subqubo(
-                decomposed_qubo,
-                config,
-                last=True,
-                rng=rng,
-            )
-            if subqubo.size != 0:
-                lastsolver = _QuboSolverClassical(
-                    subqubo,
-                    SolverConfig(solving=ClassicalSolvingConfig()),
-                )
-                subsolution = lastsolver.solve()._update(subqubo)
-                solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)
-
-            self._decomposition = decomposed_qubo._decomposition
-
-            return solution
+        return solution

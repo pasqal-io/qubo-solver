@@ -29,7 +29,16 @@ from qubosolver import (
 )
 from qubosolver.solver.config.config import _DecompositionConfig
 from qubosolver.solver.solver import _DecomposeQuboSolver
-from qubosolver.transforms._algorithms.decompose import compute_distance_interaction_matrix
+from qubosolver.transforms._algorithms.decompose import (
+    compute_distance_interaction_matrix,
+    compute_min_max_distances,
+    geometric_search,
+    interaction_matrix_from_placed,
+    positive_vertices_update,
+    transfer_edge_values,
+    update_global_solution,
+    vertices_to_place,
+)
 
 
 def manual_seed(seed: int) -> torch.Generator:
@@ -42,7 +51,7 @@ def manual_seed(seed: int) -> torch.Generator:
 @pytest.mark.duration(120)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("use_quantum", [True, False], ids=["quantum", "classical"])
-def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) -> None:
+def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) -> None:  # noqa: PLR0915
     """Test that the first steps of the decomposition yield correctly-sized results.
 
     Covers initialization and one loop iteration of a decomposition, yielding correct
@@ -51,17 +60,6 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
     # Select seed so that the decomposition is tractable for testing with the
     # Qutip backend
     rng = manual_seed(79450)
-
-    from qubosolver.transforms._algorithms.decompose import (
-        compute_distance_interaction_matrix,
-        compute_min_max_distances,
-        geometric_search,
-        interaction_matrix_from_placed,
-        positive_vertices_update,
-        transfer_edge_values,
-        update_global_solution,
-        vertices_to_place,
-    )
 
     size = decomposable_qubo.size
     qubo_mat = decomposable_qubo.matrix.clone()
@@ -101,7 +99,7 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
 
     # check that the initial transfer does not affect the length of the dictionary.
     solution = bitstring.as_tensor(torch.full((size,), -1))
-    transfer_edge_values(current_vertices_dict, dict(), solution, qubo_mat)
+    transfer_edge_values(current_vertices_dict, {}, solution, qubo_mat)
     positive_vertices_update(current_vertices_dict, solution)
     assert len(current_vertices_dict) == size
 
@@ -138,7 +136,8 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
     matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(placed_vertices)
     # If too big, the test will take a long time to run.
     if use_quantum and matrix_to_solve.shape[0] > 13:
-        raise RuntimeError(f"Test failed due to large matrix size = {matrix_to_solve.shape[0]}")
+        msg = f"Test failed due to large matrix size = {matrix_to_solve.shape[0]}"
+        raise RuntimeError(msg)
     assert len(map_index_vertices) == len(placed_vertices) == matrix_to_solve.shape[0]
     subproblem = Instance(matrix_to_solve)
     assert isinstance(solver, _DecomposeQuboSolver)
@@ -288,7 +287,7 @@ def test_compute_distance_interaction_diagonal() -> None:
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("dims", [(4,), (3,), (3, 3), (2, 3, 2), (4, 3, 2, 3)], ids=str)
 @pytest.mark.parametrize("seed", [1935225697, 1547, 66987, 55571, 998618750])
-def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:
+def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:  # noqa: PLR0915
     """Test that the decomposition solver correctly identifies and solves block-diagonal QUBOs.
 
     The test constructs a block-diagonal QUBO matrix from smaller sub-problems, runs the

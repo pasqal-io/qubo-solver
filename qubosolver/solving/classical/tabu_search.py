@@ -19,7 +19,7 @@ from qubosolver.utils._costs import _flip_deltas
 _REFRESH_EVERY = 128
 
 
-def solve(
+def solve(  # noqa: PLR0913
     instance: Instance,
     *,
     starts: Bitstrings | int = 1,
@@ -65,10 +65,11 @@ def solve(
         starts = bitstrings.rand(starts, instance.size)
 
     if starts.shape[1] != instance.size:
-        raise ValueError(
+        msg = (
             f"starts has bitstrings of length {starts.shape[1]}, "
             f"but instance.size is {instance.size}."
         )
+        raise ValueError(msg)
 
     if instance.size == 0:
         return Solution.zeros(0, count=starts.shape[0])

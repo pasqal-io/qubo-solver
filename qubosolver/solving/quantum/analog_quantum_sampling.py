@@ -15,7 +15,7 @@ from qoolqit.execution.compilation_functions import CompilerProfile
 from qubosolver.utils.quantum import _max_min_distance_ratio
 
 
-def compile(
+def compile(  # noqa: A001 (public API name)
     register: qoolqit.Register,
     drive: qoolqit.Drive,
     device: qoolqit.Device,
@@ -56,12 +56,13 @@ def compile(
     max_min_distance_ratio = register.max_radial_distance() / register.min_distance()
     device_max_min_distance_ratio = _max_min_distance_ratio(device)
     if max_min_distance_ratio > device_max_min_distance_ratio:
-        raise ValueError(
+        msg = (
             f"Register max/min distance ratio ({max_min_distance_ratio:.3g}) exceeds "
             f"the device's maximum allowed ratio ({device_max_min_distance_ratio:.3g}). "
             "This usually means the register was embedded without the target device's "
             "constraints in mind. Did you pass `device` to your embedding algorithm's config?"
         )
+        raise ValueError(msg)
 
     if device.specs["max_duration"] is None and default_sequence_duration is not None:
         device_with_duration = dataclasses.replace(

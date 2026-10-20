@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 import io
-import os
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -21,6 +20,9 @@ from qubosolver import (
     transforms,
 )
 from qubosolver._io import utils as io_utils
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def test_valid_qubo_passes_without_error() -> None:
@@ -127,20 +129,19 @@ def test_save_load(simple_qubo_instance: Instance) -> None:
 
     file_path = Path(__file__).parent / "qubo_instance_test.pt"
     simple_qubo_instance.save(file_path)
-    assert os.path.exists(file_path)
+    assert file_path.exists()
     loaded_instance = Instance.load(file_path)
     assert torch.allclose(loaded_instance.matrix, simple_qubo_instance.matrix)
-    if os.path.exists(file_path):
-        os.remove(file_path)
+    file_path.unlink(missing_ok=True)
 
 
 @pytest.mark.parametrize(
     "make_instance",
     [
         lambda parent: parent,
-        lambda parent: transforms.variable_fixing.Instance(parent),
-        lambda parent: transforms.zeroing.Instance(parent),
-        lambda parent: transforms.negative_bitflip.Instance(parent),
+        transforms.variable_fixing.Instance,
+        transforms.zeroing.Instance,
+        transforms.negative_bitflip.Instance,
     ],
     ids=["Instance", "variable_fixing", "zeroing", "negative_bitflip"],
 )

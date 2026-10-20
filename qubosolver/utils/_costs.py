@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import torch
 
-from qubosolver.types import Matrix, Tensor, Vector
+from qubosolver._checks import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from qubosolver.types import Matrix, Tensor, Vector
 
 
 def quadratic_cost(x: torch.Tensor, Q: Matrix) -> float:
@@ -30,7 +33,8 @@ def quadratic_cost(x: torch.Tensor, Q: Matrix) -> float:
     dtype = Q.dtype
     x_ = x.to(dtype)
     if x_.dim() != 1:
-        raise ValueError("This method is for vector only. Use batched_quadratic_cost instead")
+        msg = "This method is for vector only. Use batched_quadratic_cost instead"
+        raise ValueError(msg)
     return float(torch.linalg.multi_dot([x_, Q, x_]).item())
 
 

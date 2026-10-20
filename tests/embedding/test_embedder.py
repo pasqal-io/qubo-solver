@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import pytest
-from qoolqit import Device
 
 from qubosolver import (
     EmbeddingConfig,
@@ -12,6 +11,9 @@ from qubosolver import (
     Solver,
     SolverConfig,
 )
+
+if TYPE_CHECKING:
+    from qoolqit import Device
 
 
 @pytest.mark.duration(40)

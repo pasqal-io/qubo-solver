@@ -83,7 +83,7 @@ def test_extract_qubo_diagonal_with_dmm_weights_per_atom() -> None:
 
     instance = extract_qubo(register, drive)
 
-    # Q[i,i] = -2 * (delta_g_T + dmm_final * weight_i)
+    # Q[i,i] = -2 * (delta_g_T + dmm_final * weight_i) for each qubit i
     expected_diagonal = vector.tensor(
         [
             -2 * (-2.0 + -1.0 * 1.0),

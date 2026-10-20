@@ -20,8 +20,8 @@ from dataclasses import dataclass
 
 import torch
 
-from qubosolver import Bitstring, Matrix, Solution, bitstring, matrix, torch_rng, vectori
-from qubosolver import Instance as QUBOInstanceBase
+from qubosolver.types import Bitstring, Matrix, Solution, bitstring, matrix, torch_rng, vectori
+from qubosolver.types import Instance as QUBOInstanceBase
 
 from ._algorithms.decompose import (
     VertexToPlace,
@@ -241,9 +241,7 @@ def update(qubo: Instance, subqubo: SubQUBOInstance, subsolution: Solution) -> S
         return Solution()
 
     # Probabilities and counts are ignored as we return one solution
-    solution = Solution(
+    return Solution(
         bitstrings=qubo._global_solution.unsqueeze(0),
         counts=vectori.tensor([1]),
     )._update(qubo)
-
-    return solution

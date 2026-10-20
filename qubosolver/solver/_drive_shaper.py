@@ -2,14 +2,16 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-import qoolqit
-import torch
-
 from qubosolver import drive_shaping, solving
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver.drive_shaping._device_specs import support_dmm
 from qubosolver.types import Instance, Solution, protocols
 
-from .config import QuantumSolvingConfig
+if TYPE_CHECKING:
+    import qoolqit
+    import torch
+
+    from .config import QuantumSolvingConfig
 
 
 class _BaseDriveShaper(ABC):
@@ -61,7 +63,6 @@ class _BaseDriveShaper(ABC):
             tuple[qoolqit.Drive, Solution]: The generated drive and the
             associated QUBO solution.
         """
-        pass
 
 
 class ProportionalDiagonalDriveShaper(_BaseDriveShaper):
@@ -243,4 +244,5 @@ def _get_drive_shaper(
         case "bayesian_search":
             return BayesianSearchDriveShaper(instance, config, backend)
         case _:
-            raise NotImplementedError(f"Unsupported drive shaping method: {algorithm!r}")
+            msg = f"Unsupported drive shaping method: {algorithm!r}"
+            raise NotImplementedError(msg)
