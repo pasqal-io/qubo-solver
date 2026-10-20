@@ -9,8 +9,8 @@ import torch
 from scipy.optimize import OptimizeResult, minimize
 from shapely.geometry import MultiPolygon, Point, Polygon
 
-from qubosolver import Bitstring, Matrix, Vector, matrix, vector
 from qubosolver._checks import no_runtime_typecheck
+from qubosolver.types import Bitstring, Matrix, Vector, matrix, vector
 
 
 # Find a better way to compute this ?
@@ -18,8 +18,7 @@ from qubosolver._checks import no_runtime_typecheck
 def _clamp_max_radial_distance(max_radial_distance: float) -> float:
     if np.isfinite(max_radial_distance).all():
         return max_radial_distance
-    else:
-        return 50.0
+    return 50.0
 
 
 class VertexToPlace(TypedDict):
@@ -50,17 +49,19 @@ class WeightedZone:
         circle_end_blocking: Circle delimiting end of blocking_zone.
     """
 
-    def __init__(self, id: int, x: float, y: float, weight: float, min_distance: float) -> None:
+    def __init__(
+        self, vertex_id: int, x: float, y: float, weight: float, min_distance: float
+    ) -> None:
         """Initialize the zone geometry for a placed vertex.
 
         Args:
-            id: Identifier of the vertex.
+            vertex_id: Identifier of the vertex.
             x: x-coordinate of the vertex.
             y: y-coordinate of the vertex.
             weight: QUBO weight of the vertex.
             min_distance: Radius of the forbidden zone around the vertex.
         """
-        self.id = id
+        self.id = vertex_id
         self.x = x
         self.y = y
         self.weight = weight
@@ -176,7 +177,7 @@ def vertices_to_place(
         dict[int, VertexToPlace] : dictionary of placed vertices, with keys
             being the variables indices to place and values the blocking, separated and neighbors.
     """
-    vertices_dict: dict[int, VertexToPlace] = dict()
+    vertices_dict: dict[int, VertexToPlace] = {}
     n = dist_matrix.shape[0]
 
     for i in range(n):
@@ -191,7 +192,7 @@ def vertices_to_place(
         separated_vertices = separated_vertices[separated_vertices != i]
 
         # 1e-2 is an arbitrary value to consider them neighbor.
-        neighbors = torch.argwhere((distances > 1e-2) & (distances < separation_threshold))
+        neighbors = torch.argwhere((distances > 1e-2) & (distances < separation_threshold))  # noqa: PLR2004 (numerical tolerance)
         neighbors = neighbors[neighbors != i]
 
         vertices_dict[i] = {
@@ -299,21 +300,17 @@ def positive_vertices_update(
             positive_vertices.append(key)
             if global_solution[key] == -1:
                 global_solution[key] = 0
-            for vertex in dict_vertices_to_place:
-                cond_not_key = dict_vertices_to_place[vertex]["neighbors_id"] != key
-                dict_vertices_to_place[vertex]["neighbors_id"] = dict_vertices_to_place[vertex][
-                    "neighbors_id"
-                ][cond_not_key]
-                dict_vertices_to_place[vertex]["neighbors_weight"] = dict_vertices_to_place[vertex][
-                    "neighbors_weight"
-                ][cond_not_key]
+            for vertex_data in dict_vertices_to_place.values():
+                cond_not_key = vertex_data["neighbors_id"] != key
+                vertex_data["neighbors_id"] = vertex_data["neighbors_id"][cond_not_key]
+                vertex_data["neighbors_weight"] = vertex_data["neighbors_weight"][cond_not_key]
 
-                dict_vertices_to_place[vertex]["blocking_vertices"] = dict_vertices_to_place[
-                    vertex
-                ]["blocking_vertices"][dict_vertices_to_place[vertex]["blocking_vertices"] != key]
-                dict_vertices_to_place[vertex]["separated_vertices"] = dict_vertices_to_place[
-                    vertex
-                ]["separated_vertices"][dict_vertices_to_place[vertex]["separated_vertices"] != key]
+                vertex_data["blocking_vertices"] = vertex_data["blocking_vertices"][
+                    vertex_data["blocking_vertices"] != key
+                ]
+                vertex_data["separated_vertices"] = vertex_data["separated_vertices"][
+                    vertex_data["separated_vertices"] != key
+                ]
 
     for key in positive_vertices:
         dict_vertices_to_place.pop(key, None)
@@ -340,11 +337,9 @@ def transfer_edge_values(
     # add weight of cut vertices if subsolution variable was fixed to 1
     for key in placed_vertices:
         if global_solution[key] == 1:
-            for key2 in dict_vertices_to_place:
+            for key2, vertex2 in dict_vertices_to_place.items():
                 if key2 != key:
-                    dict_vertices_to_place[key2]["weight"] = (
-                        dict_vertices_to_place[key2]["weight"] + matrix[key][key2]
-                    )
+                    vertex2["weight"] = vertex2["weight"] + matrix[key][key2]
                     matrix[key2][key2] += matrix[key][key2]
 
     # update placed vertices
@@ -420,12 +415,10 @@ def forbidden_zone_intersection(
     Returns:
         Polygon: The resulting geometry.
     """
-    for vertex in placed_vertices:
+    for zone in placed_vertices.values():
         if current_intersection_result.is_empty:
             break
-        current_intersection_result = current_intersection_result.difference(
-            placed_vertices[vertex].forbidden_zone
-        )
+        current_intersection_result = current_intersection_result.difference(zone.forbidden_zone)
     return current_intersection_result
 
 
@@ -449,7 +442,8 @@ def random_point_in_geometry(
         ValueError: If `max_trials` is not a positive integer.
     """
     if max_trials <= 0:
-        raise ValueError(f"max_trials must be a positive integer, got {max_trials}.")
+        msg = f"max_trials must be a positive integer, got {max_trials}."
+        raise ValueError(msg)
 
     minx, miny, maxx, maxy = geometry.bounds
     p = vector.zeros(2)
@@ -465,7 +459,7 @@ def random_point_in_geometry(
 
 
 @no_runtime_typecheck
-def cost_interaction_point_continuous(
+def cost_interaction_point_continuous(  # noqa: PLR0913, PLR0917
     pos_new: npt.NDArray[np.float64],
     placed_points: list[list[float]],
     Q_target: list[float],
@@ -514,7 +508,7 @@ def cost_interaction_point_continuous(
     return cost
 
 
-def bfgs_placement(
+def bfgs_placement(  # noqa: PLR0913, PLR0917
     vertex: int,
     init_guess: Vector,
     placed_vertices: dict[int, WeightedZone],
@@ -537,9 +531,9 @@ def bfgs_placement(
     Returns:
         OptimizeResult: Result of BFGS.
     """
-    placed_points: list[list[float]] = list()
-    Q_target: list[float] = list()
-    current_blocked_edges: list[int] = list()
+    placed_points: list[list[float]] = []
+    Q_target: list[float] = []
+    current_blocked_edges: list[int] = []
     counter = 0
     for vertex_key, vertex_value in placed_vertices.items():
         placed_points.append([vertex_value.x, vertex_value.y])
@@ -583,16 +577,16 @@ def check_prohibited_zones(placed_vertices: dict[int, WeightedZone], final_point
         bool: Returns True if point is not within the forbidden zone of placed vertices.
     """
     checker = True
-    for key in placed_vertices:
-        if placed_vertices[key].forbidden_zone.contains(final_point):
+    for zone in placed_vertices.values():
+        if zone.forbidden_zone.contains(final_point):
             return False
 
-        if final_point.buffer(0.51).contains(Point(placed_vertices[key].x, placed_vertices[key].y)):
+        if final_point.buffer(0.51).contains(Point(zone.x, zone.y)):
             return False
     return checker
 
 
-def test_placing_vertex(
+def test_placing_vertex(  # noqa: PLR0913, PLR0917
     vertex: int,
     dict_vertices_to_place: dict[int, VertexToPlace],
     placed_vertices: dict[int, WeightedZone],
@@ -662,7 +656,7 @@ def test_placing_vertex(
         ):
             # admit point in placed_vertices
             temp_zone = WeightedZone(
-                id=vertex,
+                vertex_id=vertex,
                 x=result_descent.x[0],
                 y=result_descent.x[1],
                 weight=dict_vertices_to_place[vertex]["weight"].item(),
@@ -671,12 +665,12 @@ def test_placing_vertex(
             placed_vertices[vertex] = temp_zone
 
             # update queue
-            for j in dict_vertices_to_place[vertex]["blocking_vertices"]:
-                j = j.item()
+            for j_tensor in dict_vertices_to_place[vertex]["blocking_vertices"]:
+                j = j_tensor.item()
                 if j not in placed_vertices and j not in tested_vertices and j not in queue:
                     queue.append(j)
-            for j in dict_vertices_to_place[vertex]["neighbors_id"]:
-                j = j.item()
+            for j_tensor in dict_vertices_to_place[vertex]["neighbors_id"]:
+                j = j_tensor.item()
                 if j not in placed_vertices and j not in tested_vertices and j not in queue:
                     queue.append(j)
 
@@ -733,7 +727,7 @@ def obtain_vertice_to_test(
     return chosen_vertice
 
 
-def geometric_search(
+def geometric_search(  # noqa: PLR0913, PLR0917
     matrix: Matrix,
     dict_vertices_to_place: dict[int, VertexToPlace],
     first_vertex: int,
@@ -760,13 +754,13 @@ def geometric_search(
     """
     # place first vertex
     zone0 = WeightedZone(
-        id=first_vertex,
+        vertex_id=first_vertex,
         x=0.0,
         y=0.0,
         weight=dict_vertices_to_place[first_vertex]["weight"].item(),
         min_distance=min_distance,
     )
-    placed_vertices: dict[int, WeightedZone] = dict()
+    placed_vertices: dict[int, WeightedZone] = {}
     placed_vertices[first_vertex] = zone0
 
     # list of vertices with an edge with the first vertex
@@ -777,8 +771,8 @@ def geometric_search(
         ]
     )
 
-    tested_vertices: list[int] = list()
-    queue: list[int] = list()
+    tested_vertices: list[int] = []
+    queue: list[int] = []
     for neighbor in add_block:
         test_placing_vertex(
             neighbor.item(),

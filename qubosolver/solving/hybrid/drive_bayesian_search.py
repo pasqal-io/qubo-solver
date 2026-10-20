@@ -11,7 +11,6 @@ method to produce a tuned [`qoolqit.Drive`][] for another solver.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -19,17 +18,24 @@ import qoolqit
 import torch
 from skopt import gp_minimize
 
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver.drive_shaping._device_specs import (
     detuning_amplitude_ratio,
     max_virtual_amplitude,
     support_dmm,
 )
 from qubosolver.drive_shaping._waveforms import constant_weighted_dmm
+from qubosolver.solving.quantum import analog_quantum_sampling
 from qubosolver.types import (
     Instance,
     Solution,
     protocols,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+logger = logging.getLogger(__name__)
 
 
 def _default_objective(solution: Solution) -> float:
@@ -69,7 +75,7 @@ class Config:
     seed: int | None = None
     objective_fn: Callable[[Solution], float] = _default_objective
     _callback_fn: Callable[[_CallbackInfo], None] = field(
-        default_factory=lambda: lambda data: None, init=False
+        default_factory=lambda: lambda _data: None, init=False
     )
     default_sequence_duration: int = 50000
 
@@ -94,10 +100,7 @@ def _compute_norm_weights(instance: Instance) -> list[float]:
     """
     weights_list = torch.abs(torch.diag(instance.matrix)).tolist()
     max_node_weight = max(weights_list) if weights_list else 1.0
-    norm_weights_list = [
-        (1 - (w / max_node_weight)) if max_node_weight != 0 else 0.0 for w in weights_list
-    ]
-    return norm_weights_list
+    return [(1 - (w / max_node_weight)) if max_node_weight != 0 else 0.0 for w in weights_list]
 
 
 def _build_drive(
@@ -150,7 +153,7 @@ def _build_drive(
     # of the detuning depends on the amplitude.
     det_ratio = detuning_amplitude_ratio(device)
     det_scale = det_ratio * float(amp_wave.max()) * (1.0 - 1e-3)
-    # FIXME: det_params of length 4 ? with last param as final det for dmm?
+    # TODO(abussy-pasqal): det_params of length 4 ? with last param as final det for dmm?
     det_params = [p * det_scale for p in params[3:]]
     det_wave = qoolqit.InterpolatedWaveform(max_seq_duration, det_params)
 
@@ -166,15 +169,14 @@ def _build_drive(
             energy_scale=energy_scale,
         )
 
-    shaped_drive = qoolqit.Drive(amplitude=amp_wave, detuning=det_wave, dmm=wdetunings)
-
-    return shaped_drive
+    return qoolqit.Drive(amplitude=amp_wave, detuning=det_wave, dmm=wdetunings)
 
 
-def _run_simulation(
+def _run_simulation(  # noqa: PLR0913
     Q: torch.Tensor,
     register: qoolqit.Register,
     drive: qoolqit.Drive,
+    *,
     device: qoolqit.Device,
     backend: protocols.Backend,
     config: Config,
@@ -187,7 +189,7 @@ def _run_simulation(
     execution via `backend.run(program)`.
 
     If the simulation or post-processing raises any exception the error is
-    printed and an empty [`Solution`][] is returned, so callers must
+    logged as a warning and an empty [`Solution`][] is returned, so callers must
     treat an empty solution as a failure signal.
 
     Args:
@@ -204,10 +206,8 @@ def _run_simulation(
         ``probabilities``, and ``counts`` populated and sorted by ascending
         cost.  Returns an empty [`Solution`][] on any failure.
     """
-    from qubosolver import solving
-
     try:
-        program = solving.analog_quantum_sampling.compile(
+        program = analog_quantum_sampling.compile(
             register,
             drive,
             device,
@@ -216,13 +216,14 @@ def _run_simulation(
         job = backend.run(program)
         solution = Solution.from_results(job.results(), Instance(Q))
         solution.check_consistency(throw=True, full=False)
-        return solution
     except Exception as e:
-        print(f"Simulation failed: {e}")
+        logger.warning("Simulation failed (%r); returning an empty Solution.", e)
+        logger.debug("Simulation failure traceback", exc_info=True)
         return Solution()
+    return solution
 
 
-def solve(
+def solve(  # noqa: PLR0913
     instance: Instance,
     register: qoolqit.Register,
     *,
@@ -256,7 +257,7 @@ def solve(
     config = config or Config()
 
     if dmm and not support_dmm(device):
-        logging.warning(
+        logger.warning(
             "dmm=True was requested but device %r does not support a DMM channel; "
             "falling back to a global detuning drive.",
             device,
@@ -274,7 +275,7 @@ def solve(
 
     initial_params = config.initial_amplitude_knots + config.initial_detuning_knots
 
-    def run(x: list[float], eval: bool = True) -> tuple[float, Solution, qoolqit.Drive]:
+    def run(x: list[float], evaluate: bool = True) -> tuple[float, Solution, qoolqit.Drive]:
 
         solution = Solution()
         drive = _build_drive(
@@ -290,20 +291,23 @@ def solve(
                 instance.matrix,
                 register,
                 drive,
-                device,
-                backend,
-                config,
+                device=device,
+                backend=backend,
+                config=config,
             )
-            if eval:
+            if evaluate:
                 cost_eval = config.objective_fn(solution)
                 if not np.isfinite(cost_eval):
-                    print(f"[Warning] Non-finite cost encountered: {cost_eval} at x={x}")
+                    logger.warning(
+                        "Non-finite cost %s at x=%s; using penalty cost 1e4.", cost_eval, x
+                    )
                     cost_eval = 1e4
             else:
                 cost_eval = float("nan")
 
         except Exception as e:
-            print(f"[Exception] Error during simulation at x={x}: {e}")
+            logger.warning("Evaluation failed at x=%s (%r); using penalty cost 1e4.", x, e)
+            logger.debug("Evaluation failure traceback", exc_info=True)
             cost_eval = 1e4
         return cost_eval, solution, drive
 
@@ -322,6 +326,6 @@ def solve(
     )
 
     best_params = opt_result.x if opt_result else initial_params
-    _, solution, drive = run(best_params, eval=False)
+    _, solution, drive = run(best_params, evaluate=False)
 
     return solution, drive

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-import pulser
 import pytest
 import pytest_check as check
 import qoolqit
@@ -26,6 +25,11 @@ from qubosolver import (
     vector,
 )
 from qubosolver.utils._local_connection import _QUBIT_LIMIT, LocalConnection
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    import pulser
 
 NUM_SHOTS = 50
 

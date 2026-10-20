@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import random
-from collections.abc import Generator
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -26,6 +26,9 @@ from qubosolver import (
     vector,
     vectori,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 SLOW_THRESHOLD_S = 15
 
@@ -221,8 +224,6 @@ def generate_qubo_matrix(
     Returns:
         torch.Tensor: Qubo matrix.
     """
-    import numpy as np
-
     if seed is not None:
         np.random.seed(seed)
     matrix_ = np.zeros((size, size))

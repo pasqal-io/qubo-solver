@@ -28,13 +28,16 @@ from typing import cast
 import torch
 
 import qubosolver
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver._io import utils as io_utils
-from qubosolver._io.utils import Stream
 from qubosolver.types import Solution, bitstrings, vector
+
+if TYPE_CHECKING:
+    from qubosolver._io.utils import Stream
 
 logger = logging.getLogger(__name__)
 
-# TODO: Using `type` statement when Python >= 3.12
+# TODO(abussy-pasqal): Using `type` statement when Python >= 3.12
 Rule = Callable[[qubosolver.Instance], dict[int, int]]
 """A function that inspects a QUBO instance and returns the variables it can fix,
 as a mapping from variable index to the value (0 or 1) it is fixed to."""
@@ -58,7 +61,7 @@ def hansen_fixing(instance: qubosolver.Instance) -> dict[int, int]:
             Variables that cannot be fixed are omitted.
     """
     fixed_dict: dict[int, int] = {}
-    size: int = cast(int, instance.size)
+    size: int = cast("int", instance.size)
     epsilon: float = 1e-8  # Tolerance to avoid floating-point precision issues
 
     for i in range(size):

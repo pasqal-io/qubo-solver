@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import itertools
 import time
-from collections.abc import Callable, Iterable
 from copy import deepcopy
 from typing import Literal
 
@@ -25,9 +24,13 @@ import numpy as np
 import torch
 
 from qubosolver import Bitstring, Bitstrings, Instance, Matrix, Solution, bitstring, bitstrings
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver.utils._costs import _flip_deltas
 
 from .random_sampling import solve as random_sampling_solve
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
 
 
 def _iterations(n: int) -> Iterable[int]:
@@ -93,7 +96,8 @@ def _best_improvement_search_batch(
         ValueError: If `Q` is a 0x0 matrix.
     """
     if Q.shape[0] == 0:
-        raise ValueError("_best_improvement_search_batch does not support a 0x0 matrix.")
+        msg = "_best_improvement_search_batch does not support a 0x0 matrix."
+        raise ValueError(msg)
 
     X = X.detach().clone().to(Q)
     QX = X @ Q
@@ -162,7 +166,8 @@ def _first_improvement_search(
         ValueError: If `Q_torch` is a 0x0 matrix.
     """
     if Q_torch.shape[0] == 0:
-        raise ValueError("_first_improvement_search does not support a 0x0 matrix.")
+        msg = "_first_improvement_search does not support a 0x0 matrix."
+        raise ValueError(msg)
 
     Q = Q_torch.detach().cpu().numpy()
     x = s.to(Q_torch).detach().cpu().numpy().copy()
@@ -248,7 +253,8 @@ def _greedy_sweep_search(
         ValueError: If `Q_torch` is a 0x0 matrix.
     """
     if Q_torch.shape[0] == 0:
-        raise ValueError("_greedy_sweep_search does not support a 0x0 matrix.")
+        msg = "_greedy_sweep_search does not support a 0x0 matrix."
+        raise ValueError(msg)
 
     Q = Q_torch.detach().cpu().numpy()
     x = s.to(Q_torch).detach().cpu().numpy().copy()
@@ -354,7 +360,8 @@ def solve(
         ValueError: If `starts` bitstrings do not have length `instance.size`.
     """
     if strategy != "best_improvement" and strategy not in _ROW_STRATEGIES:
-        raise ValueError(f"Unknown postprocessing strategy: {strategy}")
+        msg = f"Unknown postprocessing strategy: {strategy}"
+        raise ValueError(msg)
 
     if isinstance(starts, int):
         solution = random_sampling_solve(instance, max_bitstrings=starts)
@@ -366,10 +373,11 @@ def solve(
         return solution
 
     if solution.bitstrings.shape[1] != instance.size:
-        raise ValueError(
+        msg = (
             f"starts has bitstrings of length {solution.bitstrings.shape[1]}, "
             f"but instance.size is {instance.size}."
         )
+        raise ValueError(msg)
 
     if instance.size == 0:
         return Solution.zeros(0, count=len(solution))

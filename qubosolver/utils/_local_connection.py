@@ -7,7 +7,6 @@ credentials are needed.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from typing import Any
 from uuid import uuid4
 
@@ -18,12 +17,16 @@ from pulser.backend.remote import (
     RemoteResults,
     RemoteResultsError,
 )
-from pulser.backend.results import Results
-from pulser.sequence import Sequence as PulserSequence
 from pulser_simulation import QutipBackendV2
 
-from qubosolver._checks import no_runtime_typecheck
+from qubosolver._checks import TYPE_CHECKING, no_runtime_typecheck
 from qubosolver.types.backends import _SV_THRESHOLD
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
+    from pulser.backend.results import Results
+    from pulser.sequence import Sequence as PulserSequence
 
 # From this register size on, QuTiP emulation becomes intractable.
 _QUBIT_LIMIT = _SV_THRESHOLD
@@ -50,8 +53,8 @@ class LocalConnection(RemoteConnection):
     def submit(
         self,
         sequence: PulserSequence,
-        wait: bool = False,
-        open: bool = False,
+        wait: bool = False,  # noqa: ARG002 (mirrors RemoteConnection.submit)
+        open: bool = False,  # noqa: A002 (mirrors RemoteConnection.submit)
         batch_id: str | None = None,
         **kwargs: Any,  # noqa: ANN401 (accepted for interface compatibility, unused)
     ) -> RemoteResults:
@@ -62,19 +65,21 @@ class LocalConnection(RemoteConnection):
         observables to compute.
         """
         if open:
-            raise NotImplementedError(
+            msg = (
                 f"{type(self).__name__} does not support open batches. "
                 "Submit each batch on its own instead."
             )
+            raise NotImplementedError(msg)
 
         sequence = self._add_measurement_to_sequence(sequence)
         n_qubits = len(sequence.register.qubit_ids)
         if n_qubits >= _QUBIT_LIMIT:
-            raise NotImplementedError(
+            msg = (
                 f"{type(self).__name__} emulates sequences with QuTiP, which is intractable "
                 f"for the {n_qubits} qubits of this sequence (limit is {_QUBIT_LIMIT}). "
                 "Use a real connection, or a local emulator backend suited to this size."
             )
+            raise NotImplementedError(msg)
 
         batch_id = str(uuid4())
         self._batches[batch_id] = QutipBackendV2(
@@ -90,7 +95,8 @@ class LocalConnection(RemoteConnection):
         """Return the results of a batch, whose only job `job_ids` must match."""
         results = self._batch(batch_id)
         if job_ids is not None and job_ids != self._get_job_ids(batch_id):
-            raise RemoteResultsError(f"Batch {batch_id!r} does not contain jobs {job_ids}.")
+            msg = f"Batch {batch_id!r} does not contain jobs {job_ids}."
+            raise RemoteResultsError(msg)
         return (results,)
 
     def _query_job_progress(self, batch_id: str) -> Mapping[str, tuple[JobStatus, Results | None]]:
@@ -111,7 +117,8 @@ class LocalConnection(RemoteConnection):
     def _batch(self, batch_id: str) -> Results:
         """Return the results stored for a batch, or raise if it is unknown."""
         if batch_id not in self._batches:
-            raise RemoteResultsError(f"Unknown batch {batch_id!r} for this connection.")
+            msg = f"Unknown batch {batch_id!r} for this connection."
+            raise RemoteResultsError(msg)
         return self._batches[batch_id]
 
     @staticmethod

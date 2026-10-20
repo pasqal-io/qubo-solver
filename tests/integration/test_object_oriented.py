@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import random
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -27,8 +28,10 @@ from qubosolver import (
     vector,
     vectori,
 )
-from qubosolver.solver.config.solving import _ClassicalAlgorithm
 from qubosolver.utils import analysis
+
+if TYPE_CHECKING:
+    from qubosolver.solver.config.solving import _ClassicalAlgorithm
 
 
 def gather_optimal_solutions(solutions: Solution) -> list[Candidate]:
@@ -144,7 +147,8 @@ def test_quantum_solve(
             algorithm="greedy_layout",
         )
     else:
-        raise ValueError(f"Invalid embedding method: {embedding_method}")
+        msg = f"Invalid embedding method: {embedding_method}"
+        raise ValueError(msg)
 
     if drive_shaping_method == "bayesian_search":
         drive_shaping_config = DriveShapingConfig(
@@ -157,7 +161,8 @@ def test_quantum_solve(
             proportional_diagonal_kappa=0.25,
         )
     else:
-        raise ValueError(f"Invalid drive shaping method: {drive_shaping_method}")
+        msg = f"Invalid drive shaping method: {drive_shaping_method}"
+        raise ValueError(msg)
 
     config = SolverConfig(
         solving=QuantumSolvingConfig(
@@ -178,7 +183,7 @@ def test_quantum_solve(
     print(f"Distances: {register.distances()}")
 
     expected_optimal_probability = 0.75
-    if drive_shaping_method in ["bayesian_search"]:
+    if drive_shaping_method == "bayesian_search":
         expected_optimal_probability = 0.0
 
     check_solution(
@@ -227,7 +232,7 @@ def test_classical_solve(
     solution._compute_costs(qubo.matrix)._sort_by_cost()._compute_probabilities()
 
     expected_optimal_probability = 0.75
-    if solving_method in ["random"]:
+    if solving_method == "random":
         expected_optimal_probability = 0.0
 
     check_solution(

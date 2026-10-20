@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import io
 import random
-from typing import get_args
+from typing import TYPE_CHECKING, get_args
 
 import numpy as np
 import pytest
 import pytest_check as check
 import torch
-from mock.connection import MockConnection
-from pulser.backend.remote import RemoteConnection
 from pulser.backend.results import Results
 from qoolqit import AnalogDeviceWithDMM
 from qoolqit.execution import (
@@ -33,11 +31,16 @@ from qubosolver import (
 )
 from qubosolver.solver.config.drive_shaping import _DriveShapingAlgorithm
 from qubosolver.solver.config.embedding import _EmbeddingAlgorithm
-from qubosolver.types import protocols
 from qubosolver.utils import analysis
 
+if TYPE_CHECKING:
+    from mock.connection import MockConnection
+    from pulser.backend.remote import RemoteConnection
 
-def _pre_remote_job(
+    from qubosolver.types import protocols
+
+
+def _pre_remote_job(  # noqa: PLR0913
     Q: matrix.Matrix,
     *,
     drive_method: _DriveShapingAlgorithm,

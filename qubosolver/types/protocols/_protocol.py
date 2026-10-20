@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING
 from qubosolver._checks import _RUNTIME_TYPE_CHECKING
 
 if _RUNTIME_TYPE_CHECKING and not TYPE_CHECKING:
-    from beartype.typing import Protocol as Protocol  # deptry: ignore[DEP004]
+    from beartype.typing import Protocol  # deptry: ignore[DEP004]
 else:
-    from typing import Protocol as Protocol
+    from typing import Protocol
 
 __all__ = [
     "Protocol",

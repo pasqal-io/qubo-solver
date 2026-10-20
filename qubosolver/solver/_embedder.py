@@ -4,12 +4,16 @@ import warnings
 from abc import ABC, abstractmethod
 
 import torch
-from qoolqit import Register
 
 from qubosolver import embedding
-from qubosolver.types import Instance, protocols
+from qubosolver._checks import TYPE_CHECKING
 
-from .config import QuantumSolvingConfig
+if TYPE_CHECKING:
+    from qoolqit import Register
+
+    from qubosolver.types import Instance, protocols
+
+    from .config import QuantumSolvingConfig
 
 warnings.filterwarnings("ignore", module="pulser")
 

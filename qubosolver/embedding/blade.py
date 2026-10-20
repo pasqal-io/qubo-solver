@@ -15,7 +15,6 @@ reduction rounds.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
 from dataclasses import dataclass, fields
 
 import numpy as np
@@ -29,6 +28,7 @@ from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
 if TYPE_CHECKING:
     # Resolves the `device: InitVar[Device | None]` field inherited from `BladeConfig`.
+    from collections.abc import Callable
     from dataclasses import InitVar  # noqa: F401 (only read by beartype)
 
     from qoolqit import Device  # noqa: F401 (only read by beartype)
@@ -113,10 +113,12 @@ def embed(
     config = config or Config()
     logger.debug("embed: instance size=%d, config=%r", instance.size, config)
     if not instance:
-        raise ValueError("Cannot embed an empty instance (size=0): nothing to place.")
+        msg = "Cannot embed an empty instance (size=0): nothing to place."
+        raise ValueError(msg)
 
     if _has_negative_offdiagonal(instance.matrix):
-        raise ValueError("QUBOs with negative off-diagonal coefficients cannot be embedded.")
+        msg = "QUBOs with negative off-diagonal coefficients cannot be embedded."
+        raise ValueError(msg)
 
     if instance.size == 1:
         # A single atom has no off-diagonal term to place it relative to,
@@ -134,8 +136,7 @@ def embed(
 
     _blade = Blade(blade_config)
     graph = _blade.embed(qubo)
-    register = qoolqit.Register.from_graph(graph)
-    return register
+    return qoolqit.Register.from_graph(graph)
 
 
 def embed_for_device(

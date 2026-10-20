@@ -26,7 +26,7 @@ jobs:
     outputs:
       is-regular-pr: ${{ steps.compute.outputs.is-regular-pr }}
       os: ${{ steps.compute.outputs.is-regular-pr == 'true' && '["ubuntu-latest"]' || '["ubuntu-latest", "windows-latest", "macos-latest"]' }}
-      python-versions: ${{ steps.compute.outputs.is-regular-pr == 'true' && '["3.14"]' || '["3.10", "3.11", "3.12", "3.13", "3.14"]' }}
+      python-versions: ${{ steps.compute.outputs.is-regular-pr == 'true' && '["3.14"]' || '["3.11", "3.12", "3.13", "3.14"]' }}
     steps:
       - id: compute
         run: echo "is-regular-pr=${{ github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release/') }}" >> "$GITHUB_OUTPUT"

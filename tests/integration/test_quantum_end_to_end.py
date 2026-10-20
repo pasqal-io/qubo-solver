@@ -65,8 +65,7 @@ def check_solution(
     for s in optimal_solutions:
         check.is_in(s.string, expected_optimal_bitstrings)
 
-    cumulated_probability = sum(s.probability for s in optimal_solutions)
-    return cumulated_probability
+    return sum(s.probability for s in optimal_solutions)
 
 
 def _relative_norm(diff_norm: float, ref_norm: float) -> float:

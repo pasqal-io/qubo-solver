@@ -16,12 +16,12 @@ from qubosolver.embedding._algorithms.greedy.layout import get_layout
     params=[embedding.Lattice.TRIANGULAR, embedding.Lattice.SQUARE], ids=["triangular", "square"]
 )
 def layout_type(request: pytest.FixtureRequest) -> embedding.Lattice:
-    return request.param  # type: ignore
+    return request.param  # type: ignore[no-any-return]
 
 
 @pytest.fixture(params=[2, 3, 5, 10, 37, 100], ids=str)
 def n_traps(request: pytest.FixtureRequest) -> int:
-    return request.param  # type: ignore
+    return request.param  # type: ignore[no-any-return]
 
 
 def test_get_layout_returns_tensor_shape(layout_type: embedding.Lattice, n_traps: int) -> None:

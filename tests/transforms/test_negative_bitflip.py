@@ -429,7 +429,8 @@ def test_glpk_solve_survives_internal_exception(monkeypatch: pytest.MonkeyPatch)
         *args: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
         **kwargs: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
     ) -> None:
-        raise RuntimeError("simulated GLPK failure")
+        msg = "simulated GLPK failure"
+        raise RuntimeError(msg)
 
     monkeypatch.setattr(glp, "glp_intopt", _raise)
 

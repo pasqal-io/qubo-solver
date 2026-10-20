@@ -19,19 +19,25 @@ from qubosolver._checks import (
     no_runtime_typecheck,
 )
 from qubosolver._io import utils as io_utils
-from qubosolver._io.utils import FileLike, Stream
 
 from . import matrix
 from ._enums import _DensityType
-from .linalg import Bitstring, Matrix
 
 _matrix_module = matrix  # alias so the shadowed `matrix` parameter can still reach this module
 
 if TYPE_CHECKING and not _RUNTIME_TYPE_CHECKING:
-    from qubosolver.transforms import negative_bitflip, variable_fixing, zeroing
+    from qubosolver.transforms import (  # noqa: TC001 (already typing-only; ruff misses the compound guard)
+        negative_bitflip,
+        variable_fixing,
+        zeroing,
+    )
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
+
+    from qubosolver._io.utils import FileLike, Stream
+
+    from .linalg import Bitstring, Matrix
 
 _InstanceT = TypeVar("_InstanceT", bound="Instance")
 
@@ -73,9 +79,8 @@ class Instance:
         elif symmetrize:
             matrix = (matrix + matrix.T) / 2
         elif not torch.allclose(matrix, matrix.T):
-            raise ValueError(
-                "QUBO matrix must be symmetric; pass `symmetrize=True` to use (Q + Q^T) / 2."
-            )
+            msg = "QUBO matrix must be symmetric; pass `symmetrize=True` to use (Q + Q^T) / 2."
+            raise ValueError(msg)
         self._matrix: Matrix = matrix
 
     @property
@@ -97,7 +102,7 @@ class Instance:
         Raises:
             AssertionError: If the internal tensor is not 2-D or not square.
         """
-        assert self._matrix.ndim == 2 and self._matrix.shape[0] == self._matrix.shape[1]  # nosec B101
+        assert self._matrix.ndim == 2 and self._matrix.shape[0] == self._matrix.shape[1]  # nosec B101  # noqa: PLR2004 (2-D matrix)
         return self._matrix
 
     @property
@@ -115,10 +120,11 @@ class Instance:
         mask = ~torch.eye(self.size, dtype=torch.bool, device=self.matrix.device)
         off_diag = self.matrix[mask]
         if off_diag.numel() == 0:
-            raise RuntimeError(
+            msg = (
                 "_max_off_diag is undefined for an instance with no off-diagonal entries "
                 f"(size={self.size})."
             )
+            raise RuntimeError(msg)
         return off_diag.max().item()
 
     def cost(self, solution: Bitstring) -> float:
@@ -131,7 +137,7 @@ class Instance:
             Scalar cost value.
         """
         # Import here to avoid circular imports
-        from qubosolver.utils import _costs
+        from qubosolver.utils import _costs  # noqa: PLC0415 (import cycle)
 
         cost = _costs.quadratic_cost(solution, self.matrix)
         assert type(cost) is float  # nosec B101
@@ -267,13 +273,15 @@ class Instance:
             tag = io_utils.load_string(f)
             target_cls = Instance._registry.get(tag)
             if target_cls is None:
-                raise ValueError(f"Cannot load Instance: unrecognized type tag {tag!r}.")
+                msg = f"Cannot load Instance: unrecognized type tag {tag!r}."
+                raise ValueError(msg)
             instance = target_cls._read_body(f)
         if not isinstance(instance, cls):
-            raise TypeError(
+            msg = (
                 f"Cannot load {cls.__module__}.{cls.__qualname__}: "
                 f"stream contains a {type(instance).__module__}.{type(instance).__qualname__}."
             )
+            raise TypeError(msg)
         return instance
 
     def _narrow(self, cls: type[_InstanceT]) -> _InstanceT:
@@ -291,9 +299,8 @@ class Instance:
             TypeError: If ``self`` is not an instance of *cls*.
         """
         if not isinstance(self, cls):
-            raise TypeError(
-                f"Expected a {cls.__module__}.{cls.__qualname__}, got {type(self).__name__}."
-            )
+            msg = f"Expected a {cls.__module__}.{cls.__qualname__}, got {type(self).__name__}."
+            raise TypeError(msg)
         return self
 
     @property
@@ -316,7 +323,7 @@ class Instance:
             TypeError: If this instance is not a
                 [`variable_fixing.Instance`][qubosolver.transforms.variable_fixing.Instance].
         """
-        from qubosolver.transforms import variable_fixing
+        from qubosolver.transforms import variable_fixing  # noqa: PLC0415 (import cycle)
 
         return self._narrow(variable_fixing.Instance)
 
@@ -340,7 +347,7 @@ class Instance:
             TypeError: If this instance is not a
                 [`zeroing.Instance`][qubosolver.transforms.zeroing.Instance].
         """
-        from qubosolver.transforms import zeroing
+        from qubosolver.transforms import zeroing  # noqa: PLC0415 (import cycle)
 
         return self._narrow(zeroing.Instance)
 
@@ -364,7 +371,7 @@ class Instance:
             TypeError: If this instance is not a
                 [`negative_bitflip.Instance`][qubosolver.transforms.negative_bitflip.Instance].
         """
-        from qubosolver.transforms import negative_bitflip
+        from qubosolver.transforms import negative_bitflip  # noqa: PLC0415 (import cycle)
 
         return self._narrow(negative_bitflip.Instance)
 
@@ -410,12 +417,12 @@ def _classify_density(density: float) -> _DensityType:
     """
     if _SPARSE_THRESHOLD[0] <= density < _SPARSE_THRESHOLD[1]:
         return _DensityType.SPARSE
-    elif _MEDIUM_THRESHOLD[0] <= density < _MEDIUM_THRESHOLD[1]:
+    if _MEDIUM_THRESHOLD[0] <= density < _MEDIUM_THRESHOLD[1]:
         return _DensityType.MEDIUM
-    elif _HIGH_THRESHOLD[0] <= density <= _HIGH_THRESHOLD[1]:
+    if _HIGH_THRESHOLD[0] <= density <= _HIGH_THRESHOLD[1]:
         return _DensityType.HIGH
-    else:
-        raise ValueError(f"Density {density} is outside the defined thresholds.")
+    msg = f"Density {density} is outside the defined thresholds."
+    raise ValueError(msg)
 
 
 def _calculate_density(m: Matrix) -> float:

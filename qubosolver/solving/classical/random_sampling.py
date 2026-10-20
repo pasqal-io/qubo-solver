@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-import torch
-
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver.types import Instance, Solution, bitstrings, torch_rng, vector, vectori
+
+if TYPE_CHECKING:
+    import torch
 
 
 def solve(
@@ -43,6 +45,4 @@ def solve(
         counts=vectori.zeros(max_bitstrings).fill_(1),
         probabilities=vector.zeros(max_bitstrings),
     )
-    solution = solution.deduplicate(update=False)._update(instance)
-
-    return solution
+    return solution.deduplicate(update=False)._update(instance)

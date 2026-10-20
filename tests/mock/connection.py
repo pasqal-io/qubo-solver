@@ -8,6 +8,7 @@ from pulser.backend.remote import (
     RemoteConnection,
     RemoteResults,
 )
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 class MockConnection(RemoteConnection):
     def __init__(self, result: Results, running_iterations: int = 0) -> None:
         self.result: Results = result
-        self.results: dict[str, Results] = dict()
+        self.results: dict[str, Results] = {}
 
         self._status_calls = 0
         self._support_open_batch = True
@@ -28,13 +29,14 @@ class MockConnection(RemoteConnection):
         self._progress_calls = 0
         self._running_iterations = running_iterations
 
+    @override
     def submit(
         self,
         sequence: PulserSequence,
         wait: bool = False,
         open: bool = False,
         batch_id: str | None = None,
-        **kwargs: Any,  # noqa: ANN401 (accepted for interface compatibility, unused)
+        **kwargs: Any,
     ) -> RemoteResults:
         if not batch_id:
             batch_id = "abcd"
@@ -42,6 +44,7 @@ class MockConnection(RemoteConnection):
 
         return RemoteResults(batch_id, self)
 
+    @override
     def _fetch_result(self, batch_id: str, job_ids: list[str] | None = None) -> tuple[Results, ...]:
         return (self.results[batch_id],)
 
@@ -62,6 +65,7 @@ class MockConnection(RemoteConnection):
             return BatchStatus.ERROR
         return BatchStatus.DONE
 
+    @override
     def _get_job_ids(self, batch_id: str) -> list[str]:
         return ["efgh"]
 

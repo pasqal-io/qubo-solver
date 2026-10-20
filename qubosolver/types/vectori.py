@@ -24,10 +24,12 @@ from typing import Any
 
 import torch
 
-from qubosolver._checks import no_runtime_typecheck
+from qubosolver._checks import TYPE_CHECKING, no_runtime_typecheck
 
 from . import linalg
-from .linalg import Vectori
+
+if TYPE_CHECKING:
+    from .linalg import Vectori
 
 
 def dtype() -> torch.dtype:

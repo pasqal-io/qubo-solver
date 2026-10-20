@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import io
-import os
 from pathlib import Path
 
 import numpy as np
@@ -83,11 +82,10 @@ def test_dataset_generation(negative_offdiag_rate: float) -> None:
     # test also save and load
     file_path = Path(__file__).parent / "qubo_dataset_test.pt"
     dataset.save(file_path)
-    assert os.path.exists(file_path)
+    assert file_path.exists()
     loaded_data = Dataset.load(file_path)
     assert len(loaded_data) == num_instances
-    if os.path.exists(file_path):
-        os.remove(file_path)
+    file_path.unlink(missing_ok=True)
 
     off_diag = ~torch.eye(size, dtype=torch.bool)
 

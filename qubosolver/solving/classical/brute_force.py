@@ -80,10 +80,12 @@ def solve(
 
     if n > _LARGE_INSTANCE_SIZE and math.isinf(time_limit):
         logger.warning(
-            f"brute_force: no time_limit set for a {n}-variable instance; "
-            f"exhaustively enumerating {1 << n:,} assignments with no time limit "
+            "brute_force: no time_limit set for a %s-variable instance; "
+            "exhaustively enumerating %s assignments with no time limit "
             "may run for an impractically long time. Consider passing a finite "
-            "time_limit."
+            "time_limit.",
+            n,
+            format(1 << n, ","),
         )
 
     Q = instance.matrix

@@ -7,7 +7,7 @@ name = "qubo-solver"
 description = "A Quadratic Unconstrained Binary Optimization (QUBO) solver library using quantum and classical approaches."
 readme = "README.md"
 version = "0.9.1"
-requires-python = ">=3.10,<3.15"
+requires-python = ">=3.11,<3.15"
 license = { text = "MIT-derived" }
 keywords = ["quantum", "qubo", "solver", "optimization", "combinatorial"]
 authors = [
@@ -25,7 +25,6 @@ classifiers = [
   "Development Status :: 3 - Alpha",
   "Topic :: Scientific/Engineering :: Mathematics",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -68,7 +67,6 @@ dev = [
   "pytest-rerunfailures",
   "nbconvert",
   "ipykernel",
-  "ruff",
   "jupyter",
   "ipython",
   "matplotlib",
@@ -165,27 +163,72 @@ extend-exclude = ["docs/tutorials/retired"]
 
 [tool.ruff.lint]
 select = [
-    "E", # pycodestyle
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
     "F", # Pyflakes
-    "Q", # flake8-quotes
-    "UP", # pyupgrade
-    "B", # flake8-bugbear
-    "SIM", # flake8-simplify
     "I", # isort
-    "ANN", # flake8-annotations
+    "N", # pep8-naming
     "D", # pydocstyle
+    "UP", # pyupgrade
+    "ANN", # flake8-annotations
+    "ASYNC", # flake8-async
+    "S", # flake8-bandit
+    "BLE", # flake8-blind-except
+    "B", # flake8-bugbear
+    "A", # flake8-builtins
+    "COM", # flake8-commas
+    "C4", # flake8-comprehensions
     "C90", # mccabe
-    "RUF", # ruff-specific rules
-    "PYI", # flake8-pyi
+    "DTZ", # flake8-datetimez
+    "EM", # flake8-errmsg
+    "ISC", # flake8-implicit-str-concat
+    "ICN", # flake8-import-conventions
+    "G", # flake8-logging-format
+    "PIE", # flake8-pie
     "T10", # flake8-debugger
+    "T20", # flake8-print
+    "PYI", # flake8-pyi
+    "Q", # flake8-quotes
+    "RSE", # flake8-raise
+    "RET", # flake8-return
+    "SLF", # flake8-self
+    "SLOT", # flake8-slots
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
+    "TC", # flake8-type-checking
+    "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib
+    "TD", # flake8-todos
+    "FIX", # flake8-fixme
+    "ERA", # eradicate
+    "PGH", # pygrep-hooks
+    "PL", # Pylint
+    "TRY", # tryceratops
+    "FLY", # flynt
+    "PERF", # Perflint
+    "FURB", # refurb
+    "LOG", # flake8-logging
+    "RUF", # ruff-specific rules
+]
+ignore = [
+    "COM812", # missing-trailing-comma: conflicts with ruff format
+    "FIX", # flake8-fixme: TODO comments are allowed
+    "N803", # invalid-argument-name: math notation (Q, X, U, ...)
+    "N806", # non-lowercase-variable-in-function: math notation (Q, X, dE, ...)
+    "S101", # assert: redundant with bandit B101 (asserts carry `# nosec B101`)
+    "SLF001", # private-member-access: cannot tell internal from external private members
+    "TD003", # missing-todo-link: no issue-link convention
+    "TRY003", # raise-vanilla-args: no custom exception class per message
 ]
 isort = { required-imports = ["from __future__ import annotations"] }
 mccabe = { max-complexity = 10 }
 flake8-quotes = { docstring-quotes = "double" }
 pydocstyle = { convention = "google" }
+flake8-unused-arguments = { ignore-variadic-names = true }
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D100", "D101", "D102", "D103", "D104", "D105", "D107"]
+"tests/**" = ["D100", "D101", "D102", "D103", "D104", "D105", "D107", "T201", "PLR2004"]
+"docs/**" = ["T201"]
 
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "examples"]

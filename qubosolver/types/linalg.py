@@ -40,7 +40,8 @@ def _device_from_env() -> torch.device:
         try:
             return torch.device(device_str)
         except RuntimeError as err:
-            raise ValueError(f"Invalid QUBO_SOLVER_DEVICE={device_str!r}.") from err
+            msg = f"Invalid QUBO_SOLVER_DEVICE={device_str!r}."
+            raise ValueError(msg) from err
 
     use_gpu = os.getenv("USE_GPU")
     if use_gpu is not None:
@@ -89,10 +90,11 @@ def _float_type_from_env() -> torch.dtype:
     float_dtype_str = os.getenv("QUBO_SOLVER_FLOAT_DTYPE")
     if float_dtype_str is not None:
         if float_dtype_str not in _FLOAT_DTYPE_MAP:
-            raise ValueError(
+            msg = (
                 f"Invalid QUBO_SOLVER_FLOAT_DTYPE={float_dtype_str!r}. "
                 f"Valid options: {list(_FLOAT_DTYPE_MAP)}"
             )
+            raise ValueError(msg)
         return _FLOAT_DTYPE_MAP[float_dtype_str]
 
     return torch.float64 if _use_double_precision_from_env() else torch.float32
@@ -115,9 +117,8 @@ class _GlobalConfig:
             dtype: A torch float dtype. Valid options: float16, bfloat16, float32, float64.
         """
         if dtype not in _FLOAT_DTYPE_MAP.values():
-            raise ValueError(
-                f"Invalid dtype {dtype!r}. Valid options: {list(_FLOAT_DTYPE_MAP.values())}"
-            )
+            msg = f"Invalid dtype {dtype!r}. Valid options: {list(_FLOAT_DTYPE_MAP.values())}"
+            raise ValueError(msg)
         cls._float_dtype = dtype
 
     @classmethod

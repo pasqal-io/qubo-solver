@@ -18,9 +18,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from qubosolver import solving
+from qubosolver._checks import TYPE_CHECKING
 from qubosolver.types import Instance, Solution, bitstrings, torch_rng
 
-from .config import ClassicalSolvingConfig
+if TYPE_CHECKING:
+    from .config import ClassicalSolvingConfig
 
 
 class BaseClassicalSolver(ABC):
@@ -53,7 +55,6 @@ class BaseClassicalSolver(ABC):
             A :class:`~qubosolver.types.Solution` containing the
             discovered bitstrings and their associated costs.
         """
-        pass
 
 
 class CplexSolver(BaseClassicalSolver):
@@ -71,17 +72,12 @@ class CplexSolver(BaseClassicalSolver):
     def solve(self) -> Solution:
         """Solve via CPLEX.
 
-        Lazily imports :mod:`qubosolver.solvers.cplex` to avoid a hard
-        dependency on the ``cplex`` package at module import time.
-
         Returns:
             A :class:`~qubosolver.types.Solution` with the optimal (or
             best feasible) bitstring found within ``config.time_limit``
             seconds.
         """
-        from qubosolver.solving import cplex
-
-        return cplex.solve(self.instance, time_limit=self.config.time_limit)
+        return solving.cplex.solve(self.instance, time_limit=self.config.time_limit)
 
 
 class SimulatedAnnealingSolver(BaseClassicalSolver):
@@ -139,13 +135,12 @@ class TabuSearchSolver(BaseClassicalSolver):
         """
         rng = torch_rng("global")
         starts = bitstrings.rand(1, self.instance.size, rng=rng)
-        tabu_search_solution = solving.tabu_search.solve(
+        return solving.tabu_search.solve(
             instance=self.instance,
             starts=starts,
             max_iter=self.config.max_iter,
             time_limit=self.config.time_limit,
         )
-        return tabu_search_solution
 
 
 class RandomSolver(BaseClassicalSolver):
@@ -207,4 +202,5 @@ def get_classical_solver(instance: Instance, config: ClassicalSolvingConfig) -> 
         case "random_sampling":
             return RandomSolver(instance, config)
         case _:
-            raise ValueError(f"Invalid solver name: {solver_type}")
+            msg = f"Invalid solver name: {solver_type}"
+            raise ValueError(msg)

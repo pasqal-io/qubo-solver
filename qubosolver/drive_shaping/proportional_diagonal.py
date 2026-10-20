@@ -8,7 +8,7 @@ import numpy as np
 import qoolqit
 import torch
 
-from qubosolver import Instance
+from qubosolver._checks import TYPE_CHECKING
 
 from ._device_specs import (
     detuning_amplitude_ratio,
@@ -17,10 +17,13 @@ from ._device_specs import (
 )
 from ._waveforms import constant_weighted_dmm
 
+if TYPE_CHECKING:
+    from qubosolver import Instance
+
 logger = logging.getLogger(__name__)
 
 
-def build_drive(
+def build_drive(  # noqa: PLR0915
     instance: Instance,
     register: qoolqit.Register,
     *,
@@ -51,7 +54,7 @@ def build_drive(
     max_seq_duration: float = specs["max_duration"] or 1000.0
     use_dmm = dmm
     if use_dmm and not support_dmm(device):
-        logging.warning(
+        logger.warning(
             "dmm=True was requested but device %r does not support a DMM channel; "
             "falling back to a global detuning drive.",
             device,
@@ -65,8 +68,10 @@ def build_drive(
         det_amp_ratio = max_amplitude / max_abs_detuning
         if kappa < det_amp_ratio:
             logger.warning(
-                f"proportional_diagonal_kappa is too small ({kappa}), you're likely to get a "
-                f"qoolqit CompilationError. Set it above {det_amp_ratio}."
+                "proportional_diagonal_kappa is too small (%s), you're likely to get a "
+                "qoolqit CompilationError. Set it above %s.",
+                kappa,
+                det_amp_ratio,
             )
 
     n = instance.size
@@ -81,9 +86,11 @@ def build_drive(
     max_amplitude = max_virtual_amplitude(device, register)
     if omega_max > max_amplitude:
         logger.info(
-            f"The proportional-diagonal drive amplitude ({omega_max}) exceeds the maximum "
-            f"amplitude compilable on the device for this register "
-            f"({max_amplitude}); clamping to it."
+            "The proportional-diagonal drive amplitude (%s) exceeds the maximum "
+            "amplitude compilable on the device for this register "
+            "(%s); clamping to it.",
+            omega_max,
+            max_amplitude,
         )
         omega_max = max_amplitude
 
@@ -91,9 +98,11 @@ def build_drive(
     max_abs_d = float(np.max(np.abs(d)))
     if max_abs_d > max_detuning:
         logger.info(
-            f"The proportional-diagonal detuning ({max_abs_d}) exceeds the maximum detuning "
-            f"compilable on the device for this amplitude ({max_detuning}); "
-            f"scaling the detuning down."
+            "The proportional-diagonal detuning (%s) exceeds the maximum detuning "
+            "compilable on the device for this amplitude (%s); "
+            "scaling the detuning down.",
+            max_abs_d,
+            max_detuning,
         )
         d = d * (max_detuning / max_abs_d)
         d_min = float(np.min(d))
@@ -107,7 +116,7 @@ def build_drive(
         # waveform must be <= 0
         spread = max(0.0, d_max - d_min)
         # if spread > 1e-15 and delta_dmm_max > 0.0:
-        if spread > 1e-15:
+        if spread > 1e-15:  # noqa: PLR2004 (numerical tolerance)
             delta_dmm_T = -spread  # must be <= 0
             denom = d_max - d_min
             weights = ((d_max - d) / denom).clip(0.0, 1.0).tolist()

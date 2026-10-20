@@ -17,17 +17,20 @@ See also [`qubosolver.bitstring`][qubosolver.bitstring] for single-bitstring ope
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import field
 from typing import Any
 
 import torch
 
-from qubosolver._checks import no_runtime_typecheck
+from qubosolver._checks import TYPE_CHECKING, no_runtime_typecheck
 
 from . import linalg
-from .linalg import Bitstrings
 from .random import torch_rng
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from .linalg import Bitstrings
 
 
 def dtype() -> torch.dtype:
@@ -99,13 +102,12 @@ def from_strings(strings: Sequence[str], *, device: torch.device | None = None) 
         return zeros(0, 0, device=device)
     lengths = {len(s) for s in strings}
     if len(lengths) != 1:
-        raise ValueError(
-            f"All bitstrings must have the same length, got lengths: {sorted(lengths)}"
-        )
+        msg = f"All bitstrings must have the same length, got lengths: {sorted(lengths)}"
+        raise ValueError(msg)
     return tensor([[int(c) for c in s] for s in strings], device=device)
 
 
-def round(
+def round(  # noqa: A001 (public API, mirrors builtins.round)
     data: Any,  # noqa: ANN401 (array-like input forwarded to torch.as_tensor)
     *,
     atol: float = 1e-6,
@@ -136,10 +138,11 @@ def round(
     bits = torch.round(values)
     invalid = ((bits != 0) & (bits != 1)) | ((values - bits).abs() > atol)
     if bool(invalid.any()):
-        raise ValueError(
+        msg = (
             f"Expected values within {atol} of 0 or 1, got "
             f"{values[invalid].tolist()} in {values.tolist()}"
         )
+        raise ValueError(msg)
     if bits.shape == (0,):
         # `torch.as_tensor([])` is 1-D: keep empty bitstrings 2-D.
         bits = bits.reshape(0, 0)

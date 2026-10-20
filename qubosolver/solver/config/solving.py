@@ -48,7 +48,8 @@ class ClassicalConfig:
     def __post_init__(self) -> None:
         """Validate `algorithm`."""
         if self.algorithm not in get_args(_ClassicalAlgorithm):
-            raise ValueError(f"Invalid classical algorithm '{self.algorithm}'.")
+            msg = f"Invalid classical algorithm '{self.algorithm}'."
+            raise ValueError(msg)
 
 
 @dataclass

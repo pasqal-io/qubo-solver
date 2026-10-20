@@ -104,7 +104,8 @@ class SolverConfig:
             case ClassicalSolvingConfig():
                 return "classical"
             case _:
-                raise ValueError(f"Invalid solving config '{self.solving!r}'.")
+                msg = f"Invalid solving config '{self.solving!r}'."
+                raise ValueError(msg)
 
     @property
     def quantum(self) -> QuantumSolvingConfig:
@@ -120,7 +121,8 @@ class SolverConfig:
             ValueError: If this configuration is not configured for quantum solving.
         """
         if self.solving_mode != "quantum":
-            raise ValueError(f"Config '{self.config_name}' is not configured for quantum solving.")
+            msg = f"Config '{self.config_name}' is not configured for quantum solving."
+            raise ValueError(msg)
         assert isinstance(self.solving, QuantumSolvingConfig)  # nosec B101
         return self.solving
 
@@ -138,8 +140,7 @@ class SolverConfig:
             ValueError: If this configuration is not configured for classical solving.
         """
         if self.solving_mode != "classical":
-            raise ValueError(
-                f"Config '{self.config_name}' is not configured for classical solving."
-            )
+            msg = f"Config '{self.config_name}' is not configured for classical solving."
+            raise ValueError(msg)
         assert isinstance(self.solving, ClassicalSolvingConfig)  # nosec B101
         return self.solving

@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import logging
 import warnings
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import numpy as np
 import pytest
 import pytest_check as check
 import torch
-from mock.connection import MockConnection
 from pulser.backend.remote import (
     RemoteConnection,
     Results,
 )
-from qoolqit import Device
+from pulser_simulation import QutipBackendV2
 from qoolqit.execution import JobStatus
 from qoolqit.graphs import DataGraph
 from scipy.spatial.distance import pdist, squareform
@@ -33,17 +33,21 @@ from qubosolver import (
     matrix,
     vectori,
 )
-from qubosolver.solver.config.embedding import _EmbeddingAlgorithm
 from qubosolver.solver.solver import _QuboSolverQuantum
 from qubosolver.utils import _random, analysis
+
+if TYPE_CHECKING:
+    from mock.connection import MockConnection
+    from qoolqit import Device
+
+    from qubosolver.solver.config.embedding import _EmbeddingAlgorithm
 
 
 @pytest.fixture
 def implicit_default_qubo_solver_config(
     simple_qubo_instance: Instance,
 ) -> Solver:
-    default_solver = Solver(simple_qubo_instance)
-    return default_solver
+    return Solver(simple_qubo_instance)
 
 
 def test_implicit_solver_config(
@@ -54,8 +58,6 @@ def test_implicit_solver_config(
 
 @pytest.mark.duration(21)
 def test_different_shots(simple_qubo_instance: Instance) -> None:
-    from pulser_simulation import QutipBackendV2
-
     default_solver = Solver(
         simple_qubo_instance,
         SolverConfig(
@@ -86,8 +88,6 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
 @pytest.mark.duration(40)
 @pytest.mark.flaky(reruns=5)
 def test_run_local_backends(simple_qubo_instance: Instance, local_backend: LocalEmulator) -> None:
-    from pulser_simulation import QutipBackendV2
-
     solver = Solver(
         simple_qubo_instance,
         SolverConfig(
@@ -114,7 +114,6 @@ def test_run_local_backends(simple_qubo_instance: Instance, local_backend: Local
 
 @pytest.mark.duration(150)
 def test_solver_different_devices(
-    request: pytest.FixtureRequest,
     qubo_for_testing_many_devices: Instance,
     local_device: Device,
     embedding_algorithm: _EmbeddingAlgorithm,
@@ -231,9 +230,7 @@ def trivial_triangular_qubo(connection: RemoteConnection | None = None) -> Solve
         preprocessing=False,
     )
 
-    solver = Solver(qubo, config)
-
-    return solver
+    return Solver(qubo, config)
 
 
 @pytest.mark.duration(25)

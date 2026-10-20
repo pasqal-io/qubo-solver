@@ -46,7 +46,8 @@ class Config:
     def __post_init__(self) -> None:
         """Validate `algorithm`."""
         if self.algorithm not in get_args(_DriveShapingAlgorithm):
-            raise ValueError(f"Invalid drive shaping method '{self.algorithm}'.")
+            msg = f"Invalid drive shaping method '{self.algorithm}'."
+            raise ValueError(msg)
 
     def _to_bayesian_search_config(self) -> drive_bayesian_search.Config:
         """Create a [`drive_bayesian_search.Config`][] from this configuration.

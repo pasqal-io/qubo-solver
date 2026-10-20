@@ -139,7 +139,7 @@ def test_from_string_roundtrips_with_to_string() -> None:
 @pytest.mark.parametrize("seed", [42, 137, 9991])
 @pytest.mark.parametrize("length", [0, 1, 2, 5, 10, 50, 100])
 def test_from_string_roundtrips_with_to_string_random(seed: int, length: int) -> None:
-    rng = random.Random(seed)
+    rng = random.Random(seed)  # noqa: S311 (seeded test data, not cryptographic)
     original = "".join(rng.choice("01") for _ in range(length))
     roundtripped = bitstring.to_string(bitstring.from_string(original))
     check.equal(roundtripped, original)
@@ -400,7 +400,7 @@ def test_round_error_message_reports_the_offending_values() -> None:
 @pytest.mark.parametrize("seed", [73, 256, 8401])
 @pytest.mark.parametrize("length", [1, 2, 5, 10, 50])
 def test_round_matches_from_string_on_perturbed_bits(seed: int, length: int) -> None:
-    rng = random.Random(seed)
+    rng = random.Random(seed)  # noqa: S311 (seeded test data, not cryptographic)
     string = "".join(rng.choice("01") for _ in range(length))
     perturbed = [int(c) + rng.uniform(-1e-7, 1e-7) for c in string]
     torch.testing.assert_close(bitstring.round(perturbed), bitstring.from_string(string))

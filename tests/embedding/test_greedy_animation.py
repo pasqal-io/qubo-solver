@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
-import pytest
 import torch
 
+import qubosolver.embedding._algorithms.greedy as greedy_mod
 from qubosolver import Matrix, embedding, matrix
 from qubosolver.embedding._algorithms.greedy import Greedy
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def _toy_qubo() -> Matrix:
@@ -67,22 +69,10 @@ def test_greedy_animation_calls_renderer(monkeypatch: pytest.MonkeyPatch) -> Non
     # Compteur d'appels
     called: dict[str, int] = {"count": 0}
 
-    def _fake_render(
-        self: Greedy,
-        frames: list[dict[str, Any]],
-        all_coords_np: np.ndarray,
-        spacing: float,
-        layout_name: str,
-        top_k: int = 5,
-        save_path: str | None = None,
-        fps: float = 1.25,
-    ) -> None:
+    def _fake_render(*args: object, **kwargs: object) -> None:
         called["count"] += 1
-        return None
 
     # 1) S'assurer que le code rentre bien dans le bloc d'animation
-    import qubosolver.embedding._algorithms.greedy as greedy_mod
-
     monkeypatch.setattr(greedy_mod, "_VIZ_OK", True, raising=False)
 
     # 2) Remplacer le renderer par un stub inoffensif

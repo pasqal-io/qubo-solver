@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import contextlib
 import math
+from pathlib import Path
 from typing import Any
 
 from qubosolver import Instance, Solution, bitstrings, vector, vectori
@@ -30,14 +31,14 @@ def _import_cplex() -> Any:  # noqa: ANN401 (dynamically imported optional modul
         ImportError: If the ``cplex`` package is not installed.
     """
     try:
-        import cplex
-
-        return cplex
+        import cplex  # noqa: PLC0415 (optional dependency)
     except ImportError as e:
-        raise ImportError(
+        msg = (
             "Solving with CPLEX requires the 'cplex' package. Install it with: "
             "pip install 'qubo-solver[extras]'"
-        ) from e
+        )
+        raise ImportError(msg) from e
+    return cplex
 
 
 def _qubo_instance_to_sparsepairs(
@@ -148,7 +149,8 @@ def _to_solution(cplex_solution: cplex.SolutionInterface) -> Solution:
             `CplexSolverError` in that case.
     """
     if not cplex_solution.is_primal_feasible():
-        raise RuntimeError("CPLEX found no feasible solution within the given time/node limit.")
+        msg = "CPLEX found no feasible solution within the given time/node limit."
+        raise RuntimeError(msg)
 
     solution_values = cplex_solution.get_values()
     solution_cost = cplex_solution.get_objective_value()
@@ -159,10 +161,9 @@ def _to_solution(cplex_solution: cplex.SolutionInterface) -> Solution:
     counts = vectori.tensor([1])
     cost_tensor = vector.tensor([solution_cost])
 
-    solution = Solution(
+    return Solution(
         bitstrings=bitstring_tensor, counts=counts, costs=cost_tensor
     )._compute_probabilities()
-    return solution
 
 
 def solve(instance: Instance, *, time_limit: float = float("inf"), log_path: str = "") -> Solution:
@@ -187,7 +188,7 @@ def solve(instance: Instance, *, time_limit: float = float("inf"), log_path: str
         return Solution.zeros(0)
 
     # Open a log file, or a no-op context manager if none was requested.
-    with open(log_path, "w") if log_path else contextlib.nullcontext() as log_file:
+    with Path(log_path).open("w") if log_path else contextlib.nullcontext() as log_file:
         problem = _to_cplex(instance, log_file=log_file)
         if math.isfinite(time_limit):
             problem.parameters.timelimit.set(time_limit)
@@ -195,6 +196,4 @@ def solve(instance: Instance, *, time_limit: float = float("inf"), log_path: str
         problem.solve()
 
         # Retrieve solution.
-        solution = _to_solution(problem.solution)
-
-    return solution
+        return _to_solution(problem.solution)
