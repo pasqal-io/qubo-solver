@@ -9,3 +9,5 @@
 ::: qubosolver.embedding.blade
 
 ::: qubosolver.embedding.greedy_layout
+
+::: qubosolver.embedding.geometric
