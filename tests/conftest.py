@@ -245,6 +245,12 @@ def decomposable_qubo() -> Instance:
 
 
 @pytest.fixture
+def small_decomposable_qubo() -> Instance:
+    # Hansen fixing leaves all 12 variables of this one.
+    return Instance(generate_qubo_matrix(12, 0.50, (0, 20), 2))
+
+
+@pytest.fixture
 def restore_rng_state() -> Generator:
     py_state = random.getstate()
     np_state = np.random.get_state()
