@@ -56,6 +56,7 @@ nav:
       - Zeroing: tutorials/06-transforms/02-zeroing.ipynb
       - Negative bitflip: tutorials/06-transforms/03-negative-bitflip.ipynb
     - Analysis: tutorials/07-analysis.ipynb
+    - Solving an MIS problem: tutorials/08-mis-to-qubo.ipynb
 
   - API:
     - qubosolver: api/qubosolver.md

@@ -247,7 +247,7 @@ module = ["qoolqit.*"]
 follow_untyped_imports = true
 
 [tool.deptry]
-extend_exclude = ["docs/tutorials/retired"]
+extend_exclude = ["docs/tutorials/retired", "docs/tutorials/08-mis-to-qubo.ipynb"]
 
 [tool.deptry.package_module_name_map]
 pulser = ["pulser", "pulser_simulation"]
