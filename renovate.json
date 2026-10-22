@@ -10,6 +10,11 @@
   },
 
   "minimumReleaseAge": "15 days",
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "minimumReleaseAge": null,
+    "schedule": ["at any time"]
+  },
   "schedule": ["every weekend"],
   "rebaseWhen": "conflicted",
   "updateNotScheduled": false
