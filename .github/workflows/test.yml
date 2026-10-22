@@ -7,6 +7,7 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - main
       - 'release/v*'
@@ -22,6 +23,8 @@ concurrency:
 jobs:
   setup:
     name: Compute test matrix
+    # Skip draft PRs. Jobs that need `setup` are skipped too.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     outputs:
       is-regular-pr: ${{ steps.compute.outputs.is-regular-pr }}
@@ -42,6 +45,8 @@ jobs:
     steps:
         - name: Checkout main code and submodules
           uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          with:
+            persist-credentials: false
         - name: Install uv
           uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
           with:
@@ -64,6 +69,8 @@ jobs:
     steps:
         - name: Checkout main code and submodules
           uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          with:
+            persist-credentials: false
         - name: Install uv
           uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
           with:
@@ -77,6 +84,8 @@ jobs:
 
   unit_tests_precision_and_runtime_checks:
     name: Unit testing (single/double precision, runtime checks)
+    # Same condition as `setup`: this job does not need it.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -85,6 +94,8 @@ jobs:
     steps:
         - name: Checkout main code and submodules
           uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          with:
+            persist-credentials: false
         - name: Install uv
           uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
           with:

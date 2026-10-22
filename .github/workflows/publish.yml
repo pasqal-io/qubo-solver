@@ -24,6 +24,7 @@ jobs:
           uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
           with:
             ref: ${{ github.ref }}
+            persist-credentials: false
         - name: Install uv
           uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
           with:
@@ -49,18 +50,20 @@ jobs:
         runs-on: ubuntu-latest
         steps:
         - name: Checkout
-          uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 # zizmor: ignore[artipacked] mike deploy --push needs the credentials
         - name: Install uv
           uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
           with:
             version: 0.13.5
             python-version: '3.14'
         - name: Deploy docs
+          env:
+            REF_NAME: ${{ github.ref_name }}
           run: |
             git config user.name "GitHub Actions"
             git config user.email "actions@github.com"
             git fetch origin gh-pages
-            uv run --group doc --no-default-groups mike deploy --push --update-aliases ${{ github.ref_name }} latest
+            uv run --group doc --no-default-groups mike deploy --push --update-aliases "$REF_NAME" latest
         permissions:
             contents: write # TODO: wide permissions needed for deployment with mike
 
@@ -70,4 +73,7 @@ jobs:
         permissions:
             contents: read
             security-events: write
-        uses: pasqal-io/qubo-solver/.github/workflows/betterleaks.yml@main
+        # A tag pushed with GITHUB_TOKEN (e.g. by a bot) does not trigger the `push` event of
+        # betterleaks.yml, so scan the release here. The self-repository path (`$/`) runs the
+        # workflow from the release commit itself.
+        uses: $/.github/workflows/betterleaks.yml
