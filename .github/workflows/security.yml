@@ -10,6 +10,8 @@ on:
     branches:
       - main
       - 'release/v*'
+  schedule:
+    - cron: "0 6 * * *"  # Daily, to catch new CVEs without a push
   workflow_dispatch: {}
 
 permissions:
@@ -28,12 +30,14 @@ jobs:
       security-events: write  # Required for SARIF upload
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: 0.13.5
           python-version: "3.14"
-      - run: pip install bandit[toml,sarif]
       - name: Run Bandit
-        run: bandit -r qubosolver/ -c pyproject.toml -f sarif -o bandit-results.sarif || true  #TODO: remove 'true' once all warnings are fixed
+        run: uvx --from 'bandit[toml,sarif]' bandit -r qubosolver/ -c pyproject.toml -f sarif -o bandit-results.sarif || true  #TODO: remove 'true' once all warnings are fixed
       - name: Upload Bandit SARIF to GitHub Security tab
         if: always()
         uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
@@ -52,43 +56,56 @@ jobs:
       security-events: write  # Required for SARIF upload to GitHub Security tab
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Set up Python 3.14
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
+          version: 0.13.5
           python-version: "3.14"
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-        with:
-          version: 0.12.23
+          activate-environment: true  # Creates .venv and exports VIRTUAL_ENV for Trivy
 
       - name: Install dependencies
-        run: uv sync -p 3.14 -U
+        run: uv sync -U
 
       - name: Generate requirements.txt
         run: |
           uv export --format requirements-txt --no-hashes -o requirements.txt
           rm uv.lock
 
-      - name: Run Trivy scan # Detect vulnerabilities and fails if vulnerabilities are found
+      # Scan once, then convert the JSON report to every other format.
+      # The license scanner is left out: it would gate on (and flood the SARIF with) license
+      # classifications; the SBOM gets package licenses from the installed metadata anyway.
+      - name: Run Trivy scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        continue-on-error: ${{ github.ref }} != 'refs/heads/main'
         with:
           version: v0.75.0
           scan-type: fs
           scan-ref: .
+          format: json
+          output: trivy-results.json
+          scanners: vuln,secret
+          exit-code: "0"
+
+      - name: Check vulnerabilities # Fails on main if vulnerabilities are found
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        continue-on-error: ${{ github.ref != 'refs/heads/main' }}
+        with:
+          skip-setup-trivy: true
+          scan-type: convert
+          scan-ref: trivy-results.json
           format: table
           exit-code: "1"
           severity: CRITICAL,HIGH
 
-      - name: Run Trivy scan for upload # Never fails so the SARIF file is always available
+      - name: Convert to SARIF
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.75.0
-          scan-type: fs
-          scan-ref: .
+          skip-setup-trivy: true
+          scan-type: convert
+          scan-ref: trivy-results.json
           format: sarif
           output: trivy-results.sarif
-          exit-code: "0"
 
       - name: Upload Trivy SARIF to GitHub Security tab
         if: always()
@@ -99,14 +116,11 @@ jobs:
       - name: Generate SBOM (CycloneDX)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.75.0
-          scan-type: fs
-          scan-ref: .
+          skip-setup-trivy: true
+          scan-type: convert
+          scan-ref: trivy-results.json
           format: cyclonedx
           output: sbom.cdx.json
-          scanners: vuln,license
-        env:
-          VIRTUAL_ENV: ${{ env.VIRTUAL_ENV }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -116,12 +130,9 @@ jobs:
       - name: Submit Dependency Snapshot to GitHub Dependency Graph
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.75.0
-          scan-type: fs
-          scan-ref: .
+          skip-setup-trivy: true
+          scan-type: convert
+          scan-ref: trivy-results.json
           format: github
           output: dependency-snapshot.json
           github-pat: ${{ secrets.GITHUB_TOKEN }}
-          scanners: vuln,license
-        env:
-          VIRTUAL_ENV: ${{ env.VIRTUAL_ENV }}
