@@ -46,10 +46,20 @@ from qubosolver.solving.classical import tabu_search
 from qubosolver.solving.classical.iterative_bitflip_local_search import (
     _best_improvement_search_batch,
 )
-from qubosolver.types import Bitstring, Bitstrings, Matrix, Solution, bitstring, matrix, vector
+from qubosolver.types import (
+    Bitstring,
+    Bitstrings,
+    Matrix,
+    Solution,
+    bitstring,
+    bitstrings,
+    matrix,
+    vector,
+)
 
 if TYPE_CHECKING:
     from qubosolver._io.utils import Stream
+    from qubosolver.types.linalg import Matrixd
 
 logger = logging.getLogger(__name__)
 
@@ -393,7 +403,7 @@ def _solve_bitflip_preprocessing_glpk(  # noqa: C901, PLR0915
     return flips, objective_value, status
 
 
-def bitflip_qubo(Q: Matrix, *, eps: float = 0.0) -> Matrix | None:
+def bitflip_qubo(Q: Matrix, *, eps: float = 0.0) -> Matrixd | None:
     """Build the QUBO ``Q_f`` whose minimum gives the best bit flips for `Q`.
 
     The bit-flip problem picks flips ``f`` minimizing the negative off-diagonal
@@ -449,11 +459,12 @@ def solve_bitflip_local_search(
         return bitstring.zeros(n), 0.0, "OPTIMAL"
 
     generator = torch.Generator(device=Q_f.device).manual_seed(seed)
-    F = torch.zeros(max(1, n_starts), n, dtype=Q_f.dtype, device=Q_f.device)
+    F = bitstrings.zeros(max(1, n_starts), n, device=Q_f.device)
     F[1:] = torch.randint(
-        0, 2, (F.shape[0] - 1, n), generator=generator, device=Q_f.device, dtype=Q_f.dtype
+        0, 2, (F.shape[0] - 1, n), generator=generator, device=Q_f.device, dtype=F.dtype
     )
-    F = _best_improvement_search_batch(Q_f, F).to(Q_f.dtype)
+    # The search runs in the library dtype; objectives are recomputed in float64.
+    F = _best_improvement_search_batch(matrix.as_tensor(Q_f), F).to(Q_f.dtype)
 
     objectives = ((F @ Q_f) * F).sum(dim=1)
     best = int(objectives.argmin())
@@ -500,11 +511,12 @@ def solve_bitflip_tabu_search(  # noqa: PLR0913
         return bitstring.zeros(n), 0.0, "OPTIMAL"
 
     generator = torch.Generator(device=Q_f.device).manual_seed(seed)
-    F = torch.zeros(max(1, n_starts), n, dtype=Q_f.dtype, device=Q_f.device)
+    F = bitstrings.zeros(max(1, n_starts), n, device=Q_f.device)
     F[1:] = torch.randint(
-        0, 2, (F.shape[0] - 1, n), generator=generator, device=Q_f.device, dtype=Q_f.dtype
+        0, 2, (F.shape[0] - 1, n), generator=generator, device=Q_f.device, dtype=F.dtype
     )
-    F = _best_improvement_search_batch(Q_f, F).to(Q_f.dtype)
+    # The search runs in the library dtype; objectives are recomputed in float64.
+    F = _best_improvement_search_batch(matrix.as_tensor(Q_f), F)
 
     solution = tabu_search.solve(
         qubosolver.Instance(matrix.as_tensor(Q_f)),

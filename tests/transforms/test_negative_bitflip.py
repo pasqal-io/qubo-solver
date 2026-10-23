@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import io
 import itertools
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 import pytest_check as check
@@ -442,7 +442,9 @@ def test_glpk_solve_survives_internal_exception(monkeypatch: pytest.MonkeyPatch)
 
 
 @pytest.mark.parametrize("method", ["local_search", "tabu_search"])
-def test_heuristic_methods_match_glpk_negative_weight(method: str) -> None:
+def test_heuristic_methods_match_glpk_negative_weight(
+    method: Literal["local_search", "tabu_search"],
+) -> None:
     instance, _ = non_bipartisable_negative_qubo()
 
     flipped_instance = transforms.negative_bitflip.apply(instance, method=method)
