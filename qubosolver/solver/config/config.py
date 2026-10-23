@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-from qubosolver.transforms import _decompositions
+from qubosolver.embedding import geometric
 
 from .solving import ClassicalConfig as ClassicalSolvingConfig
 from .solving import QuantumConfig as QuantumSolvingConfig
@@ -38,22 +38,20 @@ class _DecompositionConfig:
     neglecting_max_coefficient: float = 1.0
     classical_max_min_dist_ratio: float = float("inf")
 
-    def _to_decomposition_config(self, *, max_min_dist_ratio: float) -> _decompositions.Config:
-        """Create a [`_decompositions.Config`][] from this configuration.
+    def _to_geometric_config(self, *, max_min_dist_ratio: float) -> geometric.Config:
+        """Create a [`geometric.Config`][qubosolver.embedding.geometric.Config] from this one.
 
         Args:
             max_min_dist_ratio: Maximal ratio between the largest and smallest
                 distances allowed on the target device.
 
         Returns:
-            A decomposition algorithm configuration populated from these settings.
+            The geometric embedding configuration populated from these settings.
         """
-        return _decompositions.Config(
+        return geometric.Config(
+            threshold=self.decompose_threshold,
             neglecting_inter_distance=self.neglecting_inter_distance,
             neglecting_max_coefficient=self.neglecting_max_coefficient,
-            decompose_stop_number=self.decompose_stop_number,
-            decompose_threshold=self.decompose_threshold,
-            decompose_break_placement=self.decompose_break_placement,
             max_min_dist_ratio=max_min_dist_ratio,
         )
 

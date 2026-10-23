@@ -20,7 +20,7 @@ from qubosolver import (
     Solver,
     SolverConfig,
     analysis,
-    bitstring,
+    embedding,
     matrix,
     solving,
     torch_rng,
@@ -29,16 +29,7 @@ from qubosolver import (
 )
 from qubosolver.solver.config.config import _DecompositionConfig
 from qubosolver.solver.solver import _DecomposeQuboSolver
-from qubosolver.transforms._algorithms.decompose import (
-    compute_distance_interaction_matrix,
-    compute_min_max_distances,
-    geometric_search,
-    interaction_matrix_from_placed,
-    positive_vertices_update,
-    transfer_edge_values,
-    update_global_solution,
-    vertices_to_place,
-)
+from qubosolver.transforms import variable_fixing
 
 
 def manual_seed(seed: int) -> torch.Generator:
@@ -51,18 +42,17 @@ def manual_seed(seed: int) -> torch.Generator:
 @pytest.mark.duration(120)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("use_quantum", [True, False], ids=["quantum", "classical"])
-def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) -> None:  # noqa: PLR0915
+def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) -> None:
     """Test that the first steps of the decomposition yield correctly-sized results.
 
-    Covers initialization and one loop iteration of a decomposition, yielding correct
-    tensors or dictionaries of right sizes.
+    Covers the presolve and one loop iteration of a decomposition (partial
+    embedding, subproblem solving, fixing), yielding results of the right sizes.
     """
     # Select seed so that the decomposition is tractable for testing with the
     # Qutip backend
     rng = manual_seed(79450)
 
     size = decomposable_qubo.size
-    qubo_mat = decomposable_qubo.matrix.clone()
 
     if use_quantum:
         config = SolverConfig(
@@ -80,80 +70,41 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
     solver = _DecomposeQuboSolver(
         decomposable_qubo, solver_config=config, decompose_config=decompose_config
     )
-
-    ## Check the distance interaction matrix matches the qubo matrix
-    dist_matrix = compute_distance_interaction_matrix(qubo_mat)
-    assert dist_matrix.shape == qubo_mat.shape
-    assert torch.all(torch.diag(dist_matrix) == torch.diag(qubo_mat))
-
-    ## Check for the dictionary of vertices to place, dimensions are correct
-    current_vertices_dict = vertices_to_place(dist_matrix, qubo_mat)
-    assert len(current_vertices_dict) == size
-    for i in current_vertices_dict:
-        assert len(current_vertices_dict[i]["blocking_vertices"]) <= size
-        assert len(current_vertices_dict[i]["separated_vertices"]) <= size
-        assert len(current_vertices_dict[i]["neighbors_id"]) <= size
-        assert len(current_vertices_dict[i]["neighbors_id"]) == len(
-            current_vertices_dict[i]["neighbors_weight"]
-        )
-
-    # check that the initial transfer does not affect the length of the dictionary.
-    solution = bitstring.as_tensor(torch.full((size,), -1))
-    transfer_edge_values(current_vertices_dict, {}, solution, qubo_mat)
-    positive_vertices_update(current_vertices_dict, solution)
-    assert len(current_vertices_dict) == size
-
-    # try one iteration, check placed_vertices length
-    config_subproblems = deepcopy(config)
-    first_vertex = 0
-
-    if use_quantum:
-        assert isinstance(solver.config.solving, QuantumSolvingConfig)
-        pulser_device = solver.config.solving.device._pulser_device
-        assert pulser_device.max_radial_distance is not None
-        min_distance, max_radial_distance = compute_min_max_distances(
-            qubo_mat,
-            max_min_dist_ratio=pulser_device.max_radial_distance / pulser_device.min_atom_distance,
-        )
-    else:
-        min_distance = float(DigitalAnalogDevice()._pulser_device.min_atom_distance)
-        max_radial_distance_ = DigitalAnalogDevice()._pulser_device.max_radial_distance
-        assert max_radial_distance_ is not None
-        max_radial_distance = float(max_radial_distance_)
-
-    placed_vertices = geometric_search(
-        qubo_mat,
-        current_vertices_dict,
-        first_vertex,
-        decompose_config.decompose_threshold,
-        min_distance=min_distance,
-        max_radial_distance=max_radial_distance,
-        rng=rng,
-    )
-    assert len(placed_vertices) <= size
-
-    # check matrix size correspond to placed_vertices
-    matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(placed_vertices)
-    # If too big, the test will take a long time to run.
-    if use_quantum and matrix_to_solve.shape[0] > 13:
-        msg = f"Test failed due to large matrix size = {matrix_to_solve.shape[0]}"
-        raise RuntimeError(msg)
-    assert len(map_index_vertices) == len(placed_vertices) == matrix_to_solve.shape[0]
-    subproblem = Instance(matrix_to_solve)
     assert isinstance(solver, _DecomposeQuboSolver)
-    subsolver = Solver(subproblem, config_subproblems)
-    sub_solution = subsolver.solve().bitstrings[0]
 
-    # test update_global_solution remove -1 values
-    update_global_solution(
-        global_solution=solution, sub_solution=sub_solution, mapping=map_index_vertices
+    # presolve: the embedder needs negative diagonal coefficients
+    reduced = variable_fixing.apply_recursively(decomposable_qubo)
+    assert reduced.size <= size
+    assert (torch.diag(reduced.matrix) < 0).all()
+
+    # try one iteration, check the number of placed variables
+    max_min_dist_ratio = (
+        config.quantum.max_min_dist_ratio
+        if use_quantum
+        else decompose_config.classical_max_min_dist_ratio
     )
-    assert (solution == -1).sum() < size
+    geometric_config = decompose_config._to_geometric_config(max_min_dist_ratio=max_min_dist_ratio)
+    register, variables = embedding.geometric.embed(reduced, config=geometric_config, rng=rng)
+    assert 1 <= len(variables) <= reduced.size
+    assert len(register) == len(variables)
 
-    # test the transfer changes current_vertices_dict with less vertices to place
-    transfer_edge_values(current_vertices_dict, placed_vertices, solution, qubo_mat)
-    positive_vertices_update(current_vertices_dict, solution)
-    assert len(current_vertices_dict) < size
+    # check the subproblem size corresponds to the placed variables
+    subproblem = reduced.subinstance(variables)
+    # If too big, the test will take a long time to run.
+    if use_quantum and subproblem.size > 13:
+        msg = f"Test failed due to large matrix size = {subproblem.size}"
+        raise RuntimeError(msg)
+    assert subproblem.size == len(variables)
+    subsolver = Solver(subproblem, deepcopy(config))
+    sub_solution = subsolver.solve()
+
+    # fixing the subproblem leaves fewer variables to place
+    reduced_size = reduced.size
+    rule = variable_fixing.from_candidate(sub_solution[0], variables, reduced)
+    variable_fixing.apply(reduced, (rule,), inplace=True)
+    variable_fixing.apply_recursively(reduced, inplace=True)
+    assert reduced.size <= reduced_size - len(variables)
+    assert len(reduced.fixed_variables) == size - reduced.size
 
 
 @pytest.mark.duration(120)
@@ -187,11 +138,49 @@ def test_decomp_solver(decomposable_qubo: Instance, use_quantum: bool) -> None:
     assert solution.counts is not None
     assert solution.counts.sum() == 1
     assert len(solution.bitstrings) == 1
-    assert (solution.bitstrings[0] == -1).sum() == 0
+    assert solution.check_consistency(instance=decomposable_qubo, throw=True)
+    check.almost_equal(solution[0].cost, decomposable_qubo.cost(solution[0].bitstring), rel=1e-5)
     assert solution.costs.item() <= 0
 
-    # check that many iterations were done
-    assert solver.number_iterations >= 0
+    # check that at least one subproblem was solved
+    assert solver.number_iterations >= 1
+
+
+@pytest.mark.usefixtures("restore_rng_state")
+def test_decomp_solver_raises_on_empty_sub_solution(
+    decomposable_qubo: Instance, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A sub-solver returning no candidate (e.g. a quantum run with no sample)
+    # is a failure, not something to work around.
+    manual_seed(29443)
+    monkeypatch.setattr(Solver, "solve", lambda _: Solution())
+    config = SolverConfig(
+        solving=ClassicalSolvingConfig(), preprocessing=False, postprocessing=False
+    )
+    solver = _DecomposeQuboSolver(decomposable_qubo, solver_config=config)
+
+    with pytest.raises(RuntimeError, match="no candidate"):
+        solver.solve()
+
+
+def test_decomp_solver_when_hansen_fixes_everything() -> None:
+    # Uncoupled variables with negative diagonal coefficients: Hansen's rule
+    # fixes them all to 1 in the presolve, so no subproblem is solved.
+    size = 20
+    instance = Instance(matrix.as_tensor(-torch.eye(size)))
+    config = SolverConfig(
+        solving=ClassicalSolvingConfig(), preprocessing=False, postprocessing=False
+    )
+    solver = _DecomposeQuboSolver(instance, solver_config=config)
+    assert size > solver.decomposition_config.decompose_stop_number
+
+    solution = solver.solve()
+
+    check.equal(solver.number_iterations, 0)
+    check.equal(len(solution), 1)
+    check.equal(solution[0].string, "1" * size)
+    check.almost_equal(solution[0].cost, -float(size))
+    check.is_true(solution.check_consistency(instance=instance, throw=True))
 
 
 def test_small_qubo_solver(simple_qubo_instance: Instance) -> None:
@@ -240,50 +229,6 @@ def test_scope(decomposable_qubo: Instance) -> None:
         _DecomposeQuboSolver(Instance(coeffs), solver_config=config)
 
 
-def test_compute_distance_interaction_matrix_zero_output() -> None:
-
-    neglecting_inter_distance = 15.0
-    neglecting_max_coefficient = 1.0
-
-    Q = matrix.tensor(
-        [
-            [0, 1, 2, 3],
-            [1, 0, 4, 5],
-            [2, 4, 0, 6],
-            [3, 5, 6, 0],
-        ],
-    )
-
-    dist_matrix = compute_distance_interaction_matrix(
-        Q, neglecting_inter_distance, neglecting_max_coefficient
-    )
-
-    torch.testing.assert_close(dist_matrix, torch.zeros_like(Q))
-
-
-def test_compute_distance_interaction_diagonal() -> None:
-
-    neglecting_inter_distance = 15.0
-    neglecting_max_coefficient = 1.0
-
-    Q = matrix.tensor(
-        [
-            [-10, 0, 0, 0],
-            [0, 5, 0, 0],
-            [0, 0, 0.5, 0],
-            [0, 0, 0, 0],
-        ],
-    )
-
-    dist_matrix = compute_distance_interaction_matrix(
-        Q, neglecting_inter_distance, neglecting_max_coefficient
-    )
-    expected_dist_matrix = neglecting_inter_distance * torch.ones_like(Q)
-    expected_dist_matrix.diagonal().copy_(Q.diag())
-
-    torch.testing.assert_close(dist_matrix, expected_dist_matrix)
-
-
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("dims", [(4,), (3,), (3, 3), (2, 3, 2), (4, 3, 2, 3)], ids=str)
 @pytest.mark.parametrize("seed", [1935225697, 1547, 66987, 55571, 998618750])
@@ -312,6 +257,11 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:  #
         dims (tuple[int, ...]): Dimensions of the individual QUBO blocks that form the
             block-diagonal matrix.
     """
+    # TODO(abussy-pasqal): Redesign this test. `_DecomposeQuboSolver._decomposition` was
+    # removed, so the structural checks below (partition of range(N), refinement of the
+    # blocks) no longer have groups to check: rewrite it on the functional decomposition loop
+    # (`embedding.geometric` + `variable_fixing`), recording each subproblem's variables and
+    # splitting Hansen fixings into singletons.
     pytest.xfail("Flaky tests. Need to be re-designed")
 
     rng = manual_seed(seed)
@@ -424,23 +374,10 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:  #
     # The solver may decompose the QUBO into too many sub-decompositions. The reconstructed solution
     # is then not guaranteed to be optimal.
     non_optimal_cases: list[tuple[int, tuple[int, ...]]] = [
-        (55571, (4,)),
-        (1547, (3,)),
-        (1547, (3, 3)),
-        (66987, (3, 3)),
-        (66987, (4, 3, 2, 3)),
-        (998618750, (4,)),
-        (998618750, (4, 3, 2, 3)),
-    ]
-    failed_cases = [
-        (1935225697, (3, 3)),
         (1935225697, (4, 3, 2, 3)),
-        (66987, (2, 3, 2)),
-        (55571, (3, 3)),
-        (55571, (2, 3, 2)),
-        (55571, (4, 3, 2, 3)),
-        (998618750, (2, 3, 2)),
+        (1547, (4,)),
     ]
+    failed_cases: list[tuple[int, tuple[int, ...]]] = []
 
     # Assume that A and B are partitions of range(N)
     def is_refinement_of(A: list[list[int]], B: list[list[int]]) -> bool:
