@@ -110,7 +110,7 @@ def test_bitflip_preprocessing_removes_all_negative_coefficients() -> None:
 
 def test_bitflip_preprocessing_can_leave_negative_coefficients() -> None:
     instance, expected_flipped_instance = non_bipartisable_negative_qubo()
-    flipped_instance = transforms.negative_bitflip.apply(instance)
+    flipped_instance = transforms.negative_bitflip.apply(instance, method="glpk")
 
     check.is_instance(flipped_instance, transforms.negative_bitflip.Instance)
     torch.testing.assert_close(flipped_instance.matrix, expected_flipped_instance.matrix)
@@ -299,7 +299,7 @@ def test_apply_rejects_flips_that_increase_negative_weight(
     )
 
     with caplog.at_level("WARNING", logger="qubosolver.transforms.negative_bitflip"):
-        flipped_instance = transforms.negative_bitflip.apply(instance)
+        flipped_instance = transforms.negative_bitflip.apply(instance, method="glpk")
 
     check.equal(flipped_instance.status, "REJECTED_WORSE_THAN_NOOP")
     check.is_false(flipped_instance.flips.any())
@@ -332,7 +332,7 @@ def test_apply_keeps_flips_that_reduce_negative_weight(
         _fake_solve,
     )
 
-    flipped_instance = transforms.negative_bitflip.apply(instance)
+    flipped_instance = transforms.negative_bitflip.apply(instance, method="glpk")
 
     check.equal(flipped_instance.status, "OPTIMAL")
     check.is_true(flipped_instance.flips.any())
@@ -439,3 +439,15 @@ def test_glpk_solve_survives_internal_exception(monkeypatch: pytest.MonkeyPatch)
     check.equal(status, "FAIL")
     check.is_false(flips.any())
     check.is_nan(objective_value)
+
+
+@pytest.mark.parametrize("method", ["local_search", "tabu_search"])
+def test_heuristic_methods_match_glpk_negative_weight(method: str) -> None:
+    instance, _ = non_bipartisable_negative_qubo()
+
+    flipped_instance = transforms.negative_bitflip.apply(instance, method=method)
+    expected = transforms.negative_bitflip.apply(instance, method="glpk")
+
+    check.equal(flipped_instance.status, "FEASIBLE")
+    check.equal(flipped_instance.metrics["neg_weight_after"], expected.metrics["neg_weight_after"])
+    check.equal(flipped_instance.metrics["objective_value"], expected.metrics["objective_value"])
