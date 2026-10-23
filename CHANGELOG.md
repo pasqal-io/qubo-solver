@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- Add local search and tabu search methods to the negative-coefficient bit-flip preprocessing, selected with the new `method` argument of `negative_bitflip.apply`.
+
+### Changed
+- `negative_bitflip.apply` now finds the bit flips by local search by default instead of GLPK; pass `method="glpk"` for the previous behavior.
+
 ## [0.9.1] - 2026-10-15
 
 ### Added
