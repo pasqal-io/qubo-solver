@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import pytest_check as check
+import qoolqit
 
 from qubosolver import Instance, matrix
 from qubosolver.embedding import blade
@@ -19,6 +20,24 @@ def test_single_atom_embedding(value: float) -> None:
     instance = Instance(matrix.zeros(1).fill_(value))
     register = blade.embed(instance)
     check.equal(len(register), 1)
+
+
+def test_single_atom_embedding_for_device() -> None:
+    instance = Instance(matrix.tensor([[-1.0]]))
+    register = blade.embed_for_device(instance, qoolqit.AnalogDeviceWithDMM())
+    check.equal(len(register), 1)
+
+
+def test_embed_rejects_diagonal_instance() -> None:
+    instance = Instance(matrix.as_tensor(np.diag([-1.0, -2.0, -3.0])))
+    with pytest.raises(ValueError, match="trivial_solution_search"):
+        blade.embed(instance)
+
+
+def test_embed_for_device_rejects_diagonal_instance() -> None:
+    instance = Instance(matrix.as_tensor(np.diag([-1.0, -2.0, -3.0])))
+    with pytest.raises(ValueError, match="trivial_solution_search"):
+        blade.embed_for_device(instance, qoolqit.AnalogDeviceWithDMM())
 
 
 def captured_starting_positions(
@@ -59,12 +78,6 @@ def test_explicit_starting_positions_override_mds(monkeypatch: pytest.MonkeyPatc
     positions = captured_starting_positions(monkeypatch, instance, config)
     assert positions is not None
     check.is_true(np.array_equal(positions, starting_positions))
-
-
-def test_mds_skipped_without_positive_coupling(monkeypatch: pytest.MonkeyPatch) -> None:
-    instance = Instance(matrix.as_tensor(np.diag([1.0, 2.0, 3.0])))
-    config = blade.Config(steps_per_round=10)
-    check.is_none(captured_starting_positions(monkeypatch, instance, config))
 
 
 def test_tuned_defaults() -> None:

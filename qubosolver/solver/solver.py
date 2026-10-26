@@ -20,9 +20,9 @@ from copy import deepcopy
 
 import torch
 
-from qubosolver import Instance, Solution, torch_rng, transforms
+from qubosolver import Instance, Solution, embedding, torch_rng, transforms
 from qubosolver._checks import TYPE_CHECKING
-from qubosolver.transforms import _decompositions
+from qubosolver.transforms import variable_fixing
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
 from ._basesolver import BaseSolver
@@ -301,20 +301,24 @@ class _QuboSolverClassical(BaseSolver):
 class _DecomposeQuboSolver(BaseSolver):
     """Device-aware QUBO decomposition solver.
 
-    Treats the QUBO as a graph (variables = vertices, coefficients =
-    weighted edges), iteratively extracts device-sized subgraphs using
-    geometric search, solves each subproblem with a `Solver` configured
-    from ``solver_config``, and merges the partial solutions back into a
-    global solution.  The final tail of variables (those that fall below
-    `_DecompositionConfig.decompose_stop_number`)
-    is always solved classically.
+    Iteratively selects device-sized clusters of variables with the
+    [`geometric`][qubosolver.embedding.geometric] partial embedder, solves the
+    exact sub-instance on each cluster with a `Solver` configured from
+    ``solver_config``, and fixes the cluster to the best candidate with
+    [`variable_fixing`][qubosolver.transforms.variable_fixing], which folds it
+    into the remaining variables (then Hansen's rule fixes what it can). The
+    final tail of variables (once at most
+    `_DecompositionConfig.decompose_stop_number` remain, or the embedder
+    places at most `_DecompositionConfig.decompose_break_placement`) is
+    always solved classically.
 
     Constraints:
 
     * All off-diagonal QUBO coefficients must be non-negative (same
       physical constraint as `_QuboSolverQuantum`).
-    * Exactly **one** bitstring is returned (design choice of the
-      decomposition algorithm).
+    * Only the best candidate of each subproblem is kept, so the returned
+      candidates differ only on the classically solved tail: they are the
+      tail solver's candidates, lifted to the full instance.
     """
 
     def __init__(
@@ -330,10 +334,13 @@ class _DecomposeQuboSolver(BaseSolver):
             instance: The QUBO problem to decompose and solve.  All
                 off-diagonal coefficients must be non-negative.
             solver_config: Solver settings (backend, device, embedding,
-                drive shaping, etc.) used both for the sub-solver that
-                solves each extracted subproblem and for the final
-                classical resolution of the remaining tail.  Defaults to
-                a default-constructed `SolverConfig`.
+                drive shaping, etc.) used for the sub-solver that solves
+                each extracted subproblem. In quantum mode, its device also
+                bounds the distance ratio of the partial embedding. The
+                remaining tail, and instances small enough not to be
+                decomposed, are solved with a default classical
+                configuration instead. Defaults to a default-constructed
+                `SolverConfig`.
             decompose_config: The decomposition parameters to use.
                 Defaults to a default-constructed `_DecompositionConfig`.
 
@@ -357,8 +364,6 @@ class _DecomposeQuboSolver(BaseSolver):
         # to use for problems we do not wish to decompose.
         self._config_subproblems = deepcopy(self.config)
 
-        self._decomposition = [list(range(instance.size))]
-
     def _embedding(self) -> qoolqit.Register:
         """Not supported — decomposition manages embeddings per subproblem.
 
@@ -379,8 +384,14 @@ class _DecomposeQuboSolver(BaseSolver):
         """Solve the QUBO by iterative decomposition into device-sized subproblems.
 
         Returns:
-            A [`Solution`][qubosolver.Solution] containing exactly one
-                bitstring — the merged result of all subproblem solutions.
+            A [`Solution`][qubosolver.Solution] over the full instance: the
+                candidates of the classical solver for the remaining variables,
+                combined with the fixed best candidate of every subproblem.
+                Instances small enough not to be decomposed are solved
+                classically as a whole.
+
+        Raises:
+            RuntimeError: If a sub-solver returns no candidate.
         """
         self.number_iterations = 0
         assert self.instance.size  # nosec B101
@@ -395,43 +406,43 @@ class _DecomposeQuboSolver(BaseSolver):
             max_min_dist_ratio = self.config.quantum.max_min_dist_ratio
         else:
             max_min_dist_ratio = self.decomposition_config.classical_max_min_dist_ratio
-
-        config = self.decomposition_config._to_decomposition_config(
+        geometric_config = self.decomposition_config._to_geometric_config(
             max_min_dist_ratio=max_min_dist_ratio
         )
-        decomposed_qubo = _decompositions.Instance(self.instance, config=config)
-        solution = Solution()
+
+        # The embedder requires negative diagonal coefficients: Hansen's rule fixes the others.
+        reduced_instance = variable_fixing.apply_recursively(self.instance)
 
         rng = torch_rng("global")
-        while len(decomposed_qubo._vertices_to_place) > config.decompose_stop_number:
-            subqubo = _decompositions.extract_subqubo(decomposed_qubo, config, rng=rng)
-
-            if subqubo.size == 0:
+        while reduced_instance.size > self.decomposition_config.decompose_stop_number:
+            _, variables = embedding.geometric.embed(
+                reduced_instance, config=geometric_config, rng=rng
+            )
+            if len(variables) <= self.decomposition_config.decompose_break_placement:
                 break
+
+            # The subproblem is re-embedded by the configured embedder.
+            sub_instance = reduced_instance.subinstance(variables)
+            sub_solution = Solver(sub_instance, self._config_subproblems).solve()
+            if not sub_solution:
+                msg = (
+                    "The sub-solver returned no candidate for a subproblem of size "
+                    f"{sub_instance.size}."
+                )
+                raise RuntimeError(msg)
             self.number_iterations += 1
 
-            subsolver = Solver(subqubo, self._config_subproblems)
+            # Fixing in two separate calls: the candidate rule alone (its indices refer to
+            # `reduced_instance` as it is now), then Hansen to a fixed point, since fixing variables
+            # to 1 can turn diagonal coefficients non-negative.
+            rule = variable_fixing.from_candidate(sub_solution[0], variables, reduced_instance)
+            variable_fixing.apply(reduced_instance, (rule,), inplace=True)
+            variable_fixing.apply_recursively(reduced_instance, inplace=True)
 
-            # only one bitstring is kept as per design choice of the
-            # decomposition algorithm
-            subsolution = subsolver.solve()._update(subqubo)
-            solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)
+        # classical resolution of the remaining variables
+        rest_solution = _QuboSolverClassical(
+            Instance(reduced_instance.matrix.clone()),
+            SolverConfig(solving=ClassicalSolvingConfig()),
+        ).solve()
 
-        # classical resolution of last matrix
-        subqubo = _decompositions.extract_subqubo(
-            decomposed_qubo,
-            config,
-            last=True,
-            rng=rng,
-        )
-        if subqubo.size != 0:
-            lastsolver = _QuboSolverClassical(
-                subqubo,
-                SolverConfig(solving=ClassicalSolvingConfig()),
-            )
-            subsolution = lastsolver.solve()._update(subqubo)
-            solution = _decompositions.update(decomposed_qubo, subqubo, subsolution)
-
-        self._decomposition = decomposed_qubo._decomposition
-
-        return solution
+        return variable_fixing.lift(rest_solution, reduced_instance)

@@ -53,7 +53,9 @@ def compile(  # noqa: A001 (public API name)
         results = job.results()
         ```
     """
-    max_min_distance_ratio = register.max_radial_distance() / register.min_distance()
+    max_min_distance_ratio = (
+        register.max_radial_distance() / register.min_distance() if len(register) > 1 else 0
+    )
     device_max_min_distance_ratio = _max_min_distance_ratio(device)
     if max_min_distance_ratio > device_max_min_distance_ratio:
         msg = (

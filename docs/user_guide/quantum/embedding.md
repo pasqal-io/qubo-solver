@@ -142,6 +142,131 @@ plt.close(fig)
 print('<figure><figcaption>Register</figcaption><img src="quantum_embedding_greedy_layout_register.svg" alt="Register of atoms embedding the QUBO instance"></figure>')  # markdown-exec: hide
 ```
 
+## Partial embedding and decomposition
+
+QUBO instances with more variables than a device can hold, or whose couplings cannot all be reproduced at once, can be solved by **decomposition**: embed part of the instance, solve the sub-instance on the embedded variables, fix them, and repeat on what is left.
+
+The geometric embedder, `embedding.geometric`, is the partial embedder for this: rather than placing every variable, it grows a cluster of variables, from a random starting one, as long as their couplings can be reproduced within the device constraints. It returns the register together with the placed variables, where qubit $i$ embeds `variables[i]`. At least one variable is always placed.
+
+Fixing a solved cluster is a job for [variable fixing](../classical/transforms.md#reduction-with-variable-fixing): `variable_fixing.from_candidate` turns a candidate of the sub-instance into a fixation rule on the instance. Fixing a variable to 1 folds its couplings into the diagonal of the remaining variables, so each round works on a reduced instance conditioned on all previous rounds, and `variable_fixing.lift` reconstructs the full solution at the end.
+
+- API reference: [`qubosolver.embedding.geometric`](../../api/embedding.md), [`qubosolver.transforms.variable_fixing`](../../api/transforms.md)
+
+!!! warning
+    The geometric embedder requires negative diagonal coefficients, so start with `variable_fixing.apply_recursively`, which fixes the other variables to 0. For the same reason, fix in **two separate calls** at each round: the candidate rule alone, then `apply_recursively`, since fixing variables to 1 can turn diagonal coefficients non-negative. The candidate rule's indices refer to the instance it was built for: it raises `ValueError` if another rule fixed variables before it.
+
+### Quantum subproblems
+
+Each subproblem runs on the register found by the embedder, with a drive shaped for the exact sub-instance. The remaining variables are solved classically.
+
+```python exec="on" source="tabbed-left" session="decomposition" result="text"
+import qoolqit
+import torch
+from qubosolver import (
+    Instance,
+    LocalEmulator,
+    Solution,
+    analysis,
+    drive_shaping,
+    embedding,
+    matrix,
+    solving,
+)
+from qubosolver.transforms import variable_fixing
+
+# Private utility to set seed.
+from qubosolver.utils._random import manual_seed
+
+manual_seed(10)
+
+# A random QUBO: negative diagonal, sparse non-negative off-diagonal coefficients
+n = 50
+upper = (20 * torch.rand(n, n) * (torch.rand(n, n) < 0.5)).triu(1)
+Q = upper + upper.T - torch.diag(100 * torch.rand(n))
+instance = Instance(matrix.as_tensor(Q))
+
+device = qoolqit.AnalogDeviceWithDMM()
+backend = LocalEmulator(num_shots=1000)
+
+# Pre-process to fix variables with positive linear weight
+reduced_instance = variable_fixing.apply_recursively(instance)
+reduced_solution = solving.trivial_solution_search.solve(reduced_instance)
+
+while not reduced_solution:
+    # register qubit i <-> variables[i]; always at least one atom
+    register, variables = embedding.geometric.embed_for_device(reduced_instance, device)
+    # Exact (conditioned) sub-QUBO
+    sub_instance = reduced_instance.subinstance(variables)
+
+    # Solve sub-qubo with the quantum pipeline
+    drive = drive_shaping.local_energy_scale.build_drive(sub_instance, register, device=device)
+    program = solving.analog_quantum_sampling.compile(register, drive, device)
+    job = backend.run(program)
+    sub_solution = Solution.from_results(job.results(), sub_instance)
+
+    # Fix variables from the best candidate
+    rule = variable_fixing.from_candidate(sub_solution[0], variables, reduced_instance)
+    variable_fixing.apply(reduced_instance, (rule,), inplace=True)
+    # Fix variables that have been balanced to a positive linear weight
+    variable_fixing.apply_recursively(reduced_instance, inplace=True)
+
+    reduced_solution = solving.trivial_solution_search.solve(reduced_instance)
+
+solution = variable_fixing.lift(reduced_solution, reduced_instance)
+
+print(f"Fixed variables, in fixing order:")
+for f in reduced_instance.fixed_history:
+    print(f"\t{f}")
+print(f"Solution:\n{analysis.to_dataframe([solution])}")
+```
+
+`reduced_instance.fixed_history` lists the variables fixed by each rule application, in order and in the indices of the original instance: the initial Hansen presolve, then, for each subproblem, the fixed candidate followed by the Hansen passes it triggered. `reduced_instance.fixed_variables` merges them.
+
+The loop leaves every decision to you: rejecting a subproblem is simply not fixing it, stopping early is leaving the loop, and the remainder is `reduced_instance`, which can be solved by any means. To see which QUBO the register and drive actually implement, including what drive shaping did to the detunings, use [`extract_qubo(register, drive)`][qubosolver.extract_qubo].
+
+### Classical subproblems
+
+The same loop works with classical sub-solvers. The geometric embedder still selects device-sized clusters of variables; its register is simply unused:
+
+```python exec="on" source="tabbed-left" session="decomposition" result="text"
+manual_seed(10)
+
+# A larger random QUBO
+n = 50
+upper = (20 * torch.rand(n, n) * (torch.rand(n, n) < 0.3)).triu(1)
+Q = upper + upper.T - torch.diag(100 * torch.rand(n))
+instance = Instance(matrix.as_tensor(Q))
+
+# Pre-process to fix variables with positive linear weight
+reduced_instance = variable_fixing.apply_recursively(instance)
+reduced_solution = solving.trivial_solution_search.solve(reduced_instance)
+
+while not reduced_solution:
+    # The register is unused: only the placed variables matter
+    _, variables = embedding.geometric.embed_for_device(reduced_instance, device)
+    # Exact (conditioned) sub-QUBO
+    sub_instance = reduced_instance.subinstance(variables)
+
+    # Solve sub-qubo with a classical solver
+    sub_solution = solving.tabu_search.solve(sub_instance)
+
+    # Fix variables from the best candidate
+    rule = variable_fixing.from_candidate(sub_solution[0], variables, reduced_instance)
+    variable_fixing.apply(reduced_instance, (rule,), inplace=True)
+    # Fix variables that have been balanced to a positive linear weight
+    variable_fixing.apply_recursively(reduced_instance, inplace=True)
+
+    reduced_solution = solving.trivial_solution_search.solve(reduced_instance)
+
+solution = variable_fixing.lift(reduced_solution, reduced_instance)
+
+print(f"Fixed variables, in fixing order:")
+for f in reduced_instance.fixed_history:
+    print(f"\t{f}")
+print(f"Solution:\n{analysis.to_dataframe([solution])}")
+```
+
+
 ## Custom register
 
 You can skip embedding algorithms altogether and build a [`qoolqit.Register`][] directly from coordinates, as in the example below, or reuse a register computed elsewhere or encode problem-specific knowledge about where atoms should sit:

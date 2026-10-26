@@ -17,6 +17,7 @@ from qubosolver import (
     Solver,
     SolverConfig,
     matrix,
+    solving,
     transforms,
 )
 from qubosolver._io import utils as io_utils
@@ -84,6 +85,51 @@ def test_max_off_diag_no_off_diag_entries(size: int) -> None:
     qi = Instance(matrix.zeros(size))
     with pytest.raises(RuntimeError, match="undefined"):
         _ = qi._max_off_diag
+
+
+def test_is_diagonal() -> None:
+    check.is_true(Instance().is_diagonal())
+    check.is_true(Instance(matrix.tensor([[-1.0]])).is_diagonal())
+    check.is_true(Instance(matrix.tensor([[-1.0, 0.0], [0.0, 2.0]])).is_diagonal())
+    check.is_false(Instance(matrix.tensor([[-1.0, 1e-3], [1e-3, 2.0]])).is_diagonal())
+
+
+def test_is_trivial() -> None:
+    check.is_true(Instance(matrix.tensor([[1.0, 2.0], [2.0, 1.0]])).is_trivial())
+    check.is_true(Instance(matrix.tensor([[-1.0, -2.0], [-2.0, -1.0]])).is_trivial())
+    check.is_true(Instance(matrix.tensor([[-1.0, 0.0], [0.0, 2.0]])).is_trivial())
+    check.is_false(Instance(matrix.tensor([[-1.0, 2.0], [2.0, -1.0]])).is_trivial())
+
+
+def test_trivial_solution_search_reads_off_the_optimum() -> None:
+    Q = matrix.as_tensor([[1.0, 2.0], [2.0, 1.0]])
+    solution = solving.trivial_solution_search.solve(Instance(Q))
+    assert len(solution) == 1
+    check.equal(solution[0].string, "00")
+
+    Q = matrix.as_tensor([[0.0, 1.0], [1.0, 0.0]])
+    solution = solving.trivial_solution_search.solve(Instance(Q))
+    assert len(solution) == 1
+    check.equal(solution[0].string, "00")
+
+    Q = matrix.as_tensor([[-1.0, -2.0], [-2.0, -1.0]])
+    solution = solving.trivial_solution_search.solve(Instance(Q))
+    assert len(solution) == 1
+    check.equal(solution[0].string, "11")
+
+    Q = matrix.as_tensor([[0.0, -1.0], [-1.0, 0.0]])
+    solution = solving.trivial_solution_search.solve(Instance(Q))
+    assert len(solution) == 1
+    check.equal(solution[0].string, "11")
+
+    Q = matrix.as_tensor([[-1.0, 0.0], [0.0, 2.0]])
+    solution = solving.trivial_solution_search.solve(Instance(Q))
+    assert len(solution) == 1
+    check.equal(solution[0].string, "10")
+
+    Q = matrix.as_tensor([[-1.0, 2.0], [2.0, -1.0]])
+    solution = solving.trivial_solution_search.solve(Instance(Q))
+    check.is_false(solution)
 
 
 def test_variable_fixing_property_raises_for_plain_instance() -> None:
@@ -193,3 +239,50 @@ def test_load_rejects_a_stream_that_is_not_a_qubosolver_file() -> None:
 
     with pytest.raises(ValueError, match="Not a qubosolver file"):
         Instance.load(buffer)
+
+
+def _subinstance_qubo() -> Instance:
+    return Instance(
+        matrix.tensor(
+            [
+                [-1.0, 2.0, 3.0],
+                [2.0, -4.0, 5.0],
+                [3.0, 5.0, -6.0],
+            ]
+        )
+    )
+
+
+def test_subinstance_keeps_the_given_variable_order() -> None:
+    sub = _subinstance_qubo().subinstance([2, 0])
+
+    torch.testing.assert_close(sub.matrix, matrix.tensor([[-6.0, 3.0], [3.0, -1.0]]))
+
+
+def test_subinstance_is_an_independent_copy() -> None:
+    instance = _subinstance_qubo()
+    sub = instance.subinstance([0, 1, 2])
+
+    sub.matrix.fill_(0.0)
+    check.equal(instance.matrix[0, 0].item(), -1.0)
+
+
+def test_subinstance_is_a_plain_instance_on_subclasses() -> None:
+    reduced = transforms.variable_fixing.Instance(_subinstance_qubo())
+    sub = reduced.subinstance([1])
+
+    check.is_true(type(sub) is Instance)
+    torch.testing.assert_close(sub.matrix, matrix.tensor([[-4.0]]))
+
+
+def test_subinstance_of_no_variables_is_empty() -> None:
+    check.equal(_subinstance_qubo().subinstance([]).size, 0)
+
+
+@pytest.mark.parametrize(
+    ("variables", "match"),
+    [([0, 0], "distinct"), ([3], "range"), ([-1], "range")],
+)
+def test_subinstance_rejects_invalid_variables(variables: list[int], match: str) -> None:
+    with pytest.raises(ValueError, match=match):
+        _subinstance_qubo().subinstance(variables)

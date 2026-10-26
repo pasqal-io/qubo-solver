@@ -528,13 +528,26 @@ def test_resolve_max_possible_term_not_positive(
         _resolve_max_possible_term(max_possible_term, instance)
 
 
-def test_embed_no_positive_off_diag_raises() -> None:
+def test_embed_rejects_diagonal_instance() -> None:
     instance = Instance(vector.tensor([1.0, 2.0, 3.0]).diag())
-    with pytest.raises(ValueError, match="no strictly positive off-diagonal"):
+    with pytest.raises(ValueError, match="trivial_solution_search"):
         embedding.greedy_layout.embed(instance, config=embedding.greedy_layout.Config(traps=3))
 
 
-def test_embed_no_positive_off_diag_float_max_possible_term() -> None:
+def test_embed_for_device_single_atom() -> None:
+    instance = Instance(matrix.tensor([[-1.0]]))
+    register = embedding.greedy_layout.embed_for_device(instance, AnalogDeviceWithDMM())
+    check.equal(len(register), 1)
+
+
+def test_embed_for_device_rejects_diagonal_instance() -> None:
+    instance = Instance(vector.tensor([-1.0, -2.0, -3.0]).diag())
+    with pytest.raises(ValueError, match="trivial_solution_search"):
+        embedding.greedy_layout.embed_for_device(instance, AnalogDeviceWithDMM())
+
+
+def test_embed_rejects_diagonal_instance_with_float_max_possible_term() -> None:
     instance = Instance(matrix.zeros(3))
     config = embedding.greedy_layout.Config(traps=3, max_possible_term=1.0)
-    check.equal(len(embedding.greedy_layout.embed(instance, config=config)), 3)
+    with pytest.raises(ValueError, match="trivial_solution_search"):
+        embedding.greedy_layout.embed(instance, config=config)

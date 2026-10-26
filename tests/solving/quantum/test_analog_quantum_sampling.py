@@ -2,9 +2,21 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+import pytest_check as check
 import qoolqit
 
-from qubosolver import Instance, embedding, matrix, solving, tensor
+from qubosolver import (
+    Instance,
+    LocalEmulator,
+    Solution,
+    analysis,
+    drive_shaping,
+    embedding,
+    matrix,
+    solving,
+    tensor,
+)
+from qubosolver.utils._random import manual_seed
 
 
 @pytest.mark.duration(6)
@@ -47,3 +59,23 @@ def test_too_large_register() -> None:
 
     with pytest.raises(ValueError, match="max/min distance ratio"):
         solving.analog_quantum_sampling.compile(register, drive, device)
+
+
+@pytest.mark.usefixtures("restore_rng_state")
+def test_single_atom_register() -> None:
+    manual_seed(156617)
+
+    instance = Instance(matrix.tensor([[-2.0]]))
+
+    device = qoolqit.AnalogDeviceWithDMM()
+    register = qoolqit.Register.from_coordinates(tensor.zeros(1, 2))
+    drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
+    program = solving.analog_quantum_sampling.compile(register, drive, device)
+    job = LocalEmulator().run(program)
+    solution = Solution.from_results(job.results(), instance)
+
+    check.equal(solution[0].string, "1")
+    check.equal(solution[0].cost, -2.0)
+    check.greater(solution[0].probability, 0.7)
+
+    print(analysis.to_dataframe([solution]))

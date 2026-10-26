@@ -242,6 +242,9 @@ def embed(
             register must contain at least one qubit. If the resolved trap
             count is less than ``instance.size`` (i.e. there are not enough
             trap sites for all QUBO variables).
+        ValueError: If `instance` is diagonal with at least 2 variables: there is
+            no coupling to reproduce, and its optimum should be read off the diagonal with
+            [`trivial_solution_search.solve`][qubosolver.solving.classical.trivial_solution_search.solve].
     """
     config = config or Config()
     logger.debug("embed: instance size=%d, config=%r", instance.size, config)
@@ -261,6 +264,13 @@ def embed(
         # A single atom has no off-diagonal term to place it relative to,
         # so it is placed at the origin without running the algorithm.
         return qoolqit.Register.from_coordinates(tensor.zeros(1, 2))
+
+    if instance.is_diagonal():
+        msg = (
+            "Cannot embed a diagonal instance: there is no coupling to reproduce. Its optimum is "
+            "read off the diagonal: use `solving.trivial_solution_search.solve`."
+        )
+        raise ValueError(msg)
 
     # spacing between adjacent trap sites, derived from the largest QUBO term
     # so that it is exactly representable at the minimum trap-trap distance

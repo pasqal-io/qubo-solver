@@ -35,22 +35,46 @@ def _detuning(
     return delta
 
 
-def extract_qubo(register: qoolqit.Register, drive: qoolqit.Drive) -> Instance:
-    """Reconstruct the QUBO encoded by a register's geometry and a drive's final detuning.
+def extract_qubo(register: qoolqit.Register, diagonal: qoolqit.Drive | Instance) -> Instance:
+    """Reconstruct the QUBO encoded by a register's geometry and a diagonal.
+
+    The off-diagonal coefficients come from the register's interactions
+    (``1 / r ** 6``). The diagonal comes either from a drive's final detuning,
+    so that the result is the QUBO the register and the drive implement, or
+    from an instance's diagonal, e.g. the sub-instance a partial embedding was
+    computed for, so that the result is the QUBO the register implements.
 
     Args:
         register: The physical register whose geometry encodes the QUBO's
             off-diagonal coefficients.
-        drive: The drive whose final detuning (and, if present, DMM)
-            encodes the QUBO's diagonal coefficients.
+        diagonal: Either a drive, whose final detuning ``δ`` (and, if present,
+            DMM) encodes the diagonal as ``-2 * δ``; or an instance whose
+            diagonal is used as is, with variable *i* on qubit *i* of
+            `register` (as returned by `instance.subinstance(variables)` for
+            `variables` from a partial embedding).
 
     Returns:
         The reconstructed QUBO instance.
+
+    Raises:
+        ValueError: If `diagonal` is an instance whose size differs from the
+            number of qubits in `register`.
     """
     Q = matrix.as_tensor(register.interaction_matrix())
 
-    delta = _detuning(drive, drive.duration, n=len(register), qubit_ids=register.qubits_ids)
-    Q += torch.diag(-2 * delta)
+    if isinstance(diagonal, Instance):
+        if diagonal.size != len(register):
+            msg = (
+                f"The diagonal instance has {diagonal.size} variables but the register has "
+                f"{len(register)} qubits."
+            )
+            raise ValueError(msg)
+        Q += torch.diag(diagonal.matrix.diagonal())
+    else:
+        delta = _detuning(
+            diagonal, diagonal.duration, n=len(register), qubit_ids=register.qubits_ids
+        )
+        Q += torch.diag(-2 * delta)
 
     return Instance(Q)
 

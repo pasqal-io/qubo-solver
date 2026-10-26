@@ -17,7 +17,6 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, fields
 
-import numpy as np
 import qoolqit
 from qoolqit.embedding import Blade, BladeConfig
 
@@ -27,10 +26,12 @@ from qubosolver.embedding._algorithms.mds import embed_mds
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
 if TYPE_CHECKING:
-    # Resolves the `device: InitVar[Device | None]` field inherited from `BladeConfig`.
+    # Resolves the `device: InitVar[Device | None]` and `starting_positions: np.ndarray | None`
+    # fields inherited from `BladeConfig`.
     from collections.abc import Callable
     from dataclasses import InitVar  # noqa: F401 (only read by beartype)
 
+    import numpy as np  # noqa: F401 (only read by beartype)
     from qoolqit import Device  # noqa: F401 (only read by beartype)
 
 logger = logging.getLogger(__name__)
@@ -55,8 +56,8 @@ class Config(BladeConfig):
 
     Attributes:
         initialize_with_mds: Whether BLaDE starts from a multi-dimensional scaling
-            (MDS) of the QUBO. MDS is skipped when `starting_positions` is set, and
-            for instances without positive off-diagonal coefficient. Defaults to `True`.
+            (MDS) of the QUBO. MDS is skipped when `starting_positions` is set.
+            Defaults to `True`.
 
     Warning:
         `max_min_dist_ratio` is an advanced parameter: set it manually (or via
@@ -109,6 +110,9 @@ def embed(
             register must contain at least one qubit.
         ValueError: If the QUBO coefficient matrix has negative off-diagonal
             coefficients, since BLaDE cannot embed such instances.
+        ValueError: If `instance` is diagonal with at least 2 variables: there is
+            no coupling to reproduce, and its optimum should be read off the diagonal with
+            [`trivial_solution_search.solve`][qubosolver.solving.classical.trivial_solution_search.solve].
     """
     config = config or Config()
     logger.debug("embed: instance size=%d, config=%r", instance.size, config)
@@ -125,13 +129,20 @@ def embed(
         # so it is placed at the origin without running the algorithm.
         return qoolqit.Register.from_coordinates(tensor.zeros(1, 2))
 
+    if instance.is_diagonal():
+        msg = (
+            "Cannot embed a diagonal instance: there is no coupling to reproduce. Its optimum is "
+            "read off the diagonal: use `solving.trivial_solution_search.solve`."
+        )
+        raise ValueError(msg)
+
     qubo = instance.matrix.numpy()
 
     blade_config = config._to_qoolqit()
     if config.initialize_with_mds:
         if blade_config.starting_positions is not None:
             logger.info("`starting_positions` is set: skipping the MDS initialization.")
-        elif (np.triu(qubo, k=1) > 0).any():
+        else:
             blade_config.starting_positions = embed_mds(qubo)
 
     _blade = Blade(blade_config)
