@@ -101,19 +101,26 @@ exactly.
 
 For each variable, a flip vector entry of `0` keeps it unchanged and `1` complements it
 (`x_i -> 1 - x_i`); the transformed QUBO is equivalent to the original problem up to this change of
-variables. The current implementation uses GLPK to solve an integer linear program that selects
-the flip vector minimizing the remaining negative off-diagonal weight — exact, which is useful for
-validation and small QUBOs, but not expected to scale to large industrial instances.
+variables. Choosing the flip vector that minimizes the remaining negative off-diagonal weight is
+itself a QUBO. `apply` solves it with one of three methods:
 
-The transform lives in `qubosolver.transforms.negative_bitflip`. `apply` solves the ILP, applies
-the flips, and returns an `Instance` that records the flip vector, status, and metrics.
+- `"local_search"` (default): a local search from random starts plus the no-flip start. It is fast,
+  but not guaranteed to be optimal.
+- `"tabu_search"`: the same local search, refined with a tabu search.
+- `"glpk"`: an integer linear program solved with GLPK. It is exact, which is useful for validation
+  and small QUBOs, but it is not expected to scale to large industrial instances.
+
+The heuristics are reproducible when a seeded `rng` is passed to `apply`.
+
+The transform lives in `qubosolver.transforms.negative_bitflip`. `apply` finds the flips, applies
+them, and returns an `Instance` that records the flip vector, status, and metrics.
 
 - API reference: [`qubosolver.transforms.negative_bitflip`](../../api/transforms.md)
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="bitflip" result="text"
 import json
-from qubosolver import Instance, transforms, matrix
+from qubosolver import Instance, transforms, matrix, torch_rng
 
 Q_hard = Instance(
     matrix.tensor(
@@ -126,7 +133,9 @@ Q_hard = Instance(
     )
 )
 
-reduced_hard = transforms.negative_bitflip.apply(Q_hard, time_limit_s=60.0)
+reduced_hard = transforms.negative_bitflip.apply(
+    Q_hard, time_limit_s=60.0, rng=torch_rng(223130196)
+)
 
 print(f"Flip vector: {reduced_hard.flips}")
 print(f"Bitflip status: {reduced_hard.status}")
@@ -150,7 +159,7 @@ not modify its argument in place.
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="zeroing" result="text"
-from qubosolver import Instance, transforms, matrix
+from qubosolver import Instance, transforms, matrix, torch_rng
 
 Q_hard = Instance(
     matrix.tensor(
@@ -163,7 +172,9 @@ Q_hard = Instance(
     )
 )
 
-reduced_hard = transforms.negative_bitflip.apply(Q_hard, time_limit_s=60.0)
+reduced_hard = transforms.negative_bitflip.apply(
+    Q_hard, time_limit_s=60.0, rng=torch_rng(223130196)
+)
 zeroed_hard = transforms.zeroing.apply(reduced_hard)
 
 print(f"Zeroed edges:\n{zeroed_hard.zeroed_edges}")

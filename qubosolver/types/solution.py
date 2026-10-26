@@ -184,7 +184,7 @@ class Solution:
             `costs` must be populated (via `_compute_costs`) before
             calling this method; sorting by an empty tensor raises an error.
         """
-        sorted_indices = torch.argsort(self.costs)
+        sorted_indices = torch.argsort(self.costs, stable=True)
         self.bitstrings = self.bitstrings[sorted_indices]
         self.costs = self.costs[sorted_indices]
         if self.counts.numel() > 0:
@@ -246,6 +246,12 @@ class Solution:
         Rows sharing the same bitstring are merged into a single row:
         `counts` are summed and the minimum `cost` is kept.
 
+        Merged rows keep the order in which their bitstrings first appear, and
+        the sort by cost is stable, so equal-cost rows stay in that order.
+        Ties are therefore broken by input order rather than lexicographically,
+        which would systematically favor bitstrings with leading zeros (e.g.
+        when only ``solution[0]`` or the top-k rows are kept).
+
         Args:
             update: When ``True`` (default), sort the result by cost and
                 recompute `probabilities` from the new counts before
@@ -291,13 +297,23 @@ class Solution:
             inverse = vectori.zeros(len(self))
         else:
             unique_bitstrings, inverse = self.bitstrings.unique(dim=0, return_inverse=True)
-        n = unique_bitstrings.shape[0]
-        self.bitstrings = unique_bitstrings
 
+        n = unique_bitstrings.shape[0]
+        # torch.unique always sorts rows lexicographically (even with
+        # sorted=False); put merged rows back in first-appearance order.
+        positions = torch.arange(len(self), device=inverse.device)
+        first = torch.zeros(n, dtype=positions.dtype, device=inverse.device).scatter_reduce(
+            dim=0, index=inverse, src=positions, reduce="amin", include_self=False
+        )
+        order = first.argsort()
+        rank = torch.empty_like(order)
+        rank[order] = torch.arange(n, device=order.device)
+        inverse = rank[inverse]
+
+        self.bitstrings = unique_bitstrings[order]
         self.counts = vectori.zeros(n).scatter_reduce(
             dim=0, index=inverse, src=self.counts, reduce="sum", include_self=False
         )
-
         self.costs = vector.zeros(n).scatter_reduce(
             dim=0, index=inverse, src=self.costs, reduce="amin", include_self=False
         )
