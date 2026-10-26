@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from qubosolver import solving, transforms
+from qubosolver import solving, torch_rng, transforms
 from qubosolver._checks import TYPE_CHECKING
 from qubosolver.types import Instance, Solution
 
@@ -178,7 +178,7 @@ class BaseSolver(ABC):
             return
 
         instance: Instance = transforms.variable_fixing.apply_recursively(self.instance)
-        instance = transforms.negative_bitflip.apply(instance)
+        instance = transforms.negative_bitflip.apply(instance, rng=torch_rng("global"))
         self._update_instance(instance.negative_bitflip)
 
     def _post_process_fixation(self, solution: Solution) -> Solution:

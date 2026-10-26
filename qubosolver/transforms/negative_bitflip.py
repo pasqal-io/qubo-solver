@@ -4,11 +4,11 @@ Quantum (Rydberg) solvers cannot encode attractive interactions, so a QUBO must
 have non-negative off-diagonal coefficients to be embeddable.  A change of
 variable ``x_i -> 1 - y_i`` on a subset of variables flips the sign of the
 interactions incident to it; choosing the subset that removes as much negative
-weight as possible is itself a QUBO, ``f^T Q_f f`` with ``Q_f = diag(C 1) - C``
-(see [`bitflip_qubo`][]), solved here by local search, tabu search or, as an
+weight as possible is itself a QUBO, ``f^T Q_f f`` with ``Q_f = diag(C 1) - C``,
+solved here by local search, tabu search or, as an
 integer linear program, with [GLPK](https://github.com/bradfordboyle/pyglpk).
 
-[`apply`][] finds the bit flips (by default with [`solve_bitflip_local_search`][]) and
+[`apply`][] finds the bit flips (by default with a local search on ``Q_f``) and
 applies them to the matrix, returning a wrapper [`Instance`][] that
 records the flip vector so the solution can later be mapped back with
 [`lift`][].  When bit flips
@@ -33,6 +33,7 @@ import copy
 import io
 import json
 import logging
+import time
 import warnings
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -40,12 +41,9 @@ from typing import Any, Literal
 import torch
 
 import qubosolver
+from qubosolver import solving
 from qubosolver._checks import TYPE_CHECKING
 from qubosolver._io import utils as io_utils
-from qubosolver.solving.classical import tabu_search
-from qubosolver.solving.classical.iterative_bitflip_local_search import (
-    _best_improvement_search_batch,
-)
 from qubosolver.types import (
     Bitstring,
     Bitstrings,
@@ -53,13 +51,12 @@ from qubosolver.types import (
     Solution,
     bitstring,
     bitstrings,
-    matrix,
     vector,
+    vectori,
 )
 
 if TYPE_CHECKING:
     from qubosolver._io.utils import Stream
-    from qubosolver.types.linalg import Matrixd
 
 logger = logging.getLogger(__name__)
 
@@ -202,7 +199,7 @@ def _solve_bitflip_preprocessing_glpk(  # noqa: C901, PLR0915
     time_limit_s: float = 60.0,
     eps: float = 0.0,
     log: bool = False,
-) -> tuple[torch.Tensor, float, str]:
+) -> tuple[Solution, str]:
     """Solve the GLPK bit-flip preprocessing ILP with the negative-weight objective.
 
     Variables:
@@ -226,7 +223,13 @@ def _solve_bitflip_preprocessing_glpk(  # noqa: C901, PLR0915
         return n + k + 1
 
     if m == 0:
-        return bitstring.zeros(n), 0.0, "OPTIMAL"
+        solution = Solution(
+            bitstrings=bitstrings.zeros(1, n),
+            costs=vector.tensor([0.0]),
+            counts=vectori.tensor([1]),
+            probabilities=vector.tensor([1.0]),
+        )
+        return solution, "OPTIMAL"
 
     prob = glp.glp_create_prob()
 
@@ -400,10 +403,17 @@ def _solve_bitflip_preprocessing_glpk(  # noqa: C901, PLR0915
     finally:
         glp.glp_delete_prob(prob)
 
-    return flips, objective_value, status
+    solution = Solution(
+        bitstrings=flips.unsqueeze(0),
+        costs=vector.tensor([objective_value]),
+        counts=vectori.tensor([1]),
+        probabilities=vector.tensor([1.0]),
+    )
+
+    return solution, status
 
 
-def bitflip_qubo(Q: Matrix, *, eps: float = 0.0) -> Matrixd | None:
+def _bitflip_qubo(instance: qubosolver.Instance, *, eps: float = 0.0) -> qubosolver.Instance:
     """Build the QUBO ``Q_f`` whose minimum gives the best bit flips for `Q`.
 
     The bit-flip problem picks flips ``f`` minimizing the negative off-diagonal
@@ -412,127 +422,71 @@ def bitflip_qubo(Q: Matrix, *, eps: float = 0.0) -> Matrixd | None:
     ``f^T Q_f f`` with ``Q_f = diag(C 1) - C``.
 
     Args:
-        Q: QUBO coefficient matrix; only the upper triangle is read.
+        instance: QUBO instance; only the upper triangle of its matrix is read.
         eps: Off-diagonal coefficients with ``abs(q) <= eps`` are ignored.
 
     Returns:
-        ``Q_f`` in float64, or ``None`` when no off-diagonal coefficient
-        survives `eps`.
+        An instance holding ``Q_f``, in the dtype of `instance`. Its matrix is
+        all zeros when no off-diagonal coefficient survives `eps`.
     """
-    n = Q.shape[0]
-    C = torch.triu(Q.detach().to(torch.float64), diagonal=1)
+    C = torch.triu(instance.matrix, diagonal=1)
     C = torch.where(C.abs() > eps, C, torch.zeros_like(C))
     C = C + C.T
 
-    if n == 0 or not C.any():
-        return None
-
-    return torch.diag(C.sum(dim=1)) - C
+    return qubosolver.Instance(torch.diag(C.sum(dim=1)) - C)
 
 
-def solve_bitflip_local_search(
-    Q: Matrix,
+def _solve_bitflip(
+    instance: qubosolver.Instance,
     *,
-    eps: float = 0.0,
-    n_starts: int = 100,
-    seed: int = 0,
-) -> tuple[torch.Tensor, float, str]:
-    """Find bit flips for `Q` by multistart local search on [`bitflip_qubo`][].
+    method: Literal["local_search", "tabu_search", "glpk"],
+    time_limit: float,
+    eps: float,
+    rng: torch.Generator | None,
+) -> tuple[Solution, str]:
 
-    The starts are the no-op plus ``n_starts - 1`` random ones, so the result
-    is never worse than no flips.
+    if method not in ("local_search", "tabu_search", "glpk"):
+        msg = f"Unknown bit-flip method {method!r}."
+        raise ValueError(msg)
 
-    Args:
-        Q: QUBO coefficient matrix; only the upper triangle is read.
-        eps: Off-diagonal coefficients with ``abs(q) <= eps`` are ignored.
-        n_starts: Number of starts, the no-op plus ``n_starts - 1`` random ones.
-        seed: Seed of the random starts, for reproducibility.
+    if method == "glpk":
+        return _solve_bitflip_preprocessing_glpk(
+            instance.matrix,
+            time_limit_s=time_limit,
+            eps=eps,
+        )
 
-    Returns:
-        The flip vector, the objective value and ``"FEASIBLE"`` (a local
-        optimum, not a proven one), or ``"OPTIMAL"`` with no flips when there
-        is nothing to flip.
-    """
-    n = Q.shape[0]
-    Q_f = bitflip_qubo(Q, eps=eps)
-    if Q_f is None:
-        return bitstring.zeros(n), 0.0, "OPTIMAL"
+    # time_limit is a budget for local search and tabu search together.
+    deadline = time.monotonic() + time_limit
+    bitflip_instance = _bitflip_qubo(instance, eps=eps)
 
-    generator = torch.Generator(device=Q_f.device).manual_seed(seed)
-    F = bitstrings.zeros(max(1, n_starts), n, device=Q_f.device)
-    F[1:] = torch.randint(
-        0, 2, (F.shape[0] - 1, n), generator=generator, device=Q_f.device, dtype=F.dtype
+    solution = solving.trivial_solution_search.solve(bitflip_instance)
+    if solution:
+        return solution, "HEURISTIC"
+
+    n_starts = 100
+    starts = solving.random_sampling.solve(bitflip_instance, max_bitstrings=n_starts, rng=rng)
+    # Add the zero bitstring (no flip) as the last start, so it doesn't win
+    # ties in the local search; the search doesn't need sorted starts.
+    starts.bitstrings[-1].fill_(0)
+    starts.costs[-1] = 0.0
+    solution = solving.iterative_bitflip_local_search.solve(
+        bitflip_instance,
+        starts=starts,
+        strategy="best_improvement",
+        time_limit=time_limit,
     )
-    # The search runs in the library dtype; objectives are recomputed in float64.
-    F = _best_improvement_search_batch(matrix.as_tensor(Q_f), F).to(Q_f.dtype)
+    if method != "tabu_search":
+        return solution, "HEURISTIC"
 
-    objectives = ((F @ Q_f) * F).sum(dim=1)
-    best = int(objectives.argmin())
-    flips = F[best].to(bitstring.dtype()).to(Q.device)
-    return flips, float(objectives[best]), "FEASIBLE"
-
-
-def solve_bitflip_tabu_search(  # noqa: PLR0913
-    Q: Matrix,
-    *,
-    eps: float = 0.0,
-    n_starts: int = 100,
-    seed: int = 0,
-    max_iter: int = 1000,
-    tabu_tenure: int = 7,
-    max_no_improve: int = 100,
-    time_limit_s: float = float("inf"),
-) -> tuple[torch.Tensor, float, str]:
-    """Find bit flips for `Q` by local search followed by tabu search.
-
-    Runs the same multistart local search as [`solve_bitflip_local_search`][],
-    then every local optimum starts one tabu run on [`bitflip_qubo`][], which
-    walks out of it through non-improving moves. Each run keeps its best
-    point, so the result is never worse than the local search's.
-
-    Args:
-        Q: QUBO coefficient matrix; only the upper triangle is read.
-        eps: Off-diagonal coefficients with ``abs(q) <= eps`` are ignored.
-        n_starts: Number of starts, the no-op plus ``n_starts - 1`` random ones.
-        seed: Seed of the random starts, for reproducibility.
-        max_iter: Maximum number of tabu iterations.
-        tabu_tenure: Number of iterations a flipped bit stays tabu.
-        max_no_improve: The search stops once every run has gone this many
-            iterations without improving its best.
-        time_limit_s: Wall-clock budget of the tabu search, in seconds.
-
-    Returns:
-        The flip vector, the objective value and ``"FEASIBLE"`` (not a proven
-        optimum), or ``"OPTIMAL"`` with no flips when there is nothing to flip.
-    """
-    n = Q.shape[0]
-    Q_f = bitflip_qubo(Q, eps=eps)
-    if Q_f is None:
-        return bitstring.zeros(n), 0.0, "OPTIMAL"
-
-    generator = torch.Generator(device=Q_f.device).manual_seed(seed)
-    F = bitstrings.zeros(max(1, n_starts), n, device=Q_f.device)
-    F[1:] = torch.randint(
-        0, 2, (F.shape[0] - 1, n), generator=generator, device=Q_f.device, dtype=F.dtype
+    solution = solving.tabu_search.solve(
+        bitflip_instance,
+        starts=solution.bitstrings,
+        max_iter=1000,
+        max_no_improve=100,
+        time_limit=max(0.0, deadline - time.monotonic()),
     )
-    # The search runs in the library dtype; objectives are recomputed in float64.
-    F = _best_improvement_search_batch(matrix.as_tensor(Q_f), F)
-
-    solution = tabu_search.solve(
-        qubosolver.Instance(matrix.as_tensor(Q_f)),
-        starts=F,
-        max_iter=max_iter,
-        tabu_tenure=tabu_tenure,
-        max_no_improve=max_no_improve,
-        time_limit=time_limit_s,
-    )
-
-    # The solver's costs are in the library dtype; recompute in float64.
-    F = solution.bitstrings.to(Q_f.dtype)
-    objectives = ((F @ Q_f) * F).sum(dim=1)
-    best = int(objectives.argmin())
-    flips = solution.bitstrings[best].to(bitstring.dtype()).to(Q.device)
-    return flips, float(objectives[best]), "FEASIBLE"
+    return solution, "HEURISTIC"
 
 
 class Instance(qubosolver.Instance):
@@ -563,7 +517,8 @@ class Instance(qubosolver.Instance):
         by [`apply`][]."""
 
         self.status: str = "NONE"
-        """Outcome of the bit-flip ILP solve (e.g. ``"NONE"``, ``"OPTIMAL"``,
+        """Outcome of the bit-flip solve (e.g. ``"NONE"``, ``"HEURISTIC"`` for the
+        local and tabu searches, ``"OPTIMAL"`` for `GLPK`,
         ``"REJECTED_WORSE_THAN_NOOP"``)."""
 
         self.offset: float = 0.0
@@ -608,6 +563,7 @@ def apply(
     method: Literal["local_search", "tabu_search", "glpk"] = "local_search",
     time_limit_s: float = 60.0,
     eps: float = 0.0,
+    rng: torch.Generator | None = None,
 ) -> Instance:
     """Find the bit flips minimizing negative weight and apply them to the QUBO matrix.
 
@@ -621,13 +577,19 @@ def apply(
 
     Args:
         instance: The QUBO instance to preprocess.
-        method: ``"local_search"`` ([`solve_bitflip_local_search`][]),
-            ``"tabu_search"`` ([`solve_bitflip_tabu_search`][]) or ``"glpk"``
-            (the **Integer Linear Program (ILP)** solved with
+        method: ``"local_search"``
+            ([`solving.iterative_bitflip_local_search.solve`][qubosolver.solving.classical.iterative_bitflip_local_search.solve]
+            on ``Q_f``, from random starts plus the no-flip start),
+            ``"tabu_search"`` (the same local search, refined with
+            [`solving.tabu_search.solve`][qubosolver.solving.classical.tabu_search.solve])
+            or ``"glpk"`` (the **Integer Linear
+            Program (ILP)** solved with
             [`GLPK`](https://github.com/bradfordboyle/pyglpk)).
-        time_limit_s: Time limit in seconds of the tabu search or `GLPK`;
-            unused by the local search.
+        time_limit_s: Time limit in seconds. For ``"tabu_search"``, it is shared
+            by the local search and the tabu search.
         eps: Tolerance below which a coefficient is treated as zero.
+        rng: PyTorch random number generator controlling the random starts of
+            the local search; unused by ``"glpk"``.
 
     Returns:
         A bit-flip instance carrying the flip vector and metrics.
@@ -635,28 +597,16 @@ def apply(
     Raises:
         ValueError: If `method` is unknown.
     """
-    flipped_instance = Instance(instance)
+    if not _has_negative_offdiagonal(instance.matrix, eps=eps):
+        return Instance(instance)
 
-    Q = instance.matrix
-    if instance.size == 0 or not _has_negative_offdiagonal(Q, eps=eps):
-        return flipped_instance
+    bitflip_solution, status = _solve_bitflip(
+        instance, method=method, time_limit=time_limit_s, eps=eps, rng=rng
+    )
 
-    if method == "local_search":
-        flips, objective_value, status = solve_bitflip_local_search(Q, eps=eps)
-    elif method == "tabu_search":
-        flips, objective_value, status = solve_bitflip_tabu_search(
-            Q, eps=eps, time_limit_s=time_limit_s
-        )
-    elif method == "glpk":
-        flips, objective_value, status = _solve_bitflip_preprocessing_glpk(
-            Q,
-            time_limit_s=time_limit_s,
-            eps=eps,
-        )
-    else:
-        msg = f"Unknown bit-flip method {method!r}."
-        raise ValueError(msg)
-    metrics = _compute_negative_weight_metrics(Q, flips, eps)
+    flips = bitflip_solution[0].bitstring
+    objective_value = bitflip_solution[0].cost
+    metrics = _compute_negative_weight_metrics(instance.matrix, flips, eps)
 
     if metrics["neg_weight_reduction_pct"] < 0.0:
         reduction_pct = metrics["neg_weight_reduction_pct"]
@@ -670,10 +620,11 @@ def apply(
         flips.fill_(0)
         objective_value = float("nan")
         status = "REJECTED_WORSE_THAN_NOOP"
-        metrics = _compute_negative_weight_metrics(Q, flips, eps)
+        metrics = _compute_negative_weight_metrics(instance.matrix, flips, eps)
 
-    Q_flipped, offset = _transform_qubo_with_bitflips(Q, flips)
+    Q_flipped, offset = _transform_qubo_with_bitflips(instance.matrix, flips)
 
+    flipped_instance = Instance(instance)
     flipped_instance._matrix = Q_flipped
     flipped_instance.flips = flips
     flipped_instance.metrics = metrics

@@ -264,6 +264,45 @@ def test_deduplicate_update_false_skips_sort_and_probabilities() -> None:
     check.equal(s1.count, 5)
 
 
+@pytest.mark.parametrize("update", [True, False])
+def test_deduplicate_keeps_first_appearance_order_for_ties(update: bool) -> None:
+    # 17 distinct, equal-cost bitstrings in random order, each
+    # repeated twice, all copies placed after the first ones. Merged rows must
+    # keep the first-appearance order rather than torch.unique's lexicographic one.
+    # More than 16 rows, because a non-stable argsort only reorders ties above
+    # that size on CPU.
+    distinct = [
+        [1, 1, 1, 0, 1],
+        [1, 1, 0, 1, 1],
+        [1, 0, 1, 1, 1],
+        [1, 1, 0, 1, 0],
+        [0, 0, 0, 0, 1],
+        [0, 1, 0, 0, 0],
+        [0, 0, 1, 1, 0],
+        [0, 1, 0, 1, 0],
+        [0, 0, 1, 1, 1],
+        [1, 1, 1, 0, 0],
+        [1, 1, 1, 1, 1],
+        [1, 1, 0, 0, 0],
+        [0, 0, 0, 1, 0],
+        [1, 0, 0, 1, 0],
+        [0, 1, 0, 0, 1],
+        [0, 0, 0, 1, 1],
+        [0, 1, 1, 0, 1],
+    ]
+    rows = distinct + distinct
+    solution = Solution(
+        bitstrings=bitstrings.tensor(rows),
+        costs=vector.zeros(len(rows)),
+        counts=vectori.zeros(len(rows)).fill_(1),
+        probabilities=vector.zeros(len(rows)).fill_(1.0 / len(rows)),
+    )
+    solution.deduplicate(update=update)
+
+    torch.testing.assert_close(solution.bitstrings, bitstrings.tensor(distinct))
+    torch.testing.assert_close(solution.counts, vectori.zeros(len(distinct)).fill_(2))
+
+
 def test_deduplicate_keeps_minimum_cost_for_duplicate_bitstrings() -> None:
     solution = Solution(
         bitstrings=bitstrings.tensor([[1, 0], [1, 0], [1, 0]]),

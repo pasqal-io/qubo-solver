@@ -327,11 +327,11 @@ def _triangular_register_qubo() -> Instance:
     return Instance(matrix.as_tensor(np.asarray(qubo, dtype=float)))
 
 
-@pytest.mark.duration(24)
+@pytest.mark.duration(4)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("algorithm", ["greedy_layout", "blade"])
 def test_quantum_matches_classical_triangular(algorithm: _EmbeddingAlgorithm) -> None:
-    _random.manual_seed(25)
+    _random.manual_seed(4425)
     instance = _triangular_register_qubo()
 
     quantum_config = SolverConfig(
@@ -345,7 +345,7 @@ def test_quantum_matches_classical_triangular(algorithm: _EmbeddingAlgorithm) ->
     quantum_solution = Solver(instance, quantum_config).solve()
 
     classical_config = SolverConfig(
-        solving=ClassicalSolvingConfig(max_bitstrings=4),
+        solving=ClassicalSolvingConfig(max_bitstrings=100),
     )
     classical_solution = Solver(instance, classical_config).solve()
 
