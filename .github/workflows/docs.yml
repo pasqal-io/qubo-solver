@@ -36,7 +36,7 @@ jobs:
 
       - name: Build documentation
         run: |
-          uv run --group doc --no-default-groups properdocs build --clean --strict
+          uv run --group doc --group cpu --no-default-groups properdocs build --clean --strict
 
   publish-dev-docs:
     name: Publish development docs to GitHub Pages
@@ -57,4 +57,4 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git fetch origin gh-pages
-          uv run --group doc --no-default-groups mike deploy --push --update-aliases main development
+          uv run --group doc --group cpu --no-default-groups mike deploy --push --update-aliases main development

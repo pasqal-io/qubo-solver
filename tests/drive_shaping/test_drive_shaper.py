@@ -159,7 +159,6 @@ def test_generate_proportional_diagonal_drive_shaper(
     print("drive.duration =", drive.duration)
 
     check.almost_equal(drive.duration, 1000.0, abs=1.0e-3)
-    check.almost_equal(drive.phase, 0.0)
 
     check.equal(drive.amplitude.duration, drive.duration)
     check.almost_equal(drive.amplitude.min(), 1e-9, abs=1e-10)

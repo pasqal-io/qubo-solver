@@ -63,7 +63,7 @@ jobs:
             git config user.name "GitHub Actions"
             git config user.email "actions@github.com"
             git fetch origin gh-pages
-            uv run --group doc --no-default-groups mike deploy --push --update-aliases "$REF_NAME" latest
+            uv run --group doc --group cpu --no-default-groups mike deploy --push --update-aliases "$REF_NAME" latest
         permissions:
             contents: write # TODO: wide permissions needed for deployment with mike
 

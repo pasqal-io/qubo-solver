@@ -43,7 +43,7 @@ dependencies = [
   "seaborn",
   "scikit-optimize",
   "swiglpk>=5.0.13",
-  "qoolqit[extras]>=1.4.0", # The version in .pre-commit-config.yaml must match
+  "qoolqit[extras]>=1.5.0", # The version in .pre-commit-config.yaml must match
   "shapely",
   "scipy",
   "pasqal-cloud",
@@ -92,9 +92,28 @@ doc = [
   "mike",
   "python-markdown-math",
 ]
+# torch wheel selection (uv only, see [tool.uv.sources]):
+# plain `uv sync` installs the default PyPI wheels (CUDA on Linux), `uv sync --group cpu`
+# the CPU-only wheels.
+cpu = [
+  "torch",
+]
+# Same as plain `uv sync`; needed so uv can declare it as conflicting with `cpu`.
+cuda = [
+  "torch",
+]
 
 [tool.uv]
-default-groups = "all"
+default-groups = ["dev", "doc"]
+conflicts = [[{ group = "cpu" }, { group = "cuda" }]]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", group = "cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [project.urls]
 Documentation = "https://pasqal-io.github.io/qubo-solver/latest/"

@@ -63,6 +63,12 @@ git merge upstream/main
   pip install --group dev -e .
   ```
 
+  On Linux, the default PyTorch wheels bundle CUDA (~6 GB installed). If you don't need a GPU, install the CPU-only wheels (~1.7 GB) instead with the `cpu` dependency group (CI does the same):
+
+  ```sh
+  uv sync --group cpu
+  ```
+
 ### Useful things for your workflow: Linting and Testing
 
 Use `prek` (a drop-in, faster replacement for `pre-commit`) to make sure that the code is properly linted before pushing a new commit. Make sure that the unit tests and type checks are passing since the merge request will not be accepted if the automatic CI/CD pipeline do not pass.
