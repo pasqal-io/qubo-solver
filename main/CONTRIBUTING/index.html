@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../extras/assets/logo/qubosolver_symbol_darkgreen.svg">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.0">
     
     
       
@@ -29,10 +29,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -3593,16 +3593,19 @@
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>pip<span class="w"> </span>install<span class="w"> </span>--group<span class="w"> </span>dev<span class="w"> </span>-e<span class="w"> </span>.
 </code></pre></div>
+<p>On Linux, the default PyTorch wheels bundle CUDA (~6 GB installed). If you don't need a GPU, install the CPU-only wheels (~1.7 GB) instead with the <code>cpu</code> dependency group (CI does the same):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>cpu
+</code></pre></div>
 <h3 id="useful-things-for-your-workflow-linting-and-testing">Useful things for your workflow: Linting and Testing</h3>
 <p>Use <code>prek</code> (a drop-in, faster replacement for <code>pre-commit</code>) to make sure that the code is properly linted before pushing a new commit. Make sure that the unit tests and type checks are passing since the merge request will not be accepted if the automatic CI/CD pipeline do not pass.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pip<span class="w"> </span>install<span class="w"> </span>prek
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>prek<span class="w"> </span>install
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>prek<span class="w"> </span>run<span class="w"> </span>--all-files
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>pytest
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pip<span class="w"> </span>install<span class="w"> </span>prek
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>prek<span class="w"> </span>install
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>prek<span class="w"> </span>run<span class="w"> </span>--all-files
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>pytest
 </code></pre></div>
 <p>While iterating, you can run only the fast tests:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pytest<span class="w"> </span>-m<span class="w"> </span>fast<span class="w">   </span><span class="c1"># tests expected to take less than 15 s</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>pytest<span class="w"> </span>-m<span class="w"> </span>slow<span class="w">   </span><span class="c1"># the long-running ones</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pytest<span class="w"> </span>-m<span class="w"> </span>fast<span class="w">   </span><span class="c1"># tests expected to take less than 15 s</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>pytest<span class="w"> </span>-m<span class="w"> </span>slow<span class="w">   </span><span class="c1"># the long-running ones</span>
 </code></pre></div>
 <h2 id="a-word-on-patents">A Word on Patents</h2>
 <p>Quantum computing is a heavily patented field. If your contribution introduces a new quantum algorithm, rather than an improvement to the existing library, please check beforehand that it is not covered by an existing patent.</p>
@@ -3713,10 +3716,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "content.tooltips", "navigation.indexes", "navigation.sections", "navigation.tabs", "navigation.top", "navigation.tracking", "navigation.footer", "search.highlight", "search.suggest"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "content.tooltips", "navigation.indexes", "navigation.sections", "navigation.tabs", "navigation.top", "navigation.tracking", "navigation.footer", "search.highlight", "search.suggest"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
       
         <script src="../assets/_markdown_exec_pyodide.js"></script>
       
