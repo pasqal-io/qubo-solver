@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal, 2026
+#
+# Licensed under the Pasqal Open-Source Software License 2026 (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """1-D integer vector utilities for QUBO solvers.
 
 A [`Vectori`][qubosolver.Vectori] is a 1-D ``torch.int64`` tensor of shape ``(n,)`` used to

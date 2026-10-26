@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal, 2026
+#
+# Licensed under the Pasqal Open-Source Software License 2026 (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """QUBO Solver: a library for solving QUBO problems with classical, quantum, and hybrid algorithms.
 
 Solves Quadratic Unconstrained Binary Optimization (QUBO) problems using classical, quantum,
