@@ -30,4 +30,4 @@ jobs:
             enable-cache: true
         - name: Check files and lint
           run: |
-            uv run --no-default-groups --group dev prek run --all-files
+            uv run --no-default-groups --group dev --group cpu prek run --all-files

@@ -54,7 +54,7 @@ jobs:
             python-version: ${{ matrix.python-version }}
         - name: Perform unit tests
           run: |
-            uv run --extra extras pytest
+            uv run --extra extras --group cpu pytest
         - name: Upload coverage reports to Codecov
           uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
           with:
@@ -106,4 +106,4 @@ jobs:
             USE_DOUBLE_PRECISION: ${{ matrix.use-double-precision }}
             QUBO_SOLVER_RUNTIME_CHECKS: 1
           run: |
-            uv run --extra extras pytest -W error
+            uv run --extra extras --group cpu pytest -W error
