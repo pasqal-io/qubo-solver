@@ -26,10 +26,12 @@ from qubosolver.embedding._algorithms.mds import embed_mds
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
 if TYPE_CHECKING:
-    # Resolves the `device: InitVar[Device | None]` field inherited from `BladeConfig`.
+    # Resolves the `device: InitVar[Device | None]` and `starting_positions: np.ndarray | None`
+    # fields inherited from `BladeConfig`.
     from collections.abc import Callable
     from dataclasses import InitVar  # noqa: F401 (only read by beartype)
 
+    import numpy as np  # noqa: F401 (only read by beartype)
     from qoolqit import Device  # noqa: F401 (only read by beartype)
 
 logger = logging.getLogger(__name__)
