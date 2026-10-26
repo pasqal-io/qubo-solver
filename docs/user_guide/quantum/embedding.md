@@ -162,45 +162,67 @@ Each subproblem runs on the register found by the embedder, with a drive shaped 
 ```python exec="on" source="tabbed-left" session="decomposition" result="text"
 import qoolqit
 import torch
-from qubosolver import Instance, LocalEmulator, Solution, drive_shaping, embedding, matrix, solving
+from qubosolver import (
+    Instance,
+    LocalEmulator,
+    Solution,
+    analysis,
+    drive_shaping,
+    embedding,
+    matrix,
+    solving,
+)
 from qubosolver.transforms import variable_fixing
 
 # Private utility to set seed.
 from qubosolver.utils._random import manual_seed
 
-manual_seed(2)
+manual_seed(10)
 
 # A random QUBO: negative diagonal, sparse non-negative off-diagonal coefficients
-n = 12
+n = 50
 upper = (20 * torch.rand(n, n) * (torch.rand(n, n) < 0.5)).triu(1)
-instance = Instance(matrix.as_tensor(upper + upper.T - torch.diag(100 * torch.rand(n))))
+Q = upper + upper.T - torch.diag(100 * torch.rand(n))
+instance = Instance(matrix.as_tensor(Q))
 
 device = qoolqit.AnalogDeviceWithDMM()
-backend = LocalEmulator(num_shots=100)
-stop, min_atoms = 4, 1
+backend = LocalEmulator(num_shots=1000)
 
-reduced = variable_fixing.apply_recursively(instance)  # the embedder needs diag < 0
-while reduced.size > stop:
+# Pre-process to fix variables with positive linear weight
+reduced_instance = variable_fixing.apply_recursively(instance)
+reduced_solution = solving.trivial_solution_search.solve(reduced_instance)
+
+while not reduced_solution:
     # register qubit i <-> variables[i]; always at least one atom
-    register, variables = embedding.geometric.embed_for_device(reduced, device)
-    if len(variables) <= min_atoms:  # not worth a QPU job
-        break
-    sub = reduced.subinstance(variables)  # exact (conditioned) sub-QUBO
-    drive = drive_shaping.proportional_diagonal.build_drive(sub, register, device=device)
-    job = backend.run(solving.analog_quantum_sampling.compile(register, drive, device))
-    sub_solution = Solution.from_results(job.results(), sub)
-    rule = variable_fixing.from_candidate(sub_solution[0], variables, reduced)  # best candidate
-    variable_fixing.apply(reduced, (rule,), inplace=True)  # candidate rule alone
-    variable_fixing.apply_recursively(reduced, inplace=True)  # Hansen to a fixed point
-solution = variable_fixing.lift(solving.tabu_search.solve(reduced), reduced)
+    register, variables = embedding.geometric.embed_for_device(reduced_instance, device)
+    # Exact (conditioned) sub-QUBO
+    sub_instance = reduced_instance.subinstance(variables)
 
-print(f"Fixed variables, in fixing order: {reduced.fixed_history}")
-print(f"Solution: {solution[0].string}, cost {solution[0].cost:.2f}")
+    # Solve sub-qubo with the quantum pipeline
+    drive = drive_shaping.local_energy_scale.build_drive(sub_instance, register, device=device)
+    program = solving.analog_quantum_sampling.compile(register, drive, device)
+    job = backend.run(program)
+    sub_solution = Solution.from_results(job.results(), sub_instance)
+
+    # Fix variables from the best candidate
+    rule = variable_fixing.from_candidate(sub_solution[0], variables, reduced_instance)
+    variable_fixing.apply(reduced_instance, (rule,), inplace=True)
+    # Fix variables that have been balanced to a positive linear weight
+    variable_fixing.apply_recursively(reduced_instance, inplace=True)
+
+    reduced_solution = solving.trivial_solution_search.solve(reduced_instance)
+
+solution = variable_fixing.lift(reduced_solution, reduced_instance)
+
+print(f"Fixed variables, in fixing order:")
+for f in reduced_instance.fixed_history:
+    print(f"\t{f}")
+print(f"Solution:\n{analysis.to_dataframe([solution])}")
 ```
 
-`reduced.fixed_history` lists the variables fixed by each rule application, in order and in the indices of the original instance: the initial Hansen presolve, then, for each subproblem, the fixed candidate followed by the Hansen passes it triggered. `reduced.fixed_variables` merges them.
+`reduced_instance.fixed_history` lists the variables fixed by each rule application, in order and in the indices of the original instance: the initial Hansen presolve, then, for each subproblem, the fixed candidate followed by the Hansen passes it triggered. `reduced_instance.fixed_variables` merges them.
 
-The loop leaves every decision to you: rejecting a subproblem is simply not fixing it, stopping early is leaving the loop, and the remainder is `reduced`, which can be solved by any means. To see which QUBO the register and drive actually implement, including what drive shaping did to the detunings, use `extract_qubo(register, drive)`.
+The loop leaves every decision to you: rejecting a subproblem is simply not fixing it, stopping early is leaving the loop, and the remainder is `reduced_instance`, which can be solved by any means. To see which QUBO the register and drive actually implement, including what drive shaping did to the detunings, use [`extract_qubo(register, drive)`][qubosolver.extract_qubo].
 
 ### Classical subproblems
 
@@ -212,52 +234,38 @@ manual_seed(10)
 # A larger random QUBO
 n = 50
 upper = (20 * torch.rand(n, n) * (torch.rand(n, n) < 0.3)).triu(1)
-instance = Instance(matrix.as_tensor(upper + upper.T - torch.diag(100 * torch.rand(n))))
+Q = upper + upper.T - torch.diag(100 * torch.rand(n))
+instance = Instance(matrix.as_tensor(Q))
 
-stop, min_atoms = 15, 3
+# Pre-process to fix variables with positive linear weight
+reduced_instance = variable_fixing.apply_recursively(instance)
+reduced_solution = solving.trivial_solution_search.solve(reduced_instance)
 
-reduced = variable_fixing.apply_recursively(instance)
-while reduced.size > stop:
-    _, variables = embedding.geometric.embed_for_device(reduced, device)
-    if len(variables) <= min_atoms:
-        break
-    sub = reduced.subinstance(variables)
-    sub_solution = solving.tabu_search.solve(sub)
-    rule = variable_fixing.from_candidate(sub_solution[0], variables, reduced)
-    variable_fixing.apply(reduced, (rule,), inplace=True)
-    variable_fixing.apply_recursively(reduced, inplace=True)
-solution = variable_fixing.lift(solving.tabu_search.solve(reduced), reduced)
+while not reduced_solution:
+    # The register is unused: only the placed variables matter
+    _, variables = embedding.geometric.embed_for_device(reduced_instance, device)
+    # Exact (conditioned) sub-QUBO
+    sub_instance = reduced_instance.subinstance(variables)
 
-print(f"{len(reduced.fixed_variables)} variables fixed, {reduced.size} solved at the end")
-print(f"Cost: {solution[0].cost:.2f}")
+    # Solve sub-qubo with a classical solver
+    sub_solution = solving.tabu_search.solve(sub_instance)
+
+    # Fix variables from the best candidate
+    rule = variable_fixing.from_candidate(sub_solution[0], variables, reduced_instance)
+    variable_fixing.apply(reduced_instance, (rule,), inplace=True)
+    # Fix variables that have been balanced to a positive linear weight
+    variable_fixing.apply_recursively(reduced_instance, inplace=True)
+
+    reduced_solution = solving.trivial_solution_search.solve(reduced_instance)
+
+solution = variable_fixing.lift(reduced_solution, reduced_instance)
+
+print(f"Fixed variables, in fixing order:")
+for f in reduced_instance.fixed_history:
+    print(f"\t{f}")
+print(f"Solution:\n{analysis.to_dataframe([solution])}")
 ```
 
-### Register-derived subproblems
-
-The sub-instance `reduced.subinstance(variables)` is the exact sub-QUBO. The QUBO the register implements instead has the interactions $1/r^6$ between the placed atoms off the diagonal; `extract_qubo(register, exact)` builds it, taking the diagonal from the exact sub-instance. Solving it classically shows what the register alone can achieve:
-
-```python exec="on" source="tabbed-left" session="decomposition" result="text"
-from qubosolver import extract_qubo
-
-manual_seed(10)
-
-reduced = variable_fixing.apply_recursively(instance)
-while reduced.size > stop:
-    register, variables = embedding.geometric.embed_for_device(reduced, device)
-    if len(variables) <= min_atoms:
-        break
-    exact = reduced.subinstance(variables)
-    sub = extract_qubo(register, exact)  # off-diagonal from the register, diagonal from `exact`
-    sub_solution = solving.tabu_search.solve(sub)
-    rule = variable_fixing.from_candidate(sub_solution[0], variables, reduced)
-    variable_fixing.apply(reduced, (rule,), inplace=True)
-    variable_fixing.apply_recursively(reduced, inplace=True)
-solution = variable_fixing.lift(solving.tabu_search.solve(reduced), reduced)
-
-print(f"Cost: {solution[0].cost:.2f}")
-```
-
-Candidates are ranked here by their cost on the register-derived QUBO. To rank them on the exact sub-QUBO instead, pick `min(sub_solution, key=lambda c: exact.cost(c.bitstring))`.
 
 ## Custom register
 

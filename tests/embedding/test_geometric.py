@@ -44,16 +44,39 @@ def test_embed_is_reproducible_with_the_global_seed(decomposable_qubo: Instance)
     "instance",
     [
         Instance(matrix.tensor([[-1.0]])),
-        Instance(matrix.tensor([[-1.0, 0.0], [0.0, -2.0]])),
         Instance(matrix.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])),
     ],
-    ids=["single", "uncoupled", "weakly_coupled"],
+    ids=["single", "weakly_coupled"],
 )
 def test_embed_places_at_least_one_atom(instance: Instance) -> None:
     register, variables = embedding.geometric.embed(instance, rng=torch_rng(0))
 
     check.greater_equal(len(variables), 1)
     check.equal(len(register), len(variables))
+
+
+def test_embed_for_device_single_atom() -> None:
+    instance = Instance(matrix.tensor([[-1.0]]))
+    register, variables = embedding.geometric.embed_for_device(
+        instance, qoolqit.AnalogDeviceWithDMM(), rng=torch_rng(0)
+    )
+
+    check.equal(variables, [0])
+    check.equal(len(register), 1)
+
+
+def test_embed_rejects_diagonal_instance() -> None:
+    instance = Instance(matrix.tensor([[-1.0, 0.0], [0.0, -2.0]]))
+    with pytest.raises(ValueError, match="trivial_solution_search"):
+        embedding.geometric.embed(instance, rng=torch_rng(0))
+
+
+def test_embed_for_device_rejects_diagonal_instance() -> None:
+    instance = Instance(matrix.tensor([[-1.0, 0.0], [0.0, -2.0]]))
+    with pytest.raises(ValueError, match="trivial_solution_search"):
+        embedding.geometric.embed_for_device(
+            instance, qoolqit.AnalogDeviceWithDMM(), rng=torch_rng(0)
+        )
 
 
 @pytest.mark.parametrize("seed", [0, 1, 2])

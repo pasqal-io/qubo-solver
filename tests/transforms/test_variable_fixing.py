@@ -152,6 +152,15 @@ def test_apply_recursively_fixes_until_stable() -> None:
     check.equal(reduced.fixed_variables, fixed_variables)
 
 
+def test_apply_recursively_fix_zeros_only_drops_fixations_to_one() -> None:
+    check.equal(
+        transforms.variable_fixing.apply_recursively(fixable_qubo()).fixed_history,
+        [{0: 0}, {3: 1, 4: 1}],
+    )
+    reduced = transforms.variable_fixing.apply_recursively(fixable_qubo(), fix=(0,))
+    check.equal(reduced.fixed_history, [{0: 0}])
+
+
 def test_lift_reinserts_fixed_variables_and_recomputes_costs() -> None:
     instance = fixable_qubo()
     reduced = transforms.variable_fixing.apply_recursively(instance)

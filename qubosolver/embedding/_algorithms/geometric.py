@@ -80,7 +80,7 @@ class WeightedZone:
         # compute_distance_interaction_matrix (possibly -Q_ii / 2 under x^T Q x).
         self.radius2 = (-weight) ** (-1 / 6)
 
-        self.radius3 = 15.0
+        self.radius3 = 1.5
 
         self.point = Point(self.x, self.y)
         self.forbidden_zone = self.point.buffer(self.radius1)

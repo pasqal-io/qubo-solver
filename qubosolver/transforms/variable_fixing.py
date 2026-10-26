@@ -22,8 +22,8 @@ from __future__ import annotations
 import copy
 import json
 import logging
-from collections.abc import Callable, Sequence
-from typing import cast
+from collections.abc import Callable, Container, Sequence
+from typing import Literal, cast
 
 import torch
 
@@ -150,7 +150,11 @@ class Instance(qubosolver.Instance):
 
 
 def _reduce_qubo(
-    instance: qubosolver.Instance, fixed_indices: dict[int, int], *, inplace: bool = False
+    instance: qubosolver.Instance,
+    fixed_indices: dict[int, int],
+    *,
+    inplace: bool = False,
+    fix: Container[Literal[0, 1]] = (0, 1),
 ) -> Instance:
     """Reduce the QUBO matrix by fixing a set of variables.
 
@@ -163,6 +167,8 @@ def _reduce_qubo(
         fixed_indices: Mapping of variable index to fixed value (``0`` or ``1``).
         inplace: If ``False`` (default), wraps *qubo* in a new
             `Instance` before modifying it.
+        fix: Values to fix variables to: the variables *fixed_indices* fixes
+            to another value are left free.
 
     Returns:
         The (possibly new) instance with the reduced matrix and
@@ -175,6 +181,8 @@ def _reduce_qubo(
     if out_of_range := sorted(i for i in fixed_indices if not 0 <= i < instance.size):
         msg = f"Fixed indices {out_of_range} are outside range({instance.size}) of the instance."
         raise ValueError(msg)
+
+    fixed_indices = {i: v for i, v in fixed_indices.items() if v in fix}
 
     if not inplace:
         instance = Instance(instance)
@@ -213,6 +221,7 @@ def apply(
     fixation_rules: Sequence[Rule] = (hansen_fixing,),
     *,
     inplace: bool = False,
+    fix: Container[Literal[0, 1]] = (0, 1),
 ) -> Instance:
     """Apply each fixation rule once and reduce the QUBO matrix accordingly.
 
@@ -224,6 +233,9 @@ def apply(
         fixation_rules: Ordered sequence of [`Rule`][] callables.
         inplace: If ``False`` (default), wraps `instance` in a new
             variable-fixing [`Instance`][] before modifying it.
+        fix: Values to fix variables to: fixations to another value
+            returned by the rules are dropped, e.g. ``(0,)`` only fixes
+            variables to 0.
 
     Returns:
         The reduced instance with updated fixation history.
@@ -238,7 +250,7 @@ def apply(
 
     for rule in fixation_rules:
         fixed = rule(instance)
-        _reduce_qubo(instance, fixed, inplace=True)
+        _reduce_qubo(instance, fixed, inplace=True, fix=fix)
 
     if instance.size == 0:
         logger.info("Variable fixing reduced the instance to zero variables.")
@@ -251,6 +263,7 @@ def apply_recursively(
     fixation_rules: Sequence[Rule] = (hansen_fixing,),
     *,
     inplace: bool = False,
+    fix: Container[Literal[0, 1]] = (0, 1),
 ) -> Instance:
     """Apply fixation rules repeatedly until no further variables can be fixed.
 
@@ -262,6 +275,9 @@ def apply_recursively(
         fixation_rules: Ordered sequence of [`Rule`] callables.
         inplace: If ``False`` (default), wraps `instance` in a new
             variable-fixing [`Instance`][] before modifying it.
+        fix: Values to fix variables to: fixations to another value
+            returned by the rules are dropped, e.g. ``(0,)`` only fixes
+            variables to 0.
 
     Returns:
         The fully reduced instance.
@@ -276,7 +292,7 @@ def apply_recursively(
 
     while True:
         prev_n_fixations = len(instance._fixed_history)
-        apply(instance, fixation_rules, inplace=True)
+        apply(instance, fixation_rules, inplace=True, fix=fix)
         n_fixations = len(instance._fixed_history)
         assert n_fixations >= prev_n_fixations  # nosec B101
         if n_fixations == prev_n_fixations:
@@ -343,6 +359,11 @@ def from_candidate(
     first in `fixation_rules`, since a rule running before it in the same
     [`apply`][] call may fix variables and shift the indices. Calling the rule
     directly, `rule(instance)`, returns the fixation dict.
+
+    Apply the rule with `fix=(0, 1)` (the default): with `fix=(0,)`, the variables
+    it fixes to 1 stay free, and a candidate of only ones fixes nothing; with
+    `fix=()`, no candidate fixes anything. Either way, a decomposition loop calling
+    it each round may never end.
 
     Args:
         candidate: The candidate whose bits are fixed.

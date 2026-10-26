@@ -164,6 +164,9 @@ def embed(
             With non-negative off-diagonal coefficients, a variable with a
             non-negative diagonal coefficient is optimally 0, and Hansen's rule
             fixes it to 0.
+        ValueError: If `instance` is diagonal with at least 2 variables: there is
+            no coupling to reproduce, and its optimum should be read off the diagonal with
+            [`trivial_solution_search.solve`][qubosolver.solving.classical.trivial_solution_search.solve].
     """
     config = config or Config()
     rng = rng or torch_rng("global")
@@ -181,6 +184,18 @@ def embed(
             f"Variables {non_negative} have non-negative diagonal coefficients, but the geometric "
             "embedder requires negative ones. Fix these variables first, e.g. with "
             "`variable_fixing.apply_recursively` (Hansen's rule fixes them to 0)."
+        )
+        raise ValueError(msg)
+
+    if instance.size == 1:
+        # A single atom has no off-diagonal term to place it relative to,
+        # so it is placed at the origin without running the search.
+        return qoolqit.Register.from_coordinates(tensor.zeros(1, 2)), [0]
+
+    if instance.is_diagonal():
+        msg = (
+            "Cannot embed a diagonal instance: there is no coupling to reproduce. Its optimum is "
+            "read off the diagonal: use `solving.trivial_solution_search.solve`."
         )
         raise ValueError(msg)
 
