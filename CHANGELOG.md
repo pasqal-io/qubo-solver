@@ -11,13 +11,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- Add local search and tabu search methods to the negative-coefficient bit-flip preprocessing, selected with the new `method` argument of `negative_bitflip.apply`.
+- Add local search and tabu search methods to the negative-coefficient bit-flip preprocessing, selected with the new `method` argument of `negative_bitflip.apply`. ([#344](https://github.com/pasqal-io/qubo-solver/pull/344))
+- Add a `symmetrize` argument to `Instance` to replace a non-symmetric matrix $Q$ by $(Q + Q^T) / 2$. ([#336](https://github.com/pasqal-io/qubo-solver/pull/336))
 
 ### Changed
-- `negative_bitflip.apply` now finds the bit flips by local search by default instead of GLPK.
+- `negative_bitflip.apply` now finds the bit flips by local search by default instead of GLPK. ([#344](https://github.com/pasqal-io/qubo-solver/pull/344))
+- `Instance` now raises `ValueError` on a non-symmetric matrix, unless `symmetrize=True`. ([#336](https://github.com/pasqal-io/qubo-solver/pull/336))
+- License the package under the Pasqal Open-Source Software License 2026. ([#333](https://github.com/pasqal-io/qubo-solver/pull/333))
+- Require `qoolqit>=1.5.0`. ([#346](https://github.com/pasqal-io/qubo-solver/pull/346))
 
 ### Removed
-- Remove the GLPK method from the negative-coefficient bit-flip preprocessing, along with the `status` attribute of `negative_bitflip.Instance` and the `swiglpk` dependency. ([#347](https://github.com/pasqal-io/qubo-solver/pull/347))
+- Remove the GLPK method from the negative-coefficient bit-flip preprocessing, along with the `swiglpk` dependency. ([#347](https://github.com/pasqal-io/qubo-solver/pull/347))
+- Drop support for Python 3.10. ([#340](https://github.com/pasqal-io/qubo-solver/pull/340))
 
 ## [0.9.1] - 2026-10-15
 
