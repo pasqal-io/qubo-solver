@@ -2847,17 +2847,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#qubosolver.transforms.negative_bitflip.Instance.metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;metrics
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#qubosolver.transforms.negative_bitflip.Instance.negative_bitflip" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2869,32 +2858,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#qubosolver.transforms.negative_bitflip.Instance.offset" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;offset
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#qubosolver.transforms.negative_bitflip.Instance.size" class="md-nav__link">
     <span class="md-ellipsis">
       
         <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;size
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#qubosolver.transforms.negative_bitflip.Instance.status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;status
       
     </span>
   </a>
@@ -4064,17 +4031,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#qubosolver.transforms.negative_bitflip.Instance.metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;metrics
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#qubosolver.transforms.negative_bitflip.Instance.negative_bitflip" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4086,32 +4042,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#qubosolver.transforms.negative_bitflip.Instance.offset" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;offset
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#qubosolver.transforms.negative_bitflip.Instance.size" class="md-nav__link">
     <span class="md-ellipsis">
       
         <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;size
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#qubosolver.transforms.negative_bitflip.Instance.status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;status
       
     </span>
   </a>
@@ -4751,8 +4685,7 @@ have non-negative off-diagonal coefficients to be embeddable.  A change of
 variable <code>x_i -&gt; 1 - y_i</code> on a subset of variables flips the sign of the
 interactions incident to it; choosing the subset that removes as much negative
 weight as possible is itself a QUBO, <code>f^T Q_f f</code> with <code>Q_f = diag(C 1) - C</code>,
-solved here by local search, tabu search or, as an
-integer linear program, with <a href="https://github.com/bradfordboyle/pyglpk">GLPK</a>.</p>
+solved here by local search or tabu search.</p>
 <p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;apply&lt;/span&gt;" href="#qubosolver.transforms.negative_bitflip.apply"><code>apply</code></a> finds the bit flips (by default with a local search on <code>Q_f</code>) and
 applies them to the matrix, returning a wrapper <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt;" href="#qubosolver.transforms.negative_bitflip.Instance"><code>Instance</code></a> that
 records the flip vector so the solution can later be mapped back with
@@ -4841,7 +4774,7 @@ be dropped with <a class="autorefs autorefs-internal" title="&lt;code class=&quo
 
         <p>A QUBO instance carrying bit-flip preprocessing history.</p>
 <p>Wraps a parent <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt;" href="../qubosolver/#qubosolver.Instance"><code>qubosolver.Instance</code></a> whose off-diagonal coefficients may
-contain negative interactions.  Applying <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;apply&lt;/span&gt;" href="#qubosolver.transforms.negative_bitflip.apply"><code>apply</code></a> solves the bit-flip ILP,
+contain negative interactions.  Applying <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;apply&lt;/span&gt;" href="#qubosolver.transforms.negative_bitflip.apply"><code>apply</code></a> solves the bit-flip problem,
 stores the flip vector here, and exposes the transformed matrix so it can be
 embedded and solved.  <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;lift&lt;/span&gt;" href="#qubosolver.transforms.negative_bitflip.lift"><code>lift</code></a> uses the stored state to map a solution
 back onto the original variables.</p>
@@ -4968,19 +4901,6 @@ A deep copy is kept internally for later reconstruction.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
-          <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;metrics&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.transforms.negative_bitflip.Instance.metrics&lt;/code&gt;)" href="#qubosolver.transforms.negative_bitflip.Instance.metrics">metrics</a></code></b>
-              (<code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a>, <a class="autorefs autorefs-external" title="&lt;code&gt;typing.Any&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a>]</code>)
-          –
-          <div class="doc-md-description">
-            <p>Negative off-diagonal count and weight before/after the flips, as computed</p>
-          </div>
-        </li>
-        <li class="doc-section-item field-body">
           <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;negative_bitflip&lt;/span&gt;
 
 
@@ -4999,19 +4919,6 @@ A deep copy is kept internally for later reconstruction.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
-          <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;offset&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.transforms.negative_bitflip.Instance.offset&lt;/code&gt;)" href="#qubosolver.transforms.negative_bitflip.Instance.offset">offset</a></code></b>
-              (<code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>)
-          –
-          <div class="doc-md-description">
-            <p>Constant term relating the flipped and original QUBO costs,</p>
-          </div>
-        </li>
-        <li class="doc-section-item field-body">
           <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;size&lt;/span&gt;
 
 
@@ -5022,19 +4929,6 @@ A deep copy is kept internally for later reconstruction.</p>
           –
           <div class="doc-md-description">
             <p>Number of binary variables in the QUBO problem.</p>
-          </div>
-        </li>
-        <li class="doc-section-item field-body">
-          <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;status&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.transforms.negative_bitflip.Instance.status&lt;/code&gt;)" href="#qubosolver.transforms.negative_bitflip.Instance.status">status</a></code></b>
-              (<code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></code>)
-          –
-          <div class="doc-md-description">
-            <p>Outcome of the bit-flip solve (e.g. <code>"NONE"</code>, <code>"HEURISTIC"</code> for the</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -5077,55 +4971,45 @@ A deep copy is kept internally for later reconstruction.</p>
 
                   <details class="mkdocstrings-source">
                     <summary>Source code in <code>qubosolver/transforms/negative_bitflip.py</code></summary>
-                    <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-507">507</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-508">508</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-509">509</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-510">510</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-511">511</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-512">512</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-513">513</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-514">514</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-515">515</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-516">516</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-517">517</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-518">518</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-519">519</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-520">520</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-521">521</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-522">522</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-523">523</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-524">524</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-525">525</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-526">526</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-527">527</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-528">528</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-529">529</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-530">530</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-531">531</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-507" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-507"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-508" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-508"></a><span class="w">    </span><span class="sd">"""Initialize from a parent QUBO instance.</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-509" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-509"></a>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-510" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-510"></a><span class="sd">    Args:</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-511" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-511"></a><span class="sd">        parent_instance: The original QUBO instance (before bit flips).</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-512" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-512"></a><span class="sd">            A deep copy is kept internally for later reconstruction.</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-513" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-513"></a><span class="sd">    """</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-514" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-514"></a>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent_instance</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">())</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-515" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-515"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_parent_instance</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">parent_instance</span><span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-516" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-516"></a>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-517" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-517"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">flips</span><span class="p">:</span> <span class="n">Bitstring</span> <span class="o">=</span> <span class="n">bitstring</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">parent_instance</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-518" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-518"></a><span class="w">    </span><span class="sd">"""Flip vector applied to the parent matrix, all-zero until [`apply`][] populates it."""</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-519" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-519"></a>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-520" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-520"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-521" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-521"></a><span class="w">    </span><span class="sd">"""Negative off-diagonal count and weight before/after the flips, as computed</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-522" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-522"></a><span class="sd">    by [`apply`][]."""</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-523" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-523"></a>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-524" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-524"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"NONE"</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-525" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-525"></a><span class="w">    </span><span class="sd">"""Outcome of the bit-flip solve (e.g. ``"NONE"``, ``"HEURISTIC"`` for the</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-526" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-526"></a><span class="sd">    local and tabu searches, ``"OPTIMAL"`` for `GLPK`,</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-527" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-527"></a><span class="sd">    ``"REJECTED_WORSE_THAN_NOOP"``)."""</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-528" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-528"></a>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-529" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-529"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-530" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-530"></a><span class="w">    </span><span class="sd">"""Constant term relating the flipped and original QUBO costs,</span>
-<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-531" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-531"></a><span class="sd">    $x^T Q x = y^T Q_{flipped} y + offset$."""</span>
+                    <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-253">253</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-254">254</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-255">255</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-256">256</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-257">257</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-258">258</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-259">259</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-260">260</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-261">261</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-262">262</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-263">263</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-264">264</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-265">265</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-266">266</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-267">267</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-268">268</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-269">269</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-270">270</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-271">271</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-272">272</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-253" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-253"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-254" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-254"></a><span class="w">    </span><span class="sd">"""Initialize from a parent QUBO instance.</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-255" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-255"></a>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-256" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-256"></a><span class="sd">    Args:</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-257" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-257"></a><span class="sd">        parent_instance: The original QUBO instance (before bit flips).</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-258" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-258"></a><span class="sd">            A deep copy is kept internally for later reconstruction.</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-259" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-259"></a><span class="sd">    """</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-260" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-260"></a>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent_instance</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">())</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-261" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-261"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_parent_instance</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">parent_instance</span><span class="p">)</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-262" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-262"></a>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-263" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-263"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">flips</span><span class="p">:</span> <span class="n">Bitstring</span> <span class="o">=</span> <span class="n">bitstring</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">parent_instance</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-264" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-264"></a><span class="w">    </span><span class="sd">"""Flip vector applied to the parent matrix, all-zero until [`apply`][] populates it."""</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-265" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-265"></a>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-266" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-266"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-267" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-267"></a><span class="w">    </span><span class="sd">"""Negative off-diagonal count and weight before/after the flips, as computed</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-268" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-268"></a><span class="sd">    by [`apply`][]."""</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-269" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-269"></a>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-270" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-270"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-271" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-271"></a><span class="w">    </span><span class="sd">"""Constant term relating the flipped and original QUBO costs,</span>
+<a id="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-272" name="qubosolver.transforms.negative_bitflip.Instance--source--__codelineno-0-272"></a><span class="sd">    $x^T Q x = y^T Q_{flipped} y + offset$."""</span>
 </code></pre></div></td></tr></table></div>
                   </details>
 
@@ -5230,31 +5114,6 @@ A deep copy is kept internally for later reconstruction.</p>
 
 
 
-<h4 id="qubosolver.transforms.negative_bitflip.Instance.metrics" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">metrics</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-</h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">metrics</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Any&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Negative off-diagonal count and weight before/after the flips, as computed
-by <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;apply&lt;/span&gt;" href="#qubosolver.transforms.negative_bitflip.apply"><code>apply</code></a>.</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
 <h4 id="qubosolver.transforms.negative_bitflip.Instance.negative_bitflip" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">negative_bitflip</span>
 
@@ -5321,31 +5180,6 @@ would otherwise provide.</p>
 
 
 
-<h4 id="qubosolver.transforms.negative_bitflip.Instance.offset" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">offset</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-</h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">offset</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">0.0</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Constant term relating the flipped and original QUBO costs,
-<span class="arithmatex">\(x^T Q x = y^T Q_{flipped} y + offset\)</span>.</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
 <h4 id="qubosolver.transforms.negative_bitflip.Instance.size" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">size</span>
 
@@ -5361,32 +5195,6 @@ would otherwise provide.</p>
     <div class="doc doc-contents ">
 
         <p>Number of binary variables in the QUBO problem.</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h4 id="qubosolver.transforms.negative_bitflip.Instance.status" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">status</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-</h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">status</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s1">'NONE'</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Outcome of the bit-flip solve (e.g. <code>"NONE"</code>, <code>"HEURISTIC"</code> for the
-local and tabu searches, <code>"OPTIMAL"</code> for <code>GLPK</code>,
-<code>"REJECTED_WORSE_THAN_NOOP"</code>).</p>
 
     </div>
 
@@ -6019,7 +5827,7 @@ or a binary-writable <a class="autorefs autorefs-external" href="https://docs.py
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">apply</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-module&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-module-name&quot;&gt;qubosolver&lt;/span&gt;" href="../qubosolver/#qubosolver">qubosolver</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.Instance&lt;/code&gt;)" href="../qubosolver/#qubosolver.Instance">Instance</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Literal&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Literal">Literal</a></span><span class="p">[</span><span class="s1">'local_search'</span><span class="p">,</span> <span class="s1">'tabu_search'</span><span class="p">,</span> <span class="s1">'glpk'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'local_search'</span><span class="p">,</span> <span class="n">time_limit_s</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">60.0</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">rng</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.Generator&lt;/code&gt;" href="https://pytorch.org/docs/stable/generated/torch.Generator.html#torch.Generator">Generator</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.transforms.negative_bitflip.Instance&lt;/code&gt;)" href="#qubosolver.transforms.negative_bitflip.Instance">Instance</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">apply</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-module&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-module-name&quot;&gt;qubosolver&lt;/span&gt;" href="../qubosolver/#qubosolver">qubosolver</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.Instance&lt;/code&gt;)" href="../qubosolver/#qubosolver.Instance">Instance</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Literal&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Literal">Literal</a></span><span class="p">[</span><span class="s1">'local_search'</span><span class="p">,</span> <span class="s1">'tabu_search'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'local_search'</span><span class="p">,</span> <span class="n">time_limit_s</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">60.0</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">rng</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.Generator&lt;/code&gt;" href="https://pytorch.org/docs/stable/generated/torch.Generator.html#torch.Generator">Generator</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.transforms.negative_bitflip.Instance&lt;/code&gt;)" href="#qubosolver.transforms.negative_bitflip.Instance">Instance</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6028,10 +5836,7 @@ or a binary-writable <a class="autorefs autorefs-external" href="https://docs.py
 <p>Wraps <code>instance</code> in a bit-flip <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt;" href="#qubosolver.transforms.negative_bitflip.Instance"><code>Instance</code></a>, finds the flips with <code>method</code>,
 and replaces the matrix with its flipped counterpart.  When
 <code>instance</code> has no negative off-diagonal coefficient, the wrapper is returned
-unchanged (<code>status</code> stays <code>"NONE"</code> and <code>flips</code> stays all-zero).  If
-the solved flips would leave <em>more</em> negative weight than doing nothing
-(a known <code>GLPK</code> edge case), they are rejected and replaced with a no-op
-(<code>status</code> becomes <code>"REJECTED_WORSE_THAN_NOOP"</code>).</p>
+unchanged (<code>flips</code> stays all-zero).</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -6046,7 +5851,7 @@ the solved flips would leave <em>more</em> negative weight than doing nothing
         </li>
         <li class="doc-section-item field-body">
             <b><code>method</code></b>
-              (<code><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Literal&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Literal">Literal</a>[&#39;local_search&#39;, &#39;tabu_search&#39;, &#39;glpk&#39;]</code>, default:
+              (<code><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Literal&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Literal">Literal</a>[&#39;local_search&#39;, &#39;tabu_search&#39;]</code>, default:
                   <code>&#39;local_search&#39;</code>
 )
           –
@@ -6055,10 +5860,7 @@ the solved flips would leave <em>more</em> negative weight than doing nothing
 (<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;solve&lt;/span&gt;" href="../classical_solving/#qubosolver.solving.classical.iterative_bitflip_local_search.solve"><code>solving.iterative_bitflip_local_search.solve</code></a>
 on <code>Q_f</code>, from random starts plus the no-flip start),
 <code>"tabu_search"</code> (the same local search, refined with
-<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;solve&lt;/span&gt;" href="../classical_solving/#qubosolver.solving.classical.tabu_search.solve"><code>solving.tabu_search.solve</code></a>)
-or <code>"glpk"</code> (the <strong>Integer Linear
-Program (ILP)</strong> solved with
-<a href="https://github.com/bradfordboyle/pyglpk"><code>GLPK</code></a>).</p>
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;solve&lt;/span&gt;" href="../classical_solving/#qubosolver.solving.classical.tabu_search.solve"><code>solving.tabu_search.solve</code></a>).</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -6090,7 +5892,7 @@ by the local search and the tabu search.</p>
           –
           <div class="doc-md-description">
             <p>PyTorch random number generator controlling the random starts of
-the local search; unused by <code>"glpk"</code>.</p>
+the local search.</p>
           </div>
         </li>
     </ul>
@@ -6122,157 +5924,115 @@ the local search; unused by <code>"glpk"</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/transforms/negative_bitflip.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-565">565</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-566">566</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-567">567</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-568">568</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-569">569</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-570">570</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-571">571</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-572">572</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-573">573</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-574">574</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-575">575</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-576">576</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-577">577</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-578">578</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-579">579</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-580">580</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-581">581</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-582">582</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-583">583</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-584">584</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-585">585</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-586">586</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-587">587</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-588">588</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-589">589</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-590">590</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-591">591</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-592">592</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-593">593</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-594">594</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-595">595</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-596">596</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-597">597</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-598">598</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-599">599</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-600">600</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-601">601</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-602">602</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-603">603</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-604">604</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-605">605</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-606">606</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-607">607</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-608">608</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-609">609</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-610">610</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-611">611</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-612">612</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-613">613</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-614">614</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-615">615</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-616">616</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-617">617</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-618">618</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-619">619</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-620">620</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-621">621</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-622">622</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-623">623</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-624">624</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-625">625</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-626">626</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-627">627</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-628">628</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-629">629</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-630">630</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-631">631</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-632">632</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-633">633</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-634">634</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-635">635</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-636">636</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-637">637</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-638">638</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-639">639</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-640">640</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-565" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-565"></a><span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-566" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-566"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">,</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-567" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-567"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-568" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-568"></a>    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"local_search"</span><span class="p">,</span> <span class="s2">"tabu_search"</span><span class="p">,</span> <span class="s2">"glpk"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"local_search"</span><span class="p">,</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-569" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-569"></a>    <span class="n">time_limit_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">60.0</span><span class="p">,</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-570" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-570"></a>    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-571" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-571"></a>    <span class="n">rng</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-572" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-572"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Instance</span><span class="p">:</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-573" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-573"></a><span class="w">    </span><span class="sd">"""Find the bit flips minimizing negative weight and apply them to the QUBO matrix.</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-574" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-574"></a>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-575" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-575"></a><span class="sd">    Wraps `instance` in a bit-flip [`Instance`][], finds the flips with `method`,</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-576" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-576"></a><span class="sd">    and replaces the matrix with its flipped counterpart.  When</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-577" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-577"></a><span class="sd">    `instance` has no negative off-diagonal coefficient, the wrapper is returned</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-578" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-578"></a><span class="sd">    unchanged (``status`` stays ``"NONE"`` and ``flips`` stays all-zero).  If</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-579" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-579"></a><span class="sd">    the solved flips would leave *more* negative weight than doing nothing</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-580" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-580"></a><span class="sd">    (a known `GLPK` edge case), they are rejected and replaced with a no-op</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-581" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-581"></a><span class="sd">    (``status`` becomes ``"REJECTED_WORSE_THAN_NOOP"``).</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-582" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-582"></a>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-583" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-583"></a><span class="sd">    Args:</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-584" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-584"></a><span class="sd">        instance: The QUBO instance to preprocess.</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-585" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-585"></a><span class="sd">        method: ``"local_search"``</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-586" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-586"></a><span class="sd">            ([`solving.iterative_bitflip_local_search.solve`][qubosolver.solving.classical.iterative_bitflip_local_search.solve]</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-587" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-587"></a><span class="sd">            on ``Q_f``, from random starts plus the no-flip start),</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-588" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-588"></a><span class="sd">            ``"tabu_search"`` (the same local search, refined with</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-589" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-589"></a><span class="sd">            [`solving.tabu_search.solve`][qubosolver.solving.classical.tabu_search.solve])</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-590" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-590"></a><span class="sd">            or ``"glpk"`` (the **Integer Linear</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-591" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-591"></a><span class="sd">            Program (ILP)** solved with</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-592" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-592"></a><span class="sd">            [`GLPK`](https://github.com/bradfordboyle/pyglpk)).</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-593" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-593"></a><span class="sd">        time_limit_s: Time limit in seconds. For ``"tabu_search"``, it is shared</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-594" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-594"></a><span class="sd">            by the local search and the tabu search.</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-595" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-595"></a><span class="sd">        eps: Tolerance below which a coefficient is treated as zero.</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-596" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-596"></a><span class="sd">        rng: PyTorch random number generator controlling the random starts of</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-597" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-597"></a><span class="sd">            the local search; unused by ``"glpk"``.</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-598" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-598"></a>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-599" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-599"></a><span class="sd">    Returns:</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-600" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-600"></a><span class="sd">        A bit-flip instance carrying the flip vector and metrics.</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-601" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-601"></a>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-602" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-602"></a><span class="sd">    Raises:</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-603" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-603"></a><span class="sd">        ValueError: If `method` is unknown.</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-604" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-604"></a><span class="sd">    """</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-605" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-605"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">_has_negative_offdiagonal</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">):</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-606" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-606"></a>        <span class="k">return</span> <span class="n">Instance</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-607" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-607"></a>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-608" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-608"></a>    <span class="n">bitflip_solution</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="n">_solve_bitflip</span><span class="p">(</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-609" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-609"></a>        <span class="n">instance</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">time_limit</span><span class="o">=</span><span class="n">time_limit_s</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-610" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-610"></a>    <span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-611" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-611"></a>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-612" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-612"></a>    <span class="n">flips</span> <span class="o">=</span> <span class="n">bitflip_solution</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bitstring</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-613" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-613"></a>    <span class="n">objective_value</span> <span class="o">=</span> <span class="n">bitflip_solution</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">cost</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-614" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-614"></a>    <span class="n">metrics</span> <span class="o">=</span> <span class="n">_compute_negative_weight_metrics</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">flips</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-615" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-615"></a>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-616" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-616"></a>    <span class="k">if</span> <span class="n">metrics</span><span class="p">[</span><span class="s2">"neg_weight_reduction_pct"</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-617" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-617"></a>        <span class="n">reduction_pct</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s2">"neg_weight_reduction_pct"</span><span class="p">]</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-618" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-618"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-619" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-619"></a>            <span class="s2">"Bit-flip preprocessing (status=</span><span class="si">%s</span><span class="s2">) increased the remaining negative "</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-620" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-620"></a>            <span class="s2">"off-diagonal weight instead of reducing it (</span><span class="si">%.2f%%</span><span class="s2"> change); "</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-621" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-621"></a>            <span class="s2">"falling back to no-op flips."</span><span class="p">,</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-622" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-622"></a>            <span class="n">status</span><span class="p">,</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-623" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-623"></a>            <span class="n">reduction_pct</span><span class="p">,</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-624" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-624"></a>        <span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-625" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-625"></a>        <span class="n">flips</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-626" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-626"></a>        <span class="n">objective_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-627" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-627"></a>        <span class="n">status</span> <span class="o">=</span> <span class="s2">"REJECTED_WORSE_THAN_NOOP"</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-628" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-628"></a>        <span class="n">metrics</span> <span class="o">=</span> <span class="n">_compute_negative_weight_metrics</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">flips</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-629" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-629"></a>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-630" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-630"></a>    <span class="n">Q_flipped</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="n">_transform_qubo_with_bitflips</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">flips</span><span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-631" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-631"></a>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-632" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-632"></a>    <span class="n">flipped_instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-633" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-633"></a>    <span class="n">flipped_instance</span><span class="o">.</span><span class="n">_matrix</span> <span class="o">=</span> <span class="n">Q_flipped</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-634" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-634"></a>    <span class="n">flipped_instance</span><span class="o">.</span><span class="n">flips</span> <span class="o">=</span> <span class="n">flips</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-635" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-635"></a>    <span class="n">flipped_instance</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="n">metrics</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-636" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-636"></a>    <span class="n">flipped_instance</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">"objective_value"</span><span class="p">]</span> <span class="o">=</span> <span class="n">objective_value</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-637" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-637"></a>    <span class="n">flipped_instance</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-638" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-638"></a>    <span class="n">flipped_instance</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-639" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-639"></a>
-<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-640" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-640"></a>    <span class="k">return</span> <span class="n">flipped_instance</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-303">303</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-304">304</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-305">305</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-306">306</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-307">307</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-308">308</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-309">309</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-310">310</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-311">311</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-312">312</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-313">313</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-314">314</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-315">315</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-316">316</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-317">317</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-318">318</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-319">319</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-320">320</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-321">321</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-322">322</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-323">323</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-324">324</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-325">325</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-326">326</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-327">327</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-328">328</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-329">329</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-330">330</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-331">331</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-332">332</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-333">333</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-334">334</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-335">335</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-336">336</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-337">337</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-338">338</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-339">339</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-340">340</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-341">341</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-342">342</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-343">343</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-344">344</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-345">345</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-346">346</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-347">347</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-348">348</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-349">349</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-350">350</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-351">351</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-352">352</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-353">353</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-354">354</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-355">355</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-356">356</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-357">357</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-303" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-303"></a><span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-304" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-304"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">,</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-305" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-305"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-306" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-306"></a>    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"local_search"</span><span class="p">,</span> <span class="s2">"tabu_search"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"local_search"</span><span class="p">,</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-307" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-307"></a>    <span class="n">time_limit_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">60.0</span><span class="p">,</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-308" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-308"></a>    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-309" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-309"></a>    <span class="n">rng</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-310" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-310"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Instance</span><span class="p">:</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-311" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-311"></a><span class="w">    </span><span class="sd">"""Find the bit flips minimizing negative weight and apply them to the QUBO matrix.</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-312" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-312"></a>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-313" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-313"></a><span class="sd">    Wraps `instance` in a bit-flip [`Instance`][], finds the flips with `method`,</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-314" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-314"></a><span class="sd">    and replaces the matrix with its flipped counterpart.  When</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-315" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-315"></a><span class="sd">    `instance` has no negative off-diagonal coefficient, the wrapper is returned</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-316" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-316"></a><span class="sd">    unchanged (``flips`` stays all-zero).</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-317" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-317"></a>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-318" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-318"></a><span class="sd">    Args:</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-319" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-319"></a><span class="sd">        instance: The QUBO instance to preprocess.</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-320" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-320"></a><span class="sd">        method: ``"local_search"``</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-321" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-321"></a><span class="sd">            ([`solving.iterative_bitflip_local_search.solve`][qubosolver.solving.classical.iterative_bitflip_local_search.solve]</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-322" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-322"></a><span class="sd">            on ``Q_f``, from random starts plus the no-flip start),</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-323" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-323"></a><span class="sd">            ``"tabu_search"`` (the same local search, refined with</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-324" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-324"></a><span class="sd">            [`solving.tabu_search.solve`][qubosolver.solving.classical.tabu_search.solve]).</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-325" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-325"></a><span class="sd">        time_limit_s: Time limit in seconds. For ``"tabu_search"``, it is shared</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-326" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-326"></a><span class="sd">            by the local search and the tabu search.</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-327" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-327"></a><span class="sd">        eps: Tolerance below which a coefficient is treated as zero.</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-328" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-328"></a><span class="sd">        rng: PyTorch random number generator controlling the random starts of</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-329" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-329"></a><span class="sd">            the local search.</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-330" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-330"></a>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-331" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-331"></a><span class="sd">    Returns:</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-332" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-332"></a><span class="sd">        A bit-flip instance carrying the flip vector and metrics.</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-333" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-333"></a>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-334" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-334"></a><span class="sd">    Raises:</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-335" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-335"></a><span class="sd">        ValueError: If `method` is unknown.</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-336" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-336"></a><span class="sd">    """</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-337" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-337"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">_has_negative_offdiagonal</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">):</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-338" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-338"></a>        <span class="k">return</span> <span class="n">Instance</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-339" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-339"></a>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-340" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-340"></a>    <span class="n">bitflip_solution</span> <span class="o">=</span> <span class="n">_solve_bitflip</span><span class="p">(</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-341" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-341"></a>        <span class="n">instance</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">time_limit</span><span class="o">=</span><span class="n">time_limit_s</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-342" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-342"></a>    <span class="p">)</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-343" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-343"></a>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-344" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-344"></a>    <span class="n">flips</span> <span class="o">=</span> <span class="n">bitflip_solution</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bitstring</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-345" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-345"></a>    <span class="n">objective_value</span> <span class="o">=</span> <span class="n">bitflip_solution</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">cost</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-346" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-346"></a>    <span class="n">metrics</span> <span class="o">=</span> <span class="n">_compute_negative_weight_metrics</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">flips</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-347" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-347"></a>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-348" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-348"></a>    <span class="n">Q_flipped</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="n">_transform_qubo_with_bitflips</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">flips</span><span class="p">)</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-349" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-349"></a>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-350" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-350"></a>    <span class="n">flipped_instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-351" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-351"></a>    <span class="n">flipped_instance</span><span class="o">.</span><span class="n">_matrix</span> <span class="o">=</span> <span class="n">Q_flipped</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-352" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-352"></a>    <span class="n">flipped_instance</span><span class="o">.</span><span class="n">flips</span> <span class="o">=</span> <span class="n">flips</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-353" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-353"></a>    <span class="n">flipped_instance</span><span class="o">.</span><span class="n">_metrics</span> <span class="o">=</span> <span class="n">metrics</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-354" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-354"></a>    <span class="n">flipped_instance</span><span class="o">.</span><span class="n">_metrics</span><span class="p">[</span><span class="s2">"objective_value"</span><span class="p">]</span> <span class="o">=</span> <span class="n">objective_value</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-355" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-355"></a>    <span class="n">flipped_instance</span><span class="o">.</span><span class="n">_offset</span> <span class="o">=</span> <span class="n">offset</span>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-356" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-356"></a>
+<a id="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-357" name="qubosolver.transforms.negative_bitflip.apply--source--__codelineno-0-357"></a>    <span class="k">return</span> <span class="n">flipped_instance</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -6353,59 +6113,59 @@ returns a deep copy of <code>flipped_solution</code> unchanged.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/transforms/negative_bitflip.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-643">643</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-644">644</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-645">645</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-646">646</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-647">647</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-648">648</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-649">649</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-650">650</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-651">651</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-652">652</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-653">653</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-654">654</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-655">655</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-656">656</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-657">657</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-658">658</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-659">659</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-660">660</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-661">661</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-662">662</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-663">663</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-664">664</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-665">665</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-666">666</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-667">667</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-668">668</a></span>
-<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-669">669</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-643" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-643"></a><span class="k">def</span><span class="w"> </span><span class="nf">lift</span><span class="p">(</span><span class="n">flipped_solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">,</span> <span class="n">flipped_instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-644" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-644"></a><span class="w">    </span><span class="sd">"""Map a solution of the bit-flipped QUBO instance back onto the original variables.</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-645" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-645"></a>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-646" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-646"></a><span class="sd">    Undoes the flips recorded on `flipped_instance` (``y_i -&gt; x_i``) and recomputes</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-647" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-647"></a><span class="sd">    costs against the original (unflipped) matrix.  When no bit flip was applied,</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-648" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-648"></a><span class="sd">    returns a deep copy of `flipped_solution` unchanged.</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-649" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-649"></a>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-650" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-650"></a><span class="sd">    Args:</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-651" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-651"></a><span class="sd">        flipped_solution: Solution obtained on the bit-flipped instance.</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-652" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-652"></a><span class="sd">        flipped_instance: The bit-flipped instance produced by [`apply`][].</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-653" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-653"></a>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-654" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-654"></a><span class="sd">    Returns:</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-655" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-655"></a><span class="sd">        A new solution over the original variables.</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-656" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-656"></a><span class="sd">    """</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-657" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-657"></a>    <span class="n">flipped</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">flipped_instance</span><span class="o">.</span><span class="n">flips</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-658" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-658"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">flipped</span><span class="p">:</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-659" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-659"></a>        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">flipped_solution</span><span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-660" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-660"></a>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-661" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-661"></a>    <span class="n">solution</span> <span class="o">=</span> <span class="n">Solution</span><span class="p">()</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-662" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-662"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">bitstrings</span> <span class="o">=</span> <span class="n">_apply_bitflips</span><span class="p">(</span><span class="n">flipped_solution</span><span class="o">.</span><span class="n">bitstrings</span><span class="p">,</span> <span class="n">flipped_instance</span><span class="o">.</span><span class="n">flips</span><span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-663" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-663"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">costs</span> <span class="o">=</span> <span class="n">vector</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-664" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-664"></a>        <span class="p">[</span><span class="n">flipped_instance</span><span class="o">.</span><span class="n">_parent_instance</span><span class="o">.</span><span class="n">cost</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">bitstrings</span><span class="p">]</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-665" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-665"></a>    <span class="p">)</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-666" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-666"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">counts</span> <span class="o">=</span> <span class="n">flipped_solution</span><span class="o">.</span><span class="n">counts</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-667" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-667"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">probabilities</span> <span class="o">=</span> <span class="n">flipped_solution</span><span class="o">.</span><span class="n">probabilities</span>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-668" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-668"></a>
-<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-669" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-669"></a>    <span class="k">return</span> <span class="n">solution</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-360">360</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-361">361</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-362">362</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-363">363</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-364">364</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-365">365</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-366">366</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-367">367</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-368">368</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-369">369</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-370">370</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-371">371</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-372">372</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-373">373</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-374">374</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-375">375</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-376">376</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-377">377</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-378">378</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-379">379</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-380">380</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-381">381</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-382">382</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-383">383</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-384">384</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-385">385</a></span>
+<span class="normal"><a href="#qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-386">386</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-360" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-360"></a><span class="k">def</span><span class="w"> </span><span class="nf">lift</span><span class="p">(</span><span class="n">flipped_solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">,</span> <span class="n">flipped_instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-361" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-361"></a><span class="w">    </span><span class="sd">"""Map a solution of the bit-flipped QUBO instance back onto the original variables.</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-362" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-362"></a>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-363" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-363"></a><span class="sd">    Undoes the flips recorded on `flipped_instance` (``y_i -&gt; x_i``) and recomputes</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-364" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-364"></a><span class="sd">    costs against the original (unflipped) matrix.  When no bit flip was applied,</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-365" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-365"></a><span class="sd">    returns a deep copy of `flipped_solution` unchanged.</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-366" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-366"></a>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-367" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-367"></a><span class="sd">    Args:</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-368" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-368"></a><span class="sd">        flipped_solution: Solution obtained on the bit-flipped instance.</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-369" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-369"></a><span class="sd">        flipped_instance: The bit-flipped instance produced by [`apply`][].</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-370" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-370"></a>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-371" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-371"></a><span class="sd">    Returns:</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-372" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-372"></a><span class="sd">        A new solution over the original variables.</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-373" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-373"></a><span class="sd">    """</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-374" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-374"></a>    <span class="n">flipped</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">flipped_instance</span><span class="o">.</span><span class="n">flips</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-375" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-375"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">flipped</span><span class="p">:</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-376" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-376"></a>        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">flipped_solution</span><span class="p">)</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-377" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-377"></a>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-378" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-378"></a>    <span class="n">solution</span> <span class="o">=</span> <span class="n">Solution</span><span class="p">()</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-379" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-379"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">bitstrings</span> <span class="o">=</span> <span class="n">_apply_bitflips</span><span class="p">(</span><span class="n">flipped_solution</span><span class="o">.</span><span class="n">bitstrings</span><span class="p">,</span> <span class="n">flipped_instance</span><span class="o">.</span><span class="n">flips</span><span class="p">)</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-380" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-380"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">costs</span> <span class="o">=</span> <span class="n">vector</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-381" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-381"></a>        <span class="p">[</span><span class="n">flipped_instance</span><span class="o">.</span><span class="n">_parent_instance</span><span class="o">.</span><span class="n">cost</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">bitstrings</span><span class="p">]</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-382" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-382"></a>    <span class="p">)</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-383" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-383"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">counts</span> <span class="o">=</span> <span class="n">flipped_solution</span><span class="o">.</span><span class="n">counts</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-384" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-384"></a>    <span class="n">solution</span><span class="o">.</span><span class="n">probabilities</span> <span class="o">=</span> <span class="n">flipped_solution</span><span class="o">.</span><span class="n">probabilities</span>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-385" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-385"></a>
+<a id="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-386" name="qubosolver.transforms.negative_bitflip.lift--source--__codelineno-0-386"></a>    <span class="k">return</span> <span class="n">solution</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
