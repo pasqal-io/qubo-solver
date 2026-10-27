@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal, 2026
+#
+# Licensed under the Pasqal Open-Source Software License 2026 (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Analog quantum sampling compilation.
 
 The primary quantum solving primitive that compiles a pulse program for a target

@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal, 2026
+#
+# Licensed under the Pasqal Open-Source Software License 2026 (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Bitstring utilities for QUBO solvers.
 
 A [`Bitstring`][qubosolver.Bitstring] is a 1-D ``torch.int8`` tensor whose elements are 0 or 1.

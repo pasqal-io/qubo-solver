@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal, 2026
+#
+# Licensed under the Pasqal Open-Source Software License 2026 (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """1-D vector utilities for QUBO solvers.
 
 A [`Vector`][qubosolver.Vector] is a 1-D float tensor of shape ``(n,)`` using the globally

@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal, 2026
+#
+# Licensed under the Pasqal Open-Source Software License 2026 (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Runtime type-checking helpers controlled by the ``QUBO_SOLVER_RUNTIME_CHECKS`` env var.
 
 Set ``QUBO_SOLVER_RUNTIME_CHECKS=1`` before launching the process to enable

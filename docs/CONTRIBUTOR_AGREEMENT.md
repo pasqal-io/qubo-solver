@@ -3,7 +3,7 @@
 PASQAL CONTRIBUTION AGREEMENT (the “Agreement”)
 
 The author of the License is:
-  Pasqal, a Société par Actions Simplifiée (Simplified Joint Stock Company) registered under number 849 441 522 at the Registre du commerce et des sociétés (Trade and Companies Register) of Evry – France, headquartered at 24 rue Émile Baudot – 91120 – Palaiseau – France, duly represented by its Président, M. Georges-Olivier REYMOND, Hereafter referred to as « the Licensor »
+  Pasqal, a Société par Actions Simplifiée (Simplified Joint Stock Company) registered under number 849 441 522 at the Registre du commerce et des sociétés (Trade and Companies Register) of Evry – France, headquartered at 24 rue Émile Baudot – 91120 – Palaiseau – France, duly represented by its President, M. Loïc Henriet, Hereafter referred to as « the Licensor »
 
 In the course of its activities, Pasqal carries out and leads quantic projects, in their software components. These projects aim to bring together a community of like-minded individuals to contribute to the development and improvement of Pasqal’s products. Pasqal clearly outlines which projects are open to contributions (“Projects”).
 

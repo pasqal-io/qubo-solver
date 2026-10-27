@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal, 2026
+#
+# Licensed under the Pasqal Open-Source Software License 2026 (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Solving algorithms for QUBO problems.
 
 This module provides quantum, hybrid and classical solvers. Some of them can also be

@@ -1,3 +1,8 @@
+# Copyright (c) Pasqal, 2026
+#
+# Licensed under the Pasqal Open-Source Software License 2026 (MIT-derived).
+# See LICENSE.md in the project root for the full terms.
+
 """Exact brute-force QUBO solver by exhaustive enumeration.
 
 Enumerates the ``2^n`` binary assignments of an ``n``-variable QUBO, evaluates
