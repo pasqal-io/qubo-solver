@@ -14,7 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add local search and tabu search methods to the negative-coefficient bit-flip preprocessing, selected with the new `method` argument of `negative_bitflip.apply`.
 
 ### Changed
-- `negative_bitflip.apply` now finds the bit flips by local search by default instead of GLPK; pass `method="glpk"` for the previous behavior.
+- `negative_bitflip.apply` now finds the bit flips by local search by default instead of GLPK.
+
+### Removed
+- Remove the GLPK method from the negative-coefficient bit-flip preprocessing, along with the `status` attribute of `negative_bitflip.Instance` and the `swiglpk` dependency. ([#347](https://github.com/pasqal-io/qubo-solver/pull/347))
 
 ## [0.9.1] - 2026-10-15
 

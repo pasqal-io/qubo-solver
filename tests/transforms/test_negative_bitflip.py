@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import io
 import itertools
-from typing import Any, Literal
+from typing import Literal
 
 import pytest
 import pytest_check as check
@@ -15,34 +15,21 @@ import torch
 
 from qubosolver import (
     Instance,
-    Solution,
     bitstring,
     bitstrings,
     matrix,
     solving,
     torch_rng,
     transforms,
-    vector,
-    vectori,
 )
 from qubosolver.transforms.negative_bitflip import (
     _apply_bitflips,
+    _bitflip_qubo,
+    _compute_negative_weight_metrics,
     _has_negative_offdiagonal,
-    _import_swiglpk,
-    _solve_bitflip_preprocessing_glpk,
     _transform_qubo_with_bitflips,
 )
 from qubosolver.utils._costs import quadratic_cost
-
-
-def single_flip_solution(flips: torch.Tensor, cost: float = 0.0) -> Solution:
-    """Wrap a flip vector into the single-row Solution returned by the bit-flip solvers."""
-    return Solution(
-        bitstrings=flips.unsqueeze(0),
-        costs=vector.tensor([cost]),
-        counts=vectori.tensor([1]),
-        probabilities=vector.tensor([1.0]),
-    )
 
 
 def bipartisable_negative_qubo() -> tuple[Instance, Instance]:
@@ -131,7 +118,9 @@ def test_bitflip_preprocessing_removes_all_negative_coefficients() -> None:
 
 def test_bitflip_preprocessing_can_leave_negative_coefficients() -> None:
     instance, expected_flipped_instance = non_bipartisable_negative_qubo()
-    flipped_instance = transforms.negative_bitflip.apply(instance, method="glpk")
+    # Several flip vectors are equally optimal; seed the random starts to pin
+    # the expected one.
+    flipped_instance = transforms.negative_bitflip.apply(instance, rng=torch_rng(4039706482))
 
     check.is_instance(flipped_instance, transforms.negative_bitflip.Instance)
     torch.testing.assert_close(flipped_instance.matrix, expected_flipped_instance.matrix)
@@ -145,7 +134,7 @@ def test_bitflip_apply_is_noop_without_negative_coefficients() -> None:
     flipped_instance = transforms.negative_bitflip.apply(instance)
 
     check.is_false(flipped_instance.flips.any())
-    check.equal(flipped_instance.offset, 0.0)
+    check.equal(flipped_instance._offset, 0.0)
     torch.testing.assert_close(flipped_instance.matrix, instance.matrix)
 
 
@@ -238,10 +227,10 @@ def test_metrics_reflect_the_original_matrix_not_the_flipped_one() -> None:
                 expected_after_count += 1
                 expected_after_weight += abs(q_after)
 
-    check.equal(flipped_instance.metrics["neg_count_before"], expected_before_count)
-    check.almost_equal(flipped_instance.metrics["neg_weight_before"], expected_before_weight)
-    check.equal(flipped_instance.metrics["neg_count_after"], expected_after_count)
-    check.almost_equal(flipped_instance.metrics["neg_weight_after"], expected_after_weight)
+    check.equal(flipped_instance._metrics["neg_count_before"], expected_before_count)
+    check.almost_equal(flipped_instance._metrics["neg_weight_before"], expected_before_weight)
+    check.equal(flipped_instance._metrics["neg_count_after"], expected_after_count)
+    check.almost_equal(flipped_instance._metrics["neg_weight_after"], expected_after_weight)
     # For this fixture, bit-flip preprocessing only reduces, it does not remove.
     check.greater(expected_before_count, expected_after_count)
 
@@ -269,102 +258,9 @@ def test_bitflip_lift_restores_original_variables_for_a_batch() -> None:
         check.almost_equal(restored[i].cost, instance.cost(restored[i].bitstring))
 
 
-def test_glpk_infeasible_or_error_falls_back_to_noop_flips() -> None:
-    # A vanishing time limit forces GLPK to hit its time limit before finding
-    # any feasible solution; apply() must degrade to a safe no-op rather than
-    # raise or return garbage flips.
-    instance, _ = non_bipartisable_negative_qubo()
-
-    solution, status = _solve_bitflip_preprocessing_glpk(instance.matrix, time_limit_s=0.0)
-    flips = solution[0].bitstring
-
-    check.is_in(status, ("TIME_LIMIT_NO_SOLUTION", "TIME_LIMIT_FEASIBLE", "OPTIMAL", "FEASIBLE"))
-    check.equal(flips.shape[0], instance.size)
-
-
-def test_glpk_time_limit_warns_when_falling_back(caplog: pytest.LogCaptureFixture) -> None:
-    # When GLPK can't reach a feasible solution in time, apply() must degrade
-    # to no-op flips *and* surface a warning, so the failure is observable.
-    instance, _ = non_bipartisable_negative_qubo()
-
-    with caplog.at_level("WARNING", logger="qubosolver.transforms.negative_bitflip"):
-        solution, status = _solve_bitflip_preprocessing_glpk(instance.matrix, time_limit_s=0.0)
-    flips = solution[0].bitstring
-
-    if status in ("TIME_LIMIT_NO_SOLUTION", "GLPK_ERROR_0"):
-        check.is_false(flips.any())
-        check.is_true(len(caplog.records) >= 1)
-
-
-def test_apply_rejects_flips_that_increase_negative_weight(
-    monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    # Regression test: GLPK can return flips that are individually "optimal"
-    # for its internal objective but still leave *more* negative weight than
-    # doing nothing (see issue #237). apply() must detect and reject this,
-    # falling back to a safe no-op rather than handing back a worse matrix.
-    instance, _ = non_bipartisable_negative_qubo()
-
-    # These flips are a genuine regression on this fixture: negative weight
-    # goes from 6.0 (no-op) to 7.0 (flipped).
-    worse_flips = bitstring.from_string("1100")
-
-    def _fake_solve(
-        *args: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
-        **kwargs: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
-    ) -> tuple[Solution, str]:
-        return single_flip_solution(worse_flips), "OPTIMAL"
-
-    monkeypatch.setattr(
-        "qubosolver.transforms.negative_bitflip._solve_bitflip_preprocessing_glpk",
-        _fake_solve,
-    )
-
-    with caplog.at_level("WARNING", logger="qubosolver.transforms.negative_bitflip"):
-        flipped_instance = transforms.negative_bitflip.apply(instance, method="glpk")
-
-    check.equal(flipped_instance.status, "REJECTED_WORSE_THAN_NOOP")
-    check.is_false(flipped_instance.flips.any())
-    check.is_nan(flipped_instance.metrics["objective_value"])
-    torch.testing.assert_close(flipped_instance.matrix, instance.matrix)
-    check.equal(
-        flipped_instance.metrics["neg_weight_after"],
-        flipped_instance.metrics["neg_weight_before"],
-    )
-    check.is_true(len(caplog.records) >= 1)
-
-
-def test_apply_keeps_flips_that_reduce_negative_weight(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    # Sanity check for the new guard: a genuinely-improving flip vector must
-    # still be kept and must not be flagged as a regression.
-    instance, _ = non_bipartisable_negative_qubo()
-    good_flips = bitstring.from_string("0100")
-    expected_matrix, _ = _transform_qubo_with_bitflips(instance.matrix, good_flips)
-
-    def _fake_solve(
-        *args: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
-        **kwargs: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
-    ) -> tuple[Solution, str]:
-        return single_flip_solution(good_flips), "OPTIMAL"
-
-    monkeypatch.setattr(
-        "qubosolver.transforms.negative_bitflip._solve_bitflip_preprocessing_glpk",
-        _fake_solve,
-    )
-
-    flipped_instance = transforms.negative_bitflip.apply(instance, method="glpk")
-
-    check.equal(flipped_instance.status, "OPTIMAL")
-    check.is_true(flipped_instance.flips.any())
-    torch.testing.assert_close(flipped_instance.matrix, expected_matrix)
-
-
 def test_save_load_roundtrips_bitflip_state() -> None:
     # save/load must persist the bit-flip specific state (flips, metrics,
-    # status, offset, parent instance), not just the matrix inherited from
+    # offset, parent instance), not just the matrix inherited from
     # the base Instance.save/load.
     instance, _ = non_bipartisable_negative_qubo()
     flipped_instance = transforms.negative_bitflip.apply(instance)
@@ -377,9 +273,8 @@ def test_save_load_roundtrips_bitflip_state() -> None:
     check.is_instance(loaded_instance, transforms.negative_bitflip.Instance)
     torch.testing.assert_close(loaded_instance.matrix, flipped_instance.matrix)
     torch.testing.assert_close(loaded_instance.flips, flipped_instance.flips)
-    check.equal(loaded_instance.status, flipped_instance.status)
-    check.equal(loaded_instance.offset, flipped_instance.offset)
-    check.equal(loaded_instance.metrics, flipped_instance.metrics)
+    check.equal(loaded_instance._offset, flipped_instance._offset)
+    check.equal(loaded_instance._metrics, flipped_instance._metrics)
     torch.testing.assert_close(
         loaded_instance._parent_instance.matrix, flipped_instance._parent_instance.matrix
     )
@@ -440,39 +335,15 @@ def test_negative_bitflip_load_rejects_a_stream_saved_as_a_different_type() -> N
         transforms.negative_bitflip.Instance.load(buffer)
 
 
-def test_glpk_solve_survives_internal_exception(monkeypatch: pytest.MonkeyPatch) -> None:
-    # If GLPK itself raises during the solve (e.g. a binding error), the
-    # function must still return a usable (no-op) result instead of
-    # propagating the exception, since apply() has no outer safety net.
-    instance, _ = non_bipartisable_negative_qubo()
-
-    glp = _import_swiglpk()
-
-    def _raise(
-        *args: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
-        **kwargs: Any,  # noqa: ANN401 (stand-in matching the patched target's signature)
-    ) -> None:
-        msg = "simulated GLPK failure"
-        raise RuntimeError(msg)
-
-    monkeypatch.setattr(glp, "glp_intopt", _raise)
-
-    solution, status = _solve_bitflip_preprocessing_glpk(instance.matrix)
-
-    check.equal(status, "FAIL")
-    check.is_false(solution[0].bitstring.any())
-    check.is_nan(solution[0].cost)
-
-
 @pytest.mark.parametrize("method", ["local_search", "tabu_search"])
-def test_heuristic_methods_match_glpk_negative_weight(
+def test_heuristic_methods_match_brute_force_negative_weight(
     method: Literal["local_search", "tabu_search"],
 ) -> None:
     instance, _ = non_bipartisable_negative_qubo()
 
     flipped_instance = transforms.negative_bitflip.apply(instance, method=method)
-    expected = transforms.negative_bitflip.apply(instance, method="glpk")
+    expected = solving.brute_force.solve(_bitflip_qubo(instance))[0]
+    expected_metrics = _compute_negative_weight_metrics(instance.matrix, expected.bitstring)
 
-    check.equal(flipped_instance.status, "HEURISTIC")
-    check.equal(flipped_instance.metrics["neg_weight_after"], expected.metrics["neg_weight_after"])
-    check.equal(flipped_instance.metrics["objective_value"], expected.metrics["objective_value"])
+    check.equal(flipped_instance._metrics["neg_weight_after"], expected_metrics["neg_weight_after"])
+    check.equal(flipped_instance._metrics["objective_value"], expected.cost)

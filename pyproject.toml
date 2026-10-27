@@ -14,10 +14,11 @@ authors = [
   { name = "Antoine Bussy", email = "antoine.bussy@pasqal.com" },
   { name = "Monique Garzillo", email = "monique.garzillo@pasqal.com" },
   { name = "Manu Lahariya" },
-  { name = "Quentin Ma", email = "quentin.ma@pasqal.com" },
+  { name = "Quentin Ma" },
   { name = "Charles Moussa" },
   { name = "Yassine Naghmouchi", email = "yassine.naghmouchi@pasqal.com" },
   { name = "Wesley da Silva Coelho", email = "wesley.coelho@pasqal.com" },
+  { name = "Renan Spencer", email = "renan.spencer@pasqal.com" },
   { name = "Clément de Terrasson de Montleau", email = "clement.de-terrasson@pasqal.com" },
 ]
 
@@ -42,7 +43,6 @@ dependencies = [
   "pandas",
   "seaborn",
   "scikit-optimize",
-  "swiglpk>=5.0.13",
   "qoolqit[extras]>=1.5.0", # The version in .pre-commit-config.yaml must match
   "shapely",
   "scipy",
@@ -273,3 +273,12 @@ extend_exclude = ["docs/tutorials/retired"]
 
 [tool.deptry.package_module_name_map]
 pulser = ["pulser", "pulser_simulation"]
+
+# License check run in .github/workflows/security.yml: rejects GPL-family (GPL/LGPL/AGPL) and
+# undeclared licenses among the dependencies shipped to users.
+[tool.pip-licenses]
+from = "mixed"
+partial-match = true
+fail-on = "GPL;General Public License;UNKNOWN"
+# cuda-toolkit (via torch): NVIDIA proprietary license, declares no license metadata
+ignore-packages = ["cuda-toolkit"]

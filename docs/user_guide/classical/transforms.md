@@ -102,24 +102,21 @@ exactly.
 For each variable, a flip vector entry of `0` keeps it unchanged and `1` complements it
 (`x_i -> 1 - x_i`); the transformed QUBO is equivalent to the original problem up to this change of
 variables. Choosing the flip vector that minimizes the remaining negative off-diagonal weight is
-itself a QUBO. `apply` solves it with one of three methods:
+itself a QUBO. `apply` solves it with one of two methods:
 
 - `"local_search"` (default): a local search from random starts plus the no-flip start. It is fast,
   but not guaranteed to be optimal.
 - `"tabu_search"`: the same local search, refined with a tabu search.
-- `"glpk"`: an integer linear program solved with GLPK. It is exact, which is useful for validation
-  and small QUBOs, but it is not expected to scale to large industrial instances.
 
 The heuristics are reproducible when a seeded `rng` is passed to `apply`.
 
 The transform lives in `qubosolver.transforms.negative_bitflip`. `apply` finds the flips, applies
-them, and returns an `Instance` that records the flip vector, status, and metrics.
+them, and returns an `Instance` that records the flip vector and metrics.
 
 - API reference: [`qubosolver.transforms.negative_bitflip`](../../api/transforms.md)
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="bitflip" result="text"
-import json
 from qubosolver import Instance, transforms, matrix, torch_rng
 
 Q_hard = Instance(
@@ -138,8 +135,7 @@ reduced_hard = transforms.negative_bitflip.apply(
 )
 
 print(f"Flip vector: {reduced_hard.flips}")
-print(f"Bitflip status: {reduced_hard.status}")
-print(f"Bitflip metrics: {json.dumps(reduced_hard.metrics, indent=4)}")
+print(f"Flipped matrix:\n{reduced_hard.matrix}")
 ```
 
 Bit-flip preprocessing reduces the negative off-diagonal coefficients, but — as in the example

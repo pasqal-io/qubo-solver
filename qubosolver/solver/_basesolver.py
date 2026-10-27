@@ -174,7 +174,7 @@ class BaseSolver(ABC):
     def _preprocess(self) -> None:
         """Apply preprocessing to reduce the problem size and handle negative interactions.
 
-        Runs variable-fixing first, then GLPK bit-flip preprocessing
+        Runs variable-fixing first, then bit-flip preprocessing
         to remove negative off-diagonal coefficients.
 
         This method is a no-op when ``config.preprocessing`` is ``False``.

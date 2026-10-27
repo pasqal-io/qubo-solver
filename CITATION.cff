@@ -18,7 +18,6 @@ authors:
     affiliation: Pasqal
   - given-names: Quentin
     family-names: Ma
-    email: quentin.ma@pasqal.com
     affiliation: Pasqal
   - given-names: Charles
     family-names: Moussa
@@ -31,6 +30,10 @@ authors:
     name-particle: da
     family-names: Silva Coelho
     email: wesley.coelho@pasqal.com
+    affiliation: Pasqal
+  - given-names: Renan
+    family-names: Spencer
+    email: renan.spencer@pasqal.com
     affiliation: Pasqal
   - given-names: Clément
     name-particle: de
