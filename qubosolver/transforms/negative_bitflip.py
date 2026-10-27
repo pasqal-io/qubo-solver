@@ -10,8 +10,7 @@ have non-negative off-diagonal coefficients to be embeddable.  A change of
 variable ``x_i -> 1 - y_i`` on a subset of variables flips the sign of the
 interactions incident to it; choosing the subset that removes as much negative
 weight as possible is itself a QUBO, ``f^T Q_f f`` with ``Q_f = diag(C 1) - C``,
-solved here by local search, tabu search or, as an
-integer linear program, with [GLPK](https://github.com/bradfordboyle/pyglpk).
+solved here by local search or tabu search.
 
 [`apply`][] finds the bit flips (by default with a local search on ``Q_f``) and
 applies them to the matrix, returning a wrapper [`Instance`][] that
@@ -37,9 +36,7 @@ from __future__ import annotations
 import copy
 import io
 import json
-import logging
 import time
-import warnings
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -55,32 +52,11 @@ from qubosolver.types import (
     Matrix,
     Solution,
     bitstring,
-    bitstrings,
     vector,
-    vectori,
 )
 
 if TYPE_CHECKING:
     from qubosolver._io.utils import Stream
-
-logger = logging.getLogger(__name__)
-
-
-def _import_swiglpk() -> Any:  # noqa: ANN401 (SWIG module has no type stubs)
-    """Import ``swiglpk`` with its import-time SWIG warnings silenced.
-
-    SWIG-generated extensions emit ``DeprecationWarning: builtin type ... has
-    no __module__ attribute`` while initializing on Python 3.12+.  If warnings
-    are turned into errors (``-W error``, or pytest's ``filterwarnings =
-    ["error"]``), that warning aborts the extension's initialization half-way
-    and the next GLPK call segfaults.  Once imported, the module is cached in
-    ``sys.modules`` so later imports are safe.
-    """
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        import swiglpk  # noqa: PLC0415 (imported with SWIG deprecation warnings silenced)
-
-    return swiglpk
 
 
 @dataclass(frozen=True)
@@ -196,228 +172,6 @@ def _compute_negative_weight_metrics(
     }
 
 
-def _solve_bitflip_preprocessing_glpk(  # noqa: C901, PLR0915
-    # This function is planned to be reimplemented without GLPK; complexity
-    # should be addressed as part of that rewrite rather than fixed here.
-    Q: Matrix,
-    *,
-    time_limit_s: float = 60.0,
-    eps: float = 0.0,
-    log: bool = False,
-) -> tuple[Solution, str]:
-    """Solve the GLPK bit-flip preprocessing ILP with the negative-weight objective.
-
-    Variables:
-        f_i in {0, 1}
-        y_k in {0, 1}, with y_k = f_i XOR f_j
-
-    Objective:
-        minimize the total absolute weight of negative off-diagonal coefficients
-        remaining after applying the variable flips.
-    """
-    glp = _import_swiglpk()
-
-    n = Q.shape[0]
-    edges = _extract_upper_edges(Q, eps=eps)
-    m = len(edges)
-
-    def f_col(i: int) -> int:
-        return i + 1
-
-    def y_col(k: int) -> int:
-        return n + k + 1
-
-    if m == 0:
-        solution = Solution(
-            bitstrings=bitstrings.zeros(1, n),
-            costs=vector.tensor([0.0]),
-            counts=vectori.tensor([1]),
-            probabilities=vector.tensor([1.0]),
-        )
-        return solution, "OPTIMAL"
-
-    prob = glp.glp_create_prob()
-
-    try:
-        glp.glp_set_prob_name(prob, "bitflip_negative_weight_preprocessing")
-        glp.glp_set_obj_dir(prob, glp.GLP_MIN)
-
-        glp.glp_add_cols(prob, n + m)
-
-        for i in range(n):
-            col = f_col(i)
-            glp.glp_set_col_name(prob, col, f"f_{i}")
-            glp.glp_set_col_kind(prob, col, glp.GLP_BV)
-            glp.glp_set_col_bnds(prob, col, glp.GLP_DB, 0.0, 1.0)
-            glp.glp_set_obj_coef(prob, col, 0.0)
-
-        for k, edge in enumerate(edges):
-            col = y_col(k)
-            glp.glp_set_col_name(prob, col, f"y_{k}")
-            glp.glp_set_col_kind(prob, col, glp.GLP_BV)
-            glp.glp_set_col_bnds(prob, col, glp.GLP_DB, 0.0, 1.0)
-
-            weight = abs(float(edge.q))
-
-            # Negative remaining weight:
-            #   q < 0 : |q| * (1 - y) = constant - |q| * y
-            #   q > 0 : |q| * y
-            objective_coefficient = -weight if edge.q < 0 else weight
-            glp.glp_set_obj_coef(prob, col, objective_coefficient)
-
-        glp.glp_add_rows(prob, 4 * m)
-
-        row = 1
-
-        def set_three_term_row(  # noqa: PLR0913, PLR0917
-            row_index: int,
-            bound_type: int,
-            lower_bound: float,
-            upper_bound: float,
-            columns: tuple[int, int, int],
-            coefficients: tuple[float, float, float],
-        ) -> None:
-            glp.glp_set_row_bnds(
-                prob,
-                row_index,
-                bound_type,
-                lower_bound,
-                upper_bound,
-            )
-
-            indices = glp.intArray(4)
-            values = glp.doubleArray(4)
-
-            for position, (column, coefficient) in enumerate(
-                zip(columns, coefficients, strict=True),
-                start=1,
-            ):
-                indices[position] = column
-                values[position] = coefficient
-
-            glp.glp_set_mat_row(prob, row_index, 3, indices, values)
-
-        for k, edge in enumerate(edges):
-            fi = f_col(edge.i)
-            fj = f_col(edge.j)
-            y = y_col(k)
-
-            # y >= fi - fj  -> y - fi + fj >= 0
-            set_three_term_row(
-                row,
-                glp.GLP_LO,
-                0.0,
-                0.0,
-                (y, fi, fj),
-                (1.0, -1.0, 1.0),
-            )
-            row += 1
-
-            # y >= fj - fi  -> y + fi - fj >= 0
-            set_three_term_row(
-                row,
-                glp.GLP_LO,
-                0.0,
-                0.0,
-                (y, fi, fj),
-                (1.0, 1.0, -1.0),
-            )
-            row += 1
-
-            # y <= fi + fj  -> y - fi - fj <= 0
-            set_three_term_row(
-                row,
-                glp.GLP_UP,
-                0.0,
-                0.0,
-                (y, fi, fj),
-                (1.0, -1.0, -1.0),
-            )
-            row += 1
-
-            # y <= 2 - fi - fj  -> y + fi + fj <= 2
-            set_three_term_row(
-                row,
-                glp.GLP_UP,
-                0.0,
-                2.0,
-                (y, fi, fj),
-                (1.0, 1.0, 1.0),
-            )
-            row += 1
-
-        params = glp.glp_iocp()
-        glp.glp_init_iocp(params)
-
-        params.presolve = glp.GLP_ON
-        params.msg_lev = glp.GLP_MSG_ALL if log else glp.GLP_MSG_OFF
-        params.tm_lim = max(0, int(float(time_limit_s) * 1000))
-
-        return_code = glp.glp_intopt(prob, params)
-        mip_status = glp.glp_mip_status(prob)
-
-        status_names = {
-            glp.GLP_OPT: "OPTIMAL",
-            glp.GLP_FEAS: "FEASIBLE",
-            glp.GLP_NOFEAS: "INFEASIBLE",
-            glp.GLP_UNDEF: "UNDEFINED",
-        }
-        status = status_names.get(mip_status, f"GLPK_STATUS_{mip_status}")
-
-        if mip_status in (glp.GLP_OPT, glp.GLP_FEAS):
-            # GLPK's default integrality tolerance is 1e-5, looser than
-            # `round`'s default.
-            flips = bitstring.round(
-                [glp.glp_mip_col_val(prob, f_col(i)) for i in range(n)],
-                atol=1e-4,
-            )
-            objective_value = float(glp.glp_mip_obj_val(prob))
-
-            if return_code == glp.GLP_ETMLIM and mip_status == glp.GLP_FEAS:
-                status = "TIME_LIMIT_FEASIBLE"
-        else:
-            flips = bitstring.zeros(n)
-            objective_value = float("nan")
-
-            if return_code == glp.GLP_ETMLIM:
-                status = "TIME_LIMIT_NO_SOLUTION"
-            elif return_code != 0:
-                status = f"GLPK_ERROR_{return_code}"
-
-            hint = (
-                " Consider increasing time_limit_s to give GLPK more time to find a solution."
-                if status == "TIME_LIMIT_NO_SOLUTION"
-                else ""
-            )
-            logger.warning(
-                "Bit-flip preprocessing ILP did not reach a feasible solution "
-                "(status=%s); falling back to no-op flips.%s",
-                status,
-                hint,
-            )
-
-    except Exception:
-        logger.warning(
-            "Bit-flip preprocessing ILP raised an exception; falling back to no-op flips.",
-            exc_info=True,
-        )
-        flips = bitstring.zeros(n)
-        status = "FAIL"
-        objective_value = float("nan")
-
-    finally:
-        glp.glp_delete_prob(prob)
-
-    solution = Solution(
-        bitstrings=flips.unsqueeze(0),
-        costs=vector.tensor([objective_value]),
-        counts=vectori.tensor([1]),
-        probabilities=vector.tensor([1.0]),
-    )
-
-    return solution, status
-
-
 def _bitflip_qubo(instance: qubosolver.Instance, *, eps: float = 0.0) -> qubosolver.Instance:
     """Build the QUBO ``Q_f`` whose minimum gives the best bit flips for `Q`.
 
@@ -444,22 +198,15 @@ def _bitflip_qubo(instance: qubosolver.Instance, *, eps: float = 0.0) -> qubosol
 def _solve_bitflip(
     instance: qubosolver.Instance,
     *,
-    method: Literal["local_search", "tabu_search", "glpk"],
+    method: Literal["local_search", "tabu_search"],
     time_limit: float,
     eps: float,
     rng: torch.Generator | None,
-) -> tuple[Solution, str]:
+) -> Solution:
 
-    if method not in ("local_search", "tabu_search", "glpk"):
+    if method not in ("local_search", "tabu_search"):
         msg = f"Unknown bit-flip method {method!r}."
         raise ValueError(msg)
-
-    if method == "glpk":
-        return _solve_bitflip_preprocessing_glpk(
-            instance.matrix,
-            time_limit_s=time_limit,
-            eps=eps,
-        )
 
     # time_limit is a budget for local search and tabu search together.
     deadline = time.monotonic() + time_limit
@@ -467,7 +214,7 @@ def _solve_bitflip(
 
     solution = solving.trivial_solution_search.solve(bitflip_instance)
     if solution:
-        return solution, "HEURISTIC"
+        return solution
 
     n_starts = 100
     starts = solving.random_sampling.solve(bitflip_instance, max_bitstrings=n_starts, rng=rng)
@@ -482,23 +229,22 @@ def _solve_bitflip(
         time_limit=time_limit,
     )
     if method != "tabu_search":
-        return solution, "HEURISTIC"
+        return solution
 
-    solution = solving.tabu_search.solve(
+    return solving.tabu_search.solve(
         bitflip_instance,
         starts=solution.bitstrings,
         max_iter=1000,
         max_no_improve=100,
         time_limit=max(0.0, deadline - time.monotonic()),
     )
-    return solution, "HEURISTIC"
 
 
 class Instance(qubosolver.Instance):
     """A QUBO instance carrying bit-flip preprocessing history.
 
     Wraps a parent [`qubosolver.Instance`][] whose off-diagonal coefficients may
-    contain negative interactions.  Applying [`apply`][] solves the bit-flip ILP,
+    contain negative interactions.  Applying [`apply`][] solves the bit-flip problem,
     stores the flip vector here, and exposes the transformed matrix so it can be
     embedded and solved.  [`lift`][] uses the stored state to map a solution
     back onto the original variables.
@@ -517,16 +263,11 @@ class Instance(qubosolver.Instance):
         self.flips: Bitstring = bitstring.zeros(parent_instance.size)
         """Flip vector applied to the parent matrix, all-zero until [`apply`][] populates it."""
 
-        self.metrics: dict[str, Any] = {}
+        self._metrics: dict[str, Any] = {}
         """Negative off-diagonal count and weight before/after the flips, as computed
         by [`apply`][]."""
 
-        self.status: str = "NONE"
-        """Outcome of the bit-flip solve (e.g. ``"NONE"``, ``"HEURISTIC"`` for the
-        local and tabu searches, ``"OPTIMAL"`` for `GLPK`,
-        ``"REJECTED_WORSE_THAN_NOOP"``)."""
-
-        self.offset: float = 0.0
+        self._offset: float = 0.0
         """Constant term relating the flipped and original QUBO costs,
         $x^T Q x = y^T Q_{flipped} y + offset$."""
 
@@ -538,9 +279,7 @@ class Instance(qubosolver.Instance):
         torch.save(self.flips, buffer)
         io_utils.save_sized_buffer(f, buffer.getbuffer())
 
-        state_json = json.dumps(
-            {"status": self.status, "offset": self.offset, "metrics": self.metrics}
-        )
+        state_json = json.dumps({"offset": self._offset, "metrics": self._metrics})
         io_utils.save_string(f, state_json)
 
         self._parent_instance.save(f)
@@ -554,9 +293,8 @@ class Instance(qubosolver.Instance):
         instance.flips = torch.load(buffer, weights_only=True)
 
         state = json.loads(io_utils.load_string(f))
-        instance.status = state["status"]
-        instance.offset = state["offset"]
-        instance.metrics = state["metrics"]
+        instance._offset = state["offset"]
+        instance._metrics = state["metrics"]
 
         instance._parent_instance = qubosolver.Instance.load(f)
         return instance
@@ -565,7 +303,7 @@ class Instance(qubosolver.Instance):
 def apply(
     instance: qubosolver.Instance,
     *,
-    method: Literal["local_search", "tabu_search", "glpk"] = "local_search",
+    method: Literal["local_search", "tabu_search"] = "local_search",
     time_limit_s: float = 60.0,
     eps: float = 0.0,
     rng: torch.Generator | None = None,
@@ -575,10 +313,7 @@ def apply(
     Wraps `instance` in a bit-flip [`Instance`][], finds the flips with `method`,
     and replaces the matrix with its flipped counterpart.  When
     `instance` has no negative off-diagonal coefficient, the wrapper is returned
-    unchanged (``status`` stays ``"NONE"`` and ``flips`` stays all-zero).  If
-    the solved flips would leave *more* negative weight than doing nothing
-    (a known `GLPK` edge case), they are rejected and replaced with a no-op
-    (``status`` becomes ``"REJECTED_WORSE_THAN_NOOP"``).
+    unchanged (``flips`` stays all-zero).
 
     Args:
         instance: The QUBO instance to preprocess.
@@ -586,15 +321,12 @@ def apply(
             ([`solving.iterative_bitflip_local_search.solve`][qubosolver.solving.classical.iterative_bitflip_local_search.solve]
             on ``Q_f``, from random starts plus the no-flip start),
             ``"tabu_search"`` (the same local search, refined with
-            [`solving.tabu_search.solve`][qubosolver.solving.classical.tabu_search.solve])
-            or ``"glpk"`` (the **Integer Linear
-            Program (ILP)** solved with
-            [`GLPK`](https://github.com/bradfordboyle/pyglpk)).
+            [`solving.tabu_search.solve`][qubosolver.solving.classical.tabu_search.solve]).
         time_limit_s: Time limit in seconds. For ``"tabu_search"``, it is shared
             by the local search and the tabu search.
         eps: Tolerance below which a coefficient is treated as zero.
         rng: PyTorch random number generator controlling the random starts of
-            the local search; unused by ``"glpk"``.
+            the local search.
 
     Returns:
         A bit-flip instance carrying the flip vector and metrics.
@@ -605,7 +337,7 @@ def apply(
     if not _has_negative_offdiagonal(instance.matrix, eps=eps):
         return Instance(instance)
 
-    bitflip_solution, status = _solve_bitflip(
+    bitflip_solution = _solve_bitflip(
         instance, method=method, time_limit=time_limit_s, eps=eps, rng=rng
     )
 
@@ -613,29 +345,14 @@ def apply(
     objective_value = bitflip_solution[0].cost
     metrics = _compute_negative_weight_metrics(instance.matrix, flips, eps)
 
-    if metrics["neg_weight_reduction_pct"] < 0.0:
-        reduction_pct = metrics["neg_weight_reduction_pct"]
-        logger.warning(
-            "Bit-flip preprocessing (status=%s) increased the remaining negative "
-            "off-diagonal weight instead of reducing it (%.2f%% change); "
-            "falling back to no-op flips.",
-            status,
-            reduction_pct,
-        )
-        flips.fill_(0)
-        objective_value = float("nan")
-        status = "REJECTED_WORSE_THAN_NOOP"
-        metrics = _compute_negative_weight_metrics(instance.matrix, flips, eps)
-
     Q_flipped, offset = _transform_qubo_with_bitflips(instance.matrix, flips)
 
     flipped_instance = Instance(instance)
     flipped_instance._matrix = Q_flipped
     flipped_instance.flips = flips
-    flipped_instance.metrics = metrics
-    flipped_instance.metrics["objective_value"] = objective_value
-    flipped_instance.status = status
-    flipped_instance.offset = offset
+    flipped_instance._metrics = metrics
+    flipped_instance._metrics["objective_value"] = objective_value
+    flipped_instance._offset = offset
 
     return flipped_instance
 

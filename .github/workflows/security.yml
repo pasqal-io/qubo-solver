@@ -37,7 +37,10 @@ jobs:
           version: 0.13.5
           python-version: "3.14"
       - name: Run Bandit
-        run: uvx --from 'bandit[toml,sarif]' bandit -r qubosolver/ -c pyproject.toml -f sarif -o bandit-results.sarif || true  #TODO: remove 'true' once all warnings are fixed
+        env:
+          # renovate: datasource=pypi depName=bandit versioning=pep440
+          BANDIT_VERSION: 1.9.4
+        run: uvx --from "bandit[toml,sarif]==${BANDIT_VERSION}" bandit -r qubosolver/ -c pyproject.toml -f sarif -o bandit-results.sarif || true  #TODO: remove 'true' once all warnings are fixed
       - name: Upload Bandit SARIF to GitHub Security tab
         if: always()
         uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
@@ -136,6 +139,29 @@ jobs:
           format: github
           output: dependency-snapshot.json
           github-pat: ${{ secrets.GITHUB_TOKEN }}
+
+  licenses:
+    # License check — fails if a dependency shipped to users (runtime + extras, not the
+    # dependency groups) is GPL-family (GPL/LGPL/AGPL) or declares no license.
+    name: Licenses - pip-licenses
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: 0.13.5
+          python-version: "3.14"
+      - name: Install runtime dependencies and extras only
+        run: uv sync --no-default-groups --all-extras
+      - name: Reject GPL-family and undeclared licenses  # Configured in [tool.pip-licenses]
+        env:
+          # renovate: datasource=pypi depName=pip-licenses versioning=pep440
+          PIP_LICENSES_VERSION: 5.5.5
+        run: uvx "pip-licenses==${PIP_LICENSES_VERSION}" --python .venv/bin/python
 
   zizmor:
     # GitHub Actions static analysis — scans workflows for security issues (template injection,

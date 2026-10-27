@@ -209,7 +209,7 @@ def test_save_load_roundtrips_zeroing_over_negative_bitflip_parent() -> None:
     # zeroing.Instance.save/load dispatches on the parent's actual type (via
     # type(...).save / _load_by_tag), so a parent that is itself a richer
     # subclass (e.g. negative_bitflip.Instance) must round-trip with its own
-    # state (flips, status, offset, metrics) intact, not collapse to a plain
+    # state (flips, offset, metrics) intact, not collapse to a plain
     # base Instance.
     instance = non_bipartisable_negative_qubo_for_bitflip()
     flipped_parent = transforms.negative_bitflip.apply(instance)
@@ -223,8 +223,7 @@ def test_save_load_roundtrips_zeroing_over_negative_bitflip_parent() -> None:
     assert isinstance(loaded._parent_instance, transforms.negative_bitflip.Instance)
     torch.testing.assert_close(loaded._parent_instance.matrix, flipped_parent.matrix)
     torch.testing.assert_close(loaded._parent_instance.flips, flipped_parent.flips)
-    check.equal(loaded._parent_instance.status, flipped_parent.status)
-    check.equal(loaded._parent_instance.offset, flipped_parent.offset)
+    check.equal(loaded._parent_instance._offset, flipped_parent._offset)
 
 
 def test_base_instance_load_dispatches_to_zeroing_instance() -> None:
