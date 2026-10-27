@@ -3666,25 +3666,25 @@ that will be populated upon completion.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>qubosolver/types/protocols/backend.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-30">30</a></span>
-<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-31">31</a></span>
-<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-32">32</a></span>
-<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-33">33</a></span>
-<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-34">34</a></span>
-<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-35">35</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-35">35</a></span>
 <span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-36">36</a></span>
 <span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-37">37</a></span>
 <span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-38">38</a></span>
-<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-39">39</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.protocols.Backend.run--source--__codelineno-0-30" name="qubosolver.protocols.Backend.run--source--__codelineno-0-30"></a><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="n">program</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">QuantumProgram</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">job</span><span class="o">.</span><span class="n">Job</span><span class="p">[</span><span class="n">Results</span><span class="p">]:</span>
-<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-31" name="qubosolver.protocols.Backend.run--source--__codelineno-0-31"></a><span class="w">    </span><span class="sd">"""Submit a quantum program for execution.</span>
-<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-32" name="qubosolver.protocols.Backend.run--source--__codelineno-0-32"></a>
-<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-33" name="qubosolver.protocols.Backend.run--source--__codelineno-0-33"></a><span class="sd">    Args:</span>
-<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-34" name="qubosolver.protocols.Backend.run--source--__codelineno-0-34"></a><span class="sd">        program: The compiled quantum program to execute.</span>
-<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-35" name="qubosolver.protocols.Backend.run--source--__codelineno-0-35"></a>
-<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-36" name="qubosolver.protocols.Backend.run--source--__codelineno-0-36"></a><span class="sd">    Returns:</span>
-<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-37" name="qubosolver.protocols.Backend.run--source--__codelineno-0-37"></a><span class="sd">        A job wrapping the [`qoolqit.execution.Results`][]</span>
-<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-38" name="qubosolver.protocols.Backend.run--source--__codelineno-0-38"></a><span class="sd">            that will be populated upon completion.</span>
-<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-39" name="qubosolver.protocols.Backend.run--source--__codelineno-0-39"></a><span class="sd">    """</span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-39">39</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-40">40</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-41">41</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-42">42</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-43">43</a></span>
+<span class="normal"><a href="#qubosolver.protocols.Backend.run--source--__codelineno-0-44">44</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.protocols.Backend.run--source--__codelineno-0-35" name="qubosolver.protocols.Backend.run--source--__codelineno-0-35"></a><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="n">program</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">QuantumProgram</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">job</span><span class="o">.</span><span class="n">Job</span><span class="p">[</span><span class="n">Results</span><span class="p">]:</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-36" name="qubosolver.protocols.Backend.run--source--__codelineno-0-36"></a><span class="w">    </span><span class="sd">"""Submit a quantum program for execution.</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-37" name="qubosolver.protocols.Backend.run--source--__codelineno-0-37"></a>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-38" name="qubosolver.protocols.Backend.run--source--__codelineno-0-38"></a><span class="sd">    Args:</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-39" name="qubosolver.protocols.Backend.run--source--__codelineno-0-39"></a><span class="sd">        program: The compiled quantum program to execute.</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-40" name="qubosolver.protocols.Backend.run--source--__codelineno-0-40"></a>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-41" name="qubosolver.protocols.Backend.run--source--__codelineno-0-41"></a><span class="sd">    Returns:</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-42" name="qubosolver.protocols.Backend.run--source--__codelineno-0-42"></a><span class="sd">        A job wrapping the [`qoolqit.execution.Results`][]</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-43" name="qubosolver.protocols.Backend.run--source--__codelineno-0-43"></a><span class="sd">            that will be populated upon completion.</span>
+<a id="qubosolver.protocols.Backend.run--source--__codelineno-0-44" name="qubosolver.protocols.Backend.run--source--__codelineno-0-44"></a><span class="sd">    """</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
