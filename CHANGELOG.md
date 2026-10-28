@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-28
+
 ### Added
 - Add local search and tabu search methods to the negative-coefficient bit-flip preprocessing, selected with the new `method` argument of `negative_bitflip.apply`. ([#344](https://github.com/pasqal-io/qubo-solver/pull/344))
 - Add a `symmetrize` argument to `Instance` to replace a non-symmetric matrix $Q$ by $(Q + Q^T) / 2$. ([#336](https://github.com/pasqal-io/qubo-solver/pull/336))
@@ -158,7 +160,8 @@ This release is a major refactoring towards v1.0 and contains many breaking API 
 - Remove references to D-Wave ([#118](https://github.com/pasqal-io/qubo-solver/pull/118))
 
 
-[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/pasqal-io/qubo-solver/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/pasqal-io/qubo-solver/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.2...v0.9.0
 [0.8.2]: https://github.com/pasqal-io/qubo-solver/compare/v0.8.1...v0.8.2
