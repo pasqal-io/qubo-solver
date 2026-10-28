@@ -1,0 +1,35 @@
+<svg viewBox="0 0 620 420" xmlns="http://www.w3.org/2000/svg" style="max-width: 700px; width: 100%; font-family: var(--md-text-font, sans-serif);">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5f6368"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="#5f6368" stroke-width="2.5" marker-end="url(#arrow)">
+    <path d="M155,65 L155,160"/>
+    <path d="M155,210 L155,305"/>
+    <path d="M295,330 L365,330"/>
+    <path d="M465,305 L465,210"/>
+    <path d="M465,160 L465,65"/>
+  </g>
+  <g font-size="16" fill="#5f6368">
+    <text x="140" y="117" text-anchor="end">transform.apply</text>
+    <text x="140" y="262" text-anchor="end">transform.apply *</text>
+    <text x="330" y="290" text-anchor="middle">solver.solve</text>
+    <text x="480" y="262" text-anchor="start">transform.lift *</text>
+    <text x="480" y="117" text-anchor="start">transform.lift</text>
+  </g>
+  <g font-size="17" text-anchor="middle">
+    <rect x="45" y="15" width="220" height="50" rx="8" fill="#e8f0fe" stroke="#4285f4" stroke-width="1.5"/>
+    <text x="155" y="46" fill="#1a1a1a">Instance</text>
+    <rect x="35" y="160" width="240" height="50" rx="8" fill="#e8f0fe" stroke="#4285f4" stroke-width="1.5"/>
+    <text x="155" y="191" fill="#1a1a1a">Reduced instance</text>
+    <rect x="15" y="305" width="280" height="50" rx="8" fill="#e8f0fe" stroke="#4285f4" stroke-width="1.5"/>
+    <text x="155" y="336" fill="#1a1a1a">Further-reduced instance</text>
+    <rect x="365" y="305" width="200" height="50" rx="8" fill="#fce8e6" stroke="#ea4335" stroke-width="1.5"/>
+    <text x="465" y="336" fill="#1a1a1a">Solution</text>
+    <rect x="365" y="160" width="200" height="50" rx="8" fill="#fce8e6" stroke="#ea4335" stroke-width="1.5"/>
+    <text x="465" y="191" fill="#1a1a1a">Solution</text>
+    <rect x="320" y="15" width="290" height="50" rx="8" fill="#fce8e6" stroke="#ea4335" stroke-width="1.5"/>
+    <text x="465" y="46" fill="#1a1a1a">Solution on original Instance</text>
+  </g>
+</svg>
