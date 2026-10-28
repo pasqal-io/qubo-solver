@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "qubo-solver"
 description = "A Quadratic Unconstrained Binary Optimization (QUBO) solver library using quantum and classical approaches."
 readme = "README.md"
-version = "0.9.1"
+version = "0.10.0"
 requires-python = ">=3.11,<3.15"
 license = { text = "Pasqal Open-Source Software License 2026 (MIT-derived)" }
 keywords = ["quantum", "qubo", "solver", "optimization", "combinatorial"]
