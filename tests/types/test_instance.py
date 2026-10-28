@@ -25,6 +25,8 @@ from qubosolver import (
     transforms,
 )
 from qubosolver._io import utils as io_utils
+from qubosolver.types._enums import _DensityType
+from qubosolver.types.instance import _calculate_density, _classify_density
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -198,3 +200,29 @@ def test_load_rejects_a_stream_that_is_not_a_qubosolver_file() -> None:
 
     with pytest.raises(ValueError, match="Not a qubosolver file"):
         Instance.load(buffer)
+
+
+@pytest.mark.parametrize(
+    ("density", "expected"),
+    [
+        (0.0, _DensityType.SPARSE),
+        (0.29, _DensityType.SPARSE),
+        (0.3, _DensityType.MEDIUM),
+        (0.69, _DensityType.MEDIUM),
+        (0.7, _DensityType.HIGH),
+        (1.0, _DensityType.HIGH),
+    ],
+)
+def test_classify_density(density: float, expected: _DensityType) -> None:
+    check.equal(_classify_density(density), expected)
+
+
+@pytest.mark.parametrize("density", [-0.1, 1.1])
+def test_classify_density_out_of_range_raises(density: float) -> None:
+    with pytest.raises(ValueError, match="outside the defined thresholds"):
+        _classify_density(density)
+
+
+def test_calculate_density() -> None:
+    check.equal(_calculate_density(matrix.zeros(0)), 0.0)
+    check.equal(_calculate_density(matrix.tensor([[1.0, 0.0], [0.0, 1.0]])), 0.5)

@@ -14,7 +14,6 @@ from qubosolver.types import Instance, Solution, protocols
 
 if TYPE_CHECKING:
     import qoolqit
-    import torch
 
     from .config import QuantumSolvingConfig
 
@@ -48,11 +47,6 @@ class _BaseDriveShaper(ABC):
         self.config: QuantumSolvingConfig = config
         self.backend = backend
         self.device = self.config.device
-
-    @property
-    def qubo_coefficients(self) -> torch.Tensor:
-        """The raw QUBO coefficient matrix."""
-        return self.instance.matrix
 
     @abstractmethod
     def generate(

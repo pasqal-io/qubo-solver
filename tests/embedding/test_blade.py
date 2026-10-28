@@ -79,3 +79,9 @@ def test_tuned_defaults() -> None:
     for progress in (0.0, 0.5, 1.0):
         check.equal(config.compute_weight_relative_threshold(progress), 0.1)
         check.equal(config.compute_regulation_cursor(progress), 0.5)
+
+
+def test_negative_off_diagonal_raises() -> None:
+    instance = Instance(matrix.tensor([[1.0, -1.0], [-1.0, 1.0]]))
+    with pytest.raises(ValueError, match="negative off-diagonal"):
+        blade.embed(instance)

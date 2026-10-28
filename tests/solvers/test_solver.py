@@ -13,6 +13,7 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 import pytest_check as check
+import qoolqit
 import torch
 from pulser.backend.remote import (
     RemoteConnection,
@@ -38,7 +39,7 @@ from qubosolver import (
     matrix,
     vectori,
 )
-from qubosolver.solver.solver import _QuboSolverQuantum
+from qubosolver.solver.solver import _QuboSolverClassical, _QuboSolverQuantum
 from qubosolver.utils import _random, analysis
 
 if TYPE_CHECKING:
@@ -399,3 +400,48 @@ def test_quantum_solver_skips_pipeline_when_preprocessing_fixes_every_variable(
     check.equal(len(solution[0].string), instance.size)
     check.almost_equal(solution[0].cost, -5.0)
     solution.check_consistency(instance=instance, throw=True)
+
+
+def test_draw_sequence_draws_the_compiled_program(
+    simple_qubo_instance: Instance, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    draw = Mock()
+    monkeypatch.setattr(qoolqit.QuantumProgram, "draw", draw)
+    solver = _QuboSolverQuantum(simple_qubo_instance, SolverConfig(preprocessing=False))
+    embedding = solver._embedding()
+    drive, _ = solver._drive(embedding)
+    solver._draw_sequence(drive, embedding)
+    draw.assert_called_once_with(compiled=True)
+
+    # In classical mode no quantum program exists, so nothing is drawn.
+    classical_solver = _QuboSolverClassical(
+        simple_qubo_instance, SolverConfig(solving=ClassicalSolvingConfig())
+    )
+    classical_solver._draw_sequence(drive, embedding)
+    draw.assert_called_once()
+
+
+def test_update_instance_updates_inner_solver(
+    simple_qubo_instance: Instance, simple_qubo_instance2: Instance
+) -> None:
+    solver = Solver(simple_qubo_instance)
+    solver._update_instance(simple_qubo_instance2)
+    check.is_(solver.instance, simple_qubo_instance2)
+    check.is_(solver._solver.instance, simple_qubo_instance2)
+
+
+def test_negative_off_diagonal_without_preprocessing_warns(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    instance = Instance(matrix.tensor([[-1.0, -1.0], [-1.0, -1.0]]))
+    with caplog.at_level(logging.WARNING, logger="qubosolver.solver.solver"):
+        Solver(instance, SolverConfig(preprocessing=False))
+    check.is_in("Negative off-diagonal coefficients detected", caplog.text)
+
+
+def test_classical_solver_has_no_embedding_nor_drive(simple_qubo_instance: Instance) -> None:
+    solver = Solver(simple_qubo_instance, SolverConfig(solving=ClassicalSolvingConfig()))
+    with pytest.raises(NotImplementedError):
+        solver._embedding()
+    with pytest.raises(NotImplementedError):
+        solver._drive(qoolqit.Register.from_coordinates([[0.0, 0.0]]))

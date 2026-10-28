@@ -143,11 +143,6 @@ testpaths = ["tests"]
 addopts = [
     "-n=auto",
     "-vvv",
-    "--cov-report=term-missing",
-    "--cov-report=xml",
-    "--cov-config=pyproject.toml",
-    "--cov=qubosolver",
-    "--cov=tests",
     "--strict-markers",
 ]
 xfail_strict = true
@@ -166,6 +161,7 @@ log_cli_level = "WARNING"
 [tool.coverage.run]
 branch = true
 parallel = true
+source = ["qubosolver", "tests"]
 # uncomment to omit any file from the
 # coverage. Regexps can be used
 # to select all files from a folder
@@ -174,7 +170,10 @@ parallel = true
 #]
 
 [tool.coverage.report]
+fail_under = 100
+show_missing = true
 exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:", "pass"]
+exclude_also = ["@overload", "^\\s*\\.\\.\\.$"]
 
 [tool.ruff]
 line-length = 100

@@ -59,7 +59,7 @@ def get_layout(*, layout_type: Lattice | str = Lattice.TRIANGULAR, n_traps: int)
             squared_distances = coords.square().sum(dim=1)
             return coords[torch.argsort(squared_distances)[:n_traps]]
 
-        case _:
+        case _:  # no cov
             # Unreachable: layout_type was already validated above.
             msg = f"Unhandled layout_type: {layout_type!r}"
             raise AssertionError(msg)

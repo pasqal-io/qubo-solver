@@ -51,11 +51,11 @@ notebooks = []
 for file in notebooks_files:
     filename = notebook_name(file)
     reason = expected_fail.get(filename)
-    if reason is not None:
+    if reason is not None:  # no cov
         notebooks.append(pytest.param(file, marks=pytest.mark.xfail(reason=reason)))
         continue
     reason = skip.get(filename)
-    if reason is not None:
+    if reason is not None:  # no cov
         notebooks.append(pytest.param(file, marks=pytest.mark.skip(reason=reason)))
         continue
     notebooks.append(pytest.param(file))
@@ -82,10 +82,9 @@ def test_notebooks(notebook: Path) -> None:
                 f"stderr: {stderr.decode()}"
             )
 
-        if run_example.returncode != 0:
+        if run_example.returncode != 0:  # no cov
             pytest.fail(error_string)
 
     finally:
         # Cleanup always runs, even if errors happen
-        if py_file.exists():
-            py_file.unlink()
+        py_file.unlink(missing_ok=True)

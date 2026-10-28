@@ -12,6 +12,7 @@ from typing import Literal
 import pytest
 import pytest_check as check
 import torch
+from beartype.roar import BeartypeCallHintParamViolation
 
 from qubosolver import (
     Instance,
@@ -27,6 +28,7 @@ from qubosolver.transforms.negative_bitflip import (
     _bitflip_qubo,
     _compute_negative_weight_metrics,
     _has_negative_offdiagonal,
+    _solve_bitflip,
     _transform_qubo_with_bitflips,
 )
 from qubosolver.utils._costs import quadratic_cost
@@ -347,3 +349,31 @@ def test_heuristic_methods_match_brute_force_negative_weight(
 
     check.equal(flipped_instance._metrics["neg_weight_after"], expected_metrics["neg_weight_after"])
     check.equal(flipped_instance._metrics["objective_value"], expected.cost)
+
+
+def test_metrics_skip_zero_edges_and_handle_no_negative_coefficient() -> None:
+    Q = matrix.tensor([[0.0, 0.0, 1.0], [0.0, 0.0, 2.0], [1.0, 2.0, 0.0]])
+    metrics = _compute_negative_weight_metrics(Q, bitstring.zeros(3))
+    check.equal(metrics["n_edges"], 2)
+    check.equal(metrics["neg_count_before"], 0)
+    check.equal(metrics["neg_count_reduction_pct"], 0.0)
+    check.equal(metrics["neg_weight_reduction_pct"], 0.0)
+
+
+@pytest.mark.parametrize("has_negative_offdiagonal", [False, True])
+def test_apply_rejects_unknown_method(has_negative_offdiagonal: bool) -> None:
+    # Without negative off-diagonal coefficients, `apply` returns early: the
+    # method must be rejected before that.
+    if has_negative_offdiagonal:
+        instance, _ = bipartisable_negative_qubo()
+    else:
+        instance = Instance(matrix.tensor([[1.0, 0.0], [0.0, 1.0]]))
+    with pytest.raises((ValueError, BeartypeCallHintParamViolation)):
+        transforms.negative_bitflip.apply(instance, method="dummy")  # type: ignore[arg-type]
+
+
+def test_solve_bitflip_returns_trivial_solution() -> None:
+    instance, _ = bipartisable_negative_qubo()
+    # Every off-diagonal coefficient is below `eps`, so no flip is needed.
+    solution = _solve_bitflip(instance, method="local_search", time_limit=1.0, eps=10.0, rng=None)
+    check.equal(solution[0].string, "0000")

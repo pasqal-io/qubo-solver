@@ -22,7 +22,7 @@ logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 from qubosolver._checks import _RUNTIME_TYPE_CHECKING  # noqa: E402
 
-if _RUNTIME_TYPE_CHECKING:
+if _RUNTIME_TYPE_CHECKING:  # no cov
     from beartype import BeartypeConf  # deptry: ignore[DEP004]
     from beartype.claw import (  # deptry: ignore[DEP004]
         beartype_this_package,

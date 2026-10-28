@@ -138,10 +138,8 @@ def test_tabu_search_never_lets_f_current_go_inf(
 
     def spying_where(condition: torch.Tensor, x: torch.Tensor, y: float) -> torch.Tensor:
         nonlocal saw_all_tabu_iteration, saw_inf_at_allowed_move
-        if condition.any() and torch.isinf(x[condition]).any():
-            saw_inf_at_allowed_move = True
-        if not condition.any():
-            saw_all_tabu_iteration = True
+        saw_inf_at_allowed_move |= bool(torch.isinf(x[condition]).any())
+        saw_all_tabu_iteration |= not condition.any()
         return real_where(condition, x, y)
 
     monkeypatch.setattr(torch, "where", spying_where)
@@ -231,3 +229,10 @@ def test_tabu_search_still_finds_optimum_when_all_moves_become_tabu() -> None:
     check.almost_equal(solution[0].cost, optimum[0].cost)
 
     print(f"\n{analysis.to_dataframe([optimum, solution], labels=['optimum', 'solution'])}")
+
+
+def test_tabu_search_zero_time_limit_returns_start() -> None:
+    instance = Instance(matrix=matrix.tensor([[-3.0, 1.0], [1.0, -3.0]]))
+    starts = bitstrings.zeros(1, 2)
+    solution = solving.tabu_search.solve(instance, starts=starts, time_limit=0.0)
+    check.equal(solution[0].string, "00")

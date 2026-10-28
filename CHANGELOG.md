@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Make `negative_bitflip.apply` reject an unknown `method` when the instance has no negative off-diagonal coefficient: it used to return the instance unchanged. ([#354](https://github.com/pasqal-io/qubo-solver/pull/354))
+
 ## [0.10.0] - 2026-10-28
 
 ### Added

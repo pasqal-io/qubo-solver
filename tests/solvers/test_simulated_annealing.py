@@ -825,3 +825,17 @@ def test_simulated_annealing_overload_return_types_are_statically_correct() -> N
         instance_symmetric, starts=start, merge=False
     )
     assert_type(unmerged_result, list[Solution])
+
+
+@pytest.mark.parametrize("instance", instances, ids=instance_ids)
+def test_simulated_annealing_full_stats_counts_iterations(instance: Instance) -> None:
+    """With `stats="full"`, counts are the number of iterations spent at each bitstring."""
+    solution = solving.simulated_annealing.solve(
+        instance,
+        starts=bitstrings.zeros(1, instance.size),
+        max_iter=500,
+        rng=torch_rng(1916666555),
+        stats="full",
+        vectorized=False,
+    )
+    check.greater(solution.counts.sum().item(), 1)

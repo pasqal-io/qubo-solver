@@ -313,6 +313,5 @@ def test_quantum_prepostprocessing_2(
     check.greater(sum(probabilities), 0.9)
 
     for b in expected_solutions:
-        if b in df["bitstrings"].values:
-            cost = df.set_index("bitstrings")["costs"].get(b)
-            np.testing.assert_allclose(cost, -27.288260)
+        cost = df.set_index("bitstrings")["costs"].get(b)
+        np.testing.assert_allclose(cost, -27.288260)

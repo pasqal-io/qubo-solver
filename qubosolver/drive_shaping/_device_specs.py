@@ -5,17 +5,19 @@
 
 from __future__ import annotations
 
+import logging
 import math
-import warnings
 
 from qubosolver._checks import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import qoolqit
 
+logger = logging.getLogger(__name__)
+
 
 def compare_specs(a: dict, b: dict) -> None:
-    """Emit warnings for any key or value mismatches between two spec dicts.
+    """Log warnings for any key or value mismatches between two spec dicts.
 
     Args:
         a: First specification dictionary.
@@ -28,9 +30,9 @@ def compare_specs(a: dict, b: dict) -> None:
         only_in_a = keys_a - keys_b
         only_in_b = keys_b - keys_a
         if only_in_a:
-            warnings.warn(f"Keys present in a but missing in b: {only_in_a}", stacklevel=2)
+            logger.warning("Keys present in a but missing in b: %s", only_in_a)
         if only_in_b:
-            warnings.warn(f"Keys present in b but missing in a: {only_in_b}", stacklevel=2)
+            logger.warning("Keys present in b but missing in a: %s", only_in_b)
 
     for key in keys_a & keys_b:
         v1 = a[key]
@@ -38,7 +40,7 @@ def compare_specs(a: dict, b: dict) -> None:
         if v1 is None or v2 is None:
             continue
         if not math.isclose(float(v1), float(v2)):
-            warnings.warn(f"Value mismatch for key '{key}': a={v1}, b={v2}", stacklevel=2)
+            logger.warning("Value mismatch for key '%s': a=%s, b=%s", key, v1, v2)
 
 
 def pulser_specs(
@@ -85,6 +87,7 @@ def pulser_specs(
 
     r0 = specs["min_distance"]
     assert r0 is not None  # nosec B101
+    r0 = float(r0)  # Pulser stores it as an `int`
     _normalize("min_distance", r0)
     _normalize("max_radial_distance", r0)
 

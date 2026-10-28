@@ -11,7 +11,7 @@ import torch
 
 try:
     import cplex
-except ImportError:
+except ImportError:  # no cov
     cplex = None  # tests using it are skipped via the `extras` marker below
 
 from qubosolver import (

@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 import pytest_check as check
@@ -27,8 +29,13 @@ from qubosolver import (
 )
 from qubosolver.solving.classical.iterative_bitflip_local_search import (
     _best_improvement_search_batch,
+    _first_improvement_search,
+    _greedy_sweep_search,
 )
 from qubosolver.utils import _costs
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @pytest.mark.parametrize("postprocessing", [True, False])
@@ -169,3 +176,32 @@ def test_best_improvement_search_randoms(density: float) -> None:
             best_bitstrings = _best_improvement_search_batch(instance.matrix, s.unsqueeze(0))
             best_cost = _costs.quadratic_cost(best_bitstrings.squeeze(0), instance.matrix)
             check.less_equal(best_cost, initial_cost)
+
+
+@pytest.mark.parametrize(
+    "search", [_first_improvement_search, _greedy_sweep_search, _best_improvement_search_batch]
+)
+def test_local_search_stops_at_the_deadline(search: Callable[..., torch.Tensor]) -> None:
+    # fmt: off
+    Q = matrix.tensor([
+        [-10.0, 1.0],
+        [1.0, -10.0]
+    ])
+    # fmt: on
+    s = bitstring.zeros(2)
+    if search is _best_improvement_search_batch:
+        s = s.unsqueeze(0)
+    # An already expired deadline stops the search before any flip.
+    torch.testing.assert_close(search(Q, s, time_limit=-1.0), s)
+
+
+@pytest.mark.parametrize("search", [_first_improvement_search, _greedy_sweep_search])
+def test_local_search_with_rng(search: Callable[..., torch.Tensor]) -> None:
+    # fmt: off
+    Q = matrix.tensor([
+        [-10.0, 1.0],
+        [1.0, -10.0]
+    ])
+    # fmt: on
+    best_bitstring = search(Q, bitstring.zeros(2), rng=torch_rng(2005221736))
+    np.testing.assert_allclose(best_bitstring, np.array([1, 1]))

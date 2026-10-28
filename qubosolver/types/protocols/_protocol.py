@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from qubosolver._checks import _RUNTIME_TYPE_CHECKING
 
-if _RUNTIME_TYPE_CHECKING and not TYPE_CHECKING:
+if _RUNTIME_TYPE_CHECKING and not TYPE_CHECKING:  # no cov
     from beartype.typing import Protocol  # deptry: ignore[DEP004]
 else:
     from typing import Protocol

@@ -87,6 +87,14 @@ pytest -m fast   # tests expected to take less than 15 s
 pytest -m slow   # the long-running ones
 ```
 
+Coverage is not collected by default. The CI requires 100% test coverage; check it locally with the full test suite and the optional extras installed:
+
+```shell
+uv run --extra extras pytest --cov
+```
+
+`--cov` also works on a subset of the tests, to see which lines they cover, but then fails the 100% threshold: add `--cov-fail-under=0` if the exit code matters.
+
 ## A Word on Patents
 
 Quantum computing is a heavily patented field. If your contribution introduces a new quantum algorithm, rather than an improvement to the existing library, please check beforehand that it is not covered by an existing patent.

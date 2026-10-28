@@ -29,7 +29,6 @@ def gather_optimal_solutions(solutions: Solution) -> list[Candidate]:
 def check_solution(
     solution: Solution,
     qubo: Instance,
-    expect_optimality: bool = True,
 ) -> float:
 
     # Solutions are not duplicated
@@ -45,9 +44,6 @@ def check_solution(
     print(f"\nMinimum cost: {min_cost}")
     print(f"All optimal bitstrings: {[s.string for s in optimal_solutions]}")
     print(f"Number of optimal solutions: {len(optimal_solutions)}\n")
-
-    if not expect_optimality:
-        return 0.0
 
     expected_optimal_solutions = gather_optimal_solutions(
         solving.brute_force.solve(qubo, max_bitstrings=-1)

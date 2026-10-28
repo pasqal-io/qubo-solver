@@ -32,21 +32,21 @@ import typing
 
 _RUNTIME_TYPE_CHECKING: bool = os.getenv("QUBO_SOLVER_RUNTIME_CHECKS", "0") == "1"
 
-if _RUNTIME_TYPE_CHECKING and sys.version_info < (3, 14):
+if _RUNTIME_TYPE_CHECKING and sys.version_info < (3, 14):  # no cov
     msg = (
         "QUBO_SOLVER_RUNTIME_CHECKS=1 requires Python >= 3.14, "
         f"got {sys.version_info.major}.{sys.version_info.minor}."
     )
     raise RuntimeError(msg)
 
-if _RUNTIME_TYPE_CHECKING and importlib.util.find_spec("beartype") is None:
+if _RUNTIME_TYPE_CHECKING and importlib.util.find_spec("beartype") is None:  # no cov
     msg = (
         "QUBO_SOLVER_RUNTIME_CHECKS=1 requires the 'beartype' and 'jaxtyping' packages. "
         "Install them with: pip install 'qubo-solver[dev]'"
     )
     raise ImportError(msg)
 
-if _RUNTIME_TYPE_CHECKING and importlib.util.find_spec("cplex") is None:
+if _RUNTIME_TYPE_CHECKING and importlib.util.find_spec("cplex") is None:  # no cov
     msg = (
         "QUBO_SOLVER_RUNTIME_CHECKS=1 requires the 'cplex' package. "
         "Install it with: pip install 'qubo-solver[extras]'"
@@ -80,7 +80,7 @@ def no_runtime_typecheck(target: _T) -> _T:
         @no_runtime_typecheck
         def _fast_inner_loop(data: list) -> None: ...
     """
-    if _RUNTIME_TYPE_CHECKING:
+    if _RUNTIME_TYPE_CHECKING:  # no cov
         from beartype import (  # noqa: PLC0415 (optional dependency)  # deptry: ignore[DEP004]
             BeartypeConf,
             BeartypeStrategy,

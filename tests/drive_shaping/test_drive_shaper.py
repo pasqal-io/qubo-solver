@@ -100,10 +100,8 @@ def test_generate_bayesian_search_drive_shaper(
     assert isinstance(solution, Solution)
     assert solution.bitstrings.numel() > 0
     assert solution.costs.numel() > 0
-    if isinstance(solution.probabilities, torch.Tensor):
-        assert solution.probabilities.numel() > 0
-    if isinstance(solution.counts, torch.Tensor):
-        assert solution.counts.numel() > 0
+    assert solution.probabilities.numel() > 0
+    assert solution.counts.numel() > 0
 
 
 @pytest.mark.duration(52)
@@ -242,3 +240,10 @@ def test_proportional_diagonal_register_and_drive_shape_normalization(
     # the final detuning -> 2.0 / (0.5) = 4.0
     expected = qubo[0, 1] / (-0.5 * qubo[0, 0])
     np.testing.assert_allclose(ratio, expected, rtol=1e-3)
+
+
+def test_get_drive_shaper_invalid_algorithm(simple_qubo_instance: Instance) -> None:
+    config = QuantumSolvingConfig()
+    config.drive_shaping.algorithm = "dummy"  # type: ignore[assignment]
+    with pytest.raises(NotImplementedError, match="Unsupported drive shaping method: 'dummy'"):
+        _get_drive_shaper(simple_qubo_instance, config, config.backend)

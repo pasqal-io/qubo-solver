@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import logging
 import math
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
@@ -21,9 +22,7 @@ from qubosolver import (
     Candidate,
     Instance,
     LocalEmulator,
-    Matrix,
     Solution,
-    Tensor,
     matrix,
     solving,
     tensor,
@@ -35,17 +34,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 
-def interaction_matrix_from_vertices(vertices: Tensor) -> Matrix:
-    U = 1.0 / torch.cdist(vertices, vertices) ** 6
-    U.fill_diagonal_(0.0)
-    return U
-
-
-def gather_optimal_solutions(
-    data: Iterable[Candidate], min_cost: float | None = None
-) -> list[Candidate]:
-    if min_cost is None:
-        min_cost = min(d.cost for d in data)
+def gather_optimal_solutions(data: Iterable[Candidate]) -> list[Candidate]:
+    min_cost = min(d.cost for d in data)
     return [d for d in data if np.allclose(d.cost, min_cost)]
 
 
@@ -402,3 +392,21 @@ def test_dmm_labels_are_ints() -> None:
     qoolqit.QuantumProgram(register, drive).compile_to(
         device, profile="max_energy", device_max_duration_ratio=0.999
     )
+
+
+def test_dmm_requested_on_device_without_dmm(caplog: pytest.LogCaptureFixture) -> None:
+    register = Register.from_coordinates(tensor.tensor([[0.0, 0.0], [1.0, 0.0]]))
+    Q = matrix.as_tensor(register.interaction_matrix()) - matrix.as_tensor(torch.eye(2))
+
+    with caplog.at_level(logging.WARNING, logger="qubosolver.solving.hybrid.drive_bayesian_search"):
+        _, drive = solving.drive_bayesian_search.solve(
+            Instance(Q),
+            register,
+            backend=LocalEmulator(),
+            device=AnalogDevice(),
+            dmm=True,
+            config=solving.drive_bayesian_search.Config(n_evaluations=11),
+        )
+
+    check.is_none(drive.dmm)
+    check.is_in("does not support a DMM channel", caplog.text)

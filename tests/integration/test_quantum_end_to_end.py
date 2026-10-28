@@ -74,7 +74,7 @@ def check_solution(
 
 
 def _relative_norm(diff_norm: float, ref_norm: float) -> float:
-    if np.isclose(ref_norm, 0.0):
+    if np.isclose(ref_norm, 0.0):  # no cov
         print("Reference norm is ~0, printing absolute norm instead")
         return diff_norm
     return diff_norm / ref_norm

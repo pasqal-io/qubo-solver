@@ -281,3 +281,10 @@ def test_classical_solve_empty_instance(solve_module: ModuleType) -> None:
 
 if __name__ == "__main__":
     pytest.main()
+
+
+def test_get_classical_solver_invalid_algorithm(simple_qubo_instance: Instance) -> None:
+    config = ClassicalSolvingConfig()
+    config.algorithm = "dummy"  # type: ignore[assignment]
+    with pytest.raises(ValueError, match="Invalid solver name: dummy"):
+        get_classical_solver(simple_qubo_instance, config)

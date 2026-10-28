@@ -151,7 +151,7 @@ def test_quantum_solve(
         embedding_config = EmbeddingConfig(
             algorithm="greedy_layout",
         )
-    else:
+    else:  # no cov
         msg = f"Invalid embedding method: {embedding_method}"
         raise ValueError(msg)
 
@@ -165,7 +165,7 @@ def test_quantum_solve(
             algorithm="proportional_diagonal",
             proportional_diagonal_kappa=0.25,
         )
-    else:
+    else:  # no cov
         msg = f"Invalid drive shaping method: {drive_shaping_method}"
         raise ValueError(msg)
 
