@@ -5,11 +5,13 @@
 
 from __future__ import annotations
 
+import dataclasses
 from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pytest
 import pytest_check as check
+import qoolqit
 import torch
 from beartype.roar import BeartypeCallHintParamViolation
 from qoolqit import AnalogDeviceWithDMM
@@ -543,3 +545,28 @@ def test_embed_no_positive_off_diag_float_max_possible_term() -> None:
     instance = Instance(matrix.zeros(3))
     config = embedding.greedy_layout.Config(traps=3, max_possible_term=1.0)
     check.equal(len(embedding.greedy_layout.embed(instance, config=config)), 3)
+
+
+def test_negative_off_diagonal_raises() -> None:
+    instance = Instance(matrix.tensor([[1.0, -1.0], [-1.0, 1.0]]))
+    with pytest.raises(ValueError, match="negative off-diagonal"):
+        embedding.greedy_layout.embed(instance)
+
+
+def test_embed_fewer_traps_than_atoms_raises() -> None:
+    instance = Instance(matrix.tensor([[1.0, 1.0], [1.0, 1.0]]))
+    config = embedding.greedy_layout.Config(traps=1)
+    with pytest.raises(ValueError, match="Number of traps must be at least"):
+        embedding.greedy_layout.embed(instance, config=config)
+
+
+def test_embed_for_device() -> None:
+    instance = Instance(matrix.tensor([[1.0, 1.0], [1.0, 1.0]]))
+    register = embedding.greedy_layout.embed_for_device(instance, AnalogDeviceWithDMM())
+    check.equal(register.n_qubits, 2)
+
+
+def test_config_from_device_uses_max_layout_traps() -> None:
+    pulser_device = dataclasses.replace(AnalogDeviceWithDMM()._device, max_layout_traps=170)
+    config = embedding.greedy_layout.Config.from_device(qoolqit.Device(pulser_device=pulser_device))
+    check.equal(config.traps, 170)

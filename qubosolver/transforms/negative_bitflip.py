@@ -203,11 +203,6 @@ def _solve_bitflip(
     eps: float,
     rng: torch.Generator | None,
 ) -> Solution:
-
-    if method not in ("local_search", "tabu_search"):
-        msg = f"Unknown bit-flip method {method!r}."
-        raise ValueError(msg)
-
     # time_limit is a budget for local search and tabu search together.
     deadline = time.monotonic() + time_limit
     bitflip_instance = _bitflip_qubo(instance, eps=eps)
@@ -334,6 +329,10 @@ def apply(
     Raises:
         ValueError: If `method` is unknown.
     """
+    if method not in ("local_search", "tabu_search"):
+        msg = f"Unknown bit-flip method {method!r}."
+        raise ValueError(msg)
+
     if not _has_negative_offdiagonal(instance.matrix, eps=eps):
         return Instance(instance)
 

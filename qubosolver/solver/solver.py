@@ -266,20 +266,20 @@ class _QuboSolverClassical(BaseSolver):
         super().__init__(instance, config or SolverConfig())
 
     def _embedding(self) -> qoolqit.Register:
-        """No-op — classical solvers do not require an atom register.
+        """Not supported — classical solvers do not require an atom register.
 
-        Returns:
-            ``None``.
+        Raises:
+            NotImplementedError: Always.
         """
-        return  # type: ignore[return-value]
+        raise NotImplementedError
 
-    def _drive(self, embedding: qoolqit.Register) -> tuple:  # noqa: ARG002 (no-op override)
-        """No-op — classical solvers do not use a pulse drive.
+    def _drive(self, embedding: qoolqit.Register) -> tuple:
+        """Not supported — classical solvers do not use a pulse drive.
 
-        Returns:
-            ``None``.
+        Raises:
+            NotImplementedError: Always.
         """
-        return  # type: ignore[return-value]
+        raise NotImplementedError
 
     def solve(self) -> Solution:
         """Solve the QUBO using the configured classical solver.

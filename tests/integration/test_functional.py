@@ -122,7 +122,7 @@ def check_solution(
     check.greater(cumulated_probability, expected_optimal_probability)
 
 
-@pytest.mark.duration(30)
+@pytest.mark.duration(7)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("drive_shaping_method", ["proportional_diagonal", "bayesian_search"])
 @pytest.mark.parametrize("embedding_method", ["greedy_layout", "blade"])
@@ -155,7 +155,7 @@ def test_quantum_solve(
         greedy_config = embedding.greedy_layout.Config.from_device(device)
         greedy_config.traps = 100
         register = embedding.greedy_layout.embed(effective_qubo, config=greedy_config)
-    else:
+    else:  # no cov
         msg = f"Invalid embedding method: {embedding_method}"
         raise ValueError(msg)
     print(f"Register: {register.qubits}")
@@ -178,7 +178,7 @@ def test_quantum_solve(
             dmm=False,
             config=solving.drive_bayesian_search.Config(n_evaluations=11, seed=seed),
         )
-    else:
+    else:  # no cov
         msg = f"Invalid drive shaping method: {drive_shaping_method}"
         raise ValueError(msg)
 
@@ -248,7 +248,7 @@ def test_classical_solve(
         solution = solving.tabu_search.solve(effective_qubo, starts=solution.bitstrings)
     elif solving_method == "random":
         solution = solving.random_sampling.solve(effective_qubo, rng=rng)
-    else:
+    else:  # no cov
         msg = f"Invalid solving method: {solving_method}"
         raise ValueError(msg)
 

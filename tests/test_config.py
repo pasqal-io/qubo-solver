@@ -5,8 +5,11 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 import pytest
 import pytest_check as check
+import qoolqit
 from beartype.roar import BeartypeCallHintParamViolation
 from pulser_simulation import QutipBackendV2
 from qoolqit import AnalogDeviceWithDMM
@@ -20,6 +23,7 @@ from qubosolver import (
     QuantumSolvingConfig,
     SolverConfig,
 )
+from qubosolver.embedding.enums import Lattice
 
 
 def test_default_config() -> None:
@@ -157,3 +161,32 @@ def test_initialization_device() -> None:
 
     solver = QuantumSolvingConfig()
     check.equal(solver.embedding.algorithm, "blade")
+
+
+def test_config_repr() -> None:
+    check.equal(repr(SolverConfig(config_name="my_config")), "my_config")
+
+
+def test_solving_mode_invalid_solving_config() -> None:
+    config = SolverConfig()
+    config.solving = "dummy"  # type: ignore[assignment]
+    with pytest.raises(ValueError, match="Invalid solving config"):
+        _ = config.solving_mode
+
+
+@pytest.mark.parametrize(
+    ("lattice", "expected"), [("triangular", Lattice.TRIANGULAR), ("square", Lattice.SQUARE)]
+)
+def test_embedding_config_to_greedy_layout_config(
+    lattice: Literal["triangular", "square"], expected: Lattice
+) -> None:
+    config = EmbeddingConfig(algorithm="greedy_layout", greedy_layout_lattice=lattice)
+    greedy_config = config._to_greedy_layout_config(qoolqit.AnalogDevice())
+    check.equal(greedy_config.lattice, expected)
+
+
+def test_embedding_config_to_greedy_layout_config_invalid_lattice() -> None:
+    config = EmbeddingConfig(algorithm="greedy_layout")
+    config.greedy_layout_lattice = "dummy"  # type: ignore[assignment]
+    with pytest.raises(ValueError, match="Unknown lattice type"):
+        config._to_greedy_layout_config(qoolqit.AnalogDevice())

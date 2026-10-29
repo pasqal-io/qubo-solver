@@ -30,6 +30,8 @@ if TYPE_CHECKING:
 
     from qubosolver._io.utils import FileLike
 
+    from .linalg import Tensor
+
 
 class Dataset:
     """A dataset of QUBO instances.
@@ -61,7 +63,7 @@ class Dataset:
     """
 
     def __init__(
-        self, matrices: torch.Tensor, solutions: Sequence[Solution] = (), *, copy: bool = True
+        self, matrices: Tensor, solutions: Sequence[Solution] = (), *, copy: bool = True
     ) -> None:
         """Build a dataset from `matrices` and optional `solutions`, deep-copying by default."""
         if copy:

@@ -83,9 +83,19 @@ pytest
 While iterating, you can run only the fast tests:
 
 ```shell
-pytest -m fast   # tests expected to take less than 15 s
+pytest -m fast   # tests expected to take less than 5 s
 pytest -m slow   # the long-running ones
 ```
+
+Coverage is not collected by default. The CI requires 100% test coverage; check it locally with the full test suite and the optional extras installed:
+
+```shell
+uv run --extra extras pytest --cov
+```
+
+`--cov` also works on a subset of the tests, to see which lines they cover, but then fails the 100% threshold: add `--cov-fail-under=0` if the exit code matters.
+
+Coverage is measured without runtime type checking. With `QUBO_SOLVER_RUNTIME_CHECKS=1`, beartype rejects invalid arguments before the explicit validation code runs, so `--cov` reports less than 100% by design.
 
 ## A Word on Patents
 

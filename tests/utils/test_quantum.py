@@ -8,6 +8,7 @@ from __future__ import annotations
 import math
 from unittest.mock import MagicMock
 
+import pytest
 import pytest_check as check
 import qoolqit
 import torch
@@ -15,7 +16,7 @@ from qoolqit import ConstantWaveform, RampWaveform
 
 from qubosolver import Instance, drive_shaping, embedding, extract_qubo, matrix, vector
 from qubosolver.embedding._algorithms.greedy.layout import get_layout
-from qubosolver.utils.quantum import _max_min_distance_ratio
+from qubosolver.utils.quantum import _detuning, _max_min_distance_ratio
 
 
 def _register() -> qoolqit.Register:
@@ -182,3 +183,25 @@ def test_max_min_distance_ratio_is_infinite_when_min_distance_is_zero() -> None:
     device.specs = {"min_distance": 0.0, "max_radial_distance": 7.6}
 
     check.equal(_max_min_distance_ratio(device), float("inf"))
+
+
+def _dmm_drive() -> qoolqit.Drive:
+    dmm = qoolqit.drive.DetuningMapModulator(
+        waveform=ConstantWaveform(10.0, -1.0),
+        weights={"0": 1.0, "1": 0.5},
+    )
+    return qoolqit.Drive(
+        amplitude=ConstantWaveform(10.0, 1.0),
+        detuning=ConstantWaveform(10.0, -2.0),
+        dmm=dmm,
+    )
+
+
+def test_detuning_infers_qubit_ids_from_dmm_weights() -> None:
+    delta = _detuning(_dmm_drive(), 10.0, n=2)
+    torch.testing.assert_close(delta, vector.tensor([-3.0, -2.5]))
+
+
+def test_detuning_rejects_mismatched_qubit_ids() -> None:
+    with pytest.raises(ValueError, match="must have exactly the register's qubit ids"):
+        _detuning(_dmm_drive(), 10.0, n=2, qubit_ids=["0", "2"])

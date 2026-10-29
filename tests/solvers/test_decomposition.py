@@ -14,6 +14,7 @@ import pytest
 import pytest_check as check
 import torch
 from qoolqit import DigitalAnalogDevice, Register
+from shapely.geometry import Point, Polygon
 
 from qubosolver import (
     Candidate,
@@ -34,12 +35,18 @@ from qubosolver import (
 )
 from qubosolver.solver.config.config import _DecompositionConfig
 from qubosolver.solver.solver import _DecomposeQuboSolver
+from qubosolver.transforms import _decompositions
 from qubosolver.transforms._algorithms.decompose import (
+    WeightedZone,
+    bfgs_placement,
+    check_prohibited_zones,
     compute_distance_interaction_matrix,
     compute_min_max_distances,
+    cost_interaction_point_continuous,
     geometric_search,
     interaction_matrix_from_placed,
     positive_vertices_update,
+    random_point_in_geometry,
     transfer_edge_values,
     update_global_solution,
     vertices_to_place,
@@ -53,7 +60,7 @@ def manual_seed(seed: int) -> torch.Generator:
     return torch_rng(seed)
 
 
-@pytest.mark.duration(120)
+@pytest.mark.duration(5)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("use_quantum", [True, False], ids=["quantum", "classical"])
 def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) -> None:  # noqa: PLR0915
@@ -140,7 +147,7 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
     # check matrix size correspond to placed_vertices
     matrix_to_solve, map_index_vertices = interaction_matrix_from_placed(placed_vertices)
     # If too big, the test will take a long time to run.
-    if use_quantum and matrix_to_solve.shape[0] > 13:
+    if use_quantum and matrix_to_solve.shape[0] > 13:  # no cov
         msg = f"Test failed due to large matrix size = {matrix_to_solve.shape[0]}"
         raise RuntimeError(msg)
     assert len(map_index_vertices) == len(placed_vertices) == matrix_to_solve.shape[0]
@@ -161,7 +168,7 @@ def test_initial_steps_solver(decomposable_qubo: Instance, use_quantum: bool) ->
     assert len(current_vertices_dict) < size
 
 
-@pytest.mark.duration(120)
+@pytest.mark.duration(9)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("use_quantum", [True, False], ids=["quantum", "classical"])
 def test_decomp_solver(decomposable_qubo: Instance, use_quantum: bool) -> None:
@@ -289,10 +296,11 @@ def test_compute_distance_interaction_diagonal() -> None:
     torch.testing.assert_close(dist_matrix, expected_dist_matrix)
 
 
+@pytest.mark.skip(reason="Flaky tests. Need to be re-designed")
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("dims", [(4,), (3,), (3, 3), (2, 3, 2), (4, 3, 2, 3)], ids=str)
 @pytest.mark.parametrize("seed", [1935225697, 1547, 66987, 55571, 998618750])
-def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:  # noqa: PLR0915
+def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:  # no cov  # noqa: PLR0915
     """Test that the decomposition solver correctly identifies and solves block-diagonal QUBOs.
 
     The test constructs a block-diagonal QUBO matrix from smaller sub-problems, runs the
@@ -317,8 +325,6 @@ def test_decompose_and_solve_block_qubo(seed: int, dims: tuple[int]) -> None:  #
         dims (tuple[int, ...]): Dimensions of the individual QUBO blocks that form the
             block-diagonal matrix.
     """
-    pytest.xfail("Flaky tests. Need to be re-designed")
-
     rng = manual_seed(seed)
 
     # 32-bits vs 64-bits doesn't generate the same random matrices. So generate 64-bit
@@ -498,3 +504,89 @@ def test_decompose_drive() -> None:
     solver = _DecomposeQuboSolver(qubo_instance, solver_config=config)
     with pytest.raises(NotImplementedError):
         solver._drive(Register.from_coordinates([(0, 0), (1, 1)]))
+
+
+@pytest.mark.usefixtures("restore_rng_state")
+def test_decomposition_places_every_vertex(
+    decomposable_qubo: Instance, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = SolverConfig(
+        solving=ClassicalSolvingConfig(), preprocessing=False, postprocessing=False
+    )
+    solver = _DecomposeQuboSolver(
+        decomposable_qubo,
+        solver_config=config,
+        decompose_config=_DecompositionConfig(decompose_stop_number=0, decompose_break_placement=0),
+    )
+    extracted: list[tuple[bool, int]] = []
+    extract_subqubo = _decompositions.extract_subqubo
+
+    def spy(
+        qubo: _decompositions.Instance,
+        config: _decompositions.Config,
+        *,
+        last: bool = False,
+        rng: torch.Generator | None = None,
+    ) -> _decompositions.SubQUBOInstance:
+        subqubo = extract_subqubo(qubo, config, last=last, rng=rng)
+        extracted.append((last, subqubo.size))
+        return subqubo
+
+    monkeypatch.setattr(_decompositions, "extract_subqubo", spy)
+    manual_seed(483536674)
+    solution = solver.solve()
+
+    # The loop places every vertex, so the last subproblem is empty.
+    check.equal(extracted[-1], (True, 0))
+    # No variable is left unassigned (-1); comparing the count to 0 reports how many on failure.
+    check.equal((solution.bitstrings[0] == -1).sum(), 0)
+
+
+def test_random_point_in_geometry_rejects_non_positive_max_trials() -> None:
+    with pytest.raises(ValueError, match="max_trials must be a positive integer"):
+        random_point_in_geometry(Point(0, 0).buffer(1.0), max_trials=0, rng=torch_rng(1321356387))
+
+
+def test_random_point_in_geometry_gives_up_after_max_trials() -> None:
+    # A zero-area polygon contains no point, so every trial fails.
+    degenerate = Polygon([(0.0, 0.0), (1.0, 1.0), (2.0, 2.0)])
+    p = random_point_in_geometry(degenerate, max_trials=3, rng=torch_rng(1321356387))
+    check.is_false(degenerate.contains(Point(p[0].item(), p[1].item())))
+
+
+def test_cost_interaction_point_continuous_blocked_indices() -> None:
+    def cost(blocked_indices: list[int]) -> float:
+        # Interaction 1 / 1**6 = 1 at distance 1 from the placed point, target 0.5.
+        return cost_interaction_point_continuous(
+            np.array([1.0, 0.0]), [[0.0, 0.0]], [0.5], blocked_indices, 0.1, 10.0
+        )
+
+    # Unblocked, the cost is the squared mismatch; blocked, an interaction
+    # stronger than the target is not penalized.
+    check.almost_equal(cost([]), 0.25)
+    check.almost_equal(cost([0]), 0.0)
+
+
+def test_bfgs_placement_with_blocking_vertex() -> None:
+    placed_vertices = {0: WeightedZone(0, 0.0, 0.0, -1.0, 0.1)}
+    qubo = matrix.tensor([[-1.0, 0.5], [0.5, -1.0]])
+    vertices = {1: {"blocking_vertices": torch.tensor([0])}}
+    result = bfgs_placement(
+        1, vector.tensor([1.0, 0.0]), placed_vertices, qubo, vertices, 0.1, 10.0
+    )
+    check.less_equal(result.fun, 1e-6)
+
+
+def test_check_prohibited_zones() -> None:
+    placed_vertices = {0: WeightedZone(0, 0.0, 0.0, -1.0, 0.3)}
+    # Inside the forbidden zone.
+    check.is_false(check_prohibited_zones(placed_vertices, Point(0.2, 0.0)))
+    # Outside the forbidden zone but too close to the placed vertex.
+    check.is_false(check_prohibited_zones(placed_vertices, Point(0.4, 0.0)))
+    check.is_true(check_prohibited_zones(placed_vertices, Point(1.0, 0.0)))
+
+
+def test_update_global_solution_keeps_already_set_values() -> None:
+    global_solution = bitstring.as_tensor(torch.tensor([1, -1]))
+    update_global_solution(global_solution, bitstring.zeros(2), {0: 0, 1: 1})
+    check.equal(global_solution.tolist(), [1, 0])

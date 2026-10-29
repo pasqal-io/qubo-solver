@@ -12,7 +12,7 @@ import pytest
 import pytest_check as check
 import torch
 
-from qubosolver import linalg
+from qubosolver import linalg, tensor
 
 
 def test_device_from_env_defaults_to_cpu() -> None:
@@ -83,3 +83,28 @@ def test_global_config_use_gpu_sets_cuda_device() -> None:
         check.equal(linalg.device(), torch.device("cuda"))
     finally:
         linalg._GlobalConfig._device = original
+
+
+def test_global_config_set_device() -> None:
+    original = linalg._GlobalConfig._device
+    try:
+        linalg._GlobalConfig.set_device(torch.device("cpu"))
+        check.equal(linalg.device(), torch.device("cpu"))
+        check.equal(tensor.zeros(2).device, torch.device("cpu"))
+    finally:
+        linalg._GlobalConfig._device = original
+
+
+@pytest.mark.parametrize(
+    ("env", "expected"),
+    [
+        ({"QUBO_SOLVER_FLOAT_DTYPE": "float64"}, True),
+        ({"QUBO_SOLVER_FLOAT_DTYPE": "float32", "USE_DOUBLE_PRECISION": "1"}, False),
+        ({"USE_DOUBLE_PRECISION": "true"}, True),
+        ({"USE_DOUBLE_PRECISION": "0"}, False),
+        ({}, False),
+    ],
+)
+def test_use_double_precision_from_env(env: dict[str, str], expected: bool) -> None:
+    with patch.dict(os.environ, env, clear=True):
+        check.equal(linalg._use_double_precision_from_env(), expected)

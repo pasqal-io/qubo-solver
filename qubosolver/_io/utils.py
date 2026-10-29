@@ -34,7 +34,7 @@ _MAX_STRING_SIZE = 1 << 10
 if multibyte. Strings in these formats are type tags and version numbers, the
 longest around 50 bytes."""
 
-if TYPE_CHECKING or _RUNTIME_TYPE_CHECKING:
+if TYPE_CHECKING or _RUNTIME_TYPE_CHECKING:  # no cov
     from contextlib import AbstractContextManager
     from typing import Any, Literal
 
@@ -46,7 +46,7 @@ _T = TypeVar("_T", bytes, str)
 # result of `open`, ...
 if TYPE_CHECKING or not _RUNTIME_TYPE_CHECKING:  # noqa: SIM108
     Stream = IO[_T]
-else:
+else:  # no cov
     # Runtime-checking variant: the static hint widened with `io.IOBase`.
     #
     # beartype expands `IO[_T]` into a PEP 544 protocol requiring the full

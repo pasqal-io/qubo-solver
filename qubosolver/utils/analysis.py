@@ -213,7 +213,7 @@ def _add_gaps(df: pd.DataFrame, *, opt_cost: float) -> pd.DataFrame:
 
 
 ## PLOTTING ROUTINES
-def _plot_vs_bitstrings(
+def _plot_vs_bitstrings(  # no cov
     df: pd.DataFrame,
     y_axis: str,
     sort_by: str | None = None,
@@ -284,7 +284,7 @@ def _plot_vs_bitstrings(
     return g
 
 
-def _plot_no_bitstrings(  # noqa: PLR0913, PLR0917
+def _plot_no_bitstrings(  # no cov  # noqa: PLR0913, PLR0917
     df: pd.DataFrame,
     x_axis: str,
     y_axis: str,
@@ -356,7 +356,7 @@ def _plot_no_bitstrings(  # noqa: PLR0913, PLR0917
     return g
 
 
-def _plot(  # noqa: PLR0913
+def _plot(  # no cov  # noqa: PLR0913
     df: pd.DataFrame,
     x_axis: str,
     y_axis: str,

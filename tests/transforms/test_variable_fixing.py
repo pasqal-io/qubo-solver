@@ -13,7 +13,7 @@ import pytest_check as check
 import torch
 
 from qubosolver import Instance, Solution, bitstrings, matrix, solving, transforms, vectori
-from qubosolver.transforms.variable_fixing import hansen_fixing
+from qubosolver.transforms.variable_fixing import _reduce_qubo, hansen_fixing
 
 if TYPE_CHECKING:
     import pytest
@@ -367,3 +367,16 @@ def test_save_load_roundtrips_variable_fixing_over_negative_bitflip_parent() -> 
     torch.testing.assert_close(loaded._parent_instance.matrix, flipped_parent.matrix)
     torch.testing.assert_close(loaded._parent_instance.flips, flipped_parent.flips)
     check.equal(loaded._parent_instance._offset, flipped_parent._offset)
+
+
+def test_reduce_qubo_skips_out_of_range_indices() -> None:
+    instance = unfixable_qubo()
+    reduced = _reduce_qubo(instance, {instance.size: 1})
+    torch.testing.assert_close(reduced.matrix, instance.matrix)
+
+
+def test_apply_recursively_inplace() -> None:
+    instance = transforms.variable_fixing.Instance(fixable_qubo())
+    reduced = transforms.variable_fixing.apply_recursively(instance, inplace=True)
+    check.is_(reduced, instance)
+    check.equal(reduced.size, 2)

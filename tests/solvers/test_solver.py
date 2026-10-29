@@ -13,6 +13,7 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 import pytest_check as check
+import qoolqit
 import torch
 from pulser.backend.remote import (
     RemoteConnection,
@@ -38,7 +39,7 @@ from qubosolver import (
     matrix,
     vectori,
 )
-from qubosolver.solver.solver import _QuboSolverQuantum
+from qubosolver.solver.solver import _QuboSolverClassical, _QuboSolverQuantum
 from qubosolver.utils import _random, analysis
 
 if TYPE_CHECKING:
@@ -61,7 +62,7 @@ def test_implicit_solver_config(
     assert isinstance(implicit_default_qubo_solver_config._solver, _QuboSolverQuantum)
 
 
-@pytest.mark.duration(21)
+@pytest.mark.duration(5)
 def test_different_shots(simple_qubo_instance: Instance) -> None:
     default_solver = Solver(
         simple_qubo_instance,
@@ -90,7 +91,7 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
     assert solutions.counts.sum() == 100
 
 
-@pytest.mark.duration(40)
+@pytest.mark.duration(9)
 @pytest.mark.flaky(reruns=5)
 def test_run_local_backends(simple_qubo_instance: Instance, local_backend: LocalEmulator) -> None:
     solver = Solver(
@@ -117,7 +118,7 @@ def test_run_local_backends(simple_qubo_instance: Instance, local_backend: Local
     assert solutions.costs.min().item() <= -3.0
 
 
-@pytest.mark.duration(150)
+@pytest.mark.duration(3)
 def test_solver_different_devices(
     qubo_for_testing_many_devices: Instance,
     local_device: Device,
@@ -238,7 +239,7 @@ def trivial_triangular_qubo(connection: RemoteConnection | None = None) -> Solve
     return Solver(qubo, config)
 
 
-@pytest.mark.duration(25)
+@pytest.mark.duration(5)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("wait", [True, False], ids=["wait", "dont_wait"])
 def test_submit_integration(make_mock_connection: type[MockConnection], wait: bool) -> None:
@@ -293,7 +294,7 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
     torch.testing.assert_close(solution_remote.counts, solution.counts)
 
 
-@pytest.mark.duration(19)
+@pytest.mark.duration(4)
 def test_respects_total_bottom_detuning(caplog: pytest.LogCaptureFixture) -> None:
     n = 6
     Q = matrix.zeros(n)
@@ -332,7 +333,7 @@ def _triangular_register_qubo() -> Instance:
     return Instance(matrix.as_tensor(np.asarray(qubo, dtype=float)))
 
 
-@pytest.mark.duration(4)
+@pytest.mark.duration(9)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("algorithm", ["greedy_layout", "blade"])
 def test_quantum_matches_classical_triangular(algorithm: _EmbeddingAlgorithm) -> None:
@@ -399,3 +400,48 @@ def test_quantum_solver_skips_pipeline_when_preprocessing_fixes_every_variable(
     check.equal(len(solution[0].string), instance.size)
     check.almost_equal(solution[0].cost, -5.0)
     solution.check_consistency(instance=instance, throw=True)
+
+
+def test_draw_sequence_draws_the_compiled_program(
+    simple_qubo_instance: Instance, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    draw = Mock()
+    monkeypatch.setattr(qoolqit.QuantumProgram, "draw", draw)
+    solver = _QuboSolverQuantum(simple_qubo_instance, SolverConfig(preprocessing=False))
+    embedding = solver._embedding()
+    drive, _ = solver._drive(embedding)
+    solver._draw_sequence(drive, embedding)
+    draw.assert_called_once_with(compiled=True)
+
+    # In classical mode no quantum program exists, so nothing is drawn.
+    classical_solver = _QuboSolverClassical(
+        simple_qubo_instance, SolverConfig(solving=ClassicalSolvingConfig())
+    )
+    classical_solver._draw_sequence(drive, embedding)
+    draw.assert_called_once()
+
+
+def test_update_instance_updates_inner_solver(
+    simple_qubo_instance: Instance, simple_qubo_instance2: Instance
+) -> None:
+    solver = Solver(simple_qubo_instance)
+    solver._update_instance(simple_qubo_instance2)
+    check.is_(solver.instance, simple_qubo_instance2)
+    check.is_(solver._solver.instance, simple_qubo_instance2)
+
+
+def test_negative_off_diagonal_without_preprocessing_warns(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    instance = Instance(matrix.tensor([[-1.0, -1.0], [-1.0, -1.0]]))
+    with caplog.at_level(logging.WARNING, logger="qubosolver.solver.solver"):
+        Solver(instance, SolverConfig(preprocessing=False))
+    check.is_in("Negative off-diagonal coefficients detected", caplog.text)
+
+
+def test_classical_solver_has_no_embedding_nor_drive(simple_qubo_instance: Instance) -> None:
+    solver = Solver(simple_qubo_instance, SolverConfig(solving=ClassicalSolvingConfig()))
+    with pytest.raises(NotImplementedError):
+        solver._embedding()
+    with pytest.raises(NotImplementedError):
+        solver._drive(qoolqit.Register.from_coordinates([[0.0, 0.0]]))

@@ -80,3 +80,8 @@ def test_get_layout_square_is_compact(n_traps: int) -> None:
 def test_empty_layout(layout_type: embedding.Lattice) -> None:
     coords = get_layout(layout_type=layout_type, n_traps=0)
     check.equal(coords.size(), (0, 2))
+
+
+def test_get_layout_rejects_unsupported_layout() -> None:
+    with pytest.raises(ValueError, match="Unsupported layout_type: 'hexagonal'"):
+        get_layout(layout_type="hexagonal", n_traps=3)

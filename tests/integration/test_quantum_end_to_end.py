@@ -74,7 +74,7 @@ def check_solution(
 
 
 def _relative_norm(diff_norm: float, ref_norm: float) -> float:
-    if np.isclose(ref_norm, 0.0):
+    if np.isclose(ref_norm, 0.0):  # no cov
         print("Reference norm is ~0, printing absolute norm instead")
         return diff_norm
     return diff_norm / ref_norm
@@ -104,7 +104,7 @@ def check_hamiltonian_qubo(
     return rel_diagonal_error, rel_offdiagonal_error
 
 
-@pytest.mark.duration(33)
+@pytest.mark.duration(6)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("seed", [16844214, 650], ids=[f"seed{i}" for i in range(2)])
 @pytest.mark.parametrize(

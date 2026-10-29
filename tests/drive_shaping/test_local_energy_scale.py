@@ -34,10 +34,9 @@ from qubosolver import (
 )
 
 
-def gather_optimal_solutions(solution: Solution, min_cost: float | None = None) -> list[Candidate]:
+def gather_optimal_solutions(solution: Solution) -> list[Candidate]:
     """Return all solutions having the minimum cost."""
-    if min_cost is None:
-        min_cost = min(s.cost for s in solution)
+    min_cost = min(s.cost for s in solution)
     return [s for s in solution if np.allclose(s.cost, min_cost)]
 
 
@@ -203,3 +202,25 @@ def test_dmm_labels_are_ints() -> None:
     qoolqit.QuantumProgram(register, drive).compile_to(
         device, profile="max_energy", device_max_duration_ratio=0.999
     )
+
+
+def test_dmm_requested_on_device_without_dmm(caplog: pytest.LogCaptureFixture) -> None:
+    register = qoolqit.Register.from_coordinates(tensor.tensor([[0.0, 0.0], [1.0, 0.0]]))
+    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+
+    with caplog.at_level(logging.WARNING, logger="qubosolver.drive_shaping.local_energy_scale"):
+        drive = drive_shaping.local_energy_scale.build_drive(
+            Instance(Q), register, dmm=True, device=AnalogDevice()
+        )
+
+    check.is_none(drive.dmm)
+    check.is_in("does not support a DMM channel", caplog.text)
+
+
+def test_device_without_max_amplitude() -> None:
+    register = qoolqit.Register.from_coordinates(tensor.tensor([[0.0, 0.0], [1.0, 0.0]]))
+    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+    drive = drive_shaping.local_energy_scale.build_drive(
+        Instance(Q), register, dmm=False, device=qoolqit.MockDevice()
+    )
+    check.is_instance(drive, qoolqit.Drive)

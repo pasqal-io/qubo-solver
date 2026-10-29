@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal
 
 import pytest
+import pytest_check as check
 
 from qubosolver import (
     EmbeddingConfig,
@@ -16,12 +17,12 @@ from qubosolver import (
     Solver,
     SolverConfig,
 )
+from qubosolver.solver._embedder import BLaDEmbedder, _get_embedder
 
 if TYPE_CHECKING:
     from qoolqit import Device
 
 
-@pytest.mark.duration(40)
 @pytest.mark.parametrize("embedding_method", ["greedy_layout", "blade"])
 def test_embeddings_different_devices(
     qubo_for_testing_many_devices: Instance,
@@ -38,3 +39,17 @@ def test_embeddings_different_devices(
     )
     solver = Solver(qubo_for_testing_many_devices, config)
     assert solver._embedding()
+
+
+def test_get_embedder_invalid_algorithm(simple_qubo_instance: Instance) -> None:
+    config = QuantumSolvingConfig()
+    config.embedding.algorithm = "dummy"  # type: ignore[assignment]
+    with pytest.raises(NotImplementedError):
+        _get_embedder(simple_qubo_instance, config, config.backend)
+
+
+@pytest.mark.duration(6)
+def test_blade_embedder_default_steps_per_round(simple_qubo_instance: Instance) -> None:
+    config = QuantumSolvingConfig(embedding=EmbeddingConfig(blade_steps_per_round=None))
+    register = BLaDEmbedder(simple_qubo_instance, config, config.backend).embed()
+    check.equal(register.n_qubits, simple_qubo_instance.size)

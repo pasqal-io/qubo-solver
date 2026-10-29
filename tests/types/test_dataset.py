@@ -13,14 +13,14 @@ import pytest
 import pytest_check as check
 import torch
 
-from qubosolver import Dataset, bitstrings, torch_rng, vector, vectori
+from qubosolver import Dataset, bitstrings, tensor, torch_rng, vector, vectori
 from qubosolver.types.instance import _calculate_density
 from qubosolver.types.solution import Solution
 
 
 def test_dataset_copies_input_matrices() -> None:
     """Test that Dataset copies the input tensor instead of aliasing it."""
-    matrices = torch.zeros(3, 3, 2)
+    matrices = tensor.zeros(3, 3, 2)
     dataset = Dataset(matrices)
 
     matrices[0, 0, 0] = 42.0
@@ -30,7 +30,7 @@ def test_dataset_copies_input_matrices() -> None:
 
 def test_dataset_copies_input_solutions() -> None:
     """Test that Dataset deep-copies the input solutions instead of aliasing them."""
-    matrices = torch.zeros(3, 3, 1)
+    matrices = tensor.zeros(3, 3, 1)
     solution = Solution(
         bitstrings=bitstrings.zeros(1, 3),
         costs=vector.zeros(1),
@@ -48,7 +48,7 @@ def test_dataset_copies_input_solutions() -> None:
 
 def test_dataset_copy_false_aliases_input() -> None:
     """Test that Dataset(copy=False) stores the given matrices/solutions directly."""
-    matrices = torch.zeros(3, 3, 1)
+    matrices = tensor.zeros(3, 3, 1)
     solution = Solution(
         bitstrings=bitstrings.zeros(1, 3),
         costs=vector.zeros(1),
@@ -101,9 +101,7 @@ def test_dataset_generation(negative_offdiag_rate: float) -> None:
         assert torch.all(qubo.matrix <= coefficient_bounds[1])
         if negative_offdiag_rate:
             negative_off_diag = qubo.matrix[off_diag] < 0
-            assert torch.any(negative_off_diag) or torch.all(qubo.matrix[off_diag] == 0)
-            if torch.any(negative_off_diag):
-                assert negative_off_diag.sum().item() == int(negative_offdiag_rate * size) * 2
+            assert negative_off_diag.sum().item() == int(negative_offdiag_rate * size) * 2
         else:
             assert torch.all(qubo.matrix[off_diag] >= 0)
 
@@ -113,7 +111,7 @@ def test_save_load_to_a_path_preserves_nested_solutions(tmp_path: Path) -> None:
     # to a *path* previously reopened that path once per solution, truncating
     # everything written before it.
     dataset = Dataset(
-        matrices=torch.stack([torch.eye(2), torch.eye(2)], dim=-1),
+        matrices=torch.stack([torch.eye(2, dtype=tensor.dtype())] * 2, dim=-1),
         solutions=[
             Solution(
                 bitstrings=bitstrings.tensor([[1, 0]]),
@@ -147,3 +145,60 @@ def test_load_rejects_a_stream_that_is_not_a_qubosolver_file() -> None:
 
     with pytest.raises(ValueError, match="Not a qubosolver file"):
         Dataset.load(buffer)
+
+
+def test_getitem_returns_the_matching_solution() -> None:
+    solution = Solution(bitstrings=bitstrings.zeros(1, 3), costs=vector.zeros(1))
+    dataset = Dataset(tensor.zeros(3, 3, 1), [solution])
+    _, item_solution = dataset[0]
+    torch.testing.assert_close(item_solution.bitstrings, solution.bitstrings)
+
+
+# A single non-zero entry out of 4 * 4: the mask holds one diagonal coefficient only.
+_DIAGONAL_ONLY_DENSITY = 1 / 16
+
+
+def test_from_random_forces_a_negative_off_diagonal_coefficient() -> None:
+    dataset = Dataset.from_random(
+        1,
+        4,
+        densities=[_DIAGONAL_ONLY_DENSITY],
+        negative_offdiag_rate=0.5,
+        rng=torch_rng(445670878),
+    )
+    instance, _ = dataset[0]
+    check.less(instance.matrix[0, 1].item(), 0.0)
+
+
+def test_from_random_with_positive_lower_bound_has_a_negative_diagonal() -> None:
+    dataset = Dataset.from_random(1, 4, coefficient_bounds=(1.0, 2.0), rng=torch_rng(445670878))
+    instance, _ = dataset[0]
+    check.is_true(bool((instance.matrix.diag() < 0).any()))
+
+
+def test_from_random_keeps_an_existing_max_coefficient() -> None:
+    # Every non-zero diagonal coefficient already equals the upper bound.
+    dataset = Dataset.from_random(1, 4, coefficient_bounds=(-3.0, -3.0), rng=torch_rng(445670878))
+    instance, _ = dataset[0]
+    off_diag = ~torch.eye(4, dtype=torch.bool)
+    check.is_true(bool((instance.matrix.diag() == -3.0).any()))
+    check.is_true(bool((instance.matrix[off_diag] >= 0).all()))
+
+
+def test_from_random_without_positive_coefficient_sets_the_max_on_the_diagonal() -> None:
+    dataset = Dataset.from_random(
+        1,
+        4,
+        densities=[_DIAGONAL_ONLY_DENSITY],
+        coefficient_bounds=(-2.0, -1.0),
+        rng=torch_rng(445670878),
+    )
+    instance, _ = dataset[0]
+    check.is_true(bool((instance.matrix.diag() == -1.0).any()))
+
+
+@pytest.mark.parametrize("density", [0.0, 1.0])
+def test_from_random_extreme_densities(density: float) -> None:
+    dataset = Dataset.from_random(1, 3, densities=[density], rng=torch_rng(445670878))
+    instance, _ = dataset[0]
+    check.equal(instance.size, 3)

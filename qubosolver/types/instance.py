@@ -30,7 +30,7 @@ from ._enums import _DensityType
 
 _matrix_module = matrix  # alias so the shadowed `matrix` parameter can still reach this module
 
-if TYPE_CHECKING and not _RUNTIME_TYPE_CHECKING:
+if TYPE_CHECKING and not _RUNTIME_TYPE_CHECKING:  # no cov
     from qubosolver.transforms import (  # noqa: TC001 (already typing-only; ruff misses the compound guard)
         negative_bitflip,
         variable_fixing,

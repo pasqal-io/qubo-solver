@@ -5,9 +5,16 @@
 
 # use this file for configuring test fixtures and
 # functions common to every test
+# ruff: noqa: E402 (thread limits must be set before numpy/torch are imported)
 from __future__ import annotations
 
 import os
+
+# One BLAS/OpenMP thread per xdist worker: otherwise each worker starts one thread per core
+# and the CPU is heavily oversubscribed. Must be set before numpy/torch are imported.
+for _var in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"):
+    os.environ.setdefault(_var, "1")
+
 import random
 from typing import TYPE_CHECKING
 
@@ -35,7 +42,7 @@ from qubosolver import (
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-SLOW_THRESHOLD_S = 15
+SLOW_THRESHOLD_S = 5
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -77,7 +84,7 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     # When unset, extras are assumed to be installed; if they're not, the
     # extras-marked tests run and fail naturally with the install instructions
     # already raised by the code under test (see cplex.py's _import_cplex()).
-    if os.environ.get("QUBOSOLVER_WITHOUT_EXTRAS"):
+    if os.environ.get("QUBOSOLVER_WITHOUT_EXTRAS"):  # no cov
         skip_extras = pytest.mark.skip(
             reason="QUBOSOLVER_WITHOUT_EXTRAS is set: extras (e.g. cplex) are not installed"
         )
@@ -214,7 +221,7 @@ def qubo_for_testing_many_devices(request: pytest.FixtureRequest) -> Instance:
 
 
 def generate_qubo_matrix(
-    size: int, density: float, value_range: tuple[int, int], seed: int | None = None
+    size: int, density: float, value_range: tuple[int, int], seed: int
 ) -> Matrix:
     """Generate a random symmetric qubo matrix with negative diagonal coefficients.
 
@@ -224,13 +231,12 @@ def generate_qubo_matrix(
         size (int): Size of qubo.
         density (float): Density.
         value_range (tuple[int, int]): Value range of elements.
-        seed (int | None, optional): Random seed for reproducibility. Defaults to None.
+        seed (int): Random seed for reproducibility.
 
     Returns:
         torch.Tensor: Qubo matrix.
     """
-    if seed is not None:
-        np.random.seed(seed)
+    np.random.seed(seed)
     matrix_ = np.zeros((size, size))
     for i in range(size):
         matrix_[i, i] = -np.abs(np.random.uniform(0, 100))  # Negative diagonal

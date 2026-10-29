@@ -22,33 +22,33 @@ from qoolqit.execution import job
 # to detect whether a class matches the concept when it's expected not to.
 
 
-def _test_backend(backend: protocols.Backend) -> None: ...
+def _test_backend(backend: protocols.Backend) -> None: ...  # no cov
 
 
 def test_not_backend() -> None:
 
-    class NotBackend0: ...
+    class NotBackend0: ...  # no cov
 
     _test_backend(NotBackend0())  # type: ignore[arg-type]
     _b0: protocols.Backend = NotBackend0()  # type: ignore[assignment]
 
     class NotBackend1:
         def run(self: Self, program: qoolqit.QuantumProgram) -> None:  # noqa: ARG002
-            return
+            return  # no cov
 
     _test_backend(NotBackend1())  # type: ignore[arg-type]
     _b1: protocols.Backend = NotBackend1()  # type: ignore[assignment]
 
     class NotBackend2:
         def run(self: Self, program: int) -> job.Job[Results]:  # noqa: ARG002
-            return job._LocalJob(Results(atom_order=(), total_duration=0))
+            return job._LocalJob(Results(atom_order=(), total_duration=0))  # no cov
 
     _test_backend(NotBackend2())  # type: ignore[arg-type]
     _b2: protocols.Backend = NotBackend2()  # type: ignore[assignment]
 
     class NotBackend3:
         def run(self: Self, program: qoolqit.QuantumProgram) -> job.Job[Results] | None:  # noqa: ARG002
-            return job._LocalJob(Results(atom_order=(), total_duration=0))
+            return job._LocalJob(Results(atom_order=(), total_duration=0))  # no cov
 
     _test_backend(NotBackend3())  # type: ignore[arg-type]
     _b3: protocols.Backend = NotBackend3()  # type: ignore[assignment]
@@ -58,14 +58,14 @@ def test_backend() -> None:
 
     class Backend0:
         def run(self: Self, program: qoolqit.QuantumProgram) -> job.Job[Results]:  # noqa: ARG002
-            return job._LocalJob(Results(atom_order=(), total_duration=0))
+            return job._LocalJob(Results(atom_order=(), total_duration=0))  # no cov
 
     _test_backend(Backend0())
     _b0: protocols.Backend = Backend0()
 
     class Backend1:
         def run(self: Self, program: qoolqit.QuantumProgram | None) -> job.Job[Results]:  # noqa: ARG002
-            return job._LocalJob(Results(atom_order=(), total_duration=0))
+            return job._LocalJob(Results(atom_order=(), total_duration=0))  # no cov
 
     _test_backend(Backend1())
     _b1: protocols.Backend = Backend1()

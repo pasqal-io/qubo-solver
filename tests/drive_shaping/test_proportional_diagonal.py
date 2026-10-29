@@ -208,3 +208,15 @@ def test_dmm_labels_are_ints() -> None:
     qoolqit.QuantumProgram(register, drive).compile_to(
         device, profile="max_energy", device_max_duration_ratio=0.999
     )
+
+
+def test_too_small_kappa(caplog: pytest.LogCaptureFixture) -> None:
+    register = qoolqit.Register.from_coordinates(tensor.tensor([[0.0, 0.0], [1.0, 0.0]]))
+    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+
+    with caplog.at_level(logging.WARNING, logger="qubosolver.drive_shaping.proportional_diagonal"):
+        drive_shaping.proportional_diagonal.build_drive(
+            Instance(Q), register, dmm=False, device=AnalogDevice(), kappa=0.01
+        )
+
+    check.is_in("proportional_diagonal_kappa is too small (0.01)", caplog.text)

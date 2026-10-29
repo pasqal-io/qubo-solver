@@ -128,7 +128,7 @@ def check_solution(
     check.greater(cumulated_probability, expected_optimal_probability)
 
 
-@pytest.mark.duration(44)
+@pytest.mark.duration(11)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("drive_shaping_method", ["proportional_diagonal", "bayesian_search"])
 @pytest.mark.parametrize("embedding_method", ["greedy_layout", "blade"])
@@ -151,7 +151,7 @@ def test_quantum_solve(
         embedding_config = EmbeddingConfig(
             algorithm="greedy_layout",
         )
-    else:
+    else:  # no cov
         msg = f"Invalid embedding method: {embedding_method}"
         raise ValueError(msg)
 
@@ -165,7 +165,7 @@ def test_quantum_solve(
             algorithm="proportional_diagonal",
             proportional_diagonal_kappa=0.25,
         )
-    else:
+    else:  # no cov
         msg = f"Invalid drive shaping method: {drive_shaping_method}"
         raise ValueError(msg)
 

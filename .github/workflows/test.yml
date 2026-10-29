@@ -54,9 +54,12 @@ jobs:
             python-version: ${{ matrix.python-version }}
             enable-cache: false
         - name: Perform unit tests
+          # Coverage (100% required, see `[tool.coverage.report]`) is measured on one cell only,
+          # matching the local command in CONTRIBUTING.md.
           run: |
-            uv run --extra extras --group cpu pytest
+            uv run --extra extras --group cpu pytest ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14' && '--cov --cov-report=term-missing --cov-report=xml' || '' }}
         - name: Upload coverage reports to Codecov
+          if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14' }}
           uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
           with:
             token: ${{ secrets.CODECOV_TOKEN }}

@@ -37,7 +37,7 @@ def _import_cplex() -> Any:  # noqa: ANN401 (dynamically imported optional modul
     """
     try:
         import cplex  # noqa: PLC0415 (optional dependency)
-    except ImportError as e:
+    except ImportError as e:  # no cov
         msg = (
             "Solving with CPLEX requires the 'cplex' package. Install it with: "
             "pip install 'qubo-solver[extras]'"
