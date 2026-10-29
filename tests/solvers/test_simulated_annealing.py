@@ -176,7 +176,7 @@ def test_simulated_annealing_costs_match_bitstrings(instance: Instance, vectoriz
     )
 
 
-@pytest.mark.duration(38)
+@pytest.mark.duration(6)
 @pytest.mark.parametrize("vectorized", vectorized_params)
 def test_simulated_annealing_energy_does_not_drift_on_large_batch(vectorized: bool) -> None:
     """On a large batch/instance, accumulated rounding error must not make costs drift.

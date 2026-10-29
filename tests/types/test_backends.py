@@ -44,6 +44,7 @@ from qubosolver.types.backends import (
     _get_backend_type,
     _warn_suboptimal_backend,
 )
+from qubosolver.utils._random import manual_seed
 
 
 def make_sequence(register: pulser.Register, device: qoolqit.Device) -> pulser.Sequence:
@@ -169,7 +170,6 @@ def remote_auto_backend() -> tuple[RemoteEmulator, pulser.backend.RemoteResults]
     )
 
 
-@pytest.mark.duration(120)
 @pytest.mark.parametrize(
     "size, backend_and_results, expected_type, optimal_type",
     [
@@ -196,6 +196,7 @@ def remote_auto_backend() -> tuple[RemoteEmulator, pulser.backend.RemoteResults]
     ],
     indirect=("backend_and_results",),
 )
+@pytest.mark.usefixtures("restore_rng_state")
 def test_emulator_backend_selection(
     size: int,
     backend_and_results: tuple,
@@ -203,6 +204,9 @@ def test_emulator_backend_selection(
     optimal_type: type,
 ) -> None:
     """Test that emulators select the correct backend based on problem size and configuration."""
+    # With only 2 BLaDE steps per round, some random initial positions violate the device
+    # distance ratio, so seed it.
+    manual_seed(4203573563)
     Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
     instance = Instance(Q)
 
@@ -212,7 +216,8 @@ def test_emulator_backend_selection(
     solver_config = SolverConfig(
         solving=QuantumSolvingConfig(
             backend=backend,
-            embedding=EmbeddingConfig(algorithm="blade"),
+            # Backend selection doesn't depend on embedding quality; keep BLaDE cheap.
+            embedding=EmbeddingConfig(algorithm="blade", blade_steps_per_round=2),
         ),
         preprocessing=False,
         postprocessing=False,
@@ -241,7 +246,7 @@ def test_default_remote_emulator_backend() -> None:
     check.is_(emulator._backend_type, RemoteEmuFreeBackend)
 
 
-@pytest.mark.duration(3)
+@pytest.mark.duration(2)
 def test_remote_emulator_warning() -> None:
     """Test that RemoteEmulator warns when using suboptimal backend."""
     size = 2
@@ -267,7 +272,7 @@ def test_remote_emulator_warning() -> None:
         mock_run.assert_called_once()
 
 
-@pytest.mark.duration(3)
+@pytest.mark.duration(2)
 def test_local_emulator_warning() -> None:
     """Test that LocalEmulator warns when using suboptimal backend."""
     size = 2

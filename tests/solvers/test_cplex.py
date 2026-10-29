@@ -31,7 +31,7 @@ from qubosolver.solving.classical.cplex import _to_solution
 pytestmark = pytest.mark.extras
 
 
-@pytest.mark.duration(3)
+@pytest.mark.duration(4)
 def test_to_solution_without_incumbent() -> None:
     # Regression test flagged in review: if CPLEX's time/node limit is hit
     # before any incumbent is found, `problem.solution.get_values()` raises

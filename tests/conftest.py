@@ -5,9 +5,16 @@
 
 # use this file for configuring test fixtures and
 # functions common to every test
+# ruff: noqa: E402 (thread limits must be set before numpy/torch are imported)
 from __future__ import annotations
 
 import os
+
+# One BLAS/OpenMP thread per xdist worker: otherwise each worker starts one thread per core
+# and the CPU is heavily oversubscribed. Must be set before numpy/torch are imported.
+for _var in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"):
+    os.environ.setdefault(_var, "1")
+
 import random
 from typing import TYPE_CHECKING
 
@@ -35,7 +42,7 @@ from qubosolver import (
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-SLOW_THRESHOLD_S = 15
+SLOW_THRESHOLD_S = 5
 
 
 @pytest.hookimpl(tryfirst=True)

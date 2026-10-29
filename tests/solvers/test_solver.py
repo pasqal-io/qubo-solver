@@ -62,7 +62,7 @@ def test_implicit_solver_config(
     assert isinstance(implicit_default_qubo_solver_config._solver, _QuboSolverQuantum)
 
 
-@pytest.mark.duration(21)
+@pytest.mark.duration(5)
 def test_different_shots(simple_qubo_instance: Instance) -> None:
     default_solver = Solver(
         simple_qubo_instance,
@@ -91,7 +91,7 @@ def test_different_shots(simple_qubo_instance: Instance) -> None:
     assert solutions.counts.sum() == 100
 
 
-@pytest.mark.duration(40)
+@pytest.mark.duration(9)
 @pytest.mark.flaky(reruns=5)
 def test_run_local_backends(simple_qubo_instance: Instance, local_backend: LocalEmulator) -> None:
     solver = Solver(
@@ -118,7 +118,7 @@ def test_run_local_backends(simple_qubo_instance: Instance, local_backend: Local
     assert solutions.costs.min().item() <= -3.0
 
 
-@pytest.mark.duration(150)
+@pytest.mark.duration(3)
 def test_solver_different_devices(
     qubo_for_testing_many_devices: Instance,
     local_device: Device,
@@ -239,7 +239,7 @@ def trivial_triangular_qubo(connection: RemoteConnection | None = None) -> Solve
     return Solver(qubo, config)
 
 
-@pytest.mark.duration(25)
+@pytest.mark.duration(5)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("wait", [True, False], ids=["wait", "dont_wait"])
 def test_submit_integration(make_mock_connection: type[MockConnection], wait: bool) -> None:
@@ -294,7 +294,7 @@ def test_submit_integration(make_mock_connection: type[MockConnection], wait: bo
     torch.testing.assert_close(solution_remote.counts, solution.counts)
 
 
-@pytest.mark.duration(19)
+@pytest.mark.duration(4)
 def test_respects_total_bottom_detuning(caplog: pytest.LogCaptureFixture) -> None:
     n = 6
     Q = matrix.zeros(n)
@@ -333,7 +333,7 @@ def _triangular_register_qubo() -> Instance:
     return Instance(matrix.as_tensor(np.asarray(qubo, dtype=float)))
 
 
-@pytest.mark.duration(4)
+@pytest.mark.duration(9)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("algorithm", ["greedy_layout", "blade"])
 def test_quantum_matches_classical_triangular(algorithm: _EmbeddingAlgorithm) -> None:

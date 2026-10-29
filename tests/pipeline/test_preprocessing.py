@@ -118,7 +118,7 @@ def test_apply_rule() -> None:
     torch.testing.assert_close(reduced_qubo.matrix, expected_coefficients)
 
 
-@pytest.mark.duration(18)
+@pytest.mark.duration(3)
 def test_quantum_preprocessing_falls_back_to_zeroing_when_bitflip_is_not_enough(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -160,7 +160,7 @@ def test_quantum_preprocessing_falls_back_to_zeroing_when_bitflip_is_not_enough(
         check.almost_equal(sol.cost, instance.cost(sol.bitstring))
 
 
-@pytest.mark.duration(15)
+@pytest.mark.duration(4)
 def test_quantum_preprocessing(qubo_instance_for_preprocessing: Instance) -> None:
     """Test instance using quantum with preprocessing."""
     quantum_preprocessing_config = SolverConfig(
@@ -171,7 +171,7 @@ def test_quantum_preprocessing(qubo_instance_for_preprocessing: Instance) -> Non
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
 
-@pytest.mark.duration(8)
+@pytest.mark.duration(6)
 def test_quantum_postprocessing(qubo_instance_for_preprocessing: Instance) -> None:
     """Test instance using quantum with postprocessing."""
     quantum_preprocessing_config = SolverConfig(
@@ -182,7 +182,7 @@ def test_quantum_postprocessing(qubo_instance_for_preprocessing: Instance) -> No
     assert len(solution.bitstrings[0]) == qubo_instance_for_preprocessing.size
 
 
-@pytest.mark.duration(6)
+@pytest.mark.duration(4)
 def test_quantum_prepostprocessing(
     qubo_instance_for_preprocessing: Instance,
 ) -> None:

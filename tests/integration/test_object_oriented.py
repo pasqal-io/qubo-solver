@@ -128,7 +128,7 @@ def check_solution(
     check.greater(cumulated_probability, expected_optimal_probability)
 
 
-@pytest.mark.duration(44)
+@pytest.mark.duration(11)
 @pytest.mark.usefixtures("restore_rng_state")
 @pytest.mark.parametrize("drive_shaping_method", ["proportional_diagonal", "bayesian_search"])
 @pytest.mark.parametrize("embedding_method", ["greedy_layout", "blade"])

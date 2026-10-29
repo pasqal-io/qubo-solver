@@ -23,7 +23,6 @@ if TYPE_CHECKING:
     from qoolqit import Device
 
 
-@pytest.mark.duration(40)
 @pytest.mark.parametrize("embedding_method", ["greedy_layout", "blade"])
 def test_embeddings_different_devices(
     qubo_for_testing_many_devices: Instance,
@@ -49,6 +48,7 @@ def test_get_embedder_invalid_algorithm(simple_qubo_instance: Instance) -> None:
         _get_embedder(simple_qubo_instance, config, config.backend)
 
 
+@pytest.mark.duration(6)
 def test_blade_embedder_default_steps_per_round(simple_qubo_instance: Instance) -> None:
     config = QuantumSolvingConfig(embedding=EmbeddingConfig(blade_steps_per_round=None))
     register = BLaDEmbedder(simple_qubo_instance, config, config.backend).embed()

@@ -6,12 +6,15 @@
 from __future__ import annotations
 
 import itertools
+from typing import TYPE_CHECKING
 
-import pytest
 import pytest_check as check
 import torch
 
 from qubosolver import Candidate, Instance, bitstrings, matrix, solving, torch_rng
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def _reference_sorted(instance: Instance) -> list[Candidate]:
@@ -105,7 +108,6 @@ def test_time_limit_returns_best_so_far_without_enumerating_all() -> None:
         check.is_true(torch.isfinite(torch.tensor(instance.cost(b))))
 
 
-@pytest.mark.duration(4)
 def test_large_instance_with_no_time_limit_logs_warning(
     caplog: pytest.LogCaptureFixture,
 ) -> None:

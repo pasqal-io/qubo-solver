@@ -142,6 +142,7 @@ packages = ["qubosolver"]
 testpaths = ["tests"]
 addopts = [
     "-n=auto",
+    "--maxschedchunk=2",
     "-vvv",
     "--strict-markers",
 ]
@@ -151,8 +152,8 @@ asyncio_mode="auto"
 asyncio_default_fixture_loop_scope="function"
 markers = [
 	"duration(seconds): expected runtime; longer tests run first.",
-	"fast: auto-applied when duration < 15 s; do not set manually.",
-	"slow: auto-applied when duration >= 15 s; do not set manually.",
+	"fast: auto-applied when duration < 5 s; do not set manually.",
+	"slow: auto-applied when duration >= 5 s; do not set manually.",
 	"extras: requires optional extras (e.g. cplex) to be installed.",
 ]
 log_cli = true

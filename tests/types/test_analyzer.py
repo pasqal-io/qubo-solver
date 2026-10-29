@@ -110,7 +110,7 @@ def test_analyzer_classical(
     assert "probs" in df.columns
 
 
-@pytest.mark.duration(10)
+@pytest.mark.duration(4)
 def test_analyzer_quantum(simple_qubo_instance: Instance) -> None:
     config = SolverConfig(solving=QuantumSolvingConfig(), preprocessing=False, postprocessing=False)
     solver = Solver(simple_qubo_instance, config)
@@ -122,7 +122,7 @@ def test_analyzer_quantum(simple_qubo_instance: Instance) -> None:
     assert "counts" in df.columns
 
 
-@pytest.mark.duration(6)
+@pytest.mark.duration(4)
 @pytest.mark.parametrize("classical_method", _CLASSICAL_METHODS)
 def test_analyzer_quantum_and_classical(
     simple_qubo_instance: Instance, classical_method: _ClassicalAlgorithm
