@@ -198,18 +198,36 @@ class Solution:
             self.probabilities = self.probabilities[sorted_indices]
         return self
 
-    def _update(self, instance: Instance) -> Self:
+    def _update(self, instance: Instance, *, unit_counts: bool = False) -> Self:
         """Recompute costs, sort by cost, and recompute probabilities, in that order.
 
         Equivalent to
-        ``self._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()``.
+        ``self._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()``,
+        optionally after setting every count to 1.
 
         Args:
             instance: The QUBO instance whose matrix is passed to `_compute_costs`.
+            unit_counts: If ``True``, first replace `counts` with one count per
+                candidate, overwriting any existing counts, so that the recomputed
+                probabilities are uniform. Useful for solutions built from bare
+                bitstrings, which have no counts. Defaults to ``False``.
 
         Returns:
             The same [`Solution`][] instance, allowing method chaining.
+
+        Raises:
+            ValueError: If `unit_counts` is ``False`` and `counts` does not have
+                one entry per candidate (e.g. a solution built from bare
+                bitstrings).
         """
+        if unit_counts:
+            self.counts = vectori.zeros(len(self)).fill_(1)
+        elif self.counts.numel() != len(self):
+            msg = (
+                f"Solution has {len(self)} candidates but {self.counts.numel()} counts: "
+                "pass `unit_counts=True` to count each candidate once."
+            )
+            raise ValueError(msg)
         return self._compute_costs(instance.matrix)._sort_by_cost()._compute_probabilities()
 
     def truncate(self, k: int) -> Self:

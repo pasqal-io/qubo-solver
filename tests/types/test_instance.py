@@ -226,3 +226,50 @@ def test_classify_density_out_of_range_raises(density: float) -> None:
 def test_calculate_density() -> None:
     check.equal(_calculate_density(matrix.zeros(0)), 0.0)
     check.equal(_calculate_density(matrix.tensor([[1.0, 0.0], [0.0, 1.0]])), 0.5)
+
+
+def _subinstance_qubo() -> Instance:
+    return Instance(
+        matrix.tensor(
+            [
+                [-1.0, 2.0, 3.0],
+                [2.0, -4.0, 5.0],
+                [3.0, 5.0, -6.0],
+            ]
+        )
+    )
+
+
+def test_subinstance_keeps_the_given_variable_order() -> None:
+    sub = _subinstance_qubo().subinstance([2, 0])
+
+    torch.testing.assert_close(sub.matrix, matrix.tensor([[-6.0, 3.0], [3.0, -1.0]]))
+
+
+def test_subinstance_is_an_independent_copy() -> None:
+    instance = _subinstance_qubo()
+    sub = instance.subinstance([0, 1, 2])
+
+    sub.matrix.fill_(0.0)
+    check.equal(instance.matrix[0, 0].item(), -1.0)
+
+
+def test_subinstance_is_a_plain_instance_on_subclasses() -> None:
+    reduced = transforms.variable_fixing.Instance(_subinstance_qubo())
+    sub = reduced.subinstance([1])
+
+    check.is_true(type(sub) is Instance)
+    torch.testing.assert_close(sub.matrix, matrix.tensor([[-4.0]]))
+
+
+def test_subinstance_of_no_variables_is_empty() -> None:
+    check.equal(_subinstance_qubo().subinstance([]).size, 0)
+
+
+@pytest.mark.parametrize(
+    ("variables", "match"),
+    [([0, 0], "distinct"), ([3], "range"), ([-1], "range")],
+)
+def test_subinstance_rejects_invalid_variables(variables: list[int], match: str) -> None:
+    with pytest.raises(ValueError, match=match):
+        _subinstance_qubo().subinstance(variables)

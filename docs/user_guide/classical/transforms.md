@@ -28,7 +28,7 @@ reduced_instance = transforms.variable_fixing.apply_recursively(instance)
 reduced_solution = solving.brute_force.solve(reduced_instance)
 solution = transforms.variable_fixing.lift(reduced_solution, reduced_instance)
 
-print(f"Fixed indices: {reduced_instance.fixed_indices}")
+print(f"Fixed variables: {reduced_instance.fixed_variables}")
 print(f"Full-size bitstrings: {bitstrings.to_strings(solution.bitstrings)}")
 print(f"Costs: {solution.costs}")
 ```
@@ -80,7 +80,7 @@ reduced = transforms.variable_fixing.apply_recursively(Q)
 reduced_solution = solving.brute_force.solve(reduced)
 solution = transforms.variable_fixing.lift(reduced_solution, reduced)
 
-print(f"Fixed indices: {reduced.fixed_indices}")
+print(f"Fixed variables: {reduced.fixed_variables}")
 print(f"Reduced size: {reduced.size}")
 print(f"Full-size bitstrings: {bitstrings.to_strings(solution.bitstrings)}")
 ```

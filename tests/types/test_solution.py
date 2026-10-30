@@ -739,6 +739,23 @@ def test_update_computes_costs_sorts_and_computes_probabilities(instance: Instan
     check.equal(s1.probability, 0.25)
 
 
+def test_update_with_unit_counts_on_bare_bitstrings(instance: Instance) -> None:
+    solution = Solution(bitstrings=bitstrings.tensor([[0, 1], [1, 0]]))
+    result = solution._update(instance, unit_counts=True)
+    check.is_(result, solution)
+    _assert_valid(solution, instance)
+    torch.testing.assert_close(solution.bitstrings, bitstrings.tensor([[1, 0], [0, 1]]))
+    torch.testing.assert_close(solution.costs, vector.tensor([1.0, 2.0]))
+    torch.testing.assert_close(solution.counts, vectori.tensor([1, 1]))
+    torch.testing.assert_close(solution.probabilities, vector.tensor([0.5, 0.5]))
+
+
+def test_update_without_counts_raises(instance: Instance) -> None:
+    solution = Solution(bitstrings=bitstrings.tensor([[0, 1], [1, 0]]))
+    with pytest.raises(ValueError, match="unit_counts=True"):
+        solution._update(instance)
+
+
 def test_deepcopy_is_independent_of_original() -> None:
     solution = Solution(
         bitstrings=bitstrings.tensor([[1, 0], [0, 1]]),
