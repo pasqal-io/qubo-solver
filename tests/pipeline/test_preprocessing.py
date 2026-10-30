@@ -51,8 +51,8 @@ def test_apply_full_and_post_process_fixation() -> None:
     reduced_instance = transforms.variable_fixing.apply_recursively(instance)
 
     assert isinstance(reduced_instance, transforms.variable_fixing.Instance)
-    check.equal(reduced_instance.fixed_indices, [{0: 1, 3: 1}, {0: 0, 1: 0}])
-    check.equal(reduced_instance.n_fixed_indices, 4)
+    check.equal(reduced_instance.fixed_history, [{0: 1, 3: 1}, {1: 0, 2: 0}])
+    check.equal(len(reduced_instance.fixed_variables), 4)
 
     reduced_solution = Solution(
         bitstrings.zeros(1, 0),
@@ -245,7 +245,7 @@ def test_reduce_qubo_2() -> None:
 
     reduced_qubo = transforms.variable_fixing.apply_recursively(qubo)
 
-    check.equal(reduced_qubo._fixed_indices, [{0: 0}, {2: 1, 3: 1}])
+    check.equal(reduced_qubo.fixed_history, [{0: 0}, {3: 1, 4: 1}])
 
     # Hardcode solution
     reduced_solution = Solution(

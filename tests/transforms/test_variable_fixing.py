@@ -7,16 +7,23 @@ from __future__ import annotations
 
 import io
 import logging
-from typing import TYPE_CHECKING
 
+import pytest
 import pytest_check as check
 import torch
 
-from qubosolver import Instance, Solution, bitstrings, matrix, solving, transforms, vectori
-from qubosolver.transforms.variable_fixing import _reduce_qubo, hansen_fixing
-
-if TYPE_CHECKING:
-    import pytest
+from qubosolver import (
+    Candidate,
+    Instance,
+    Solution,
+    bitstring,
+    bitstrings,
+    matrix,
+    solving,
+    transforms,
+    vectori,
+)
+from qubosolver.transforms.variable_fixing import from_candidate, hansen_fixing
 
 
 def fully_fixable_qubo() -> Instance:
@@ -98,15 +105,15 @@ def test_init_preserves_the_parent_instance_type() -> None:
     check.is_instance(wrapped._parent_instance, transforms.negative_bitflip.Instance)
 
 
-def test_apply_reduces_matrix_and_records_fixed_indices() -> None:
+def test_apply_reduces_matrix_and_records_fixed_history() -> None:
     instance = fixable_qubo()
     expected_fixed = hansen_fixing(instance)
 
     reduced = transforms.variable_fixing.apply(instance)
 
     check.is_instance(reduced, transforms.variable_fixing.Instance)
-    check.equal(reduced.fixed_indices, [expected_fixed])
-    check.equal(reduced.n_fixed_indices, len(expected_fixed))
+    check.equal(reduced.fixed_history, [expected_fixed])
+    check.equal(len(reduced.fixed_variables), len(expected_fixed))
     check.equal(reduced.size, instance.size - len(expected_fixed))
 
 
@@ -115,7 +122,7 @@ def test_apply_is_noop_when_nothing_can_be_fixed() -> None:
     reduced = transforms.variable_fixing.apply(instance)
 
     check.equal(reduced.size, instance.size)
-    check.equal(reduced.n_fixed_indices, 0)
+    check.equal(reduced.fixed_variables, {})
     torch.testing.assert_close(reduced.matrix, instance.matrix)
 
 
@@ -142,12 +149,24 @@ def test_apply_does_not_log_when_variables_remain(
 def test_apply_recursively_fixes_until_stable() -> None:
     instance = fixable_qubo()
     reduced = transforms.variable_fixing.apply_recursively(instance)
-    n_fixed_indices = reduced.n_fixed_indices
+    fixed_variables = reduced.fixed_variables
 
     # A further in-place pass finds nothing new: the recursion already ran
     # to a fixed point.
     transforms.variable_fixing.apply(reduced, inplace=True)
-    check.equal(reduced.n_fixed_indices, n_fixed_indices)
+    check.equal(reduced.fixed_variables, fixed_variables)
+
+
+def test_apply_recursively_with_a_wrapped_rule_only_fixes_to_zero() -> None:
+    def zeros_only(instance: Instance) -> dict[int, int]:
+        return {i: v for i, v in hansen_fixing(instance).items() if v == 0}
+
+    check.equal(
+        transforms.variable_fixing.apply_recursively(fixable_qubo()).fixed_history,
+        [{0: 0}, {3: 1, 4: 1}],
+    )
+    reduced = transforms.variable_fixing.apply_recursively(fixable_qubo(), (zeros_only,))
+    check.equal(reduced.fixed_history, [{0: 0}])
 
 
 def test_lift_reinserts_fixed_variables_and_recomputes_costs() -> None:
@@ -199,14 +218,14 @@ def test_lift_when_every_variable_gets_fixed() -> None:
 
 def test_lift_is_noop_on_already_empty_instance_with_trivial_solution() -> None:
     # An instance that is already size 0 needs no fixing at all
-    # (fixed_indices stays empty), so lift() must take the "nothing fixed"
+    # (fixed_history stays empty), so lift() must take the "nothing fixed"
     # early-return path and hand back reduced_solution unchanged (deep-copied)
     # -- here a single zero-length bitstring, since trivial_solution_search
     # vacuously satisfies its "all coeffs >= 0" case on an empty matrix.
     instance = Instance()
     reduced = transforms.variable_fixing.apply_recursively(instance)
     check.equal(reduced.size, 0)
-    check.equal(reduced.fixed_indices, [])
+    check.equal(reduced.fixed_history, [])
 
     reduced_solution = solving.trivial_solution_search.solve(reduced)
     check.equal(len(reduced_solution), 1)
@@ -228,7 +247,7 @@ def test_lift_is_noop_on_already_empty_instance_with_empty_solution() -> None:
     instance = Instance()
     reduced = transforms.variable_fixing.apply_recursively(instance)
     check.equal(reduced.size, 0)
-    check.equal(reduced.fixed_indices, [])
+    check.equal(reduced.fixed_history, [])
 
     restored = transforms.variable_fixing.lift(Solution(), reduced)
 
@@ -246,7 +265,7 @@ def test_lift_of_empty_solution_stays_empty_even_when_variables_were_fixed() -> 
     # to an empty solution, not a made-up one.
     instance = fixable_qubo()
     reduced = transforms.variable_fixing.apply_recursively(instance)
-    check.greater(reduced.n_fixed_indices, 0)
+    check.greater(len(reduced.fixed_variables), 0)
 
     restored = transforms.variable_fixing.lift(Solution(), reduced)
 
@@ -288,7 +307,7 @@ def test_apply_does_not_alias_the_parent_instance() -> None:
 
 
 def test_save_load_roundtrips_variable_fixing_state() -> None:
-    # save/load must persist the fixing-specific state (fixed_indices,
+    # save/load must persist the fixing-specific state (fixed_history,
     # parent instance), not just the matrix inherited from the base
     # Instance.save/load.
     instance = fixable_qubo()
@@ -301,7 +320,7 @@ def test_save_load_roundtrips_variable_fixing_state() -> None:
 
     check.is_instance(loaded, transforms.variable_fixing.Instance)
     torch.testing.assert_close(loaded.matrix, reduced.matrix)
-    check.equal(loaded.fixed_indices, reduced.fixed_indices)
+    check.equal(loaded.fixed_history, reduced.fixed_history)
     torch.testing.assert_close(loaded._parent_instance.matrix, reduced._parent_instance.matrix)
 
 
@@ -321,7 +340,7 @@ def test_base_instance_load_dispatches_to_variable_fixing_instance() -> None:
 
     check.is_instance(loaded, transforms.variable_fixing.Instance)
     torch.testing.assert_close(loaded.matrix, reduced.matrix)
-    check.equal(loaded.variable_fixing.fixed_indices, reduced.fixed_indices)
+    check.equal(loaded.variable_fixing.fixed_history, reduced.fixed_history)
     torch.testing.assert_close(
         loaded.variable_fixing._parent_instance.matrix, reduced._parent_instance.matrix
     )
@@ -329,7 +348,7 @@ def test_base_instance_load_dispatches_to_variable_fixing_instance() -> None:
 
 def test_load_of_saved_variable_fixing_instance_can_be_lifted() -> None:
     # A round-tripped instance must remain usable end-to-end: lift() needs
-    # _parent_instance and fixed_indices to be restored correctly.
+    # _parent_instance and fixed_history to be restored correctly.
     instance = fixable_qubo()
     reduced = transforms.variable_fixing.apply_recursively(instance)
     reduced_solution = solving.brute_force.solve(reduced)
@@ -369,14 +388,113 @@ def test_save_load_roundtrips_variable_fixing_over_negative_bitflip_parent() -> 
     check.equal(loaded._parent_instance._offset, flipped_parent._offset)
 
 
-def test_reduce_qubo_skips_out_of_range_indices() -> None:
-    instance = unfixable_qubo()
-    reduced = _reduce_qubo(instance, {instance.size: 1})
-    torch.testing.assert_close(reduced.matrix, instance.matrix)
-
-
 def test_apply_recursively_inplace() -> None:
     instance = transforms.variable_fixing.Instance(fixable_qubo())
     reduced = transforms.variable_fixing.apply_recursively(instance, inplace=True)
     check.is_(reduced, instance)
     check.equal(reduced.size, 2)
+
+
+def test_fixed_history_uses_original_indices_over_several_rounds() -> None:
+    # fixable_qubo(): round 1 fixes original 0; round 2 fixes reduced 2, 3, i.e.
+    # original 3, 4 once variable 0 is gone.
+    instance = fixable_qubo()
+    reduced = transforms.variable_fixing.apply_recursively(instance)
+
+    check.equal(reduced.fixed_history, [{0: 0}, {3: 1, 4: 1}])
+    check.equal(reduced.size, 2)
+
+
+@pytest.mark.parametrize(
+    "fixed",
+    [{-1: 0}, {5: 1}, {0: 0, 5: 1}],
+    ids=["negative", "too-large", "mixed"],
+)
+def test_apply_rejects_out_of_range_indices(fixed: dict[int, int]) -> None:
+    instance = transforms.variable_fixing.Instance(fixable_qubo())
+    matrix = instance.matrix.clone()
+
+    with pytest.raises(ValueError, match="outside range"):
+        transforms.variable_fixing.apply(instance, (lambda _: fixed,), inplace=True)
+    torch.testing.assert_close(instance.matrix, matrix)
+    check.equal(instance.fixed_history, [])
+
+
+def test_apply_recursively_rejects_only_out_of_range_indices() -> None:
+    # Used to loop forever: each pass appended an empty dict to the history.
+    with pytest.raises(ValueError, match="outside range"):
+        transforms.variable_fixing.apply_recursively(fixable_qubo(), (lambda _: {7: 1},))
+
+
+def test_fixed_history_is_a_copy() -> None:
+    reduced = transforms.variable_fixing.apply_recursively(fixable_qubo())
+
+    history = reduced.fixed_history
+    history[0][1] = 1
+    history.append({2: 0})
+    check.equal(reduced.fixed_history, [{0: 0}, {3: 1, 4: 1}])
+
+
+def test_fixed_variables_is_the_union_and_a_copy() -> None:
+    reduced = transforms.variable_fixing.apply_recursively(fixable_qubo())
+
+    fixed = reduced.fixed_variables
+    check.equal(fixed, {0: 0, 3: 1, 4: 1})
+
+    fixed[1] = 1
+    check.equal(reduced.fixed_variables, {0: 0, 3: 1, 4: 1})
+    check.equal(reduced.fixed_history, [{0: 0}, {3: 1, 4: 1}])
+
+
+def test_lift_fills_remaining_positions_in_order() -> None:
+    reduced = transforms.variable_fixing.apply_recursively(fixable_qubo())
+    reduced_solution = Solution(bitstrings=bitstrings.from_strings(["01", "10"]))._update(
+        reduced, unit_counts=True
+    )
+
+    restored = transforms.variable_fixing.lift(reduced_solution, reduced)
+
+    check.equal(bitstrings.to_strings(restored.bitstrings), ["00111", "01011"])
+
+
+def test_from_candidate_fixation_is_restored_by_lift() -> None:
+    instance = unfixable_qubo()
+    rule = from_candidate(Candidate(bitstring.from_string("10")), [2, 0], instance)
+    check.equal(rule(instance), {2: 1, 0: 0})
+
+    reduced = transforms.variable_fixing.apply(instance, (rule,))
+    check.equal(reduced.fixed_history, [{0: 0, 2: 1}])
+    check.equal(list(reduced.fixed_history[0]), [0, 2])  # sorted by index
+    check.equal(reduced.size, 1)
+
+    reduced_solution = Solution(bitstrings=bitstrings.from_strings(["1"]))._update(
+        reduced, unit_counts=True
+    )
+    restored = transforms.variable_fixing.lift(reduced_solution, reduced)
+    check.equal(restored[0].string, "011")
+    check.almost_equal(restored[0].cost, instance.cost(restored[0].bitstring))
+
+
+def test_from_candidate_rejects_width_mismatch() -> None:
+    with pytest.raises(ValueError, match="bits"):
+        from_candidate(Candidate(bitstring.from_string("1")), [0, 1], unfixable_qubo())
+
+
+def test_from_candidate_rejects_duplicate_variables() -> None:
+    with pytest.raises(ValueError, match="distinct"):
+        from_candidate(Candidate(bitstring.from_string("10")), [1, 1], unfixable_qubo())
+
+
+def test_from_candidate_rejects_out_of_range_variables() -> None:
+    with pytest.raises(ValueError, match="range"):
+        from_candidate(Candidate(bitstring.from_string("10")), [0, 3], unfixable_qubo())
+
+
+def test_from_candidate_rule_after_fixing_rule_raises() -> None:
+    # hansen_fixing fixes variable 0 of fixable_qubo() first, so the candidate
+    # rule's indices are stale when it runs.
+    instance = fixable_qubo()
+    rule = from_candidate(Candidate(bitstring.from_string("1")), [1], instance)
+
+    with pytest.raises(ValueError, match="first"):
+        transforms.variable_fixing.apply(instance, (hansen_fixing, rule))

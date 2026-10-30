@@ -25,7 +25,7 @@ from qubosolver._checks import (
 )
 from qubosolver._io import utils as io_utils
 
-from . import matrix
+from . import matrix, vectori
 from ._enums import _DensityType
 
 _matrix_module = matrix  # alias so the shadowed `matrix` parameter can still reach this module
@@ -38,6 +38,7 @@ if TYPE_CHECKING and not _RUNTIME_TYPE_CHECKING:  # no cov
     )
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from typing import Self
 
     from qubosolver._io.utils import FileLike, Stream
@@ -147,6 +148,33 @@ class Instance:
         cost = _costs.quadratic_cost(solution, self.matrix)
         assert type(cost) is float  # nosec B101
         return cost
+
+    def subinstance(self, variables: Sequence[int]) -> Instance:
+        """Exact sub-instance on a subset of the variables.
+
+        Keeps the rows and columns of `variables`, in the given order: variable
+        *i* of the sub-instance is `variables[i]` of this instance. Couplings to
+        the other variables are dropped.
+
+        Args:
+            variables: Distinct variable indices, in `range(size)`.
+
+        Returns:
+            A plain [`Instance`][] (also when called on a subclass, which carries
+                no provenance).
+
+        Raises:
+            ValueError: If `variables` contains duplicates or out-of-range indices.
+        """
+        if len(set(variables)) != len(variables):
+            msg = f"Variables must be distinct, got {variables}."
+            raise ValueError(msg)
+        if any(not 0 <= v < self.size for v in variables):
+            msg = f"Variables must be in range({self.size}), got {variables}."
+            raise ValueError(msg)
+        index = vectori.as_tensor(variables)
+        sub = self.matrix.detach().index_select(0, index).index_select(1, index)
+        return Instance(sub)
 
     @classmethod
     def _tag(cls) -> str:

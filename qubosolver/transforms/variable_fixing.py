@@ -35,17 +35,22 @@ import torch
 import qubosolver
 from qubosolver._checks import TYPE_CHECKING
 from qubosolver._io import utils as io_utils
-from qubosolver.types import Solution, bitstrings, vector
+from qubosolver.types import Solution, bitstrings
 
 if TYPE_CHECKING:
     from qubosolver._io.utils import Stream
+    from qubosolver.types import Candidate
 
 logger = logging.getLogger(__name__)
 
 # TODO(abussy-pasqal): Using `type` statement when Python >= 3.12
 Rule = Callable[[qubosolver.Instance], dict[int, int]]
 """A function that inspects a QUBO instance and returns the variables it can fix,
-as a mapping from variable index to the value (0 or 1) it is fixed to."""
+as a mapping from variable index, in ``range(instance.size)``, to the value (0 or 1)
+it is fixed to.
+
+To restrict what a rule fixes, wrap it, e.g. to only fix variables to 0:
+``lambda instance: {i: v for i, v in hansen_fixing(instance).items() if v == 0}``."""
 
 
 def hansen_fixing(instance: qubosolver.Instance) -> dict[int, int]:
@@ -102,22 +107,41 @@ class Instance(qubosolver.Instance):
             parent_instance.matrix.detach().clone(),
         )
         self._parent_instance = copy.deepcopy(parent_instance)
-        self._fixed_indices: list[dict[int, int]] = []
+        self._fixed_history: list[dict[int, int]] = []
 
     @property
-    def fixed_indices(self) -> list[dict[int, int]]:
-        """Fixation history: one dict per [`apply`][] call, mapping index → fixed value."""
-        return self._fixed_indices
+    def fixed_history(self) -> list[dict[int, int]]:
+        """Fixation history: one dict per rule application that fixed variables.
+
+        Each dict maps original index → fixed value, in the order the rules were
+        applied: [`apply`][] adds one dict per rule that fixes at least one
+        variable. Indices refer to the variables of the parent instance, not of
+        the reduced one, and each dict is sorted by index.
+
+        A fresh copy on each access: mutating it does not change the history.
+        """
+        return copy.deepcopy(self._fixed_history)
 
     @property
-    def n_fixed_indices(self) -> int:
-        """Total number of variables fixed across all fixation rounds."""
-        return sum([len(fixed) for fixed in self.fixed_indices])
+    def fixed_variables(self) -> dict[int, int]:
+        """All fixed variables, merged over [`fixed_history`][], as original index → fixed value.
+
+        A fresh dict on each access: mutating it does not change the history.
+        """
+        return {i: v for fixed in self._fixed_history for i, v in fixed.items()}
+
+    def _remaining_variables(self) -> list[int]:
+        """Original indices of the variables not fixed yet, in increasing order.
+
+        Reduction never reorders variables, so reduced variable *i* is the *i*-th entry.
+        """
+        fixed = self.fixed_variables
+        return [i for i in range(self._parent_instance.size) if i not in fixed]
 
     def _write_body(self, f: Stream[bytes]) -> None:
         """Write the parent matrix, fixation history, and parent instance to `f`."""
         super()._write_body(f)
-        io_utils.save_string(f, json.dumps(self._fixed_indices))
+        io_utils.save_string(f, json.dumps(self._fixed_history))
         self._parent_instance.save(f)
 
     @classmethod
@@ -128,13 +152,16 @@ class Instance(qubosolver.Instance):
             return {int(k): v for k, v in obj.items()}
 
         instance = Instance(qubosolver.Instance._read_body(f))
-        instance._fixed_indices = json.loads(io_utils.load_string(f), object_hook=decode_int_keys)
+        instance._fixed_history = json.loads(io_utils.load_string(f), object_hook=decode_int_keys)
         instance._parent_instance = qubosolver.Instance.load(f)
         return instance
 
 
 def _reduce_qubo(
-    instance: qubosolver.Instance, fixed_indices: dict[int, int], *, inplace: bool = False
+    instance: qubosolver.Instance,
+    fixed_indices: dict[int, int],
+    *,
+    inplace: bool = False,
 ) -> Instance:
     """Reduce the QUBO matrix by fixing a set of variables.
 
@@ -150,8 +177,16 @@ def _reduce_qubo(
 
     Returns:
         The (possibly new) instance with the reduced matrix and
-        *fixed_indices* appended to its fixation history.
+        *fixed_indices*, translated to original indices, appended to its
+        fixation history.
+
+    Raises:
+        ValueError: If an index of *fixed_indices* is outside ``range(instance.size)``.
     """
+    if out_of_range := sorted(i for i in fixed_indices if not 0 <= i < instance.size):
+        msg = f"Fixed indices {out_of_range} are outside range({instance.size}) of the instance."
+        raise ValueError(msg)
+
     if not inplace:
         instance = Instance(instance)
 
@@ -160,6 +195,7 @@ def _reduce_qubo(
     if not fixed_indices:
         return instance
 
+    remaining = instance._remaining_variables()
     Q = instance.matrix.clone()
 
     fixed_to_0 = {i for i, v in fixed_indices.items() if v == 0}
@@ -167,9 +203,6 @@ def _reduce_qubo(
     fixed_vars = sorted(fixed_to_0 | fixed_to_1, reverse=True)
 
     for i in fixed_vars:
-        if i >= Q.shape[0]:
-            continue
-
         if i in fixed_to_1:
             for j in range(Q.shape[0]):
                 if j != i:
@@ -180,7 +213,9 @@ def _reduce_qubo(
 
     instance._matrix = Q
 
-    instance._fixed_indices.append(fixed_indices)
+    instance._fixed_history.append(
+        dict(sorted((remaining[i], v) for i, v in fixed_indices.items()))
+    )
     return instance
 
 
@@ -203,6 +238,9 @@ def apply(
 
     Returns:
         The reduced instance with updated fixation history.
+
+    Raises:
+        ValueError: If a rule returns an index outside ``range(instance.size)``.
     """
     if not inplace:
         instance = Instance(instance)
@@ -238,6 +276,9 @@ def apply_recursively(
 
     Returns:
         The fully reduced instance.
+
+    Raises:
+        ValueError: If a rule returns an index outside ``range(instance.size)``.
     """
     if not inplace:
         instance = Instance(instance)
@@ -245,9 +286,9 @@ def apply_recursively(
     instance = instance.variable_fixing
 
     while True:
-        prev_n_fixations = len(instance._fixed_indices)
+        prev_n_fixations = len(instance._fixed_history)
         apply(instance, fixation_rules, inplace=True)
-        n_fixations = len(instance._fixed_indices)
+        n_fixations = len(instance._fixed_history)
         assert n_fixations >= prev_n_fixations  # nosec B101
         if n_fixations == prev_n_fixations:
             return instance
@@ -256,9 +297,10 @@ def apply_recursively(
 def lift(reduced_solution: Solution, reduced_instance: Instance) -> Solution:
     """Reconstruct the full solution by reinserting fixed variables.
 
-    Reverses the fixation history stored in `reduced_instance`: fixed variables
-    are reinserted at their original positions in each bitstring, and costs
-    are recomputed against the original (unreduced) QUBO matrix.
+    Writes the fixed variables of `reduced_instance` at their original
+    positions in each bitstring, fills the remaining positions, in order,
+    with the reduced bitstring, and recomputes costs against the original
+    (unreduced) QUBO matrix.
 
     If no variables were fixed, returns a deep copy of `reduced_solution`
     unchanged.
@@ -276,29 +318,81 @@ def lift(reduced_solution: Solution, reduced_instance: Instance) -> Solution:
     if not reduced_solution:
         return Solution()
 
-    bitstrings_list = reduced_solution.bitstrings.tolist()
+    fixed = reduced_instance.fixed_variables
+    parent_size = reduced_instance._parent_instance.size
+    assert len(fixed) + reduced_solution.num_variables == parent_size  # nosec B101
 
-    def reinsert_fixed_variables(bitstring: list[int]) -> list[int]:
-        for fixation_dict in reversed(reduced_instance._fixed_indices):
-            for position, bit_value in sorted(fixation_dict.items()):
-                bitstring.insert(position, bit_value)
-        return bitstring
-
-    bits_to_reinsert = sum(len(fixation_dict) for fixation_dict in reduced_instance._fixed_indices)
-    assert (bits_to_reinsert + len(bitstrings_list[0])) == reduced_instance._parent_instance.size  # nosec B101
-
-    if bits_to_reinsert == 0:
+    if not fixed:
         return copy.deepcopy(reduced_solution)
 
-    solution = Solution()
+    full = bitstrings.zeros(len(reduced_solution), parent_size)
+    full[:, list(fixed)] = bitstrings.tensor([list(fixed.values())])
+    full[:, reduced_instance._remaining_variables()] = reduced_solution.bitstrings
 
-    solution.bitstrings = bitstrings.tensor(
-        [reinsert_fixed_variables(bitstring) for bitstring in bitstrings_list]
-    )
-    solution.costs = vector.tensor(
-        [reduced_instance._parent_instance.cost(b) for b in solution.bitstrings]
-    )
-    solution.counts = reduced_solution.counts
-    solution.probabilities = reduced_solution.probabilities
+    return Solution(
+        bitstrings=full,
+        counts=reduced_solution.counts,
+        probabilities=reduced_solution.probabilities,
+    )._compute_costs(reduced_instance._parent_instance.matrix)
 
-    return solution
+
+def from_candidate(
+    candidate: Candidate, variables: Sequence[int], instance: qubosolver.Instance
+) -> Rule:
+    """Turn a candidate of a sub-instance into a fixation rule on `instance`.
+
+    The candidate's bit *i* is the value of variable `variables[i]` of `instance`,
+    as for a sub-instance built with [`qubosolver.Instance.subinstance`][]. The
+    returned rule fixes those variables to those values.
+
+    Choosing which candidate to fix is the caller's decision: `solution[0]` is the
+    best one of a solution sorted by cost (e.g. from `Solution.from_results`).
+
+    The rule is only valid on an instance of the same size as `instance`, so it
+    can only be applied once, with [`apply`][], and must come first in
+    `fixation_rules`: a rule running before it in the same call may fix variables
+    and shift the indices. Do not pass it to [`apply_recursively`][]: once its
+    variables are fixed, the instance is smaller and the next pass raises. Calling
+    the rule directly, `rule(instance)`, returns the fixation dict.
+
+    Args:
+        candidate: The candidate whose bits are fixed.
+        variables: Distinct variable indices of `instance`, in the order of the
+            candidate's bits.
+        instance: The instance the indices in `variables` refer to.
+
+    Returns:
+        A [`Rule`][] fixing `variables` to the candidate's bits.
+
+    Raises:
+        ValueError: If the candidate's width differs from `len(variables)`, or
+            if `variables` contains duplicates or out-of-range indices. The rule
+            itself raises `ValueError` when applied to an instance whose size
+            differs from `instance.size`.
+    """
+    size = instance.size
+    if len(candidate.bitstring) != len(variables):
+        msg = (
+            f"Candidate has {len(candidate.bitstring)} bits but {len(variables)} variables "
+            "were given."
+        )
+        raise ValueError(msg)
+    if len(set(variables)) != len(variables):
+        msg = f"Variables must be distinct, got {variables}."
+        raise ValueError(msg)
+    if any(not 0 <= v < size for v in variables):
+        msg = f"Variables must be in range({size}), got {variables}."
+        raise ValueError(msg)
+
+    fixation = dict(zip(variables, candidate.bitstring.tolist(), strict=True))
+
+    def rule(target: qubosolver.Instance) -> dict[int, int]:
+        if target.size != size:
+            msg = (
+                f"This rule was built for an instance of size {size}, but was applied to one "
+                f"of size {target.size}: apply it once, with `apply`, first in `fixation_rules`."
+            )
+            raise ValueError(msg)
+        return fixation.copy()
+
+    return rule
