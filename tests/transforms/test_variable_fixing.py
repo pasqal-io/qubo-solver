@@ -176,9 +176,7 @@ def test_hansen_fixing_margin(diagonal: float, coupling: float, expected: dict[i
     check.equal(hansen_fixing(instance), expected)
 
 
-@pytest.mark.parametrize(
-    ("diagonal", "expected"), [(-1.0, {0: 1}), (0.0, {}), (1.0, {0: 0})]
-)
+@pytest.mark.parametrize(("diagonal", "expected"), [(-1.0, {0: 1}), (0.0, {}), (1.0, {0: 0})])
 def test_hansen_fixing_of_a_single_variable(diagonal: float, expected: dict[int, int]) -> None:
     instance = Instance(matrix.tensor([[diagonal]]))
 
