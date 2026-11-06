@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import io
+import itertools
 import logging
 
 import pytest
@@ -20,6 +21,7 @@ from qubosolver import (
     bitstrings,
     matrix,
     solving,
+    torch_rng,
     transforms,
     vectori,
 )
@@ -57,7 +59,7 @@ def fixable_qubo() -> Instance:
     return Instance(
         matrix.tensor(
             [
-                [0.0, 19.7365809, 19.7365809, 5.42015853, 5.42015853],
+                [1.0, 19.7365809, 19.7365809, 5.42015853, 5.42015853],
                 [19.7365809, -10.0, 20.67626392, 0.17675796, 0.85604541],
                 [19.7365809, 20.67626392, -10.0, 0.85604541, 0.17675796],
                 [5.42015853, 0.17675796, 0.85604541, -10.0, 0.32306662],
@@ -80,6 +82,84 @@ def unfixable_qubo() -> Instance:
     )
 
 
+def near_tie_qubo() -> Instance:
+    """QUBO whose variable 0 has an upper Hansen bound of almost exactly 0."""
+    Q = matrix.tensor(
+        [
+            [
+                -7502.08154296875,
+                809.0555419921875,
+                712.5992431640625,
+                876.0499267578125,
+                214.60260009765625,
+                546.004150390625,
+                592.7294311523438,
+            ],
+            [809.0555419921875, -10000.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [712.5992431640625, 0.0, -10000.0, 0.0, 0.0, 0.0, 0.0],
+            [876.0499267578125, 0.0, 0.0, -10000.0, 0.0, 0.0, 0.0],
+            [214.60260009765625, 0.0, 0.0, 0.0, -10000.0, 0.0, 0.0],
+            [546.004150390625, 0.0, 0.0, 0.0, 0.0, -10000.0, 0.0],
+            [592.7294311523438, 0.0, 0.0, 0.0, 0.0, 0.0, -10000.0],
+        ],
+    )
+    return Instance(Q)
+
+
+def random_instance(n: int, seed: int, *, integer: bool) -> Instance:
+    """Seeded sparse QUBO; integer coefficients make Hansen bounds hit exact ties."""
+    rng = torch_rng(seed)
+    if integer:
+        Q = torch.randint(-3, 4, (n, n), generator=rng)
+        diag = torch.randint(-6, 7, (n,), generator=rng)
+    else:
+        Q = torch.randn(n, n, generator=rng)
+        diag = 4 * torch.randn(n, generator=rng)
+    Q = Q * (torch.rand(n, n, generator=rng) < 2 / n)  # ~4 neighbours per variable
+    Q.diagonal().copy_(diag)
+    return Instance(matrix.as_tensor(Q), symmetrize=True)
+
+
+def reference_apply(
+    instance: Instance, fixed: dict[int, int] | None = None
+) -> transforms.variable_fixing.Instance:
+    """Loop-based oracle, in Python floats, for `apply` with Hansen's rule.
+
+    Fixes the variables of `fixed` instead, if given. The reduced matrix is the
+    block of the remaining variables, whose diagonal absorbs twice their
+    interactions with the variables fixed to 1.
+    """
+    Q = instance.matrix.tolist()
+    if fixed is None:
+        fixed = {}
+        for i, row in enumerate(Q):
+            others = [q for j, q in enumerate(row) if j != i]
+            if row[i] + 2 * sum(min(0.0, q) for q in others) > 0:
+                fixed[i] = 0
+            elif row[i] + 2 * sum(max(0.0, q) for q in others) < 0:
+                fixed[i] = 1
+
+    ones = [k for k, v in fixed.items() if v == 1]
+    remaining = [i for i in range(len(Q)) if i not in fixed]
+    reduced = transforms.variable_fixing.Instance(instance)
+    reduced._matrix = matrix.tensor(
+        [
+            [Q[i][j] + (2 * sum(Q[i][k] for k in ones) if i == j else 0.0) for j in remaining]
+            for i in remaining
+        ]
+    )
+    if fixed:
+        reduced._fixed_history.append(dict(sorted(fixed.items())))
+    return reduced
+
+
+def random_fixation(n: int, n_fixed: int, seed: int) -> dict[int, int]:
+    rng = torch_rng(seed)
+    variables = torch.randperm(n, generator=rng)[:n_fixed].tolist()
+    values = bitstring.rand(n_fixed, rng=rng).tolist()
+    return dict(zip(variables, values, strict=True))
+
+
 def test_hansen_fixing_identifies_fixed_variables() -> None:
     instance = fixable_qubo()
     fixed = hansen_fixing(instance)
@@ -90,6 +170,157 @@ def test_hansen_fixing_identifies_fixed_variables() -> None:
 def test_hansen_fixing_is_empty_when_nothing_can_be_fixed() -> None:
     fixed = hansen_fixing(unfixable_qubo())
     check.equal(fixed, {})
+
+
+def test_hansen_fixing_does_not_fix_exact_ties() -> None:
+    # Variable 0 has an all-zero row: both bounds are exactly 0, so it is left
+    # unfixed although either value is optimal.
+    instance = Instance(matrix.tensor([[0.0, 0.0], [0.0, -1.0]]))
+
+    check.equal(hansen_fixing(instance), {1: 1})
+
+
+@pytest.mark.skipif(matrix.dtype() != torch.float64, reason="float64 only")
+@pytest.mark.parametrize(
+    ("ulps", "sign", "expected"),
+    [
+        pytest.param(0, 1.0, {}, id="tie-to_0"),
+        pytest.param(0, -1.0, {}, id="tie-to_1"),
+        # The margin is n * eps * magnitude = 2 * eps * ~2.
+        pytest.param(2, 1.0, {}, id="within-margin-to_0"),
+        pytest.param(2, -1.0, {}, id="within-margin-to_1"),
+        pytest.param(8, 1.0, {0: 0}, id="beyond-margin-to_0"),
+        pytest.param(8, -1.0, {0: 1}, id="beyond-margin-to_1"),
+    ],
+)
+def test_hansen_fixing_relative_margin_in_float64(  # no cov (coverage runs in float32)
+    ulps: int, sign: float, expected: dict[int, int]
+) -> None:
+    # Variable 0 has a bound of exactly sign * ulps * eps, for a magnitude of ~2.
+    # Variable 1 is an exact tie, never fixed.
+    diagonal = 1.0 + ulps * torch.finfo(torch.float64).eps
+    instance = Instance(sign * matrix.tensor([[diagonal, -0.5], [-0.5, 1.0]]))
+
+    check.equal(hansen_fixing(instance), expected)
+
+
+@pytest.mark.skipif(matrix.dtype() != torch.float32, reason="float32 only")
+@pytest.mark.parametrize(
+    ("ulps", "sign", "expected"),
+    [
+        pytest.param(0, 1.0, {}, id="tie-to_0"),
+        pytest.param(0, -1.0, {}, id="tie-to_1"),
+        # Bounds are summed in float64, whose eps is 2**29 times smaller than that
+        # of float32: any nonzero float32 bound is beyond the margin.
+        pytest.param(1, 1.0, {0: 0}, id="one-ulp-to_0"),
+        pytest.param(1, -1.0, {0: 1}, id="one-ulp-to_1"),
+        pytest.param(8, 1.0, {0: 0}, id="eight-ulps-to_0"),
+        pytest.param(8, -1.0, {0: 1}, id="eight-ulps-to_1"),
+    ],
+)
+def test_hansen_fixing_relative_margin_in_float32(
+    ulps: int, sign: float, expected: dict[int, int]
+) -> None:
+    # Variable 0 has a bound of exactly sign * ulps * eps, for a magnitude of ~2.
+    # Variable 1 is an exact tie, never fixed.
+    diagonal = 1.0 + ulps * torch.finfo(torch.float32).eps
+    instance = Instance(sign * matrix.tensor([[diagonal, -0.5], [-0.5, 1.0]]))
+
+    check.equal(hansen_fixing(instance), expected)
+
+
+@pytest.mark.parametrize("scale", [2.0**-40, 2.0**40])
+@pytest.mark.parametrize("integer", [True, False], ids=["integer", "float"])
+@pytest.mark.parametrize("seed", [633965010, 1610731958, 2402977655])
+def test_hansen_fixing_is_scale_invariant(seed: int, integer: bool, scale: float) -> None:
+    # Scaling by a power of 2 is exact, so the bounds and margins scale exactly.
+    instance = random_instance(40, seed, integer=integer)
+    scaled = Instance(scale * instance.matrix)
+
+    check.not_equal(hansen_fixing(instance), {})
+    check.equal(hansen_fixing(scaled), hansen_fixing(instance))
+
+
+@pytest.mark.parametrize(("diagonal", "expected"), [(-1.0, {0: 1}), (0.0, {}), (1.0, {0: 0})])
+def test_hansen_fixing_of_a_single_variable(diagonal: float, expected: dict[int, int]) -> None:
+    instance = Instance(matrix.tensor([[diagonal]]))
+
+    check.equal(hansen_fixing(instance), expected)
+
+
+def test_hansen_fixing_of_an_empty_instance() -> None:
+    check.equal(hansen_fixing(Instance()), {})
+
+
+@pytest.mark.parametrize("integer", [True, False], ids=["integer", "float"])
+@pytest.mark.parametrize("seed", [633965010, 1610731958, 2402977655])
+@pytest.mark.parametrize("n", [7, 40])
+def test_hansen_fixing_matches_reference(n: int, seed: int, integer: bool) -> None:
+    instance = random_instance(n, seed, integer=integer)
+
+    reduced = transforms.variable_fixing.apply(instance)
+    expected = reference_apply(instance)
+
+    check.equal(reduced.fixed_history, expected.fixed_history)
+    torch.testing.assert_close(reduced.matrix, expected.matrix)
+
+    fixed = hansen_fixing(instance)
+    # Plain ints, in increasing order: the dict ends up JSON-encoded in the history.
+    check.equal(list(fixed), sorted(fixed))
+    check.is_true(all(type(i) is int and type(v) is int for i, v in fixed.items()))
+
+
+def test_apply_keeps_the_optimum_of_a_near_tie() -> None:
+    # The upper bound of variable 0 is exactly 2**-12, but summed in float32 it
+    # rounds to -2**-11, which would wrongly fix it to 1 and exclude the optimum.
+    reduced = transforms.variable_fixing.apply(near_tie_qubo())
+
+    check.equal(reduced.fixed_history, [{1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}])
+    # Folding the variables fixed to 1 into the diagonal also needs float64.
+    torch.testing.assert_close(reduced.matrix, matrix.tensor([[2.0**-12]]), rtol=0, atol=0)
+
+
+def test_apply_recursively_finds_the_optimum_of_a_near_tie() -> None:
+    instance = near_tie_qubo()
+
+    reduced = transforms.variable_fixing.apply_recursively(instance)
+
+    check.equal(reduced.fixed_history, [{1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}, {0: 0}])
+    reduced_solution = solving.trivial_solution_search.solve(reduced)
+    solution = transforms.variable_fixing.lift(reduced_solution, reduced)
+    check.equal(solution[0].string, "0111111")
+
+
+@pytest.mark.parametrize("seed", [1275482418, 2816271258, 1667717451])
+@pytest.mark.parametrize("n_fixed", [0, 1, 5, 12])
+def test_reduce_qubo_matches_reference(n_fixed: int, seed: int) -> None:
+    instance = random_instance(12, seed, integer=False)
+    original = instance.matrix.clone()
+    fixed = random_fixation(12, n_fixed, seed)
+
+    reduced = transforms.variable_fixing._reduce_qubo(instance, fixed)
+    expected = reference_apply(instance, fixed)
+
+    torch.testing.assert_close(reduced.matrix, expected.matrix)
+    check.equal(reduced.fixed_history, expected.fixed_history)
+    torch.testing.assert_close(instance.matrix, original)  # not inplace: input untouched
+
+
+@pytest.mark.parametrize("seed", [399497325, 1357894654, 2608074856])
+def test_reduce_qubo_preserves_costs_up_to_a_constant(seed: int) -> None:
+    # The reduced cost of x equals the original cost of x lifted, minus the
+    # cost of the fixed variables alone, which does not depend on x.
+    instance = random_instance(8, seed, integer=False)
+    reduced = transforms.variable_fixing._reduce_qubo(instance, random_fixation(8, 4, seed))
+
+    all_bitstrings = bitstrings.tensor(list(itertools.product([0, 1], repeat=reduced.size)))
+    reduced_solution = Solution(bitstrings=all_bitstrings)._update(reduced, unit_counts=True)
+    lifted = transforms.variable_fixing.lift(reduced_solution, reduced)
+
+    # The original and reduced costs differ by the same offset for every bitstring.
+    offsets = lifted.costs - reduced_solution.costs
+    expected_offsets = offsets.detach().clone().fill_(offsets[0])
+    torch.testing.assert_close(offsets, expected_offsets)
 
 
 def test_init_preserves_the_parent_instance_type() -> None:
