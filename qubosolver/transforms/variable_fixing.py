@@ -20,6 +20,13 @@ reduced_instance = variable_fixing.apply_recursively(instance)
 reduced_solution = brute_force.solve(reduced_instance)
 solution = variable_fixing.lift(reduced_solution, reduced_instance)
 ```
+
+Fixing decisions and the reduced matrix are computed in float64 whatever the
+matrix dtype, so they are as accurate as float64 allows. In float32, the reduced
+matrix is still rounded to float32, and solvers can then not tell apart solutions
+whose costs differ by less than float32 resolution, e.g. near-ties between large
+coefficients. Set ``USE_DOUBLE_PRECISION=1`` for more robust results on
+such instances.
 """
 
 from __future__ import annotations
@@ -28,6 +35,8 @@ import copy
 import json
 import logging
 from collections.abc import Callable, Sequence
+
+import torch
 
 import qubosolver
 from qubosolver._checks import TYPE_CHECKING
@@ -59,7 +68,13 @@ def hansen_fixing(instance: qubosolver.Instance) -> dict[int, int]:
     elements of the QUBO matrix.  A variable is fixed to 0 when its lower
     bound is positive (it cannot improve the objective by being 1) and
     to 1 when its upper bound is negative (it can only improve it), both
-    by a margin of ``1e-8`` against rounding errors.
+    strictly and by a margin against rounding errors of ``rtol * magnitude``,
+    where ``rtol = n * eps`` (``n`` the instance size and ``eps`` the machine
+    epsilon of float64, in which the bounds are summed whatever the matrix
+    dtype) and ``magnitude`` the sum of the absolute values of the terms summed
+    in that bound. Exact ties are never fixed, so every optimal solution of the
+    instance is preserved, and the fixed variables do not change when the
+    matrix is scaled by a positive factor.
 
     Args:
         instance: The QUBO instance to analyze.
@@ -68,20 +83,23 @@ def hansen_fixing(instance: qubosolver.Instance) -> dict[int, int]:
         Mapping of variable index to fixed value (``0`` or ``1``).
             Variables that cannot be fixed are omitted.
     """
-    # TODO(abussy-pasqal): The tolerance is absolute: it refuses exact ties (a bound
-    # of exactly 0, e.g. a zero row) and is meaningless on a matrix scaled far
-    # from 1. Make it either 0 (exact criterion) or atol + rtol * the magnitude of
-    # the summed terms (|c_i| + 2 * sum(|Q_ij|) over the couplings summed in that
-    # bound).
-    epsilon = 1e-8  # Conservative margin against floating-point rounding
+    # Summed in float64: in float32, near-ties between large coefficients would
+    # otherwise round to the wrong sign.
+    diagonal = instance.matrix.diagonal().double()
+    off_diagonal = instance.matrix.to(torch.float64, copy=True).fill_diagonal_(0)
+    negative = off_diagonal.clamp(max=0).sum(dim=1)
+    positive = off_diagonal.clamp(min=0).sum(dim=1)
+    lower = diagonal + 2 * negative
+    upper = diagonal + 2 * positive
 
-    diagonal = instance.matrix.diagonal()
-    off_diagonal = instance.matrix.clone().fill_diagonal_(0)
-    lower = diagonal + 2 * off_diagonal.clamp(max=0).sum(dim=1)
-    upper = diagonal + 2 * off_diagonal.clamp(min=0).sum(dim=1)
+    # The rounding error of a sum of n terms is at most about n * eps times the
+    # sum of their absolute values. Strict comparisons refuse exact ties, e.g. a
+    # zero row, whose margin is 0.
+    rtol = instance.size * torch.finfo(diagonal.dtype).eps
+    abs_diagonal = diagonal.abs()
 
-    to_0 = lower >= epsilon
-    to_1 = upper <= -epsilon
+    to_0 = lower > rtol * (abs_diagonal - 2 * negative)
+    to_1 = upper < -rtol * (abs_diagonal + 2 * positive)
     fixed = (to_0 | to_1).nonzero().flatten()
     # to_1 is False both for variables fixed to 0 and for unfixed ones; restricted
     # to the fixed variables, False only leaves those of to_0.
@@ -201,7 +219,9 @@ def _reduce_qubo(
 
     rows = instance.matrix.index_select(0, kept)
     reduced = rows.index_select(1, kept)
-    reduced.diagonal().add_(2 * rows.index_select(1, fixed_to_1).sum(dim=1))
+    # Folded in float64 and rounded once to the matrix dtype, see hansen_fixing.
+    folded = 2 * rows.index_select(1, fixed_to_1).sum(dim=1, dtype=torch.float64)
+    reduced.diagonal().copy_(reduced.diagonal().double() + folded)
     instance._matrix = reduced
 
     instance._fixed_history.append(

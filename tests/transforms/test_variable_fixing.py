@@ -82,6 +82,30 @@ def unfixable_qubo() -> Instance:
     )
 
 
+def near_tie_qubo() -> Instance:
+    """QUBO whose variable 0 has an upper Hansen bound of almost exactly 0."""
+    Q = matrix.tensor(
+        [
+            [
+                -7502.08154296875,
+                809.0555419921875,
+                712.5992431640625,
+                876.0499267578125,
+                214.60260009765625,
+                546.004150390625,
+                592.7294311523438,
+            ],  # noqa: E501
+            [809.0555419921875, -10000.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [712.5992431640625, 0.0, -10000.0, 0.0, 0.0, 0.0, 0.0],
+            [876.0499267578125, 0.0, 0.0, -10000.0, 0.0, 0.0, 0.0],
+            [214.60260009765625, 0.0, 0.0, 0.0, -10000.0, 0.0, 0.0],
+            [546.004150390625, 0.0, 0.0, 0.0, 0.0, -10000.0, 0.0],
+            [592.7294311523438, 0.0, 0.0, 0.0, 0.0, 0.0, -10000.0],
+        ],
+    )
+    return Instance(Q)
+
+
 def random_instance(n: int, seed: int, *, integer: bool) -> Instance:
     """Seeded sparse QUBO; integer coefficients make Hansen bounds hit exact ties."""
     rng = torch_rng(seed)
@@ -110,9 +134,9 @@ def reference_apply(
         fixed = {}
         for i, row in enumerate(Q):
             others = [q for j, q in enumerate(row) if j != i]
-            if row[i] + 2 * sum(min(0.0, q) for q in others) >= 1e-8:
+            if row[i] + 2 * sum(min(0.0, q) for q in others) > 0:
                 fixed[i] = 0
-            elif row[i] + 2 * sum(max(0.0, q) for q in others) <= -1e-8:
+            elif row[i] + 2 * sum(max(0.0, q) for q in others) < 0:
                 fixed[i] = 1
 
     ones = [k for k, v in fixed.items() if v == 1]
@@ -149,31 +173,72 @@ def test_hansen_fixing_is_empty_when_nothing_can_be_fixed() -> None:
 
 
 def test_hansen_fixing_does_not_fix_exact_ties() -> None:
-    # Variable 0 has an all-zero row: both bounds are 0, within the margin, so
-    # it is left unfixed although either value is optimal.
+    # Variable 0 has an all-zero row: both bounds are exactly 0, so it is left
+    # unfixed although either value is optimal.
     instance = Instance(matrix.tensor([[0.0, 0.0], [0.0, -1.0]]))
 
     check.equal(hansen_fixing(instance), {1: 1})
 
 
+@pytest.mark.skipif(matrix.dtype() != torch.float64, reason="float64 only")
 @pytest.mark.parametrize(
-    ("diagonal", "coupling", "expected"),
+    ("ulps", "sign", "expected"),
     [
-        (2e-8, 0.0, {0: 0, 1: 0}),  # bounds 2e-8: lower beyond the margin
-        (0.5e-8, 0.0, {1: 0}),  # bounds 0.5e-8: within the margin
-        (-0.5e-8, 0.0, {1: 0}),  # bounds -0.5e-8: within the margin
-        (-2e-8, 0.0, {0: 1, 1: 0}),  # bounds -2e-8: upper beyond the margin
-        (3e-8, -0.5e-8, {0: 0, 1: 0}),  # lower bound 2e-8
-        (3e-8, -1.25e-8, {1: 0}),  # lower bound 0.5e-8
-        (-3e-8, 0.5e-8, {0: 1, 1: 0}),  # upper bound -2e-8
-        (-3e-8, 1.25e-8, {1: 0}),  # upper bound -0.5e-8
+        pytest.param(0, 1.0, {}, id="tie-to_0"),
+        pytest.param(0, -1.0, {}, id="tie-to_1"),
+        # The margin is n * eps * magnitude = 2 * eps * ~2.
+        pytest.param(2, 1.0, {}, id="within-margin-to_0"),
+        pytest.param(2, -1.0, {}, id="within-margin-to_1"),
+        pytest.param(8, 1.0, {0: 0}, id="beyond-margin-to_0"),
+        pytest.param(8, -1.0, {0: 1}, id="beyond-margin-to_1"),
     ],
 )
-def test_hansen_fixing_margin(diagonal: float, coupling: float, expected: dict[int, int]) -> None:
-    # Variable 1 has a large positive diagonal, so it is always fixed to 0.
-    instance = Instance(matrix.tensor([[diagonal, coupling], [coupling, 1.0]]))
+def test_hansen_fixing_relative_margin_in_float64(  # no cov (coverage runs in float32)
+    ulps: int, sign: float, expected: dict[int, int]
+) -> None:
+    # Variable 0 has a bound of exactly sign * ulps * eps, for a magnitude of ~2.
+    # Variable 1 is an exact tie, never fixed.
+    diagonal = 1.0 + ulps * torch.finfo(torch.float64).eps
+    instance = Instance(sign * matrix.tensor([[diagonal, -0.5], [-0.5, 1.0]]))
 
     check.equal(hansen_fixing(instance), expected)
+
+
+@pytest.mark.skipif(matrix.dtype() != torch.float32, reason="float32 only")
+@pytest.mark.parametrize(
+    ("ulps", "sign", "expected"),
+    [
+        pytest.param(0, 1.0, {}, id="tie-to_0"),
+        pytest.param(0, -1.0, {}, id="tie-to_1"),
+        # Bounds are summed in float64, whose eps is 2**29 times smaller than that
+        # of float32: any nonzero float32 bound is beyond the margin.
+        pytest.param(1, 1.0, {0: 0}, id="one-ulp-to_0"),
+        pytest.param(1, -1.0, {0: 1}, id="one-ulp-to_1"),
+        pytest.param(8, 1.0, {0: 0}, id="eight-ulps-to_0"),
+        pytest.param(8, -1.0, {0: 1}, id="eight-ulps-to_1"),
+    ],
+)
+def test_hansen_fixing_relative_margin_in_float32(
+    ulps: int, sign: float, expected: dict[int, int]
+) -> None:
+    # Variable 0 has a bound of exactly sign * ulps * eps, for a magnitude of ~2.
+    # Variable 1 is an exact tie, never fixed.
+    diagonal = 1.0 + ulps * torch.finfo(torch.float32).eps
+    instance = Instance(sign * matrix.tensor([[diagonal, -0.5], [-0.5, 1.0]]))
+
+    check.equal(hansen_fixing(instance), expected)
+
+
+@pytest.mark.parametrize("scale", [2.0**-40, 2.0**40])
+@pytest.mark.parametrize("integer", [True, False], ids=["integer", "float"])
+@pytest.mark.parametrize("seed", [633965010, 1610731958, 2402977655])
+def test_hansen_fixing_is_scale_invariant(seed: int, integer: bool, scale: float) -> None:
+    # Scaling by a power of 2 is exact, so the bounds and margins scale exactly.
+    instance = random_instance(40, seed, integer=integer)
+    scaled = Instance(scale * instance.matrix)
+
+    check.not_equal(hansen_fixing(instance), {})
+    check.equal(hansen_fixing(scaled), hansen_fixing(instance))
 
 
 @pytest.mark.parametrize(("diagonal", "expected"), [(-1.0, {0: 1}), (0.0, {}), (1.0, {0: 0})])
@@ -203,6 +268,27 @@ def test_hansen_fixing_matches_reference(n: int, seed: int, integer: bool) -> No
     # Plain ints, in increasing order: the dict ends up JSON-encoded in the history.
     check.equal(list(fixed), sorted(fixed))
     check.is_true(all(type(i) is int and type(v) is int for i, v in fixed.items()))
+
+
+def test_apply_keeps_the_optimum_of_a_near_tie() -> None:
+    # The upper bound of variable 0 is exactly 2**-12, but summed in float32 it
+    # rounds to -2**-11, which would wrongly fix it to 1 and exclude the optimum.
+    reduced = transforms.variable_fixing.apply(near_tie_qubo())
+
+    check.equal(reduced.fixed_history, [{1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}])
+    # Folding the variables fixed to 1 into the diagonal also needs float64.
+    torch.testing.assert_close(reduced.matrix, matrix.tensor([[2.0**-12]]), rtol=0, atol=0)
+
+
+def test_apply_recursively_finds_the_optimum_of_a_near_tie() -> None:
+    instance = near_tie_qubo()
+
+    reduced = transforms.variable_fixing.apply_recursively(instance)
+
+    check.equal(reduced.fixed_history, [{1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}, {0: 0}])
+    reduced_solution = solving.trivial_solution_search.solve(reduced)
+    solution = transforms.variable_fixing.lift(reduced_solution, reduced)
+    check.equal(solution[0].string, "0111111")
 
 
 @pytest.mark.parametrize("seed", [1275482418, 2816271258, 1667717451])
