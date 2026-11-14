@@ -63,7 +63,7 @@ repos:
 
 # Cleanup jupyter notebooks
 -   repo: https://github.com/srstevenson/nb-clean
-    rev: f745b986570ef12cfbe0cfe20a7e0271c328914f # frozen: 4.0.1
+    rev: 81011157368071eaa5322e99abf0a5267d06a3cb # frozen: v5.0.0
     hooks:
       - id: nb-clean
         args:
