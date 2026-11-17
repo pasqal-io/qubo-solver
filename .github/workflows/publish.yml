@@ -12,6 +12,9 @@ concurrency:
   group: fast-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+env:
+  UV_LOCKED: "1"  # uv run/sync fail if uv.lock is out of sync with pyproject.toml
+
 jobs:
     publish_pypi:
         name: Publish package to PyPI

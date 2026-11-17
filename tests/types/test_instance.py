@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import io
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -31,6 +30,7 @@ from qubosolver.types.instance import _calculate_density, _classify_density
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from pathlib import Path
 
 
 def test_valid_qubo_passes_without_error() -> None:
@@ -178,14 +178,12 @@ def test_negative_bitflip_property_returns_self_for_negative_bitflip_instance() 
     check.is_(instance, instance.negative_bitflip)
 
 
-def test_save_load(simple_qubo_instance: Instance) -> None:
-
-    file_path = Path(__file__).parent / "qubo_instance_test.pt"
+def test_save_load(simple_qubo_instance: Instance, tmp_path: Path) -> None:
+    file_path = tmp_path / "qubo_instance_test.pt"
     simple_qubo_instance.save(file_path)
     assert file_path.exists()
     loaded_instance = Instance.load(file_path)
     assert torch.allclose(loaded_instance.matrix, simple_qubo_instance.matrix)
-    file_path.unlink(missing_ok=True)
 
 
 @pytest.mark.parametrize(
