@@ -156,6 +156,31 @@ def test_extract_qubo_round_trip_through_greedy_embedding_and_drive_shaping() ->
     check.almost_equal(diag_distance, 0.0, abs=1e-6)
 
 
+def test_extract_qubo_with_instance_diagonal() -> None:
+    register = _register()
+    instance = Instance(
+        matrix.tensor(
+            [
+                [-1.0, 9.0, 9.0],
+                [9.0, -2.0, 9.0],
+                [9.0, 9.0, -3.0],
+            ]
+        )
+    )
+
+    extracted = extract_qubo(register, instance)
+
+    expected = matrix.as_tensor(register.interaction_matrix())
+    expected.diagonal().copy_(vector.tensor([-1.0, -2.0, -3.0]))
+    torch.testing.assert_close(extracted.matrix, expected)
+
+
+def test_extract_qubo_rejects_instance_of_another_size() -> None:
+    instance = Instance(matrix.tensor([[-1.0, 0.0], [0.0, -1.0]]))
+    with pytest.raises(ValueError, match="3 qubits"):
+        extract_qubo(_register(), instance)
+
+
 def test_max_min_distance_ratio_from_device_specs() -> None:
     device = qoolqit.AnalogDevice()
     check.equal(device.specs["min_distance"], 1.0)

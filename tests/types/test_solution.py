@@ -756,6 +756,33 @@ def test_update_without_counts_raises(instance: Instance) -> None:
         solution._update(instance)
 
 
+def test_update_with_counts_of_wrong_length_raises(instance: Instance) -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
+        counts=vectori.tensor([1]),
+    )
+    with pytest.raises(ValueError, match="2 candidates but 1 counts"):
+        solution._update(instance)
+
+
+def test_update_with_unit_counts_overwrites_existing_counts(instance: Instance) -> None:
+    solution = Solution(
+        bitstrings=bitstrings.tensor([[0, 1], [1, 0]]),
+        counts=vectori.tensor([1, 3]),
+    )
+    solution._update(instance, unit_counts=True)
+    torch.testing.assert_close(solution.counts, vectori.tensor([1, 1]))
+    torch.testing.assert_close(solution.probabilities, vector.tensor([0.5, 0.5]))
+
+
+def test_update_with_unit_counts_on_empty_solution(instance: Instance) -> None:
+    solution = Solution(bitstrings=bitstrings.zeros(0, 2))
+    solution._update(instance, unit_counts=True)
+    check.equal(len(solution), 0)
+    check.equal(solution.counts.numel(), 0)
+    check.equal(solution.probabilities.numel(), 0)
+
+
 def test_deepcopy_is_independent_of_original() -> None:
     solution = Solution(
         bitstrings=bitstrings.tensor([[1, 0], [0, 1]]),

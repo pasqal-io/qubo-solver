@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import io
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -16,6 +16,9 @@ import torch
 from qubosolver import Dataset, bitstrings, tensor, torch_rng, vector, vectori
 from qubosolver.types.instance import _calculate_density
 from qubosolver.types.solution import Solution
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_dataset_copies_input_matrices() -> None:
@@ -66,7 +69,7 @@ def test_dataset_copy_false_aliases_input() -> None:
 
 
 @pytest.mark.parametrize("negative_offdiag_rate", [0.0, 0.2])
-def test_dataset_generation(negative_offdiag_rate: float) -> None:
+def test_dataset_generation(negative_offdiag_rate: float, tmp_path: Path) -> None:
     """Test dataset is generated correctly in terms of element properties asked."""
     size = 5
     num_instances = 10
@@ -85,12 +88,11 @@ def test_dataset_generation(negative_offdiag_rate: float) -> None:
     assert len(dataset) == num_instances
 
     # test also save and load
-    file_path = Path(__file__).parent / "qubo_dataset_test.pt"
+    file_path = tmp_path / "qubo_dataset_test.pt"
     dataset.save(file_path)
     assert file_path.exists()
     loaded_data = Dataset.load(file_path)
     assert len(loaded_data) == num_instances
-    file_path.unlink(missing_ok=True)
 
     off_diag = ~torch.eye(size, dtype=torch.bool)
 
