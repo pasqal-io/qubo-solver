@@ -58,7 +58,14 @@ def compile(  # noqa: A001 (public API name)
         results = job.results()
         ```
     """
-    max_min_distance_ratio = register.max_radial_distance() / register.min_distance()
+    if len(register) > 1:
+        max_min_distance_ratio = register.max_radial_distance() / register.min_distance()
+    else:
+        # A single atom has no minimum distance: measure its radial distance in
+        # units of the device's minimum distance instead.
+        max_min_distance_ratio = register.max_radial_distance() / (
+            device.specs["min_distance"] or float("inf")
+        )
     device_max_min_distance_ratio = _max_min_distance_ratio(device)
     if max_min_distance_ratio > device_max_min_distance_ratio:
         msg = (
