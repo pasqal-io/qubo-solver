@@ -91,6 +91,7 @@ jobs:
           format: json
           output: trivy-results.json
           scanners: vuln,secret
+          trivyignores: .trivyignore.yaml
           exit-code: "0"
 
       - name: Check vulnerabilities # Fails on main if vulnerabilities are found

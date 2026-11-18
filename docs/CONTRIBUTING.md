@@ -73,7 +73,7 @@ git merge upstream/main
 
 `uv.lock` is committed, and CI installs from it. After editing dependencies in `pyproject.toml`, run `uv lock` and commit the updated lockfile.
 
-Renovate keeps `uv.lock` up to date with a single lockfile-refresh PR (`uv lock --upgrade`), refreshed early in the morning (Paris time) on Mondays, Wednesdays and Fridays. It does not open PRs for individual Python packages, except to fix known vulnerabilities. uv only resolves releases that are at least 15 days old (`exclude-newer` in `[tool.uv]`). Pasqal packages are exempt (`exclude-newer-package`). If an urgent fix is newer than that, add the package to `exclude-newer-package` until the release is 15 days old.
+Renovate keeps `uv.lock` up to date with a single lockfile-refresh PR (`uv lock --upgrade`), refreshed early in the morning (Paris time) on Mondays, Wednesdays and Fridays. It does not open PRs for individual Python packages, except to fix known vulnerabilities in the dependencies listed in `pyproject.toml`; vulnerable packages that are only pulled in by other packages are fixed by the next lockfile refresh. uv only resolves releases that are at least 15 days old (`exclude-newer` in `[tool.uv]`). Pasqal packages are exempt (`exclude-newer-package`). If an urgent fix is newer than that, add the package to `exclude-newer-package` until the release is 15 days old, and run `uv lock --upgrade-package <package>`.
 
 ### Useful things for your workflow: Linting and Testing
 

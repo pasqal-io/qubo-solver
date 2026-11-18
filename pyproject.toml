@@ -106,13 +106,12 @@ cuda = [
 [tool.uv]
 default-groups = ["dev", "doc"]
 conflicts = [[{ group = "cpu" }, { group = "cuda" }]]
-# Platforms and Pythons uv.lock is resolved for (users are not affected: they still get
-# `requires-python`). Python < 3.11.5 is left out because it would pin soupsieve 2.10 (dev/doc
-# only), which has unfixable vulnerabilities and fails the Trivy scan.
-environments = [
-  "python_full_version >= '3.11.5' and sys_platform == 'linux'",
-  "python_full_version >= '3.11.5' and sys_platform == 'darwin'",
-  "python_full_version >= '3.11.5' and sys_platform == 'win32'",
+# Security floors on packages we only get through other packages. They limit the version when
+# something pulls the package in, without making it a dependency.
+constraint-dependencies = [
+  # CVE-2026-126190 (fixed in 4.0.0). soupsieve 3+ requires Python >= 3.11.5, so the vulnerable
+  # 2.10 stays locked for 3.11.0-3.11.4 (silenced in .trivyignore.yaml), but never above.
+  "soupsieve>=4.0.0 ; python_full_version >= '3.11.5'",
 ]
 # Supply-chain cooldown: resolve only distributions uploaded at least 15 days ago (matches
 # Renovate's `minimumReleaseAge`). Pasqal's own packages are exempt so their releases can be
