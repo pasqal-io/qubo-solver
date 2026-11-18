@@ -143,13 +143,9 @@ allow-direct-references = true
 allow-ambiguous-features = true
 
 [tool.hatch.build.targets.sdist]
-exclude = [
-    "/.gitignore",
-    "/.pre-commit-config.yml",
-    "/tests",
-    "/docs",
-    "/examples",
-]
+# Only what is needed to build the package, plus the changelog and citation. hatchling also
+# always adds pyproject.toml, README.md, LICENSE.md and .gitignore.
+only-include = ["qubosolver", "CHANGELOG.md", "CITATION.cff"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["qubosolver"]
