@@ -109,19 +109,28 @@ conflicts = [[{ group = "cpu" }, { group = "cuda" }]]
 # Security floors on packages we only get through other packages. They limit the version when
 # something pulls the package in, without making it a dependency.
 constraint-dependencies = [
-  # CVE-2026-126190 (fixed in 4.0.0). soupsieve 3+ requires Python >= 3.11.5, so the vulnerable
+  # CVE-2026-126190 (fixed in 4). soupsieve 3+ requires Python >= 3.11.5, so the vulnerable
   # 2.10 stays locked for 3.11.0-3.11.4 (silenced in .trivyignore.yaml), but never above.
-  "soupsieve>=4.0.0 ; python_full_version >= '3.11.5'",
+  "soupsieve>=4 ; python_full_version >= '3.11.5'",
 ]
 # Supply-chain cooldown: resolve only distributions uploaded at least 15 days ago (matches
-# Renovate's `minimumReleaseAge`). Pasqal's own packages are exempt so their releases can be
-# adopted right away. This also applies to Renovate's security PRs: if a vulnerability fix is
-# newer than 15 days, the PR fails with an artifact error. To let it through, add the package
-# here with `false` (or a shorter duration, e.g. `"2 days"`), then remove it once the fix is
-# old enough.
-# Security exceptions: soupsieve (CVE-2026-126190, fixed in 4.0.0): remove after 2026-11-19.
+# Renovate's `minimumReleaseAge`). Exemptions are in [tool.uv.exclude-newer-package] below.
 exclude-newer = "15 days"
-exclude-newer-package = { soupsieve = "7 days", qoolqit = false, pulser = false, pulser-core = false, pulser-simulation = false, emu-base = false, emu-mps = false, emu-sv = false, pasqal-cloud = false }
+
+# Packages exempt from the 15-day cooldown. Pasqal's own packages are exempt so their releases
+# can be adopted right away. The cooldown also applies to Renovate's security PRs: if a
+# vulnerability fix is newer than 15 days, the PR fails with an artifact error. To let it
+# through, add the package here with `false` (or a shorter duration, e.g. `"2 days"`), then
+# remove it once the fix is old enough.
+[tool.uv.exclude-newer-package]
+emu-base = false
+emu-mps = false
+emu-sv = false
+pasqal-cloud = false
+pulser = false
+pulser-core = false
+pulser-simulation = false
+qoolqit = false
 
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu", group = "cpu" }]

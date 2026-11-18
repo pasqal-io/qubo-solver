@@ -71,7 +71,6 @@ pulser = false
 pulser-core = false
 pulser-simulation = false
 qoolqit = false
-soupsieve = { timestamp = "0001-01-01T00:00:00Z", span = "P7D" }
 
 [manifest]
 constraints = [{ name = "soupsieve", marker = "python_full_version >= '3.11.5'", specifier = ">=4.0.0" }]
@@ -467,11 +466,73 @@ wheels = [
 
 [[package]]
 name = "beautifulsoup4"
+version = "4.6.3"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.12.*' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+]
+sdist = { url = "https://files.pythonhosted.org/packages/88/df/86bffad6309f74f3ff85ea69344a078fc30003270c8df6894fca7a3c72ff/beautifulsoup4-4.6.3.tar.gz", hash = "sha256:90f8e61121d6ae58362ce3bed8cd997efb00c914eae0ff3d363c32f9a9822d10", size = 167469, upload-time = "2018-08-12T16:39:49.655Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/21/0a/47fdf541c97fd9b6a610cb5fd518175308a7cc60569962e776ac52420387/beautifulsoup4-4.6.3-py3-none-any.whl", hash = "sha256:194ec62a25438adcb3fdb06378b26559eda1ea8a747367d34c33cef9c7f48d57", size = 90375, upload-time = "2018-08-12T16:39:48.02Z" },
+]
+
+[[package]]
+name = "beautifulsoup4"
 version = "4.15.0"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11.5' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version < '3.11.5' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version < '3.11.5' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
+    "python_full_version < '3.11.5' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version < '3.11.5' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version < '3.11.5' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version < '3.11.5' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version < '3.11.5' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version < '3.11.5' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+    "python_full_version < '3.11.5' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
+]
 dependencies = [
-    { name = "soupsieve", version = "2.10", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11.5'" },
-    { name = "soupsieve", version = "4.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11.5'" },
+    { name = "soupsieve" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/43/65/318323f98dbee45d42dff61d8f047181bc6f2268a9068cfad035a46be5af/beautifulsoup4-4.15.0.tar.gz", hash = "sha256:288e3ca7d54b06f2ac191970bc275c1939cb46d450b255bf6718b04aa37ab4f7", size = 632571, upload-time = "2026-06-07T16:44:20.453Z" }
@@ -2568,28 +2629,6 @@ wheels = [
 name = "mkdocs-jupyter"
 version = "0.26.3"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-]
 dependencies = [
     { name = "ipykernel" },
     { name = "jupytext" },
@@ -2601,56 +2640,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/00/aa/f8d15409a9a3112486994a80d5a975694c7d145c4f8b5b484aeb383420ef/mkdocs_jupyter-0.26.3.tar.gz", hash = "sha256:e1e8bd48a1b96542e84e3028e3066112bac7b94d95ab69f8b91305c84003ca26", size = 1628353, upload-time = "2026-04-17T18:56:31.517Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/13/95/cf3f7fe4910cf0365fa8ea0c731f4b8a624d97cd76ea777913ac8d0868e2/mkdocs_jupyter-0.26.3-py3-none-any.whl", hash = "sha256:cd6644fb578131157194d750fd4d10fc2fd8f1e84e00036ee62df3b5b4b84c82", size = 1459740, upload-time = "2026-04-17T18:56:30.031Z" },
-]
-
-[[package]]
-name = "mkdocs-jupyter"
-version = "0.27.0"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-]
-dependencies = [
-    { name = "beautifulsoup4" },
-    { name = "ipykernel" },
-    { name = "jupytext" },
-    { name = "mkdocs" },
-    { name = "mkdocs-material" },
-    { name = "nbconvert" },
-    { name = "pygments" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f8/80/7c12e5f285616eb634bac2fe9c52e3f58e6a59af163eee659061c5dd5d85/mkdocs_jupyter-0.27.0.tar.gz", hash = "sha256:2530405b9616534b8a8bb81da688c4e617b1f704cdfe4c1bd8462b071b9a4d03", size = 1671655, upload-time = "2026-10-22T02:29:17.735Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/e0/82531f365a9cd5e5b9f0b0003035c7d3e6a36d8278b236ef76d74b15b203/mkdocs_jupyter-0.27.0-py3-none-any.whl", hash = "sha256:9b7fd5be133ebc5cb20a01b9589b4e8d4f8fef0e247ba783c9f3ebb76cb907b9", size = 1505153, upload-time = "2026-10-22T02:29:15.904Z" },
 ]
 
 [[package]]
@@ -2958,7 +2947,8 @@ name = "nbconvert"
 version = "7.17.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "beautifulsoup4" },
+    { name = "beautifulsoup4", version = "4.6.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11.5'" },
+    { name = "beautifulsoup4", version = "4.15.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11.5'" },
     { name = "bleach", extra = ["css"] },
     { name = "defusedxml" },
     { name = "jinja2" },
@@ -4479,8 +4469,7 @@ doc = [
     { name = "markdown-exec" },
     { name = "mike" },
     { name = "mkdocs-exclude" },
-    { name = "mkdocs-jupyter", version = "0.26.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "mkdocs-jupyter", version = "0.27.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "mkdocs-jupyter" },
     { name = "mkdocs-macros-plugin" },
     { name = "mkdocs-material" },
     { name = "mkdocs-section-index" },
@@ -5137,72 +5126,9 @@ wheels = [
 name = "soupsieve"
 version = "2.10"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version < '3.11.5' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version < '3.11.5' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-]
 sdist = { url = "https://files.pythonhosted.org/packages/71/c3/1b817965ac12dc002d7c9cd7dfffdd7d4fbf9b45763ef2ffe7b86ee94670/soupsieve-2.10.tar.gz", hash = "sha256:49e9380d7d2905463583bafe285e818c7366a9ed7b3aee221c1ac79c905d8bc0", size = 124337, upload-time = "2026-09-24T02:36:35.048Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/66/87/5ed59e1d0290564e2027ed066c52b059892c4637741337fc0967183c8d4d/soupsieve-2.10-py3-none-any.whl", hash = "sha256:8596eb8967d744174820280fa62b4542a2e955bfaccca73ed8a13c6eb8e9b502", size = 38019, upload-time = "2026-09-24T02:36:33.709Z" },
-]
-
-[[package]]
-name = "soupsieve"
-version = "4.1"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra == 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'emscripten' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-    "python_full_version >= '3.11.5' and python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-qubo-solver-cpu' and extra != 'group-11-qubo-solver-cuda'",
-]
-sdist = { url = "https://files.pythonhosted.org/packages/95/48/21a393ff731b8f928fa4f8176f9a7ceba2252ee60a5149f25b45c292aa5c/soupsieve-4.1.tar.gz", hash = "sha256:ca9abf7126667010d8f6e9b39bfc1bc3b23c8aed9bcb0f54a754dde969bb8aab", size = 161955, upload-time = "2026-11-10T01:59:50.399Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/73/6a2087c72975cfc07394623bca8d17654342ea4055ae368deafe5a81a542/soupsieve-4.1-py3-none-any.whl", hash = "sha256:e4d667b3974ce6e038e7390486b8093369854a1d345ffdd4c121dfc4a782e809", size = 52302, upload-time = "2026-11-10T01:59:48.571Z" },
 ]
 
 [[package]]
