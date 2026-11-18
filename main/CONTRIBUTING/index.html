@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../extras/assets/logo/qubosolver_symbol_darkgreen.svg">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.0">
     
     
       
@@ -3161,6 +3161,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#dependencies-and-uvlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependencies and uv.lock
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#useful-things-for-your-workflow-linting-and-testing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3480,6 +3491,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#dependencies-and-uvlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependencies and uv.lock
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#useful-things-for-your-workflow-linting-and-testing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3596,6 +3618,9 @@
 <p>On Linux, the default PyTorch wheels bundle CUDA (~6 GB installed). If you don't need a GPU, install the CPU-only wheels (~1.7 GB) instead with the <code>cpu</code> dependency group (CI does the same):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>cpu
 </code></pre></div>
+<h3 id="dependencies-and-uvlock">Dependencies and <code>uv.lock</code></h3>
+<p><code>uv.lock</code> is committed, and CI installs from it. After editing dependencies in <code>pyproject.toml</code>, run <code>uv lock</code> and commit the updated lockfile.</p>
+<p>Renovate keeps <code>uv.lock</code> up to date with a single lockfile-refresh PR (<code>uv lock --upgrade</code>), refreshed early in the morning (Paris time) on Mondays, Wednesdays and Fridays. It does not open PRs for individual Python packages, except to fix known vulnerabilities in the dependencies listed in <code>pyproject.toml</code>; vulnerable packages that are only pulled in by other packages are fixed by the next lockfile refresh. uv only resolves releases that are at least 15 days old (<code>exclude-newer</code> in <code>[tool.uv]</code>). Pasqal packages are exempt (<code>exclude-newer-package</code>). If an urgent fix is newer than that, add the package to <code>exclude-newer-package</code> until the release is 15 days old, and run <code>uv lock --upgrade-package &lt;package&gt;</code>.</p>
 <h3 id="useful-things-for-your-workflow-linting-and-testing">Useful things for your workflow: Linting and Testing</h3>
 <p>Use <code>prek</code> (a drop-in, faster replacement for <code>pre-commit</code>) to make sure that the code is properly linted before pushing a new commit. Make sure that the unit tests and type checks are passing since the merge request will not be accepted if the automatic CI/CD pipeline do not pass.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pip<span class="w"> </span>install<span class="w"> </span>prek
@@ -3724,7 +3749,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "content.tooltips", "navigation.indexes", "navigation.sections", "navigation.tabs", "navigation.top", "navigation.tracking", "navigation.footer", "search.highlight", "search.suggest"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
       
         <script src="../assets/_markdown_exec_pyodide.js"></script>
       
