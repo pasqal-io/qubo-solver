@@ -37,13 +37,21 @@ repos:
         additional_dependencies: ["bandit[toml]"]
 
 # Runs mypy from the project venv (`uv run`), so it checks against the real
-# dependencies and needs no separate hook environment.
+# dependencies and needs no separate hook environment. `--locked` (here and in
+# deptry) makes `uv run` fail instead of silently updating uv.lock.
 -   repo: local
     hooks:
+      - id: uv-lock
+        name: uv.lock in sync with pyproject.toml
+        entry: uv lock --check
+        language: system
+        files: ^(pyproject\.toml|uv\.lock)$
+        pass_filenames: false
+
       - &mypy_base
         id: mypy
         name: mypy (float32)
-        entry: uv run mypy
+        entry: uv run --locked mypy
         language: system
         types_or: [python, pyi]
         exclude: examples|docs
@@ -60,7 +68,7 @@ repos:
       - id: deptry
         # deptry must run inside the project venv to read the installed
         # dependencies' metadata; plain `git commit` doesn't have it on PATH.
-        entry: uv run deptry .
+        entry: uv run --locked deptry .
 
 # Cleanup jupyter notebooks
 -   repo: https://github.com/srstevenson/nb-clean
