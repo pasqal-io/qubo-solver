@@ -17,6 +17,9 @@ on:
 permissions:
   contents: read  # Minimal permissions — read-only access to repo contents
 
+env:
+  UV_LOCKED: "1"  # uv run/sync fail if uv.lock is out of sync with pyproject.toml
+
 jobs:
 
   bandit:
@@ -69,11 +72,11 @@ jobs:
           activate-environment: true  # Creates .venv and exports VIRTUAL_ENV for Trivy
 
       - name: Install dependencies
-        run: uv sync -U
+        run: uv sync --all-extras
 
       - name: Generate requirements.txt
         run: |
-          uv export --format requirements-txt --no-hashes -o requirements.txt
+          uv export --all-extras --format requirements-txt --no-hashes -o requirements.txt
           rm uv.lock
 
       # Scan once, then convert the JSON report to every other format.
@@ -88,6 +91,7 @@ jobs:
           format: json
           output: trivy-results.json
           scanners: vuln,secret
+          trivyignores: .trivyignore.yaml
           exit-code: "0"
 
       - name: Check vulnerabilities # Fails on main if vulnerabilities are found

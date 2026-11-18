@@ -15,6 +15,9 @@ concurrency:
   group: gh-pages-deploy
   cancel-in-progress: false
 
+env:
+  UV_LOCKED: "1"  # uv run/sync fail if uv.lock is out of sync with pyproject.toml
+
 jobs:
   build:
     name: Build docs

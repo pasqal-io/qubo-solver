@@ -13,10 +13,54 @@
   "minimumReleaseAge": "15 days",
   "osvVulnerabilityAlerts": true,
   "vulnerabilityAlerts": {
+    "enabled": true,
     "minimumReleaseAge": null,
     "schedule": ["at any time"]
   },
+  "timezone": "Europe/Paris",
   "schedule": ["every weekend"],
   "rebaseWhen": "conflicted",
-  "updateNotScheduled": false
+  "updateNotScheduled": false,
+
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["* 4-5 * * 1,3,5"],
+    "minimumReleaseAge": null
+  },
+
+  "packageRules": [
+    {
+      "description": "Python dependencies: no per-package PRs and no changes to the pyproject.toml constraints; uv.lock is refreshed as a whole by lockFileMaintenance. Vulnerability fixes still get their own PRs (vulnerabilityAlerts.enabled overrides this rule).",
+      "matchManagers": ["pep621"],
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch",
+        "pin",
+        "pinDigest",
+        "digest",
+        "bump",
+        "rollback",
+        "replacement"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Runtime and extras dependencies are capped at the next major (e.g. numpy<3): propose raising the cap when a new major is out. 'widen' keeps the old major supported (numpy>=2,<3 becomes numpy>=2,<4).",
+      "matchManagers": ["pep621"],
+      "matchDepTypes": ["project.dependencies", "project.optional-dependencies"],
+      "matchUpdateTypes": ["major"],
+      "rangeStrategy": "widen",
+      "enabled": true
+    },
+    {
+      "description": "qoolqit is capped at the next minor (qoolqit>=1.6.0,<1.7): also propose raising the cap for new minors. No release-age wait, like its uv cooldown exemption.",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["qoolqit"],
+      "matchUpdateTypes": ["major", "minor"],
+      "rangeStrategy": "widen",
+      "minimumReleaseAge": null,
+      "enabled": true
+    }
+  ]
 }

@@ -37,24 +37,24 @@ classifiers = [
 # always specify a version for each package
 # to maintain consistency
 dependencies = [
-  "numpy>=2",
-  "torch",
-  "scikit-learn",
-  "pandas",
-  "seaborn",
-  "scikit-optimize",
-  "qoolqit[extras]>=1.5.0", # The version in .pre-commit-config.yaml must match
-  "shapely",
-  "scipy",
-  "pasqal-cloud",
-  "pulser[torch]>=1.9.0",
-  "emu-mps",
-  "emu-sv",
+  "numpy>=2,<3",
+  "torch<3",
+  "scikit-learn<2",
+  "pandas<4",
+  "seaborn<1",
+  "scikit-optimize<1",
+  "qoolqit[extras]>=1.6.0,<1.7",  # Capped at the next minor, not major
+  "shapely<3",
+  "scipy<2",
+  "pasqal-cloud<1",
+  "pulser[torch]>=1.9.0,<2",
+  "emu-mps<3",
+  "emu-sv<3",
 ]
 
 [project.optional-dependencies]
 extras = [
-  "cplex",
+  "cplex<23",
 ]
 
 [dependency-groups]
@@ -106,6 +106,31 @@ cuda = [
 [tool.uv]
 default-groups = ["dev", "doc"]
 conflicts = [[{ group = "cpu" }, { group = "cuda" }]]
+# Security floors on packages we only get through other packages. They limit the version when
+# something pulls the package in, without making it a dependency.
+constraint-dependencies = [
+  # CVE-2026-126190 (fixed in 4). soupsieve 3+ requires Python >= 3.11.5, so the vulnerable
+  # 2.10 stays locked for 3.11.0-3.11.4 (silenced in .trivyignore.yaml), but never above.
+  "soupsieve>=4 ; python_full_version >= '3.11.5'",
+]
+# Supply-chain cooldown: resolve only distributions uploaded at least 15 days ago (matches
+# Renovate's `minimumReleaseAge`). Exemptions are in [tool.uv.exclude-newer-package] below.
+exclude-newer = "15 days"
+
+# Packages exempt from the 15-day cooldown. Pasqal's own packages are exempt so their releases
+# can be adopted right away. The cooldown also applies to Renovate's security PRs: if a
+# vulnerability fix is newer than 15 days, the PR fails with an artifact error. To let it
+# through, add the package here with `false` (or a shorter duration, e.g. `"2 days"`), then
+# remove it once the fix is old enough.
+[tool.uv.exclude-newer-package]
+emu-base = false
+emu-mps = false
+emu-sv = false
+pasqal-cloud = false
+pulser = false
+pulser-core = false
+pulser-simulation = false
+qoolqit = false
 
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu", group = "cpu" }]
@@ -127,13 +152,9 @@ allow-direct-references = true
 allow-ambiguous-features = true
 
 [tool.hatch.build.targets.sdist]
-exclude = [
-    "/.gitignore",
-    "/.pre-commit-config.yml",
-    "/tests",
-    "/docs",
-    "/examples",
-]
+# Only what is needed to build the package, plus the changelog and citation. hatchling also
+# always adds pyproject.toml, README.md, LICENSE.md and .gitignore.
+only-include = ["qubosolver", "CHANGELOG.md", "CITATION.cff"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["qubosolver"]

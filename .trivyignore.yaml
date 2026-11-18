@@ -1,0 +1,18 @@
+# Vulnerabilities Trivy must not report. Trivy ignores the environment markers in the exported
+# requirements, so it also reports versions locked only for environments CI never installs.
+# Each entry is limited to the affected package versions (purls), and says why it is safe to
+# ignore.
+vulnerabilities:
+  # soupsieve 2.10 is locked only for Python 3.11.0-3.11.4: soupsieve 3.0.2+ requires Python
+  # >= 3.11.5, and no fix exists for older Pythons. CI never installs it (setup-uv takes the
+  # latest Python patch), and it only comes with the dev/doc tools, which run selectors on our
+  # own docs. Remove these entries when Python 3.11 support is dropped.
+  - id: CVE-2026-126190
+    purls: [pkg:pypi/soupsieve@2.10]
+    statement: Locked only for Python 3.11.0-3.11.4, never installed by CI; dev/doc tools only.
+  - id: CVE-2026-126191
+    purls: [pkg:pypi/soupsieve@2.10]
+    statement: Locked only for Python 3.11.0-3.11.4, never installed by CI; dev/doc tools only.
+  - id: CVE-2026-126193
+    purls: [pkg:pypi/soupsieve@2.10]
+    statement: Locked only for Python 3.11.0-3.11.4, never installed by CI; dev/doc tools only.

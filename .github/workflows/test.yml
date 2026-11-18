@@ -20,6 +20,9 @@ concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+env:
+  UV_LOCKED: "1"  # uv run/sync fail if uv.lock is out of sync with pyproject.toml
+
 jobs:
   setup:
     name: Compute test matrix
@@ -32,7 +35,8 @@ jobs:
       python-versions: ${{ steps.compute.outputs.is-regular-pr == 'true' && '["3.14"]' || '["3.11", "3.12", "3.13", "3.14"]' }}
     steps:
       - id: compute
-        run: echo "is-regular-pr=${{ github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release/') }}" >> "$GITHUB_OUTPUT"
+        # Release and lockfile-refresh PRs get the full OS x Python matrix.
+        run: echo "is-regular-pr=${{ github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release/') && github.head_ref != 'renovate/lock-file-maintenance' }}" >> "$GITHUB_OUTPUT"
 
   unit_tests:
     name: Unit testing
