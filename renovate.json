@@ -30,6 +30,12 @@
 
   "packageRules": [
     {
+      "description": "Runtime and extras dependencies are capped (e.g. numpy<3, qoolqit<1.7). 'widen' raises the cap and keeps the old versions supported (numpy>=2,<3 becomes numpy>=2,<4). Renovate forbids rangeStrategy in rules that use matchUpdateTypes, so it gets its own rule.",
+      "matchManagers": ["pep621"],
+      "matchDepTypes": ["project.dependencies", "project.optional-dependencies"],
+      "rangeStrategy": "widen"
+    },
+    {
       "description": "Python dependencies: no per-package PRs and no changes to the pyproject.toml constraints; uv.lock is refreshed as a whole by lockFileMaintenance. Vulnerability fixes still get their own PRs (vulnerabilityAlerts.enabled overrides this rule).",
       "matchManagers": ["pep621"],
       "matchUpdateTypes": [
@@ -46,11 +52,10 @@
       "enabled": false
     },
     {
-      "description": "Runtime and extras dependencies are capped at the next major (e.g. numpy<3): propose raising the cap when a new major is out. 'widen' keeps the old major supported (numpy>=2,<3 becomes numpy>=2,<4).",
+      "description": "Runtime and extras dependencies are capped at the next major: propose raising the cap when a new major is out.",
       "matchManagers": ["pep621"],
       "matchDepTypes": ["project.dependencies", "project.optional-dependencies"],
       "matchUpdateTypes": ["major"],
-      "rangeStrategy": "widen",
       "enabled": true
     },
     {
@@ -58,7 +63,6 @@
       "matchManagers": ["pep621"],
       "matchPackageNames": ["qoolqit"],
       "matchUpdateTypes": ["major", "minor"],
-      "rangeStrategy": "widen",
       "minimumReleaseAge": null,
       "enabled": true
     }
