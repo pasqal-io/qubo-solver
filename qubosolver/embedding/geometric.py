@@ -11,21 +11,25 @@ geometric search grows a cluster of variables whose QUBO couplings can be
 reproduced by atom positions (interactions ``1 / r ** 6``) within the device
 constraints. It returns the register together with the placed variables.
 
+Warning:
+    The geometric embedder and its search algorithms are in the prototype
+    stage and may or may not change in the future.
+
 This makes it the building block of decomposition: embed part of the
-instance, solve the sub-instance on those variables, fix them with
+instance, solve the QUBO the register implements on those variables (its
+couplings from the atom positions, its diagonal from the sub-instance, see
+[`extract_qubo`][qubosolver.extract_qubo]), fix them with
 [`variable_fixing`][qubosolver.transforms.variable_fixing], and repeat on the
 reduced instance:
 
 ```python
-from qubosolver import embedding, solving
+from qubosolver import embedding, extract_qubo, solving
 from qubosolver.transforms import variable_fixing
 
 reduced = variable_fixing.apply_recursively(instance)  # the embedder needs diag < 0
 while reduced.size > stop:
     register, variables = embedding.geometric.embed_for_device(reduced, device)
-    if len(variables) <= min_atoms:
-        break
-    sub = reduced.subinstance(variables)
+    sub = extract_qubo(register, reduced.subinstance(variables))
     sub_solution = solving.tabu_search.solve(sub)
     rule = variable_fixing.from_candidate(sub_solution[0], variables, reduced)
     variable_fixing.apply(reduced, (rule,), inplace=True)  # candidate rule alone
@@ -57,6 +61,11 @@ from ._algorithms.geometric import (
 )
 
 logger = logging.getLogger(__name__)
+
+_PROTOTYPE_NOTICE = (
+    "The geometric embedder and its search algorithms are in the prototype stage and may or "
+    "may not change in the future."
+)
 
 
 @dataclass
@@ -173,6 +182,7 @@ def embed(
             no coupling to reproduce, and its optimum should be read off the diagonal with
             [`trivial_solution_search.solve`][qubosolver.solving.classical.trivial_solution_search.solve].
     """
+    logger.info(_PROTOTYPE_NOTICE)
     config = config or Config()
     rng = rng or torch_rng("global")
     logger.debug("embed: instance size=%d, config=%r", instance.size, config)
@@ -217,11 +227,9 @@ def embed(
     # A random first variable works better according to some performed numerics.
     first_vertex = int(torch.randint(0, instance.size, (), generator=rng).item())
 
-    # TODO(abussy-pasqal): The distance scale comes from the largest off-diagonal coefficient
-    # of `instance`. In a decomposition loop, that is the reduced instance, so the scale changes
-    # between rounds as the strongest couplings get fixed (the former stateful decomposition
-    # kept the scale of the original instance for the whole run). Decide which scale to use;
-    # part of the known scale dependence of the decomposition.
+    # The distance scale comes from the largest off-diagonal coefficient of `instance`. In a
+    # decomposition loop, that is the reduced instance, so each round gets its own scale. This is
+    # deliberate: a per-round scale leaves more room for a good embedding than one shared scale.
     min_distance, max_radial_distance = compute_min_max_distances(
         qubo_matrix, max_min_dist_ratio=config.max_min_dist_ratio
     )
