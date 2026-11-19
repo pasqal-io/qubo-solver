@@ -239,3 +239,51 @@ def test_check_prohibited_zones() -> None:
     # Outside the forbidden zone but too close to the placed vertex.
     check.is_false(check_prohibited_zones(placed_vertices, Point(0.4, 0.0)))
     check.is_true(check_prohibited_zones(placed_vertices, Point(1.0, 0.0)))
+
+
+def _pair_qubo(q_ii: float, q_jj: float, q_ij: float) -> torch.Tensor:
+    return matrix.tensor([[q_ii, q_ij], [q_ij, q_jj]])
+
+
+# Under x^T Q x, setting both variables to 1 costs Q_ii + Q_jj + 2 Q_ij: it stops paying off
+# against the best single variable when Q_ij > -max(Q_ii, Q_jj) / 2.
+@pytest.mark.parametrize(
+    ("q_ii", "q_jj", "q_ij"),
+    [
+        (-8.0, -8.0, 3.0),  # both-on pays off
+        (-8.0, -8.0, 6.0),  # -Q_ii / 2 < Q_ij < -Q_ii: both-on does not pay off
+        (-8.0, -8.0, 10.0),  # both-on does not pay off
+        (-8.0, -12.0, 3.0),
+        (-8.0, -12.0, 6.0),
+        (-8.0, -12.0, 13.0),
+    ],
+)
+def test_compute_distance_interaction_matrix_blocks_iff_both_on_does_not_pay_off(
+    q_ii: float, q_jj: float, q_ij: float
+) -> None:
+    qubo = _pair_qubo(q_ii, q_jj, q_ij)
+    both_on = q_ii + q_jj + 2 * q_ij
+    expected_blocking = both_on > min(q_ii, q_jj)
+
+    dist_matrix = compute_distance_interaction_matrix(qubo)
+
+    check.equal(bool(dist_matrix[0, 1] == 0), expected_blocking)
+    check.equal(bool(dist_matrix[1, 0] == 0), expected_blocking)
+    if not expected_blocking:
+        check.almost_equal(dist_matrix[0, 1].item(), q_ij ** (-1 / 6))
+
+
+# WeightedZone.radius2 and the blocking threshold of compute_distance_interaction_matrix must
+# agree: a vertex at the interaction distance of a pair lies in the blocking disc of the other
+# iff the matrix marks the pair as blocking.
+@pytest.mark.parametrize("q_ij", [3.0, 6.0, 10.0])
+def test_weighted_zone_blocking_radius_matches_distance_matrix(q_ij: float) -> None:
+    weight = -8.0
+    dist_matrix = compute_distance_interaction_matrix(_pair_qubo(weight, weight, q_ij))
+    matrix_blocks = bool(dist_matrix[0, 1] == 0)
+
+    zone = WeightedZone(0, 0.0, 0.0, weight, min_distance=0.1)
+    interaction_distance = q_ij ** (-1 / 6)
+    zone_blocks = zone.circle_end_forbidden.contains(Point(interaction_distance, 0.0))
+
+    check.equal(zone_blocks, matrix_blocks)

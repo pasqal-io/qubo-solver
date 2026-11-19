@@ -81,9 +81,9 @@ class WeightedZone:
         self.weight = weight
 
         self.radius1 = min_distance
-        # TODO(abussy-pasqal): Blocking radius from U(r) = -Q_ii; see the threshold TODO in
-        # compute_distance_interaction_matrix (possibly -Q_ii / 2 under x^T Q x).
-        self.radius2 = (-weight) ** (-1 / 6)
+        # Blocking radius: the interaction U(r) = 1 / r**6 exceeds the detuning -Q_ii / 2 (see
+        # compute_distance_interaction_matrix). Keep in sync with its blocking threshold.
+        self.radius2 = (-weight / 2) ** (-1 / 6)
 
         self.radius3 = 1.5
 
@@ -155,14 +155,14 @@ def compute_distance_interaction_matrix(
     )
 
     # relevant interactions
-    # TODO(abussy-pasqal): The blocking threshold compares Q_ij with -Q_ii, but under the
-    # x^T Q x convention, setting both variables to 1 stops paying off at Q_ij > -Q_ii / 2.
-    # Possibly the same factor-2 slip as the conditioning fixed in variable_fixing; changing
-    # it alters which clusters the search finds. Keep in sync with WeightedZone.radius2.
+    # A pair is blocking when setting both variables to 1 does not pay off. Under x^T Q x with
+    # symmetric Q, that is Q_ii + Q_jj + 2 Q_ij > min(Q_ii, Q_jj), i.e. Q_ij > -max(Q_ii, Q_jj) / 2.
+    # On the device (U_ij = Q_ij, detuning -Q_ii / 2, see `extract_qubo`), the interaction
+    # exceeds the smaller detuning. Keep in sync with WeightedZone.radius2.
     cond = (
         (qubo_matrix > neglecting_max_coefficient)
-        & (qubo_matrix < -diag_mat[:, None])
-        & (qubo_matrix < -diag_mat[None, :])
+        & (qubo_matrix < -diag_mat[:, None] / 2)
+        & (qubo_matrix < -diag_mat[None, :] / 2)
     )
 
     if cond.any():
