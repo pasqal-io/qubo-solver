@@ -15,7 +15,6 @@ from pulser_simulation import QutipBackendV2
 from qoolqit import AnalogDeviceWithDMM
 
 from qubosolver import (
-    AutoLocalEmulatorBackend,
     ClassicalSolvingConfig,
     DriveShapingConfig,
     EmbeddingConfig,
@@ -24,6 +23,7 @@ from qubosolver import (
     SolverConfig,
 )
 from qubosolver.embedding.enums import Lattice
+from qubosolver.types.backends import _AutoLocalEmulatorBackend
 
 
 def test_default_config() -> None:
@@ -32,7 +32,7 @@ def test_default_config() -> None:
     check.equal(default_config.solving_mode, "quantum")
     assert isinstance(default_config.solving, QuantumSolvingConfig)
     check.is_instance(default_config.solving.backend, LocalEmulator)
-    check.is_(default_config.solving.backend._backend_type, AutoLocalEmulatorBackend)
+    check.is_(default_config.solving.backend._backend_type, _AutoLocalEmulatorBackend)
     check.equal(default_config.solving.embedding.algorithm, "blade")
     check.equal(default_config.solving.embedding.greedy_layout_lattice, "triangular")
 

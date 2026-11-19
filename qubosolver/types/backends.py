@@ -26,16 +26,9 @@ import logging
 import warnings
 from typing import Any, Literal, cast
 
-from emu_mps import MPSBackend
-from emu_sv import SVBackend
-from pasqal_cloud.backends import (
-    RemoteEmuFreeBackend,
-    RemoteEmulatorBackend,
-    RemoteMPSBackend,
-    RemoteSVBackend,
+from qoolqit.execution import (
+    BackendType,
 )
-from pulser.backend.abc import EmulatorBackend
-from pulser_simulation import QutipBackendV2
 from qoolqit.execution import (
     LocalEmulator as QoolqitLocalEmulator,
 )
@@ -43,11 +36,17 @@ from qoolqit.execution import (
     RemoteEmulator as QoolqitRemoteEmulator,
 )
 
+# pasqal_cloud's remote emulator base class and free engine, taken from qoolqit (which imports
+# them) rather than from pasqal_cloud, which is not a direct dependency. `pulser.backends` has
+# no equivalent of the base class, needed by `_AutoRemoteEmulatorBackend`.
+from qoolqit.execution.backends import EmulatorBackend, RemoteEmulatorBackend
+
 from qubosolver._checks import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import pulser
     import qoolqit
+    from pulser.backend.abc import Backend
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +57,7 @@ _SV_THRESHOLD = 15  # Use state-vector backends for problems with ≥15 qubits
 
 def _get_backend_type(
     backend_id: Literal["qutip", "emu_sv", "emu_mps"], remote: bool
-) -> type[EmulatorBackend | RemoteEmulatorBackend]:
+) -> type[Backend]:
     """Get the backend type for a given backend ID and execution mode.
 
     Args:
@@ -73,25 +72,69 @@ def _get_backend_type(
     """
     match (backend_id, remote):
         case ("qutip", True):
-            return RemoteEmuFreeBackend
+            return BackendType.RemoteEmuFreeBackend
         case ("qutip", False):
-            return QutipBackendV2
+            return BackendType.QutipBackendV2
         case ("emu_sv", True):
-            return RemoteSVBackend
+            return BackendType.RemoteSVBackend
         case ("emu_sv", False):
-            return cast("type[EmulatorBackend]", SVBackend)
+            return BackendType.SVBackend
         case ("emu_mps", True):
-            return RemoteMPSBackend
+            return BackendType.RemoteMPSBackend
         case ("emu_mps", False):
-            return cast("type[EmulatorBackend]", MPSBackend)
+            return BackendType.MPSBackend
         case _:
             msg = f"Backend ID '{backend_id}' is not recognized"
             raise ValueError(msg)
 
 
-def _select_backend_type(
-    n_qubits: int, remote: bool
-) -> type[EmulatorBackend | RemoteEmulatorBackend]:
+def _resolve_local_backend_name(
+    backend_name: Literal["auto", "qutip", "emu_sv", "emu_mps"],
+) -> type[EmulatorBackend]:
+    """Resolve a backend name to its local backend class.
+
+    Args:
+        backend_name: `"auto"` for automatic selection, or a backend ID
+            (see `_get_backend_type`).
+
+    Returns:
+        `_AutoLocalEmulatorBackend` for `"auto"`, otherwise the local backend class
+            for the given ID.
+
+    Raises:
+        ValueError: If the backend_name is not recognized.
+    """
+    if backend_name == "auto":
+        return _AutoLocalEmulatorBackend
+    # `_get_backend_type` returns classes from `pulser.backends`, typed `type[Backend]`;
+    # local IDs only map to `EmulatorBackend` subclasses.
+    return cast("type[EmulatorBackend]", _get_backend_type(backend_name, remote=False))
+
+
+def _resolve_remote_backend_name(
+    backend_name: Literal["auto", "qutip", "emu_sv", "emu_mps"],
+) -> type[RemoteEmulatorBackend]:
+    """Resolve a backend name to its remote backend class.
+
+    Args:
+        backend_name: `"auto"` for automatic selection, or a backend ID
+            (see `_get_backend_type`).
+
+    Returns:
+        `_AutoRemoteEmulatorBackend` for `"auto"`, otherwise the remote backend class
+            for the given ID.
+
+    Raises:
+        ValueError: If the backend_name is not recognized.
+    """
+    if backend_name == "auto":
+        return _AutoRemoteEmulatorBackend
+    # `_get_backend_type` returns classes from `pulser.backends`, typed `type[Backend]`;
+    # remote IDs only map to `RemoteEmulatorBackend` subclasses.
+    return cast("type[RemoteEmulatorBackend]", _get_backend_type(backend_name, remote=True))
+
+
+def _select_backend_type(n_qubits: int, remote: bool) -> type[Backend]:
     """Select the appropriate backend class based on the number of qubits.
 
     Args:
@@ -109,7 +152,7 @@ def _select_backend_type(
     return _get_backend_type("qutip", remote)
 
 
-class AutoLocalEmulatorBackend(EmulatorBackend):
+class _AutoLocalEmulatorBackend(EmulatorBackend):
     """Factory class that automatically selects optimal emulator backends.
 
     This factory uses `__new__` to return instances of different backend types
@@ -153,10 +196,12 @@ class AutoLocalEmulatorBackend(EmulatorBackend):
         n_qubits = len(sequence.register.qubit_ids)
         backend_type = _select_backend_type(n_qubits, False)
         logger.info("Selected %s for %d qubits.", backend_type.__name__, n_qubits)
-        return backend_type(sequence, *args, **kwargs)
+        backend = backend_type(sequence, *args, **kwargs)
+        assert isinstance(backend, EmulatorBackend)  # nosec B101
+        return backend
 
 
-class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
+class _AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
     """Factory class that automatically selects optimal remote emulator backends.
 
     This factory uses `__new__` to return instances of different remote backend types
@@ -206,7 +251,7 @@ class AutoRemoteEmulatorBackend(RemoteEmulatorBackend):
 
 
 def _warn_suboptimal_backend(
-    backend_type: type[EmulatorBackend | RemoteEmulatorBackend],
+    backend_type: type[Backend],
     n_qubits: int,
 ) -> None:
     """Warn if using a suboptimal backend for the given problem size.
@@ -215,7 +260,7 @@ def _warn_suboptimal_backend(
         backend_type: The currently selected backend type.
         n_qubits: Number of qubits in the quantum program.
     """
-    if backend_type in [AutoLocalEmulatorBackend, AutoRemoteEmulatorBackend]:
+    if backend_type in [_AutoLocalEmulatorBackend, _AutoRemoteEmulatorBackend]:
         return
 
     remote = issubclass(backend_type, RemoteEmulatorBackend)
@@ -253,7 +298,12 @@ class LocalEmulator(QoolqitLocalEmulator):
     - Large problems (≥ 26 qubits): [`MPSBackend`](https://pasqal-io.github.io/emulators/latest/emu_mps/api/#mpsbackend)
 
     Args:
-        backend_type: Backend type to use.
+        backend_type: Backend to use, either a backend class or one of these names:
+
+            - `"auto"` (default): picks the backend from the register size, as listed above,
+            - `"qutip"`: `QutipBackendV2`,
+            - `"emu_sv"`: `SVBackend`,
+            - `"emu_mps"`: `MPSBackend`.
         **kwargs: Additional keyword arguments passed to the base
             [`qoolqit.execution.LocalEmulator`][].
 
@@ -262,15 +312,19 @@ class LocalEmulator(QoolqitLocalEmulator):
         from qubosolver import LocalEmulator
         emulator = LocalEmulator(num_shots=1000)
         # Backend will be automatically selected based on problem size
+        sv_emulator = LocalEmulator(backend_type="emu_sv", num_shots=1000)
         ```
     """
 
     def __init__(
         self,
-        backend_type: type[EmulatorBackend] = AutoLocalEmulatorBackend,
+        backend_type: type[EmulatorBackend]
+        | Literal["auto", "qutip", "emu_sv", "emu_mps"] = "auto",
         **kwargs: Any,  # noqa: ANN401 (forwarded to qoolqit.execution.LocalEmulator)
     ) -> None:
         """Create a local emulator backend of the given `backend_type`."""
+        if isinstance(backend_type, str):
+            backend_type = _resolve_local_backend_name(backend_type)
         super().__init__(backend_type=backend_type, **kwargs)
 
     def run(
@@ -315,7 +369,17 @@ class RemoteEmulator(QoolqitRemoteEmulator):
         `RemoteMPSBackend` are necessary. Fees may apply for remote execution.
 
     Args:
-        backend_type: Backend type to use.
+        backend_type: Backend to use, either a remote backend class or one of these names
+            (shared with `LocalEmulator`, each mapping to the remote counterpart of the
+            local engine):
+
+            - `"qutip"` (default): `RemoteEmuFreeBackend`, the free engine,
+            - `"emu_sv"`: `RemoteSVBackend`,
+            - `"emu_mps"`: `RemoteMPSBackend`,
+            - `"auto"`: picks the backend from the register size, as listed above.
+
+            The default is the free engine rather than `"auto"`, since automatic selection
+            switches to paid engines from 15 qubits on.
         **kwargs: Additional keyword arguments passed to the base
             [`qoolqit.execution.RemoteEmulator`][].
 
@@ -326,15 +390,19 @@ class RemoteEmulator(QoolqitRemoteEmulator):
         connection = PasqalCloudConnection(username="user", password="pass", project_id="project")
         emulator = RemoteEmulator(connection=connection, num_shots=1000)
         # Uses RemoteEmuFreeBackend by default
+        sv_emulator = RemoteEmulator(backend_type="emu_sv", connection=connection)
         ```
     """
 
     def __init__(
         self,
-        backend_type: type[RemoteEmulatorBackend] = RemoteEmuFreeBackend,
+        backend_type: type[RemoteEmulatorBackend]
+        | Literal["auto", "qutip", "emu_sv", "emu_mps"] = "qutip",
         **kwargs: Any,  # noqa: ANN401 (forwarded to qoolqit.execution.RemoteEmulator)
     ) -> None:
         """Create a remote emulator backend of the given `backend_type`."""
+        if isinstance(backend_type, str):
+            backend_type = _resolve_remote_backend_name(backend_type)
         super().__init__(backend_type=backend_type, **kwargs)
 
     def run(

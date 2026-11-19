@@ -38,8 +38,6 @@ if _RUNTIME_TYPE_CHECKING:  # no cov
 # package itself (e.g. `from qubosolver import Instance`). Don't let isort/ruff reorder this
 # block alphabetically, or it will reintroduce that circular import.
 from qubosolver.types import (  # noqa: E402
-    AutoLocalEmulatorBackend,
-    AutoRemoteEmulatorBackend,
     # Type Aliases
     Bitstring,
     Bitstrings,
@@ -80,8 +78,6 @@ from qubosolver.solver import (  # noqa: E402
 from qubosolver.utils import analysis, extract_qubo  # noqa: E402
 
 __all__ = [
-    "AutoLocalEmulatorBackend",
-    "AutoRemoteEmulatorBackend",
     "Bitstring",
     "Bitstrings",
     "Candidate",

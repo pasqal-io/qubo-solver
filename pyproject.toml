@@ -46,10 +46,7 @@ dependencies = [
   "qoolqit[extras]>=1.6.0,<1.7",  # Capped at the next minor, not major
   "shapely<3",
   "scipy<2",
-  "pasqal-cloud<1",
   "pulser[torch]>=1.9.0,<2",
-  "emu-mps<3",
-  "emu-sv<3",
 ]
 
 [project.optional-dependencies]
@@ -78,6 +75,7 @@ dev = [
   "bandit[sarif,toml]>=1.9.4",
   "deptry",
   "prek",
+  "pasqal-cloud<1",
 ]
 doc = [
   "properdocs",
@@ -91,6 +89,7 @@ doc = [
   "mkdocs-macros-plugin",
   "mike",
   "python-markdown-math",
+  "pasqal-cloud<1",
 ]
 # torch wheel selection (uv only, see [tool.uv.sources]):
 # plain `uv sync` installs the default PyPI wheels (CUDA on Linux), `uv sync --group cpu`
