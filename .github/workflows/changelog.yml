@@ -1,0 +1,31 @@
+name: Changelog
+
+# Fail a PR that doesn't update CHANGELOG.md.
+# Add the `skip-changelog` label to a PR that needs no entry.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+permissions:
+    contents: read
+
+jobs:
+  changelog:
+    name: Changelog
+    if: ${{ !github.event.pull_request.draft && !contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout main code
+          uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          with:
+            fetch-depth: 0
+            persist-credentials: false
+        - name: Check that CHANGELOG.md is updated
+          env:
+            BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          run: |
+            if git diff --quiet "$BASE_SHA"...HEAD -- CHANGELOG.md; then
+              echo "::error::Add an entry to CHANGELOG.md under [Unreleased], or the 'skip-changelog' label if the change doesn't affect end users."
+              exit 1
+            fi
