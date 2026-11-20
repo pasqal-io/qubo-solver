@@ -16,21 +16,19 @@ import pytest_check as check
 import qoolqit
 import torch
 from beartype.roar import BeartypeCallHintParamViolation
-from emu_mps import MPSBackend
-from emu_sv import SVBackend
 from mock.connection import MockConnection
-from pasqal_cloud.backends import (
+from pulser.backend.abc import EmulatorBackend
+from pulser.backend.remote import RemoteBackend
+from pulser.backends import (
+    MPSBackend,
+    QutipBackendV2,
     RemoteEmuFreeBackend,
-    RemoteEmulatorBackend,
     RemoteMPSBackend,
     RemoteSVBackend,
+    SVBackend,
 )
-from pulser.backend.abc import EmulatorBackend
-from pulser_simulation import QutipBackendV2
 
 from qubosolver import (
-    AutoLocalEmulatorBackend,
-    AutoRemoteEmulatorBackend,
     EmbeddingConfig,
     Instance,
     LocalEmulator,
@@ -41,6 +39,8 @@ from qubosolver import (
     matrix,
 )
 from qubosolver.types.backends import (
+    _AutoLocalEmulatorBackend,
+    _AutoRemoteEmulatorBackend,
     _get_backend_type,
     _warn_suboptimal_backend,
 )
@@ -85,10 +85,10 @@ def mock_connection_and_results() -> tuple[MockConnection, pulser.backend.Remote
     ],
 )
 def test_auto_local_emulator_backend(size: int, expected_type: type) -> None:
-    """Test that AutoLocalEmulatorBackend selects the correct backend type based on problem size."""
+    """Test that _AutoLocalEmulatorBackend selects the correct backend type for the problem size."""
     device = qoolqit.MockDevice()
     sequence = make_sequence(dummy_pulser_register(size), device)
-    backend = AutoLocalEmulatorBackend(sequence)  # type: ignore[abstract]
+    backend = _AutoLocalEmulatorBackend(sequence)  # type: ignore[abstract]
     check.is_instance(backend, expected_type)
 
 
@@ -101,13 +101,13 @@ def test_auto_local_emulator_backend(size: int, expected_type: type) -> None:
     ],
 )
 def test_auto_remote_emulator_backend(size: int, expected_type: type) -> None:
-    """Test that AutoRemoteEmulatorBackend selects the correct backend type based on size.
+    """Test that _AutoRemoteEmulatorBackend selects the correct backend type based on size.
 
     Selection is based on problem size.
     """
     device = qoolqit.MockDevice()
     sequence = make_sequence(dummy_pulser_register(size), device)
-    backend = AutoRemoteEmulatorBackend(
+    backend = _AutoRemoteEmulatorBackend(
         sequence, MagicMock(spec=pulser.backend.remote.RemoteConnection)
     )
     check.is_instance(backend, expected_type)
@@ -144,7 +144,7 @@ def local_default_backend() -> tuple[LocalEmulator, pulser.backend.Results]:
 @pytest.fixture
 def local_auto_backend() -> tuple[LocalEmulator, pulser.backend.Results]:
     results = MagicMock(spec=pulser.backend.Results)
-    return LocalEmulator(backend_type=AutoLocalEmulatorBackend), results  # type: ignore[type-abstract]
+    return LocalEmulator(backend_type=_AutoLocalEmulatorBackend), results
 
 
 @pytest.fixture
@@ -165,7 +165,7 @@ def remote_default_backend() -> tuple[RemoteEmulator, pulser.backend.RemoteResul
 def remote_auto_backend() -> tuple[RemoteEmulator, pulser.backend.RemoteResults]:
     mock_connection, results = mock_connection_and_results()
     return (
-        RemoteEmulator(backend_type=AutoRemoteEmulatorBackend, connection=mock_connection),
+        RemoteEmulator(backend_type=_AutoRemoteEmulatorBackend, connection=mock_connection),
         results,
     )
 
@@ -234,9 +234,9 @@ def test_emulator_backend_selection(
 
 
 def test_default_config_backend() -> None:
-    """Test that default solving.Config uses AutoLocalEmulatorBackend."""
+    """Test that default solving.Config uses _AutoLocalEmulatorBackend."""
     config = SolverConfig()
-    check.is_(config.quantum.backend._backend_type, AutoLocalEmulatorBackend)
+    check.is_(config.quantum.backend._backend_type, _AutoLocalEmulatorBackend)
 
 
 def test_default_remote_emulator_backend() -> None:
@@ -244,6 +244,51 @@ def test_default_remote_emulator_backend() -> None:
     mock_connection = MagicMock(spec=pulser.backend.remote.RemoteConnection)
     emulator = RemoteEmulator(connection=mock_connection)
     check.is_(emulator._backend_type, RemoteEmuFreeBackend)
+
+
+@pytest.mark.parametrize(
+    "backend_name, expected_type",
+    [
+        ("auto", _AutoLocalEmulatorBackend),
+        ("qutip", QutipBackendV2),
+        ("emu_sv", SVBackend),
+        ("emu_mps", MPSBackend),
+    ],
+)
+def test_local_emulator_backend_name(
+    backend_name: Literal["auto", "qutip", "emu_sv", "emu_mps"], expected_type: type
+) -> None:
+    """Test that LocalEmulator resolves backend names to local backend classes."""
+    emulator = LocalEmulator(backend_type=backend_name)
+    check.is_(emulator._backend_type, expected_type)
+
+
+@pytest.mark.parametrize(
+    "backend_name, expected_type",
+    [
+        ("auto", _AutoRemoteEmulatorBackend),
+        ("qutip", RemoteEmuFreeBackend),
+        ("emu_sv", RemoteSVBackend),
+        ("emu_mps", RemoteMPSBackend),
+    ],
+)
+def test_remote_emulator_backend_name(
+    backend_name: Literal["auto", "qutip", "emu_sv", "emu_mps"], expected_type: type
+) -> None:
+    """Test that RemoteEmulator resolves backend names to remote backend classes."""
+    mock_connection = MagicMock(spec=pulser.backend.remote.RemoteConnection)
+    emulator = RemoteEmulator(backend_type=backend_name, connection=mock_connection)
+    check.is_(emulator._backend_type, expected_type)
+
+
+def test_emulator_invalid_backend_name() -> None:
+    """Test that emulators reject unknown backend names."""
+    mock_connection = MagicMock(spec=pulser.backend.remote.RemoteConnection)
+    error_match = r"not recognized|violates type hint"
+    with pytest.raises((ValueError, BeartypeCallHintParamViolation), match=error_match):
+        LocalEmulator(backend_type="invalid")  # type: ignore[arg-type]
+    with pytest.raises((ValueError, BeartypeCallHintParamViolation), match=error_match):
+        RemoteEmulator(backend_type="invalid", connection=mock_connection)  # type: ignore[arg-type]
 
 
 @pytest.mark.duration(2)
@@ -256,7 +301,7 @@ def test_remote_emulator_warning() -> None:
     attach_bitstring(mock_results, size)
     config = SolverConfig(
         solving=QuantumSolvingConfig(
-            backend=RemoteEmulator(backend_type=RemoteSVBackend, connection=mock_connection),
+            backend=RemoteEmulator(backend_type="emu_sv", connection=mock_connection),
             embedding=EmbeddingConfig(algorithm="blade"),
         ),
         preprocessing=False,
@@ -280,7 +325,7 @@ def test_local_emulator_warning() -> None:
     instance = Instance(Q)
     config = SolverConfig(
         solving=QuantumSolvingConfig(
-            backend=LocalEmulator(backend_type=SVBackend),
+            backend=LocalEmulator(backend_type="emu_sv"),
             embedding=EmbeddingConfig(algorithm="blade"),
         ),
         preprocessing=False,
@@ -329,7 +374,7 @@ def test_get_remote_backend_type(
     """Test that _get_backend_type returns the correct remote backend class."""
     backend_type = _get_backend_type(backend_id, True)
     check.is_(backend_type, expected_type)
-    assert issubclass(backend_type, RemoteEmulatorBackend)
+    assert issubclass(backend_type, RemoteBackend)
 
 
 def test_get_backend_type_invalid_backend_id() -> None:
@@ -365,10 +410,10 @@ def test_warn_suboptimal_backend(
     "backend_type, n_qubits",
     [
         # Auto backends should never warn
-        (AutoLocalEmulatorBackend, 10),
-        (AutoLocalEmulatorBackend, 20),
-        (AutoRemoteEmulatorBackend, 10),
-        (AutoRemoteEmulatorBackend, 20),
+        (_AutoLocalEmulatorBackend, 10),
+        (_AutoLocalEmulatorBackend, 20),
+        (_AutoRemoteEmulatorBackend, 10),
+        (_AutoRemoteEmulatorBackend, 20),
         # Optimal backends should not warn
         (QutipBackendV2, 10),  # Optimal for <15 qubits local
         (RemoteEmuFreeBackend, 10),  # Optimal for <15 qubits remote
@@ -444,11 +489,11 @@ def test_dont_warn_optimal_backend_no_log(caplog: pytest.LogCaptureFixture) -> N
 def test_auto_local_emulator_backend_logs_info(
     size: int, expected_type: type, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Test that AutoLocalEmulatorBackend logs the selected backend type at INFO level."""
+    """Test that _AutoLocalEmulatorBackend logs the selected backend type at INFO level."""
     device = qoolqit.MockDevice()
     sequence = make_sequence(dummy_pulser_register(size), device)
     with caplog.at_level(logging.INFO, logger="qubosolver.types.backends"):
-        AutoLocalEmulatorBackend(sequence)  # type: ignore[abstract]
+        _AutoLocalEmulatorBackend(sequence)  # type: ignore[abstract]
 
     assert len(caplog.records) == 1
     check.equal(caplog.records[0].levelno, logging.INFO)
@@ -467,11 +512,11 @@ def test_auto_local_emulator_backend_logs_info(
 def test_auto_remote_emulator_backend_logs_info(
     size: int, expected_type: type, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Test that AutoRemoteEmulatorBackend logs the selected backend type at INFO level."""
+    """Test that _AutoRemoteEmulatorBackend logs the selected backend type at INFO level."""
     device = qoolqit.MockDevice()
     sequence = make_sequence(dummy_pulser_register(size), device)
     with caplog.at_level(logging.INFO, logger="qubosolver.types.backends"):
-        AutoRemoteEmulatorBackend(sequence, MagicMock(spec=pulser.backend.remote.RemoteConnection))
+        _AutoRemoteEmulatorBackend(sequence, MagicMock(spec=pulser.backend.remote.RemoteConnection))
 
     assert len(caplog.records) == 1
     check.equal(caplog.records[0].levelno, logging.INFO)
