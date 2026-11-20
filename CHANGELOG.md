@@ -10,7 +10,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- Add `variable_fixing.from_candidate` to turn a candidate of a sub-instance into a fixation rule on the parent instance, and `Instance.subinstance` to extract the exact sub-instance on a subset of the variables. ([#352](https://github.com/pasqal-io/qubo-solver/pull/352))
+- Add `Instance.is_diagonal()` and `Instance.is_trivial()` to detect instances whose optimum needs no search. ([#361](https://github.com/pasqal-io/qubo-solver/pull/361))
+- `extract_qubo` accepts an `Instance` as the diagonal, and `analog_quantum_sampling.compile` accepts a single-atom register. ([#361](https://github.com/pasqal-io/qubo-solver/pull/361))
+
+### Changed
+- Record variable fixings in original indices: `fixed_history` and `fixed_variables` replace `fixed_indices` and `n_fixed_indices`, and the save/load format changes accordingly, with no backward compatibility. ([#352](https://github.com/pasqal-io/qubo-solver/pull/352))
+- Hansen fixing uses a margin relative to the magnitude of the coefficients instead of an absolute 1e-8, so the fixed variables no longer depend on the scale of the matrix. It is also much faster on large instances. ([#355](https://github.com/pasqal-io/qubo-solver/pull/355))
+- The blade and greedy layout embedders raise `ValueError` on diagonal instances with at least 2 variables, which have no coupling to reproduce; use `trivial_solution_search.solve` instead. Blade always starts from MDS unless `starting_positions` is set. ([#361](https://github.com/pasqal-io/qubo-solver/pull/361))
+- Require `qoolqit>=1.6.0,<1.7` and cap the other runtime and extras dependencies at their next major version. ([#360](https://github.com/pasqal-io/qubo-solver/pull/360))
+- Ship only the package, changelog and citation in the source distribution. ([#360](https://github.com/pasqal-io/qubo-solver/pull/360))
+
 ### Fixed
+- Make variable fixing raise `ValueError` when a rule returns an index outside the instance: `apply_recursively` used to loop forever. ([#352](https://github.com/pasqal-io/qubo-solver/pull/352))
+- Make Hansen fixing robust to rounding: in float32, near-ties between large coefficients could fix a variable to a value that excludes the optimum. ([#355](https://github.com/pasqal-io/qubo-solver/pull/355))
 - Make `negative_bitflip.apply` reject an unknown `method` when the instance has no negative off-diagonal coefficient: it used to return the instance unchanged. ([#354](https://github.com/pasqal-io/qubo-solver/pull/354))
 
 ## [0.10.0] - 2026-10-28
