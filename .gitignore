@@ -9,6 +9,7 @@ qubosolver_logs
 .DS_Store
 docs/.DS_Store
 docs/tutorial/tmp/
+docs/tutorials/tmp/
 
 # C extensions
 *.so
