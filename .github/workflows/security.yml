@@ -46,7 +46,7 @@ jobs:
         run: uvx --from "bandit[toml,sarif]==${BANDIT_VERSION}" bandit -r qubosolver/ -c pyproject.toml -f sarif -o bandit-results.sarif || true  #TODO: remove 'true' once all warnings are fixed
       - name: Upload Bandit SARIF to GitHub Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           sarif_file: bandit-results.sarif
 
@@ -116,7 +116,7 @@ jobs:
 
       - name: Upload Trivy SARIF to GitHub Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           sarif_file: trivy-results.sarif
 
