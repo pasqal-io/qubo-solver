@@ -24,8 +24,6 @@ from qubosolver.types import (
     vectori,
 )
 from qubosolver.types.backends import (
-    AutoLocalEmulatorBackend,
-    AutoRemoteEmulatorBackend,
     LocalEmulator,
     RemoteEmulator,
 )
@@ -36,8 +34,6 @@ from qubosolver.types.random import torch_rng
 from qubosolver.types.solution import Candidate, Solution
 
 __all__ = [
-    "AutoLocalEmulatorBackend",
-    "AutoRemoteEmulatorBackend",
     "Bitstring",
     "Bitstrings",
     "Candidate",

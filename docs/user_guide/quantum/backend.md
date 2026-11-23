@@ -67,17 +67,11 @@ You can also pick a specific engine instead of relying on automatic selection:
 
 ```python exec="on" source="tabbed-left" session="backend" result="text"
 from qubosolver import LocalEmulator
-from pulser_simulation import QutipBackendV2
-from emu_sv import SVBackend
-from emu_mps import MPSBackend
 
-local_backends = [
-    LocalEmulator(backend_type=QutipBackendV2, num_shots=500),
-    LocalEmulator(backend_type=SVBackend, num_shots=500),
-    LocalEmulator(backend_type=MPSBackend, num_shots=500),
-]
+# "qutip" -> QutipBackendV2, "emu_sv" -> SVBackend, "emu_mps" -> MPSBackend
+local_backends = ["qutip", "emu_sv", "emu_mps"]
 
-job = local_backends[0].run(program)
+job = LocalEmulator(backend_type=local_backends[0], num_shots=500).run(program)
 solution = Solution.from_results(job.results(), instance)
 print(analysis.to_dataframe([solution]))
 ```
@@ -93,16 +87,15 @@ print(analysis.to_dataframe([solution]))
 - API reference: [`qubosolver.RemoteEmulator`][]
 - Tutorial: [Solving a QUBO problem flexibly](../../tutorials/02-qubosolver-in-full.ipynb)
 
-Unlike the local emulator, automatic selection here **will incur fees** as soon as the problem reaches 15 qubits, since it switches away from the free engine — so `RemoteEmulator` defaults to the free engine rather than automatic selection. Opt into automatic selection explicitly via `AutoRemoteEmulatorBackend` if you want it.
+Unlike the local emulator, automatic selection here **will incur fees** as soon as the problem reaches 15 qubits, since it switches away from the free engine — so `RemoteEmulator` defaults to the free engine rather than automatic selection. Opt into automatic selection explicitly with `backend_type="auto"` if you want it.
 
 ### Code example
 
 Replace `USERNAME`, `PROJECT_ID` and `PASSWORD` with your [Pasqal Cloud](https://docs.pasqal.com/cloud/set-up/) credentials to run this example against the real cloud. Without a password, it falls back to a `LocalConnection`, which emulates the same interface locally with QuTiP — no credentials needed, handy for trying the snippet out or for tests.
 
 ```python exec="on" source="tabbed-left" session="backend" result="text"
-from qubosolver import RemoteEmulator, AutoRemoteEmulatorBackend, Solution, analysis
+from qubosolver import RemoteEmulator, Solution, analysis
 from pasqal_cloud import PasqalCloudConnection
-from pasqal_cloud.backends import RemoteEmuFreeBackend, RemoteSVBackend, RemoteMPSBackend
 
 USERNAME = "#TO_PROVIDE"
 PROJECT_ID = "#TO_PROVIDE"
@@ -125,15 +118,11 @@ backend = RemoteEmulator(connection=connection, num_shots=500)
 
 # Automatic engine selection based on problem size.
 # WARNING: will use paid engines for problems >= 15 qubits.
-auto_backend = RemoteEmulator(
-    backend_type=AutoRemoteEmulatorBackend, connection=connection, num_shots=500
-)
+auto_backend = RemoteEmulator(backend_type="auto", connection=connection, num_shots=500)
 
-# Manual engine selection (only supported by a real cloud connection).
-remote_backends = [
-    RemoteEmulator(backend_type=btype, connection=connection, num_shots=500)
-    for btype in [RemoteEmuFreeBackend, RemoteSVBackend, RemoteMPSBackend]
-]
+# Manual engine selection (only supported by a real cloud connection):
+# "qutip" -> RemoteEmuFreeBackend, "emu_sv" -> RemoteSVBackend, "emu_mps" -> RemoteMPSBackend
+remote_backends = ["qutip", "emu_sv", "emu_mps"]
 
 job = backend.run(program)
 solution = Solution.from_results(job.results(), instance)
@@ -214,13 +203,12 @@ Rather than building a program and calling `backend.run` directly, you can selec
 
 ```python exec="on" source="tabbed-left" session="backend" result="text"
 from qubosolver import SolverConfig, QuantumSolvingConfig, LocalEmulator
-from pulser_simulation import QutipBackendV2
 from dataclasses import asdict
 import pprint
 import qoolqit
 
 quantum_config = QuantumSolvingConfig(
-    backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=500),
+    backend=LocalEmulator(backend_type="qutip", num_shots=500),
     device=qoolqit.AnalogDeviceWithDMM(),
 )
 solver_config = SolverConfig(
