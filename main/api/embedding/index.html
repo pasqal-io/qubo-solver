@@ -2805,6 +2805,73 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#qubosolver.embedding.partial_greedy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;partial_greedy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" partial_greedy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#qubosolver.embedding.partial_greedy.Config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;Config
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" Config">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#qubosolver.embedding.partial_greedy.Config.from_device" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;from_device
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#qubosolver.embedding.partial_greedy.embed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;embed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#qubosolver.embedding.partial_greedy.embed_for_device" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;embed_for_device
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3744,6 +3811,73 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#qubosolver.embedding.partial_greedy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;partial_greedy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" partial_greedy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#qubosolver.embedding.partial_greedy.Config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;Config
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" Config">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#qubosolver.embedding.partial_greedy.Config.from_device" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;from_device
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#qubosolver.embedding.partial_greedy.embed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;embed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#qubosolver.embedding.partial_greedy.embed_for_device" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;embed_for_device
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3799,6 +3933,13 @@
           –
           <div class="doc-md-description">
             <p>Greedy layout-based embedding algorithm for QUBO instances.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-module&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-module-name&quot;&gt;qubosolver.embedding.partial_greedy&lt;/span&gt;" href="#qubosolver.embedding.partial_greedy">partial_greedy</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Partial greedy embedding of QUBO instances.</p>
           </div>
         </li>
     </ul>
@@ -5316,6 +5457,811 @@ directly:</p>
 <a id="qubosolver.embedding.greedy_layout.embed_for_device--source--__codelineno-0-214" name="qubosolver.embedding.greedy_layout.embed_for_device--source--__codelineno-0-214"></a><span class="sd">    """</span>
 <a id="qubosolver.embedding.greedy_layout.embed_for_device--source--__codelineno-0-215" name="qubosolver.embedding.greedy_layout.embed_for_device--source--__codelineno-0-215"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"embed_for_device: instance size=</span><span class="si">%d</span><span class="s2">, device=</span><span class="si">%r</span><span class="s2">"</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
 <a id="qubosolver.embedding.greedy_layout.embed_for_device--source--__codelineno-0-216" name="qubosolver.embedding.greedy_layout.embed_for_device--source--__codelineno-0-216"></a>    <span class="k">return</span> <span class="n">embed</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">Config</span><span class="o">.</span><span class="n">from_device</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="qubosolver.embedding.partial_greedy" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">qubosolver.embedding.partial_greedy</span>
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Partial greedy embedding of QUBO instances.</p>
+<p>Unlike the other embedders, which place every variable of an instance, the
+partial greedy embedder places <em>what it can</em>: starting from a random variable, a
+geometric search grows a cluster of variables whose QUBO couplings can be
+reproduced by atom positions (interactions <code>1 / r ** 6</code>) within the device
+constraints. It returns the register together with the placed variables.</p>
+
+
+<details class="warning" open>
+  <summary>Warning</summary>
+  <p>The partial greedy embedder and its search algorithms are in the prototype
+stage and may or may not change in the future.</p>
+</details>        <p>This makes it the building block of decomposition: embed part of the
+instance, solve the QUBO the register implements on those variables (its
+couplings from the atom positions, its diagonal from the sub-instance, see
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;extract_qubo&lt;/span&gt;" href="../qubosolver/#qubosolver.extract_qubo"><code>extract_qubo</code></a>), fix them with
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-module&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-module-name&quot;&gt;qubosolver.transforms.variable_fixing&lt;/span&gt;" href="../transforms/#qubosolver.transforms.variable_fixing"><code>variable_fixing</code></a>, and repeat on the
+reduced instance:</p>
+<div class="highlight"><pre><span></span><code><a id="qubosolver.embedding.partial_greedy--__codelineno-0-1" name="qubosolver.embedding.partial_greedy--__codelineno-0-1" href="#qubosolver.embedding.partial_greedy--__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">embedding</span><span class="p">,</span> <span class="n">extract_qubo</span><span class="p">,</span> <span class="n">solving</span>
+<a id="qubosolver.embedding.partial_greedy--__codelineno-0-2" name="qubosolver.embedding.partial_greedy--__codelineno-0-2" href="#qubosolver.embedding.partial_greedy--__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">variable_fixing</span>
+<a id="qubosolver.embedding.partial_greedy--__codelineno-0-3" name="qubosolver.embedding.partial_greedy--__codelineno-0-3" href="#qubosolver.embedding.partial_greedy--__codelineno-0-3"></a>
+<a id="qubosolver.embedding.partial_greedy--__codelineno-0-4" name="qubosolver.embedding.partial_greedy--__codelineno-0-4" href="#qubosolver.embedding.partial_greedy--__codelineno-0-4"></a><span class="n">reduced</span> <span class="o">=</span> <span class="n">variable_fixing</span><span class="o">.</span><span class="n">apply_recursively</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>  <span class="c1"># the embedder needs diag &lt; 0</span>
+<a id="qubosolver.embedding.partial_greedy--__codelineno-0-5" name="qubosolver.embedding.partial_greedy--__codelineno-0-5" href="#qubosolver.embedding.partial_greedy--__codelineno-0-5"></a><span class="k">while</span> <span class="n">reduced</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="n">stop</span><span class="p">:</span>
+<a id="qubosolver.embedding.partial_greedy--__codelineno-0-6" name="qubosolver.embedding.partial_greedy--__codelineno-0-6" href="#qubosolver.embedding.partial_greedy--__codelineno-0-6"></a>    <span class="n">register</span><span class="p">,</span> <span class="n">variables</span> <span class="o">=</span> <span class="n">embedding</span><span class="o">.</span><span class="n">partial_greedy</span><span class="o">.</span><span class="n">embed_for_device</span><span class="p">(</span><span class="n">reduced</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy--__codelineno-0-7" name="qubosolver.embedding.partial_greedy--__codelineno-0-7" href="#qubosolver.embedding.partial_greedy--__codelineno-0-7"></a>    <span class="n">sub</span> <span class="o">=</span> <span class="n">extract_qubo</span><span class="p">(</span><span class="n">register</span><span class="p">,</span> <span class="n">reduced</span><span class="o">.</span><span class="n">subinstance</span><span class="p">(</span><span class="n">variables</span><span class="p">))</span>
+<a id="qubosolver.embedding.partial_greedy--__codelineno-0-8" name="qubosolver.embedding.partial_greedy--__codelineno-0-8" href="#qubosolver.embedding.partial_greedy--__codelineno-0-8"></a>    <span class="n">sub_solution</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">tabu_search</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy--__codelineno-0-9" name="qubosolver.embedding.partial_greedy--__codelineno-0-9" href="#qubosolver.embedding.partial_greedy--__codelineno-0-9"></a>    <span class="n">variable_fixing</span><span class="o">.</span><span class="n">apply_candidate</span><span class="p">(</span><span class="n">reduced</span><span class="p">,</span> <span class="n">sub_solution</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">variables</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy--__codelineno-0-10" name="qubosolver.embedding.partial_greedy--__codelineno-0-10" href="#qubosolver.embedding.partial_greedy--__codelineno-0-10"></a>    <span class="n">variable_fixing</span><span class="o">.</span><span class="n">apply_recursively</span><span class="p">(</span><span class="n">reduced</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Hansen to a fixed point</span>
+<a id="qubosolver.embedding.partial_greedy--__codelineno-0-11" name="qubosolver.embedding.partial_greedy--__codelineno-0-11" href="#qubosolver.embedding.partial_greedy--__codelineno-0-11"></a><span class="n">solution</span> <span class="o">=</span> <span class="n">variable_fixing</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span><span class="n">solving</span><span class="o">.</span><span class="n">tabu_search</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">reduced</span><span class="p">),</span> <span class="n">reduced</span><span class="p">)</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Config&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.partial_greedy.Config&lt;/code&gt;)" href="#qubosolver.embedding.partial_greedy.Config">Config</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Configuration for the partial greedy embedding algorithm.</p>
+          </div>
+        </li>
+    </ul>
+
+
+
+
+<p><span class="doc-section-title">Functions:</span></p>
+    <ul>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;embed&lt;/span&gt; (&lt;code&gt;qubosolver.embedding.partial_greedy.embed&lt;/code&gt;)" href="#qubosolver.embedding.partial_greedy.embed">embed</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Embed part of a QUBO instance with the geometric search.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;embed_for_device&lt;/span&gt; (&lt;code&gt;qubosolver.embedding.partial_greedy.embed_for_device&lt;/code&gt;)" href="#qubosolver.embedding.partial_greedy.embed_for_device">embed_for_device</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Embed part of a QUBO instance with the geometric search, sized for <em>device</em>.</p>
+            </div>
+          </li>
+    </ul>
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="qubosolver.embedding.partial_greedy.Config" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">Config</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Config</span><span class="p">(</span><span class="n">threshold</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">250.0</span><span class="p">,</span> <span class="n">neglecting_inter_distance</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">neglecting_max_coefficient</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">max_min_dist_ratio</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span><span class="p">(</span><span class="s1">'inf'</span><span class="p">))</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Configuration for the partial greedy embedding algorithm.</p>
+<p>Use <code>Config.from_device</code> to derive <code>max_min_dist_ratio</code> from a device's
+constraints instead of setting it by hand.</p>
+
+
+<details class="warning" open>
+  <summary>Warning</summary>
+  <p><code>max_min_dist_ratio</code> is an advanced parameter: set it manually (or
+overwrite it after calling <code>from_device</code>) with care, since a bad value
+can produce a register that the target device cannot realize.</p>
+</details>
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><span title="qubosolver.embedding.partial_greedy.Config.threshold">threshold</span></code></b>
+              (<code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Cost-function threshold for accepting the placement of a
+variable, comparing its target QUBO couplings with the
+interactions of its position.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="qubosolver.embedding.partial_greedy.Config.neglecting_inter_distance">neglecting_inter_distance</span></code></b>
+              (<code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Distance assigned to neglected interactions
+in the distance interaction matrix.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="qubosolver.embedding.partial_greedy.Config.neglecting_max_coefficient">neglecting_max_coefficient</span></code></b>
+              (<code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>QUBO coefficient below which an
+interaction is neglected.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="qubosolver.embedding.partial_greedy.Config.max_min_dist_ratio">max_min_dist_ratio</span></code></b>
+              (<code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Maximum allowed ratio between the maximum radial
+distance and the minimum inter-atom distance in the resulting
+register.</p>
+          </div>
+        </li>
+    </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <ul>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-method&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;from_device&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-staticmethod&quot;&gt;&lt;code&gt;staticmethod&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.partial_greedy.Config.from_device&lt;/code&gt;)" href="#qubosolver.embedding.partial_greedy.Config.from_device">from_device</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Create a <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Config&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="#qubosolver.embedding.partial_greedy.Config"><code>Config</code></a> with <code>max_min_dist_ratio</code> derived from <em>device</em>.</p>
+            </div>
+          </li>
+    </ul>
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="qubosolver.embedding.partial_greedy.Config.from_device" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">from_device</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_device</span><span class="p">(</span><span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Device&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Device">Device</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Config&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.partial_greedy.Config&lt;/code&gt;)" href="#qubosolver.embedding.partial_greedy.Config">Config</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create a <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Config&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="#qubosolver.embedding.partial_greedy.Config"><code>Config</code></a> with <code>max_min_dist_ratio</code> derived from <em>device</em>.</p>
+<p>All fields can be overwritten on the returned instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>device</code></b>
+              (<code><a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Device&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Device">Device</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Target quantum device to derive the distance constraints from.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Config&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.partial_greedy.Config&lt;/code&gt;)" href="#qubosolver.embedding.partial_greedy.Config">Config</a></code>
+          –
+          <div class="doc-md-description">
+            <p>A configuration with a device-derived <code>max_min_dist_ratio</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>qubosolver/embedding/partial_greedy.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-97"> 97</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-98"> 98</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-99"> 99</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-100">100</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-101">101</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-102">102</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-103">103</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-104">104</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-105">105</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-106">106</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-107">107</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-108">108</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-109">109</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-97" name="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-97"></a><span class="nd">@staticmethod</span>
+<a id="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-98" name="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-98"></a><span class="k">def</span><span class="w"> </span><span class="nf">from_device</span><span class="p">(</span><span class="n">device</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Device</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Config</span><span class="p">:</span>
+<a id="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-99" name="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-99"></a><span class="w">    </span><span class="sd">"""Create a [`Config`][] with `max_min_dist_ratio` derived from *device*.</span>
+<a id="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-100" name="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-100"></a>
+<a id="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-101" name="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-101"></a><span class="sd">    All fields can be overwritten on the returned instance.</span>
+<a id="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-102" name="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-102"></a>
+<a id="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-103" name="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-103"></a><span class="sd">    Args:</span>
+<a id="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-104" name="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-104"></a><span class="sd">        device: Target quantum device to derive the distance constraints from.</span>
+<a id="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-105" name="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-105"></a>
+<a id="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-106" name="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-106"></a><span class="sd">    Returns:</span>
+<a id="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-107" name="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-107"></a><span class="sd">        A configuration with a device-derived `max_min_dist_ratio`.</span>
+<a id="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-108" name="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-108"></a><span class="sd">    """</span>
+<a id="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-109" name="qubosolver.embedding.partial_greedy.Config.from_device--source--__codelineno-0-109"></a>    <span class="k">return</span> <span class="n">Config</span><span class="p">(</span><span class="n">max_min_dist_ratio</span><span class="o">=</span><span class="n">_max_min_distance_ratio</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="qubosolver.embedding.partial_greedy.embed" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">embed</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">embed</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.Instance&lt;/code&gt;)" href="../qubosolver/#qubosolver.Instance">Instance</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Config&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.partial_greedy.Config&lt;/code&gt;)" href="#qubosolver.embedding.partial_greedy.Config">Config</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">rng</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.Generator&lt;/code&gt;" href="https://pytorch.org/docs/stable/generated/torch.Generator.html#torch.Generator">Generator</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple">tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Register&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Register">Register</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">]]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Embed part of a QUBO instance with the geometric search.</p>
+<p>Starts from a randomly chosen variable, placed at the origin, and grows a
+cluster of variables whose couplings can be reproduced by atom positions
+(interactions <code>1 / r ** 6</code>, adimensional units). At least one variable is
+always placed.</p>
+
+
+<details class="warning" open>
+  <summary>Warning</summary>
+  <p>A poorly chosen <code>config</code> can produce a register that is incompatible
+with a target device. See <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Config&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="#qubosolver.embedding.partial_greedy.Config"><code>Config</code></a>.</p>
+</details>
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>instance</code></b>
+              (<code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.Instance&lt;/code&gt;)" href="../qubosolver/#qubosolver.Instance">Instance</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>The QUBO instance to partially embed. Off-diagonal
+coefficients must be non-negative and, with at least 2 variables,
+diagonal coefficients non-positive.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>config</code></b>
+              (<code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Config&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.embedding.partial_greedy.Config&lt;/code&gt;)" href="#qubosolver.embedding.partial_greedy.Config">Config</a> | None</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Geometric search parameters (see <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-method&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;from_device&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-staticmethod&quot;&gt;&lt;code&gt;staticmethod&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="#qubosolver.embedding.partial_greedy.Config.from_device"><code>Config.from_device</code></a> for
+deriving <code>max_min_dist_ratio</code> from a device).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>rng</code></b>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.Generator&lt;/code&gt;" href="https://pytorch.org/docs/stable/generated/torch.Generator.html#torch.Generator">Generator</a> | None</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Random number generator choosing the first variable and driving the
+search. Defaults to <code>torch_rng("global")</code>, so that it follows
+<code>torch.manual_seed</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple">tuple</a>[<a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Register&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Register">Register</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a>]]</code>
+          –
+          <div class="doc-md-description">
+            <p>A tuple <code>(register, variables)</code>: qubit <em>i</em> of <code>register</code> (labelled <em>i</em>)
+embeds variable <code>variables[i]</code> of <code>instance</code>. <code>variables</code> is sorted,
+so <code>instance.subinstance(variables)</code> is the sub-instance in
+register order.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError">ValueError</a></code>
+            –
+          <div class="doc-md-description">
+            <p>If <code>instance</code> has no variables, has negative off-diagonal
+coefficients, or has at least 2 variables and positive diagonal
+coefficients (fix them first with
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;apply_recursively&lt;/span&gt;" href="../transforms/#qubosolver.transforms.variable_fixing.apply_recursively"><code>variable_fixing.apply_recursively</code></a>).
+With non-negative off-diagonal coefficients, a variable with a
+positive diagonal coefficient is optimally 0, and Hansen's rule
+fixes it to 0.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError">ValueError</a></code>
+            –
+          <div class="doc-md-description">
+            <p>If <code>instance</code> is diagonal with at least 2 variables: there is
+no coupling to reproduce, and its optimum should be read off the diagonal with
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;solve&lt;/span&gt;" href="../classical_solving/#qubosolver.solving.classical.trivial_solution_search.solve"><code>trivial_solution_search.solve</code></a>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>qubosolver/embedding/partial_greedy.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-136">136</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-137">137</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-138">138</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-139">139</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-140">140</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-141">141</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-142">142</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-143">143</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-144">144</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-145">145</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-146">146</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-147">147</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-148">148</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-149">149</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-150">150</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-151">151</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-152">152</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-153">153</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-154">154</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-155">155</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-156">156</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-157">157</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-158">158</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-159">159</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-160">160</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-161">161</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-162">162</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-163">163</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-164">164</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-165">165</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-166">166</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-167">167</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-168">168</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-169">169</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-170">170</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-171">171</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-172">172</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-173">173</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-174">174</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-175">175</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-176">176</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-177">177</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-178">178</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-179">179</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-180">180</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-181">181</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-182">182</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-183">183</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-184">184</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-185">185</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-186">186</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-187">187</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-188">188</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-189">189</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-190">190</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-191">191</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-192">192</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-193">193</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-194">194</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-195">195</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-196">196</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-197">197</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-198">198</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-199">199</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-200">200</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-201">201</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-202">202</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-203">203</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-204">204</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-205">205</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-206">206</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-207">207</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-208">208</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-209">209</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-210">210</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-211">211</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-212">212</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-213">213</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-214">214</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-215">215</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-216">216</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-217">217</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-218">218</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-219">219</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-220">220</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-221">221</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-222">222</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-223">223</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-224">224</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-225">225</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-226">226</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-227">227</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-228">228</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-229">229</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-230">230</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-231">231</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-232">232</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-233">233</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-234">234</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-235">235</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-236">236</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-237">237</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-238">238</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-239">239</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-240">240</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-241">241</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-242">242</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-243">243</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-244">244</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-136" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-136"></a><span class="k">def</span><span class="w"> </span><span class="nf">embed</span><span class="p">(</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-137" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-137"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-138" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-138"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-139" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-139"></a>    <span class="n">config</span><span class="p">:</span> <span class="n">Config</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-140" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-140"></a>    <span class="n">rng</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-141" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-141"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-142" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-142"></a><span class="w">    </span><span class="sd">"""Embed part of a QUBO instance with the geometric search.</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-143" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-143"></a>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-144" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-144"></a><span class="sd">    Starts from a randomly chosen variable, placed at the origin, and grows a</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-145" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-145"></a><span class="sd">    cluster of variables whose couplings can be reproduced by atom positions</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-146" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-146"></a><span class="sd">    (interactions ``1 / r ** 6``, adimensional units). At least one variable is</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-147" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-147"></a><span class="sd">    always placed.</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-148" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-148"></a>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-149" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-149"></a><span class="sd">    Warning:</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-150" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-150"></a><span class="sd">        A poorly chosen `config` can produce a register that is incompatible</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-151" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-151"></a><span class="sd">        with a target device. See [`Config`][].</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-152" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-152"></a>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-153" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-153"></a><span class="sd">    Args:</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-154" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-154"></a><span class="sd">        instance: The QUBO instance to partially embed. Off-diagonal</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-155" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-155"></a><span class="sd">            coefficients must be non-negative and, with at least 2 variables,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-156" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-156"></a><span class="sd">            diagonal coefficients non-positive.</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-157" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-157"></a><span class="sd">        config: Geometric search parameters (see [`Config.from_device`][] for</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-158" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-158"></a><span class="sd">            deriving `max_min_dist_ratio` from a device).</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-159" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-159"></a><span class="sd">        rng: Random number generator choosing the first variable and driving the</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-160" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-160"></a><span class="sd">            search. Defaults to `torch_rng("global")`, so that it follows</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-161" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-161"></a><span class="sd">            `torch.manual_seed`.</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-162" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-162"></a>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-163" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-163"></a><span class="sd">    Returns:</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-164" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-164"></a><span class="sd">        A tuple `(register, variables)`: qubit *i* of `register` (labelled *i*)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-165" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-165"></a><span class="sd">            embeds variable `variables[i]` of `instance`. `variables` is sorted,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-166" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-166"></a><span class="sd">            so `instance.subinstance(variables)` is the sub-instance in</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-167" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-167"></a><span class="sd">            register order.</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-168" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-168"></a>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-169" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-169"></a><span class="sd">    Raises:</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-170" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-170"></a><span class="sd">        ValueError: If `instance` has no variables, has negative off-diagonal</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-171" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-171"></a><span class="sd">            coefficients, or has at least 2 variables and positive diagonal</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-172" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-172"></a><span class="sd">            coefficients (fix them first with</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-173" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-173"></a><span class="sd">            [`variable_fixing.apply_recursively`][qubosolver.transforms.variable_fixing.apply_recursively]).</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-174" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-174"></a><span class="sd">            With non-negative off-diagonal coefficients, a variable with a</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-175" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-175"></a><span class="sd">            positive diagonal coefficient is optimally 0, and Hansen's rule</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-176" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-176"></a><span class="sd">            fixes it to 0.</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-177" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-177"></a><span class="sd">        ValueError: If `instance` is diagonal with at least 2 variables: there is</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-178" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-178"></a><span class="sd">            no coupling to reproduce, and its optimum should be read off the diagonal with</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-179" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-179"></a><span class="sd">            [`trivial_solution_search.solve`][qubosolver.solving.classical.trivial_solution_search.solve].</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-180" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-180"></a><span class="sd">    """</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-181" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-181"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">_PROTOTYPE_NOTICE</span><span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-182" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-182"></a>    <span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">Config</span><span class="p">()</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-183" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-183"></a>    <span class="n">rng</span> <span class="o">=</span> <span class="n">rng</span> <span class="ow">or</span> <span class="n">torch_rng</span><span class="p">(</span><span class="s2">"global"</span><span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-184" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-184"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"embed: instance size=</span><span class="si">%d</span><span class="s2">, config=</span><span class="si">%r</span><span class="s2">"</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-185" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-185"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">instance</span><span class="p">:</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-186" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-186"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Cannot embed an empty instance (size=0): nothing to place."</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-187" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-187"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-188" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-188"></a>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-189" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-189"></a>    <span class="k">if</span> <span class="n">_has_negative_offdiagonal</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="p">):</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-190" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-190"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="s2">"QUBOs with negative off-diagonal coefficients cannot be embedded."</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-191" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-191"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-192" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-192"></a>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-193" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-193"></a>    <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-194" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-194"></a>        <span class="c1"># A single atom has no off-diagonal term to place it relative to,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-195" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-195"></a>        <span class="c1"># so it is placed at the origin without running the search.</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-196" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-196"></a>        <span class="k">return</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="o">.</span><span class="n">from_coordinates</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-197" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-197"></a>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-198" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-198"></a>    <span class="k">if</span> <span class="n">positive</span> <span class="o">:=</span> <span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-199" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-199"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-200" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-200"></a>            <span class="sa">f</span><span class="s2">"Variables </span><span class="si">{</span><span class="n">positive</span><span class="si">}</span><span class="s2"> have positive diagonal coefficients, but the partial greedy "</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-201" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-201"></a>            <span class="s2">"embedder requires non-positive ones. Fix these variables first, e.g. with "</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-202" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-202"></a>            <span class="s2">"`variable_fixing.apply_recursively` (Hansen's rule fixes them to 0)."</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-203" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-203"></a>        <span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-204" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-204"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-205" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-205"></a>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-206" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-206"></a>    <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">is_diagonal</span><span class="p">():</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-207" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-207"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-208" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-208"></a>            <span class="s2">"Cannot embed a diagonal instance: there is no coupling to reproduce. Its optimum is "</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-209" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-209"></a>            <span class="s2">"read off the diagonal: use `solving.trivial_solution_search.solve`."</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-210" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-210"></a>        <span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-211" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-211"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-212" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-212"></a>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-213" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-213"></a>    <span class="n">qubo_matrix</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">matrix</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-214" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-214"></a>    <span class="n">dist_matrix</span> <span class="o">=</span> <span class="n">compute_distance_interaction_matrix</span><span class="p">(</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-215" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-215"></a>        <span class="n">qubo_matrix</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-216" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-216"></a>        <span class="n">neglecting_inter_distance</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">neglecting_inter_distance</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-217" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-217"></a>        <span class="n">neglecting_max_coefficient</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">neglecting_max_coefficient</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-218" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-218"></a>    <span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-219" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-219"></a>    <span class="n">vertices</span> <span class="o">=</span> <span class="n">vertices_to_place</span><span class="p">(</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-220" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-220"></a>        <span class="n">dist_matrix</span><span class="p">,</span> <span class="n">qubo_matrix</span><span class="p">,</span> <span class="n">separation_threshold</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">neglecting_inter_distance</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-221" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-221"></a>    <span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-222" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-222"></a>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-223" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-223"></a>    <span class="c1"># A random first variable works better according to some performed numerics.</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-224" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-224"></a>    <span class="n">first_vertex</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="p">(),</span> <span class="n">generator</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-225" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-225"></a>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-226" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-226"></a>    <span class="c1"># The distance scale comes from the largest off-diagonal coefficient of `instance`. In a</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-227" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-227"></a>    <span class="c1"># decomposition loop, that is the reduced instance, so each round gets its own scale. This is</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-228" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-228"></a>    <span class="c1"># deliberate: a per-round scale leaves more room for a good embedding than one shared scale.</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-229" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-229"></a>    <span class="n">min_distance</span><span class="p">,</span> <span class="n">max_radial_distance</span> <span class="o">=</span> <span class="n">compute_min_max_distances</span><span class="p">(</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-230" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-230"></a>        <span class="n">qubo_matrix</span><span class="p">,</span> <span class="n">max_min_dist_ratio</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">max_min_dist_ratio</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-231" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-231"></a>    <span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-232" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-232"></a>    <span class="n">placed</span> <span class="o">=</span> <span class="n">geometric_search</span><span class="p">(</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-233" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-233"></a>        <span class="n">qubo_matrix</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-234" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-234"></a>        <span class="n">vertices</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-235" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-235"></a>        <span class="n">first_vertex</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-236" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-236"></a>        <span class="n">config</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-237" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-237"></a>        <span class="n">min_distance</span><span class="o">=</span><span class="n">min_distance</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-238" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-238"></a>        <span class="n">max_radial_distance</span><span class="o">=</span><span class="n">max_radial_distance</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-239" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-239"></a>        <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-240" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-240"></a>    <span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-241" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-241"></a>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-242" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-242"></a>    <span class="n">variables</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">placed</span><span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-243" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-243"></a>    <span class="n">coords</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="n">placed</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">placed</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">y</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">])</span>
+<a id="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-244" name="qubosolver.embedding.partial_greedy.embed--source--__codelineno-0-244"></a>    <span class="k">return</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="o">.</span><span class="n">from_coordinates</span><span class="p">(</span><span class="n">coords</span><span class="p">),</span> <span class="n">variables</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="qubosolver.embedding.partial_greedy.embed_for_device" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">embed_for_device</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">embed_for_device</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.Instance&lt;/code&gt;)" href="../qubosolver/#qubosolver.Instance">Instance</a></span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Device&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Device">Device</a></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">rng</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;torch.Generator&lt;/code&gt;" href="https://pytorch.org/docs/stable/generated/torch.Generator.html#torch.Generator">Generator</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple">tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Register&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Register">Register</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">]]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Embed part of a QUBO instance with the geometric search, sized for <em>device</em>.</p>
+<p>Convenience wrapper around <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;embed&lt;/span&gt;" href="#qubosolver.embedding.partial_greedy.embed"><code>embed</code></a> that derives <code>Config.max_min_dist_ratio</code>
+from <em>device</em> via <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-method&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;from_device&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-staticmethod&quot;&gt;&lt;code&gt;staticmethod&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="#qubosolver.embedding.partial_greedy.Config.from_device"><code>Config.from_device</code></a>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>instance</code></b>
+              (<code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.Instance&lt;/code&gt;)" href="../qubosolver/#qubosolver.Instance">Instance</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>The QUBO instance to partially embed.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>device</code></b>
+              (<code><a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Device&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Device">Device</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Target quantum device the resulting register must fit.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>rng</code></b>
+              (<code><a class="autorefs autorefs-external" href="https://pytorch.org/docs/stable/torch.html#module-torch">torch</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;torch.Generator&lt;/code&gt;" href="https://pytorch.org/docs/stable/generated/torch.Generator.html#torch.Generator">Generator</a> | None</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Random number generator choosing the first variable and driving the
+search. Defaults to <code>torch_rng("global")</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple">tuple</a>[<a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Register&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Register">Register</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a>]]</code>
+          –
+          <div class="doc-md-description">
+            <p>The register and the placed variables; see <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;embed&lt;/span&gt;" href="#qubosolver.embedding.partial_greedy.embed"><code>embed</code></a>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>qubosolver/embedding/partial_greedy.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-112">112</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-113">113</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-114">114</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-115">115</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-116">116</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-117">117</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-118">118</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-119">119</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-120">120</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-121">121</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-122">122</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-123">123</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-124">124</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-125">125</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-126">126</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-127">127</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-128">128</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-129">129</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-130">130</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-131">131</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-132">132</a></span>
+<span class="normal"><a href="#qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-133">133</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-112" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-112"></a><span class="k">def</span><span class="w"> </span><span class="nf">embed_for_device</span><span class="p">(</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-113" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-113"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-114" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-114"></a>    <span class="n">device</span><span class="p">:</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">Device</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-115" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-115"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-116" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-116"></a>    <span class="n">rng</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-117" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-117"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">qoolqit</span><span class="o">.</span><span class="n">Register</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-118" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-118"></a><span class="w">    </span><span class="sd">"""Embed part of a QUBO instance with the geometric search, sized for *device*.</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-119" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-119"></a>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-120" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-120"></a><span class="sd">    Convenience wrapper around [`embed`][] that derives `Config.max_min_dist_ratio`</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-121" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-121"></a><span class="sd">    from *device* via [`Config.from_device`][].</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-122" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-122"></a>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-123" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-123"></a><span class="sd">    Args:</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-124" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-124"></a><span class="sd">        instance: The QUBO instance to partially embed.</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-125" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-125"></a><span class="sd">        device: Target quantum device the resulting register must fit.</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-126" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-126"></a><span class="sd">        rng: Random number generator choosing the first variable and driving the</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-127" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-127"></a><span class="sd">            search. Defaults to `torch_rng("global")`.</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-128" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-128"></a>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-129" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-129"></a><span class="sd">    Returns:</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-130" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-130"></a><span class="sd">        The register and the placed variables; see [`embed`][].</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-131" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-131"></a><span class="sd">    """</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-132" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-132"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"embed_for_device: instance size=</span><span class="si">%d</span><span class="s2">, device=</span><span class="si">%r</span><span class="s2">"</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<a id="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-133" name="qubosolver.embedding.partial_greedy.embed_for_device--source--__codelineno-0-133"></a>    <span class="k">return</span> <span class="n">embed</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">Config</span><span class="o">.</span><span class="n">from_device</span><span class="p">(</span><span class="n">device</span><span class="p">),</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

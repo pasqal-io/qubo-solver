@@ -1003,6 +1003,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#partial-embedding-and-decomposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Partial embedding and decomposition
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Partial embedding and decomposition">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quantum-subproblems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quantum subproblems
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#classical-subproblems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Classical subproblems
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#custom-register" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3544,6 +3583,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#partial-embedding-and-decomposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Partial embedding and decomposition
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Partial embedding and decomposition">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quantum-subproblems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quantum subproblems
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#classical-subproblems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Classical subproblems
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#custom-register" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3765,9 +3843,158 @@ Plot the resulting register:</p>
 </div>
 </div>
 </div>
+<h2 id="partial-embedding-and-decomposition">Partial embedding and decomposition</h2>
+<p>QUBO instances with more variables than a device can hold, or whose couplings cannot all be reproduced at once, can be solved by <strong>decomposition</strong>: embed part of the instance, solve the sub-instance on the embedded variables, fix them, and repeat on what is left.</p>
+<p>The partial greedy embedder, <code>embedding.partial_greedy</code>, is the partial embedder for this: rather than placing every variable, it grows a cluster of variables, from a random starting one, as long as their couplings can be reproduced within the device constraints. It returns the register together with the placed variables, where qubit <span class="arithmatex">\(i\)</span> embeds <code>variables[i]</code>. At least one variable is always placed.</p>
+<p>Fixing a solved cluster is a job for <a href="../../classical/transforms/#reduction-with-variable-fixing">variable fixing</a>: <code>variable_fixing.apply_candidate</code> fixes the placed variables to the bits of a candidate of the sub-instance. Fixing a variable to 1 folds its couplings into the diagonal of the remaining variables, so each round works on a reduced instance conditioned on all previous rounds, and <code>variable_fixing.lift</code> reconstructs the full solution at the end.</p>
+<ul>
+<li>API reference: <a href="../../../api/embedding/"><code>qubosolver.embedding.partial_greedy</code></a>, <a href="../../../api/transforms/"><code>qubosolver.transforms.variable_fixing</code></a></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The partial greedy embedder requires non-positive diagonal coefficients, so start with <code>variable_fixing.apply_recursively</code>, which fixes variables with a positive diagonal coefficient to 0. At each round, call <code>apply_recursively</code> again after <code>apply_candidate</code>, since fixing variables to 1 can turn diagonal coefficients positive.</p>
+</div>
+<h3 id="quantum-subproblems">Quantum subproblems</h3>
+<p>Each subproblem runs on the register found by the embedder, with a drive shaped for the exact sub-instance. The remaining variables are solved classically.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-34--__tabbed_1_1" name="exec-34--__tabbed_1" type="radio" /><input id="exec-34--__tabbed_1_2" name="exec-34--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-34--__tabbed_1_1">Source</label><label for="exec-34--__tabbed_1_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">Instance</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">LocalEmulator</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">Solution</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">analysis</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">drive_shaping</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">embedding</span><span class="p">,</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">matrix</span><span class="p">,</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">solving</span><span class="p">,</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">)</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">variable_fixing</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1"># Private utility to set seed.</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver.utils._random</span><span class="w"> </span><span class="kn">import</span> <span class="n">manual_seed</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">manual_seed</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1"># A random QUBO: negative diagonal, sparse non-negative off-diagonal coefficients</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="n">n</span> <span class="o">=</span> <span class="mi">50</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="n">upper</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">))</span><span class="o">.</span><span class="n">triu</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="n">Q</span> <span class="o">=</span> <span class="n">upper</span> <span class="o">+</span> <span class="n">upper</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="mi">100</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">Q</span><span class="p">))</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="n">device</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">AnalogDeviceWithDMM</span><span class="p">()</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">LocalEmulator</span><span class="p">(</span><span class="n">num_shots</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="c1"># Pre-process to fix variables with positive linear weight</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="n">reduced_instance</span> <span class="o">=</span> <span class="n">variable_fixing</span><span class="o">.</span><span class="n">apply_recursively</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="n">reduced_solution</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">trivial_solution_search</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">reduced_instance</span><span class="p">)</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="k">while</span> <span class="ow">not</span> <span class="n">reduced_solution</span><span class="p">:</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>    <span class="c1"># register qubit i &lt;-&gt; variables[i]; always at least one atom</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>    <span class="n">register</span><span class="p">,</span> <span class="n">variables</span> <span class="o">=</span> <span class="n">embedding</span><span class="o">.</span><span class="n">partial_greedy</span><span class="o">.</span><span class="n">embed_for_device</span><span class="p">(</span><span class="n">reduced_instance</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>    <span class="c1"># Exact (conditioned) sub-QUBO</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>    <span class="n">sub_instance</span> <span class="o">=</span> <span class="n">reduced_instance</span><span class="o">.</span><span class="n">subinstance</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>    <span class="c1"># Solve sub-qubo with the quantum pipeline</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>    <span class="n">drive</span> <span class="o">=</span> <span class="n">drive_shaping</span><span class="o">.</span><span class="n">local_energy_scale</span><span class="o">.</span><span class="n">build_drive</span><span class="p">(</span><span class="n">sub_instance</span><span class="p">,</span> <span class="n">register</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>    <span class="n">program</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">analog_quantum_sampling</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">register</span><span class="p">,</span> <span class="n">drive</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>    <span class="n">job</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">program</span><span class="p">)</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>    <span class="n">sub_solution</span> <span class="o">=</span> <span class="n">Solution</span><span class="o">.</span><span class="n">from_results</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">results</span><span class="p">(),</span> <span class="n">sub_instance</span><span class="p">)</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>    <span class="c1"># Fix variables from the best candidate</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>    <span class="n">variable_fixing</span><span class="o">.</span><span class="n">apply_candidate</span><span class="p">(</span><span class="n">reduced_instance</span><span class="p">,</span> <span class="n">sub_solution</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">variables</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>    <span class="c1"># Fix variables that have been balanced to a positive linear weight</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>    <span class="n">variable_fixing</span><span class="o">.</span><span class="n">apply_recursively</span><span class="p">(</span><span class="n">reduced_instance</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>
+<a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a>    <span class="n">reduced_solution</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">trivial_solution_search</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">reduced_instance</span><span class="p">)</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>
+<a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a><span class="n">solution</span> <span class="o">=</span> <span class="n">variable_fixing</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span><span class="n">reduced_solution</span><span class="p">,</span> <span class="n">reduced_instance</span><span class="p">)</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>
+<a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Fixed variables, in fixing order:"</span><span class="p">)</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a><span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">reduced_instance</span><span class="o">.</span><span class="n">fixed_history</span><span class="p">:</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\t</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Solution:</span><span class="se">\n</span><span class="si">{</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Fixed variables, in fixing order:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    {5: 1, 6: 1, 7: 1, 8: 1, 16: 0, 23: 1, 32: 1, 38: 0, 41: 1, 43: 0}
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    {0: 0, 2: 0, 3: 0, 4: 0, 9: 0, 11: 0, 12: 0, 14: 0, 15: 0, 17: 0, 19: 0, 21: 0, 22: 0, 24: 0, 26: 0, 27: 0, 28: 0, 30: 0, 31: 0, 33: 0, 35: 0, 39: 0, 40: 0, 44: 0, 45: 0, 46: 0, 47: 0, 48: 0, 49: 0}
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    {20: 1, 25: 1, 29: 1, 34: 0, 37: 1, 42: 0}
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    {1: 1, 10: 0, 13: 0, 18: 0, 36: 0}
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Solution:
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  labels                                         bitstrings  ...  counts  probs
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>0      0  0100011110000000000010010100010010000100010000...  ...       1    1.0
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>[1 rows x 5 columns]
+</code></pre></div>
+</div>
+</div>
+</div>
+<p><code>reduced_instance.fixed_history</code> lists the variables fixed by each rule application, in order and in the indices of the original instance: the initial Hansen presolve, then, for each subproblem, the fixed candidate followed by the Hansen passes it triggered. <code>reduced_instance.fixed_variables</code> merges them.</p>
+<p>The loop leaves every decision to you: rejecting a subproblem is simply not fixing it, stopping early is leaving the loop, and the remainder is <code>reduced_instance</code>, which can be solved by any means. To see which QUBO the register and drive actually implement, including what drive shaping did to the detunings, use <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;extract_qubo&lt;/span&gt;" href="../../../api/qubosolver/#qubosolver.extract_qubo"><code>extract_qubo(register, drive)</code></a>.</p>
+<h3 id="classical-subproblems">Classical subproblems</h3>
+<p>The same loop works with classical sub-solvers. The partial greedy embedder still selects device-sized clusters of variables; its register is simply unused:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-35--__tabbed_1_1" name="exec-35--__tabbed_1" type="radio" /><input id="exec-35--__tabbed_1_2" name="exec-35--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-35--__tabbed_1_1">Source</label><label for="exec-35--__tabbed_1_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">manual_seed</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># A sparser random QUBO</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">n</span> <span class="o">=</span> <span class="mi">50</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">upper</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.3</span><span class="p">))</span><span class="o">.</span><span class="n">triu</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">Q</span> <span class="o">=</span> <span class="n">upper</span> <span class="o">+</span> <span class="n">upper</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="mi">100</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">Q</span><span class="p">))</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Pre-process to fix variables with positive linear weight</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">reduced_instance</span> <span class="o">=</span> <span class="n">variable_fixing</span><span class="o">.</span><span class="n">apply_recursively</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">reduced_solution</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">trivial_solution_search</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">reduced_instance</span><span class="p">)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="k">while</span> <span class="ow">not</span> <span class="n">reduced_solution</span><span class="p">:</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="c1"># The register is unused: only the placed variables matter</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">_</span><span class="p">,</span> <span class="n">variables</span> <span class="o">=</span> <span class="n">embedding</span><span class="o">.</span><span class="n">partial_greedy</span><span class="o">.</span><span class="n">embed_for_device</span><span class="p">(</span><span class="n">reduced_instance</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="c1"># Exact (conditioned) sub-QUBO</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="n">sub_instance</span> <span class="o">=</span> <span class="n">reduced_instance</span><span class="o">.</span><span class="n">subinstance</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="c1"># Solve sub-qubo with a classical solver</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="n">sub_solution</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">tabu_search</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">sub_instance</span><span class="p">)</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="c1"># Fix variables from the best candidate</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="n">variable_fixing</span><span class="o">.</span><span class="n">apply_candidate</span><span class="p">(</span><span class="n">reduced_instance</span><span class="p">,</span> <span class="n">sub_solution</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">variables</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    <span class="c1"># Fix variables that have been balanced to a positive linear weight</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    <span class="n">variable_fixing</span><span class="o">.</span><span class="n">apply_recursively</span><span class="p">(</span><span class="n">reduced_instance</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    <span class="n">reduced_solution</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">trivial_solution_search</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">reduced_instance</span><span class="p">)</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="n">solution</span> <span class="o">=</span> <span class="n">variable_fixing</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span><span class="n">reduced_solution</span><span class="p">,</span> <span class="n">reduced_instance</span><span class="p">)</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Fixed variables, in fixing order:"</span><span class="p">)</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">reduced_instance</span><span class="o">.</span><span class="n">fixed_history</span><span class="p">:</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\t</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Solution:</span><span class="se">\n</span><span class="si">{</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Fixed variables, in fixing order:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    {0: 1, 6: 1, 7: 1, 14: 0, 16: 1, 17: 0, 21: 1, 23: 1, 25: 1, 31: 1, 33: 1, 38: 1, 42: 1, 43: 1}
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    {2: 0, 3: 0, 4: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0, 15: 0, 18: 0, 19: 0, 20: 0, 24: 0, 26: 0, 27: 0, 28: 0, 30: 0, 32: 0, 35: 0, 36: 0, 37: 0, 39: 0, 40: 0, 44: 0, 46: 0, 47: 0, 48: 0, 49: 0}
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    {29: 1, 41: 1}
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    {1: 1, 5: 1, 34: 0, 45: 1}
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    {22: 1}
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Solution:
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  labels                                         bitstrings  ...  counts  probs
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>0      0  1100011100000000100001110100010101000010011101...  ...       1    1.0
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>[1 rows x 5 columns]
+</code></pre></div>
+</div>
+</div>
+</div>
 <h2 id="custom-register">Custom register</h2>
 <p>You can skip embedding algorithms altogether and build a <a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Register"><code>qoolqit.Register</code></a> directly from coordinates, as in the example below, or reuse a register computed elsewhere or encode problem-specific knowledge about where atoms should sit:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-34--__tabbed_1_1" name="exec-34--__tabbed_1" type="radio" /><input id="exec-34--__tabbed_1_2" name="exec-34--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-34--__tabbed_1_1">Result</label><label for="exec-34--__tabbed_1_2">Source</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-36--__tabbed_1_1" name="exec-36--__tabbed_1" type="radio" /><input id="exec-36--__tabbed_1_2" name="exec-36--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-36--__tabbed_1_1">Result</label><label for="exec-36--__tabbed_1_2">Source</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><figure><figcaption>Register</figcaption><img src="quantum_embedding_custom_register.svg" alt="Register of atoms embedding the QUBO instance"></figure></p>
@@ -3799,7 +4026,7 @@ Plot the resulting register:</p>
       &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
   &lt;/span&gt;" href="../../../api/solver/#qubosolver.solver.SolverConfig"><code>SolverConfig</code></a> for the full set of defaults.</p>
 <p><code>EmbeddingConfig</code> only exposes the most commonly tuned parameters of each algorithm (e.g. <code>blade_steps_per_round</code>, <code>greedy_layout_lattice</code>). Finer-grained parameters — such as BLaDE's <code>pca</code> flag or its <code>compute_*</code> schedule functions — are not settable this way; call <code>embedding.blade.embed</code>/<code>embedding.greedy_layout.embed</code> directly with a full <code>blade.Config</code>/<code>greedy_layout.Config</code> if you need those.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-35--__tabbed_1_1" name="exec-35--__tabbed_1" type="radio" /><input id="exec-35--__tabbed_1_2" name="exec-35--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-35--__tabbed_1_1">Source</label><label for="exec-35--__tabbed_1_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-37--__tabbed_1_1" name="exec-37--__tabbed_1" type="radio" /><input id="exec-37--__tabbed_1_2" name="exec-37--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-37--__tabbed_1_1">Source</label><label for="exec-37--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverConfig</span><span class="p">,</span> <span class="n">QuantumSolvingConfig</span><span class="p">,</span> <span class="n">EmbeddingConfig</span>

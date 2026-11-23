@@ -3227,10 +3227,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#qubosolver.transforms.variable_fixing.apply_recursively" class="md-nav__link">
+  <a href="#qubosolver.transforms.variable_fixing.apply_candidate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;apply_recursively
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;apply_candidate
       
     </span>
   </a>
@@ -3238,10 +3238,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#qubosolver.transforms.variable_fixing.from_candidate" class="md-nav__link">
+  <a href="#qubosolver.transforms.variable_fixing.apply_recursively" class="md-nav__link">
     <span class="md-ellipsis">
       
-        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;from_candidate
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;apply_recursively
       
     </span>
   </a>
@@ -4521,10 +4521,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#qubosolver.transforms.variable_fixing.apply_recursively" class="md-nav__link">
+  <a href="#qubosolver.transforms.variable_fixing.apply_candidate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;apply_recursively
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;apply_candidate
       
     </span>
   </a>
@@ -4532,10 +4532,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#qubosolver.transforms.variable_fixing.from_candidate" class="md-nav__link">
+  <a href="#qubosolver.transforms.variable_fixing.apply_recursively" class="md-nav__link">
     <span class="md-ellipsis">
       
-        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;from_candidate
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;apply_recursively
       
     </span>
   </a>
@@ -6710,17 +6710,17 @@ such instances.</p>
             </div>
           </li>
           <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;apply_candidate&lt;/span&gt; (&lt;code&gt;qubosolver.transforms.variable_fixing.apply_candidate&lt;/code&gt;)" href="#qubosolver.transforms.variable_fixing.apply_candidate">apply_candidate</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Fix <code>variables</code> to the bits of <code>candidate</code> and reduce the QUBO matrix accordingly.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
             <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;apply_recursively&lt;/span&gt; (&lt;code&gt;qubosolver.transforms.variable_fixing.apply_recursively&lt;/code&gt;)" href="#qubosolver.transforms.variable_fixing.apply_recursively">apply_recursively</a></code></b>
             –
             <div class="doc-md-description">
               <p>Apply fixation rules repeatedly until no further variables can be fixed.</p>
-            </div>
-          </li>
-          <li class="doc-section-item field-body">
-            <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;from_candidate&lt;/span&gt; (&lt;code&gt;qubosolver.transforms.variable_fixing.from_candidate&lt;/code&gt;)" href="#qubosolver.transforms.variable_fixing.from_candidate">from_candidate</a></code></b>
-            –
-            <div class="doc-md-description">
-              <p>Turn a candidate of a sub-instance into a fixation rule on <code>instance</code>.</p>
             </div>
           </li>
           <li class="doc-section-item field-body">
@@ -8296,6 +8296,204 @@ variable-fixing <a class="autorefs autorefs-internal" title="&lt;code class=&quo
 <div class="doc doc-object doc-function">
 
 
+<h3 id="qubosolver.transforms.variable_fixing.apply_candidate" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">apply_candidate</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">apply_candidate</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-module&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-module-name&quot;&gt;qubosolver&lt;/span&gt;" href="../qubosolver/#qubosolver">qubosolver</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.Instance&lt;/code&gt;)" href="../qubosolver/#qubosolver.Instance">Instance</a></span><span class="p">,</span> <span class="n">candidate</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Candidate&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.types.Candidate&lt;/code&gt;)" href="../qubosolver/#qubosolver.Candidate">Candidate</a></span><span class="p">,</span> <span class="n">variables</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;collections.abc.Sequence&lt;/code&gt;" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">inplace</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.transforms.variable_fixing.Instance&lt;/code&gt;)" href="#qubosolver.transforms.variable_fixing.Instance">Instance</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Fix <code>variables</code> to the bits of <code>candidate</code> and reduce the QUBO matrix accordingly.</p>
+<p>Unlike <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;Rule&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="#qubosolver.transforms.variable_fixing.Rule"><code>Rule</code></a>s, the fixation is given rather than inferred from the instance,
+and need not preserve optimality: the instance is conditioned on the candidate.</p>
+<p>The candidate's bit <em>i</em> is the value of variable <code>variables[i]</code> of <code>instance</code>,
+as for a sub-instance built with <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-method&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;subinstance&lt;/span&gt;" href="../qubosolver/#qubosolver.Instance.subinstance"><code>qubosolver.Instance.subinstance</code></a>.
+Choosing which candidate to fix is the caller's decision: <code>solution[0]</code> is the
+best one of a solution sorted by cost (e.g. from <code>Solution.from_results</code>).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>instance</code></b>
+              (<code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-module&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-module-name&quot;&gt;qubosolver&lt;/span&gt;" href="../qubosolver/#qubosolver">qubosolver</a>.<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.Instance&lt;/code&gt;)" href="../qubosolver/#qubosolver.Instance">Instance</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>The QUBO instance to reduce.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>candidate</code></b>
+              (<code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Candidate&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;qubosolver.types.Candidate&lt;/code&gt;)" href="../qubosolver/#qubosolver.Candidate">Candidate</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>The candidate whose bits are fixed.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>variables</code></b>
+              (<code><a class="autorefs autorefs-external" title="&lt;code&gt;collections.abc.Sequence&lt;/code&gt;" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence">Sequence</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Distinct variable indices of <code>instance</code>, in the order of the
+candidate's bits.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>inplace</code></b>
+              (<code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>If <code>False</code> (default), wraps <code>instance</code> in a new
+variable-fixing <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt;" href="#qubosolver.transforms.variable_fixing.Instance"><code>Instance</code></a> before modifying it.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.transforms.variable_fixing.Instance&lt;/code&gt;)" href="#qubosolver.transforms.variable_fixing.Instance">Instance</a></code>
+          –
+          <div class="doc-md-description">
+            <p>The reduced instance with updated fixation history.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError">ValueError</a></code>
+            –
+          <div class="doc-md-description">
+            <p>If the candidate's width differs from <code>len(variables)</code>, or
+if <code>variables</code> contains duplicates or out-of-range indices.</p>
+          </div>
+        </li>
+    </ul>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>qubosolver/transforms/variable_fixing.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-350">350</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-351">351</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-352">352</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-353">353</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-354">354</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-355">355</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-356">356</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-357">357</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-358">358</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-359">359</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-360">360</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-361">361</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-362">362</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-363">363</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-364">364</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-365">365</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-366">366</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-367">367</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-368">368</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-369">369</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-370">370</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-371">371</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-372">372</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-373">373</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-374">374</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-375">375</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-376">376</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-377">377</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-378">378</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-379">379</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-380">380</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-381">381</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-382">382</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-383">383</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-384">384</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-385">385</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-386">386</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-387">387</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-388">388</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-389">389</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-390">390</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-391">391</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-392">392</a></span>
+<span class="normal"><a href="#qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-393">393</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-350" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-350"></a><span class="k">def</span><span class="w"> </span><span class="nf">apply_candidate</span><span class="p">(</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-351" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-351"></a>    <span class="n">instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">,</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-352" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-352"></a>    <span class="n">candidate</span><span class="p">:</span> <span class="n">Candidate</span><span class="p">,</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-353" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-353"></a>    <span class="n">variables</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-354" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-354"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-355" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-355"></a>    <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-356" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-356"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Instance</span><span class="p">:</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-357" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-357"></a><span class="w">    </span><span class="sd">"""Fix `variables` to the bits of `candidate` and reduce the QUBO matrix accordingly.</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-358" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-358"></a>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-359" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-359"></a><span class="sd">    Unlike [`Rule`][]s, the fixation is given rather than inferred from the instance,</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-360" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-360"></a><span class="sd">    and need not preserve optimality: the instance is conditioned on the candidate.</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-361" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-361"></a>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-362" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-362"></a><span class="sd">    The candidate's bit *i* is the value of variable `variables[i]` of `instance`,</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-363" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-363"></a><span class="sd">    as for a sub-instance built with [`qubosolver.Instance.subinstance`][].</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-364" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-364"></a><span class="sd">    Choosing which candidate to fix is the caller's decision: `solution[0]` is the</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-365" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-365"></a><span class="sd">    best one of a solution sorted by cost (e.g. from `Solution.from_results`).</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-366" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-366"></a>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-367" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-367"></a><span class="sd">    Args:</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-368" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-368"></a><span class="sd">        instance: The QUBO instance to reduce.</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-369" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-369"></a><span class="sd">        candidate: The candidate whose bits are fixed.</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-370" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-370"></a><span class="sd">        variables: Distinct variable indices of `instance`, in the order of the</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-371" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-371"></a><span class="sd">            candidate's bits.</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-372" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-372"></a><span class="sd">        inplace: If ``False`` (default), wraps `instance` in a new</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-373" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-373"></a><span class="sd">            variable-fixing [`Instance`][] before modifying it.</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-374" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-374"></a>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-375" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-375"></a><span class="sd">    Returns:</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-376" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-376"></a><span class="sd">        The reduced instance with updated fixation history.</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-377" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-377"></a>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-378" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-378"></a><span class="sd">    Raises:</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-379" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-379"></a><span class="sd">        ValueError: If the candidate's width differs from `len(variables)`, or</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-380" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-380"></a><span class="sd">            if `variables` contains duplicates or out-of-range indices.</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-381" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-381"></a><span class="sd">    """</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-382" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-382"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidate</span><span class="o">.</span><span class="n">bitstring</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">variables</span><span class="p">):</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-383" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-383"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-384" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-384"></a>            <span class="sa">f</span><span class="s2">"Candidate has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">candidate</span><span class="o">.</span><span class="n">bitstring</span><span class="p">)</span><span class="si">}</span><span class="s2"> bits but </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span><span class="si">}</span><span class="s2"> variables "</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-385" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-385"></a>            <span class="s2">"were given."</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-386" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-386"></a>        <span class="p">)</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-387" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-387"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-388" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-388"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">variables</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">variables</span><span class="p">):</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-389" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-389"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Variables must be distinct, got </span><span class="si">{</span><span class="n">variables</span><span class="si">}</span><span class="s2">."</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-390" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-390"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-391" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-391"></a>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-392" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-392"></a>    <span class="n">fixation</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="n">candidate</span><span class="o">.</span><span class="n">bitstring</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<a id="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-393" name="qubosolver.transforms.variable_fixing.apply_candidate--source--__codelineno-0-393"></a>    <span class="k">return</span> <span class="n">_reduce_qubo</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">fixation</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="n">inplace</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="qubosolver.transforms.variable_fixing.apply_recursively" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">apply_recursively</span>
 
@@ -8450,242 +8648,6 @@ variable-fixing <a class="autorefs autorefs-internal" title="&lt;code class=&quo
 <a id="qubosolver.transforms.variable_fixing.apply_recursively--source--__codelineno-0-303" name="qubosolver.transforms.variable_fixing.apply_recursively--source--__codelineno-0-303"></a>        <span class="k">assert</span> <span class="n">n_fixations</span> <span class="o">&gt;=</span> <span class="n">prev_n_fixations</span>  <span class="c1"># nosec B101</span>
 <a id="qubosolver.transforms.variable_fixing.apply_recursively--source--__codelineno-0-304" name="qubosolver.transforms.variable_fixing.apply_recursively--source--__codelineno-0-304"></a>        <span class="k">if</span> <span class="n">n_fixations</span> <span class="o">==</span> <span class="n">prev_n_fixations</span><span class="p">:</span>
 <a id="qubosolver.transforms.variable_fixing.apply_recursively--source--__codelineno-0-305" name="qubosolver.transforms.variable_fixing.apply_recursively--source--__codelineno-0-305"></a>            <span class="k">return</span> <span class="n">instance</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="qubosolver.transforms.variable_fixing.from_candidate" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">from_candidate</span>
-
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_candidate</span><span class="p">(</span><span class="n">candidate</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Candidate&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.types.Candidate&lt;/code&gt;)" href="../qubosolver/#qubosolver.Candidate">Candidate</a></span><span class="p">,</span> <span class="n">variables</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;collections.abc.Sequence&lt;/code&gt;" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">],</span> <span class="n">instance</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-module&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-module-name&quot;&gt;qubosolver&lt;/span&gt;" href="../qubosolver/#qubosolver">qubosolver</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.Instance&lt;/code&gt;)" href="../qubosolver/#qubosolver.Instance">Instance</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;Rule&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.transforms.variable_fixing.Rule&lt;/code&gt;)" href="#qubosolver.transforms.variable_fixing.Rule">Rule</a></span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Turn a candidate of a sub-instance into a fixation rule on <code>instance</code>.</p>
-<p>The candidate's bit <em>i</em> is the value of variable <code>variables[i]</code> of <code>instance</code>,
-as for a sub-instance built with <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-method&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;subinstance&lt;/span&gt;" href="../qubosolver/#qubosolver.Instance.subinstance"><code>qubosolver.Instance.subinstance</code></a>. The
-returned rule fixes those variables to those values.</p>
-<p>Choosing which candidate to fix is the caller's decision: <code>solution[0]</code> is the
-best one of a solution sorted by cost (e.g. from <code>Solution.from_results</code>).</p>
-<p>The rule is only valid on an instance of the same size as <code>instance</code>, so it
-can only be applied once, with <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;apply&lt;/span&gt;" href="#qubosolver.transforms.variable_fixing.apply"><code>apply</code></a>, and must come first in
-<code>fixation_rules</code>: a rule running before it in the same call may fix variables
-and shift the indices. Do not pass it to <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;apply_recursively&lt;/span&gt;" href="#qubosolver.transforms.variable_fixing.apply_recursively"><code>apply_recursively</code></a>: once its
-variables are fixed, the instance is smaller and the next pass raises. Calling
-the rule directly, <code>rule(instance)</code>, returns the fixation dict.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-            <b><code>candidate</code></b>
-              (<code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Candidate&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.types.Candidate&lt;/code&gt;)" href="../qubosolver/#qubosolver.Candidate">Candidate</a></code>)
-          –
-          <div class="doc-md-description">
-            <p>The candidate whose bits are fixed.</p>
-          </div>
-        </li>
-        <li class="doc-section-item field-body">
-            <b><code>variables</code></b>
-              (<code><a class="autorefs autorefs-external" title="&lt;code&gt;collections.abc.Sequence&lt;/code&gt;" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence">Sequence</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a>]</code>)
-          –
-          <div class="doc-md-description">
-            <p>Distinct variable indices of <code>instance</code>, in the order of the
-candidate's bits.</p>
-          </div>
-        </li>
-        <li class="doc-section-item field-body">
-            <b><code>instance</code></b>
-              (<code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-module&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-module-name&quot;&gt;qubosolver&lt;/span&gt;" href="../qubosolver/#qubosolver">qubosolver</a>.<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Instance&lt;/span&gt; (&lt;code&gt;qubosolver.Instance&lt;/code&gt;)" href="../qubosolver/#qubosolver.Instance">Instance</a></code>)
-          –
-          <div class="doc-md-description">
-            <p>The instance the indices in <code>variables</code> refer to.</p>
-          </div>
-        </li>
-    </ul>
-
-
-<p><span class="doc-section-title">Returns:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-              <code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;Rule&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt; (&lt;code&gt;qubosolver.transforms.variable_fixing.Rule&lt;/code&gt;)" href="#qubosolver.transforms.variable_fixing.Rule">Rule</a></code>
-          –
-          <div class="doc-md-description">
-            <p>A <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;Rule&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="#qubosolver.transforms.variable_fixing.Rule"><code>Rule</code></a> fixing <code>variables</code> to the candidate's bits.</p>
-          </div>
-        </li>
-    </ul>
-
-
-<p><span class="doc-section-title">Raises:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-              <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError">ValueError</a></code>
-            –
-          <div class="doc-md-description">
-            <p>If the candidate's width differs from <code>len(variables)</code>, or
-if <code>variables</code> contains duplicates or out-of-range indices. The rule
-itself raises <code>ValueError</code> when applied to an instance whose size
-differs from <code>instance.size</code>.</p>
-          </div>
-        </li>
-    </ul>
-
-
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>qubosolver/transforms/variable_fixing.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-350">350</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-351">351</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-352">352</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-353">353</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-354">354</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-355">355</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-356">356</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-357">357</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-358">358</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-359">359</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-360">360</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-361">361</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-362">362</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-363">363</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-364">364</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-365">365</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-366">366</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-367">367</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-368">368</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-369">369</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-370">370</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-371">371</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-372">372</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-373">373</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-374">374</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-375">375</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-376">376</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-377">377</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-378">378</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-379">379</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-380">380</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-381">381</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-382">382</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-383">383</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-384">384</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-385">385</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-386">386</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-387">387</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-388">388</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-389">389</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-390">390</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-391">391</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-392">392</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-393">393</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-394">394</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-395">395</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-396">396</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-397">397</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-398">398</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-399">399</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-400">400</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-401">401</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-402">402</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-403">403</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-404">404</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-405">405</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-406">406</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-407">407</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-408">408</a></span>
-<span class="normal"><a href="#qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-409">409</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-350" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-350"></a><span class="k">def</span><span class="w"> </span><span class="nf">from_candidate</span><span class="p">(</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-351" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-351"></a>    <span class="n">candidate</span><span class="p">:</span> <span class="n">Candidate</span><span class="p">,</span> <span class="n">variables</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">instance</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-352" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-352"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rule</span><span class="p">:</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-353" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-353"></a><span class="w">    </span><span class="sd">"""Turn a candidate of a sub-instance into a fixation rule on `instance`.</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-354" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-354"></a>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-355" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-355"></a><span class="sd">    The candidate's bit *i* is the value of variable `variables[i]` of `instance`,</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-356" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-356"></a><span class="sd">    as for a sub-instance built with [`qubosolver.Instance.subinstance`][]. The</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-357" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-357"></a><span class="sd">    returned rule fixes those variables to those values.</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-358" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-358"></a>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-359" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-359"></a><span class="sd">    Choosing which candidate to fix is the caller's decision: `solution[0]` is the</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-360" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-360"></a><span class="sd">    best one of a solution sorted by cost (e.g. from `Solution.from_results`).</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-361" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-361"></a>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-362" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-362"></a><span class="sd">    The rule is only valid on an instance of the same size as `instance`, so it</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-363" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-363"></a><span class="sd">    can only be applied once, with [`apply`][], and must come first in</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-364" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-364"></a><span class="sd">    `fixation_rules`: a rule running before it in the same call may fix variables</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-365" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-365"></a><span class="sd">    and shift the indices. Do not pass it to [`apply_recursively`][]: once its</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-366" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-366"></a><span class="sd">    variables are fixed, the instance is smaller and the next pass raises. Calling</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-367" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-367"></a><span class="sd">    the rule directly, `rule(instance)`, returns the fixation dict.</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-368" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-368"></a>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-369" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-369"></a><span class="sd">    Args:</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-370" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-370"></a><span class="sd">        candidate: The candidate whose bits are fixed.</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-371" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-371"></a><span class="sd">        variables: Distinct variable indices of `instance`, in the order of the</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-372" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-372"></a><span class="sd">            candidate's bits.</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-373" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-373"></a><span class="sd">        instance: The instance the indices in `variables` refer to.</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-374" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-374"></a>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-375" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-375"></a><span class="sd">    Returns:</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-376" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-376"></a><span class="sd">        A [`Rule`][] fixing `variables` to the candidate's bits.</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-377" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-377"></a>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-378" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-378"></a><span class="sd">    Raises:</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-379" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-379"></a><span class="sd">        ValueError: If the candidate's width differs from `len(variables)`, or</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-380" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-380"></a><span class="sd">            if `variables` contains duplicates or out-of-range indices. The rule</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-381" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-381"></a><span class="sd">            itself raises `ValueError` when applied to an instance whose size</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-382" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-382"></a><span class="sd">            differs from `instance.size`.</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-383" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-383"></a><span class="sd">    """</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-384" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-384"></a>    <span class="n">size</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">size</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-385" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-385"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidate</span><span class="o">.</span><span class="n">bitstring</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">variables</span><span class="p">):</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-386" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-386"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-387" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-387"></a>            <span class="sa">f</span><span class="s2">"Candidate has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">candidate</span><span class="o">.</span><span class="n">bitstring</span><span class="p">)</span><span class="si">}</span><span class="s2"> bits but </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span><span class="si">}</span><span class="s2"> variables "</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-388" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-388"></a>            <span class="s2">"were given."</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-389" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-389"></a>        <span class="p">)</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-390" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-390"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-391" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-391"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">variables</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">variables</span><span class="p">):</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-392" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-392"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Variables must be distinct, got </span><span class="si">{</span><span class="n">variables</span><span class="si">}</span><span class="s2">."</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-393" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-393"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-394" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-394"></a>    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="n">size</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">):</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-395" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-395"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Variables must be in range(</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">), got </span><span class="si">{</span><span class="n">variables</span><span class="si">}</span><span class="s2">."</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-396" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-396"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-397" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-397"></a>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-398" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-398"></a>    <span class="n">fixation</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="n">candidate</span><span class="o">.</span><span class="n">bitstring</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-399" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-399"></a>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-400" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-400"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">rule</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="n">qubosolver</span><span class="o">.</span><span class="n">Instance</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-401" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-401"></a>        <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">size</span><span class="p">:</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-402" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-402"></a>            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-403" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-403"></a>                <span class="sa">f</span><span class="s2">"This rule was built for an instance of size </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">, but was applied to one "</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-404" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-404"></a>                <span class="sa">f</span><span class="s2">"of size </span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">: apply it once, with `apply`, first in `fixation_rules`."</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-405" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-405"></a>            <span class="p">)</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-406" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-406"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-407" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-407"></a>        <span class="k">return</span> <span class="n">fixation</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-408" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-408"></a>
-<a id="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-409" name="qubosolver.transforms.variable_fixing.from_candidate--source--__codelineno-0-409"></a>    <span class="k">return</span> <span class="n">rule</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
