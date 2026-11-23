@@ -16,6 +16,7 @@ for _var in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"):
     os.environ.setdefault(_var, "1")
 
 import random
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -44,6 +45,10 @@ if TYPE_CHECKING:
 
 SLOW_THRESHOLD_S = 5
 
+# Not unit tests: they must not contribute to coverage (see `omit` in pyproject.toml).
+_TESTS_DIR = Path(__file__).parent
+NO_COVER_PATHS = tuple(_TESTS_DIR / p for p in ("pipeline", "integration", "test_notebooks.py"))
+
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
@@ -61,6 +66,8 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     - Tests with duration >= `SLOW_THRESHOLD_S` get the `slow` marker, the
       others get `fast`, so `pytest -m fast` / `pytest -m slow` select them.
       Do not apply `fast` / `slow` manually; set `duration` instead.
+    - Tests under `NO_COVER_PATHS` get pytest-cov's `no_cover` marker, so they
+      do not contribute to coverage.
     - Runs `tryfirst` so the markers exist before pytest's `-m` deselection.
 
     Args:
@@ -78,6 +85,8 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
         item.add_marker(
             pytest.mark.slow if duration(item) >= SLOW_THRESHOLD_S else pytest.mark.fast
         )
+        if any(item.path.is_relative_to(p) for p in NO_COVER_PATHS):
+            item.add_marker(pytest.mark.no_cover)
 
     # QUBOSOLVER_WITHOUT_EXTRAS explicitly declares that extras (e.g. cplex) are
     # not installed, so extras-marked tests are skipped rather than failing.
@@ -253,6 +262,12 @@ def generate_qubo_matrix(
 @pytest.fixture
 def decomposable_qubo() -> Instance:
     return Instance(generate_qubo_matrix(50, 0.30, (0, 20), 1))
+
+
+@pytest.fixture
+def small_decomposable_qubo() -> Instance:
+    # Hansen fixing leaves all 12 variables of this one.
+    return Instance(generate_qubo_matrix(12, 0.50, (0, 20), 2))
 
 
 @pytest.fixture

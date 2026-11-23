@@ -347,41 +347,38 @@ def lift(reduced_solution: Solution, reduced_instance: Instance) -> Solution:
     )._compute_costs(reduced_instance._parent_instance.matrix)
 
 
-def from_candidate(
-    candidate: Candidate, variables: Sequence[int], instance: qubosolver.Instance
-) -> Rule:
-    """Turn a candidate of a sub-instance into a fixation rule on `instance`.
+def apply_candidate(
+    instance: qubosolver.Instance,
+    candidate: Candidate,
+    variables: Sequence[int],
+    *,
+    inplace: bool = False,
+) -> Instance:
+    """Fix `variables` to the bits of `candidate` and reduce the QUBO matrix accordingly.
+
+    Unlike [`Rule`][]s, the fixation is given rather than inferred from the instance,
+    and need not preserve optimality: the instance is conditioned on the candidate.
 
     The candidate's bit *i* is the value of variable `variables[i]` of `instance`,
-    as for a sub-instance built with [`qubosolver.Instance.subinstance`][]. The
-    returned rule fixes those variables to those values.
-
+    as for a sub-instance built with [`qubosolver.Instance.subinstance`][].
     Choosing which candidate to fix is the caller's decision: `solution[0]` is the
     best one of a solution sorted by cost (e.g. from `Solution.from_results`).
 
-    The rule is only valid on an instance of the same size as `instance`, so it
-    can only be applied once, with [`apply`][], and must come first in
-    `fixation_rules`: a rule running before it in the same call may fix variables
-    and shift the indices. Do not pass it to [`apply_recursively`][]: once its
-    variables are fixed, the instance is smaller and the next pass raises. Calling
-    the rule directly, `rule(instance)`, returns the fixation dict.
-
     Args:
+        instance: The QUBO instance to reduce.
         candidate: The candidate whose bits are fixed.
         variables: Distinct variable indices of `instance`, in the order of the
             candidate's bits.
-        instance: The instance the indices in `variables` refer to.
+        inplace: If ``False`` (default), wraps `instance` in a new
+            variable-fixing [`Instance`][] before modifying it.
 
     Returns:
-        A [`Rule`][] fixing `variables` to the candidate's bits.
+        The reduced instance with updated fixation history.
 
     Raises:
         ValueError: If the candidate's width differs from `len(variables)`, or
-            if `variables` contains duplicates or out-of-range indices. The rule
-            itself raises `ValueError` when applied to an instance whose size
-            differs from `instance.size`.
+            if `variables` contains duplicates or out-of-range indices.
     """
-    size = instance.size
     if len(candidate.bitstring) != len(variables):
         msg = (
             f"Candidate has {len(candidate.bitstring)} bits but {len(variables)} variables "
@@ -391,19 +388,6 @@ def from_candidate(
     if len(set(variables)) != len(variables):
         msg = f"Variables must be distinct, got {variables}."
         raise ValueError(msg)
-    if any(not 0 <= v < size for v in variables):
-        msg = f"Variables must be in range({size}), got {variables}."
-        raise ValueError(msg)
 
     fixation = dict(zip(variables, candidate.bitstring.tolist(), strict=True))
-
-    def rule(target: qubosolver.Instance) -> dict[int, int]:
-        if target.size != size:
-            msg = (
-                f"This rule was built for an instance of size {size}, but was applied to one "
-                f"of size {target.size}: apply it once, with `apply`, first in `fixation_rules`."
-            )
-            raise ValueError(msg)
-        return fixation.copy()
-
-    return rule
+    return _reduce_qubo(instance, fixation, inplace=inplace)

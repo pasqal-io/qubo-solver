@@ -14,7 +14,7 @@ import qoolqit
 import torch
 from qoolqit import ConstantWaveform, RampWaveform
 
-from qubosolver import Instance, drive_shaping, embedding, extract_qubo, matrix, vector
+from qubosolver import Instance, drive_shaping, embedding, extract_qubo, matrix, torch_rng, vector
 from qubosolver.embedding._algorithms.greedy.layout import get_layout
 from qubosolver.utils.quantum import _detuning, _max_min_distance_ratio
 
@@ -179,6 +179,24 @@ def test_extract_qubo_rejects_instance_of_another_size() -> None:
     instance = Instance(matrix.tensor([[-1.0, 0.0], [0.0, -1.0]]))
     with pytest.raises(ValueError, match="3 qubits"):
         extract_qubo(_register(), instance)
+
+
+def test_extract_qubo_from_partial_greedy_embedding_and_subinstance(
+    decomposable_qubo: Instance,
+) -> None:
+    # The QUBO the partial embedding implements: 1 / r^6 between the placed
+    # positions off the diagonal, the (conditioned) weights on the diagonal.
+    register, variables = embedding.partial_greedy.embed(decomposable_qubo, rng=torch_rng(0))
+    exact = decomposable_qubo.subinstance(variables)
+
+    extracted = extract_qubo(register, exact)
+
+    coords = torch.stack([torch.as_tensor(register.qubits[q]) for q in register.qubits_ids])
+    coords = coords.to(matrix.dtype())
+    off_diag = ~torch.eye(len(variables), dtype=torch.bool)
+    expected_interactions = torch.cdist(coords, coords) ** -6
+    torch.testing.assert_close(extracted.matrix[off_diag], expected_interactions[off_diag])
+    torch.testing.assert_close(torch.diag(extracted.matrix), torch.diag(exact.matrix))
 
 
 def test_max_min_distance_ratio_from_device_specs() -> None:
