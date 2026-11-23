@@ -3,9 +3,10 @@
 # Licensed under the Pasqal Open-Source Software License 2026 (MIT-derived).
 # See LICENSE.md in the project root for the full terms.
 
+"""Geometric search placing a cluster of QUBO variables, used by the partial greedy embedder."""
+
 from __future__ import annotations
 
-import math
 from typing import TypedDict
 
 import numpy as np
@@ -15,7 +16,7 @@ from scipy.optimize import OptimizeResult, minimize
 from shapely.geometry import MultiPolygon, Point, Polygon
 
 from qubosolver._checks import no_runtime_typecheck
-from qubosolver.types import Bitstring, Matrix, Vector, matrix, vector
+from qubosolver.types import Matrix, Vector, vector
 
 
 # Find a better way to compute this ?
@@ -27,6 +28,14 @@ def _clamp_max_radial_distance(max_radial_distance: float) -> float:
 
 
 class VertexToPlace(TypedDict):
+    """A variable still to place, with its relations to the other variables.
+
+    Built by [`vertices_to_place`][]: `weight` is the variable's diagonal
+    coefficient; `blocking_vertices`, `separated_vertices` and `neighbors_id`
+    are the variables it blocks, is separated from, and interacts with, and
+    `neighbors_weight` holds the QUBO coefficients to those neighbors.
+    """
+
     id: int
     weight: torch.Tensor
     blocking_vertices: torch.Tensor
@@ -54,8 +63,14 @@ class WeightedZone:
         circle_end_blocking: Circle delimiting end of blocking_zone.
     """
 
-    def __init__(
-        self, vertex_id: int, x: float, y: float, weight: float, min_distance: float
+    def __init__(  # noqa: PLR0913, PLR0917
+        self,
+        vertex_id: int,
+        x: float,
+        y: float,
+        weight: float,
+        min_distance: float,
+        max_radial_distance: float = torch.inf,
     ) -> None:
         """Initialize the zone geometry for a placed vertex.
 
@@ -63,8 +78,12 @@ class WeightedZone:
             vertex_id: Identifier of the vertex.
             x: x-coordinate of the vertex.
             y: y-coordinate of the vertex.
-            weight: QUBO weight of the vertex.
+            weight: QUBO weight of the vertex, non-positive. A zero weight has an
+                infinite blocking radius: the vertex blocks every other one.
             min_distance: Radius of the forbidden zone around the vertex.
+            max_radial_distance: Radius of the search disc around the origin, which
+                contains the vertex. It bounds the drawn blocking disc, as shapely
+                cannot draw an infinite one.
         """
         self.id = vertex_id
         self.x = x
@@ -72,13 +91,18 @@ class WeightedZone:
         self.weight = weight
 
         self.radius1 = min_distance
-        self.radius2 = (-weight) ** (-1 / 6)
+        # Blocking radius: the interaction U(r) = 1 / r**6 exceeds the detuning -Q_ii / 2 (see
+        # compute_distance_interaction_matrix). Keep in sync with its blocking threshold.
+        self.radius2 = (-weight / 2) ** (-1 / 6) if weight else float("inf")
 
-        self.radius3 = 15.0
+        self.radius3 = 1.5
 
         self.point = Point(self.x, self.y)
         self.forbidden_zone = self.point.buffer(self.radius1)
-        self.circle_end_forbidden = self.point.buffer(self.radius2)
+        # The vertex and the search disc lie within the search radius R of the origin, so a disc of
+        # radius 3 R around the vertex covers the search disc, despite its polygonal approximation.
+        search_radius = _clamp_max_radial_distance(max_radial_distance)
+        self.circle_end_forbidden = self.point.buffer(min(self.radius2, 3 * search_radius))
         self.circle_end_blocking = self.point.buffer(self.radius3)
         self.blocking_zone = self.circle_end_forbidden.difference(self.forbidden_zone)
         self.range_zone = self.circle_end_blocking.difference(self.circle_end_forbidden)
@@ -144,10 +168,14 @@ def compute_distance_interaction_matrix(
     )
 
     # relevant interactions
+    # A pair is blocking when setting both variables to 1 does not pay off. Under x^T Q x with
+    # symmetric Q, that is Q_ii + Q_jj + 2 Q_ij > min(Q_ii, Q_jj), i.e. Q_ij > -max(Q_ii, Q_jj) / 2.
+    # On the device (U_ij = Q_ij, detuning -Q_ii / 2, see `extract_qubo`), the interaction
+    # exceeds the smaller detuning. Keep in sync with WeightedZone.radius2.
     cond = (
         (qubo_matrix > neglecting_max_coefficient)
-        & (qubo_matrix < -diag_mat[:, None])
-        & (qubo_matrix < -diag_mat[None, :])
+        & (qubo_matrix < -diag_mat[:, None] / 2)
+        & (qubo_matrix < -diag_mat[None, :] / 2)
     )
 
     if cond.any():
@@ -209,152 +237,6 @@ def vertices_to_place(
             "neighbors_weight": qubo_matrix[i, neighbors],
         }
     return vertices_dict
-
-
-def update_vertex_info_from_placed(
-    vertex: int,
-    dict_vertices_to_place: dict[int, VertexToPlace],
-    placed_vertices: torch.Tensor,
-) -> None:
-    """Update `dict_vertices_to_place` based on `placed_vertices` for a `vertex`.
-
-    Args:
-        vertex (int): Vertex to update info in dict_vertices_to_place.
-        dict_vertices_to_place (dict[int, VertexToPlace]): Current dictionary of vertices to place.
-        placed_vertices (torch.Tensor): Placed vertices indices.
-    """
-    neighbors_notplaced = ~torch.isin(
-        dict_vertices_to_place[vertex]["neighbors_id"], placed_vertices
-    )
-    temp_neighborsid_not_placed = dict_vertices_to_place[vertex]["neighbors_id"][
-        neighbors_notplaced
-    ]
-    temp_neighborsweight_not_placed = dict_vertices_to_place[vertex]["neighbors_weight"][
-        neighbors_notplaced
-    ]
-
-    temp_cond = (temp_neighborsweight_not_placed > -dict_vertices_to_place[vertex]["weight"]) | (
-        -torch.tensor(
-            [dict_vertices_to_place[n.item()]["weight"] for n in temp_neighborsid_not_placed]
-        )
-        < temp_neighborsweight_not_placed
-    )
-    temp = dict_vertices_to_place[vertex]["neighbors_id"][neighbors_notplaced][temp_cond]
-
-    dict_vertices_to_place[vertex]["neighbors_id"] = dict_vertices_to_place[vertex]["neighbors_id"][
-        neighbors_notplaced
-    ]
-    dict_vertices_to_place[vertex]["neighbors_weight"] = dict_vertices_to_place[vertex][
-        "neighbors_weight"
-    ][neighbors_notplaced]
-
-    blocking_cond_notplaced = ~torch.isin(
-        dict_vertices_to_place[vertex]["blocking_vertices"], placed_vertices
-    )
-    dict_vertices_to_place[vertex]["blocking_vertices"] = torch.cat(
-        [
-            dict_vertices_to_place[vertex]["blocking_vertices"][blocking_cond_notplaced],
-            temp,
-        ]
-    )
-
-    separated_cond_notplaced = ~torch.isin(
-        dict_vertices_to_place[vertex]["separated_vertices"], placed_vertices
-    )
-    dict_vertices_to_place[vertex]["separated_vertices"] = dict_vertices_to_place[vertex][
-        "separated_vertices"
-    ][separated_cond_notplaced]
-
-    # should be <= and >= ?
-    # should be ~temp ?
-    neighbord_cond = (
-        dict_vertices_to_place[vertex]["neighbors_weight"]
-        < -dict_vertices_to_place[vertex]["weight"]
-    ) & (
-        -torch.tensor(
-            [
-                dict_vertices_to_place[n.item()]["weight"]
-                for n in dict_vertices_to_place[vertex]["neighbors_id"]
-            ]
-        )
-        > dict_vertices_to_place[vertex]["neighbors_weight"]
-    )
-    dict_vertices_to_place[vertex]["neighbors_id"] = dict_vertices_to_place[vertex]["neighbors_id"][
-        neighbord_cond
-    ]
-    dict_vertices_to_place[vertex]["neighbors_weight"] = dict_vertices_to_place[vertex][
-        "neighbors_weight"
-    ][neighbord_cond]
-
-
-def positive_vertices_update(
-    dict_vertices_to_place: dict[int, VertexToPlace], global_solution: Bitstring
-) -> list[int]:
-    """Remove vertices whose weight became positive during decomposition.
-
-    Args:
-        dict_vertices_to_place (dict[int, VertexToPlace]): current dictionary of vertices to place.
-        global_solution (torch.Tensor): global solution of the qubo.
-
-    Returns:
-        list[int]: Identifiers of the vertices removed from `dict_vertices_to_place`.
-    """
-    positive_vertices = []
-    for key, value in dict_vertices_to_place.items():
-        if value["weight"].item() >= 0:
-            positive_vertices.append(key)
-            if global_solution[key] == -1:
-                global_solution[key] = 0
-            for vertex_data in dict_vertices_to_place.values():
-                cond_not_key = vertex_data["neighbors_id"] != key
-                vertex_data["neighbors_id"] = vertex_data["neighbors_id"][cond_not_key]
-                vertex_data["neighbors_weight"] = vertex_data["neighbors_weight"][cond_not_key]
-
-                vertex_data["blocking_vertices"] = vertex_data["blocking_vertices"][
-                    vertex_data["blocking_vertices"] != key
-                ]
-                vertex_data["separated_vertices"] = vertex_data["separated_vertices"][
-                    vertex_data["separated_vertices"] != key
-                ]
-
-    for key in positive_vertices:
-        dict_vertices_to_place.pop(key, None)
-    return positive_vertices
-
-
-def transfer_edge_values(
-    dict_vertices_to_place: dict[int, VertexToPlace],
-    placed_vertices: dict,
-    global_solution: Bitstring,
-    matrix: Matrix,
-) -> None:
-    """Transfer the values of cut vertices between the embedded and leftover subgraphs.
-
-    Applies if the value in subgraph was fixed to 1, and updates the dictionary of left
-    vertices and global solution.
-
-    Args:
-        dict_vertices_to_place (dict[int, VertexToPlace]): current dictionary of vertices to place.
-        placed_vertices (dict): placed vertices.
-        global_solution (torch.Tensor): global solution of the qubo.
-        matrix (torch.Tensor): current qubo matrix.
-    """
-    # add weight of cut vertices if subsolution variable was fixed to 1
-    for key in placed_vertices:
-        if global_solution[key] == 1:
-            for key2, vertex2 in dict_vertices_to_place.items():
-                if key2 != key:
-                    vertex2["weight"] = vertex2["weight"] + matrix[key][key2]
-                    matrix[key2][key2] += matrix[key][key2]
-
-    # update placed vertices
-    for key in placed_vertices:
-        dict_vertices_to_place.pop(key, None)
-
-    placed_vertices_tensor = torch.tensor(list(placed_vertices.keys()))
-    # update neighbors, separated and blocked vertices from vertices still to place
-    for vertex in dict_vertices_to_place:
-        update_vertex_info_from_placed(vertex, dict_vertices_to_place, placed_vertices_tensor)
 
 
 def zone_intersection(
@@ -666,6 +548,7 @@ def test_placing_vertex(  # noqa: PLR0913, PLR0917
                 y=result_descent.x[1],
                 weight=dict_vertices_to_place[vertex]["weight"].item(),
                 min_distance=min_distance,
+                max_radial_distance=max_radial_distance,
             )
             placed_vertices[vertex] = temp_zone
 
@@ -764,6 +647,7 @@ def geometric_search(  # noqa: PLR0913, PLR0917
         y=0.0,
         weight=dict_vertices_to_place[first_vertex]["weight"].item(),
         min_distance=min_distance,
+        max_radial_distance=max_radial_distance,
     )
     placed_vertices: dict[int, WeightedZone] = {}
     placed_vertices[first_vertex] = zone0
@@ -809,84 +693,3 @@ def geometric_search(  # noqa: PLR0913, PLR0917
         )
 
     return placed_vertices
-
-
-def distance_plan(x1: float, y1: float, x2: float, y2: float) -> float:
-    """Compute the distance between two 2D points.
-
-    Args:
-        x1 (float): x-coordinate first point.
-        y1 (float): y-coordinate first point.
-        x2 (float): x-coordinate second point.
-        y2 (float): y-coordinate second point.
-
-    Returns:
-        float: distance
-    """
-    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-
-
-def interaction_matrix_from_placed(
-    placed_vertices: dict[int, WeightedZone],
-) -> tuple[Matrix, dict[int, int]]:
-    """Compute interaction matrix corresponding to embedded subgraph.
-
-    Args:
-        placed_vertices (dict[int, WeightedZone]): Vertices already placed.
-
-    Returns:
-        tuple[torch.Tensor, dict]: Interacton matrix of embedded subgraph
-            with a mapping of indices of placed vertices.
-    """
-    mat = matrix.zeros(len(placed_vertices))
-
-    sorted_placed_vertices = dict(sorted(placed_vertices.items()))
-    map_index_vertices = {k[0]: i for i, k in enumerate(sorted_placed_vertices.items())}
-
-    for key, value in sorted_placed_vertices.items():
-        for key2, value2 in sorted_placed_vertices.items():
-            if key2 != key:
-                dist = distance_plan(
-                    value.x,
-                    value.y,
-                    value2.x,
-                    value2.y,
-                )
-                mat[map_index_vertices[key]][map_index_vertices[key2]] = 1 / dist**6
-            else:
-                mat[map_index_vertices[key]][map_index_vertices[key]] = value.weight
-
-    return mat, map_index_vertices
-
-
-def update_global_solution(
-    global_solution: Bitstring, sub_solution: Bitstring, mapping: dict[int, int]
-) -> None:
-    """Transfer solution of the subgraph values to the global one.
-
-    Args:
-        global_solution (torch.Tensor): Current global solution.
-        sub_solution (torch.Tensor): Current solution of subgraph.
-        mapping (dict[int, int]): Mapping of indices.
-    """
-    for key, value in mapping.items():
-        if global_solution[key] == -1:
-            global_solution[key] = sub_solution[value]
-
-
-def last_target_matrix(last_indices: list[int], matrix: Matrix) -> tuple[Matrix, dict[int, int]]:
-    """Obtain the last qubo matrix to solve after the decomposition algorithm.
-
-    Args:
-        last_indices (list[int]): List of last indices.
-        matrix (torch.Tensor): Original qubo matrix.
-
-    Returns:
-        tuple[torch.Tensor, dict[int, int]]: Submatrix and mapping
-            of indices from the last target qubo to the original
-            qubo.
-    """
-    indices = sorted(last_indices)
-    sub_matrix = matrix[np.ix_(indices, indices)]
-    mapping = {index: i for i, index in enumerate(indices)}
-    return sub_matrix, mapping

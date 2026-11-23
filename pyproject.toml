@@ -184,12 +184,8 @@ log_cli_level = "WARNING"
 branch = true
 parallel = true
 source = ["qubosolver", "tests"]
-# uncomment to omit any file from the
-# coverage. Regexps can be used
-# to select all files from a folder
-#omit = [
-#  "template_python/to_omit.py",
-#]
+# Not unit tests: marked `no_cover` in tests/conftest.py.
+omit = ["tests/pipeline/*", "tests/integration/*", "tests/test_notebooks.py"]
 
 [tool.coverage.report]
 fail_under = 100

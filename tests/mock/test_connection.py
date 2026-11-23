@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 import pytest_check as check
-from pulser.backend.remote import BatchStatus
+from pulser.backend.remote import BatchStatus, JobStatus
 
 if TYPE_CHECKING:
     from pulser import Sequence as PulserSequence
@@ -34,6 +34,12 @@ def test_batch_status_of_submitted_and_unknown_batches(connection: MockConnectio
     connection.submit(cast("PulserSequence", None), batch_id="submitted")
     check.equal(connection._get_batch_status("submitted"), BatchStatus.DONE)
     check.equal(connection._get_batch_status("unknown"), BatchStatus.ERROR)
+
+
+def test_job_progress_of_submitted_and_unknown_batches(connection: MockConnection) -> None:
+    connection.submit(cast("PulserSequence", None), batch_id="submitted")
+    check.equal(connection._query_job_progress("submitted")["efgh"][0], JobStatus.DONE)
+    check.equal(connection._query_job_progress("unknown")["efgh"][0], JobStatus.ERROR)
 
 
 def test_close_batch_records_the_batch_id(connection: MockConnection) -> None:

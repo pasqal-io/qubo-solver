@@ -11,9 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- Add `variable_fixing.from_candidate` to turn a candidate of a sub-instance into a fixation rule on the parent instance, and `Instance.subinstance` to extract the exact sub-instance on a subset of the variables. ([#352](https://github.com/pasqal-io/qubo-solver/pull/352))
+- Add `variable_fixing.apply_candidate` to fix a subset of variables to the bits of a candidate of a sub-instance, and `Instance.subinstance` to extract the exact sub-instance on a subset of the variables. ([#352](https://github.com/pasqal-io/qubo-solver/pull/352), [#341](https://github.com/pasqal-io/qubo-solver/pull/341))
 - Add `Instance.is_diagonal()` and `Instance.is_trivial()` to detect instances whose optimum needs no search. ([#361](https://github.com/pasqal-io/qubo-solver/pull/361))
 - `extract_qubo` accepts an `Instance` as the diagonal, and `analog_quantum_sampling.compile` accepts a single-atom register. ([#361](https://github.com/pasqal-io/qubo-solver/pull/361))
+- Add the partial greedy embedder, `embedding.partial_greedy`, which embeds only a cluster of variables whose couplings the device can reproduce and returns the register with the placed variables. Combined with `variable_fixing`, it decomposes QUBOs too large for the device, see the embedding user guide. ([#341](https://github.com/pasqal-io/qubo-solver/pull/341))
 
 ### Changed
 - Record variable fixings in original indices: `fixed_history` and `fixed_variables` replace `fixed_indices` and `n_fixed_indices`, and the save/load format changes accordingly, with no backward compatibility. ([#352](https://github.com/pasqal-io/qubo-solver/pull/352))
@@ -26,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Make variable fixing raise `ValueError` when a rule returns an index outside the instance: `apply_recursively` used to loop forever. ([#352](https://github.com/pasqal-io/qubo-solver/pull/352))
 - Make Hansen fixing robust to rounding: in float32, near-ties between large coefficients could fix a variable to a value that excludes the optimum. ([#355](https://github.com/pasqal-io/qubo-solver/pull/355))
 - Make `negative_bitflip.apply` reject an unknown `method` when the instance has no negative off-diagonal coefficient: it used to return the instance unchanged. ([#354](https://github.com/pasqal-io/qubo-solver/pull/354))
+- Fix a factor-2 error in `embedding.partial_greedy`: a pair of variables blocked each other when Q_ij > -max(Q_ii, Q_jj) instead of -max(Q_ii, Q_jj) / 2, and the blocking radius was off by the same factor. ([#341](https://github.com/pasqal-io/qubo-solver/pull/341))
 
 ## [0.10.0] - 2026-10-28
 

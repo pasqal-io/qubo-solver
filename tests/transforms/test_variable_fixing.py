@@ -25,7 +25,7 @@ from qubosolver import (
     transforms,
     vectori,
 )
-from qubosolver.transforms.variable_fixing import from_candidate, hansen_fixing
+from qubosolver.transforms.variable_fixing import hansen_fixing
 
 
 def fully_fixable_qubo() -> Instance:
@@ -688,12 +688,11 @@ def test_lift_fills_remaining_positions_in_order() -> None:
     check.equal(bitstrings.to_strings(restored.bitstrings), ["00111", "01011"])
 
 
-def test_from_candidate_fixation_is_restored_by_lift() -> None:
+def test_apply_candidate_fixation_is_restored_by_lift() -> None:
     instance = unfixable_qubo()
-    rule = from_candidate(Candidate(bitstring.from_string("10")), [2, 0], instance)
-    check.equal(rule(instance), {2: 1, 0: 0})
-
-    reduced = transforms.variable_fixing.apply(instance, (rule,))
+    reduced = transforms.variable_fixing.apply_candidate(
+        instance, Candidate(bitstring.from_string("10")), [2, 0]
+    )
     check.equal(reduced.fixed_history, [{0: 0, 2: 1}])
     check.equal(list(reduced.fixed_history[0]), [0, 2])  # sorted by index
     check.equal(reduced.size, 1)
@@ -706,26 +705,22 @@ def test_from_candidate_fixation_is_restored_by_lift() -> None:
     check.almost_equal(restored[0].cost, instance.cost(restored[0].bitstring))
 
 
-def test_from_candidate_rejects_width_mismatch() -> None:
+def test_apply_candidate_rejects_width_mismatch() -> None:
     with pytest.raises(ValueError, match="bits"):
-        from_candidate(Candidate(bitstring.from_string("1")), [0, 1], unfixable_qubo())
+        transforms.variable_fixing.apply_candidate(
+            unfixable_qubo(), Candidate(bitstring.from_string("1")), [0, 1]
+        )
 
 
-def test_from_candidate_rejects_duplicate_variables() -> None:
+def test_apply_candidate_rejects_duplicate_variables() -> None:
     with pytest.raises(ValueError, match="distinct"):
-        from_candidate(Candidate(bitstring.from_string("10")), [1, 1], unfixable_qubo())
+        transforms.variable_fixing.apply_candidate(
+            unfixable_qubo(), Candidate(bitstring.from_string("10")), [1, 1]
+        )
 
 
-def test_from_candidate_rejects_out_of_range_variables() -> None:
+def test_apply_candidate_rejects_out_of_range_variables() -> None:
     with pytest.raises(ValueError, match="range"):
-        from_candidate(Candidate(bitstring.from_string("10")), [0, 3], unfixable_qubo())
-
-
-def test_from_candidate_rule_after_fixing_rule_raises() -> None:
-    # hansen_fixing fixes variable 0 of fixable_qubo() first, so the candidate
-    # rule's indices are stale when it runs.
-    instance = fixable_qubo()
-    rule = from_candidate(Candidate(bitstring.from_string("1")), [1], instance)
-
-    with pytest.raises(ValueError, match="first"):
-        transforms.variable_fixing.apply(instance, (hansen_fixing, rule))
+        transforms.variable_fixing.apply_candidate(
+            unfixable_qubo(), Candidate(bitstring.from_string("10")), [0, 3]
+        )

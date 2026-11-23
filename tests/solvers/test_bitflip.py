@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import itertools
 import time
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import pytest
 import pytest_check as check
@@ -17,6 +17,7 @@ from beartype.roar import BeartypeCallHintParamViolation
 from qubosolver import (
     Instance,
     Solution,
+    bitstring,
     bitstrings,
     matrix,
     solving,
@@ -29,6 +30,9 @@ from qubosolver.solving.classical.iterative_bitflip_local_search import (
     _first_improvement_search,
     _greedy_sweep_search,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @pytest.mark.parametrize("strategy", ["best_improvement", "first_improvement", "greedy_sweep"])
@@ -464,3 +468,49 @@ def test_iterative_bitflip_local_search_solve_empty_instance(
     check.equal(solution[0].cost, 0.0)
     check.equal(solution[0].count, 1)
     check.equal(solution[0].probability, 1.0)
+
+
+def test_no_solution() -> None:
+    # fmt: off
+    Q = matrix.tensor([
+        [-10.0, 1.0],
+        [1.0, -10.0]
+    ])
+    # fmt: on
+
+    instance = Instance(matrix=Q)
+    solution = Solution()
+    check.equal(len(solution), 0)
+
+    # Bitflip doesn't find new solutions if there were none to begin with
+    pp_solution = solving.iterative_bitflip_local_search.solve(instance, starts=solution)
+    check.equal(len(pp_solution), 0)
+
+
+@pytest.mark.parametrize(
+    "search", [_first_improvement_search, _greedy_sweep_search, _best_improvement_search_batch]
+)
+def test_local_search_stops_at_the_deadline(search: Callable[..., torch.Tensor]) -> None:
+    # fmt: off
+    Q = matrix.tensor([
+        [-10.0, 1.0],
+        [1.0, -10.0]
+    ])
+    # fmt: on
+    s = bitstring.zeros(2)
+    if search is _best_improvement_search_batch:
+        s = s.unsqueeze(0)
+    # An already expired deadline stops the search before any flip.
+    torch.testing.assert_close(search(Q, s, time_limit=-1.0), s)
+
+
+@pytest.mark.parametrize("search", [_first_improvement_search, _greedy_sweep_search])
+def test_local_search_with_rng(search: Callable[..., torch.Tensor]) -> None:
+    # fmt: off
+    Q = matrix.tensor([
+        [-10.0, 1.0],
+        [1.0, -10.0]
+    ])
+    # fmt: on
+    best_bitstring = search(Q, bitstring.zeros(2), rng=torch_rng(2005221736))
+    torch.testing.assert_close(best_bitstring, bitstring.tensor([1, 1]))
