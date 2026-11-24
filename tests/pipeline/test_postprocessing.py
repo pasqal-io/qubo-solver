@@ -14,8 +14,6 @@ from qubosolver import (
     Dataset,
     Instance,
     Solution,
-    Solver,
-    SolverConfig,
     analysis,
     bitstring,
     bitstrings,
@@ -29,38 +27,6 @@ from qubosolver.solving.classical.iterative_bitflip_local_search import (
     _best_improvement_search_batch,
 )
 from qubosolver.utils import _costs
-
-
-@pytest.mark.parametrize("postprocessing", [True, False])
-def test_basic_qubo_2d_integration(postprocessing: bool) -> None:
-    # fmt: off
-    Q = matrix.tensor([
-        [-10.0, 1.0],
-        [1.0, -10.0]
-    ])
-    # fmt: on
-
-    instance = Instance(matrix=Q)
-    solver = Solver(instance, SolverConfig(postprocessing=postprocessing))
-    solution = Solution(
-        bitstrings=bitstrings.tensor([[0, 0]]),
-        costs=vector.tensor([0.0]),
-        counts=vectori.tensor([1]),
-        probabilities=vector.tensor([1.0]),
-    )
-
-    pp_solution = solver._post_process(solution)
-    pp_solution._sort_by_cost()
-
-    if postprocessing:
-        torch.testing.assert_close(pp_solution.bitstrings[0, :], bitstring.tensor([1, 1]))
-        torch.testing.assert_close(pp_solution.costs, vector.tensor([-18.0]))
-    else:
-        torch.testing.assert_close(pp_solution.bitstrings[0, :], bitstring.tensor([0, 0]))
-        torch.testing.assert_close(pp_solution.costs, vector.tensor([0.0]))
-
-    df = analysis.to_dataframe([pp_solution])
-    print(f"\n{df}")
 
 
 def test_basic_qubo_2d() -> None:

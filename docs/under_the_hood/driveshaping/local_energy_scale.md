@@ -1,6 +1,6 @@
 ## Local-Energy-Scale Drive Shaper
 
-`LocalEnergyScaleDriveShaper` generates a fixed analog drive from:
+`drive_shaping.local_energy_scale.build_drive` generates a fixed analog drive from:
 
 - the diagonal of the QUBO matrix;
 - the interactions returned by the embedded register;
@@ -269,23 +269,17 @@ When DMM is active, the weighted detuning waveform is created with
 
 | Field | Type | Description |
 |---|---|---|
-| `drive_shaping_method` | `DriveType \| str` | `DriveType.LOCAL_ENERGY_SCALE` or `"local_energy_scale"` |
-| `dmm` | `bool` | Requests DMM encoding when supported by the device |
-| `local_energy_scale_kappa` | `float` | Multiplies the mean local energy scale; default: `0.25` |
+| `device` | `qoolqit.Device` | Target device; its specs bound the drive |
+| `dmm` | `bool` | Requests DMM encoding when supported by the device; default: `True` |
+| `kappa` | `float` | Multiplies the mean local energy scale; default: `0.1` |
 
 ---
 
 ### Example
 
 ```python
-from qubosolver import (
-    DriveShapingConfig,
-    DriveType,
-    Instance,
-    Solver,
-    SolverConfig,
-    matrix,
-)
+import qoolqit
+from qubosolver import Instance, embedding, drive_shaping, matrix
 
 qubo = matrix.tensor(
     [
@@ -297,18 +291,10 @@ qubo = matrix.tensor(
 )
 
 instance = Instance(matrix=qubo)
+device = qoolqit.AnalogDeviceWithDMM()
+register = embedding.blade.embed_for_device(instance, device)
 
-config = SolverConfig(
-    use_quantum=True,
-    drive_shaping=DriveShapingConfig(
-        drive_shaping_method=DriveType.LOCAL_ENERGY_SCALE,
-        dmm=True,
-        local_energy_scale_kappa=0.25,
-    ),
+drive = drive_shaping.local_energy_scale.build_drive(
+    instance, register, device=device, dmm=True, kappa=0.25
 )
-
-solver = Solver(instance, config)
-solution = solver.solve()
-
-print(solution)
 ```

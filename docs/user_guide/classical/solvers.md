@@ -1,6 +1,6 @@
 # Classical Solvers
 
-Classical solvers tackle a QUBO `Instance` entirely on CPU, without going through the quantum pipeline. Each one is a standalone function under `solving`, callable directly with the instance and its own set of keyword arguments — no `Solver`/`SolverConfig` wiring required. They differ in the trade-off between solution quality, runtime, and whether they need a starting point.
+Classical solvers tackle a QUBO `Instance` entirely on CPU, without going through the quantum pipeline. Each one is a standalone function under `solving`, callable directly with the instance and its own set of keyword arguments. They differ in the trade-off between solution quality, runtime, and whether they need a starting point.
 
 ## Without an initial solution
 
@@ -102,45 +102,3 @@ print(analysis.to_dataframe([refined_solution]))
 ```
 
 For full parameter details, see the [classical solvers API reference](../../api/classical_solving.md).
-
-## The `Solver` shortcut
-
-For the common case, [`SolverConfig`][qubosolver.SolverConfig] and [`Solver`][qubosolver.Solver] wrap solver selection through [`ClassicalSolvingConfig`][qubosolver.ClassicalSolvingConfig], and (optionally) the initial-solution sampling into a single call:
-
-```python exec="on" source="tabbed-left" session="shortcut" result="text"
-from qubosolver import (
-    Instance,
-    Solver,
-    SolverConfig,
-    ClassicalSolvingConfig,
-    matrix,
-    analysis,
-)
-from dataclasses import asdict
-import pprint
-
-instance = Instance(
-    matrix.tensor(
-        [
-            [-2.0, 1.0, 0.0, 1.5, 0.0],
-            [1.0, -1.5, 1.0, 0.0, 0.5],
-            [0.0, 1.0, -2.0, 1.0, 1.0],
-            [1.5, 0.0, 1.0, -1.0, 0.5],
-            [0.0, 0.5, 1.0, 0.5, -1.5],
-        ]
-    )
-)
-
-classical_config = ClassicalSolvingConfig(
-    algorithm="tabu_search",
-    # algorithm="simulated_annealing",
-    # algorithm="cplex",
-)
-solver_config = SolverConfig(solving=classical_config)
-solver = Solver(instance, solver_config)
-solution = solver.solve()
-
-print(pprint.pformat(asdict(solver_config.solving)))
-print()
-print(analysis.to_dataframe([solution]))
-```

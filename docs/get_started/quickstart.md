@@ -12,10 +12,20 @@ pip install qubo-solver
 ##  Your first ⚛️**Quantum**⚛️ solve
 
 !!! info "Runs on an emulator, no QPU required"
-    By default, the solver runs locally using Pasqal's [emulators](https://docs.pasqal.com/qpu-emulators/emulators/), so you can try it out without access to real quantum hardware.
+    This example runs locally using Pasqal's [emulators](https://docs.pasqal.com/qpu-emulators/emulators/), so you can try it out without access to real quantum hardware.
 
 ```python exec="on" session="negative" source="tabbed-left" result="text"
-from qubosolver import Instance, Solver, matrix, analysis
+import qoolqit
+from qubosolver import (
+    Instance,
+    LocalEmulator,
+    Solution,
+    analysis,
+    drive_shaping,
+    embedding,
+    matrix,
+    solving,
+)
 
 # Define an Instance from a symmetric matrix
 Q = matrix.tensor(
@@ -26,10 +36,14 @@ Q = matrix.tensor(
     ]
 )
 instance = Instance(Q)
+device = qoolqit.AnalogDeviceWithDMM()
 
-# Instantiate the quantum solver (default)
-solver = Solver(instance)
-solution = solver.solve()
+# Map the variables onto atoms, build the laser drive, compile and run on a local emulator
+register = embedding.blade.embed_for_device(instance, device)
+drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
+program = solving.analog_quantum_sampling.compile(register, drive, device)
+job = LocalEmulator().run(program)
+solution = Solution.from_results(job.results(), instance)
 
 print(analysis.to_dataframe([solution]))
 ```

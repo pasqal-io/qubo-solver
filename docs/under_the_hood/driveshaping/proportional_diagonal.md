@@ -1,10 +1,10 @@
 ## Proportional-Diagonal Drive Shaper
 
-`ProportionalDiagonalDriveShaper` constructs a fixed, closed-form analog drive directly from
+`drive_shaping.proportional_diagonal.build_drive` constructs a fixed, closed-form analog drive directly from
 the diagonal of the QUBO matrix, without running any classical pulse
 optimization loop.
 
-Compared with [`BayesianSearchDriveShaper`](./bayesian_search.md), it is lighter and faster:
+Compared with [Bayesian search](./bayesian_search.md), it is lighter and faster:
 it builds the drive analytically from the problem structure and the hardware
 limits. It is especially useful when the diagonal coefficients carry meaningful
 site-dependent bias information.
@@ -138,7 +138,7 @@ Hardware bounds are enforced at compilation-time by QoolQit (TODO: link referenc
 
 ### Register
 
-The register should be normalized to have a minimal inter-atomic distance equal to 1 (plus a margin, e.g. 1.001). This can be done using the parameter `min_distance` from `EmbeddingConfig`.
+The register should be normalized to have a minimal inter-atomic distance equal to 1 (plus a margin, e.g. 1.001). The embedders' `embed_for_device` functions size the register for the target device.
 
 ---
 
@@ -147,12 +147,12 @@ The register should be normalized to have a minimal inter-atomic distance equal 
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `drive_shaping_method` | `drive_shaping.Algorithm \| str` | Must be set to `drive_shaping.Algorithm.PROPORTIONAL_DIAGONAL` or `"proportional_diagonal"` |
-| `dmm` | `bool` | Enables site-dependent final detuning through weighted DMM detunings |
-| `proportional_diagonal_kappa` | `float` | Proportionality factor used to derive $\Omega_{\max}$ from the detuning scale; current fallback default: `0.25` |
+| `device` | `qoolqit.Device` | Target device; its specs bound the drive |
+| `dmm` | `bool` | Enables site-dependent final detuning through weighted DMM detunings; default: `True` |
+| `kappa` | `float` | Proportionality factor used to derive $\Omega_{\max}$ from the detuning scale; default: `1.0` |
 
-These parameters are provided through `DriveShapingConfig` and read at drive
-generation time.
+These parameters are keyword arguments of
+`drive_shaping.proportional_diagonal.build_drive`.
 
 ---
 
@@ -170,10 +170,10 @@ generation time.
 ### Example
 
 ```python
-import torch
-from qubosolver import Instance, SolverConfig, DriveShapingConfig, Solver, drive_shaping
+import qoolqit
+from qubosolver import Instance, embedding, drive_shaping, matrix
 
-Q = torch.tensor(
+Q = matrix.tensor(
     [
         [-1.0, 0.5, 0.2],
         [0.5, -2.0, 0.3],
@@ -182,18 +182,10 @@ Q = torch.tensor(
 )
 
 instance = Instance(Q)
+device = qoolqit.AnalogDeviceWithDMM()
+register = embedding.blade.embed_for_device(instance, device)
 
-config = SolverConfig(
-    use_quantum=True,
-    drive_shaping=DriveShapingConfig(
-        drive_shaping_method=drive_shaping.Algorithm.PROPORTIONAL_DIAGONAL,
-        dmm=True,
-        proportional_diagonal_kappa=0.25,
-    ),
+drive = drive_shaping.proportional_diagonal.build_drive(
+    instance, register, device=device, dmm=True, kappa=0.25
 )
-
-solver = Solver(instance, config)
-solution = solver.solve()
-
-print(solution)
 ```

@@ -189,7 +189,7 @@ def _run_simulation(  # noqa: PLR0913
     """Execute one quantum simulation and return a costed, sorted solution.
 
     Compiles the program via
-    `~qubosolver.solvers.analog_quantum_sampling` using the
+    [`analog_quantum_sampling`][qubosolver.solving.quantum.analog_quantum_sampling] using the
     `MAX_ENERGY` compiler profile (the default), then submits it for
     execution via `backend.run(program)`.
 
@@ -256,8 +256,8 @@ def solve(  # noqa: PLR0913
             number of evaluations, and objective function.
 
     Returns:
-        A tuple of the best [`qoolqit.Drive`][] found and the corresponding
-            [`Solution`][].
+        A tuple of the [`Solution`][] obtained with the best drive found, and that
+            [`qoolqit.Drive`][].
     """
     config = config or Config()
 

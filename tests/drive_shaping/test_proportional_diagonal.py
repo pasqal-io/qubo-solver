@@ -18,14 +18,11 @@ from qoolqit import AnalogDevice, DigitalAnalogDevice
 
 from qubosolver import (
     Candidate,
-    DriveShapingConfig,
-    EmbeddingConfig,
     Instance,
-    QuantumSolvingConfig,
+    LocalEmulator,
     Solution,
-    Solver,
-    SolverConfig,
     drive_shaping,
+    embedding,
     matrix,
     solving,
     tensor,
@@ -85,31 +82,18 @@ def test_with_perfect_embedding(
     print(f"All expected optimal bitstrings: {[s.string for s in expected_optimal_solutions]}")
     print(f"Number of expected optimal solutions: {len(expected_optimal_solutions)}\n")
 
-    embed_cfg = EmbeddingConfig(
-        algorithm="greedy_layout",
+    device = device_type()
+    register = embedding.greedy_layout.embed_for_device(instance, device)
+    drive = drive_shaping.proportional_diagonal.build_drive(
+        instance, register, device=device, dmm=device_type is DigitalAnalogDevice, kappa=0.5
     )
-
-    drive_cfg = DriveShapingConfig(
-        algorithm="proportional_diagonal",
-        proportional_diagonal_kappa=0.5,
+    program = solving.analog_quantum_sampling.compile(
+        register, drive, device, default_sequence_duration=6000
     )
-
-    config = SolverConfig(
-        solving=QuantumSolvingConfig(
-            embedding=embed_cfg,
-            drive_shaping=drive_cfg,
-            device=device_type(),
-        ),
-        preprocessing=False,
-        postprocessing=False,
-    )
-
-    solver = Solver(instance, config)
-    quantum_solution = solver.solve()
+    quantum_solution = Solution.from_results(LocalEmulator().run(program).results(), instance)
 
     print(f"{analysis.to_dataframe([quantum_solution])}")
 
-    register = solver._embedding()
     print(f"Register: {register.qubits}")
     print(f"Distances: {register.distances()}")
 
@@ -220,3 +204,12 @@ def test_too_small_kappa(caplog: pytest.LogCaptureFixture) -> None:
         )
 
     check.is_in("proportional_diagonal_kappa is too small (0.01)", caplog.text)
+
+
+def test_device_without_max_amplitude() -> None:
+    register = qoolqit.Register.from_coordinates(tensor.tensor([[0.0, 0.0], [1.0, 0.0]]))
+    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+    drive = drive_shaping.proportional_diagonal.build_drive(
+        Instance(Q), register, dmm=False, device=qoolqit.MockDevice()
+    )
+    check.is_instance(drive, qoolqit.Drive)

@@ -63,9 +63,18 @@ for file in notebooks_files:
 
 @pytest.mark.duration(22)
 @pytest.mark.parametrize("notebook", notebooks, ids=notebooks_names)
-def test_notebooks(notebook: Path) -> None:
+def test_notebooks(notebook: Path, tmp_path: Path) -> None:
     """Execute docs notebooks as a test, passes if it returns 0."""
     jupyter_cmd = ["-m", "jupyter", "nbconvert", "--to", "python", "--execute"]
+    if sys.platform != "win32":
+        # Kernels started in parallel (pytest-xdist) pick free TCP ports before binding them,
+        # so two can race for the same port ("Address already in use"). IPC sockets avoid
+        # ports altogether (they are unavailable on Windows). Their path must be absolute,
+        # since the kernel runs in the notebook's directory, and unique per test.
+        jupyter_cmd += [
+            "--KernelManager.transport=ipc",
+            f"--KernelManager.ip={tmp_path / 'kernel'}",
+        ]
     cmd: list[str | Path] = [sys.executable, *jupyter_cmd, notebook]
     py_file = notebook.with_suffix(".py")
     try:

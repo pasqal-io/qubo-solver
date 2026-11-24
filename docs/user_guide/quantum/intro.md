@@ -128,41 +128,6 @@ Each call returns a plain object you can inspect or pass to a different step: sw
 
 To run remotely (on a remote emulator or a real QPU), pass a `RemoteEmulator` or `QPU` backend instead of `LocalEmulator`. Remote runs are asynchronous: `backend.run(program)` returns as soon as the job is queued, so you can save its identifiers and retrieve the results later. See the [qubosolver-in-full tutorial](../../tutorials/02-qubosolver-in-full.ipynb) for the full remote and save/retrieve example, as well as the equivalent classical functional call.
 
-## The `Solver` shortcut
-
-For the common case, [`SolverConfig`][qubosolver.SolverConfig] and [`Solver`][qubosolver.Solver] wrap the four steps above into a single call, using sensible defaults for anything you don't specify:
-
-```python exec="on" source="tabbed-left" session="negative" result="text"
-from qubosolver import (
-    Instance,
-    Solver,
-    SolverConfig,
-    matrix,
-    analysis,
-)
-
-# Private utility to set seed.
-from qubosolver.utils._random import manual_seed
-
-manual_seed(147)
-
-instance = Instance(
-    matrix.tensor(
-        [
-            [-0.2, 0.0, 1.0],
-            [0.0, -1.0, 1.5],
-            [1.0, 1.5, -0.1],
-        ]
-    )
-)
-
-config = SolverConfig()
-solver = Solver(instance, config)
-solution = solver.solve()
-
-print(analysis.to_dataframe([solution]))
-```
-
 ## Where to go next
 
 - Learn how variables are mapped onto atoms in [Embedding](embedding.md).

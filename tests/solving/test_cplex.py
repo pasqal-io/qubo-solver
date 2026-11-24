@@ -15,11 +15,8 @@ except ImportError:  # no cov
     cplex = None  # tests using it are skipped via the `extras` marker below
 
 from qubosolver import (
-    ClassicalSolvingConfig,
     Instance,
     Solution,
-    Solver,
-    SolverConfig,
     matrix,
     solving,
     tensor,
@@ -69,25 +66,14 @@ def test_to_solution_without_incumbent() -> None:
         _to_solution(problem.solution)
 
 
-def test_qubo_solver_classical_cplex() -> None:
+def test_cplex_solve_identity() -> None:
     # Create a simple 2x2 QUBO instance.
     # For example, consider a QUBO where the optimum is known.
     # Here we use an identity matrix.
     Q = matrix.tensor([[1.0, 0.0], [0.0, 1.0]])
     instance = Instance(matrix=Q)
 
-    # Create a solving.Config object with classical solver options.
-    classical_config = ClassicalSolvingConfig(
-        algorithm="cplex",
-        time_limit=10.0,
-    )
-    config = SolverConfig(solving=classical_config)
-
-    # Instantiate the classical solver via the pipeline's classical solver dispatcher.
-    classical_solver = Solver(instance, config)
-
-    # Solve the QUBO problem.
-    solution = classical_solver.solve()
+    solution = solving.cplex.solve(instance, time_limit=10.0)
 
     # Assert that the solution is an instance of Solution.
     assert isinstance(solution, Solution)

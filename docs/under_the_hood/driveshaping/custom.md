@@ -1,52 +1,39 @@
-## Custom Drive Shaper config
-If one desires to develop his own drive shaping method, a subclass of `qubosolver.pipeline.drive.BaseDriveShaper` should be implemented with a mandatory `generate` method.
+## Custom drive shaping
+A drive shaping method is simply a function that builds a [`qoolqit.Drive`][] for a register.
+Write your own and pass its output to
+[`solving.analog_quantum_sampling.compile`][qubosolver.solving.quantum.analog_quantum_sampling.compile]
+like any built-in drive.
 
-The `generate` method syntax is `generate(register: Register, instance: Instance) -> tuple[Drive, Solution]`
- with arguments:
+For concrete examples, see the [proportional-diagonal](./proportional_diagonal.md) and
+[local-energy-scale](./local_energy_scale.md) drives, implemented in
+`qubosolver.drive_shaping`.
 
-- a `Register` instance specifying the qubits we work with.
-- a `Instance` specifying the qubo problem we target.
+Let us show an example of a custom simple hard-coded drive.
 
-It returns:
+```python
+import qoolqit
+from qoolqit import ConstantWaveform, Drive, RampWaveform
 
-- an instance of `qoolqit.Drive`
-- a `Solution` specyfing the solution that may be used by a solver.
+from qubosolver import Instance, LocalEmulator, Solution, embedding, matrix, solving
 
-For concrete examples, we have the [`ProportionalDiagonalDriveShaper`](./proportional_diagonal.md) and the [`BayesianSearchDriveShaper`](./bayesian_search.md) and their current implementations lie in `qubosolver.pipeline.drive.py`.
 
-Let us show an example of a custom simple hard-coded drive shaper.
+def simple_drive() -> Drive:
+    # Defining the drive parameters
+    omega = 2.0
+    delta_i = -4.0 * omega
+    delta_f = -delta_i
+    T = 200.0
 
-```python exec="on" source="block" html="1"
-# TODO: revamp with functional
-# from qoolqit import Drive, Constant, Ramp, Register
-# from qubosolver.pipeline.drive import BaseDriveShaper
-# from qubosolver.data import Solution
-# from qubosolver.config import (
-#     DriveShapingConfig,
-#     SolverConfig,
-# )
-#
-# class SimpleShaper(BaseDriveShaper):
-#     def generate(
-#         self,
-#         register: Register,
-#     ) -> tuple[Drive, Solution]:
-#
-#         # Defining the drive parameters
-#         omega = 2.0
-#         delta_i = -4.0 * omega
-#         delta_f = -delta_i
-#         T = 200.0
-#
-#         # Defining the drive
-#         wf_amp = Constant(T, omega)
-#         wf_det = Ramp(T, delta_i, delta_f)
-#         drive = Drive(amplitude=wf_amp, detuning=wf_det)
-#
-#         return drive, Solution()
-#
-# config = SolverConfig(
-#     use_quantum=True,
-#     drive_shaping=DriveShapingConfig(drive_shaping_method=SimpleShaper),
-# )
+    # Defining the drive
+    wf_amp = ConstantWaveform(T, omega)
+    wf_det = RampWaveform(T, delta_i, delta_f)
+    return Drive(amplitude=wf_amp, detuning=wf_det)
+
+
+instance = Instance(matrix.tensor([[-1.0, 0.5], [0.5, -2.0]]))
+device = qoolqit.AnalogDevice()
+register = embedding.blade.embed_for_device(instance, device)
+
+program = solving.analog_quantum_sampling.compile(register, simple_drive(), device)
+solution = Solution.from_results(LocalEmulator().run(program).results(), instance)
 ```

@@ -1,6 +1,6 @@
 # Embedding workflow
 
-Embedding maps a QUBO instance's variables onto atom positions on a quantum device, so that the physical interaction between atoms approximates the QUBO's coefficients. Each embedding algorithm is callable directly, or picked and configured through `Solver`/`SolverConfig`.
+Embedding maps a QUBO instance's variables onto atom positions on a quantum device, so that the physical interaction between atoms approximates the QUBO's coefficients. Each embedding algorithm is a function you call directly.
 
 ## Goal of embedding
 
@@ -287,30 +287,4 @@ fig.savefig(output_dir / "quantum_embedding_custom_register.svg")
 plt.close(fig)
 
 print('<figure><figcaption>Register</figcaption><img src="quantum_embedding_custom_register.svg" alt="Register of atoms embedding the QUBO instance"></figure>')  # markdown-exec: hide
-```
-
-## The `Solver` shortcut
-
-Rather than calling `embedding.blade.embed` or `embedding.greedy_layout.embed` directly, you can select and configure the embedding algorithm through `EmbeddingConfig`, nested in `QuantumSolvingConfig` and `SolverConfig`; `Solver` then runs it as part of the full quantum pipeline. Leaving `EmbeddingConfig` unset falls back to the BLaDE embedder — see [`SolverConfig`][qubosolver.SolverConfig] for the full set of defaults.
-
-`EmbeddingConfig` only exposes the most commonly tuned parameters of each algorithm (e.g. `blade_steps_per_round`, `greedy_layout_lattice`). Finer-grained parameters — such as BLaDE's `pca` flag or its `compute_*` schedule functions — are not settable this way; call `embedding.blade.embed`/`embedding.greedy_layout.embed` directly with a full `blade.Config`/`greedy_layout.Config` if you need those.
-
-```python exec="on" source="tabbed-left" session="embedding" result="text"
-from qubosolver import SolverConfig, QuantumSolvingConfig, EmbeddingConfig
-from dataclasses import asdict
-import pprint
-
-embedding_config = EmbeddingConfig(
-    algorithm="blade",
-    # algorithm = "greedy_layout",
-    # greedy_layout_lattice = "triangular",
-    greedy_layout_lattice="square",
-)
-quantum_config = QuantumSolvingConfig(
-    embedding=embedding_config,
-)
-solver_config = SolverConfig(
-    solving=quantum_config,
-)
-print(pprint.pformat(asdict(solver_config.solving.embedding)))
 ```

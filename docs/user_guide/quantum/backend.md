@@ -1,6 +1,6 @@
 # Backends
 
-A backend runs a compiled [`qoolqit.QuantumProgram`][] — the output of [compilation](compilation.md) — and returns a job you can wait on for results. `qubosolver` doesn't implement its own execution engines; it wraps the backends exposed by [Qoolqit](https://github.com/pasqal-io/qoolqit), picked and configured through `Solver`/`SolverConfig`, or used directly like any other step of the [quantum pipeline](intro.md).
+A backend runs a compiled [`qoolqit.QuantumProgram`][] — the output of [compilation](compilation.md) — and returns a job you can wait on for results. `qubosolver` doesn't implement its own execution engines; it wraps the backends exposed by [Qoolqit](https://github.com/pasqal-io/qoolqit), used directly like any other step of the [quantum pipeline](intro.md).
 
 ## Goal of backend selection
 
@@ -12,7 +12,7 @@ Emulators (local or remote) simulate the Rydberg Hamiltonian on classical hardwa
 - **State-vector** (`SVBackend` / `RemoteSVBackend`): tractable for medium problems (15-25 qubits),
 - **Tensor network** (`MPSBackend` / `RemoteMPSBackend`): state of the art tensor network techniques, tractable for large problems (≥ 26 qubits).
 
-**Note:** The number of qubits used may differ from the input QUBO size due to preprocessing or decomposition — e.g. `DecomposeQuboSolver` breaks large QUBOs into smaller subproblems, changing the qubit count that drives backend selection.
+**Note:** The number of qubits used may differ from the input QUBO size due to preprocessing or decomposition — e.g. [decomposition](embedding.md#partial-embedding-and-decomposition) breaks large QUBOs into smaller subproblems, changing the qubit count that drives backend selection.
 
 ## Local emulator
 
@@ -207,24 +207,3 @@ print(analysis.to_dataframe([solution]))
 ## Asynchronous remote runs
 
 Remote runs, whether on a QPU or a remote emulator, are submitted asynchronously: `backend.run(program)` returns as soon as the job is queued, without waiting for results. This lets you save the job's identifiers and the instance, disconnect, and retrieve the results later — from the same session or a different one — rather than blocking until the run completes. See the [qubosolver-in-full tutorial](../../tutorials/02-qubosolver-in-full.ipynb) for the full save/retrieve example.
-
-## The `Solver` shortcut
-
-Rather than building a program and calling `backend.run` directly, you can select and configure the backend and device through `QuantumSolvingConfig`, nested in `SolverConfig`; `Solver` then runs it as part of the full quantum pipeline. Leaving `backend`/`device` unset falls back to a `LocalEmulator` on `AnalogDeviceWithDMM` — see [`SolverConfig`][qubosolver.SolverConfig] for the full set of defaults.
-
-```python exec="on" source="tabbed-left" session="backend" result="text"
-from qubosolver import SolverConfig, QuantumSolvingConfig, LocalEmulator
-from pulser_simulation import QutipBackendV2
-from dataclasses import asdict
-import pprint
-import qoolqit
-
-quantum_config = QuantumSolvingConfig(
-    backend=LocalEmulator(backend_type=QutipBackendV2, num_shots=500),
-    device=qoolqit.AnalogDeviceWithDMM(),
-)
-solver_config = SolverConfig(
-    solving=quantum_config,
-)
-print(pprint.pformat(asdict(solver_config.solving)))
-```

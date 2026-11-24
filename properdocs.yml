@@ -59,7 +59,6 @@ nav:
 
   - API:
     - qubosolver: api/qubosolver.md
-    - qubosolver.solver: api/solver.md
     - qubosolver.analysis: api/analysis.md
     - qubosolver.drive_shaping: api/drive_shaping.md
     - qubosolver.embedding: api/embedding.md
