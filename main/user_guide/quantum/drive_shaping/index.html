@@ -1069,17 +1069,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#the-solver-shortcut" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Solver shortcut
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -2572,8 +2561,6 @@
       
         
       
-        
-      
     
     
     
@@ -2634,34 +2621,6 @@
     
   
     qubosolver
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../api/solver/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.solver
   
 
     
@@ -2961,10 +2920,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
         
           
-          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
             
   
   
@@ -2982,8 +2941,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3610,17 +3569,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#the-solver-shortcut" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Solver shortcut
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -3642,7 +3590,7 @@
 
 
 <h1 id="drive-shaping-workflow">Drive shaping workflow</h1>
-<p>Drive shaping builds the time-dependent drive Hamiltonian — amplitude and detuning waveforms, and optionally a detuning map — applied to a register during quantum solving. Each drive shaping algorithm is callable directly, or picked and configured through <code>Solver</code>/<code>SolverConfig</code>.</p>
+<p>Drive shaping builds the time-dependent drive Hamiltonian — amplitude and detuning waveforms, and optionally a detuning map — applied to a register during quantum solving. Each drive shaping algorithm is a function you call directly.</p>
 <h2 id="goal-of-drive-shaping">Goal of drive shaping</h2>
 <p>The <a href="../embedding/">embedding</a> step encodes the QUBO's off-diagonal coefficients <span class="arithmatex">\(Q_{ij}\)</span> into the physical interaction between atoms. The diagonal coefficients <span class="arithmatex">\(Q_{ii}\)</span> are encoded separately, as local detunings <span class="arithmatex">\(\delta_i\)</span> applied to each atom: <span class="arithmatex">\(Q_{ii} \longleftrightarrow -2\delta_i\)</span> (see <a href="../intro/">The quantum pipeline</a>). Drive shaping is the step that builds this detuning schedule, together with the amplitude (Rabi frequency) schedule that drives the system, so that the ground state of the resulting Hamiltonian encodes a good solution of the QUBO.</p>
 <p>A drive shaping algorithm returns a <a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Drive"><code>qoolqit.Drive</code></a> — an amplitude waveform, a detuning waveform, and optionally a per-atom weighted detuning (a Detuning Map Modulator, or DMM) for site-dependent control — together with a <code>Solution</code>. Algorithms that only build the drive analytically from the problem's structure return an empty <code>Solution</code>, since no sampling has happened yet; algorithms that also run a quantum simulation internally return a populated one.</p>
@@ -3655,7 +3603,7 @@
 <li>Under the hood: <a href="../../../under_the_hood/driveshaping/proportional_diagonal/">Proportional-diagonal</a></li>
 </ul>
 <h3 id="code-example">Code example</h3>
-<p><div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-23--__tabbed_1_1" name="exec-23--__tabbed_1" type="radio" /><input id="exec-23--__tabbed_1_2" name="exec-23--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-23--__tabbed_1_1">Source</label><label for="exec-23--__tabbed_1_2">Result</label></div>
+<p><div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-18--__tabbed_1_1" name="exec-18--__tabbed_1" type="radio" /><input id="exec-18--__tabbed_1_2" name="exec-18--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-18--__tabbed_1_1">Source</label><label for="exec-18--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">embedding</span><span class="p">,</span> <span class="n">drive_shaping</span>
@@ -3697,7 +3645,7 @@
 </div>
 </div>
 Plot the resulting drive:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-24--__tabbed_1_1" name="exec-24--__tabbed_1" type="radio" /><input id="exec-24--__tabbed_1_2" name="exec-24--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-24--__tabbed_1_1">Result</label><label for="exec-24--__tabbed_1_2">Source</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-19--__tabbed_1_1" name="exec-19--__tabbed_1" type="radio" /><input id="exec-19--__tabbed_1_2" name="exec-19--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-19--__tabbed_1_1">Result</label><label for="exec-19--__tabbed_1_2">Source</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><figure><figcaption>Drive</figcaption><img src="quantum_drive_shaping_proportional_diagonal.svg" alt="Proportional-diagonal drive"></figure></p>
@@ -3725,7 +3673,7 @@ Plot the resulting drive:</p>
 <li>Under the hood: <a href="../../../under_the_hood/driveshaping/local_energy_scale/">Local-energy-scale</a></li>
 </ul>
 <h3 id="code-example_1">Code example</h3>
-<p><div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-25--__tabbed_1_1" name="exec-25--__tabbed_1" type="radio" /><input id="exec-25--__tabbed_1_2" name="exec-25--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-25--__tabbed_1_1">Source</label><label for="exec-25--__tabbed_1_2">Result</label></div>
+<p><div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-20--__tabbed_1_1" name="exec-20--__tabbed_1" type="radio" /><input id="exec-20--__tabbed_1_2" name="exec-20--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-20--__tabbed_1_1">Source</label><label for="exec-20--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">embedding</span><span class="p">,</span> <span class="n">drive_shaping</span>
@@ -3767,7 +3715,7 @@ Plot the resulting drive:</p>
 </div>
 </div>
 Plot the resulting drive:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-26--__tabbed_1_1" name="exec-26--__tabbed_1" type="radio" /><input id="exec-26--__tabbed_1_2" name="exec-26--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-26--__tabbed_1_1">Result</label><label for="exec-26--__tabbed_1_2">Source</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-21--__tabbed_1_1" name="exec-21--__tabbed_1" type="radio" /><input id="exec-21--__tabbed_1_2" name="exec-21--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-21--__tabbed_1_1">Result</label><label for="exec-21--__tabbed_1_2">Source</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><figure><figcaption>Drive</figcaption><img src="quantum_drive_shaping_local_energy_scale.svg" alt="Local-energy-scale drive"></figure></p>
@@ -3797,7 +3745,7 @@ Plot the resulting drive:</p>
 </ul>
 <p>The example below uses a small <code>n_evaluations</code> for a quick, self-contained doc run; see <a href="../../../api/quantum_solving/"><code>solving.drive_bayesian_search.Config</code></a> for the full set of parameters, including the initial waveform knots, the random seed, and the objective function.</p>
 <h3 id="code-example_2">Code example</h3>
-<p><div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-27--__tabbed_1_1" name="exec-27--__tabbed_1" type="radio" /><input id="exec-27--__tabbed_1_2" name="exec-27--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-27--__tabbed_1_1">Source</label><label for="exec-27--__tabbed_1_2">Result</label></div>
+<p><div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-22--__tabbed_1_1" name="exec-22--__tabbed_1" type="radio" /><input id="exec-22--__tabbed_1_2" name="exec-22--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-22--__tabbed_1_1">Source</label><label for="exec-22--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">embedding</span><span class="p">,</span> <span class="n">solving</span><span class="p">,</span> <span class="n">analysis</span><span class="p">,</span> <span class="n">LocalEmulator</span>
@@ -3845,7 +3793,7 @@ Plot the resulting drive:</p>
 </div>
 </div>
 Plot the resulting drive:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-28--__tabbed_1_1" name="exec-28--__tabbed_1" type="radio" /><input id="exec-28--__tabbed_1_2" name="exec-28--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-28--__tabbed_1_1">Result</label><label for="exec-28--__tabbed_1_2">Source</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-23--__tabbed_1_1" name="exec-23--__tabbed_1" type="radio" /><input id="exec-23--__tabbed_1_2" name="exec-23--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-23--__tabbed_1_1">Result</label><label for="exec-23--__tabbed_1_2">Source</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><figure><figcaption>Drive</figcaption><img src="quantum_drive_shaping_bayesian_search.svg" alt="Bayesian-search drive"></figure></p>
@@ -3867,7 +3815,7 @@ Plot the resulting drive:</p>
 </div>
 <h2 id="custom-drive">Custom drive</h2>
 <p>You can skip the built-in algorithms altogether and build a <a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Drive"><code>qoolqit.Drive</code></a> directly from waveforms, as in the example below, or reuse a drive computed elsewhere:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-29--__tabbed_1_1" name="exec-29--__tabbed_1" type="radio" /><input id="exec-29--__tabbed_1_2" name="exec-29--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-29--__tabbed_1_1">Result</label><label for="exec-29--__tabbed_1_2">Source</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-24--__tabbed_1_1" name="exec-24--__tabbed_1" type="radio" /><input id="exec-24--__tabbed_1_2" name="exec-24--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-24--__tabbed_1_1">Result</label><label for="exec-24--__tabbed_1_2">Source</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><figure><figcaption>Drive</figcaption><img src="quantum_drive_shaping_custom_drive.svg" alt="Custom drive"></figure></p>
@@ -3893,33 +3841,6 @@ Plot the resulting drive:</p>
 </div>
 </div>
 </div>
-<h2 id="the-solver-shortcut">The <code>Solver</code> shortcut</h2>
-<p>Rather than calling <code>drive_shaping.proportional_diagonal.build_drive</code>, <code>drive_shaping.local_energy_scale.build_drive</code>, or <code>solving.drive_bayesian_search.solve</code> directly, you can select and configure the drive shaping algorithm through <code>DriveShapingConfig</code>, nested in <code>QuantumSolvingConfig</code> and <code>SolverConfig</code>; <code>Solver</code> then runs it as part of the full quantum pipeline. Leaving <code>DriveShapingConfig</code> unset falls back to the proportional-diagonal shaper with DMM enabled — see <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SolverConfig&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../../../api/solver/#qubosolver.solver.SolverConfig"><code>SolverConfig</code></a> for the full set of defaults.</p>
-<p><code>DriveShapingConfig</code> only exposes the most commonly tuned parameters of each algorithm (e.g. <code>proportional_diagonal_kappa</code>, <code>local_energy_scale_kappa</code>, <code>bayesian_search_n_calls</code>). Finer-grained parameters — such as Bayesian search's <code>objective_fn</code> or its optimization callback — are not settable this way; call <code>solving.drive_bayesian_search.solve</code> directly with a full <code>solving.drive_bayesian_search.Config</code> if you need those.</p>
-<p>```python exec="on" source="tabbed-left" session="drive_shaping" result="text"
-from qubosolver import SolverConfig, QuantumSolvingConfig, DriveShapingConfig
-from dataclasses import asdict
-import pprint</p>
-<p>drive_shaping_config = DriveShapingConfig(
-    algorithm="local_energy_scale",
-    # algorithm = "proportional_diagonal",
-    # algorithm = "bayesian_search",
-    dmm=True,
-    local_energy_scale_kappa=0.3,
-)
-quantum_config = QuantumSolvingConfig(
-    drive_shaping=drive_shaping_config,
-)
-solver_config = SolverConfig(
-    solving=quantum_config,
-)
-print(pprint.pformat(asdict(solver_config.solving.drive_shaping)))
-```</p>
 
 
 

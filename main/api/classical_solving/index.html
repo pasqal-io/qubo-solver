@@ -2397,8 +2397,6 @@
       
         
       
-        
-      
     
     
     
@@ -2462,34 +2460,6 @@
     
   
     qubosolver
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../solver/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.solver
   
 
     
@@ -3048,10 +3018,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
         
           
-          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="">
             
   
   
@@ -3069,8 +3039,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -4455,8 +4425,8 @@ strategy to every bitstring in an existing <a class="autorefs autorefs-internal"
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
   &lt;/span&gt;" href="../qubosolver/#qubosolver.Solution"><code>Solution</code></a>, or to a batch of
-uniformly random candidates generated on the fly. It is used as a
-post-processing step in <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Solver&lt;/span&gt;" href="../solver/#qubosolver.solver.Solver"><code>Solver</code></a>. <code>"best_improvement"</code> runs every
+uniformly random candidates generated on the fly, e.g. to post-process the
+candidates of another solver. <code>"best_improvement"</code> runs every
 bitstring in lockstep as a single batched search; <code>"first_improvement"</code>
 and <code>"greedy_sweep"</code> improve each bitstring independently.</p>
 

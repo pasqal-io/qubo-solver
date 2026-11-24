@@ -86,7 +86,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#custom-drive-shaper-config" class="md-skip">
+        <a href="#custom-drive-shaping" class="md-skip">
           Skip to content
         </a>
       
@@ -1542,10 +1542,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#custom-drive-shaper-config" class="md-nav__link">
+  <a href="#custom-drive-shaping" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Custom Drive Shaper config
+        Custom drive shaping
       
     </span>
   </a>
@@ -2464,8 +2464,6 @@
       
         
       
-        
-      
     
     
     
@@ -2526,34 +2524,6 @@
     
   
     qubosolver
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../api/solver/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.solver
   
 
     
@@ -2853,10 +2823,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
         
           
-          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
             
   
   
@@ -2874,8 +2844,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3395,10 +3365,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#custom-drive-shaper-config" class="md-nav__link">
+  <a href="#custom-drive-shaping" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Custom Drive Shaper config
+        Custom drive shaping
       
     </span>
   </a>
@@ -3427,57 +3397,41 @@
 
   <h1>Custom</h1>
 
-<h2 id="custom-drive-shaper-config">Custom Drive Shaper config</h2>
-<p>If one desires to develop his own drive shaping method, a subclass of <code>qubosolver.pipeline.drive.BaseDriveShaper</code> should be implemented with a mandatory <code>generate</code> method.</p>
-<p>The <code>generate</code> method syntax is <code>generate(register: Register, instance: Instance) -&gt; tuple[Drive, Solution]</code>
- with arguments:</p>
-<ul>
-<li>a <code>Register</code> instance specifying the qubits we work with.</li>
-<li>a <code>Instance</code> specifying the qubo problem we target.</li>
-</ul>
-<p>It returns:</p>
-<ul>
-<li>an instance of <code>qoolqit.Drive</code></li>
-<li>a <code>Solution</code> specyfing the solution that may be used by a solver.</li>
-</ul>
-<p>For concrete examples, we have the <a href="../proportional_diagonal/"><code>ProportionalDiagonalDriveShaper</code></a> and the <a href="../bayesian_search/"><code>BayesianSearchDriveShaper</code></a> and their current implementations lie in <code>qubosolver.pipeline.drive.py</code>.</p>
-<p>Let us show an example of a custom simple hard-coded drive shaper.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># TODO: revamp with functional</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># from qoolqit import Drive, Constant, Ramp, Register</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># from qubosolver.pipeline.drive import BaseDriveShaper</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># from qubosolver.data import Solution</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># from qubosolver.config import (</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1">#     DriveShapingConfig,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1">#     SolverConfig,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># )</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1">#</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># class SimpleShaper(BaseDriveShaper):</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1">#     def generate(</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1">#         self,</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1">#         register: Register,</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1">#     ) -&gt; tuple[Drive, Solution]:</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1">#</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1">#         # Defining the drive parameters</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="c1">#         omega = 2.0</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="c1">#         delta_i = -4.0 * omega</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1">#         delta_f = -delta_i</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1">#         T = 200.0</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="c1">#</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="c1">#         # Defining the drive</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="c1">#         wf_amp = Constant(T, omega)</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="c1">#         wf_det = Ramp(T, delta_i, delta_f)</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="c1">#         drive = Drive(amplitude=wf_amp, detuning=wf_det)</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="c1">#</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="c1">#         return drive, Solution()</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="c1">#</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="c1"># config = SolverConfig(</span>
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="c1">#     use_quantum=True,</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="c1">#     drive_shaping=DriveShapingConfig(drive_shaping_method=SimpleShaper),</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="c1"># )</span>
+<h2 id="custom-drive-shaping">Custom drive shaping</h2>
+<p>A drive shaping method is simply a function that builds a <a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Drive"><code>qoolqit.Drive</code></a> for a register.
+Write your own and pass its output to
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;compile&lt;/span&gt;" href="../../../api/quantum_solving/#qubosolver.solving.quantum.analog_quantum_sampling.compile"><code>solving.analog_quantum_sampling.compile</code></a>
+like any built-in drive.</p>
+<p>For concrete examples, see the <a href="../proportional_diagonal/">proportional-diagonal</a> and
+<a href="../local_energy_scale/">local-energy-scale</a> drives, implemented in
+<code>qubosolver.drive_shaping</code>.</p>
+<p>Let us show an example of a custom simple hard-coded drive.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qoolqit</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConstantWaveform</span><span class="p">,</span> <span class="n">Drive</span><span class="p">,</span> <span class="n">RampWaveform</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">LocalEmulator</span><span class="p">,</span> <span class="n">Solution</span><span class="p">,</span> <span class="n">embedding</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">solving</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">simple_drive</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Drive</span><span class="p">:</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="c1"># Defining the drive parameters</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">omega</span> <span class="o">=</span> <span class="mf">2.0</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">delta_i</span> <span class="o">=</span> <span class="o">-</span><span class="mf">4.0</span> <span class="o">*</span> <span class="n">omega</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">delta_f</span> <span class="o">=</span> <span class="o">-</span><span class="n">delta_i</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">T</span> <span class="o">=</span> <span class="mf">200.0</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="c1"># Defining the drive</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">wf_amp</span> <span class="o">=</span> <span class="n">ConstantWaveform</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">omega</span><span class="p">)</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">wf_det</span> <span class="o">=</span> <span class="n">RampWaveform</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">delta_i</span><span class="p">,</span> <span class="n">delta_f</span><span class="p">)</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="k">return</span> <span class="n">Drive</span><span class="p">(</span><span class="n">amplitude</span><span class="o">=</span><span class="n">wf_amp</span><span class="p">,</span> <span class="n">detuning</span><span class="o">=</span><span class="n">wf_det</span><span class="p">)</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">]]))</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="n">device</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">AnalogDevice</span><span class="p">()</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="n">register</span> <span class="o">=</span> <span class="n">embedding</span><span class="o">.</span><span class="n">blade</span><span class="o">.</span><span class="n">embed_for_device</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="n">program</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">analog_quantum_sampling</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">register</span><span class="p">,</span> <span class="n">simple_drive</span><span class="p">(),</span> <span class="n">device</span><span class="p">)</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="n">solution</span> <span class="o">=</span> <span class="n">Solution</span><span class="o">.</span><span class="n">from_results</span><span class="p">(</span><span class="n">LocalEmulator</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">program</span><span class="p">)</span><span class="o">.</span><span class="n">results</span><span class="p">(),</span> <span class="n">instance</span><span class="p">)</span>
 </code></pre></div>
-<div class="result">
-
-</div>
 
 
 

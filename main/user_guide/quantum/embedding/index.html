@@ -1052,17 +1052,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#the-solver-shortcut" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Solver shortcut
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -2583,8 +2572,6 @@
       
         
       
-        
-      
     
     
     
@@ -2645,34 +2632,6 @@
     
   
     qubosolver
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../api/solver/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.solver
   
 
     
@@ -2972,10 +2931,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
         
           
-          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
             
   
   
@@ -2993,8 +2952,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3632,17 +3591,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#the-solver-shortcut" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Solver shortcut
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -3664,7 +3612,7 @@
 
 
 <h1 id="embedding-workflow">Embedding workflow</h1>
-<p>Embedding maps a QUBO instance's variables onto atom positions on a quantum device, so that the physical interaction between atoms approximates the QUBO's coefficients. Each embedding algorithm is callable directly, or picked and configured through <code>Solver</code>/<code>SolverConfig</code>.</p>
+<p>Embedding maps a QUBO instance's variables onto atom positions on a quantum device, so that the physical interaction between atoms approximates the QUBO's coefficients. Each embedding algorithm is a function you call directly.</p>
 <h2 id="goal-of-embedding">Goal of embedding</h2>
 <p>Solving a QUBO on a neutral-atom quantum device requires translating the problem's coefficients into a physical layout of atoms. Each QUBO variable <span class="arithmatex">\(i\)</span> is represented by an atom, placed at some position on the device. The interaction strength between two atoms is a function of the physical distance between them (typically decaying with distance, e.g. as <span class="arithmatex">\(1/r^6\)</span> for Rydberg interactions), whereas the QUBO matrix specifies the desired coupling strength <span class="arithmatex">\(Q_{ij}\)</span> between each pair of variables <span class="arithmatex">\(i\)</span> and <span class="arithmatex">\(j\)</span>.</p>
 <p>The goal of embedding is therefore to find atom positions such that the interaction strengths induced by their pairwise distances reproduce, as closely as possible, the couplings encoded in the QUBO matrix — subject to the constraints of the target device (register size, minimal distance between atoms, layout geometry, etc.). A good embedding is what allows the quantum device to encode the optimization problem faithfully, so that its ground state (or low-energy states) correspond to good solutions of the original QUBO.</p>
@@ -3685,7 +3633,7 @@
 </ul>
 <p>The example below runs BLaDE sized for a target device via <code>embed_for_device</code> — the sequence of dimension layers, number of steps per round, and starting positions can all be tuned by combining <code>embedding.blade.Config(device=...)</code> with <code>embed</code> directly. See <a href="https://docs.pasqal.com/qoolqit/reference/embedding/#qoolqit.embedding.BladeConfig">Qoolqit's documentation</a> for the available parameters.</p>
 <h3 id="code-example">Code example</h3>
-<p><div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-30--__tabbed_1_1" name="exec-30--__tabbed_1" type="radio" /><input id="exec-30--__tabbed_1_2" name="exec-30--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-30--__tabbed_1_1">Source</label><label for="exec-30--__tabbed_1_2">Result</label></div>
+<p><div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-25--__tabbed_1_1" name="exec-25--__tabbed_1" type="radio" /><input id="exec-25--__tabbed_1_2" name="exec-25--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-25--__tabbed_1_1">Source</label><label for="exec-25--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">embedding</span>
@@ -3737,7 +3685,7 @@
 </div>
 </div>
 Plot the resulting register:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-31--__tabbed_1_1" name="exec-31--__tabbed_1" type="radio" /><input id="exec-31--__tabbed_1_2" name="exec-31--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-31--__tabbed_1_1">Result</label><label for="exec-31--__tabbed_1_2">Source</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-26--__tabbed_1_1" name="exec-26--__tabbed_1" type="radio" /><input id="exec-26--__tabbed_1_2" name="exec-26--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-26--__tabbed_1_1">Result</label><label for="exec-26--__tabbed_1_2">Source</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><figure><figcaption>Register</figcaption><img src="quantum_embedding_blade_register.svg" alt="Register of atoms embedding the QUBO instance"></figure></p>
@@ -3767,7 +3715,7 @@ Plot the resulting register:</p>
 <li>Under the hood: <a href="../../../under_the_hood/embedding/greedy_layout/">Greedy Layout</a></li>
 </ul>
 <h3 id="code-example_1">Code example</h3>
-<p><div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-32--__tabbed_1_1" name="exec-32--__tabbed_1" type="radio" /><input id="exec-32--__tabbed_1_2" name="exec-32--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-32--__tabbed_1_1">Source</label><label for="exec-32--__tabbed_1_2">Result</label></div>
+<p><div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-27--__tabbed_1_1" name="exec-27--__tabbed_1" type="radio" /><input id="exec-27--__tabbed_1_2" name="exec-27--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-27--__tabbed_1_1">Source</label><label for="exec-27--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">embedding</span>
@@ -3823,7 +3771,7 @@ Plot the resulting register:</p>
 </div>
 </div>
 Plot the resulting register:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-33--__tabbed_1_1" name="exec-33--__tabbed_1" type="radio" /><input id="exec-33--__tabbed_1_2" name="exec-33--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-33--__tabbed_1_1">Result</label><label for="exec-33--__tabbed_1_2">Source</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-28--__tabbed_1_1" name="exec-28--__tabbed_1" type="radio" /><input id="exec-28--__tabbed_1_2" name="exec-28--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-28--__tabbed_1_1">Result</label><label for="exec-28--__tabbed_1_2">Source</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><figure><figcaption>Register</figcaption><img src="quantum_embedding_greedy_layout_register.svg" alt="Register of atoms embedding the QUBO instance"></figure></p>
@@ -3856,7 +3804,7 @@ Plot the resulting register:</p>
 </div>
 <h3 id="quantum-subproblems">Quantum subproblems</h3>
 <p>Each subproblem runs on the register found by the embedder, with a drive shaped for the exact sub-instance. The remaining variables are solved classically.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-34--__tabbed_1_1" name="exec-34--__tabbed_1" type="radio" /><input id="exec-34--__tabbed_1_2" name="exec-34--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-34--__tabbed_1_1">Source</label><label for="exec-34--__tabbed_1_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-29--__tabbed_1_1" name="exec-29--__tabbed_1" type="radio" /><input id="exec-29--__tabbed_1_2" name="exec-29--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-29--__tabbed_1_1">Source</label><label for="exec-29--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
@@ -3937,7 +3885,7 @@ Plot the resulting register:</p>
 <p>The loop leaves every decision to you: rejecting a subproblem is simply not fixing it, stopping early is leaving the loop, and the remainder is <code>reduced_instance</code>, which can be solved by any means. To see which QUBO the register and drive actually implement, including what drive shaping did to the detunings, use <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;extract_qubo&lt;/span&gt;" href="../../../api/qubosolver/#qubosolver.extract_qubo"><code>extract_qubo(register, drive)</code></a>.</p>
 <h3 id="classical-subproblems">Classical subproblems</h3>
 <p>The same loop works with classical sub-solvers. The partial greedy embedder still selects device-sized clusters of variables; its register is simply unused:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-35--__tabbed_1_1" name="exec-35--__tabbed_1" type="radio" /><input id="exec-35--__tabbed_1_2" name="exec-35--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-35--__tabbed_1_1">Source</label><label for="exec-35--__tabbed_1_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-30--__tabbed_1_1" name="exec-30--__tabbed_1" type="radio" /><input id="exec-30--__tabbed_1_2" name="exec-30--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-30--__tabbed_1_1">Source</label><label for="exec-30--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">manual_seed</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
@@ -3994,7 +3942,7 @@ Plot the resulting register:</p>
 </div>
 <h2 id="custom-register">Custom register</h2>
 <p>You can skip embedding algorithms altogether and build a <a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Register"><code>qoolqit.Register</code></a> directly from coordinates, as in the example below, or reuse a register computed elsewhere or encode problem-specific knowledge about where atoms should sit:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-36--__tabbed_1_1" name="exec-36--__tabbed_1" type="radio" /><input id="exec-36--__tabbed_1_2" name="exec-36--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-36--__tabbed_1_1">Result</label><label for="exec-36--__tabbed_1_2">Source</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-31--__tabbed_1_1" name="exec-31--__tabbed_1" type="radio" /><input id="exec-31--__tabbed_1_2" name="exec-31--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-31--__tabbed_1_1">Result</label><label for="exec-31--__tabbed_1_2">Source</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><figure><figcaption>Register</figcaption><img src="quantum_embedding_custom_register.svg" alt="Register of atoms embedding the QUBO instance"></figure></p>
@@ -4014,44 +3962,6 @@ Plot the resulting register:</p>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">()</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_dir</span> <span class="o">/</span> <span class="s2">"quantum_embedding_custom_register.svg"</span><span class="p">)</span>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
-</code></pre></div>
-</div>
-</div>
-</div>
-<h2 id="the-solver-shortcut">The <code>Solver</code> shortcut</h2>
-<p>Rather than calling <code>embedding.blade.embed</code> or <code>embedding.greedy_layout.embed</code> directly, you can select and configure the embedding algorithm through <code>EmbeddingConfig</code>, nested in <code>QuantumSolvingConfig</code> and <code>SolverConfig</code>; <code>Solver</code> then runs it as part of the full quantum pipeline. Leaving <code>EmbeddingConfig</code> unset falls back to the BLaDE embedder — see <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SolverConfig&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../../../api/solver/#qubosolver.solver.SolverConfig"><code>SolverConfig</code></a> for the full set of defaults.</p>
-<p><code>EmbeddingConfig</code> only exposes the most commonly tuned parameters of each algorithm (e.g. <code>blade_steps_per_round</code>, <code>greedy_layout_lattice</code>). Finer-grained parameters — such as BLaDE's <code>pca</code> flag or its <code>compute_*</code> schedule functions — are not settable this way; call <code>embedding.blade.embed</code>/<code>embedding.greedy_layout.embed</code> directly with a full <code>blade.Config</code>/<code>greedy_layout.Config</code> if you need those.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-37--__tabbed_1_1" name="exec-37--__tabbed_1" type="radio" /><input id="exec-37--__tabbed_1_2" name="exec-37--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-37--__tabbed_1_1">Source</label><label for="exec-37--__tabbed_1_2">Result</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverConfig</span><span class="p">,</span> <span class="n">QuantumSolvingConfig</span><span class="p">,</span> <span class="n">EmbeddingConfig</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pprint</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">embedding_config</span> <span class="o">=</span> <span class="n">EmbeddingConfig</span><span class="p">(</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">algorithm</span><span class="o">=</span><span class="s2">"blade"</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="c1"># algorithm = "greedy_layout",</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="c1"># greedy_layout_lattice = "triangular",</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">greedy_layout_lattice</span><span class="o">=</span><span class="s2">"square"</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">)</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">quantum_config</span> <span class="o">=</span> <span class="n">QuantumSolvingConfig</span><span class="p">(</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">embedding</span><span class="o">=</span><span class="n">embedding_config</span><span class="p">,</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">)</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">solver_config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">(</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">solving</span><span class="o">=</span><span class="n">quantum_config</span><span class="p">,</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">)</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="nb">print</span><span class="p">(</span><span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="n">asdict</span><span class="p">(</span><span class="n">solver_config</span><span class="o">.</span><span class="n">solving</span><span class="o">.</span><span class="n">embedding</span><span class="p">)))</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{'algorithm': 'blade',
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a> 'blade_steps_per_round': 200,
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a> 'greedy_layout_lattice': 'square'}
 </code></pre></div>
 </div>
 </div>

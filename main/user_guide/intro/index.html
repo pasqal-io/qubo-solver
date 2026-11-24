@@ -2486,8 +2486,6 @@
       
         
       
-        
-      
     
     
     
@@ -2548,34 +2546,6 @@
     
   
     qubosolver
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/solver/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.solver
   
 
     
@@ -2875,10 +2845,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
         
           
-          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
             
   
   
@@ -2896,8 +2866,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3472,16 +3442,7 @@
 
 
 <h1 id="solving-a-qubo-instance">Solving a QUBO instance</h1>
-<p>Solving a QUBO instance means feeding an <a href="../instances_and_solutions/"><code>Instance</code></a> to a solver. <code>qubosolver</code> gives you two ways to do that:</p>
-<ul>
-<li>Call the <a href="../classical/intro/">classical</a> or <a href="../quantum/intro/">quantum</a> pipeline functions directly, composing <a href="../classical/transforms/">transforms</a> and solvers as needed.</li>
-<li>Or use <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Solver&lt;/span&gt;" href="../../api/solver/#qubosolver.solver.Solver"><code>Solver</code></a> with a <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SolverConfig&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../../api/solver/#qubosolver.solver.SolverConfig"><code>SolverConfig</code></a>, which wraps a common pipeline (transform → solve → lift) behind a single call, and lets you switch between a classical and a quantum approach by configuration alone.</li>
-</ul>
+<p>Solving a QUBO instance means feeding an <a href="../instances_and_solutions/"><code>Instance</code></a> to a solver: call the <a href="../classical/intro/">classical</a> or <a href="../quantum/intro/">quantum</a> pipeline functions directly, composing <a href="../classical/transforms/">transforms</a> and solvers as needed.</p>
 <h2 id="composition-of-solvers-and-transforms">Composition of solvers and transforms</h2>
 <p>A solve is a pipeline: an optional chain of transforms reduces or adapts the instance, a solver produces a solution for the transformed instance, and each transform is "lifted" in reverse to map that solution back to the original instance.</p>
 <figure markdown>
@@ -3489,12 +3450,7 @@
 <figcaption>An optional chain of transforms reduces the instance, a solver produces a solution, then each transform is lifted in reverse to map that solution back to the original instance.</figcaption>
 </figure>
 
-<p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Solver&lt;/span&gt;" href="../../api/solver/#qubosolver.solver.Solver"><code>Solver</code></a>/<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SolverConfig&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../../api/solver/#qubosolver.solver.SolverConfig"><code>SolverConfig</code></a> builds this pipeline for you: <code>preprocessing=True</code> chains the configured transforms before solving, <code>postprocessing=True</code> chains refinement solvers after, and the solver itself is either the <a href="../classical/intro/">classical</a> or <a href="../quantum/intro/">quantum</a> pipeline depending on <code>solving</code>. See <a href="../classical/transforms/">Transforms</a> and <a href="../classical/solvers/">Solvers</a> for the building blocks.</p>
+<p>The solver itself is either a <a href="../classical/intro/">classical</a> solver or the <a href="../quantum/intro/">quantum</a> pipeline, and a refinement solver can be chained after it to post-process its candidates. See <a href="../classical/transforms/">Transforms</a> and <a href="../classical/solvers/">Solvers</a> for the building blocks.</p>
 <h2 id="the-quantum-pipeline">The quantum pipeline</h2>
 <p>Solving with a quantum approach turns the instance into a program that runs on a neutral-atom device — an <a href="../quantum/embedding/">embedding</a> step maps variables onto atoms, <a href="../quantum/drive_shaping/">drive shaping</a> builds the laser pulse, and the result is compiled and run on a <a href="../quantum/backend/">backend</a> (a local emulator, a remote emulator, or a real QPU).</p>
 <figure markdown>
@@ -3508,12 +3464,6 @@
 <li>Understand the core <a href="../instances_and_solutions/"><code>Instance</code></a> and <a href="../instances_and_solutions/"><code>Solution</code></a> types.</li>
 <li>Learn about the building blocks of the <a href="../classical/intro/">classical pipeline</a>: solvers and transforms.</li>
 <li>Learn about the steps of the <a href="../quantum/intro/">quantum pipeline</a>: embedding, drive shaping, compiling, and backends.</li>
-<li>Configure either approach through <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SolverConfig&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../../api/solver/#qubosolver.solver.SolverConfig"><code>qubosolver.SolverConfig</code></a>.</li>
 </ul>
 
 

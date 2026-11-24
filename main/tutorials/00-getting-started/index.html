@@ -2422,8 +2422,6 @@
       
         
       
-        
-      
     
     
     
@@ -2484,34 +2482,6 @@
     
   
     qubosolver
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/solver/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.solver
   
 
     
@@ -2811,10 +2781,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
         
           
-          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
             
   
   
@@ -2832,8 +2802,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3592,8 +3562,8 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="getting-started">Getting started<a class="anchor-link" href="#getting-started">¶</a></h1><p><code>qubo-solver</code> solves Quadratic Unconstrained Binary Optimization (QUBO) instances using either classical or quantum approaches. Here is the entire workflow in three steps: define an <code>Instance</code> from a QUBO matrix, pass it to a <code>Solver</code>, and call <code>solve()</code>.</p>
-<p>The example below uses the default configuration, which runs a quantum approach on a local emulator. See the next tutorial for how to configure quantum backends and classical algorithms explicitly.</p>
+<h1 id="getting-started">Getting started<a class="anchor-link" href="#getting-started">¶</a></h1><p><code>qubo-solver</code> solves Quadratic Unconstrained Binary Optimization (QUBO) instances using either classical or quantum approaches. Here is the entire quantum workflow: define an <code>Instance</code> from a QUBO matrix, map its variables onto atoms (embedding), build the laser drive (drive shaping), then compile and run the program on a backend.</p>
+<p>The example below runs on a local emulator. See the next tutorial for how to use other quantum backends and classical solvers.</p>
 </div>
 </div>
 </div>
@@ -3619,11 +3589,17 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Instance</span><span class="p">,</span>
-    <span class="n">Solver</span><span class="p">,</span>
+    <span class="n">LocalEmulator</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
     <span class="n">analysis</span><span class="p">,</span>
+    <span class="n">drive_shaping</span><span class="p">,</span>
+    <span class="n">embedding</span><span class="p">,</span>
     <span class="n">matrix</span><span class="p">,</span>
+    <span class="n">solving</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1"># Define QUBO</span>
@@ -3635,19 +3611,32 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
     <span class="p">]</span>
 <span class="p">)</span>
 <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
-<span class="c1"># Solve it!</span>
-<span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
-<span class="n">solution</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+
+<span class="c1"># Solve it on a local emulator</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">AnalogDeviceWithDMM</span><span class="p">()</span>
+<span class="n">backend</span> <span class="o">=</span> <span class="n">LocalEmulator</span><span class="p">()</span>
+
+<span class="n">register</span> <span class="o">=</span> <span class="n">embedding</span><span class="o">.</span><span class="n">blade</span><span class="o">.</span><span class="n">embed_for_device</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<span class="n">drive</span> <span class="o">=</span> <span class="n">drive_shaping</span><span class="o">.</span><span class="n">local_energy_scale</span><span class="o">.</span><span class="n">build_drive</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">register</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="n">program</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">analog_quantum_sampling</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">register</span><span class="p">,</span> <span class="n">drive</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<span class="n">job</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">program</span><span class="p">)</span>
+<span class="n">solution</span> <span class="o">=</span> <span class="n">Solution</span><span class="o">.</span><span class="n">from_results</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">results</span><span class="p">(),</span> <span class="n">instance</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-1">from __future__ import annotations
 
+import qoolqit
+
 from qubosolver import (
     Instance,
-    Solver,
+    LocalEmulator,
+    Solution,
     analysis,
+    drive_shaping,
+    embedding,
     matrix,
+    solving,
 )
 
 # Define QUBO
@@ -3659,9 +3648,16 @@ Q = matrix.tensor(
     ]
 )
 instance = Instance(Q)
-# Solve it!
-solver = Solver(instance)
-solution = solver.solve()
+
+# Solve it on a local emulator
+device = qoolqit.AnalogDeviceWithDMM()
+backend = LocalEmulator()
+
+register = embedding.blade.embed_for_device(instance, device)
+drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
+program = solving.analog_quantum_sampling.compile(register, drive, device)
+job = backend.run(program)
+solution = Solution.from_results(job.results(), instance)
 
 print(analysis.to_dataframe([solution]))</div>
 </div>
@@ -3676,8 +3672,11 @@ print(analysis.to_dataframe([solution]))</div>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>  labels bitstrings  costs  counts  probs
-0      0        110   -1.2     989  0.989
-1      0        001   -0.1      11  0.011
+0      0        110   -1.2     743  0.743
+1      0        010   -1.0     196  0.196
+2      0        100   -0.2      39  0.039
+3      0        001   -0.1      17  0.017
+4      0        000    0.0       5  0.005
 </pre>
 </div>
 </div>
@@ -3691,7 +3690,7 @@ print(analysis.to_dataframe([solution]))</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The output is a <code>Solution</code>, converted here to a dataframe listing each sampled bitstring, its cost, and its probability. Continue to the next tutorial, <a href="02-qubosolver.ipynb">Solving a QUBO instance</a>, for quantum backends and classical solver options.</p>
+<p>The output is a <code>Solution</code>, converted here to a dataframe listing each sampled bitstring, its cost, and its probability. Continue to the next tutorial, <a href="01-qubosolver-basics.ipynb">Solving a QUBO problem easily</a>, for quantum backends and classical solvers.</p>
 </div>
 </div>
 </div>

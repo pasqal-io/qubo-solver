@@ -2477,8 +2477,6 @@
       
         
       
-        
-      
     
     
     
@@ -2539,34 +2537,6 @@
     
   
     qubosolver
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../api/solver/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.solver
   
 
     
@@ -2866,10 +2836,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
         
           
-          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
             
   
   
@@ -2887,8 +2857,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3456,7 +3426,7 @@
 <h2 id="goal-of-compilation">Goal of compilation</h2>
 <p>Embedding and drive shaping produce a <code>Register</code> and a <code>Drive</code> in dimensionless units, so the same program stays portable across compatible devices. Compilation is the step that converts these dimensionless parameters, times, energies, and distances into their physical equivalents for a target <code>Device</code> — using device-dependent scaling based on hardware properties such as the <span class="arithmatex">\(C_6\)</span> interaction coefficient and the minimum atom spacing — and packages the result into a <code>QuantumProgram</code> a backend can execute. Internally, this also generates the low-level <a href="https://pulser.readthedocs.io/">pulser</a> sequence submitted to the QPU.</p>
 <p><code>qubosolver</code> exposes this step as <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;compile&lt;/span&gt;" href="../../../api/quantum_solving/#qubosolver.solving.quantum.analog_quantum_sampling.compile"><code>solving.analog_quantum_sampling.compile</code></a>:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-22--__tabbed_1_1" name="exec-22--__tabbed_1" type="radio" /><input id="exec-22--__tabbed_1_2" name="exec-22--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-22--__tabbed_1_1">Source</label><label for="exec-22--__tabbed_1_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-17--__tabbed_1_1" name="exec-17--__tabbed_1" type="radio" /><input id="exec-17--__tabbed_1_2" name="exec-17--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-17--__tabbed_1_1">Source</label><label for="exec-17--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">embedding</span><span class="p">,</span> <span class="n">drive_shaping</span><span class="p">,</span> <span class="n">solving</span>

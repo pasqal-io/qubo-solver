@@ -1125,17 +1125,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#the-solver-shortcut" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Solver shortcut
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -2572,8 +2561,6 @@
       
         
       
-        
-      
     
     
     
@@ -2634,34 +2621,6 @@
     
   
     qubosolver
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../api/solver/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.solver
   
 
     
@@ -2961,10 +2920,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
         
           
-          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
             
   
   
@@ -2982,8 +2941,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3610,17 +3569,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#the-solver-shortcut" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Solver shortcut
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -3642,7 +3590,7 @@
 
 
 <h1 id="backends">Backends</h1>
-<p>A backend runs a compiled <a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.QuantumProgram"><code>qoolqit.QuantumProgram</code></a> — the output of <a href="../compilation/">compilation</a> — and returns a job you can wait on for results. <code>qubosolver</code> doesn't implement its own execution engines; it wraps the backends exposed by <a href="https://github.com/pasqal-io/qoolqit">Qoolqit</a>, picked and configured through <code>Solver</code>/<code>SolverConfig</code>, or used directly like any other step of the <a href="../intro/">quantum pipeline</a>.</p>
+<p>A backend runs a compiled <a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.QuantumProgram"><code>qoolqit.QuantumProgram</code></a> — the output of <a href="../compilation/">compilation</a> — and returns a job you can wait on for results. <code>qubosolver</code> doesn't implement its own execution engines; it wraps the backends exposed by <a href="https://github.com/pasqal-io/qoolqit">Qoolqit</a>, used directly like any other step of the <a href="../intro/">quantum pipeline</a>.</p>
 <h2 id="goal-of-backend-selection">Goal of backend selection</h2>
 <p>The same register and drive can be run on several kinds of backends: a local emulator, a remote emulator, or a real QPU. All of them implement the same <code>run(program)</code> interface, so switching backends never affects embedding, drive shaping, or compilation — only where and how the program is executed.</p>
 <p>Emulators (local or remote) simulate the Rydberg Hamiltonian on classical hardware, so their cost grows quickly with the number of qubits. <code>qubosolver</code> ships three emulator engines, each tractable over a different qubit range:</p>
@@ -3651,7 +3599,7 @@
 <li><strong>State-vector</strong> (<code>SVBackend</code> / <code>RemoteSVBackend</code>): tractable for medium problems (15-25 qubits),</li>
 <li><strong>Tensor network</strong> (<code>MPSBackend</code> / <code>RemoteMPSBackend</code>): state of the art tensor network techniques, tractable for large problems (≥ 26 qubits).</li>
 </ul>
-<p><strong>Note:</strong> The number of qubits used may differ from the input QUBO size due to preprocessing or decomposition — e.g. <code>DecomposeQuboSolver</code> breaks large QUBOs into smaller subproblems, changing the qubit count that drives backend selection.</p>
+<p><strong>Note:</strong> The number of qubits used may differ from the input QUBO size due to preprocessing or decomposition — e.g. <a href="../embedding/#partial-embedding-and-decomposition">decomposition</a> breaks large QUBOs into smaller subproblems, changing the qubit count that drives backend selection.</p>
 <h2 id="local-emulator">Local emulator</h2>
 <p><code>LocalEmulator</code> runs a program on the local machine. Left to pick automatically, it selects the emulator engine best suited to the register's qubit count:</p>
 <ul>
@@ -3659,7 +3607,7 @@
 <li>Tutorial: <a href="../../../tutorials/02-qubosolver-in-full/">Solving a QUBO problem flexibly</a></li>
 </ul>
 <h3 id="code-example">Code example</h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-17--__tabbed_1_1" name="exec-17--__tabbed_1" type="radio" /><input id="exec-17--__tabbed_1_2" name="exec-17--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-17--__tabbed_1_1">Source</label><label for="exec-17--__tabbed_1_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-13--__tabbed_1_1" name="exec-13--__tabbed_1" type="radio" /><input id="exec-13--__tabbed_1_2" name="exec-13--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-13--__tabbed_1_1">Source</label><label for="exec-13--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -3713,7 +3661,7 @@
 </div>
 </div>
 <p>You can also pick a specific engine instead of relying on automatic selection:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-18--__tabbed_1_1" name="exec-18--__tabbed_1" type="radio" /><input id="exec-18--__tabbed_1_2" name="exec-18--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-18--__tabbed_1_1">Source</label><label for="exec-18--__tabbed_1_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-14--__tabbed_1_1" name="exec-14--__tabbed_1" type="radio" /><input id="exec-14--__tabbed_1_2" name="exec-14--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-14--__tabbed_1_1">Source</label><label for="exec-14--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalEmulator</span>
@@ -3756,7 +3704,7 @@
 <p>Unlike the local emulator, automatic selection here <strong>will incur fees</strong> as soon as the problem reaches 15 qubits, since it switches away from the free engine — so <code>RemoteEmulator</code> defaults to the free engine rather than automatic selection. Opt into automatic selection explicitly via <code>AutoRemoteEmulatorBackend</code> if you want it.</p>
 <h3 id="code-example_1">Code example</h3>
 <p>Replace <code>USERNAME</code>, <code>PROJECT_ID</code> and <code>PASSWORD</code> with your <a href="https://docs.pasqal.com/cloud/set-up/">Pasqal Cloud</a> credentials to run this example against the real cloud. Without a password, it falls back to a <code>LocalConnection</code>, which emulates the same interface locally with QuTiP — no credentials needed, handy for trying the snippet out or for tests.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-19--__tabbed_1_1" name="exec-19--__tabbed_1" type="radio" /><input id="exec-19--__tabbed_1_2" name="exec-19--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-19--__tabbed_1_1">Source</label><label for="exec-19--__tabbed_1_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-15--__tabbed_1_1" name="exec-15--__tabbed_1" type="radio" /><input id="exec-15--__tabbed_1_2" name="exec-15--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-15--__tabbed_1_1">Source</label><label for="exec-15--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">RemoteEmulator</span><span class="p">,</span> <span class="n">AutoRemoteEmulatorBackend</span><span class="p">,</span> <span class="n">Solution</span><span class="p">,</span> <span class="n">analysis</span>
@@ -3816,7 +3764,7 @@
 </ul>
 <h3 id="code-example_2">Code example</h3>
 <p>Submitting to a real QPU requires a <code>PasqalCloudConnection</code> — there is no local equivalent of the hardware itself. Without a password, the snippet below falls back to emulating the same instance locally with <code>LocalEmulator</code> instead, so it stays runnable without credentials.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-20--__tabbed_1_1" name="exec-20--__tabbed_1" type="radio" /><input id="exec-20--__tabbed_1_2" name="exec-20--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-20--__tabbed_1_1">Source</label><label for="exec-20--__tabbed_1_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-16--__tabbed_1_1" name="exec-16--__tabbed_1" type="radio" /><input id="exec-16--__tabbed_1_2" name="exec-16--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-16--__tabbed_1_1">Source</label><label for="exec-16--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -3880,46 +3828,6 @@
 </div>
 <h2 id="asynchronous-remote-runs">Asynchronous remote runs</h2>
 <p>Remote runs, whether on a QPU or a remote emulator, are submitted asynchronously: <code>backend.run(program)</code> returns as soon as the job is queued, without waiting for results. This lets you save the job's identifiers and the instance, disconnect, and retrieve the results later — from the same session or a different one — rather than blocking until the run completes. See the <a href="../../../tutorials/02-qubosolver-in-full/">qubosolver-in-full tutorial</a> for the full save/retrieve example.</p>
-<h2 id="the-solver-shortcut">The <code>Solver</code> shortcut</h2>
-<p>Rather than building a program and calling <code>backend.run</code> directly, you can select and configure the backend and device through <code>QuantumSolvingConfig</code>, nested in <code>SolverConfig</code>; <code>Solver</code> then runs it as part of the full quantum pipeline. Leaving <code>backend</code>/<code>device</code> unset falls back to a <code>LocalEmulator</code> on <code>AnalogDeviceWithDMM</code> — see <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SolverConfig&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../../../api/solver/#qubosolver.solver.SolverConfig"><code>SolverConfig</code></a> for the full set of defaults.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-21--__tabbed_1_1" name="exec-21--__tabbed_1" type="radio" /><input id="exec-21--__tabbed_1_2" name="exec-21--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-21--__tabbed_1_1">Source</label><label for="exec-21--__tabbed_1_2">Result</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverConfig</span><span class="p">,</span> <span class="n">QuantumSolvingConfig</span><span class="p">,</span> <span class="n">LocalEmulator</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pulser_simulation</span><span class="w"> </span><span class="kn">import</span> <span class="n">QutipBackendV2</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pprint</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">quantum_config</span> <span class="o">=</span> <span class="n">QuantumSolvingConfig</span><span class="p">(</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">backend</span><span class="o">=</span><span class="n">LocalEmulator</span><span class="p">(</span><span class="n">backend_type</span><span class="o">=</span><span class="n">QutipBackendV2</span><span class="p">,</span> <span class="n">num_shots</span><span class="o">=</span><span class="mi">500</span><span class="p">),</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">device</span><span class="o">=</span><span class="n">qoolqit</span><span class="o">.</span><span class="n">AnalogDeviceWithDMM</span><span class="p">(),</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">)</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">solver_config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">(</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">solving</span><span class="o">=</span><span class="n">quantum_config</span><span class="p">,</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">)</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="nb">print</span><span class="p">(</span><span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="n">asdict</span><span class="p">(</span><span class="n">solver_config</span><span class="o">.</span><span class="n">solving</span><span class="p">)))</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{'backend': &lt;qubosolver.types.backends.LocalEmulator object at 0x7c47f8f21550&gt;,
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a> 'device': AnalogDeviceWithDMM,
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a> 'drive_shaping': {'algorithm': 'local_energy_scale',
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>                   'bayesian_search_n_calls': 20,
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>                   'local_energy_scale_kappa': 0.1,
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>                   'proportional_diagonal_kappa': 1.0},
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a> 'embedding': {'algorithm': 'blade',
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>               'blade_steps_per_round': 200,
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>               'greedy_layout_lattice': 'triangular'}}
-</code></pre></div>
-</div>
-</div>
-</div>
 
 
 

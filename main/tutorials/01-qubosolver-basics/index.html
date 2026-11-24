@@ -2548,8 +2548,6 @@
       
         
       
-        
-      
     
     
     
@@ -2610,34 +2608,6 @@
     
   
     qubosolver
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/solver/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.solver
   
 
     
@@ -2937,10 +2907,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
         
           
-          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
             
   
   
@@ -2958,8 +2928,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3815,10 +3785,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="solving-a-qubo-problem-easily">Solving a QUBO problem easily<a class="anchor-link" href="#solving-a-qubo-problem-easily">¶</a></h1><p>Solving a QUBO problem is straightforward with <code>qubo-solver</code>. We can directly use the <code>Solver</code> class by providing an <code>Instance</code> with a given <code>SolverConfig</code> configuration.
-<code>SolverConfig</code> specifies whether to use a classical approach or a quantum one. Note that <code>SolverConfig</code> comes with many options but the default ones can be used straightforwardly.
-We have however more advanced tutorials on the quantum-related components to dive deeper into these advanced concepts.</p>
-<h2 id="solving-with-a-quantum-approach">Solving with a quantum approach<a class="anchor-link" href="#solving-with-a-quantum-approach">¶</a></h2><p>To use a quantum approach, several choices have to be made regarding the configuration, explained in more details in the <a href="https://pasqal-io.github.io/qubo-solver/latest/content/solving/">Solving QUBOs section of the documentation</a>.</p>
+<h1 id="solving-a-qubo-problem-easily">Solving a QUBO problem easily<a class="anchor-link" href="#solving-a-qubo-problem-easily">¶</a></h1><p>Solving a QUBO problem is straightforward with <code>qubo-solver</code>: build an <code>Instance</code>, then call a classical solver, or run the quantum pipeline (embedding, drive shaping, compiling and running on a backend). Each step is a plain function with sensible defaults.
+We have more advanced tutorials on the quantum-related components to dive deeper into these concepts.</p>
+<h2 id="solving-with-a-quantum-approach">Solving with a quantum approach<a class="anchor-link" href="#solving-with-a-quantum-approach">¶</a></h2><p>To use a quantum approach, several choices have to be made, explained in more details in the <a href="https://pasqal-io.github.io/qubo-solver/latest/content/solving/">Solving QUBOs section of the documentation</a>.</p>
 <p>One main decision is about the <a href="https://pasqal-io.github.io/qubo-solver/latest/content/backend/">backend</a>, that is how we choose to perform quantum runs. We can decide to either perform our on emulators (locally, or remotely) or using a real quantum processing unit (QPU). Our QPU, based on the Rydberg Analog Model, is accessible remotely.</p>
 <h3 id="available-backend-types-and-devices">Available backend types and devices<a class="anchor-link" href="#available-backend-types-and-devices">¶</a></h3><p>The supported backends are available via <a href="https://pasqal-io.github.io/qoolqit/latest/api/qoolqit/execution/backends/"><code>qoolqit</code></a>, a Python package designed for algorithm development in the Rydberg Analog Model.</p>
 <p>The backends can be divided into 3 main categories:</p>
@@ -3864,14 +3833,17 @@ We have however more advanced tutorials on the quantum-related components to div
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Instance</span><span class="p">,</span>
     <span class="n">LocalEmulator</span><span class="p">,</span>
-    <span class="n">QuantumSolvingConfig</span><span class="p">,</span>
-    <span class="n">Solver</span><span class="p">,</span>
-    <span class="n">SolverConfig</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
     <span class="n">analysis</span><span class="p">,</span>
+    <span class="n">drive_shaping</span><span class="p">,</span>
+    <span class="n">embedding</span><span class="p">,</span>
     <span class="n">matrix</span><span class="p">,</span>
+    <span class="n">solving</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
@@ -3883,25 +3855,31 @@ We have however more advanced tutorials on the quantum-related components to div
 <span class="p">)</span>
 <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
 
-<span class="c1"># Create a SolverConfig to use a quantum backend.</span>
-<span class="n">quantum_config</span> <span class="o">=</span> <span class="n">QuantumSolvingConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">LocalEmulator</span><span class="p">())</span>
-<span class="n">config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">(</span><span class="n">solving</span><span class="o">=</span><span class="n">quantum_config</span><span class="p">)</span>
+<span class="c1"># Run the quantum pipeline on a local emulator.</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">AnalogDeviceWithDMM</span><span class="p">()</span>
+<span class="n">backend</span> <span class="o">=</span> <span class="n">LocalEmulator</span><span class="p">()</span>
 
-<span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-<span class="n">solution</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+<span class="n">register</span> <span class="o">=</span> <span class="n">embedding</span><span class="o">.</span><span class="n">blade</span><span class="o">.</span><span class="n">embed_for_device</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<span class="n">drive</span> <span class="o">=</span> <span class="n">drive_shaping</span><span class="o">.</span><span class="n">local_energy_scale</span><span class="o">.</span><span class="n">build_drive</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">register</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="n">program</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">analog_quantum_sampling</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">register</span><span class="p">,</span> <span class="n">drive</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<span class="n">job</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">program</span><span class="p">)</span>
+<span class="n">solution</span> <span class="o">=</span> <span class="n">Solution</span><span class="o">.</span><span class="n">from_results</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">results</span><span class="p">(),</span> <span class="n">instance</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-1">from __future__ import annotations
 
+import qoolqit
+
 from qubosolver import (
     Instance,
     LocalEmulator,
-    QuantumSolvingConfig,
-    Solver,
-    SolverConfig,
+    Solution,
     analysis,
+    drive_shaping,
+    embedding,
     matrix,
+    solving,
 )
 
 Q = matrix.tensor(
@@ -3913,12 +3891,15 @@ Q = matrix.tensor(
 )
 instance = Instance(Q)
 
-# Create a SolverConfig to use a quantum backend.
-quantum_config = QuantumSolvingConfig(backend=LocalEmulator())
-config = SolverConfig(solving=quantum_config)
+# Run the quantum pipeline on a local emulator.
+device = qoolqit.AnalogDeviceWithDMM()
+backend = LocalEmulator()
 
-solver = Solver(instance, config)
-solution = solver.solve()
+register = embedding.blade.embed_for_device(instance, device)
+drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
+program = solving.analog_quantum_sampling.compile(register, drive, device)
+job = backend.run(program)
+solution = Solution.from_results(job.results(), instance)
 
 print(analysis.to_dataframe([solution]))</div>
 </div>
@@ -3933,11 +3914,11 @@ print(analysis.to_dataframe([solution]))</div>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>  labels bitstrings  costs  counts  probs
-0      0        110   -0.2    38.0  0.038
-1      0        100   -0.2   156.0  0.156
-2      0        000    0.0   117.0  0.117
-3      0        010    0.0   339.0  0.339
-4      0        001    0.0   350.0  0.350
+0      0        110   -1.2     729  0.729
+1      0        010   -1.0     210  0.210
+2      0        100   -0.2      45  0.045
+3      0        001   -0.1      13  0.013
+4      0        000    0.0       3  0.003
 </pre>
 </div>
 </div>
@@ -3983,11 +3964,12 @@ To do so, we have to provide several information after <a href="https://docs.pas
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Instance</span><span class="p">,</span>
-    <span class="n">QuantumSolvingConfig</span><span class="p">,</span>
-    <span class="n">Solver</span><span class="p">,</span>
-    <span class="n">SolverConfig</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
     <span class="n">analysis</span><span class="p">,</span>
+    <span class="n">drive_shaping</span><span class="p">,</span>
+    <span class="n">embedding</span><span class="p">,</span>
     <span class="n">matrix</span><span class="p">,</span>
+    <span class="n">solving</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1"># Replace with your username, project id and password on the Pasqal Cloud.</span>
@@ -4025,11 +4007,13 @@ To do so, we have to provide several information after <a href="https://docs.pas
     <span class="n">device</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">AnalogDevice</span><span class="p">()</span>
     <span class="n">qpu_backend</span> <span class="o">=</span> <span class="n">RemoteEmulator</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
 
-<span class="n">quantum_config</span> <span class="o">=</span> <span class="n">QuantumSolvingConfig</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">qpu_backend</span><span class="p">)</span>
+<span class="n">backend</span> <span class="o">=</span> <span class="n">qpu_backend</span>
 
-<span class="n">config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">(</span><span class="n">solving</span><span class="o">=</span><span class="n">quantum_config</span><span class="p">)</span>
-<span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-<span class="n">solution</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+<span class="n">register</span> <span class="o">=</span> <span class="n">embedding</span><span class="o">.</span><span class="n">blade</span><span class="o">.</span><span class="n">embed_for_device</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<span class="n">drive</span> <span class="o">=</span> <span class="n">drive_shaping</span><span class="o">.</span><span class="n">local_energy_scale</span><span class="o">.</span><span class="n">build_drive</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">register</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="n">program</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">analog_quantum_sampling</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">register</span><span class="p">,</span> <span class="n">drive</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<span class="n">job</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">program</span><span class="p">)</span>
+<span class="n">solution</span> <span class="o">=</span> <span class="n">Solution</span><span class="o">.</span><span class="n">from_results</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">results</span><span class="p">(),</span> <span class="n">instance</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
@@ -4039,11 +4023,12 @@ from qoolqit.execution import QPU
 
 from qubosolver import (
     Instance,
-    QuantumSolvingConfig,
-    Solver,
-    SolverConfig,
+    Solution,
     analysis,
+    drive_shaping,
+    embedding,
     matrix,
+    solving,
 )
 
 # Replace with your username, project id and password on the Pasqal Cloud.
@@ -4081,11 +4066,13 @@ else:
     device = qoolqit.AnalogDevice()
     qpu_backend = RemoteEmulator(connection=connection)
 
-quantum_config = QuantumSolvingConfig(device=device, backend=qpu_backend)
+backend = qpu_backend
 
-config = SolverConfig(solving=quantum_config)
-solver = Solver(instance, config)
-solution = solver.solve()
+register = embedding.blade.embed_for_device(instance, device)
+drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
+program = solving.analog_quantum_sampling.compile(register, drive, device)
+job = backend.run(program)
+solution = Solution.from_results(job.results(), instance)
 
 print(analysis.to_dataframe([solution]))</div>
 </div>
@@ -4100,11 +4087,11 @@ print(analysis.to_dataframe([solution]))</div>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>  labels bitstrings  costs  counts  probs
-0      0        110   -0.2   470.0  0.470
-1      0        100   -0.2    53.0  0.053
-2      0        001    0.0   282.0  0.282
-3      0        000    0.0   148.0  0.148
-4      0        010    0.0    47.0  0.047
+0      0        110   -1.2     893  0.893
+1      0        010   -1.0      15  0.015
+2      0        100   -0.2      20  0.020
+3      0        001   -0.1      71  0.071
+4      0        000    0.0       1  0.001
 </pre>
 </div>
 </div>
@@ -4146,12 +4133,13 @@ print(analysis.to_dataframe([solution]))</div>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Instance</span><span class="p">,</span>
-    <span class="n">QuantumSolvingConfig</span><span class="p">,</span>
     <span class="n">RemoteEmulator</span><span class="p">,</span>
-    <span class="n">Solver</span><span class="p">,</span>
-    <span class="n">SolverConfig</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
     <span class="n">analysis</span><span class="p">,</span>
+    <span class="n">drive_shaping</span><span class="p">,</span>
+    <span class="n">embedding</span><span class="p">,</span>
     <span class="n">matrix</span><span class="p">,</span>
+    <span class="n">solving</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1"># Replace with your username, project id and password on the Pasqal Cloud.</span>
@@ -4181,13 +4169,14 @@ print(analysis.to_dataframe([solution]))</div>
 
     <span class="n">connection</span> <span class="o">=</span> <span class="n">LocalConnection</span><span class="p">()</span>
 
-<span class="c1"># Use a remote emulator backend</span>
-<span class="n">remote_emulator_backend</span> <span class="o">=</span> <span class="n">RemoteEmulator</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
+<span class="c1"># Use a remote emulator backend, on the device chosen above</span>
+<span class="n">backend</span> <span class="o">=</span> <span class="n">RemoteEmulator</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
 
-<span class="n">quantum_config</span> <span class="o">=</span> <span class="n">QuantumSolvingConfig</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">remote_emulator_backend</span><span class="p">)</span>
-<span class="n">config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">(</span><span class="n">solving</span><span class="o">=</span><span class="n">quantum_config</span><span class="p">)</span>
-<span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-<span class="n">solution</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+<span class="n">register</span> <span class="o">=</span> <span class="n">embedding</span><span class="o">.</span><span class="n">blade</span><span class="o">.</span><span class="n">embed_for_device</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<span class="n">drive</span> <span class="o">=</span> <span class="n">drive_shaping</span><span class="o">.</span><span class="n">local_energy_scale</span><span class="o">.</span><span class="n">build_drive</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">register</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="n">program</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">analog_quantum_sampling</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">register</span><span class="p">,</span> <span class="n">drive</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<span class="n">job</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">program</span><span class="p">)</span>
+<span class="n">solution</span> <span class="o">=</span> <span class="n">Solution</span><span class="o">.</span><span class="n">from_results</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">results</span><span class="p">(),</span> <span class="n">instance</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
@@ -4195,12 +4184,13 @@ print(analysis.to_dataframe([solution]))</div>
 
 from qubosolver import (
     Instance,
-    QuantumSolvingConfig,
     RemoteEmulator,
-    Solver,
-    SolverConfig,
+    Solution,
     analysis,
+    drive_shaping,
+    embedding,
     matrix,
+    solving,
 )
 
 # Replace with your username, project id and password on the Pasqal Cloud.
@@ -4230,13 +4220,14 @@ else:
 
     connection = LocalConnection()
 
-# Use a remote emulator backend
-remote_emulator_backend = RemoteEmulator(connection=connection)
+# Use a remote emulator backend, on the device chosen above
+backend = RemoteEmulator(connection=connection)
 
-quantum_config = QuantumSolvingConfig(device=device, backend=remote_emulator_backend)
-config = SolverConfig(solving=quantum_config)
-solver = Solver(instance, config)
-solution = solver.solve()
+register = embedding.blade.embed_for_device(instance, device)
+drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
+program = solving.analog_quantum_sampling.compile(register, drive, device)
+job = backend.run(program)
+solution = Solution.from_results(job.results(), instance)
 
 print(analysis.to_dataframe([solution]))</div>
 </div>
@@ -4251,11 +4242,11 @@ print(analysis.to_dataframe([solution]))</div>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>  labels bitstrings  costs  counts  probs
-0      0        110   -0.2   465.0  0.465
-1      0        100   -0.2    62.0  0.062
-2      0        010    0.0    35.0  0.035
-3      0        001    0.0   276.0  0.276
-4      0        000    0.0   162.0  0.162
+0      0        110   -1.2     911  0.911
+1      0        010   -1.0      10  0.010
+2      0        100   -0.2      16  0.016
+3      0        001   -0.1      60  0.060
+4      0        000    0.0       3  0.003
 </pre>
 </div>
 </div>
@@ -4275,8 +4266,8 @@ More information on classical approaches can be found in the <a href="https://pa
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=bcad3274-63d2-48ce-b0d0-14508b04782b">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bcad3274-63d2-48ce-b0d0-14508b04782b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4295,12 +4286,10 @@ More information on classical approaches can be found in the <a href="https://pa
 </clipboard-copy>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ClassicalSolvingConfig</span><span class="p">,</span>
     <span class="n">Instance</span><span class="p">,</span>
-    <span class="n">Solver</span><span class="p">,</span>
-    <span class="n">SolverConfig</span><span class="p">,</span>
     <span class="n">analysis</span><span class="p">,</span>
     <span class="n">matrix</span><span class="p">,</span>
+    <span class="n">solving</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
@@ -4312,25 +4301,16 @@ More information on classical approaches can be found in the <a href="https://pa
 <span class="p">)</span>
 <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
 
-<span class="c1"># Create a SolverConfig with a classical solver.</span>
-<span class="n">classical_config</span> <span class="o">=</span> <span class="n">ClassicalSolvingConfig</span><span class="p">(</span>
-    <span class="n">algorithm</span><span class="o">=</span><span class="s2">"tabu_search"</span><span class="p">,</span>
-    <span class="n">time_limit</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">(</span><span class="n">solving</span><span class="o">=</span><span class="n">classical_config</span><span class="p">)</span>
-
-<span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-<span class="n">solution</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+<span class="c1"># Solve with tabu search, from 10 random starting bitstrings.</span>
+<span class="n">solution</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">tabu_search</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">starts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">time_limit</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-4">from qubosolver import (
-    ClassicalSolvingConfig,
     Instance,
-    Solver,
-    SolverConfig,
     analysis,
     matrix,
+    solving,
 )
 
 Q = matrix.tensor(
@@ -4342,17 +4322,24 @@ Q = matrix.tensor(
 )
 instance = Instance(Q)
 
-# Create a SolverConfig with a classical solver.
-classical_config = ClassicalSolvingConfig(
-    algorithm="tabu_search",
-    time_limit=10.0,
-)
-config = SolverConfig(solving=classical_config)
-
-solver = Solver(instance, config)
-solution = solver.solve()
+# Solve with tabu search, from 10 random starting bitstrings.
+solution = solving.tabu_search.solve(instance, starts=10, time_limit=10.0)
 
 print(analysis.to_dataframe([solution]))</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>  labels bitstrings  costs  counts  probs
+0      0        110   -1.2      10    1.0
+</pre>
 </div>
 </div>
 </div>
@@ -4365,7 +4352,7 @@ print(analysis.to_dataframe([solution]))</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The examples above use the Object API (<code>Solver</code>). Continue to the next tutorial, <a href="02-qubosolver-in-full.ipynb">Using the functional API</a>, for a lower-level, more flexible way of achieving the same results.</p>
+<p>Continue to the next tutorial, <a href="02-qubosolver-in-full.ipynb">Solving a QUBO problem flexibly</a>, to save remote jobs and retrieve their results later, and to refine solutions.</p>
 </div>
 </div>
 </div>

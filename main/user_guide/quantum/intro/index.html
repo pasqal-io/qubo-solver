@@ -930,17 +930,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-solver-shortcut" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Solver shortcut
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#where-to-go-next" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2499,8 +2488,6 @@
       
         
       
-        
-      
     
     
     
@@ -2561,34 +2548,6 @@
     
   
     qubosolver
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../api/solver/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.solver
   
 
     
@@ -2888,10 +2847,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
         
           
-          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
             
   
   
@@ -2909,8 +2868,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3454,17 +3413,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-solver-shortcut" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Solver shortcut
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#where-to-go-next" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3535,7 +3483,7 @@ Q_{ij} \;\longleftrightarrow\; \tilde{J}_{ij} \tag{2}
 <li><strong>Compiling and running</strong> — compile the register and drive into a program, and run it on a <a href="../backend/">backend</a>: a local emulator, a remote emulator, or a real QPU.</li>
 </ol>
 <h2 id="example">Example</h2>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-38--__tabbed_1_1" name="exec-38--__tabbed_1" type="radio" /><input id="exec-38--__tabbed_1_2" name="exec-38--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-38--__tabbed_1_1">Source</label><label for="exec-38--__tabbed_1_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-32--__tabbed_1_1" name="exec-32--__tabbed_1" type="radio" /><input id="exec-32--__tabbed_1_2" name="exec-32--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-32--__tabbed_1_1">Source</label><label for="exec-32--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -3594,7 +3542,7 @@ Q_{ij} \;\longleftrightarrow\; \tilde{J}_{ij} \tag{2}
 </div>
 </div>
 <p>You can plot the register and the drive.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-39--__tabbed_1_1" name="exec-39--__tabbed_1" type="radio" /><input id="exec-39--__tabbed_1_2" name="exec-39--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-39--__tabbed_1_1">Plots</label><label for="exec-39--__tabbed_1_2">Source</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-33--__tabbed_1_1" name="exec-33--__tabbed_1" type="radio" /><input id="exec-33--__tabbed_1_2" name="exec-33--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-33--__tabbed_1_1">Plots</label><label for="exec-33--__tabbed_1_2">Source</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><figure><figcaption>Register of atoms embedding the QUBO instance</figcaption><img src="quantum_intro_register.svg" alt="Register of atoms embedding the QUBO instance"></figure>
@@ -3622,54 +3570,6 @@ Q_{ij} \;\longleftrightarrow\; \tilde{J}_{ij} \tag{2}
 </div>
 <p>Each call returns a plain object you can inspect or pass to a different step: swap <code>embedding.blade.embed</code> for <a href="../embedding/"><code>embedding.greedy.embed</code></a>, try another <a href="../drive_shaping/">drive shaping method</a>, or run on a different <a href="../backend/">backend</a> — the rest of the pipeline is unaffected.</p>
 <p>To run remotely (on a remote emulator or a real QPU), pass a <code>RemoteEmulator</code> or <code>QPU</code> backend instead of <code>LocalEmulator</code>. Remote runs are asynchronous: <code>backend.run(program)</code> returns as soon as the job is queued, so you can save its identifiers and retrieve the results later. See the <a href="../../../tutorials/02-qubosolver-in-full/">qubosolver-in-full tutorial</a> for the full remote and save/retrieve example, as well as the equivalent classical functional call.</p>
-<h2 id="the-solver-shortcut">The <code>Solver</code> shortcut</h2>
-<p>For the common case, <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SolverConfig&lt;/span&gt;
-
-
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../../../api/solver/#qubosolver.solver.SolverConfig"><code>SolverConfig</code></a> and <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Solver&lt;/span&gt;" href="../../../api/solver/#qubosolver.solver.Solver"><code>Solver</code></a> wrap the four steps above into a single call, using sensible defaults for anything you don't specify:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-40--__tabbed_1_1" name="exec-40--__tabbed_1" type="radio" /><input id="exec-40--__tabbed_1_2" name="exec-40--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-40--__tabbed_1_1">Source</label><label for="exec-40--__tabbed_1_2">Result</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">Instance</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">Solver</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">SolverConfig</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">matrix</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">analysis</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Private utility to set seed.</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver.utils._random</span><span class="w"> </span><span class="kn">import</span> <span class="n">manual_seed</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">manual_seed</span><span class="p">(</span><span class="mi">147</span><span class="p">)</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>        <span class="p">[</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>            <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>            <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>            <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">],</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>        <span class="p">]</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="p">)</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="p">)</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="n">config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">()</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="n">solution</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>  labels bitstrings  costs  counts  probs
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>0      0        110   -1.2     983  0.983
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>1      0        001   -0.1      17  0.017
-</code></pre></div>
-</div>
-</div>
-</div>
 <h2 id="where-to-go-next">Where to go next</h2>
 <ul>
 <li>Learn how variables are mapped onto atoms in <a href="../embedding/">Embedding</a>.</li>

@@ -2397,8 +2397,6 @@
       
         
       
-        
-      
     
     
     
@@ -2462,34 +2460,6 @@
     
   
     qubosolver
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../solver/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.solver
   
 
     
@@ -2891,10 +2861,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
         
           
-          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="">
             
   
   
@@ -2912,8 +2882,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3881,13 +3851,13 @@ number of evaluations, and objective function.</p>
   &lt;/span&gt; (&lt;code&gt;qubosolver.types.Solution&lt;/code&gt;)" href="../qubosolver/#qubosolver.Solution">Solution</a>, <a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit">qoolqit</a>.<a class="autorefs autorefs-external" title="&lt;code&gt;qoolqit.Drive&lt;/code&gt;" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Drive">Drive</a>]</code>
           –
           <div class="doc-md-description">
-            <p>A tuple of the best <a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Drive"><code>qoolqit.Drive</code></a> found and the corresponding
-<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Solution&lt;/span&gt;
+            <p>A tuple of the <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Solution&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../qubosolver/#qubosolver.Solution"><code>Solution</code></a>.</p>
+  &lt;/span&gt;" href="../qubosolver/#qubosolver.Solution"><code>Solution</code></a> obtained with the best drive found, and that
+<a class="autorefs autorefs-external" href="https://docs.pasqal.com/qoolqit/reference/qoolqit/#qoolqit.Drive"><code>qoolqit.Drive</code></a>.</p>
           </div>
         </li>
     </ul>
@@ -4028,8 +3998,8 @@ number of evaluations, and objective function.</p>
 <a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-256" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-256"></a><span class="sd">            number of evaluations, and objective function.</span>
 <a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-257" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-257"></a>
 <a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-258" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-258"></a><span class="sd">    Returns:</span>
-<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-259" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-259"></a><span class="sd">        A tuple of the best [`qoolqit.Drive`][] found and the corresponding</span>
-<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-260" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-260"></a><span class="sd">            [`Solution`][].</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-259" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-259"></a><span class="sd">        A tuple of the [`Solution`][] obtained with the best drive found, and that</span>
+<a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-260" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-260"></a><span class="sd">            [`qoolqit.Drive`][].</span>
 <a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-261" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-261"></a><span class="sd">    """</span>
 <a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-262" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-262"></a>    <span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">Config</span><span class="p">()</span>
 <a id="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-263" name="qubosolver.solving.hybrid.drive_bayesian_search.solve--source--__codelineno-0-263"></a>

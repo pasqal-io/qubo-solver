@@ -1297,34 +1297,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#the-solver-shortcut" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Solver shortcut
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="The Solver shortcut">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#code-example_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code example
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -2606,8 +2578,6 @@
       
         
       
-        
-      
     
     
     
@@ -2668,34 +2638,6 @@
     
   
     qubosolver
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../api/solver/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.solver
   
 
     
@@ -2995,10 +2937,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
         
           
-          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
             
   
   
@@ -3016,8 +2958,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3661,34 +3603,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#the-solver-shortcut" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Solver shortcut
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="The Solver shortcut">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#code-example_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code example
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -3712,8 +3626,7 @@
 <h1 id="transforms">Transforms</h1>
 <p>Transforms reduce or change a QUBO <code>Instance</code> before solving — fixing variables, or eliminating
 negative off-diagonal coefficients — and record enough history to map a <code>Solution</code> of the
-transformed problem back to the original one. Each is callable directly, or chained automatically
-by <code>Solver</code>/<code>SolverConfig</code> via <code>preprocessing=True</code>.</p>
+transformed problem back to the original one. Each is a plain function you call directly.</p>
 <ul>
 <li>API reference: <a href="../../../api/transforms/"><code>qubosolver.transforms</code></a></li>
 </ul>
@@ -3728,7 +3641,7 @@ by <code>Solver</code>/<code>SolverConfig</code> via <code>preprocessing=True</c
   their original length and ordering, and costs are recomputed against the original QUBO matrix.</li>
 </ul>
 <h3 id="code-example">Code example</h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-12--__tabbed_1_1" name="exec-12--__tabbed_1" type="radio" /><input id="exec-12--__tabbed_1_2" name="exec-12--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-12--__tabbed_1_1">Source</label><label for="exec-12--__tabbed_1_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-9--__tabbed_1_1" name="exec-9--__tabbed_1" type="radio" /><input id="exec-9--__tabbed_1_2" name="exec-9--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-9--__tabbed_1_1">Source</label><label for="exec-9--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">transforms</span><span class="p">,</span> <span class="n">solving</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">bitstrings</span>
@@ -3753,8 +3666,7 @@ by <code>Solver</code>/<code>SolverConfig</code> via <code>preprocessing=True</c
 </div>
 </div>
 <p>Transforms can be chained: apply one to the output of another, solve the final instance, then
-lift back through each transform in reverse order. <code>Solver</code> does this for you (see
-<a href="#the-solver-shortcut">The <code>Solver</code> shortcut</a>).</p>
+lift back through each transform in reverse order.</p>
 <h2 id="reduction-with-variable-fixing">Reduction with variable fixing</h2>
 <p>Variable fixing deterministically fixes variables to 0 or 1 when the structure of the QUBO matrix
 alone already settles their optimal value, without introducing any approximation or randomness —
@@ -3782,7 +3694,7 @@ solver.</p>
 <li>API reference: <a href="../../../api/transforms/"><code>qubosolver.transforms.variable_fixing</code></a></li>
 </ul>
 <h3 id="code-example_1">Code example</h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-13--__tabbed_1_1" name="exec-13--__tabbed_1" type="radio" /><input id="exec-13--__tabbed_1_2" name="exec-13--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-13--__tabbed_1_1">Source</label><label for="exec-13--__tabbed_1_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-10--__tabbed_1_1" name="exec-10--__tabbed_1" type="radio" /><input id="exec-10--__tabbed_1_2" name="exec-10--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-10--__tabbed_1_1">Source</label><label for="exec-10--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">transforms</span><span class="p">,</span> <span class="n">solving</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">bitstrings</span>
@@ -3833,7 +3745,7 @@ them, and returns an <code>Instance</code> that records the flip vector and metr
 <li>API reference: <a href="../../../api/transforms/"><code>qubosolver.transforms.negative_bitflip</code></a></li>
 </ul>
 <h3 id="code-example_2">Code example</h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-14--__tabbed_1_1" name="exec-14--__tabbed_1" type="radio" /><input id="exec-14--__tabbed_1_2" name="exec-14--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-14--__tabbed_1_1">Source</label><label for="exec-14--__tabbed_1_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-11--__tabbed_1_1" name="exec-11--__tabbed_1" type="radio" /><input id="exec-11--__tabbed_1_2" name="exec-11--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-11--__tabbed_1_1">Source</label><label for="exec-11--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">transforms</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">torch_rng</span>
@@ -3881,7 +3793,7 @@ not modify its argument in place.</p>
 <li>API reference: <a href="../../../api/transforms/"><code>qubosolver.transforms.zeroing</code></a></li>
 </ul>
 <h3 id="code-example_3">Code example</h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-15--__tabbed_1_1" name="exec-15--__tabbed_1" type="radio" /><input id="exec-15--__tabbed_1_2" name="exec-15--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-15--__tabbed_1_1">Source</label><label for="exec-15--__tabbed_1_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-12--__tabbed_1_1" name="exec-12--__tabbed_1" type="radio" /><input id="exec-12--__tabbed_1_2" name="exec-12--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-12--__tabbed_1_1">Source</label><label for="exec-12--__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">transforms</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">torch_rng</span>
@@ -3918,72 +3830,10 @@ not modify its argument in place.</p>
 </div>
 </div>
 </div>
-<p>Zeroing is only ever applied automatically by the <code>Solver</code>/<code>SolverConfig</code> shortcut below, and only
-when solving with a <code>QuantumSolvingConfig</code> — regardless of whether <code>preprocessing</code> is enabled.
-Before embedding, the final QUBO is always checked, and if negative off-diagonal coefficients
-remain, the quantum solver zeros them out automatically (logging a message) so it can be embedded
-— there is no separate flag to request this, and no flag to opt out of it or make it raise
-instead. Classical solvers have no such restriction and never trigger this fallback.</p>
-<h2 id="the-solver-shortcut">The <code>Solver</code> shortcut</h2>
-<p>Going through the <code>Solver</code> dispatcher with a <code>QuantumSolvingConfig</code> chains the transforms above
-for you:</p>
-<ol>
-<li>if <code>SolverConfig.preprocessing=True</code>, variable-fixing reduction
-   (<code>transforms.variable_fixing.apply_recursively</code>) followed by negative-coefficients bit-flip
-   preprocessing (<code>transforms.negative_bitflip.apply</code>);</li>
-<li>regardless of <code>preprocessing</code>, if negative off-diagonal coefficients remain, automatic zeroing
-   (<code>transforms.zeroing.apply</code>) — classical solvers skip this step entirely.</li>
-</ol>
-<p>After solving, <code>Solver</code> lifts the solution back through each transform in reverse order, so the
-returned <code>Solution</code> always refers to the bitstrings and costs of the <em>original</em> instance you
-passed in.</p>
-<h3 id="code-example_4">Code example</h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="exec-16--__tabbed_1_1" name="exec-16--__tabbed_1" type="radio" /><input id="exec-16--__tabbed_1_2" name="exec-16--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="exec-16--__tabbed_1_1">Source</label><label for="exec-16--__tabbed_1_2">Result</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">Solver</span><span class="p">,</span> <span class="n">SolverConfig</span><span class="p">,</span> <span class="n">QuantumSolvingConfig</span><span class="p">,</span> <span class="n">matrix</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">Q_hard</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        <span class="p">[</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>            <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>            <span class="p">[</span><span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>            <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">],</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>            <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="p">]</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="p">)</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">)</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">(</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">solving</span><span class="o">=</span><span class="n">QuantumSolvingConfig</span><span class="p">(),</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">preprocessing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">)</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># Bit-flip preprocessing cannot remove every negative off-diagonal coefficient here;</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1"># the quantum solver zeros out the remainder automatically before embedding (see the</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="c1"># logged message).</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="n">solution</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">Q_hard</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Solution bitstrings shape: </span><span class="si">{</span><span class="n">solution</span><span class="o">.</span><span class="n">bitstrings</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Original instance size: </span><span class="si">{</span><span class="n">Q_hard</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Solution bitstrings shape: torch.Size([5, 4])
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Original instance size: 4
-</code></pre></div>
-</div>
-</div>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The <code>Solver</code> API does not let you run variable-fixing, bit-flip preprocessing, and zeroing
-independently of each other. If you need that flexibility — for example, to inspect the QUBO
-after bit-flip preprocessing but before deciding whether to zero it — use the functional API
-directly, as shown in the sections above: <code>transforms.variable_fixing.apply</code>,
-<code>transforms.negative_bitflip.apply</code>, and <code>transforms.zeroing.apply</code> can each be called on
-their own, and their matching <code>lift</code> functions used to map solutions back afterwards.</p>
-</div>
+<p>Zeroing is never applied implicitly. The embedders reject instances with negative off-diagonal
+coefficients, so before a quantum solve, call <code>transforms.negative_bitflip.apply</code> and, if negative
+coefficients remain, <code>transforms.zeroing.apply</code>, then lift the solution back through both in
+reverse order. Classical solvers have no such restriction.</p>
 
 
 
