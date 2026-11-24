@@ -9,17 +9,12 @@ from __future__ import annotations
 import io
 from typing import TYPE_CHECKING
 
-import numpy as np
 import pytest
 import pytest_check as check
 import torch
 
 from qubosolver import (
-    ClassicalSolvingConfig,
     Instance,
-    QuantumSolvingConfig,
-    Solver,
-    SolverConfig,
     matrix,
     solving,
     transforms,
@@ -71,20 +66,6 @@ def test_len_zero_is_falsy() -> None:
     qi = Instance(matrix.zeros(0))
     check.equal(len(qi), 0)
     check.is_false(bool(qi))
-
-
-def test_size_exceeds_limit_triggers_system_exit() -> None:
-
-    # An 81x81 QUBO exceeds the maximum supported size of 80x80
-    coeffs = np.zeros((81, 81))
-
-    qi = Instance(matrix.tensor(coeffs))
-    # Expect SystemExit to be raised when setting oversized coefficients
-    solver = Solver(qi, SolverConfig(solving=ClassicalSolvingConfig()))
-    assert solver.instance.size == 81
-    match_msg = "QUBO size 81x81 exceeds the maximum supported size of 80x80"
-    with pytest.raises(ValueError, match=match_msg):
-        Solver(qi, SolverConfig(solving=QuantumSolvingConfig()))
 
 
 @pytest.mark.parametrize("size", [0, 1])

@@ -1,6 +1,6 @@
 ## Bayesian Search Drive Shaper
 
-`BayesianSearchDriveShaper` uses bayesian optimization to find drive parameters (amplitude and detuning) in order to solve a QUBO problem using quantum simulation.
+`solving.drive_bayesian_search.solve` uses bayesian optimization to find drive parameters (amplitude and detuning) in order to solve a QUBO problem using quantum simulation.
 
 It outputs both the optimized drive and a solution object containing bitstrings, counts, probabilities, and associated costs.
 
@@ -15,7 +15,11 @@ It outputs both the optimized drive and a solution object containing bitstrings,
 | Field         | Type          | Description |
 |---------------|---------------|-------------|
 | `instance`   | `Instance` | Qubo instance. |
-| `config` | `SolverConfig` | Configuration for solving. |
+| `register` | `qoolqit.Register` | Atom register the drive is applied to. |
+| `backend` | `protocols.Backend` | Backend running the simulations during optimization. |
+| `device` | `qoolqit.Device` | Target device. |
+| `dmm` | `bool` | Whether to use the Detuning Map Modulator; default: `True`. |
+| `config` | `drive_bayesian_search.Config` | Optimization parameters (initial knots, number of evaluations, objective). |
 
 
 ### Drive Parameterization
@@ -64,24 +68,24 @@ After the final round of optimization, the following attributes are populated:
 
 ### Example
 
-```python exec="on" source="block" html="1"
-# import torch
+```python
+import qoolqit
+from qubosolver import Instance, LocalEmulator, embedding, matrix, solving
 
-# from qubosolver import Instance, SolverConfig, DriveShapingConfig, Solver, drive_shaping
+Q = matrix.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
 
+instance = Instance(Q)
+device = qoolqit.AnalogDeviceWithDMM()
+register = embedding.blade.embed_for_device(instance, device)
 
-# Q = torch.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
-
-# instance = Instance(Q)
-
-# default_config = SolverConfig(
-#     use_quantum = True, drive_shaping=DriveShapingConfig(drive_shaping_method=drive_shaping.Algorithm.BAYESIAN_SEARCH, bayesian_search_n_calls = 25),
-# )
-# solver = Solver(instance, default_config)
-
-# solution = solver.solve()
-# print(solution)
-
+solution, drive = solving.drive_bayesian_search.solve(
+    instance,
+    register,
+    backend=LocalEmulator(),
+    device=device,
+    config=solving.drive_bayesian_search.Config(n_evaluations=25),
+)
+print(solution)
 ```
 This will return a `Solution` instance, which comprehends the solution bitstrings, the counts of each bitstring, their probabilities and costs.
 

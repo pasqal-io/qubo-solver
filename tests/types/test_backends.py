@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import warnings
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 from unittest.mock import MagicMock, patch
 
 import pulser
@@ -31,20 +31,37 @@ from pulser_simulation import QutipBackendV2
 from qubosolver import (
     AutoLocalEmulatorBackend,
     AutoRemoteEmulatorBackend,
-    EmbeddingConfig,
     Instance,
     LocalEmulator,
-    QuantumSolvingConfig,
     RemoteEmulator,
-    Solver,
-    SolverConfig,
+    Solution,
+    drive_shaping,
+    embedding,
     matrix,
+    solving,
 )
 from qubosolver.types.backends import (
     _get_backend_type,
     _warn_suboptimal_backend,
 )
 from qubosolver.utils._random import manual_seed
+
+if TYPE_CHECKING:
+    from qubosolver.types import protocols
+
+
+def _quantum_solve(
+    instance: Instance, backend: protocols.Backend, *, steps_per_round: int | None = None
+) -> Solution:
+    """Run the default quantum pipeline (BLaDE, local energy scale) on `backend`."""
+    device = qoolqit.AnalogDeviceWithDMM()
+    config = embedding.blade.Config(device=device)
+    if steps_per_round is not None:
+        config.steps_per_round = steps_per_round
+    register = embedding.blade.embed(instance, config=config)
+    drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
+    program = solving.analog_quantum_sampling.compile(register, drive, device)
+    return Solution.from_results(backend.run(program).results(), instance)
 
 
 def make_sequence(register: pulser.Register, device: qoolqit.Device) -> pulser.Sequence:
@@ -150,9 +167,7 @@ def local_auto_backend() -> tuple[LocalEmulator, pulser.backend.Results]:
 @pytest.fixture
 def local_default_config() -> tuple[LocalEmulator, pulser.backend.Results]:
     results = MagicMock(spec=pulser.backend.Results)
-    backend = SolverConfig().quantum.backend
-    assert isinstance(backend, LocalEmulator)
-    return backend, results
+    return LocalEmulator(), results
 
 
 @pytest.fixture
@@ -213,30 +228,19 @@ def test_emulator_backend_selection(
     backend, results = backend_and_results
     attach_bitstring(results, size)
 
-    solver_config = SolverConfig(
-        solving=QuantumSolvingConfig(
-            backend=backend,
-            # Backend selection doesn't depend on embedding quality; keep BLaDE cheap.
-            embedding=EmbeddingConfig(algorithm="blade", blade_steps_per_round=2),
-        ),
-        preprocessing=False,
-        postprocessing=False,
-    )
-
-    solver = Solver(instance, solver_config)
+    # Backend selection doesn't depend on embedding quality; keep BLaDE cheap.
     with patch.object(expected_type, "run", return_value=results) as mock_run:
         if expected_type is not optimal_type:
             with pytest.warns(UserWarning, match=f"Consider using {optimal_type.__name__}"):
-                solver.solve()
+                _quantum_solve(instance, backend, steps_per_round=2)
         else:
-            solver.solve()
+            _quantum_solve(instance, backend, steps_per_round=2)
         mock_run.assert_called_once()
 
 
-def test_default_config_backend() -> None:
-    """Test that default solving.Config uses AutoLocalEmulatorBackend."""
-    config = SolverConfig()
-    check.is_(config.quantum.backend._backend_type, AutoLocalEmulatorBackend)
+def test_default_local_emulator_backend() -> None:
+    """Test that default LocalEmulator uses AutoLocalEmulatorBackend."""
+    check.is_(LocalEmulator()._backend_type, AutoLocalEmulatorBackend)
 
 
 def test_default_remote_emulator_backend() -> None:
@@ -254,21 +258,13 @@ def test_remote_emulator_warning() -> None:
     instance = Instance(Q)
     mock_connection, mock_results = mock_connection_and_results()
     attach_bitstring(mock_results, size)
-    config = SolverConfig(
-        solving=QuantumSolvingConfig(
-            backend=RemoteEmulator(backend_type=RemoteSVBackend, connection=mock_connection),
-            embedding=EmbeddingConfig(algorithm="blade"),
-        ),
-        preprocessing=False,
-        postprocessing=False,
-    )
-    solver = Solver(instance, config)
+    backend = RemoteEmulator(backend_type=RemoteSVBackend, connection=mock_connection)
 
     with (
         patch.object(RemoteSVBackend, "run", return_value=mock_results) as mock_run,
         pytest.warns(UserWarning, match="Consider using RemoteEmuFreeBackend"),
     ):
-        solver.solve()
+        _quantum_solve(instance, backend)
         mock_run.assert_called_once()
 
 
@@ -278,23 +274,14 @@ def test_local_emulator_warning() -> None:
     size = 2
     Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
     instance = Instance(Q)
-    config = SolverConfig(
-        solving=QuantumSolvingConfig(
-            backend=LocalEmulator(backend_type=SVBackend),
-            embedding=EmbeddingConfig(algorithm="blade"),
-        ),
-        preprocessing=False,
-        postprocessing=False,
-    )
-
-    solver = Solver(instance, config)
+    backend = LocalEmulator(backend_type=SVBackend)
     results = MagicMock(spec=pulser.backend.Results)
     attach_bitstring(results, size)
     with (
         patch.object(SVBackend, "run", return_value=results) as mock_run,
         pytest.warns(UserWarning, match="Consider using QutipBackendV2"),
     ):
-        solver.solve()
+        _quantum_solve(instance, backend)
         mock_run.assert_called_once()
 
 

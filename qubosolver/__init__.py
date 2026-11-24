@@ -8,10 +8,9 @@
 Solves Quadratic Unconstrained Binary Optimization (QUBO) problems using classical, quantum,
 and hybrid algorithms, including on Pasqal neutral-atom QPUs.
 
-Exposes the core data types ([`Instance`][], [`Solution`][], [`Dataset`][], ...), the
-[`Solver`][] entry point, and the [`transforms`][], [`embedding`][],
-[`drive_shaping`][], and [`solving`][] submodules used to build and run quantum,
-hybrid, and classical QUBO solvers.
+Exposes the core data types ([`Instance`][], [`Solution`][], [`Dataset`][], ...) and the
+[`transforms`][], [`embedding`][], [`drive_shaping`][], and [`solving`][] submodules used to
+build and run quantum, hybrid, and classical QUBO solvers.
 """
 
 from __future__ import annotations
@@ -34,7 +33,7 @@ if _RUNTIME_TYPE_CHECKING:  # no cov
 
 # isort: split
 # qubosolver.types must be imported (and fully initialized) before qubosolver.drive_shaping,
-# qubosolver.solver, etc., since those submodules import names back from the qubosolver
+# qubosolver.solving, etc., since those submodules import names back from the qubosolver
 # package itself (e.g. `from qubosolver import Instance`). Don't let isort/ruff reorder this
 # block alphabetically, or it will reintroduce that circular import.
 from qubosolver.types import (  # noqa: E402
@@ -69,14 +68,6 @@ from qubosolver.types import (  # noqa: E402
 
 # isort: split
 from qubosolver import drive_shaping, embedding, solving, transforms  # noqa: E402
-from qubosolver.solver import (  # noqa: E402
-    ClassicalSolvingConfig,
-    DriveShapingConfig,
-    EmbeddingConfig,
-    QuantumSolvingConfig,
-    Solver,
-    SolverConfig,
-)
 from qubosolver.utils import analysis, extract_qubo  # noqa: E402
 
 __all__ = [
@@ -85,18 +76,12 @@ __all__ = [
     "Bitstring",
     "Bitstrings",
     "Candidate",
-    "ClassicalSolvingConfig",
     "Dataset",
-    "DriveShapingConfig",
-    "EmbeddingConfig",
     "Instance",
     "LocalEmulator",
     "Matrix",
-    "QuantumSolvingConfig",
     "RemoteEmulator",
     "Solution",
-    "Solver",
-    "SolverConfig",
     "Tensor",
     "Vector",
     "Vectori",

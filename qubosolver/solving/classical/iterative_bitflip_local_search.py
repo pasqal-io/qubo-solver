@@ -12,8 +12,8 @@ iterations is reached, or a shared time budget is exhausted.
 
 The main public entry point is [`solve`][], which applies the selected
 strategy to every bitstring in an existing [`Solution`][], or to a batch of
-uniformly random candidates generated on the fly. It is used as a
-post-processing step in [`Solver`][]. ``"best_improvement"`` runs every
+uniformly random candidates generated on the fly, e.g. to post-process the
+candidates of another solver. ``"best_improvement"`` runs every
 bitstring in lockstep as a single batched search; ``"first_improvement"``
 and ``"greedy_sweep"`` improve each bitstring independently.
 """

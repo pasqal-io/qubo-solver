@@ -583,3 +583,9 @@ def test_config_from_device_uses_max_layout_traps() -> None:
     pulser_device = dataclasses.replace(AnalogDeviceWithDMM()._device, max_layout_traps=170)
     config = embedding.greedy_layout.Config.from_device(qoolqit.Device(pulser_device=pulser_device))
     check.equal(config.traps, 170)
+
+
+def test_config_from_device_without_layout_limits_uses_default_traps() -> None:
+    # MockDevice sets neither max_layout_traps nor max_atom_num.
+    config = embedding.greedy_layout.Config.from_device(qoolqit.MockDevice())
+    check.equal(config.traps, 200)

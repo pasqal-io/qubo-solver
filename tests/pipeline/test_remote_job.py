@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import io
 import random
-from typing import TYPE_CHECKING, get_args
+from typing import TYPE_CHECKING, Literal, get_args
 
 import numpy as np
 import pytest
@@ -34,8 +34,6 @@ from qubosolver import (
     solving,
     transforms,
 )
-from qubosolver.solver.config.drive_shaping import _DriveShapingAlgorithm
-from qubosolver.solver.config.embedding import _EmbeddingAlgorithm
 from qubosolver.utils import analysis
 
 if TYPE_CHECKING:
@@ -43,6 +41,9 @@ if TYPE_CHECKING:
     from pulser.backend.remote import RemoteConnection
 
     from qubosolver.types import protocols
+
+_DriveShapingAlgorithm = Literal["local_energy_scale", "proportional_diagonal", "bayesian_search"]
+_EmbeddingAlgorithm = Literal["blade", "greedy_layout"]
 
 
 def _pre_remote_job(  # noqa: PLR0913
@@ -75,6 +76,10 @@ def _pre_remote_job(  # noqa: PLR0913
 
     if drive_method == "proportional_diagonal":
         drive = drive_shaping.proportional_diagonal.build_drive(
+            instance, register, device=device, dmm=dmm
+        )
+    elif drive_method == "local_energy_scale":
+        drive = drive_shaping.local_energy_scale.build_drive(
             instance, register, device=device, dmm=dmm
         )
     else:

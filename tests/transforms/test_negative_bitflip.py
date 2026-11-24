@@ -377,3 +377,16 @@ def test_solve_bitflip_returns_trivial_solution() -> None:
     # Every off-diagonal coefficient is below `eps`, so no flip is needed.
     solution = _solve_bitflip(instance, method="local_search", time_limit=1.0, eps=10.0, rng=None)
     check.equal(solution[0].string, "0000")
+
+
+def test_lift_without_flips_returns_an_equal_copy() -> None:
+    instance = Instance(matrix.tensor([[-1.0, 2.0], [2.0, -1.0]]))
+    flipped_instance = transforms.negative_bitflip.apply(instance)
+    check.is_false(bool(torch.any(flipped_instance.flips != 0)))
+    solution = solving.brute_force.solve(flipped_instance)
+
+    restored = transforms.negative_bitflip.lift(solution, flipped_instance)
+
+    check.is_not(restored, solution)
+    torch.testing.assert_close(restored.bitstrings, solution.bitstrings)
+    torch.testing.assert_close(restored.costs, solution.costs)

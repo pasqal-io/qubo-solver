@@ -514,3 +514,16 @@ def test_local_search_with_rng(search: Callable[..., torch.Tensor]) -> None:
     # fmt: on
     best_bitstring = search(Q, bitstring.zeros(2), rng=torch_rng(2005221736))
     torch.testing.assert_close(best_bitstring, bitstring.tensor([1, 1]))
+
+
+def test_greedy_sweep_stops_after_max_iterations_while_still_improving() -> None:
+    # From 00, the first sweep only flips bit 1 (flipping bit 0 first would raise the
+    # cost); a second sweep would then flip bit 0 and reach the optimum 11.
+    Q = matrix.tensor([[1.0, -2.0], [-2.0, -0.5]])
+    start = bitstring.zeros(2)
+
+    one_sweep = _greedy_sweep_search(Q, start, max_iterations=1)
+    converged = _greedy_sweep_search(Q, start)
+
+    torch.testing.assert_close(one_sweep, bitstring.tensor([0, 1]))
+    torch.testing.assert_close(converged, bitstring.tensor([1, 1]))

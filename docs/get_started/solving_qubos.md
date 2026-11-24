@@ -20,7 +20,7 @@ Pasqal's quantum processors operate in the Rydberg analog model: a register of n
 
 ## Where to go next
 
-The [tutorials](../tutorials/01-qubosolver-basics.ipynb) walk through solving QUBO instances with both the object-oriented and functional APIs, covering classical, quantum, and hybrid solving in practice.
+The [tutorials](../tutorials/01-qubosolver-basics.ipynb) walk through classical, quantum, and hybrid QUBO solving in practice.
 
 [^1]: [Glover et al., A Tutorial on Formulating and Using QUBO Models (2018)](https://arxiv.org/abs/1811.11538)
 [^2]: [Glover et al., Quantum bridge analytics I: a tutorial on formulating and using QUBO models (2022)](https://link.springer.com/article/10.1007/s10479-022-04634-2)

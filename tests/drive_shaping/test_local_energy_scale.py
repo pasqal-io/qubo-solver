@@ -18,15 +18,12 @@ from qoolqit import AnalogDevice, DigitalAnalogDevice
 
 from qubosolver import (
     Candidate,
-    DriveShapingConfig,
-    EmbeddingConfig,
     Instance,
-    QuantumSolvingConfig,
+    LocalEmulator,
     Solution,
-    Solver,
-    SolverConfig,
     analysis,
     drive_shaping,
+    embedding,
     matrix,
     solving,
     tensor,
@@ -85,28 +82,18 @@ def test_with_perfect_embedding(
     expected_bitstrings = [solution.string for solution in expected_optimal_solutions]
     print(f"Expected optimal bitstrings: {expected_bitstrings}")
 
-    embedding_config = EmbeddingConfig(
-        algorithm="greedy_layout",
+    device = device_type()
+    register = embedding.greedy_layout.embed_for_device(instance, device)
+    drive = drive_shaping.local_energy_scale.build_drive(
+        instance, register, device=device, dmm=device_type is DigitalAnalogDevice
     )
-
-    drive_shaping_config = DriveShapingConfig(
-        algorithm="local_energy_scale",
+    program = solving.analog_quantum_sampling.compile(
+        register, drive, device, default_sequence_duration=6000
     )
-
-    solving_config = QuantumSolvingConfig(
-        embedding=embedding_config,
-        drive_shaping=drive_shaping_config,
-        device=device_type(),
-    )
-
-    config = SolverConfig(solving=solving_config, preprocessing=False, postprocessing=False)
-
-    solver = Solver(instance, config)
-    solution = solver.solve()
+    solution = Solution.from_results(LocalEmulator().run(program).results(), instance)
     df = analysis.to_dataframe([solution])
     print(df)
 
-    register = solver._embedding()
     print(f"Register: {register.qubits}")
     print(f"Distances: {register.distances()}")
 
@@ -224,3 +211,25 @@ def test_device_without_max_amplitude() -> None:
         Instance(Q), register, dmm=False, device=qoolqit.MockDevice()
     )
     check.is_instance(drive, qoolqit.Drive)
+
+
+def test_dmm_final_detuning_is_clipped_to_total_bottom_detuning(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    n = 6
+    Q = matrix.zeros(n)
+    for i in range(n):
+        Q[i, i] = -50.0 if i % 2 == 0 else 50.0
+    for i in range(n):
+        for j in range(i + 1, n):
+            Q[i, j] = Q[j, i] = 1.0
+    instance = Instance(Q)
+    device = qoolqit.AnalogDeviceWithDMM()
+    register = embedding.blade.embed_for_device(instance, device)
+
+    with caplog.at_level(logging.INFO):
+        drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
+
+    check.is_in("DMM final detuning would exceed the device's total_bottom_detuning", caplog.text)
+    # The clipped drive must still compile on the device.
+    solving.analog_quantum_sampling.compile(register, drive, device)

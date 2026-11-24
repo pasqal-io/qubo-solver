@@ -23,15 +23,10 @@ import numpy as np
 import pytest
 import qoolqit
 import torch
-from emu_mps import MPSBackend
-from emu_sv import SVBackend
 from mock.connection import MockConnection
-from pulser_simulation import QutipBackendV2
 
 from qubosolver import (
-    DriveShapingConfig,
     Instance,
-    LocalEmulator,
     Matrix,
     Solution,
     bitstrings,
@@ -112,121 +107,10 @@ def basic_solution() -> Solution:
     )
 
 
-locals_bkds: list[LocalEmulator] = [
-    LocalEmulator(backend_type=btype, num_shots=500)
-    for btype in [
-        QutipBackendV2,
-        SVBackend,
-        MPSBackend,
-    ]
-]
-
-
-@pytest.fixture(
-    params=locals_bkds,
-)
-def local_backend(request: pytest.FixtureRequest) -> LocalEmulator:
-    return request.param  # type: ignore[no-any-return]
-
-
-@pytest.fixture(
-    params=[
-        qoolqit.AnalogDeviceWithDMM(),
-        qoolqit.AnalogDevice(),
-        qoolqit.MockDevice(),
-    ],
-    ids=[
-        "AnalogDeviceWithDMM",
-        "AnalogDevice",
-        "MockDevice",
-    ],
-)
-def local_device(request: pytest.FixtureRequest) -> qoolqit.Device:
-    return request.param  # type: ignore[no-any-return]
-
-
-@pytest.fixture(
-    params=[
-        "greedy_layout",
-        "blade",
-    ]
-)
-def embedding_algorithm(request: pytest.FixtureRequest) -> str:
-    return request.param  # type: ignore[no-any-return]
-
-
-@pytest.fixture
-def bayesian_search_drive_shaping() -> DriveShapingConfig:
-    return DriveShapingConfig(algorithm="bayesian_search")
-
-
-@pytest.fixture
-def qubo_instance_for_preprocessing() -> Instance:
-    """Generate small instance for pre/postprocessing."""
-    return Instance(
-        matrix.tensor(
-            [
-                [-10.0, 19.7365809, 19.7365809, 5.42015853, 5.42015853],
-                [19.7365809, -10.0, 20.67626392, 0.17675796, 0.85604541],
-                [19.7365809, 20.67626392, -10.0, 0.85604541, 0.17675796],
-                [5.42015853, 0.17675796, 0.85604541, -10.0, 0.32306662],
-                [5.42015853, 0.85604541, 0.17675796, 0.32306662, -10.0],
-            ]
-        )
-    )
-
-
 @pytest.fixture
 def simple_qubo_instance() -> Instance:
     Q = matrix.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
     return Instance(matrix=Q)
-
-
-@pytest.fixture
-def simple_qubo_instance2() -> Instance:
-    Q = matrix.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
-    return Instance(matrix=Q)
-
-
-@pytest.fixture
-def qubo_instance_for_embedding() -> Instance:
-    """Small QUBO instance for embedding."""
-    return Instance(
-        matrix.tensor(
-            [[-98, 2, 13, 1], [2, -12, 20, 15], [13, 20, -34, 7], [1, 15, 7, -57]],
-        )
-    )
-
-
-@pytest.fixture
-def qubo_instance_blade_tutorial() -> Instance:
-    M = matrix.tensor(
-        [
-            [0.0, 3.0, 13.0, 211.0, 49.0, 5.0, 12.0, 0.0, 0.0],
-            [0.0, 0.0, 23.0, 0.0, 0.0, 4.0, 0.0, 63.0, 2.0],
-            [0.0, 0.0, 0.0, 5.0, 0.0, 1.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 37.0, 0.0, 1.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 34.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 35.0, 9.0, 34.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 70.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        ]
-    )
-    Q = M + M.T
-    return Instance(matrix=Q)
-
-
-@pytest.fixture(
-    params=[
-        "simple_qubo_instance",
-        "simple_qubo_instance2",
-        "qubo_instance_for_embedding",
-        "qubo_instance_blade_tutorial",
-    ],
-)
-def qubo_for_testing_many_devices(request: pytest.FixtureRequest) -> Instance:
-    return request.getfixturevalue(request.param)  # type: ignore[no-any-return]
 
 
 def generate_qubo_matrix(

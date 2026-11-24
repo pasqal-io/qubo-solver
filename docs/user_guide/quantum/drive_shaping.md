@@ -1,6 +1,6 @@
 # Drive shaping workflow
 
-Drive shaping builds the time-dependent drive Hamiltonian — amplitude and detuning waveforms, and optionally a detuning map — applied to a register during quantum solving. Each drive shaping algorithm is callable directly, or picked and configured through `Solver`/`SolverConfig`.
+Drive shaping builds the time-dependent drive Hamiltonian — amplitude and detuning waveforms, and optionally a detuning map — applied to a register during quantum solving. Each drive shaping algorithm is a function you call directly.
 
 ## Goal of drive shaping
 
@@ -204,31 +204,4 @@ fig.savefig(output_dir / "quantum_drive_shaping_custom_drive.svg")
 plt.close(fig)
 
 print('<figure><figcaption>Drive</figcaption><img src="quantum_drive_shaping_custom_drive.svg" alt="Custom drive"></figure>')  # markdown-exec: hide
-```
-
-## The `Solver` shortcut
-
-Rather than calling `drive_shaping.proportional_diagonal.build_drive`, `drive_shaping.local_energy_scale.build_drive`, or `solving.drive_bayesian_search.solve` directly, you can select and configure the drive shaping algorithm through `DriveShapingConfig`, nested in `QuantumSolvingConfig` and `SolverConfig`; `Solver` then runs it as part of the full quantum pipeline. Leaving `DriveShapingConfig` unset falls back to the proportional-diagonal shaper with DMM enabled — see [`SolverConfig`][qubosolver.SolverConfig] for the full set of defaults.
-
-`DriveShapingConfig` only exposes the most commonly tuned parameters of each algorithm (e.g. `proportional_diagonal_kappa`, `local_energy_scale_kappa`, `bayesian_search_n_calls`). Finer-grained parameters — such as Bayesian search's `objective_fn` or its optimization callback — are not settable this way; call `solving.drive_bayesian_search.solve` directly with a full `solving.drive_bayesian_search.Config` if you need those.
-
-```python exec="on" source="tabbed-left" session="drive_shaping" result="text"
-from qubosolver import SolverConfig, QuantumSolvingConfig, DriveShapingConfig
-from dataclasses import asdict
-import pprint
-
-drive_shaping_config = DriveShapingConfig(
-    algorithm="local_energy_scale",
-    # algorithm = "proportional_diagonal",
-    # algorithm = "bayesian_search",
-    dmm=True,
-    local_energy_scale_kappa=0.3,
-)
-quantum_config = QuantumSolvingConfig(
-    drive_shaping=drive_shaping_config,
-)
-solver_config = SolverConfig(
-    solving=quantum_config,
-)
-print(pprint.pformat(asdict(solver_config.solving.drive_shaping)))
 ```

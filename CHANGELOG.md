@@ -23,6 +23,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Require `qoolqit>=1.6.0,<1.7` and cap the other runtime and extras dependencies at their next major version. ([#360](https://github.com/pasqal-io/qubo-solver/pull/360))
 - Ship only the package, changelog and citation in the source distribution. ([#360](https://github.com/pasqal-io/qubo-solver/pull/360))
 
+### Removed
+- Remove the object-oriented API, the `qubosolver.solver` module with `Solver`, `SolverConfig`, `ClassicalSolvingConfig`, `QuantumSolvingConfig`, `EmbeddingConfig` and `DriveShapingConfig`; use the functional `transforms`, `embedding`, `drive_shaping` and `solving` submodules instead, see the user guide. ([#378](https://github.com/pasqal-io/qubo-solver/pull/378))
+
 ### Fixed
 - Make variable fixing raise `ValueError` when a rule returns an index outside the instance: `apply_recursively` used to loop forever. ([#352](https://github.com/pasqal-io/qubo-solver/pull/352))
 - Make Hansen fixing robust to rounding: in float32, near-ties between large coefficients could fix a variable to a value that excludes the optimum. ([#355](https://github.com/pasqal-io/qubo-solver/pull/355))

@@ -2,8 +2,7 @@
 
 Transforms reduce or change a QUBO `Instance` before solving — fixing variables, or eliminating
 negative off-diagonal coefficients — and record enough history to map a `Solution` of the
-transformed problem back to the original one. Each is callable directly, or chained automatically
-by `Solver`/`SolverConfig` via `preprocessing=True`.
+transformed problem back to the original one. Each is a plain function you call directly.
 
 - API reference: [`qubosolver.transforms`](../../api/transforms.md)
 
@@ -34,8 +33,7 @@ print(f"Costs: {solution.costs}")
 ```
 
 Transforms can be chained: apply one to the output of another, solve the final instance, then
-lift back through each transform in reverse order. `Solver` does this for you (see
-[The `Solver` shortcut](#the-solver-shortcut)).
+lift back through each transform in reverse order.
 
 ## Reduction with variable fixing
 
@@ -177,61 +175,7 @@ print(f"Zeroed edges:\n{zeroed_hard.zeroed_edges}")
 print(f"Negative matrix:\n{zeroed_hard.negative_matrix}")
 ```
 
-Zeroing is only ever applied automatically by the `Solver`/`SolverConfig` shortcut below, and only
-when solving with a `QuantumSolvingConfig` — regardless of whether `preprocessing` is enabled.
-Before embedding, the final QUBO is always checked, and if negative off-diagonal coefficients
-remain, the quantum solver zeros them out automatically (logging a message) so it can be embedded
-— there is no separate flag to request this, and no flag to opt out of it or make it raise
-instead. Classical solvers have no such restriction and never trigger this fallback.
-
-## The `Solver` shortcut
-
-Going through the `Solver` dispatcher with a `QuantumSolvingConfig` chains the transforms above
-for you:
-
-1. if `SolverConfig.preprocessing=True`, variable-fixing reduction
-   (`transforms.variable_fixing.apply_recursively`) followed by negative-coefficients bit-flip
-   preprocessing (`transforms.negative_bitflip.apply`);
-2. regardless of `preprocessing`, if negative off-diagonal coefficients remain, automatic zeroing
-   (`transforms.zeroing.apply`) — classical solvers skip this step entirely.
-
-After solving, `Solver` lifts the solution back through each transform in reverse order, so the
-returned `Solution` always refers to the bitstrings and costs of the *original* instance you
-passed in.
-
-### Code example
-```python exec="on" source="tabbed-left" session="shortcut" result="text"
-from qubosolver import Instance, Solver, SolverConfig, QuantumSolvingConfig, matrix
-
-Q_hard = Instance(
-    matrix.tensor(
-        [
-            [0.0, -2.0, 1.0, 1.0],
-            [-2.0, 0.0, -2.0, 1.0],
-            [1.0, -2.0, 0.0, -2.0],
-            [1.0, 1.0, -2.0, 0.0],
-        ]
-    )
-)
-
-config = SolverConfig(
-    solving=QuantumSolvingConfig(),
-    preprocessing=True,
-)
-
-# Bit-flip preprocessing cannot remove every negative off-diagonal coefficient here;
-# the quantum solver zeros out the remainder automatically before embedding (see the
-# logged message).
-solution = Solver(Q_hard, config).solve()
-
-print(f"Solution bitstrings shape: {solution.bitstrings.shape}")
-print(f"Original instance size: {Q_hard.size}")
-```
-
-!!! note
-    The `Solver` API does not let you run variable-fixing, bit-flip preprocessing, and zeroing
-    independently of each other. If you need that flexibility — for example, to inspect the QUBO
-    after bit-flip preprocessing but before deciding whether to zero it — use the functional API
-    directly, as shown in the sections above: `transforms.variable_fixing.apply`,
-    `transforms.negative_bitflip.apply`, and `transforms.zeroing.apply` can each be called on
-    their own, and their matching `lift` functions used to map solutions back afterwards.
+Zeroing is never applied implicitly. The embedders reject instances with negative off-diagonal
+coefficients, so before a quantum solve, call `transforms.negative_bitflip.apply` and, if negative
+coefficients remain, `transforms.zeroing.apply`, then lift the solution back through both in
+reverse order. Classical solvers have no such restriction.

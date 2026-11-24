@@ -7,10 +7,12 @@ from __future__ import annotations
 
 import copy
 import io
+from unittest.mock import Mock
 
 import pytest
 import pytest_check as check
 import torch
+from pulser.backend.remote import Results
 
 from qubosolver import Instance, Solution, bitstrings, matrix, vector, vectori
 
@@ -903,3 +905,72 @@ def test_concat_mixed_populated_and_empty_counts_raises() -> None:
     )
     with pytest.raises(AssertionError):
         Solution.concat([a, b])
+
+
+def test_parse_results() -> None:
+    # Mock results object
+    mock_result = Mock(spec=Results)
+    mock_result.final_bitstrings = {"001": 10, "110": 5, "010": 3}
+
+    solution = Solution.from_results(mock_result, Instance(matrix.zeros(3)))
+
+    expected_bitstrings = bitstrings.tensor([[0, 0, 1], [1, 1, 0], [0, 1, 0]])
+    expected_counts = vectori.tensor([10, 5, 3])
+
+    torch.testing.assert_close(solution.bitstrings, expected_bitstrings)
+    torch.testing.assert_close(solution.counts, expected_counts)
+
+
+def test_parse_results_empty_final_bitstrings() -> None:
+    # Mock results with empty final_bitstrings
+    mock_result = Mock(spec=Results)
+    mock_result.final_bitstrings = {}
+
+    solution = Solution.from_results(mock_result, Instance())
+
+    check.equal(solution.bitstrings.shape, (0, 0))
+    check.equal(solution.bitstrings.dtype, torch.int8)
+    check.equal(solution.counts.shape, (0,))
+    check.equal(solution.counts.dtype, torch.int64)
+
+
+def test_parse_results_binary_string_conversion() -> None:
+    # Mock results with binary string keys
+    mock_result = Mock(spec=Results)
+    mock_result.final_bitstrings = {"0101": 8, "1010": 12, "1111": 4}
+
+    solution = Solution.from_results(mock_result, Instance(matrix.zeros(4)))
+
+    expected_bitstrings = bitstrings.tensor([[0, 1, 0, 1], [1, 0, 1, 0], [1, 1, 1, 1]])
+    expected_counts = vectori.tensor([8, 12, 4])
+
+    torch.testing.assert_close(solution.bitstrings, expected_bitstrings)
+    torch.testing.assert_close(solution.counts, expected_counts)
+
+
+def test_parse_results_single_bitstring() -> None:
+    # Mock results with single bitstring
+    mock_result = Mock(spec=Results)
+    mock_result.final_bitstrings = {"101": 25}
+
+    solution = Solution.from_results(mock_result, Instance(matrix.zeros(3)))
+
+    expected_bitstrings = bitstrings.tensor([[1, 0, 1]])
+    expected_counts = vectori.tensor([25])
+
+    torch.testing.assert_close(solution.bitstrings, expected_bitstrings)
+    torch.testing.assert_close(solution.counts, expected_counts)
+
+
+def test_parse_results_string_counts_to_integer_tensor() -> None:
+    # Mock results with string count values
+    mock_result = Mock(spec=Results)
+    mock_result.final_bitstrings = {"101": "15", "010": "8", "111": "12"}
+
+    solution = Solution.from_results(mock_result, Instance(matrix.zeros(3)))
+
+    expected_bitstrings = bitstrings.tensor([[1, 0, 1], [0, 1, 0], [1, 1, 1]])
+    expected_counts = vectori.tensor([15, 8, 12])
+
+    torch.testing.assert_close(solution.bitstrings, expected_bitstrings)
+    torch.testing.assert_close(solution.counts, expected_counts)

@@ -5,25 +5,39 @@
 
 from __future__ import annotations
 
-from typing import get_args
+from typing import TYPE_CHECKING
 
 import pytest
+import qoolqit
 
 from qubosolver import (
-    ClassicalSolvingConfig,
     Instance,
-    QuantumSolvingConfig,
+    LocalEmulator,
     Solution,
-    Solver,
-    SolverConfig,
+    drive_shaping,
+    embedding,
+    solving,
 )
-from qubosolver.solver.config.solving import _ClassicalAlgorithm
 from qubosolver.utils import analysis
 
+if TYPE_CHECKING:
+    from types import ModuleType
+
 _CLASSICAL_METHODS = [
-    pytest.param(method, marks=pytest.mark.extras) if method == "cplex" else method
-    for method in get_args(_ClassicalAlgorithm)
+    solving.tabu_search,
+    solving.simulated_annealing,
+    pytest.param(solving.cplex, marks=pytest.mark.extras),
+    solving.random_sampling,
 ]
+_CLASSICAL_IDS = ["tabu_search", "simulated_annealing", "cplex", "random_sampling"]
+
+
+def _quantum_solve(instance: Instance) -> Solution:
+    device = qoolqit.AnalogDeviceWithDMM()
+    register = embedding.blade.embed_for_device(instance, device)
+    drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
+    program = solving.analog_quantum_sampling.compile(register, drive, device)
+    return Solution.from_results(LocalEmulator().run(program).results(), instance)
 
 
 def test_to_dataframe_single_solution(basic_solution: Solution) -> None:
@@ -94,15 +108,9 @@ def test_calculate_gaps(basic_solution: Solution) -> None:
     assert "gaps" in df.columns
 
 
-@pytest.mark.parametrize("classical_method", _CLASSICAL_METHODS)
-def test_analyzer_classical(
-    simple_qubo_instance: Instance, classical_method: _ClassicalAlgorithm
-) -> None:
-    config = SolverConfig(
-        solving=ClassicalSolvingConfig(algorithm=classical_method),
-    )
-    solver = Solver(simple_qubo_instance, config)
-    solution = solver.solve()
+@pytest.mark.parametrize("classical_method", _CLASSICAL_METHODS, ids=_CLASSICAL_IDS)
+def test_analyzer_classical(simple_qubo_instance: Instance, classical_method: ModuleType) -> None:
+    solution = classical_method.solve(simple_qubo_instance)
     df = analysis.to_dataframe([solution], labels=["sol1"])
 
     assert len(df) == len(solution.bitstrings)
@@ -112,9 +120,7 @@ def test_analyzer_classical(
 
 @pytest.mark.duration(4)
 def test_analyzer_quantum(simple_qubo_instance: Instance) -> None:
-    config = SolverConfig(solving=QuantumSolvingConfig(), preprocessing=False, postprocessing=False)
-    solver = Solver(simple_qubo_instance, config)
-    solution = solver.solve()
+    solution = _quantum_solve(simple_qubo_instance)
     df = analysis.to_dataframe([solution], labels=["sol1"])
 
     assert len(df) == len(solution.bitstrings)
@@ -123,26 +129,12 @@ def test_analyzer_quantum(simple_qubo_instance: Instance) -> None:
 
 
 @pytest.mark.duration(4)
-@pytest.mark.parametrize("classical_method", _CLASSICAL_METHODS)
+@pytest.mark.parametrize("classical_method", _CLASSICAL_METHODS, ids=_CLASSICAL_IDS)
 def test_analyzer_quantum_and_classical(
-    simple_qubo_instance: Instance, classical_method: _ClassicalAlgorithm
+    simple_qubo_instance: Instance, classical_method: ModuleType
 ) -> None:
-    config = SolverConfig(
-        solving=ClassicalSolvingConfig(algorithm=classical_method),
-        preprocessing=False,
-        postprocessing=False,
-    )
-    solver = Solver(simple_qubo_instance, config)
-    solution = solver.solve()
-
-    config = SolverConfig(
-        solving=QuantumSolvingConfig(),
-        preprocessing=False,
-        postprocessing=False,
-    )
-
-    quantumsolver = Solver(simple_qubo_instance, config)
-    quantumsolution = quantumsolver.solve()
+    solution = classical_method.solve(simple_qubo_instance)
+    quantumsolution = _quantum_solve(simple_qubo_instance)
     df = analysis.to_dataframe([solution, quantumsolution], labels=["sol1", "sol2"])
 
     assert len(df) == len(solution.bitstrings) + len(quantumsolution.bitstrings)

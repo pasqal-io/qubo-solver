@@ -51,3 +51,12 @@ def test_close_batch_records_the_batch_id(connection: MockConnection) -> None:
 def test_supports_open_batch(connection: MockConnection, supported: bool) -> None:
     connection._support_open_batch = supported
     check.equal(connection.supports_open_batch(), supported)
+
+
+def test_job_progress_reports_running_before_done(
+    make_mock_connection: type[MockConnection],
+) -> None:
+    connection = make_mock_connection(cast("Results", object()), running_iterations=1)
+    connection.submit(cast("PulserSequence", None), batch_id="submitted")
+    check.equal(connection._query_job_progress("submitted")["efgh"][0], JobStatus.RUNNING)
+    check.equal(connection._query_job_progress("submitted")["efgh"][0], JobStatus.DONE)
