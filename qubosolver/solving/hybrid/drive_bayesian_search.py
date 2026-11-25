@@ -17,13 +17,12 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import numpy as np
 import qoolqit
-import torch
 from skopt import gp_minimize
 
-from qubosolver._checks import TYPE_CHECKING
 from qubosolver.drive_shaping._device_specs import (
     detuning_amplitude_ratio,
     max_virtual_amplitude,
@@ -40,12 +39,15 @@ from qubosolver.types import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
+    from numpy.typing import NDArray
+
+
 logger = logging.getLogger(__name__)
 
 
 def _default_objective(solution: Solution) -> float:
     """Return the lowest cost from a solution, or infinity if empty."""
-    return solution.costs[0].item() if solution else float("inf")
+    return float(solution.costs[0]) if solution else float("inf")
 
 
 @dataclass
@@ -103,7 +105,7 @@ def _compute_norm_weights(instance: Instance) -> list[float]:
         normalized DMM weights.  Returns all-zeros when every diagonal
         entry is zero.
     """
-    weights_list = torch.abs(torch.diag(instance.matrix)).tolist()
+    weights_list = np.abs(np.diag(instance.matrix)).tolist()
     max_node_weight = max(weights_list) if weights_list else 1.0
     return [(1 - (w / max_node_weight)) if max_node_weight != 0 else 0.0 for w in weights_list]
 
@@ -178,7 +180,7 @@ def _build_drive(
 
 
 def _run_simulation(  # noqa: PLR0913
-    Q: torch.Tensor,
+    Q: NDArray[np.float64],
     register: qoolqit.Register,
     drive: qoolqit.Drive,
     *,
@@ -198,7 +200,7 @@ def _run_simulation(  # noqa: PLR0913
     treat an empty solution as a failure signal.
 
     Args:
-        Q: The raw QUBO coefficient matrix (``torch.Tensor``).
+        Q: The raw QUBO coefficient matrix.
         register: Physical atom register describing qubit positions.
         drive: The drive sequence to apply during the simulation.
         device: Target quantum device that defines hardware constraints.

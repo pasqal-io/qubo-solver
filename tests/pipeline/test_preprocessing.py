@@ -7,31 +7,23 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+import numpy as np
 import pytest_check as check
-import torch
 
-from qubosolver import (
-    Instance,
-    Solution,
-    bitstring,
-    bitstrings,
-    matrix,
-    transforms,
-    vector,
-    vectori,
-)
+from qubosolver import Instance, Solution, bitstring, transforms
 
 
 def test_apply_full_and_post_process_fixation() -> None:
 
     instance = Instance(
-        matrix.tensor(
+        np.asarray(
             [
                 [-98, 2, 13, 1],
                 [2, -12, 20, 15],
                 [13, 20, -34, 7],
                 [1, 15, 7, -57],
-            ]
+            ],
+            dtype=np.float64,
         )
     )
 
@@ -42,10 +34,10 @@ def test_apply_full_and_post_process_fixation() -> None:
     check.equal(len(reduced_instance.fixed_variables), 4)
 
     reduced_solution = Solution(
-        bitstrings.zeros(1, 0),
-        vector.tensor([0.0]),
-        vectori.tensor([1]),
-        vector.tensor([1.0]),
+        np.zeros((1, 0), dtype=np.int8),
+        np.asarray([0.0], dtype=np.float64),
+        np.asarray([1], dtype=np.int64),
+        np.asarray([1.0], dtype=np.float64),
     )
 
     solution = transforms.variable_fixing.lift(reduced_solution, reduced_instance)
@@ -55,7 +47,7 @@ def test_apply_full_and_post_process_fixation() -> None:
 
 
 def test_hansen_fixing() -> None:
-    matrix_reducible = matrix.tensor([[-10, 1], [1, -10]])
+    matrix_reducible = np.asarray([[-10, 1], [1, -10]], dtype=np.float64)
 
     qubo_reducible = Instance(matrix_reducible)
 
@@ -65,7 +57,7 @@ def test_hansen_fixing() -> None:
 
     assert fixed_var == {0: 1, 1: 1}
 
-    matrix_not_reducible = matrix.tensor([[-1, 10], [10, -1]])
+    matrix_not_reducible = np.asarray([[-1, 10], [10, -1]], dtype=np.float64)
 
     qubo_reducible = Instance(matrix_not_reducible)
 
@@ -76,38 +68,38 @@ def test_hansen_fixing() -> None:
 
 def test_reduce_qubo() -> None:
 
-    Q = matrix.tensor(
-        [[-98, 2, 13, 1], [2, -12, 20, 15], [13, 20, -34, 7], [1, 15, 7, -57]],
+    Q = np.asarray(
+        [[-98, 2, 13, 1], [2, -12, 20, 15], [13, 20, -34, 7], [1, 15, 7, -57]], dtype=np.float64
     )
     qubo = Instance(Q)
     reduced_qubo = deepcopy(qubo)
 
     reduced_qubo = transforms.variable_fixing._reduce_qubo(qubo, {0: 1, 3: 1})
 
-    expected_coefficients = matrix.tensor([[22, 20], [20, 6]])
-    torch.testing.assert_close(reduced_qubo.matrix, expected_coefficients)
+    expected_coefficients = np.asarray([[22, 20], [20, 6]], dtype=np.float64)
+    np.testing.assert_allclose(reduced_qubo.matrix, expected_coefficients, strict=True)
 
     non_reduced_qubo = transforms.variable_fixing._reduce_qubo(qubo, {})
-    torch.testing.assert_close(non_reduced_qubo.matrix, qubo.matrix)
+    np.testing.assert_allclose(non_reduced_qubo.matrix, qubo.matrix, strict=True)
 
 
 def test_apply_rule() -> None:
 
-    Q = matrix.tensor(
-        [[-98, 2, 13, 1], [2, -12, 20, 15], [13, 20, -34, 7], [1, 15, 7, -57]],
+    Q = np.asarray(
+        [[-98, 2, 13, 1], [2, -12, 20, 15], [13, 20, -34, 7], [1, 15, 7, -57]], dtype=np.float64
     )
     qubo = Instance(Q)
     reduced_qubo = transforms.variable_fixing.apply(
         qubo, [transforms.variable_fixing.hansen_fixing]
     )
 
-    expected_coefficients = matrix.tensor([[22, 20], [20, 6]])
-    torch.testing.assert_close(reduced_qubo.matrix, expected_coefficients)
+    expected_coefficients = np.asarray([[22, 20], [20, 6]], dtype=np.float64)
+    np.testing.assert_allclose(reduced_qubo.matrix, expected_coefficients, strict=True)
 
 
 def test_reduce_qubo_2() -> None:
 
-    Q = matrix.tensor(
+    Q = np.asarray(
         [
             [1.0, 19.7365809, 19.7365809, 5.42015853, 5.42015853],
             [19.7365809, -10.0, 20.67626392, 0.17675796, 0.85604541],
@@ -115,6 +107,7 @@ def test_reduce_qubo_2() -> None:
             [5.42015853, 0.17675796, 0.85604541, -10.0, 0.32306662],
             [5.42015853, 0.85604541, 0.17675796, 0.32306662, -10.0],
         ],
+        dtype=np.float64,
     )
 
     qubo = Instance(Q)
@@ -125,8 +118,8 @@ def test_reduce_qubo_2() -> None:
 
     # Hardcode solution
     reduced_solution = Solution(
-        bitstrings=bitstrings.tensor([[0, 1]]),
-        costs=vector.tensor([0.0]),
+        bitstrings=np.asarray([[0, 1]], dtype=np.int8),
+        costs=np.asarray([0.0], dtype=np.float64),
     )
 
     solution = transforms.variable_fixing.lift(reduced_solution, reduced_qubo)

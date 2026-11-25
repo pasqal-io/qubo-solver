@@ -13,32 +13,59 @@ extracted from it.
 
 from __future__ import annotations
 
-import io
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
-import torch
-
-from qubosolver._checks import TYPE_CHECKING
+import numpy as np
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
     from typing import Self
 
+    from numpy.typing import NDArray
     from pulser.backend.results import Results
 
     from qubosolver._io.utils import FileLike
 
     from .instance import Instance
-    from .linalg import Bitstring, Bitstrings, Matrix, Vector, Vectori
 
 
 from qubosolver._io import utils as io_utils
 
-from . import bitstring, vector, vectori
-from . import bitstrings as _bitstrings
+from . import bitstring
 
 logger = logging.getLogger(__name__)
+
+
+def _unique_rows(rows: NDArray[np.int8]) -> tuple[np.ndarray, np.ndarray]:
+    """Group identical rows of a 0/1 matrix.
+
+    Faster than ``np.unique(rows, axis=0)``, which sorts a structured dtype with one field
+    per column: rows are packed into ``uint64`` words first and grouped by a stable
+    ``lexsort`` over those few words.
+
+    Args:
+        rows: ``(m, n)`` array of 0/1 values.
+
+    Returns:
+        ``(first, inverse)``: ``first[g]`` is the index of the first row of group ``g``,
+        and ``inverse[i]`` is the group of row ``i``. Groups come in an unspecified order.
+    """
+    m = rows.shape[0]
+    packed = np.packbits(rows, axis=1)
+    # Pad to whole uint64 words, with at least one word so `lexsort` gets a key.
+    pad = -packed.shape[1] % 8 or (8 if packed.shape[1] == 0 else 0)
+    if pad:
+        packed = np.pad(packed, ((0, 0), (0, pad)))
+    words = np.ascontiguousarray(packed).view(np.uint64)
+    order = np.lexsort(words.T)  # stable: each group's rows stay in input order
+    sorted_words = words[order]
+    starts = np.ones(m, dtype=bool)
+    starts[1:] = np.any(sorted_words[1:] != sorted_words[:-1], axis=1)
+    inverse = np.empty(m, dtype=np.intp)
+    inverse[order] = np.cumsum(starts) - 1
+    return order[starts], inverse
 
 
 @dataclass
@@ -59,7 +86,7 @@ class Candidate:
             to ``0.0`` when constructed without one.
     """
 
-    bitstring: Bitstring
+    bitstring: NDArray[np.int8]
     cost: float = float("inf")
     count: int = 0
     probability: float = 0.0
@@ -92,10 +119,10 @@ class Solution:
                 sampling probability of each bitstring.
     """
 
-    bitstrings: Bitstrings = _bitstrings.zeros_field(0, 0)  # noqa: RUF009
-    costs: Vector = vector.zeros_field(0)  # noqa: RUF009
-    counts: Vectori = vectori.zeros_field(0)  # noqa: RUF009
-    probabilities: Vector = vector.zeros_field(0)  # noqa: RUF009
+    bitstrings: NDArray[np.int8] = field(default_factory=lambda: np.zeros((0, 0), dtype=np.int8))
+    costs: NDArray[np.float64] = field(default_factory=lambda: np.zeros(0))
+    counts: NDArray[np.int64] = field(default_factory=lambda: np.zeros(0, dtype=np.int64))
+    probabilities: NDArray[np.float64] = field(default_factory=lambda: np.zeros(0))
 
     def __getitem__(self, idx: int) -> Candidate:
         """Return the candidate at position `idx` as a [`Candidate`][].
@@ -107,17 +134,17 @@ class Solution:
             Snapshot of the candidate at `idx`.
         """
         candidate = Candidate(self.bitstrings[idx])
-        candidate.count = int(self.counts[idx].item())
-        if self.costs.numel() > 0:
-            candidate.cost = self.costs[idx].item()
-        if self.probabilities.numel() > 0:
-            candidate.probability = self.probabilities[idx].item()
+        candidate.count = int(self.counts[idx])
+        if self.costs.size > 0:
+            candidate.cost = float(self.costs[idx])
+        if self.probabilities.size > 0:
+            candidate.probability = float(self.probabilities[idx])
 
         return candidate
 
     def __len__(self) -> int:
         """Return the number of candidate solutions (``num_solutions``)."""
-        return self.bitstrings.shape[0]
+        return int(self.bitstrings.shape[0])
 
     def __iter__(self) -> Iterator[Candidate]:
         """Iterate over all candidates in index order, yielding [`Candidate`][] objects.
@@ -131,9 +158,9 @@ class Solution:
     @property
     def num_variables(self) -> int:
         """Return the number of variables per bitstring."""
-        return self.bitstrings.shape[1]
+        return int(self.bitstrings.shape[1])
 
-    def _compute_costs(self, matrix: Matrix) -> Self:
+    def _compute_costs(self, matrix: NDArray[np.float64]) -> Self:
         """Compute and store the QUBO objective $x^T Q x$ for every bitstring.
 
         Casts `bitstrings` to the dtype of `matrix` before calling the
@@ -150,7 +177,7 @@ class Solution:
         # Import here to avoid circular imports
         from qubosolver.utils import _costs  # noqa: PLC0415 (import cycle)
 
-        self.costs = _costs.batched_quadratic_cost(self.bitstrings.to(dtype), matrix)
+        self.costs = _costs.batched_quadratic_cost(self.bitstrings.astype(dtype), matrix)
         return self
 
     def _compute_probabilities(self) -> Self:
@@ -169,10 +196,10 @@ class Solution:
             calling it on an empty `counts` tensor produces an all-zero
             probabilities tensor.
         """
-        total_counts = self.counts.sum().item()
+        total_counts = int(self.counts.sum())
         self.probabilities = (
-            self.counts / total_counts if total_counts > 0 else torch.zeros_like(self.counts)
-        ).to(self.costs.dtype)
+            self.counts / total_counts if total_counts > 0 else np.zeros_like(self.counts)
+        ).astype(self.costs.dtype)
 
         return self
 
@@ -189,12 +216,12 @@ class Solution:
             `costs` must be populated (via `_compute_costs`) before
             calling this method; sorting by an empty tensor raises an error.
         """
-        sorted_indices = torch.argsort(self.costs, stable=True)
+        sorted_indices = np.argsort(self.costs, kind="stable")
         self.bitstrings = self.bitstrings[sorted_indices]
         self.costs = self.costs[sorted_indices]
-        if self.counts.numel() > 0:
+        if self.counts.size > 0:
             self.counts = self.counts[sorted_indices]
-        if self.probabilities.numel() > 0:
+        if self.probabilities.size > 0:
             self.probabilities = self.probabilities[sorted_indices]
         return self
 
@@ -221,10 +248,10 @@ class Solution:
                 bitstrings).
         """
         if unit_counts:
-            self.counts = vectori.zeros(len(self)).fill_(1)
-        elif self.counts.numel() != len(self):
+            self.counts = np.ones(len(self), dtype=np.int64)
+        elif self.counts.size != len(self):
             msg = (
-                f"Solution has {len(self)} candidates but {self.counts.numel()} counts: "
+                f"Solution has {len(self)} candidates but {self.counts.size} counts: "
                 "pass `unit_counts=True` to count each candidate once."
             )
             raise ValueError(msg)
@@ -312,34 +339,23 @@ class Solution:
 
         self.check_consistency(throw=True, full=False)
 
-        # torch.unique(dim=0) rejects zero-width tensors outright ("0 sized
-        # dimensions... aren't selected"), but a width-0 bitstring is just the
-        # single empty tuple repeated: every row collapses to that one row.
-        if self.bitstrings.shape[1] == 0:
-            unique_bitstrings = self.bitstrings[:1]
-            inverse = vectori.zeros(len(self))
-        else:
-            unique_bitstrings, inverse = self.bitstrings.unique(dim=0, return_inverse=True)
+        first, inverse = _unique_rows(self.bitstrings)
 
-        n = unique_bitstrings.shape[0]
-        # torch.unique always sorts rows lexicographically (even with
-        # sorted=False); put merged rows back in first-appearance order.
-        positions = torch.arange(len(self), device=inverse.device)
-        first = torch.zeros(n, dtype=positions.dtype, device=inverse.device).scatter_reduce(
-            dim=0, index=inverse, src=positions, reduce="amin", include_self=False
-        )
+        n = first.shape[0]
+        # Groups come out in packed-key order; put merged rows back in
+        # first-appearance order.
         order = first.argsort()
-        rank = torch.empty_like(order)
-        rank[order] = torch.arange(n, device=order.device)
+        rank = np.empty_like(order)
+        rank[order] = np.arange(n)
         inverse = rank[inverse]
 
-        self.bitstrings = unique_bitstrings[order]
-        self.counts = vectori.zeros(n).scatter_reduce(
-            dim=0, index=inverse, src=self.counts, reduce="sum", include_self=False
-        )
-        self.costs = vector.zeros(n).scatter_reduce(
-            dim=0, index=inverse, src=self.costs, reduce="amin", include_self=False
-        )
+        self.bitstrings = self.bitstrings[first[order]]
+        counts = np.zeros(n, dtype=np.int64)
+        np.add.at(counts, inverse, self.counts)
+        self.counts = counts
+        costs = np.full(n, np.inf, dtype=self.costs.dtype)
+        np.minimum.at(costs, inverse, self.costs)
+        self.costs = costs
 
         if update:
             self._sort_by_cost()._compute_probabilities()
@@ -390,16 +406,16 @@ class Solution:
         for s in non_empty:
             s.check_consistency(instance=None, throw=True, full=False)
 
-        bitstrings = torch.cat([s.bitstrings for s in non_empty], dim=0)
+        bitstrings = np.concatenate([s.bitstrings for s in non_empty], axis=0)
         if unit_counts:
-            counts = vectori.zeros(bitstrings.shape[0]).fill_(1)
+            counts = np.ones(bitstrings.shape[0], dtype=np.int64)
         else:
-            counts = torch.cat([s.counts for s in non_empty], dim=0)
+            counts = np.concatenate([s.counts for s in non_empty], axis=0)
 
         return (
             Solution(
                 bitstrings=bitstrings,
-                costs=torch.cat([s.costs for s in non_empty], dim=0),
+                costs=np.concatenate([s.costs for s in non_empty], axis=0),
                 counts=counts,
             )
             ._sort_by_cost()
@@ -426,15 +442,17 @@ class Solution:
             default shape inferred from an empty list, avoiding shape ambiguity.
         """
         counter = results.final_bitstrings
-        bitstrings = _bitstrings.tensor([list(map(int, list(b))) for b in list(counter.keys())])
-        if bitstrings.numel() == 0:
-            bitstrings = _bitstrings.zeros(0, 0)
-        counts = vectori.tensor(list(map(int, list(counter.values()))))
+        bitstrings = np.asarray(
+            [list(map(int, list(b))) for b in list(counter.keys())], dtype=np.int8
+        )
+        if bitstrings.size == 0:
+            bitstrings = np.zeros((0, 0), dtype=np.int8)
+        counts = np.asarray(list(map(int, list(counter.values()))), dtype=np.int64)
 
         return Solution(bitstrings=bitstrings, counts=counts)._update(instance)
 
     def save(self, file_like: FileLike[bytes]) -> None:
-        """Serialize this solution to `file_like` using `torch.save`.
+        """Serialize this solution to `file_like`.
 
         Args:
             file_like: Destination — a file path (`str` or `os.PathLike`),
@@ -450,17 +468,8 @@ class Solution:
         """
         with io_utils.open(file_like, "wb") as f:
             io_utils.save_header(f)
-            buffer = io.BytesIO()
-            torch.save(
-                {
-                    "bitstrings": self.bitstrings,
-                    "costs": self.costs,
-                    "counts": self.counts,
-                    "probabilities": self.probabilities,
-                },
-                buffer,
-            )
-            io_utils.save_sized_buffer(f, buffer.getbuffer())
+            for array in (self.bitstrings, self.costs, self.counts, self.probabilities):
+                io_utils.save_array(f, array)
 
     @staticmethod
     def load(file_like: FileLike[bytes]) -> Solution:
@@ -478,8 +487,8 @@ class Solution:
             ValueError: If the stream is not a qubosolver file.
 
         Note:
-            [`torch.load`][] is called with `weights_only=True` to prevent
-            arbitrary code execution from untrusted checkpoint files.
+            Pickled payloads are refused, to prevent arbitrary code execution from
+            untrusted files.
 
         Example:
             ```python
@@ -491,16 +500,10 @@ class Solution:
         """
         with io_utils.open(file_like, "rb") as f:
             io_utils.load_header(f)
-            # torch.load might consume too much of the src buffer.
-            # Use a dedicated limited buffer
-            buffer = io.BytesIO(io_utils.load_sized_buffer(f))
-            data = torch.load(buffer, weights_only=True)
+            bitstrings, costs, counts, probabilities = (io_utils.load_array(f) for _ in range(4))
 
         return Solution(
-            bitstrings=data["bitstrings"],
-            costs=data["costs"],
-            counts=data["counts"],
-            probabilities=data["probabilities"],
+            bitstrings=bitstrings, costs=costs, counts=counts, probabilities=probabilities
         )
 
     def check_consistency(
@@ -544,10 +547,10 @@ class Solution:
                 and skip the rest (cost recomputation, sortedness,
                 duplicate/binary/count/probability checks), which scale
                 with the number of solutions.
-            rtol: Relative tolerance forwarded to `torch.allclose` when
+            rtol: Relative tolerance forwarded to `numpy.allclose` when
                 comparing `costs` against $x^T Q x$ and `probabilities`
                 against normalized `counts`.
-            atol: Absolute tolerance forwarded to `torch.allclose` when
+            atol: Absolute tolerance forwarded to `numpy.allclose` when
                 comparing `costs` against $x^T Q x$ and `probabilities`
                 against normalized `counts`.
 
@@ -590,55 +593,50 @@ class Solution:
 
         if instance is not None:
             expected_costs = _costs.batched_quadratic_cost(
-                self.bitstrings.to(instance.matrix.dtype), instance.matrix
+                self.bitstrings.astype(instance.matrix.dtype), instance.matrix
             )
 
             valid &= check(
-                torch.allclose(
-                    self.costs, expected_costs.to(self.costs.dtype), rtol=rtol, atol=atol
+                np.allclose(
+                    self.costs, expected_costs.astype(self.costs.dtype), rtol=rtol, atol=atol
                 ),
                 f"costs {self.costs.tolist()} does not match x^T Q x "
                 f"{expected_costs.tolist()} for the corresponding bitstrings",
             )
 
         valid &= check(
-            bool(torch.all(self.costs[:-1] <= self.costs[1:])),
+            bool(np.all(self.costs[:-1] <= self.costs[1:])),
             f"costs {self.costs.tolist()} is not sorted in non-decreasing order",
         )
 
         if num_solutions == 0:
             return valid
 
-        # torch.unique(dim=0) rejects zero-width tensors outright ("0 sized
-        # dimensions... aren't selected"), but a width-0 bitstring is just the
-        # single empty tuple repeated: there is exactly one distinct row.
-        num_unique_bitstrings = (
-            1 if self.bitstrings.shape[1] == 0 else self.bitstrings.unique(dim=0).shape[0]
-        )
+        num_unique_bitstrings = np.unique(self.bitstrings, axis=0).shape[0]
         valid &= check(
             num_unique_bitstrings == num_solutions,
             f"bitstrings contains {num_solutions - num_unique_bitstrings} duplicate row(s)",
         )
 
         valid &= check(
-            bool(torch.all((self.bitstrings == 0) | (self.bitstrings == 1))),
+            bool(np.all((self.bitstrings == 0) | (self.bitstrings == 1))),
             f"bitstrings {self.bitstrings.tolist()} contains entries other than 0 or 1",
         )
 
         valid &= check(
-            bool(torch.all(self.counts == self.counts.round())),
+            bool(np.all(self.counts == self.counts.round())),
             f"counts {self.counts.tolist()} contains non-integer values",
         )
         valid &= check(
-            bool(torch.all(self.counts > 0)),
+            bool(np.all(self.counts > 0)),
             f"counts {self.counts.tolist()} contains non-positive entries",
         )
 
         expected_probabilities = self.counts / self.counts.sum()
         valid &= check(
-            torch.allclose(
+            np.allclose(
                 self.probabilities,
-                expected_probabilities.to(self.probabilities.dtype),
+                expected_probabilities.astype(self.probabilities.dtype),
                 rtol=rtol,
                 atol=atol,
             ),
@@ -660,8 +658,8 @@ class Solution:
             A `Solution` holding one all-zero candidate.
         """
         return Solution(
-            bitstrings=_bitstrings.zeros(1, length),
-            counts=vectori.tensor([count]),
-            probabilities=vector.tensor([1.0]),
-            costs=vector.tensor([0.0]),
+            bitstrings=np.zeros((1, length), dtype=np.int8),
+            counts=np.asarray([count], dtype=np.int64),
+            probabilities=np.asarray([1.0], dtype=np.float64),
+            costs=np.asarray([0.0], dtype=np.float64),
         )

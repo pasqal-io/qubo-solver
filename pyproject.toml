@@ -38,7 +38,6 @@ classifiers = [
 # to maintain consistency
 dependencies = [
   "numpy>=2,<3",
-  "torch<3",
   "scikit-learn<2",
   "pandas<4",
   "seaborn<1",
@@ -73,8 +72,6 @@ dev = [
   "tqdm",
   "mypy",
   "ruff>=0.17.4",
-  "jaxtyping",
-  "beartype>=0.23",
   "typing_extensions",
   "bandit[sarif,toml]>=1.9.4",
   "deptry",

@@ -14,24 +14,18 @@ from __future__ import annotations
 
 import heapq
 import logging
+import math
 import time
 from dataclasses import dataclass
-from typing import Literal, overload
+from typing import TYPE_CHECKING, Literal, overload
 
-import torch
+import numpy as np
 
-from qubosolver import (
-    Bitstring,
-    Bitstrings,
-    Instance,
-    Solution,
-    bitstring,
-    bitstrings,
-    torch_rng,
-    vector,
-    vectori,
-)
+from qubosolver import Instance, Solution, bitstrings, numpy_rng
 from qubosolver.utils._costs import _flip_deltas, batched_quadratic_cost
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)
 
@@ -42,14 +36,14 @@ class _Data:
     count: int = 0
 
 
-def _to_key(bits: Bitstring) -> bytes:
+def _to_key(bits: NDArray[np.int8]) -> bytes:
     return bytes(bits.tolist())
 
 
-def _from_key(key: bytes) -> Bitstring:
-    # Bitstring is always torch.int8, so this round-trips exactly through
+def _from_key(key: bytes) -> NDArray[np.int8]:
+    # Bitstring is always int8, so this round-trips exactly through
     # the same bytes produced by _to_key.
-    return torch.frombuffer(bytearray(key), dtype=bitstring.dtype())
+    return np.frombuffer(key, dtype=np.int8)
 
 
 def _item_energy(item: tuple[bytes, _Data]) -> float:
@@ -95,7 +89,7 @@ _REFRESH_EVERY = 128
 def solve(
     instance: Instance,
     *,
-    starts: Bitstrings | int = 1,
+    starts: NDArray[np.int8] | int = 1,
     merge: Literal[True] = True,
     top_k: int = 1,
     max_iter: int = 1000,
@@ -103,7 +97,7 @@ def solve(
     final_temp: float = 1e-3,
     cooling_rate: float | None = None,
     time_limit: float = float("inf"),
-    rng: torch.Generator | None = None,
+    rng: np.random.Generator | None = None,
     stats: Literal["per_run", "full"] = "per_run",
     vectorized: bool = True,
 ) -> Solution: ...
@@ -112,7 +106,7 @@ def solve(
 @overload
 def solve(
     instance: Instance,
-    starts: Bitstrings | int = 1,
+    starts: NDArray[np.int8] | int = 1,
     *,
     merge: Literal[False],
     top_k: int = 1,
@@ -121,16 +115,15 @@ def solve(
     final_temp: float = 1e-3,
     cooling_rate: float | None = None,
     time_limit: float = float("inf"),
-    rng: torch.Generator | None = None,
+    rng: np.random.Generator | None = None,
     stats: Literal["per_run", "full"] = "per_run",
     vectorized: bool = True,
 ) -> list[Solution]: ...
 
 
-@torch.no_grad()
 def solve(  # noqa: PLR0913
     instance: Instance,
-    starts: Bitstrings | int = 1,
+    starts: NDArray[np.int8] | int = 1,
     *,
     merge: bool = True,
     top_k: int = 1,
@@ -139,7 +132,7 @@ def solve(  # noqa: PLR0913
     final_temp: float = 1e-3,
     cooling_rate: float | None = None,
     time_limit: float = float("inf"),
-    rng: torch.Generator | None = None,
+    rng: np.random.Generator | None = None,
     stats: Literal["per_run", "full"] = "per_run",
     vectorized: bool = True,
 ) -> Solution | list[Solution]:
@@ -158,10 +151,10 @@ def solve(  # noqa: PLR0913
 
     Example:
         Running a single explicit start requires promoting it to a batch of
-        size 1 first, via [`torch.unsqueeze`][]:
+        size 1 first:
 
         ```python
-        solution = simulated_annealing(instance, start.unsqueeze(0))
+        solution = simulated_annealing(instance, start[np.newaxis])
         ```
 
         Passing ``merge=False`` returns the per-start results instead of a
@@ -200,7 +193,7 @@ def solve(  # noqa: PLR0913
             With ``vectorized=True`` this is a single budget for the whole
             batch of starts, which all stop at the same iteration; with
             ``vectorized=False`` each start gets its own budget.
-        rng: PyTorch random number generator used for bit selection and
+        rng: NumPy random number generator used for bit selection and
             acceptance sampling.  When ``None`` (default), a new generator is
             created; pass an explicit generator for reproducibility across
             calls.  Note that `vectorized` changes the order in which draws
@@ -243,7 +236,7 @@ def solve(  # noqa: PLR0913
         msg = "top_k must be >= 1."
         raise ValueError(msg)
     if rng is None:
-        rng = torch_rng()
+        rng = numpy_rng()
     if stats == "per_run" and top_k > 1:
         logger.info(
             "stats='per_run' with top_k=%s: per-run counts are set to 1, but merging "
@@ -297,21 +290,21 @@ def solve(  # noqa: PLR0913
 
 def _run_sequential(  # noqa: PLR0913
     instance: Instance,
-    starts: Bitstrings,
+    starts: NDArray[np.int8],
     *,
     top_k: int,
     max_iter: int,
     initial_temp: float,
     alpha: float,
     time_limit: float,
-    rng: torch.Generator,
+    rng: np.random.Generator,
     stats: Literal["per_run", "full"],
 ) -> list[Solution]:
     """Anneal each start in turn, one scalar bit-flip proposal at a time.
 
     The original, run-at-a-time implementation, kept as the reference
     behaviour that [`_run_vectorized`][] is checked against. It is
-    `O(len(starts) * max_iter)` in Python-level torch calls, so prefer the
+    `O(len(starts) * max_iter)` in Python-level numpy calls, so prefer the
     vectorized path for large batches.
 
     Unlike the vectorized path, `time_limit` here is consumed per run: each
@@ -338,10 +331,10 @@ def _run_sequential(  # noqa: PLR0913
     solutions: list[Solution] = []
 
     for b in starts:
-        bits: Bitstring = b.detach().clone()
+        bits: NDArray[np.int8] = b.copy()
 
-        Qx = Q @ bits.to(Q)
-        energy = float(bits.to(Q).dot(Qx))
+        Qx = Q @ bits.astype(Q.dtype)
+        energy = float(bits.astype(Q.dtype).dot(Qx))
 
         temperature: float = initial_temp
 
@@ -359,21 +352,18 @@ def _run_sequential(  # noqa: PLR0913
             # are accumulated incrementally, so periodically recomputing them
             # exactly from `bits` keeps rounding error from growing unbounded.
             if visits % _REFRESH_EVERY == 0:
-                Qx = Q @ bits.to(Q)
-                energy = float(bits.to(Q).dot(Qx))
+                Qx = Q @ bits.astype(Q.dtype)
+                energy = float(bits.astype(Q.dtype).dot(Qx))
 
-            i = int(torch.randint(0, n, (1,), generator=rng).item())
-            xi = int(bits[i].item())
+            i = int(rng.integers(0, n))
+            xi = int(bits[i])
 
             # ΔE = (1 - 2xi) * (Q_ii + 2*(Qx_i - Q_ii*xi))
-            Qii = float(Q[i, i].item())
-            Qx_i = float(Qx[i].item())
+            Qii = float(Q[i, i])
+            Qx_i = float(Qx[i])
             dE = (1 - 2 * xi) * (Qii + 2.0 * (Qx_i - Qii * xi))
 
-            accept = (dE <= 0.0) or (
-                torch.rand((), generator=rng).item()
-                < torch.exp(torch.tensor(-dE / temperature)).item()
-            )
+            accept = (dE <= 0.0) or (rng.random() < math.exp(-dE / temperature))
             if accept:
                 new_xi = 1 - xi
                 diff = float(new_xi - xi)
@@ -400,14 +390,14 @@ def _run_sequential(  # noqa: PLR0913
 
         _shrink(visited_solutions, top_k=top_k)
 
-        counts = vectori.tensor([s.count for s in visited_solutions.values()])
+        counts = np.asarray([s.count for s in visited_solutions.values()], dtype=np.int64)
         if stats == "per_run":
-            counts.fill_(1)
+            counts[:] = 1
 
-        unique_bits = torch.stack([_from_key(key) for key in visited_solutions])
+        unique_bits = np.stack([_from_key(key) for key in visited_solutions])
         solution = Solution(
-            bitstrings=bitstrings.as_tensor(unique_bits),
-            costs=vector.tensor([s.energy for s in visited_solutions.values()]),
+            bitstrings=np.asarray(unique_bits, dtype=np.int8),
+            costs=np.asarray([s.energy for s in visited_solutions.values()], dtype=np.float64),
             counts=counts,
         )
 
@@ -421,21 +411,21 @@ def _run_sequential(  # noqa: PLR0913
 
 def _run_vectorized(  # noqa: PLR0913
     instance: Instance,
-    starts: Bitstrings,
+    starts: NDArray[np.int8],
     *,
     top_k: int,
     max_iter: int,
     initial_temp: float,
     alpha: float,
     time_limit: float,
-    rng: torch.Generator,
+    rng: np.random.Generator,
     stats: Literal["per_run", "full"],
 ) -> list[Solution]:
     """Anneal every start simultaneously, one batched bit-flip proposal per step.
 
     All runs are stepped forward together: each iteration proposes one flip per
     run, evaluates every candidate delta in a single matmul, and accepts or
-    rejects per run via a boolean mask. The number of Python-level torch calls
+    rejects per run via a boolean mask. The number of Python-level numpy calls
     is therefore proportional to `max_iter` alone rather than to
     ``len(starts) * max_iter``, so the cost is nearly flat in the number of
     starts. The runs remain statistically independent -- only their bookkeeping
@@ -467,22 +457,22 @@ def _run_vectorized(  # noqa: PLR0913
     n = Q.shape[0]
     n_runs = starts.shape[0]
 
-    X = starts.detach().clone().to(Q)
+    X = starts.astype(Q.dtype)
     QX = X @ Q
     energy = batched_quadratic_cost(X, Q)
     diagonal = Q.diagonal()
-    dE_buffer = torch.empty_like(QX)
+    dE_buffer = np.empty_like(QX)
 
     # Preallocated for the worst case (every iteration runs) and sliced down to
     # however many actually did; each iteration writes the post-move state of
     # every run at index `visits`, with index 0 holding the starting state.
-    visited_bits = torch.empty((max_iter + 1, n_runs, n), dtype=bitstring.dtype(), device=X.device)
-    visited_energy = torch.empty((max_iter + 1, n_runs), dtype=energy.dtype, device=X.device)
-    visited_bits[0] = X.to(bitstring.dtype())
+    visited_bits = np.empty((max_iter + 1, n_runs, n), dtype=np.int8)
+    visited_energy = np.empty((max_iter + 1, n_runs), dtype=energy.dtype)
+    visited_bits[0] = X.astype(np.int8)
     visited_energy[0] = energy
 
     temperature: float = initial_temp
-    rows = torch.arange(n_runs, device=X.device)
+    rows = np.arange(n_runs)
     deadline = time.perf_counter() + time_limit
     visits = 1
 
@@ -501,27 +491,24 @@ def _run_vectorized(  # noqa: PLR0913
             QX = X @ Q
             energy = batched_quadratic_cost(X, Q)
 
-        idx = torch.randint(0, n, (n_runs,), generator=rng, device=X.device)
-        dE = (
-            _flip_deltas(Q, X, QX, diagonal=diagonal, out=dE_buffer)
-            .gather(1, idx.unsqueeze(1))
-            .squeeze(1)
-        )
+        idx = rng.integers(0, n, n_runs)
+        dE = _flip_deltas(Q, X, QX, diagonal=diagonal, out=dE_buffer)[rows, idx]
 
+        # Clamping the exponent at 0 only affects runs already accepted by
+        # `dE <= 0`, and avoids overflow warnings for large negative `dE`.
         accept = (dE <= 0.0) | (
-            torch.rand(n_runs, generator=rng, device=X.device, dtype=X.dtype)
-            < torch.exp(-dE / temperature)
+            rng.random(n_runs, dtype=X.dtype) < np.exp(np.minimum(-dE / temperature, 0.0))
         )
 
         # Flipping x -> 1 - x moves the bit by +1 or -1; zeroing that step on
         # the rejected runs leaves them untouched without branching per run.
         xi = X[rows, idx]
-        step = (1.0 - 2.0 * xi) * accept.to(X.dtype)
+        step = (1.0 - 2.0 * xi) * accept.astype(X.dtype)
         X[rows, idx] = xi + step
-        energy = energy + step.abs() * dE
-        QX = QX + step.unsqueeze(1) * Q[idx, :]
+        energy = energy + np.abs(step) * dE
+        QX = QX + step[:, np.newaxis] * Q[idx, :]
 
-        visited_bits[visits] = X.to(bitstring.dtype())
+        visited_bits[visits] = X.astype(np.int8)
         visited_energy[visits] = energy
         visits += 1
 
@@ -541,10 +528,10 @@ def _run_vectorized(  # noqa: PLR0913
         # the top_k lowest-energy ones. This loop runs once per run rather than
         # once per iteration, so it stays off the hot path.
         solution = Solution(
-            bitstrings=bitstrings.as_tensor(visited_bits[:, r, :]),
+            bitstrings=np.asarray(visited_bits[:, r, :], dtype=np.int8),
             costs=visited_energy[:, r],
-            counts=vectori.zeros(visits).fill_(1),
-            probabilities=vector.zeros(visits).fill_(1.0 / visits),
+            counts=np.ones(visits, dtype=np.int64),
+            probabilities=np.full(visits, 1.0 / visits, dtype=np.float64),
         )
         # `costs` was accumulated incrementally, drifting from the true x^T Q x
         # by up to _REFRESH_EVERY steps of rounding error. `deduplicate` picks
@@ -554,7 +541,7 @@ def _run_vectorized(  # noqa: PLR0913
         solution.deduplicate(update=False)._update(instance).truncate(top_k)
 
         if stats == "per_run":
-            solution.counts = solution.counts.clone().fill_(1)
+            solution.counts = np.ones_like(solution.counts)
             solution._compute_probabilities()
 
         solutions.append(solution)

@@ -7,10 +7,10 @@ from __future__ import annotations
 
 import math
 
+import numpy as np
 import pytest
 import pytest_check as check
 import scipy
-import torch
 from pulser.register.special_layouts import SquareLatticeLayout
 
 from qubosolver import embedding
@@ -31,15 +31,15 @@ def n_traps(request: pytest.FixtureRequest) -> int:
 
 def test_get_layout_returns_tensor_shape(layout_type: embedding.Lattice, n_traps: int) -> None:
     coords = get_layout(layout_type=layout_type, n_traps=n_traps)
-    assert isinstance(coords, torch.Tensor)
+    assert isinstance(coords, np.ndarray)
     assert coords.ndim == 2
     assert coords.shape == (n_traps, 2)
-    assert coords.unique(dim=0).shape[0] == coords.shape[0]
+    assert np.unique(coords, axis=0).shape[0] == coords.shape[0]
 
     pdists = scipy.spatial.distance.pdist(coords)
     assert min(pdists) == pytest.approx(1.0)
 
-    assert torch.linalg.norm(coords, dim=1).max().item() <= 1 / math.sqrt(2) * math.ceil(
+    assert np.linalg.norm(coords, axis=1).max().item() <= 1 / math.sqrt(2) * math.ceil(
         math.sqrt(n_traps)
     )
 
@@ -48,15 +48,15 @@ def test_get_layout_returns_tensor_shape(layout_type: embedding.Lattice, n_traps
 def test_get_layout_accepts_case_insensitive_strings(layout_str: str) -> None:
     coords1 = get_layout(layout_type=layout_str, n_traps=10)
     coords2 = get_layout(layout_type=layout_str.lower(), n_traps=10)
-    assert torch.equal(coords1, coords2)
+    assert np.array_equal(coords1, coords2)
 
 
 @pytest.mark.parametrize("n_traps", [2, 5, 10, 50])
 def test_get_layout_square_spacing_is_one(n_traps: int) -> None:
     coords = get_layout(layout_type=embedding.Lattice.SQUARE, n_traps=n_traps)
-    assert torch.allclose(coords, coords.round())
-    d = torch.cdist(coords, coords)
-    d.fill_diagonal_(float("inf"))
+    assert np.allclose(coords, coords.round())
+    d = scipy.spatial.distance.cdist(coords, coords)
+    np.fill_diagonal(d, np.inf)
     assert d.min().item() == pytest.approx(1.0)
 
 
@@ -64,13 +64,13 @@ def test_get_layout_square_spacing_is_one(n_traps: int) -> None:
 def test_get_layout_square_is_compact(n_traps: int) -> None:
     coords = get_layout(layout_type=embedding.Lattice.SQUARE, n_traps=n_traps)
     n = math.ceil(math.sqrt(2 * n_traps))
-    candidates = torch.tensor(SquareLatticeLayout(n, n, spacing=1).coords, dtype=coords.dtype)
+    candidates = np.array(SquareLatticeLayout(n, n, spacing=1).coords, dtype=coords.dtype)
     cand_set = {tuple(p.tolist()) for p in candidates}
     sel_set = {tuple(p.tolist()) for p in coords}
     assert sel_set.issubset(cand_set)
-    cand_d2 = (candidates**2).sum(dim=1)
-    sel_d2 = coords.square().sum(dim=1)
-    kth = torch.kthvalue(cand_d2, k=n_traps).values.item()
+    cand_d2 = (candidates**2).sum(axis=1)
+    sel_d2 = np.square(coords).sum(axis=1)
+    kth = np.sort(cand_d2)[n_traps - 1].item()
     assert sel_d2.max().item() == pytest.approx(kth)
     closer = candidates[cand_d2 < kth]
     closer_set = {tuple(p.tolist()) for p in closer}
@@ -79,7 +79,7 @@ def test_get_layout_square_is_compact(n_traps: int) -> None:
 
 def test_empty_layout(layout_type: embedding.Lattice) -> None:
     coords = get_layout(layout_type=layout_type, n_traps=0)
-    check.equal(coords.size(), (0, 2))
+    check.equal(coords.shape, (0, 2))
 
 
 def test_get_layout_rejects_unsupported_layout() -> None:

@@ -15,6 +15,7 @@ pip install qubo-solver
     This example runs locally using Pasqal's [emulators](https://docs.pasqal.com/qpu-emulators/emulators/), so you can try it out without access to real quantum hardware.
 
 ```python exec="on" session="negative" source="tabbed-left" result="text"
+import numpy as np
 import qoolqit
 from qubosolver import (
     Instance,
@@ -23,17 +24,17 @@ from qubosolver import (
     analysis,
     drive_shaping,
     embedding,
-    matrix,
     solving,
 )
 
 # Define an Instance from a symmetric matrix
-Q = matrix.tensor(
+Q = np.asarray(
     [
         [-0.2, 0.0, 1.0],
         [0.0, -1.0, 1.5],
         [1.0, 1.5, -0.1],
-    ]
+    ],
+    dtype=np.float64,
 )
 instance = Instance(Q)
 device = qoolqit.AnalogDeviceWithDMM()

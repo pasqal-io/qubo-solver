@@ -12,18 +12,18 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 import pytest_check as check
-import torch
 from IPython.core import getipython
 from IPython.core.interactiveshell import InteractiveShell
 
+from qubosolver import numpy_rng
 from qubosolver.utils._random import manual_seed, register_seeded_magic, reset_seed, seed_context
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
 
-def draw() -> tuple[float, float, torch.Tensor]:
-    return random.random(), np.random.rand(), torch.rand(4)  # noqa: S311 (seeded test data, not cryptographic)
+def draw() -> tuple[float, float, np.ndarray]:
+    return random.random(), np.random.rand(), numpy_rng("global").random(4)  # noqa: S311 (seeded test data, not cryptographic)
 
 
 @pytest.fixture
@@ -34,7 +34,7 @@ def shell() -> Generator[InteractiveShell]:
 
 @pytest.mark.usefixtures("restore_rng_state")
 def test_reset_seed_returns_generator() -> None:
-    check.is_instance(reset_seed(), torch.Generator)
+    check.is_instance(reset_seed(), np.random.Generator)
 
 
 @pytest.mark.usefixtures("restore_rng_state")
@@ -44,16 +44,16 @@ def test_seed_context_is_reproducible_and_restores_state() -> None:
     manual_seed(1)
 
     with seed_context(2) as rng:
-        check.is_instance(rng, torch.Generator)
+        check.is_instance(rng, np.random.Generator)
         first = draw()
     with seed_context(2):
         second = draw()
     after = draw()
 
     check.equal(first[:2], second[:2])
-    torch.testing.assert_close(first[2], second[2])
+    np.testing.assert_allclose(first[2], second[2], strict=True)
     check.equal(after[:2], expected_after[:2])
-    torch.testing.assert_close(after[2], expected_after[2])
+    np.testing.assert_allclose(after[2], expected_after[2], strict=True)
 
 
 @pytest.mark.usefixtures("restore_rng_state")

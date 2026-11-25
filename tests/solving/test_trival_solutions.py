@@ -5,40 +5,42 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pytest_check as check
-import torch
 
-from qubosolver import Instance, bitstrings, matrix, solving
+from qubosolver import Instance, solving
 
 
 def test_all_positive_trivial() -> None:
     """For a QUBO with all coefficients >= 0, the trivial solution search returns all zeros."""
-    coeffs = matrix.tensor([[1.0, 0.5], [0.5, 2.0]])
+    coeffs = np.asarray([[1.0, 0.5], [0.5, 2.0]], dtype=np.float64)
     instance = Instance(matrix=coeffs)
 
     sol = solving.trivial_solution_search.solve(instance)
 
     # All entries zero
-    torch.testing.assert_close(sol.bitstrings, torch.zeros_like(sol.bitstrings))
+    np.testing.assert_allclose(sol.bitstrings, np.zeros_like(sol.bitstrings), rtol=0, strict=True)
     check.is_true(sol.check_consistency())
 
 
 def test_all_negative_trivial() -> None:
     """For a QUBO with all coefficients <= 0, the trivial solution search returns all ones."""
-    coeffs = matrix.tensor([[-1.0, 0.0], [0.0, -3.0]])
+    coeffs = np.asarray([[-1.0, 0.0], [0.0, -3.0]], dtype=np.float64)
     instance = Instance(matrix=coeffs)
 
     sol = solving.trivial_solution_search.solve(instance)
 
     # All entries one
-    torch.testing.assert_close(sol.bitstrings, torch.ones_like(sol.bitstrings))
+    np.testing.assert_allclose(sol.bitstrings, np.ones_like(sol.bitstrings), rtol=0, strict=True)
     check.is_true(sol.check_consistency())
 
 
 def test_diagonal_trivial() -> None:
-    coeffs = matrix.tensor([[-1.0, 0.0], [0.0, 3.0]])
+    coeffs = np.asarray([[-1.0, 0.0], [0.0, 3.0]], dtype=np.float64)
     instance = Instance(matrix=coeffs)
 
     sol = solving.trivial_solution_search.solve(instance)
-    torch.testing.assert_close(sol.bitstrings, bitstrings.tensor([[1, 0]]))
+    np.testing.assert_allclose(
+        sol.bitstrings, np.asarray([[1, 0]], dtype=np.int8), rtol=0, strict=True
+    )
     check.is_true(sol.check_consistency())

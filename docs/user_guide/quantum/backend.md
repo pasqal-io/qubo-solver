@@ -23,9 +23,10 @@ Emulators (local or remote) simulate the Rydberg Hamiltonian on classical hardwa
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="backend" result="text"
+import numpy as np
+
 from qubosolver import (
     Instance,
-    matrix,
     embedding,
     drive_shaping,
     solving,
@@ -41,13 +42,14 @@ from qubosolver.utils._random import manual_seed
 manual_seed(958)
 
 instance = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [-1, 1, 2, 1],
             [1, -3, 3, 0],
             [2, 3, -1, 5],
             [1, 0, 5, -2],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 device = qoolqit.AnalogDeviceWithDMM()
@@ -152,10 +154,11 @@ print(analysis.to_dataframe([solution]))
 Submitting to a real QPU requires a `PasqalCloudConnection` — there is no local equivalent of the hardware itself. Without a password, the snippet below falls back to emulating the same instance locally with `LocalEmulator` instead, so it stays runnable without credentials.
 
 ```python exec="on" source="tabbed-left" result="text"
+import numpy as np
+
 from qubosolver import (
     Instance,
     LocalEmulator,
-    matrix,
     embedding,
     drive_shaping,
     solving,
@@ -171,13 +174,14 @@ PROJECT_ID = "#TO_PROVIDE"
 PASSWORD = None
 
 instance = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [-1, 1, 2, 1],
             [1, -3, 3, 0],
             [2, 3, -1, 5],
             [1, 0, 5, -2],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 

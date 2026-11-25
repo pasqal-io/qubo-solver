@@ -34,28 +34,21 @@ solution = negative_bitflip.lift(flipped_solution, flipped_instance)
 from __future__ import annotations
 
 import copy
-import io
 import json
 import time
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
-import torch
+import numpy as np
 
 import qubosolver
 from qubosolver import solving
-from qubosolver._checks import TYPE_CHECKING
 from qubosolver._io import utils as io_utils
-from qubosolver.types import (
-    Bitstring,
-    Bitstrings,
-    Matrix,
-    Solution,
-    bitstring,
-    vector,
-)
+from qubosolver.types import Solution
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     from qubosolver._io.utils import Stream
 
 
@@ -68,21 +61,21 @@ class _Edge:
     q: float
 
 
-def _has_negative_offdiagonal(Q: Matrix, eps: float = 0.0) -> bool:
+def _has_negative_offdiagonal(Q: NDArray[np.float64], eps: float = 0.0) -> bool:
     """Return True if Q has at least one negative off-diagonal coefficient."""
     n = Q.shape[0]
-    offdiag_mask = ~torch.eye(n, dtype=torch.bool, device=Q.device)
-    return bool(torch.any(Q[offdiag_mask] < -eps).item())
+    offdiag_mask = ~np.eye(n, dtype=bool)
+    return bool(np.any(Q[offdiag_mask] < -eps))
 
 
-def _extract_upper_edges(Q: Matrix, eps: float = 0.0) -> list[_Edge]:
+def _extract_upper_edges(Q: NDArray[np.float64], eps: float = 0.0) -> list[_Edge]:
     """Extract non-zero upper-triangular off-diagonal QUBO coefficients."""
     n = Q.shape[0]
     edges: list[_Edge] = []
 
     for i in range(n):
         for j in range(i + 1, n):
-            q = float(Q[i, j].item())
+            q = float(Q[i, j])
             if abs(q) > eps:
                 edges.append(_Edge(i=i, j=j, q=q))
 
@@ -90,22 +83,23 @@ def _extract_upper_edges(Q: Matrix, eps: float = 0.0) -> list[_Edge]:
 
 
 def _apply_bitflips(
-    bitstrings: Bitstrings,
-    flips: Bitstring,
-) -> Bitstrings:
+    bitstrings: NDArray[np.int8],
+    flips: NDArray[np.int8],
+) -> NDArray[np.int8]:
     """Apply or undo bit flips on bitstrings.
 
     The operation is its own inverse.
     """
-    if bitstrings.numel() == 0:
+    if bitstrings.size == 0:
         return bitstrings
-    return bitstrings ^ flips.unsqueeze(0)
+    flipped: NDArray[np.int8] = bitstrings ^ flips[np.newaxis, :]
+    return flipped
 
 
 def _transform_qubo_with_bitflips(
-    Q: Matrix,
-    flips: Bitstring,
-) -> tuple[Matrix, float]:
+    Q: NDArray[np.float64],
+    flips: NDArray[np.int8],
+) -> tuple[NDArray[np.float64], float]:
     """Transform QUBO coefficients after variable bit flips.
 
     Convention:
@@ -115,10 +109,10 @@ def _transform_qubo_with_bitflips(
     The returned offset satisfies:
         x^T Q x = y^T Q_flipped y + offset
     """
-    f = flips.to(dtype=Q.dtype)
+    f = flips.astype(Q.dtype)
     s = 1.0 - 2.0 * f
     linear = 2.0 * s * (Q @ f)
-    Q_flipped = Q * torch.outer(s, s) + torch.diag(linear)
+    Q_flipped = Q * np.outer(s, s) + np.diag(linear)
 
     offset = float(f @ Q @ f)
 
@@ -132,8 +126,8 @@ def _coefficient_after_bitflip(q: float, fi: int, fj: int) -> float:
 
 
 def _compute_negative_weight_metrics(
-    Q: Matrix,
-    flips: Bitstring,
+    Q: NDArray[np.float64],
+    flips: NDArray[np.int8],
     eps: float = 0.0,
 ) -> dict[str, Any]:
     """Compute negative off-diagonal count and weight before and after bit flips."""
@@ -188,11 +182,11 @@ def _bitflip_qubo(instance: qubosolver.Instance, *, eps: float = 0.0) -> qubosol
         An instance holding ``Q_f``, in the dtype of `instance`. Its matrix is
         all zeros when no off-diagonal coefficient survives `eps`.
     """
-    C = torch.triu(instance.matrix, diagonal=1)
-    C = torch.where(C.abs() > eps, C, torch.zeros_like(C))
+    C = np.triu(instance.matrix, k=1)
+    C = np.where(np.abs(C) > eps, C, np.zeros_like(C))
     C = C + C.T
 
-    return qubosolver.Instance(torch.diag(C.sum(dim=1)) - C)
+    return qubosolver.Instance(np.diag(C.sum(axis=1)) - C)
 
 
 def _solve_bitflip(
@@ -201,7 +195,7 @@ def _solve_bitflip(
     method: Literal["local_search", "tabu_search"],
     time_limit: float,
     eps: float,
-    rng: torch.Generator | None,
+    rng: np.random.Generator | None,
 ) -> Solution:
     # time_limit is a budget for local search and tabu search together.
     deadline = time.monotonic() + time_limit
@@ -215,7 +209,7 @@ def _solve_bitflip(
     starts = solving.random_sampling.solve(bitflip_instance, max_bitstrings=n_starts, rng=rng)
     # Add the zero bitstring (no flip) as the last start, so it doesn't win
     # ties in the local search; the search doesn't need sorted starts.
-    starts.bitstrings[-1].fill_(0)
+    starts.bitstrings[-1] = 0
     starts.costs[-1] = 0.0
     solution = solving.iterative_bitflip_local_search.solve(
         bitflip_instance,
@@ -252,10 +246,10 @@ class Instance(qubosolver.Instance):
             parent_instance: The original QUBO instance (before bit flips).
                 A deep copy is kept internally for later reconstruction.
         """
-        super().__init__(parent_instance.matrix.detach().clone())
+        super().__init__(parent_instance.matrix.copy())
         self._parent_instance = copy.deepcopy(parent_instance)
 
-        self.flips: Bitstring = bitstring.zeros(parent_instance.size)
+        self.flips: NDArray[np.int8] = np.zeros(parent_instance.size, dtype=np.int8)
         """Flip vector applied to the parent matrix, all-zero until [`apply`][] populates it."""
 
         self._metrics: dict[str, Any] = {}
@@ -270,9 +264,7 @@ class Instance(qubosolver.Instance):
         """Write the matrix, flip vector, solve metadata, and parent instance to `f`."""
         super()._write_body(f)
 
-        buffer = io.BytesIO()
-        torch.save(self.flips, buffer)
-        io_utils.save_sized_buffer(f, buffer.getbuffer())
+        io_utils.save_array(f, self.flips)
 
         state_json = json.dumps({"offset": self._offset, "metrics": self._metrics})
         io_utils.save_string(f, state_json)
@@ -284,8 +276,7 @@ class Instance(qubosolver.Instance):
         """Read back a negative-bitflip instance written by [`_write_body`][]."""
         instance = Instance(qubosolver.Instance._read_body(f))
 
-        buffer = io.BytesIO(io_utils.load_sized_buffer(f))
-        instance.flips = torch.load(buffer, weights_only=True)
+        instance.flips = io_utils.load_array(f)
 
         state = json.loads(io_utils.load_string(f))
         instance._offset = state["offset"]
@@ -301,7 +292,7 @@ def apply(
     method: Literal["local_search", "tabu_search"] = "local_search",
     time_limit_s: float = 60.0,
     eps: float = 0.0,
-    rng: torch.Generator | None = None,
+    rng: np.random.Generator | None = None,
 ) -> Instance:
     """Find the bit flips minimizing negative weight and apply them to the QUBO matrix.
 
@@ -320,7 +311,7 @@ def apply(
         time_limit_s: Time limit in seconds. For ``"tabu_search"``, it is shared
             by the local search and the tabu search.
         eps: Tolerance below which a coefficient is treated as zero.
-        rng: PyTorch random number generator controlling the random starts of
+        rng: NumPy random number generator controlling the random starts of
             the local search.
 
     Returns:
@@ -370,14 +361,14 @@ def lift(flipped_solution: Solution, flipped_instance: Instance) -> Solution:
     Returns:
         A new solution over the original variables.
     """
-    flipped = torch.any(flipped_instance.flips != 0)
+    flipped = np.any(flipped_instance.flips != 0)
     if not flipped:
         return copy.deepcopy(flipped_solution)
 
     solution = Solution()
     solution.bitstrings = _apply_bitflips(flipped_solution.bitstrings, flipped_instance.flips)
-    solution.costs = vector.tensor(
-        [flipped_instance._parent_instance.cost(b) for b in solution.bitstrings]
+    solution.costs = np.asarray(
+        [flipped_instance._parent_instance.cost(b) for b in solution.bitstrings], dtype=np.float64
     )
     solution.counts = flipped_solution.counts
     solution.probabilities = flipped_solution.probabilities

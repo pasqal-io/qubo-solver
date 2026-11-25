@@ -20,7 +20,9 @@ The proportional-diagonal shaper builds a fixed drive directly from the diagonal
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="drive_shaping" result="text"
-from qubosolver import Instance, matrix, embedding, drive_shaping
+import numpy as np
+
+from qubosolver import Instance, embedding, drive_shaping
 import qoolqit
 
 # Private utility to set seed.
@@ -29,13 +31,14 @@ from qubosolver.utils._random import manual_seed
 manual_seed(958)
 
 instance = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [-1, 1, 2, 1],
             [1, -3, 3, 0],
             [2, 3, -1, 5],
             [1, 0, 5, -2],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 device = qoolqit.AnalogDeviceWithDMM()
@@ -74,7 +77,9 @@ The local-energy-scale shaper also builds a fixed drive analytically, but derive
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="drive_shaping_local_energy_scale" result="text"
-from qubosolver import Instance, matrix, embedding, drive_shaping
+import numpy as np
+
+from qubosolver import Instance, embedding, drive_shaping
 import qoolqit
 
 # Private utility to set seed.
@@ -83,13 +88,14 @@ from qubosolver.utils._random import manual_seed
 manual_seed(958)
 
 instance = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [-1, 1, 2, 1],
             [1, -3, 3, 0],
             [2, 3, -1, 5],
             [1, 0, 5, -2],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 device = qoolqit.AnalogDeviceWithDMM()
@@ -132,7 +138,9 @@ The example below uses a small `n_evaluations` for a quick, self-contained doc r
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="drive_shaping_bayesian_search" result="text"
-from qubosolver import Instance, matrix, embedding, solving, analysis, LocalEmulator
+import numpy as np
+
+from qubosolver import Instance, embedding, solving, analysis, LocalEmulator
 import qoolqit
 
 # Private utility to set seed.
@@ -141,13 +149,14 @@ from qubosolver.utils._random import manual_seed
 manual_seed(958)
 
 instance = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [-1, 1, 2, 1],
             [1, -3, 3, 0],
             [2, 3, -1, 5],
             [1, 0, 5, -2],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 device = qoolqit.AnalogDeviceWithDMM()

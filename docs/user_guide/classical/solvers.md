@@ -33,21 +33,24 @@ These solvers take a starting point. Because they accept a starting point, they 
 ### Example: Tabu Search
 
 ```python exec="on" source="tabbed-left" session="tabu" result="text"
-from qubosolver import Instance, solving, matrix, bitstrings, torch_rng, analysis
+import numpy as np
+
+from qubosolver import Instance, solving, bitstrings, numpy_rng, analysis
 
 instance = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [-2.0, 1.0, 0.0, 1.5, 0.0],
             [1.0, -1.5, 1.0, 0.0, 0.5],
             [0.0, 1.0, -2.0, 1.0, 1.0],
             [1.5, 0.0, 1.0, -1.0, 0.5],
             [0.0, 0.5, 1.0, 0.5, -1.5],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 
-starts = bitstrings.rand(5, instance.size, rng=torch_rng(15))
+starts = bitstrings.rand(5, instance.size, rng=numpy_rng(15))
 solution = solving.tabu_search.solve(instance, starts=starts, time_limit=10.0)
 
 print("Tabu Search solution:")
@@ -59,6 +62,8 @@ print(analysis.to_dataframe([solution]))
 Run the quantum pipeline (see [quantum solving](../quantum/intro.md)), then try local bitflips for refinement:
 
 ```python exec="on" source="tabbed-left" session="refine" result="text"
+import numpy as np
+
 from qubosolver import (
     Instance,
     Solution,
@@ -66,20 +71,20 @@ from qubosolver import (
     embedding,
     drive_shaping,
     solving,
-    matrix,
     analysis,
 )
 import qoolqit
 
 instance = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [-2.0, 1.0, 0.0, 1.5, 0.0],
             [1.0, -1.5, 1.0, 0.0, 0.5],
             [0.0, 1.0, -2.0, 1.0, 1.0],
             [1.5, 0.0, 1.0, -1.0, 0.5],
             [0.0, 0.5, 1.0, 0.5, -1.5],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 device = qoolqit.AnalogDeviceWithDMM()

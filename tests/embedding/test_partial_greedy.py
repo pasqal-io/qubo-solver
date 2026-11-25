@@ -9,10 +9,10 @@ import numpy as np
 import pytest
 import pytest_check as check
 import qoolqit
-import torch
+import scipy
 from shapely.geometry import Point, Polygon
 
-from qubosolver import Instance, embedding, matrix, torch_rng, vector
+from qubosolver import Instance, embedding, numpy_rng
 from qubosolver.embedding._algorithms.partial_greedy import (
     WeightedZone,
     bfgs_placement,
@@ -26,13 +26,13 @@ from qubosolver.utils._random import manual_seed
 from qubosolver.utils.quantum import _max_min_distance_ratio
 
 
-def _coords(register: qoolqit.Register) -> torch.Tensor:
-    return torch.stack([torch.as_tensor(register.qubits[q]) for q in register.qubits_ids]).double()
+def _coords(register: qoolqit.Register) -> np.ndarray:
+    return np.array([register.qubits[q] for q in register.qubits_ids], dtype=np.float64)
 
 
 @pytest.mark.parametrize("seed", [0, 1, 2])
 def test_embed_returns_a_subset_with_local_labels(decomposable_qubo: Instance, seed: int) -> None:
-    register, variables = embedding.partial_greedy.embed(decomposable_qubo, rng=torch_rng(seed))
+    register, variables = embedding.partial_greedy.embed(decomposable_qubo, rng=numpy_rng(seed))
 
     check.greater_equal(len(variables), 1)
     check.less_equal(len(variables), decomposable_qubo.size)
@@ -49,29 +49,31 @@ def test_embed_is_reproducible_with_the_global_seed(decomposable_qubo: Instance)
     register2, variables2 = embedding.partial_greedy.embed(decomposable_qubo)
 
     check.equal(variables1, variables2)
-    torch.testing.assert_close(_coords(register1), _coords(register2))
+    np.testing.assert_allclose(_coords(register1), _coords(register2), strict=True)
 
 
 @pytest.mark.parametrize(
     "instance",
     [
-        Instance(matrix.tensor([[-1.0]])),
-        Instance(matrix.tensor([[1.0]])),
-        Instance(matrix.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])),
+        Instance(np.asarray([[-1.0]], dtype=np.float64)),
+        Instance(np.asarray([[1.0]], dtype=np.float64)),
+        Instance(
+            np.asarray([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]], dtype=np.float64)
+        ),
     ],
     ids=["single", "single_non_negative", "weakly_coupled"],
 )
 def test_embed_places_at_least_one_atom(instance: Instance) -> None:
-    register, variables = embedding.partial_greedy.embed(instance, rng=torch_rng(0))
+    register, variables = embedding.partial_greedy.embed(instance, rng=numpy_rng(0))
 
     check.greater_equal(len(variables), 1)
     check.equal(len(register), len(variables))
 
 
 def test_embed_for_device_single_atom() -> None:
-    instance = Instance(matrix.tensor([[-1.0]]))
+    instance = Instance(np.asarray([[-1.0]], dtype=np.float64))
     register, variables = embedding.partial_greedy.embed_for_device(
-        instance, qoolqit.AnalogDeviceWithDMM(), rng=torch_rng(0)
+        instance, qoolqit.AnalogDeviceWithDMM(), rng=numpy_rng(0)
     )
 
     check.equal(variables, [0])
@@ -79,16 +81,16 @@ def test_embed_for_device_single_atom() -> None:
 
 
 def test_embed_rejects_diagonal_instance() -> None:
-    instance = Instance(matrix.tensor([[-1.0, 0.0], [0.0, -2.0]]))
+    instance = Instance(np.asarray([[-1.0, 0.0], [0.0, -2.0]], dtype=np.float64))
     with pytest.raises(ValueError, match="trivial_solution_search"):
-        embedding.partial_greedy.embed(instance, rng=torch_rng(0))
+        embedding.partial_greedy.embed(instance, rng=numpy_rng(0))
 
 
 def test_embed_for_device_rejects_diagonal_instance() -> None:
-    instance = Instance(matrix.tensor([[-1.0, 0.0], [0.0, -2.0]]))
+    instance = Instance(np.asarray([[-1.0, 0.0], [0.0, -2.0]], dtype=np.float64))
     with pytest.raises(ValueError, match="trivial_solution_search"):
         embedding.partial_greedy.embed_for_device(
-            instance, qoolqit.AnalogDeviceWithDMM(), rng=torch_rng(0)
+            instance, qoolqit.AnalogDeviceWithDMM(), rng=numpy_rng(0)
         )
 
 
@@ -99,14 +101,14 @@ def test_embed_for_device_respects_the_distance_ratio(
     device = qoolqit.AnalogDeviceWithDMM()
 
     register, variables = embedding.partial_greedy.embed_for_device(
-        decomposable_qubo, device, rng=torch_rng(seed)
+        decomposable_qubo, device, rng=numpy_rng(seed)
     )
     check.equal(len(register), len(variables))
     assert len(variables) >= 2  # the distance ratio needs two atoms
 
     coords = _coords(register)
-    min_distance = torch.pdist(coords).min()
-    max_radial_distance = coords.norm(dim=1).max()
+    min_distance = scipy.spatial.distance.pdist(coords).min()
+    max_radial_distance = np.linalg.norm(coords, axis=1).max()
     check.less_equal(
         (max_radial_distance / min_distance).item(), _max_min_distance_ratio(device) + 1e-6
     )
@@ -124,13 +126,13 @@ def test_embed_rejects_empty_instance() -> None:
 
 
 def test_embed_rejects_negative_off_diagonal() -> None:
-    instance = Instance(matrix.tensor([[-1.0, -1.0], [-1.0, -1.0]]))
+    instance = Instance(np.asarray([[-1.0, -1.0], [-1.0, -1.0]], dtype=np.float64))
     with pytest.raises(ValueError, match="negative off-diagonal"):
         embedding.partial_greedy.embed(instance)
 
 
 def test_embed_rejects_positive_diagonal() -> None:
-    instance = Instance(matrix.tensor([[-1.0, 2.0], [2.0, 1.0]]))
+    instance = Instance(np.asarray([[-1.0, 2.0], [2.0, 1.0]], dtype=np.float64))
     with pytest.raises(ValueError, match=r"Variables \[1\] .*apply_recursively"):
         embedding.partial_greedy.embed(instance)
 
@@ -139,8 +141,8 @@ def test_embed_rejects_positive_diagonal() -> None:
 @pytest.mark.parametrize("seed", [0, 1, 2])
 def test_embed_accepts_zero_diagonal(seed: int) -> None:
     # A zero diagonal coefficient has an infinite blocking radius.
-    instance = Instance(matrix.tensor([[-1.0, 2.0], [2.0, 0.0]]))
-    register, variables = embedding.partial_greedy.embed(instance, rng=torch_rng(seed))
+    instance = Instance(np.asarray([[-1.0, 2.0], [2.0, 0.0]], dtype=np.float64))
+    register, variables = embedding.partial_greedy.embed(instance, rng=numpy_rng(seed))
     check.is_in(variables, [[0], [1], [0, 1]])
     check.equal(len(register), len(variables))
 
@@ -151,7 +153,7 @@ def test_vertices_to_place_dimensions(decomposable_qubo: Instance) -> None:
 
     dist_matrix = compute_distance_interaction_matrix(qubo_mat)
     check.equal(dist_matrix.shape, qubo_mat.shape)
-    check.is_true(torch.all(torch.diag(dist_matrix) == torch.diag(qubo_mat)))
+    check.is_true(np.all(np.diag(dist_matrix) == np.diag(qubo_mat)))
 
     vertices = vertices_to_place(dist_matrix, qubo_mat)
     check.equal(len(vertices), size)
@@ -167,20 +169,21 @@ def test_compute_distance_interaction_matrix_zero_output() -> None:
     neglecting_inter_distance = 15.0
     neglecting_max_coefficient = 1.0
 
-    Q = matrix.tensor(
+    Q = np.asarray(
         [
             [0, 1, 2, 3],
             [1, 0, 4, 5],
             [2, 4, 0, 6],
             [3, 5, 6, 0],
         ],
+        dtype=np.float64,
     )
 
     dist_matrix = compute_distance_interaction_matrix(
         Q, neglecting_inter_distance, neglecting_max_coefficient
     )
 
-    torch.testing.assert_close(dist_matrix, torch.zeros_like(Q))
+    np.testing.assert_allclose(dist_matrix, np.zeros_like(Q), strict=True)
 
 
 def test_compute_distance_interaction_diagonal() -> None:
@@ -188,33 +191,34 @@ def test_compute_distance_interaction_diagonal() -> None:
     neglecting_inter_distance = 15.0
     neglecting_max_coefficient = 1.0
 
-    Q = matrix.tensor(
+    Q = np.asarray(
         [
             [-10, 0, 0, 0],
             [0, 5, 0, 0],
             [0, 0, 0.5, 0],
             [0, 0, 0, 0],
         ],
+        dtype=np.float64,
     )
 
     dist_matrix = compute_distance_interaction_matrix(
         Q, neglecting_inter_distance, neglecting_max_coefficient
     )
-    expected_dist_matrix = neglecting_inter_distance * torch.ones_like(Q)
-    expected_dist_matrix.diagonal().copy_(Q.diag())
+    expected_dist_matrix = neglecting_inter_distance * np.ones_like(Q)
+    np.fill_diagonal(expected_dist_matrix, np.diag(Q))
 
-    torch.testing.assert_close(dist_matrix, expected_dist_matrix)
+    np.testing.assert_allclose(dist_matrix, expected_dist_matrix, strict=True)
 
 
 def test_random_point_in_geometry_rejects_non_positive_max_trials() -> None:
     with pytest.raises(ValueError, match="max_trials must be a positive integer"):
-        random_point_in_geometry(Point(0, 0).buffer(1.0), max_trials=0, rng=torch_rng(1321356387))
+        random_point_in_geometry(Point(0, 0).buffer(1.0), max_trials=0, rng=numpy_rng(1321356387))
 
 
 def test_random_point_in_geometry_gives_up_after_max_trials() -> None:
     # A zero-area polygon contains no point, so every trial fails.
     degenerate = Polygon([(0.0, 0.0), (1.0, 1.0), (2.0, 2.0)])
-    p = random_point_in_geometry(degenerate, max_trials=3, rng=torch_rng(1321356387))
+    p = random_point_in_geometry(degenerate, max_trials=3, rng=numpy_rng(1321356387))
     check.is_false(degenerate.contains(Point(p[0].item(), p[1].item())))
 
 
@@ -233,10 +237,10 @@ def test_cost_interaction_point_continuous_blocked_indices() -> None:
 
 def test_bfgs_placement_with_blocking_vertex() -> None:
     placed_vertices = {0: WeightedZone(0, 0.0, 0.0, -1.0, 0.1)}
-    qubo = matrix.tensor([[-1.0, 0.5], [0.5, -1.0]])
-    vertices = {1: {"blocking_vertices": torch.tensor([0])}}
+    qubo = np.asarray([[-1.0, 0.5], [0.5, -1.0]], dtype=np.float64)
+    vertices = {1: {"blocking_vertices": np.array([0])}}
     result = bfgs_placement(
-        1, vector.tensor([1.0, 0.0]), placed_vertices, qubo, vertices, 0.1, 10.0
+        1, np.asarray([1.0, 0.0], dtype=np.float64), placed_vertices, qubo, vertices, 0.1, 10.0
     )
     check.less_equal(result.fun, 1e-6)
 
@@ -250,8 +254,8 @@ def test_check_prohibited_zones() -> None:
     check.is_true(check_prohibited_zones(placed_vertices, Point(1.0, 0.0)))
 
 
-def _pair_qubo(q_ii: float, q_jj: float, q_ij: float) -> torch.Tensor:
-    return matrix.tensor([[q_ii, q_ij], [q_ij, q_jj]])
+def _pair_qubo(q_ii: float, q_jj: float, q_ij: float) -> np.ndarray:
+    return np.asarray([[q_ii, q_ij], [q_ij, q_jj]], dtype=np.float64)
 
 
 # Under x^T Q x, setting both variables to 1 costs Q_ii + Q_jj + 2 Q_ij: it stops paying off
@@ -292,7 +296,7 @@ def test_weighted_zone_blocking_radius_matches_distance_matrix(q_ij: float) -> N
     check.equal(zone_blocks, matrix_blocks)
 
 
-@pytest.mark.parametrize("max_radial_distance", [2.0, torch.inf])
+@pytest.mark.parametrize("max_radial_distance", [2.0, np.inf])
 def test_weighted_zone_with_zero_weight_blocks_the_search_disc(max_radial_distance: float) -> None:
     # Placed at the edge of the search disc, the vertex still blocks the opposite edge.
     search_radius = 2.0 if max_radial_distance == 2.0 else 50.0

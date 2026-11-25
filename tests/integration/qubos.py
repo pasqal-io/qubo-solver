@@ -5,22 +5,25 @@
 
 from __future__ import annotations
 
-from qubosolver import Instance, matrix
+import numpy as np
+
+from qubosolver import Instance
 
 QUBOS: list[Instance] = [
     Instance(
-        matrix=matrix.tensor(
+        matrix=np.asarray(
             [
                 [-2, 2, 0, 2],
                 [2, -2, 2, 0],
                 [0, 2, -2, 2],
                 [2, 0, 2, -2],
-            ]
+            ],
+            dtype=np.float64,
         )
     ),
     # random_qubo_10b7eb135a7624c734ad_size-7_density-0.5
     Instance(
-        matrix=matrix.tensor(
+        matrix=np.asarray(
             [
                 [
                     13.491744041442871,
@@ -45,12 +48,13 @@ QUBOS: list[Instance] = [
                 ],
                 [0.0, 0.0, 0.0, 7.084327697753906, 0.0, -20.18182945251465, 0.0],
                 [0.0, 0.0, 0.0, 0.0, 41.34328842163086, 0.0, 22.608423233032227],
-            ]
+            ],
+            dtype=np.float64,
         )
     ),
     # random_qubo_20788e390563ec051838_size-7_density-0.5
     Instance(
-        matrix=matrix.tensor(
+        matrix=np.asarray(
             [
                 [-49.911380767822266, 0.0, 0.0, 0.0, 0.0, 44.725791931152344, 44.42251968383789],
                 [0.0, -0.7001042366027832, 50.0, 13.801156997680664, 39.38922882080078, 0.0, 0.0],
@@ -83,12 +87,13 @@ QUBOS: list[Instance] = [
                     8.889513969421387,
                     10.498213768005371,
                 ],
-            ]
+            ],
+            dtype=np.float64,
         )
     ),
     # random_qubo_2d685a0329b8f7a2f863_size-7_density-0.5
     Instance(
-        matrix=matrix.tensor(
+        matrix=np.asarray(
             [
                 [-0.0, 39.064144134521484, 0.0, 0.0, 44.46507263183594, 0.0, 0.0],
                 [
@@ -113,12 +118,13 @@ QUBOS: list[Instance] = [
                     41.465274810791016,
                 ],
                 [0.0, 49.0513916015625, 0.0, 0.0, 0.0, 41.465274810791016, -0.0],
-            ]
+            ],
+            dtype=np.float64,
         )
     ),
     # random_qubo_33c942b44fb21996eb06_size-7_density-0.5
     Instance(
-        matrix=matrix.tensor(
+        matrix=np.asarray(
             [
                 [0.0, 0.0, 0.0, 50.0, 0.0, 0.0, 0.0],
                 [0.0, 38.73957824707031, 0.0, 0.0, 6.843841075897217, 12.074577331542969, 0.0],
@@ -151,12 +157,13 @@ QUBOS: list[Instance] = [
                     38.092567443847656,
                 ],
                 [0.0, 0.0, 33.24610137939453, 19.568866729736328, 0.0, 38.092567443847656, 0.0],
-            ]
+            ],
+            dtype=np.float64,
         )
     ),
     # random_qubo_3c009266ce9468ce53f9_size-7_density-0.5
     Instance(
-        matrix=matrix.tensor(
+        matrix=np.asarray(
             [
                 [
                     0.0,
@@ -189,12 +196,13 @@ QUBOS: list[Instance] = [
                     46.28537368774414,
                     -36.3349723815918,
                 ],
-            ]
+            ],
+            dtype=np.float64,
         )
     ),
     # random_qubo_6ae3ae60046f8bce3c2d_size-7_density-0.5
     Instance(
-        matrix=matrix.tensor(
+        matrix=np.asarray(
             [
                 [-50.0, 0.0, 0.0, 0.0, 35.68136215209961, 22.641355514526367, 0.0],
                 [0.0, 33.999603271484375, 0.0, 50.0, 0.0, 40.30060577392578, 41.63567352294922],
@@ -227,12 +235,13 @@ QUBOS: list[Instance] = [
                     5.2306413650512695,
                     0.0,
                 ],
-            ]
+            ],
+            dtype=np.float64,
         )
     ),
     # random_qubo_7e48685cfa21736a9bc0_size-7_density-0.5
     Instance(
-        matrix=matrix.tensor(
+        matrix=np.asarray(
             [
                 [-50.0, 16.735755920410156, 10.722273826599121, 0.0, 0.0, 35.89142990112305, 0.0],
                 [
@@ -249,12 +258,13 @@ QUBOS: list[Instance] = [
                 [0.0, 40.011512756347656, 0.0, 0.0, 35.94693374633789, 0.0, 47.58523178100586],
                 [35.89142990112305, 29.136966705322266, 0.0, 46.73072052001953, 0.0, 0.0, 0.0],
                 [0.0, 50.0, 29.788928985595703, 0.0, 47.58523178100586, 0.0, 0.0],
-            ]
+            ],
+            dtype=np.float64,
         )
     ),
     # random_qubo_a41bdb9b2a710661e3c2_size-7_density-0.5
     Instance(
-        matrix=matrix.tensor(
+        matrix=np.asarray(
             [
                 [44.68749237060547, 0.0, 50.0, 10.319823265075684, 0.0, 0.0, 2.0995140075683594],
                 [0.0, -0.0, 2.9599368572235107, 0.0, 0.0, 0.0, 17.166107177734375],
@@ -271,12 +281,13 @@ QUBOS: list[Instance] = [
                     11.93252182006836,
                     34.235233306884766,
                 ],
-            ]
+            ],
+            dtype=np.float64,
         )
     ),
     # random_qubo_a642cbb2db67574dba18_size-7_density-0.5
     Instance(
-        matrix=matrix.tensor(
+        matrix=np.asarray(
             [
                 [-0.0, 0.0, 50.0, 28.575838088989258, 0.0, 0.0, 30.5847110748291],
                 [
@@ -317,12 +328,13 @@ QUBOS: list[Instance] = [
                     5.908775329589844,
                     17.05706024169922,
                 ],
-            ]
+            ],
+            dtype=np.float64,
         )
     ),
     # random_qubo_a963d001fd71e8273290_size-7_density-0.5
     Instance(
-        matrix=matrix.tensor(
+        matrix=np.asarray(
             [
                 [
                     49.248619079589844,
@@ -347,12 +359,13 @@ QUBOS: list[Instance] = [
                 [0.0, 0.0, 0.0, 50.0, 11.954730987548828, 0.0, 28.466785430908203],
                 [39.38875198364258, 0.0, 6.766068935394287, 0.0, 0.0, 0.0, 0.0],
                 [0.0, 0.0, 26.638412475585938, 0.0, 28.466785430908203, 0.0, -18.4755859375],
-            ]
+            ],
+            dtype=np.float64,
         )
     ),
     # random_qubo_bf78d34f424e69c7c103_size-7_density-0.5
     Instance(
-        matrix=matrix.tensor(
+        matrix=np.asarray(
             [
                 [34.48146438598633, 0.0, 25.548053741455078, 50.0, 0.0, 0.0, 47.17563247680664],
                 [0.0, 5.258613586425781, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -377,7 +390,8 @@ QUBOS: list[Instance] = [
                     0.0,
                     -15.900754928588867,
                 ],
-            ]
+            ],
+            dtype=np.float64,
         )
     ),
 ]

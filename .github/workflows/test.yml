@@ -90,30 +90,3 @@ jobs:
             QUBOSOLVER_WITHOUT_EXTRAS: "1"
           run: |
             uv run pytest
-
-  unit_tests_precision_and_runtime_checks:
-    name: Unit testing (single/double precision, runtime checks)
-    # Same condition as `setup`: this job does not need it.
-    if: ${{ !github.event.pull_request.draft }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.14"]
-        use-double-precision: [0, 1]
-    steps:
-        - name: Checkout main code and submodules
-          uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-          with:
-            persist-credentials: false
-        - name: Install uv
-          uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-          with:
-            version: 0.13.9
-            python-version: ${{ matrix.python-version }}
-            enable-cache: false
-        - name: Perform unit tests
-          env:
-            USE_DOUBLE_PRECISION: ${{ matrix.use-double-precision }}
-            QUBO_SOLVER_RUNTIME_CHECKS: 1
-          run: |
-            uv run --extra extras --group cpu pytest -W error

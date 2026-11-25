@@ -21,23 +21,19 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, fields
+from typing import TYPE_CHECKING
 
+import numpy as np
 import qoolqit
 from qoolqit.embedding import Blade, BladeConfig
 
-from qubosolver import Instance, tensor
-from qubosolver._checks import TYPE_CHECKING
 from qubosolver.embedding._algorithms.mds import embed_mds
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 
 if TYPE_CHECKING:
-    # Resolves the `device: InitVar[Device | None]` and `starting_positions: np.ndarray | None`
-    # fields inherited from `BladeConfig`.
     from collections.abc import Callable
-    from dataclasses import InitVar  # noqa: F401 (only read by beartype)
 
-    import numpy as np  # noqa: F401 (only read by beartype)
-    from qoolqit import Device  # noqa: F401 (only read by beartype)
+    from qubosolver import Instance
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +128,7 @@ def embed(
     if instance.size == 1:
         # A single atom has no off-diagonal term to place it relative to,
         # so it is placed at the origin without running the algorithm.
-        return qoolqit.Register.from_coordinates(tensor.zeros(1, 2))
+        return qoolqit.Register.from_coordinates(np.zeros((1, 2), dtype=np.float64))
 
     if instance.is_diagonal():
         msg = (
@@ -141,7 +137,7 @@ def embed(
         )
         raise ValueError(msg)
 
-    qubo = instance.matrix.numpy()
+    qubo = instance.matrix
 
     blade_config = config._to_qoolqit()
     if config.initialize_with_mds:

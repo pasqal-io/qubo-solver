@@ -11,32 +11,24 @@ import contextlib
 import logging
 import math
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
-import torch
-
-from qubosolver import Matrix, Tensor, Vector, Vectori, matrix, tensor, vector, vectori
-from qubosolver._checks import TYPE_CHECKING
+import numpy as np
+from scipy.spatial.distance import cdist
 
 from .layout import get_layout
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from qubosolver.types.linalg import Tensord
+    from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)
 
-# Optional imports for animation; guarded so library usage stays safe in non-notebook envs.
-try:  # pragma: no cover
-    import numpy as np
 
-    _VIZ_OK = True
-except ImportError:  # pragma: no cover
-    _VIZ_OK = False
-
-
-def _mismatch_terms(deviations: Tensor, p: Literal[1, 2], dim: int) -> Tensord:
+def _mismatch_terms(
+    deviations: NDArray[np.float64], p: Literal[1, 2], dim: int
+) -> NDArray[np.float64]:
     """Reduce pair *deviations* into their additive contribution to `‖U - Q‖_p`.
 
     The 1-norm sums absolute deviations, the 2-norm sums squared ones.
@@ -44,14 +36,14 @@ def _mismatch_terms(deviations: Tensor, p: Literal[1, 2], dim: int) -> Tensord:
     Args:
         deviations: Pairwise `Q[i, j] - U[p, q]` deviations.
         p: Order of the norm being minimized, 1 or 2.
-        dim: Dimension to reduce over.
+        dim: Axis to reduce over.
 
     Returns:
-        The reduced contributions, accumulated in float64 so that they do not
-        depend on the summation order.
+        The reduced contributions.
     """
-    terms = deviations.abs() if p == 1 else deviations.square()
-    return terms.sum(dim=dim, dtype=torch.float64)
+    terms = np.abs(deviations) if p == 1 else np.square(deviations)
+    # np.asarray keeps a full reduction a 0-d array rather than a numpy scalar.
+    return np.asarray(terms.sum(axis=dim))
 
 
 def _mismatch_norm(total: float, p: Literal[1, 2]) -> float:
@@ -74,7 +66,7 @@ class Greedy:
     # ----------------------------
     # Layout utilities
     # ----------------------------
-    def _get_predefined_coordinates(self, params: dict) -> Tensor:
+    def _get_predefined_coordinates(self, params: dict) -> NDArray[np.float64]:
         """Build the initial lattice of trap coordinates.
 
         Expected `params` keys:
@@ -86,12 +78,14 @@ class Greedy:
         n_traps: int = params["traps"]
         spacing: float = params["spacing"]
 
-        return spacing * get_layout(layout_type=type_layout, n_traps=n_traps)
+        return np.asarray(
+            spacing * get_layout(layout_type=type_layout, n_traps=n_traps), dtype=np.float64
+        )
 
     # ----------------------------
     # Interaction matrix
     # ----------------------------
-    def _interaction_matrix(self, coordinates: Tensor) -> Matrix:
+    def _interaction_matrix(self, coordinates: NDArray[np.float64]) -> NDArray[np.float64]:
         """Interaction between traps, U[p, q] = 1 / ||r_p - r_q|| ** 6.
 
         The diagonal is left at zero: a trap holds at most one node, so a node
@@ -100,18 +94,16 @@ class Greedy:
         divide a distance by.
         """
         n_traps = len(coordinates)
-        U = matrix.zeros(n_traps)
-        distances = torch.cdist(
-            coordinates, coordinates, compute_mode="donot_use_mm_for_euclid_dist"
-        )
-        off_diagonal = ~torch.eye(n_traps, dtype=torch.bool, device=U.device)
+        U = np.zeros((n_traps, n_traps), dtype=np.float64)
+        distances = cdist(coordinates, coordinates)
+        off_diagonal = ~np.eye(n_traps, dtype=bool)
         U[off_diagonal] = 1.0 / distances[off_diagonal] ** 6
         return U
 
     # ----------------------------
     # Next node heuristic
     # ----------------------------
-    def _get_best(self, couplings: Vector, placed: torch.Tensor) -> int:
+    def _get_best(self, couplings: NDArray[np.float64], placed: np.ndarray) -> int:
         """Pick the next logical node: the unplaced one most coupled to the placed set.
 
         Args:
@@ -122,19 +114,19 @@ class Greedy:
         Returns:
             The index of the chosen node. Ties go to the lowest index.
         """
-        return int(torch.argmax(couplings.masked_fill(placed, -torch.inf)))
+        return int(np.argmax(np.where(placed, -np.inf, couplings)))
 
     # ----------------------------
     # Best trap for a node
     # ----------------------------
     def _optimize_position(  # noqa: PLR0913, PLR0917
         self,
-        U: Matrix,
-        Q: Matrix,
+        U: NDArray[np.float64],
+        Q: NDArray[np.float64],
         u: int,
-        placed_nodes: Vectori,
-        placed_traps: Vectori,
-        available_traps: Vectori,
+        placed_nodes: NDArray[np.int64],
+        placed_traps: NDArray[np.int64],
+        available_traps: NDArray[np.int64],
         p: Literal[1, 2] = 1,
         return_candidates: bool = False,
     ) -> tuple[int, float, list[tuple[int, float]]]:
@@ -158,11 +150,11 @@ class Greedy:
             is set and empty otherwise. Ties go to the lowest trap index.
         """
         # (n_available, n_placed) block of deviations, reduced over the placed nodes.
-        u_couplings = Q[u].index_select(0, placed_nodes)
-        trap_couplings = U.index_select(0, available_traps).index_select(1, placed_traps)
+        u_couplings = Q[u][placed_nodes]
+        trap_couplings = U[np.ix_(available_traps, placed_traps)]
         scores = _mismatch_terms(u_couplings - trap_couplings, p=p, dim=1)
 
-        best = int(torch.argmin(scores))
+        best = int(np.argmin(scores))
         choice_p = int(available_traps[best])
         min_val = float(scores[best])
 
@@ -189,14 +181,14 @@ class Greedy:
     # ----------------------------
     def _greedy_algorithm(  # noqa: PLR0913, PLR0915, PLR0917
         self,
-        U: Matrix,
-        Q: Matrix,
-        coords: Tensor,
+        U: NDArray[np.float64],
+        Q: NDArray[np.float64],
+        coords: NDArray[np.float64],
         v: int,
         results: dict,
         params: dict,
         on_step: Callable[[dict[str, Any]], None] | None = None,
-        max_radial_distance: float = torch.inf,
+        max_radial_distance: float = np.inf,
         p: Literal[1, 2] = 1,
     ) -> dict:
         """Greedy loop starting from node v.
@@ -210,13 +202,13 @@ class Greedy:
 
         # Placement state, in placement order: only the first `n_placed` entries
         # of `placed_nodes` / `placed_traps` are meaningful.
-        placed_nodes: Vectori = vectori.zeros(n_nodes)
-        placed_traps: Vectori = vectori.zeros(n_nodes)
+        placed_nodes: NDArray[np.int64] = np.zeros(n_nodes, dtype=np.int64)
+        placed_traps: NDArray[np.int64] = np.zeros(n_nodes, dtype=np.int64)
         n_placed: int = 0
-        placed_mask = torch.zeros(n_nodes, dtype=torch.bool, device=tensor.device())
-        free_traps = torch.ones(n_traps, dtype=torch.bool, device=tensor.device())
+        placed_mask = np.zeros(n_nodes, dtype=bool)
+        free_traps = np.ones(n_traps, dtype=bool)
         # couplings[i] = sum of Q[i, j] over the placed nodes j, kept incrementally
-        couplings: Vector = vector.zeros(n_nodes)
+        couplings: NDArray[np.float64] = np.zeros(n_nodes, dtype=np.float64)
 
         def _place(node: int, trap: int) -> None:
             nonlocal n_placed
@@ -225,7 +217,7 @@ class Greedy:
             n_placed += 1
             placed_mask[node] = True
             free_traps[trap] = False
-            couplings.add_(Q[:, node])
+            np.add(couplings, Q[:, node], out=couplings)
 
         step_id = 0
         total_mismatch = 0.0
@@ -241,7 +233,7 @@ class Greedy:
                 "picked_node": int(node),
                 "picked_trap": int(trap),
                 "placed_nodes": nodes_so_far,
-                "used_traps": torch.nonzero(~free_traps).squeeze(1).tolist(),
+                "used_traps": np.flatnonzero(~free_traps).tolist(),
                 "inc_mismatch": float(inc_mismatch),
                 "total_mismatch": float(total_mismatch),
                 "per_trap_candidates": candidates,
@@ -253,7 +245,7 @@ class Greedy:
             }
 
         # the start node goes to the trap closest to the origin
-        origin_trap = int(torch.argmin(coords.square().sum(dim=1)))
+        origin_trap = int(np.argmin(np.square(coords).sum(axis=1)))
         _place(v, origin_trap)
         if on_step is not None:  # pragma: no cover
             self._emit_step(on_step, **_snapshot(v, origin_trap, 0.0, []))
@@ -263,7 +255,7 @@ class Greedy:
 
         while n_placed < n_nodes:
             u = self._get_best(couplings, placed_mask)
-            available_traps = torch.nonzero(free_traps).squeeze(1)
+            available_traps = np.flatnonzero(free_traps)
             trap, inc_val, candidates = self._optimize_position(
                 U,
                 Q,
@@ -277,7 +269,7 @@ class Greedy:
             candidates.sort(key=lambda t: t[1])  # ascending by mismatch
 
             # check whether trap coordinate is within the maximal radial distance
-            if float(coords[trap].norm()) >= max_radial_distance:
+            if float(np.linalg.norm(coords[trap])) >= max_radial_distance:
                 if n_extra_traps == 0:
                     msg = (
                         f"no traps found to place qubit '{u}' "
@@ -298,14 +290,12 @@ class Greedy:
             if on_step is not None:  # pragma: no cover
                 self._emit_step(on_step, **_snapshot(u, trap, inc_val, candidates))
 
-        # finalize coordinates tensor
-        final_coords = tensor.zeros((n_nodes, 2))
+        # finalize coordinates array
+        final_coords = np.zeros((n_nodes, 2), dtype=np.float64)
         final_coords[placed_nodes] = coords[placed_traps]
 
-        iu, ju = torch.triu_indices(n_nodes, n_nodes, offset=1)
-        distances = torch.cdist(
-            final_coords, final_coords, compute_mode="donot_use_mm_for_euclid_dist"
-        )
+        iu, ju = np.triu_indices(n_nodes, k=1)
+        distances = cdist(final_coords, final_coords)
         uij = 1 / distances[iu, ju] ** 6
         diff = _mismatch_norm(float(_mismatch_terms(Q[iu, ju] - uij, p=p, dim=0)), p=p)
 
@@ -325,9 +315,6 @@ class Greedy:
         fps: float = 1.25,
     ) -> Any | None:  # noqa: ANN401 (matplotlib animation type is an optional, lazily-imported dep)
         """Post-run animation (traps = gray, qubits = green). No persistent rings."""
-        if not _VIZ_OK:
-            return None  # numpy not available
-
         try:
             import matplotlib.pyplot as plt  # noqa: PLC0415 (optional dependency)  # deptry: ignore[DEP004]
             from IPython.display import (  # noqa: PLC0415 (optional dependency)  # deptry: ignore[DEP004]
@@ -569,12 +556,12 @@ class Greedy:
     # ----------------------------
     def launch_greedy(
         self,
-        Q: Matrix,
+        Q: NDArray[np.float64],
         *,
         max_min_dist_ratio: float,
         params: dict,
         on_step: Callable[[dict[str, Any]], None] | None = None,
-    ) -> tuple[Any, torch.Tensor]:
+    ) -> tuple[Any, np.ndarray]:
         """Run greedy from each start node and keep the best result.
 
         Instrumentation rules:
@@ -639,11 +626,9 @@ class Greedy:
         coords = best_result[1]["coords"]
 
         # Post-run animation if requested
-        if anim_flag and frames and _VIZ_OK:  # pragma: no cover
+        if anim_flag and frames:  # pragma: no cover
             # Rebuild full lattice coords to show ALL traps (including extras)
-            all_coords_np = (
-                coordinates.numpy() if hasattr(coordinates, "numpy") else np.array(coordinates)
-            )
+            all_coords_np = np.asarray(coordinates)
             self._render_animation(
                 frames=frames,
                 all_coords_np=all_coords_np,

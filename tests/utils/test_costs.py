@@ -5,12 +5,12 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
-from qubosolver import bitstrings, matrix
 from qubosolver.utils import _costs
 
 
 def test_quadratic_cost_rejects_batched_input() -> None:
     with pytest.raises(ValueError, match="Use batched_quadratic_cost instead"):
-        _costs.quadratic_cost(bitstrings.zeros(2, 2), matrix.zeros(2))
+        _costs.quadratic_cost(np.zeros((2, 2), dtype=np.int8), np.zeros((2, 2), dtype=np.float64))

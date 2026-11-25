@@ -5,21 +5,21 @@
 
 from __future__ import annotations
 
-import torch
+from typing import TYPE_CHECKING
 
-from qubosolver._checks import TYPE_CHECKING
+import numpy as np
 
 if TYPE_CHECKING:
-    from qubosolver.types import Matrix, Tensor, Vector
+    from numpy.typing import NDArray
 
 
-def quadratic_cost(x: torch.Tensor, Q: Matrix) -> float:
+def quadratic_cost(x: np.ndarray, Q: NDArray[np.float64]) -> float:
     """Compute the quadratic cost for a single binary vector under a QUBO matrix.
 
     The cost is defined as the quadratic form :math:`x^T Q x`.
 
     Args:
-        x: Binary tensor of shape ``(n,)``. Must be 1-dimensional.
+        x: Binary array of shape ``(n,)``. Must be 1-dimensional.
         Q: Symmetric QUBO coefficient matrix of shape ``(n, n)``.
 
     Returns:
@@ -30,61 +30,64 @@ def quadratic_cost(x: torch.Tensor, Q: Matrix) -> float:
             `batched_quadratic_cost` for batched inputs.
 
     Example:
-        >>> Q = torch.tensor([[1., -1.], [-1., 2.]])
-        >>> x = torch.tensor([1., 0.])
+        >>> Q = np.array([[1., -1.], [-1., 2.]])
+        >>> x = np.array([1., 0.])
         >>> quadratic_cost(x, Q)
         1.0
     """
     dtype = Q.dtype
-    x_ = x.to(dtype)
-    if x_.dim() != 1:
+    x_ = x.astype(dtype)
+    if x_.ndim != 1:
         msg = "This method is for vector only. Use batched_quadratic_cost instead"
         raise ValueError(msg)
-    return float(torch.linalg.multi_dot([x_, Q, x_]).item())
+    return float(x_ @ Q @ x_)
 
 
-def batched_quadratic_cost(x: Tensor, Q: Matrix) -> Vector:
+def batched_quadratic_cost(x: NDArray[np.float64], Q: NDArray[np.float64]) -> NDArray[np.float64]:
     """Compute the quadratic cost for a batch of binary vectors under a QUBO matrix.
 
     The cost for each vector is defined as the quadratic form :math:`x_i^T Q x_i`.
 
     Args:
-        x: Binary tensor of shape ``(b, n)``, where ``b`` is the batch size
+        x: Binary array of shape ``(b, n)``, where ``b`` is the batch size
             and ``n`` is the number of variables.
         Q: Symmetric QUBO coefficient matrix of shape ``(n, n)``.
 
     Returns:
-        Vector: A 1-D tensor of shape ``(b,)`` containing one cost value per
-        input vector in the batch.
+        A 1-D array of shape ``(b,)`` containing one cost value per
+            input vector in the batch.
 
     Example:
-        >>> Q = torch.tensor([[1., -1.], [-1., 2.]])
-        >>> x = torch.tensor([[1., 0.], [0., 1.]])
+        >>> Q = np.array([[1., -1.], [-1., 2.]])
+        >>> x = np.array([[1., 0.], [0., 1.]])
         >>> batched_quadratic_cost(x, Q)
-        tensor([1., 2.])
+        array([1., 2.])
     """
-    return torch.einsum("bi,ij,bj->b", x, Q, x)
+    x_ = x.astype(Q.dtype, copy=False)
+    # Row-wise dot of (x @ Q) with x, without materializing the (b, n) product:
+    # `np.sum((x @ Q) * x, axis=1)` allocates one more large temporary per call, which
+    # for big float64 batches is returned to the OS and page-faulted back in every time.
+    costs: NDArray[np.float64] = np.einsum("bi,bi->b", x_ @ Q, x_)
+    return costs
 
 
 def _flip_deltas(
-    Q: Matrix,
-    X: Tensor,
-    QX: Tensor,
-    diagonal: Tensor | None = None,
-    out: Tensor | None = None,
-) -> Tensor:
+    Q: NDArray[np.float64],
+    X: NDArray[np.float64],
+    QX: NDArray[np.float64],
+    diagonal: NDArray[np.float64] | None = None,
+    out: NDArray[np.float64] | None = None,
+) -> NDArray[np.float64]:
     r"""Energy change from flipping each bit, for every run in the batch at once.
 
     For a single run, flipping $x_i \\to 1 - x_i$ changes $x^T Q x$ by
     $(1 - 2 x_i)(Q_{ii} + 2 (Qx)_i - 2 Q_{ii} x_i)$, which only needs row/column
     `i` of `Q` -- already summarized in ``QX = X @ Q``. Evaluating that for all
     `i` and all runs is a single elementwise expression over the ``(b, n)``
-    tensors, replacing ``b * n`` scalar evaluations.
+    arrays, replacing ``b * n`` scalar evaluations.
 
-    The expression is evaluated as ``2*QX - 4*QX*X + diag`` via a broadcast copy
-    plus one fused multiply-add, which keeps the whole thing to a single
-    ``(b, n)`` allocation (or none at all, when `out` is supplied) instead of the
-    four temporaries the naive elementwise form materializes.
+    The expression is evaluated as ``2*QX + diag - 4*QX*X``, writing into `out`
+    when it is supplied.
 
     Args:
         Q: Symmetric QUBO coefficient matrix of shape ``(n, n)``.
@@ -97,17 +100,17 @@ def _flip_deltas(
             from `Q`.
         out: Optional ``(b, n)`` buffer to write the result into, in `Q`'s
             dtype. Reused across iterations by callers in a loop to avoid
-            reallocating the delta tensor every round. Must not alias `QX` or
-            `X`. Defaults to allocating a fresh tensor.
+            reallocating the delta array every round. Must not alias `QX` or
+            `X`. Defaults to allocating a fresh array.
 
     Returns:
-        A ``(b, n)`` tensor whose ``[r, i]`` entry is the energy change run `r`
+        A ``(b, n)`` array whose ``[r, i]`` entry is the energy change run `r`
             would see from flipping its bit `i`. This is `out` itself when `out`
             is supplied.
     """
     diag = Q.diagonal() if diagonal is None else diagonal
-    # dE = 2*QX*(1 - 2*X) + diag = (2*QX + diag) - 4*QX*X, built as one
-    # broadcast add followed by one in-place fused multiply-add.
-    dE = torch.add(QX, diag, alpha=0.5, out=out)
-    dE *= 2.0
-    return dE.addcmul_(QX, X, value=-4.0)
+    # dE = 2*QX*(1 - 2*X) + diag = (2*QX + diag) - 4*QX*X
+    dE: NDArray[np.float64] = np.multiply(QX, 2.0, out=out)
+    dE += diag
+    dE -= 4.0 * QX * X
+    return dE

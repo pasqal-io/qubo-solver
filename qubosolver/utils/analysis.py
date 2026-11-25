@@ -16,14 +16,13 @@ Example:
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
 import seaborn as sns
 
 from qubosolver import Solution, bitstrings
-from qubosolver._checks import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

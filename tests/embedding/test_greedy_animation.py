@@ -9,19 +9,20 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import torch
+import numpy as np
 
 import qubosolver.embedding._algorithms.greedy as greedy_mod
-from qubosolver import Matrix, embedding, matrix
+from qubosolver import embedding
 from qubosolver.embedding._algorithms.greedy import Greedy
 
 if TYPE_CHECKING:
     import pytest
+    from numpy.typing import NDArray
 
 
-def _toy_qubo() -> Matrix:
+def _toy_qubo() -> NDArray[np.float64]:
     # Petit QUBO dense et déterministe (5x5)
-    return matrix.tensor(
+    return np.asarray(
         [
             [-4.0, 1.0, 2.0, 1.5, 2.3],
             [1.0, -3.2, 1.7, 2.1, 0.8],
@@ -29,6 +30,7 @@ def _toy_qubo() -> Matrix:
             [1.5, 2.1, 0.7, -2.7, 1.2],
             [2.3, 0.8, 2.5, 1.2, -6.3],
         ],
+        dtype=np.float64,
     )
 
 
@@ -53,7 +55,7 @@ def test_greedy_coords_shape_no_animation() -> None:
         Q=Q, params=params, max_min_dist_ratio=params["max_min_dist_ratio"]
     )
 
-    assert isinstance(coords, torch.Tensor)
+    assert isinstance(coords, np.ndarray)
     assert tuple(coords.shape) == (n, 2)
 
 

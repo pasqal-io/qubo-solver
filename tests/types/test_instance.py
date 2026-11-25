@@ -9,16 +9,11 @@ from __future__ import annotations
 import io
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pytest
 import pytest_check as check
-import torch
 
-from qubosolver import (
-    Instance,
-    matrix,
-    solving,
-    transforms,
-)
+from qubosolver import Instance, solving, transforms
 from qubosolver._io import utils as io_utils
 from qubosolver.types._enums import _DensityType
 from qubosolver.types.instance import _calculate_density, _classify_density
@@ -30,92 +25,98 @@ if TYPE_CHECKING:
 
 def test_valid_qubo_passes_without_error() -> None:
     # A 5x5 QUBO with all coefficients >= 0 (identity matrix)
-    coeffs = matrix.as_tensor(torch.eye(5))
+    coeffs = np.asarray(np.eye(5), dtype=np.float64)
     qi = Instance(coeffs)
     assert qi.size == 5
-    # Verify that the tensor is stored correctly
+    # Verify that the matrix is stored correctly
     assert qi.matrix.shape == (5, 5)
 
 
 def test_non_symmetric_matrix_raises() -> None:
-    coeffs = matrix.tensor([[1.0, 2.0], [0.0, 3.0]])
+    coeffs = np.asarray([[1.0, 2.0], [0.0, 3.0]], dtype=np.float64)
     with pytest.raises(ValueError, match="symmetric"):
         Instance(coeffs)
 
 
 def test_symmetrize_uses_symmetrized_matrix() -> None:
-    coeffs = matrix.tensor([[1.0, 2.0], [0.0, 3.0]])
+    coeffs = np.asarray([[1.0, 2.0], [0.0, 3.0]], dtype=np.float64)
     qi = Instance(coeffs, symmetrize=True)
-    torch.testing.assert_close(qi.matrix, matrix.tensor([[1.0, 1.0], [1.0, 3.0]]))
+    np.testing.assert_allclose(
+        qi.matrix, np.asarray([[1.0, 1.0], [1.0, 3.0]], dtype=np.float64), strict=True
+    )
     # The original matrix is left untouched.
-    torch.testing.assert_close(coeffs, matrix.tensor([[1.0, 2.0], [0.0, 3.0]]))
+    np.testing.assert_allclose(
+        coeffs, np.asarray([[1.0, 2.0], [0.0, 3.0]], dtype=np.float64), strict=True
+    )
 
 
 def test_symmetrize_keeps_symmetric_matrix_unchanged() -> None:
-    coeffs = matrix.tensor([[1.0, 2.0], [2.0, 3.0]])
-    torch.testing.assert_close(Instance(coeffs, symmetrize=True).matrix, coeffs)
+    coeffs = np.asarray([[1.0, 2.0], [2.0, 3.0]], dtype=np.float64)
+    np.testing.assert_allclose(Instance(coeffs, symmetrize=True).matrix, coeffs, strict=True)
 
 
 def test_len_matches_size() -> None:
-    qi = Instance(matrix.as_tensor(torch.eye(5)))
+    qi = Instance(np.asarray(np.eye(5), dtype=np.float64))
     check.equal(len(qi), 5)
     check.is_true(bool(qi))
 
 
 def test_len_zero_is_falsy() -> None:
-    qi = Instance(matrix.zeros(0))
+    qi = Instance(np.zeros((0, 0), dtype=np.float64))
     check.equal(len(qi), 0)
     check.is_false(bool(qi))
 
 
 @pytest.mark.parametrize("size", [0, 1])
 def test_max_off_diag_no_off_diag_entries(size: int) -> None:
-    qi = Instance(matrix.zeros(size))
+    qi = Instance(np.zeros((size, size), dtype=np.float64))
     with pytest.raises(RuntimeError, match="undefined"):
         _ = qi._max_off_diag
 
 
 def test_is_diagonal() -> None:
     check.is_true(Instance().is_diagonal())
-    check.is_true(Instance(matrix.tensor([[-1.0]])).is_diagonal())
-    check.is_true(Instance(matrix.tensor([[-1.0, 0.0], [0.0, 2.0]])).is_diagonal())
-    check.is_false(Instance(matrix.tensor([[-1.0, 1e-3], [1e-3, 2.0]])).is_diagonal())
+    check.is_true(Instance(np.asarray([[-1.0]], dtype=np.float64)).is_diagonal())
+    check.is_true(Instance(np.asarray([[-1.0, 0.0], [0.0, 2.0]], dtype=np.float64)).is_diagonal())
+    check.is_false(
+        Instance(np.asarray([[-1.0, 1e-3], [1e-3, 2.0]], dtype=np.float64)).is_diagonal()
+    )
 
 
 def test_is_trivial() -> None:
-    check.is_true(Instance(matrix.tensor([[1.0, 2.0], [2.0, 1.0]])).is_trivial())
-    check.is_true(Instance(matrix.tensor([[-1.0, -2.0], [-2.0, -1.0]])).is_trivial())
-    check.is_true(Instance(matrix.tensor([[-1.0, 0.0], [0.0, 2.0]])).is_trivial())
-    check.is_false(Instance(matrix.tensor([[-1.0, 2.0], [2.0, -1.0]])).is_trivial())
+    check.is_true(Instance(np.asarray([[1.0, 2.0], [2.0, 1.0]], dtype=np.float64)).is_trivial())
+    check.is_true(Instance(np.asarray([[-1.0, -2.0], [-2.0, -1.0]], dtype=np.float64)).is_trivial())
+    check.is_true(Instance(np.asarray([[-1.0, 0.0], [0.0, 2.0]], dtype=np.float64)).is_trivial())
+    check.is_false(Instance(np.asarray([[-1.0, 2.0], [2.0, -1.0]], dtype=np.float64)).is_trivial())
 
 
 def test_trivial_solution_search_reads_off_the_optimum() -> None:
-    Q = matrix.as_tensor([[1.0, 2.0], [2.0, 1.0]])
+    Q = np.asarray([[1.0, 2.0], [2.0, 1.0]], dtype=np.float64)
     solution = solving.trivial_solution_search.solve(Instance(Q))
     assert len(solution) == 1
     check.equal(solution[0].string, "00")
 
-    Q = matrix.as_tensor([[0.0, 1.0], [1.0, 0.0]])
+    Q = np.asarray([[0.0, 1.0], [1.0, 0.0]], dtype=np.float64)
     solution = solving.trivial_solution_search.solve(Instance(Q))
     assert len(solution) == 1
     check.equal(solution[0].string, "00")
 
-    Q = matrix.as_tensor([[-1.0, -2.0], [-2.0, -1.0]])
+    Q = np.asarray([[-1.0, -2.0], [-2.0, -1.0]], dtype=np.float64)
     solution = solving.trivial_solution_search.solve(Instance(Q))
     assert len(solution) == 1
     check.equal(solution[0].string, "11")
 
-    Q = matrix.as_tensor([[0.0, -1.0], [-1.0, 0.0]])
+    Q = np.asarray([[0.0, -1.0], [-1.0, 0.0]], dtype=np.float64)
     solution = solving.trivial_solution_search.solve(Instance(Q))
     assert len(solution) == 1
     check.equal(solution[0].string, "11")
 
-    Q = matrix.as_tensor([[-1.0, 0.0], [0.0, 2.0]])
+    Q = np.asarray([[-1.0, 0.0], [0.0, 2.0]], dtype=np.float64)
     solution = solving.trivial_solution_search.solve(Instance(Q))
     assert len(solution) == 1
     check.equal(solution[0].string, "10")
 
-    Q = matrix.as_tensor([[-1.0, 2.0], [2.0, -1.0]])
+    Q = np.asarray([[-1.0, 2.0], [2.0, -1.0]], dtype=np.float64)
     solution = solving.trivial_solution_search.solve(Instance(Q))
     check.is_false(solution)
 
@@ -160,11 +161,11 @@ def test_negative_bitflip_property_returns_self_for_negative_bitflip_instance() 
 
 
 def test_save_load(simple_qubo_instance: Instance, tmp_path: Path) -> None:
-    file_path = tmp_path / "qubo_instance_test.pt"
+    file_path = tmp_path / "qubo_instance_test.bin"
     simple_qubo_instance.save(file_path)
     assert file_path.exists()
     loaded_instance = Instance.load(file_path)
-    assert torch.allclose(loaded_instance.matrix, simple_qubo_instance.matrix)
+    assert np.allclose(loaded_instance.matrix, simple_qubo_instance.matrix)
 
 
 @pytest.mark.parametrize(
@@ -191,7 +192,7 @@ def test_base_instance_load_dispatches_to_the_saved_type(
     loaded = Instance.load(buffer)
 
     check.equal(type(loaded), type(instance))
-    torch.testing.assert_close(loaded.matrix, instance.matrix)
+    np.testing.assert_allclose(loaded.matrix, instance.matrix, strict=True)
 
 
 def test_subclass_load_rejects_a_stream_saved_as_a_different_type(
@@ -249,18 +250,19 @@ def test_classify_density_out_of_range_raises(density: float) -> None:
 
 
 def test_calculate_density() -> None:
-    check.equal(_calculate_density(matrix.zeros(0)), 0.0)
-    check.equal(_calculate_density(matrix.tensor([[1.0, 0.0], [0.0, 1.0]])), 0.5)
+    check.equal(_calculate_density(np.zeros((0, 0), dtype=np.float64)), 0.0)
+    check.equal(_calculate_density(np.asarray([[1.0, 0.0], [0.0, 1.0]], dtype=np.float64)), 0.5)
 
 
 def _subinstance_qubo() -> Instance:
     return Instance(
-        matrix.tensor(
+        np.asarray(
             [
                 [-1.0, 2.0, 3.0],
                 [2.0, -4.0, 5.0],
                 [3.0, 5.0, -6.0],
-            ]
+            ],
+            dtype=np.float64,
         )
     )
 
@@ -268,14 +270,16 @@ def _subinstance_qubo() -> Instance:
 def test_subinstance_keeps_the_given_variable_order() -> None:
     sub = _subinstance_qubo().subinstance([2, 0])
 
-    torch.testing.assert_close(sub.matrix, matrix.tensor([[-6.0, 3.0], [3.0, -1.0]]))
+    np.testing.assert_allclose(
+        sub.matrix, np.asarray([[-6.0, 3.0], [3.0, -1.0]], dtype=np.float64), strict=True
+    )
 
 
 def test_subinstance_is_an_independent_copy() -> None:
     instance = _subinstance_qubo()
     sub = instance.subinstance([0, 1, 2])
 
-    sub.matrix.fill_(0.0)
+    sub.matrix.fill(0.0)
     check.equal(instance.matrix[0, 0].item(), -1.0)
 
 
@@ -284,7 +288,7 @@ def test_subinstance_is_a_plain_instance_on_subclasses() -> None:
     sub = reduced.subinstance([1])
 
     check.is_true(type(sub) is Instance)
-    torch.testing.assert_close(sub.matrix, matrix.tensor([[-4.0]]))
+    np.testing.assert_allclose(sub.matrix, np.asarray([[-4.0]], dtype=np.float64), strict=True)
 
 
 def test_subinstance_of_no_variables_is_empty() -> None:

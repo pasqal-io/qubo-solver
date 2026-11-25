@@ -7,26 +7,24 @@
 
 from __future__ import annotations
 
-import torch
+from typing import TYPE_CHECKING
 
-from qubosolver._checks import TYPE_CHECKING
-from qubosolver.types import matrix, vector
+import numpy as np
+
 from qubosolver.types.instance import Instance
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     import qoolqit
-
-    from qubosolver.types.linalg import Vector
+    from numpy.typing import NDArray
 
 
 def _detuning(
     drive: qoolqit.Drive, t: float, *, n: int, dmm: bool = True, qubit_ids: Sequence[str | int] = []
-) -> Vector:
+) -> NDArray[np.float64]:
 
-    delta = vector.zeros(n)
-    delta.fill_(drive.detuning(t))
+    delta = np.full(n, drive.detuning(t), dtype=np.float64)
 
     if dmm and drive.dmm is not None:
         if not qubit_ids:
@@ -34,7 +32,7 @@ def _detuning(
         if set(qubit_ids) != set(drive.dmm.weights):
             msg = "drive.dmm.weights must have exactly the register's qubit ids."
             raise ValueError(msg)
-        weights = vector.tensor([drive.dmm.weights[i] for i in qubit_ids])
+        weights = np.asarray([drive.dmm.weights[i] for i in qubit_ids], dtype=np.float64)
         delta += drive.dmm.waveform(t) * weights
 
     return delta
@@ -65,7 +63,7 @@ def extract_qubo(register: qoolqit.Register, diagonal: qoolqit.Drive | Instance)
         ValueError: If `diagonal` is an instance whose size differs from the
             number of qubits in `register`.
     """
-    Q = matrix.as_tensor(register.interaction_matrix())
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64)
 
     if isinstance(diagonal, Instance):
         if diagonal.size != len(register):
@@ -74,12 +72,12 @@ def extract_qubo(register: qoolqit.Register, diagonal: qoolqit.Drive | Instance)
                 f"{len(register)} qubits."
             )
             raise ValueError(msg)
-        Q += torch.diag(diagonal.matrix.diagonal())
+        Q += np.diag(diagonal.matrix.diagonal())
     else:
         delta = _detuning(
             diagonal, diagonal.duration, n=len(register), qubit_ids=register.qubits_ids
         )
-        Q += torch.diag(-2 * delta)
+        Q += np.diag(-2 * delta)
 
     return Instance(Q)
 

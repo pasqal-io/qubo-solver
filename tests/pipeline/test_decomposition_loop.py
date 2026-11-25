@@ -7,10 +7,10 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 import pytest_check as check
 import qoolqit
-import torch
 
 from qubosolver import (
     Instance,
@@ -19,9 +19,8 @@ from qubosolver import (
     drive_shaping,
     embedding,
     extract_qubo,
-    matrix,
+    numpy_rng,
     solving,
-    torch_rng,
 )
 from qubosolver.transforms import variable_fixing
 from qubosolver.utils._random import manual_seed
@@ -29,12 +28,10 @@ from qubosolver.utils._random import manual_seed
 
 def _random_qubo(n: int, density: float, seed: int) -> Instance:
     """The random QUBO of the user guide: negative diagonal, sparse non-negative off-diagonal."""
-    gen = torch_rng(seed)
-    upper = (
-        20 * torch.rand(n, n, generator=gen) * (torch.rand(n, n, generator=gen) < density)
-    ).triu(1)
-    Q = upper + upper.T - torch.diag(100 * torch.rand(n, generator=gen))
-    return Instance(matrix.as_tensor(Q))
+    gen = numpy_rng(seed)
+    upper = np.triu(20 * gen.random((n, n)) * (gen.random((n, n)) < density), k=1)
+    Q = upper + upper.T - np.diag(100 * gen.random(n))
+    return Instance(np.asarray(Q, dtype=np.float64))
 
 
 @pytest.fixture
@@ -116,11 +113,11 @@ def test_classical_loop_with_a_zero_diagonal_coefficient() -> None:
     # `apply_recursively` and reaches the partial embedder.
     size = 20
     rng = manual_seed(699059484)
-    upper = torch.triu(5 * torch.rand(size, size, generator=rng), diagonal=1)
+    upper = np.triu(5 * rng.random((size, size)), k=1)
     Q = upper + upper.T
-    Q.fill_diagonal_(-10.0)
+    np.fill_diagonal(Q, -10.0)
     Q[0, 0] = 0.0
-    instance = Instance(matrix.as_tensor(Q))
+    instance = Instance(np.asarray(Q, dtype=np.float64))
     device = qoolqit.AnalogDeviceWithDMM()
 
     reduced = variable_fixing.apply_recursively(instance)

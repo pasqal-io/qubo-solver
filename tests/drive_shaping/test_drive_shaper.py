@@ -14,15 +14,7 @@ import qoolqit
 from qoolqit.graphs import DataGraph
 from scipy.spatial.distance import pdist, squareform
 
-from qubosolver import (
-    Instance,
-    LocalEmulator,
-    Solution,
-    drive_shaping,
-    embedding,
-    matrix,
-    solving,
-)
+from qubosolver import Instance, LocalEmulator, Solution, drive_shaping, embedding, solving
 
 
 def test_proportional_diagonal_drive_on_digital_analog_device(
@@ -58,7 +50,7 @@ def test_shaper_does_not_overflow_device() -> None:
     with np.errstate(divide="ignore"):
         qubo = 1.0 / dist_matrix**6
     np.fill_diagonal(qubo, -1.0)
-    instance = Instance(matrix.tensor(np.asarray(qubo, dtype=float)))
+    instance = Instance(np.asarray(qubo, dtype=np.float64))
 
     device = qoolqit.AnalogDeviceWithDMM()
     register = embedding.greedy_layout.embed_for_device(instance, device)
@@ -66,7 +58,7 @@ def test_shaper_does_not_overflow_device() -> None:
     program = solving.analog_quantum_sampling.compile(register, drive, device)
     solution = Solution.from_results(LocalEmulator().run(program).results(), instance)
 
-    assert solution.bitstrings.numel() > 0
+    assert solution.bitstrings.size > 0
 
 
 @pytest.mark.duration(2)
@@ -79,7 +71,7 @@ def test_proportional_diagonal_register_and_drive_shape_normalization(
     It must use the same convention as the register.
     """
     qubo = np.array([[-1.0, 2.0], [2.0, -1.0]])
-    instance = Instance(matrix.tensor(qubo))
+    instance = Instance(np.asarray(qubo, dtype=np.float64))
     device = qoolqit.AnalogDeviceWithDMM()
     embedder = getattr(embedding, embedding_method)
     register = embedder.embed_for_device(instance, device)

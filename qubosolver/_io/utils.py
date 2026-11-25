@@ -17,7 +17,7 @@ from importlib.metadata import version
 from pathlib import Path
 from typing import IO, TYPE_CHECKING, TypeVar, overload
 
-from qubosolver._checks import _RUNTIME_TYPE_CHECKING
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ _MAX_STRING_SIZE = 1 << 10
 if multibyte. Strings in these formats are type tags and version numbers, the
 longest around 50 bytes."""
 
-if TYPE_CHECKING or _RUNTIME_TYPE_CHECKING:  # no cov
+if TYPE_CHECKING:
     from contextlib import AbstractContextManager
     from typing import Any, Literal
 
@@ -44,21 +44,7 @@ _T = TypeVar("_T", bytes, str)
 
 # `Stream[_T]` is an already-open binary or text stream: `io.BytesIO`, the
 # result of `open`, ...
-if TYPE_CHECKING or not _RUNTIME_TYPE_CHECKING:  # noqa: SIM108
-    Stream = IO[_T]
-else:  # no cov
-    # Runtime-checking variant: the static hint widened with `io.IOBase`.
-    #
-    # beartype expands `IO[_T]` into a PEP 544 protocol requiring the full
-    # `typing.IO` surface, including the `mode` and `name` attributes. In-memory
-    # streams have neither, so `io.BytesIO()` is rejected while an `open()` file
-    # object passes -- a check that fails exactly the callers it should accept.
-    #
-    # The extra `io.IOBase` arm readmits every real stream while still rejecting
-    # non-streams. It gives up only the bytes/str distinction for in-memory
-    # streams, which `open` enforces anyway by raising `TypeError` on a stream
-    # of the wrong flavour. `IO[_T]` is kept so the alias stays generic.
-    Stream = IO[_T] | io.IOBase  # type: ignore[misc,assignment]
+Stream = IO[_T]
 
 FileLike = str | os.PathLike[str] | Stream[_T]
 """A filesystem path or an already-open [`Stream`][], as taken by `save`/`load`."""
@@ -175,6 +161,35 @@ def load_sized_buffer(src: Stream[bytes], *, max_size: int = _MAX_BUFFER_SIZE) -
         msg = f"Refusing to read a {length}-byte payload: exceeds the {max_size}-byte limit."
         raise ValueError(msg)
     return read_exact(src, length)
+
+
+def save_array(output: Stream[bytes], array: np.ndarray) -> None:
+    """Write a numpy array to a binary stream as a length-prefixed ``.npy`` payload.
+
+    Args:
+        output: A binary output stream to write the array to.
+        array: The array to write. Object arrays are rejected.
+    """
+    buffer = io.BytesIO()
+    np.save(buffer, array, allow_pickle=False)
+    save_sized_buffer(output, buffer.getbuffer())
+
+
+def load_array(src: Stream[bytes]) -> np.ndarray:
+    """Read an array previously written by `save_array`.
+
+    The payload is read into its own buffer first, so `numpy.load` cannot over-consume
+    *src* when several objects are packed in the same stream. Pickled payloads are
+    refused, so untrusted files cannot execute code.
+
+    Args:
+        src: A binary input stream to read the array from.
+
+    Returns:
+        The array that was saved.
+    """
+    array: np.ndarray = np.load(io.BytesIO(load_sized_buffer(src)), allow_pickle=False)
+    return array
 
 
 def save_string(output: Stream[bytes], string: str, *, encoding: str = "utf-8") -> None:

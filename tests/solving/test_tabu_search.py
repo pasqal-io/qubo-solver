@@ -7,14 +7,14 @@ from __future__ import annotations
 
 import copy
 
+import numpy as np
 import pytest
 import pytest_check as check
-import torch
 
-from qubosolver import Instance, analysis, bitstrings, matrix, solving, vectori
+from qubosolver import Instance, analysis, bitstrings, solving
 
 instance = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [-2.0, 1.0, 0.0, -1.0, 0.0, 0.0],
             [1.0, -3.0, 2.0, 0.0, 0.0, -1.0],
@@ -23,21 +23,22 @@ instance = Instance(
             [0.0, 0.0, -2.0, 1.0, -1.0, 2.0],
             [0.0, -1.0, 0.0, 0.0, 2.0, -2.0],
         ],
+        dtype=np.float64,
     )
 )
 
 
 def test_tabu_search_costs_match_bitstrings() -> None:
     """Every reported cost must correspond to x^T Q x of its own bitstring."""
-    start = bitstrings.zeros(3, instance.size)
+    start = np.zeros((3, instance.size), dtype=np.int8)
 
     solution = solving.tabu_search.solve(instance, starts=start, max_iter=200)
 
     true_solution = copy.deepcopy(solution)._compute_costs(instance.matrix)
 
-    torch.testing.assert_close(solution.costs, true_solution.costs)
-    torch.testing.assert_close(
-        solution.costs, torch.sort(solution.costs).values, atol=0.0, rtol=0.0
+    np.testing.assert_allclose(solution.costs, true_solution.costs, strict=True)
+    np.testing.assert_allclose(
+        solution.costs, np.sort(solution.costs), atol=0.0, rtol=0.0, strict=True
     )
 
 
@@ -47,7 +48,7 @@ def test_tabu_search_stays_consistent_across_refresh_boundary() -> None:
     See `_REFRESH_EVERY` in `tabu_search.py`; this bounds rounding drift. Run past several
     refreshes and check the result is still fully internally consistent.
     """
-    start = bitstrings.zeros(3, instance.size)
+    start = np.zeros((3, instance.size), dtype=np.int8)
 
     solution = solving.tabu_search.solve(instance, starts=start, max_iter=300)
 
@@ -67,11 +68,11 @@ def test_tabu_search_runs_start_from_given_bitstrings() -> None:
     solution = solving.tabu_search.solve(instance, starts=start, max_iter=0)
 
     expected_bitstrings = bitstrings.from_strings(["101010", "111111", "000000"])
-    expected_counts = vectori.tensor([1, 1, 2])
+    expected_counts = np.asarray([1, 1, 2], dtype=np.int64)
 
     check.equal(len(solution), 3)
-    torch.testing.assert_close(solution.bitstrings, expected_bitstrings)
-    torch.testing.assert_close(solution.counts, expected_counts)
+    np.testing.assert_allclose(solution.bitstrings, expected_bitstrings, rtol=0, strict=True)
+    np.testing.assert_allclose(solution.counts, expected_counts, rtol=0, strict=True)
 
 
 def test_tabu_search_is_deterministic_given_same_start() -> None:
@@ -80,8 +81,8 @@ def test_tabu_search_is_deterministic_given_same_start() -> None:
     solution_a = solving.tabu_search.solve(instance, starts=start, max_iter=100)
     solution_b = solving.tabu_search.solve(instance, starts=start, max_iter=100)
 
-    torch.testing.assert_close(solution_a.bitstrings, solution_b.bitstrings)
-    torch.testing.assert_close(solution_a.costs, solution_b.costs)
+    np.testing.assert_allclose(solution_a.bitstrings, solution_b.bitstrings, rtol=0, strict=True)
+    np.testing.assert_allclose(solution_a.costs, solution_b.costs, strict=True)
 
 
 def test_int_starts_generates_that_many_random_runs() -> None:
@@ -120,7 +121,7 @@ def test_tabu_search_never_lets_f_current_go_inf(
     state, so assigning it there poisons every later iteration and also
     disables aspiration (`inf < f_best` is never true), leaving the run
     unable to search or to recover. Hence `f_current` is read from the
-    unmasked candidate costs, not from the masked tensor.
+    unmasked candidate costs, not from the masked array.
 
     Checked by spying on the masking call: `f_candidates` must be finite
     wherever moves are allowed.
@@ -129,20 +130,20 @@ def test_tabu_search_never_lets_f_current_go_inf(
     every bit tabu before any tenure expires; any symmetric 2x2 does it.
     """
     n = 2
-    small_instance = Instance(matrix=matrix.tensor([[-3.0, 1.0], [1.0, -3.0]]))
-    starts = bitstrings.zeros(1, n)
+    small_instance = Instance(matrix=np.asarray([[-3.0, 1.0], [1.0, -3.0]], dtype=np.float64))
+    starts = np.zeros((1, n), dtype=np.int8)
 
-    real_where = torch.where
+    real_where = np.where
     saw_all_tabu_iteration = False
     saw_inf_at_allowed_move = False
 
-    def spying_where(condition: torch.Tensor, x: torch.Tensor, y: float) -> torch.Tensor:
+    def spying_where(condition: np.ndarray, x: np.ndarray, y: float) -> np.ndarray:
         nonlocal saw_all_tabu_iteration, saw_inf_at_allowed_move
-        saw_inf_at_allowed_move |= bool(torch.isinf(x[condition]).any())
+        saw_inf_at_allowed_move |= bool(np.isinf(x[condition]).any())
         saw_all_tabu_iteration |= not condition.any()
         return real_where(condition, x, y)
 
-    monkeypatch.setattr(torch, "where", spying_where)
+    monkeypatch.setattr(np, "where", spying_where)
 
     solving.tabu_search.solve(
         small_instance,
@@ -167,8 +168,8 @@ def test_tabu_search_never_lets_f_current_go_inf(
 
 def test_tabu_search_raises_on_starts_length_mismatch() -> None:
     """`starts` bitstrings shorter or longer than `instance.size` must raise, not crash."""
-    short_start = bitstrings.zeros(1, instance.size - 1)
-    long_start = bitstrings.zeros(1, instance.size + 1)
+    short_start = np.zeros((1, instance.size - 1), dtype=np.int8)
+    long_start = np.zeros((1, instance.size + 1), dtype=np.int8)
 
     with pytest.raises(ValueError, match=r"instance\.size"):
         solving.tabu_search.solve(instance, starts=short_start)
@@ -206,19 +207,17 @@ def test_tabu_search_still_finds_optimum_when_all_moves_become_tabu() -> None:
     interchangeable with an arbitrary matrix of the same size.
     """
     instance = Instance(
-        matrix.tensor(
-            [
+        np.asarray([
                 [-0.9875382781028748, 0.628231406211853, -0.10774004459381104, 1.2844055891036987],
                 [0.628231406211853, -0.45010146498680115, 0.5505266189575195, -0.4758329391479492],
                 [-0.10774004459381104, 0.5505266189575195, 0.4487120509147644, -0.22096946835517883],  # noqa: E501
                 [1.2844055891036987, -0.4758329391479492, -0.22096946835517883, -0.5388421416282654],  # noqa: E501
-            ]
-        )
+            ], dtype=np.float64)
     )  # fmt: skip
 
     solution = solving.tabu_search.solve(
         instance,
-        starts=bitstrings.zeros(1, instance.size),
+        starts=np.zeros((1, instance.size), dtype=np.int8),
         max_iter=100,
         tabu_tenure=7,
         max_no_improve=1000,
@@ -232,7 +231,7 @@ def test_tabu_search_still_finds_optimum_when_all_moves_become_tabu() -> None:
 
 
 def test_tabu_search_zero_time_limit_returns_start() -> None:
-    instance = Instance(matrix=matrix.tensor([[-3.0, 1.0], [1.0, -3.0]]))
-    starts = bitstrings.zeros(1, 2)
+    instance = Instance(matrix=np.asarray([[-3.0, 1.0], [1.0, -3.0]], dtype=np.float64))
+    starts = np.zeros((1, 2), dtype=np.int8)
     solution = solving.tabu_search.solve(instance, starts=starts, time_limit=0.0)
     check.equal(solution[0].string, "00")

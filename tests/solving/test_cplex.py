@@ -5,24 +5,16 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 import pytest_check as check
-import torch
 
 try:
     import cplex
 except ImportError:  # no cov
     cplex = None  # tests using it are skipped via the `extras` marker below
 
-from qubosolver import (
-    Instance,
-    Solution,
-    matrix,
-    solving,
-    tensor,
-    torch_rng,
-    vectori,
-)
+from qubosolver import Instance, Solution, numpy_rng, solving
 from qubosolver.solving.classical.cplex import _to_solution
 
 pytestmark = pytest.mark.extras
@@ -40,7 +32,7 @@ def test_to_solution_without_incumbent() -> None:
     # presolve/heuristics/node exploration so CPLEX cannot find even the
     # trivial all-zero incumbent that an unconstrained QUBO always admits.
     n = 40
-    Q = torch.rand(n, n, generator=torch_rng(1)) * 100 - 50
+    Q = numpy_rng(1).random((n, n)) * 100 - 50
     Q = (Q + Q.T) / 2
 
     problem = cplex.Cplex()
@@ -70,7 +62,7 @@ def test_cplex_solve_identity() -> None:
     # Create a simple 2x2 QUBO instance.
     # For example, consider a QUBO where the optimum is known.
     # Here we use an identity matrix.
-    Q = matrix.tensor([[1.0, 0.0], [0.0, 1.0]])
+    Q = np.asarray([[1.0, 0.0], [0.0, 1.0]], dtype=np.float64)
     instance = Instance(matrix=Q)
 
     solution = solving.cplex.solve(instance, time_limit=10.0)
@@ -98,7 +90,7 @@ def test_cplex_solve_identity() -> None:
 # each mirrored into (j, i) -- a sparse encoding of a matrix that is 88% zeros.
 # Every coefficient is an integer, so nothing here loses precision: the drift
 # is created entirely inside CPLEX.
-_ROUNDING_DIAGONAL = vectori.tensor(
+_ROUNDING_DIAGONAL = np.asarray(
     [
         -2,
         -8,
@@ -140,10 +132,11 @@ _ROUNDING_DIAGONAL = vectori.tensor(
         -6,
         2,
         0,
-    ]
+    ],
+    dtype=np.int64,
 )
 
-_ROUNDING_COUPLINGS = tensor.tensor(
+_ROUNDING_COUPLINGS = np.asarray(
     [
         (1, 2, 2),
         (1, 31, 2),
@@ -220,15 +213,15 @@ _ROUNDING_COUPLINGS = tensor.tensor(
         (36, 37, 2),
         (37, 38, -2),
     ],
-    dtype=torch.int64,
+    dtype=np.int64,
 )
 
 
 def _build_rounding_matrix() -> Instance:
-    Q = _ROUNDING_DIAGONAL.diag()
-    i, j, w = _ROUNDING_COUPLINGS.unbind(dim=1)
+    Q = np.diag(_ROUNDING_DIAGONAL)
+    i, j, w = _ROUNDING_COUPLINGS.T
     Q[i, j] = Q[j, i] = w
-    return Instance(matrix.as_tensor(Q))
+    return Instance(np.asarray(Q, dtype=np.float64))
 
 
 def test_rounding() -> None:

@@ -22,21 +22,14 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 import qoolqit
-import torch
 from mock.connection import MockConnection
 
-from qubosolver import (
-    Instance,
-    Matrix,
-    Solution,
-    bitstrings,
-    matrix,
-    vector,
-    vectori,
-)
+from qubosolver import Instance, Solution
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+
+    from numpy.typing import NDArray
 
 SLOW_THRESHOLD_S = 5
 
@@ -100,22 +93,22 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 @pytest.fixture
 def basic_solution() -> Solution:
     return Solution(
-        bitstrings=bitstrings.tensor([[0, 1, 0], [1, 0, 1]]),
-        costs=vector.tensor([1.0, 2.0]),
-        counts=vectori.tensor([15, 5]),
-        probabilities=vector.tensor([0.75, 0.25]),
+        bitstrings=np.asarray([[0, 1, 0], [1, 0, 1]], dtype=np.int8),
+        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        counts=np.asarray([15, 5], dtype=np.int64),
+        probabilities=np.asarray([0.75, 0.25], dtype=np.float64),
     )
 
 
 @pytest.fixture
 def simple_qubo_instance() -> Instance:
-    Q = matrix.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
+    Q = np.asarray([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]], dtype=np.float64)
     return Instance(matrix=Q)
 
 
 def generate_qubo_matrix(
     size: int, density: float, value_range: tuple[int, int], seed: int
-) -> Matrix:
+) -> NDArray[np.float64]:
     """Generate a random symmetric qubo matrix with negative diagonal coefficients.
 
     Off-diagonal elements are positive.
@@ -127,7 +120,7 @@ def generate_qubo_matrix(
         seed (int): Random seed for reproducibility.
 
     Returns:
-        torch.Tensor: Qubo matrix.
+        np.ndarray: Qubo matrix.
     """
     np.random.seed(seed)
     matrix_ = np.zeros((size, size))
@@ -140,7 +133,7 @@ def generate_qubo_matrix(
                 )  # Positive off-diagonal
                 matrix_[i, j] = value
                 matrix_[j, i] = value
-    return matrix.tensor(matrix_)
+    return np.asarray(matrix_, dtype=np.float64)
 
 
 @pytest.fixture
@@ -158,11 +151,9 @@ def small_decomposable_qubo() -> Instance:
 def restore_rng_state() -> Generator:
     py_state = random.getstate()
     np_state = np.random.get_state()
-    torch_state = torch.random.get_rng_state()
 
     yield  # run the test
 
-    torch.random.set_rng_state(torch_state)
     np.random.set_state(np_state)
     random.setstate(py_state)
 

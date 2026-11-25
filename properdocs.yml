@@ -68,13 +68,9 @@ nav:
     - qubosolver.solving.hybrid: api/hybrid_solving.md
     - qubosolver.solving.quantum: api/quantum_solving.md
     - qubosolver.transforms: api/transforms.md
-    - Tensors:
+    - Bitstrings:
       - qubosolver.bitstring: api/bitstring.md
       - qubosolver.bitstrings: api/bitstrings.md
-      - qubosolver.matrix: api/matrix.md
-      - qubosolver.tensor: api/tensor.md
-      - qubosolver.vector: api/vector.md
-      - qubosolver.vectori: api/vectori.md
   - Contribute:
     - How to contribute: CONTRIBUTING.md
     - Code of conduct: CODE_OF_CONDUCT.md
@@ -148,7 +144,7 @@ plugins:
         inventories:
         - url: https://pasqal-io.github.io/qoolqit/latest/objects.inv
           base_url: https://docs.pasqal.com/qoolqit/
-        - url: https://pytorch.org/docs/stable/objects.inv
+        - url: https://numpy.org/doc/stable/objects.inv
         - url: https://pandas.pydata.org/docs/objects.inv
         - url: https://docs.python.org/3/objects.inv
         options:

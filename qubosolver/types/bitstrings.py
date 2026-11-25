@@ -5,16 +5,14 @@
 
 """Batch bitstring utilities for QUBO solvers.
 
-A [`Bitstrings`][qubosolver.Bitstrings] collection is a 2-D ``torch.int8`` tensor of shape
+A batch of bitstrings is a 2-D ``int8`` array of shape
 ``(count, n_bits)``, where each row is an individual bitstring.
-This module provides factory functions and converters for creating and
-manipulating batches of bitstrings on the globally configured torch device.
+This module provides converters for creating and manipulating batches of bitstrings.
 
 Typical usage:
 
     bs = bitstrings.from_strings(["1010", "0110", "1100"])
     ss = bitstrings.to_strings(bs)          # ["1010", "0110", "1100"]
-    z  = bitstrings.zeros(4, 8)             # 4 zero bitstrings of length 8
     f  = bitstrings.round([[1.0, 0.0, 0.9999999]])  # from a MIP solver's output
 
 See also [`qubosolver.bitstring`][qubosolver.bitstring] for single-bitstring operations.
@@ -22,126 +20,62 @@ See also [`qubosolver.bitstring`][qubosolver.bitstring] for single-bitstring ope
 
 from __future__ import annotations
 
-from dataclasses import field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import torch
+import numpy as np
 
-from qubosolver._checks import TYPE_CHECKING, no_runtime_typecheck
-
-from . import linalg
-from .random import torch_rng
+from .random import numpy_rng
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from .linalg import Bitstrings
+    from numpy.typing import NDArray
 
 
-def dtype() -> torch.dtype:
-    """Returns the dtype used for bitstrings (``torch.int8``)."""
-    return torch.int8
-
-
-def device() -> torch.device:
-    """Returns the globally configured torch device."""
-    return linalg.device()
-
-
-_device = device  # alias so shadowed `device` params can still call the module function
-
-
-def zeros(count: int, n_bits: int, *, device: torch.device | None = None) -> Bitstrings:
-    """Creates a zero-filled 2-D bitstrings tensor.
-
-    Args:
-        count: Number of bitstrings (rows).
-        n_bits: Length of each bitstring (columns).
-        device: Torch device for the tensor.
-
-    Returns:
-        A 2-D ``int8`` tensor of shape ``(count, n_bits)``.
-    """
-    device = device or _device()
-    return torch.zeros((count, n_bits), dtype=dtype(), device=device)
-
-
-def tensor(
-    data: Any,  # noqa: ANN401 (array-like input forwarded to torch.tensor)
-    *,
-    device: torch.device | None = None,
-    **kwargs: Any,  # noqa: ANN401 (forwarded to torch.tensor)
-) -> Bitstrings:
-    """Creates a 2-D bitstrings tensor from the given data.
-
-    Args:
-        data: Input data (nested list or array-like of 0s and 1s).
-        device: Torch device for the tensor.
-        **kwargs: Extra keyword arguments forwarded to `torch.tensor`.
-
-    Returns:
-        A 2-D ``int8`` tensor; an empty list gives a ``(0, 0)`` tensor.
-    """
-    device = device or _device()
-    result = torch.tensor(data, dtype=dtype(), device=device, **kwargs)
-    # `torch.tensor([])` is 1-D: keep empty bitstrings 2-D.
-    return result.reshape(0, 0) if result.shape == (0,) else result
-
-
-def from_strings(strings: Sequence[str], *, device: torch.device | None = None) -> Bitstrings:
-    """Creates a 2-D bitstrings tensor from a sequence of '0'/'1' strings.
+def from_strings(strings: Sequence[str]) -> NDArray[np.int8]:
+    """Creates a 2-D bitstrings array from a sequence of '0'/'1' strings.
 
     Args:
         strings: A sequence of strings, each consisting of '0' and '1' characters.
             All strings must have the same length.
-        device: Torch device for the tensor.
 
     Returns:
-        A 2-D ``int8`` tensor of shape ``(len(strings), len(strings[0]))``, possibly empty.
+        A 2-D ``int8`` array of shape ``(len(strings), len(strings[0]))``, possibly empty.
 
     Raises:
         ValueError: If the strings have differing lengths.
     """
-    device = device or _device()
     if len(strings) == 0:
-        return zeros(0, 0, device=device)
+        return np.zeros((0, 0), dtype=np.int8)
     lengths = {len(s) for s in strings}
     if len(lengths) != 1:
         msg = f"All bitstrings must have the same length, got lengths: {sorted(lengths)}"
         raise ValueError(msg)
-    return tensor([[int(c) for c in s] for s in strings], device=device)
+    return np.asarray([[int(c) for c in s] for s in strings], dtype=np.int8)
 
 
 def round(  # noqa: A001 (public API, mirrors builtins.round)
-    data: Any,  # noqa: ANN401 (array-like input forwarded to torch.as_tensor)
+    data: Any,  # noqa: ANN401 (array-like input forwarded to np.asarray)
     *,
     atol: float = 1e-6,
-    device: torch.device | None = None,
-) -> Bitstrings:
-    """Rounds near-integral float values to a 2-D bitstrings tensor.
-
-    Values are compared in ``float64`` regardless of the globally configured
-    float dtype, so *atol* keeps its meaning even when the global dtype is
-    narrower (e.g. ``float32``, which would round ``0.9999999998`` to exactly
-    ``1.0`` before the check could see it).
+) -> NDArray[np.int8]:
+    """Rounds near-integral float values to a 2-D bitstrings array.
 
     Args:
-        data: Input data (tensor, numpy array, nested list, etc.) of floats, each
+        data: Input data (numpy array, nested list, etc.) of floats, each
             within *atol* of 0 or 1. Nested sequences must not be ragged.
         atol: Maximum absolute distance from 0 or 1 tolerated before raising.
-        device: Torch device for the tensor.
 
     Returns:
-        A 2-D ``int8`` tensor of shape ``(count, n_bits)``.
+        A 2-D ``int8`` array of shape ``(count, n_bits)``.
 
     Raises:
         ValueError: If any value is further than *atol* from both 0 and 1, or if
             the input is a ragged nested sequence.
     """
-    device = device or _device()
-    values = torch.as_tensor(data, dtype=torch.float64)
-    bits = torch.round(values)
-    invalid = ((bits != 0) & (bits != 1)) | ((values - bits).abs() > atol)
+    values = np.asarray(data, dtype=np.float64)
+    bits = np.round(values)
+    invalid = ((bits != 0) & (bits != 1)) | (np.abs(values - bits) > atol)
     if bool(invalid.any()):
         msg = (
             f"Expected values within {atol} of 0 or 1, got "
@@ -149,76 +83,33 @@ def round(  # noqa: A001 (public API, mirrors builtins.round)
         )
         raise ValueError(msg)
     if bits.shape == (0,):
-        # `torch.as_tensor([])` is 1-D: keep empty bitstrings 2-D.
+        # `np.asarray([])` is 1-D: keep empty bitstrings 2-D.
         bits = bits.reshape(0, 0)
-    return bits.to(dtype=dtype(), device=device)
+    return bits.astype(np.int8)
 
 
-def to_strings(bitstrings: Bitstrings) -> list[str]:
-    """Converts a 2-D bitstrings tensor into a list of '0'/'1' strings.
+def to_strings(bitstrings: NDArray[np.int8]) -> list[str]:
+    """Converts a 2-D bitstrings array into a list of '0'/'1' strings.
 
     Args:
-        bitstrings: A 2-D ``int8`` tensor of shape ``(n, m)`` containing 0s and 1s.
+        bitstrings: A 2-D ``int8`` array of shape ``(n, m)`` containing 0s and 1s.
 
     Returns:
-        A list of *n* strings, each of length *m*, representing each row of the tensor.
+        A list of *n* strings, each of length *m*, representing each row of the array.
     """
-    return ["".join(str(b.item()) for b in row) for row in bitstrings]
+    return ["".join(str(b) for b in row.tolist()) for row in bitstrings]
 
 
-def rand(
-    count: int,
-    n_bits: int,
-    *,
-    device: torch.device | None = None,
-    rng: torch.Generator | None = None,
-) -> Bitstrings:
-    """Creates a 2-D bitstrings tensor with independent uniformly random bits.
+def rand(count: int, n_bits: int, *, rng: np.random.Generator | None = None) -> NDArray[np.int8]:
+    """Creates a 2-D bitstrings array with independent uniformly random bits.
 
     Args:
         count: Number of bitstrings (rows).
         n_bits: Length of each bitstring (columns).
-        device: Torch device for the tensor.
-        rng: PyTorch random number generator controlling the sampling.
+        rng: NumPy random number generator controlling the sampling.
 
     Returns:
-        A 2-D ``int8`` tensor of shape ``(count, n_bits)`` containing 0s and 1s.
+        A 2-D ``int8`` array of shape ``(count, n_bits)`` containing 0s and 1s.
     """
-    device = device or _device()
-    rng = rng or torch_rng()
-    return torch.randint(0, 2, (count, n_bits), generator=rng, device=device, dtype=dtype())
-
-
-def as_tensor(data: Any) -> Bitstrings:  # noqa: ANN401 (array-like input forwarded to torch.as_tensor)
-    """Convenience wrapper for `torch.as_tensor` that converts data to a bitstrings tensor.
-
-    Avoids a copy when possible. If *data* is already a tensor with the right dtype and on
-    the right device, it is returned as-is, sharing the same underlying memory. A numpy
-    array is also shared rather than copied if it already has ``int8`` dtype and the global
-    device is ``cpu`` (numpy arrays only live on CPU, so any other dtype or device forces a
-    copy). Lists, tuples, and other array-like inputs are always copied.
-
-    Args:
-        data: Input data (tensor, numpy array, nested list, etc.).
-
-    Returns:
-        A 2-D ``int8`` tensor on the global device.
-    """
-    return torch.as_tensor(data, dtype=dtype(), device=device())
-
-
-# Returns a dataclass `Field`, typed as the tensor for static type checkers only.
-@no_runtime_typecheck
-def zeros_field(count: int, n_bits: int, *, device: torch.device | None = None) -> Bitstrings:
-    """Creates a dataclass field defaulting to a zero-filled bitstrings tensor.
-
-    Args:
-        count: Number of bitstrings (rows).
-        n_bits: Length of each bitstring (columns).
-        device: Torch device for the tensor.
-
-    Returns:
-        A dataclass field (typed as `Bitstrings` for the enclosing class) whose
-        `default_factory` builds a fresh zero tensor per instance.
-    """
-    return field(default_factory=lambda: zeros(count, n_bits, device=device))
+    rng = rng or numpy_rng()
+    return rng.integers(0, 2, (count, n_bits), dtype=np.int8)

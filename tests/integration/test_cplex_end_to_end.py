@@ -32,7 +32,7 @@ def check_solution(
 ) -> float:
 
     # Solutions are not duplicated
-    check.equal(solution.bitstrings.unique(dim=0).shape[0], len(solution))
+    check.equal(np.unique(solution.bitstrings, axis=0).shape[0], len(solution))
 
     print(f"\n{analysis.to_dataframe([solution])}")
 

@@ -15,9 +15,11 @@ Two classes sit at the center of `qubosolver`'s API: [`Instance`][qubosolver.typ
 ### Code example
 
 ```python exec="on" source="tabbed-left" session="instance" result="text"
-from qubosolver import Instance, matrix, bitstring
+import numpy as np
 
-instance = Instance(matrix.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]]))
+from qubosolver import Instance, bitstring
+
+instance = Instance(np.asarray([[0, 1, 2], [1, 0, 3], [2, 3, 0]], dtype=np.float64))
 
 solution = bitstring.from_string("101")
 cost = instance.cost(solution)
@@ -46,15 +48,18 @@ print(loaded_instance.matrix)
 Some preprocessing steps in `qubosolver.transforms` (variable fixing, zeroing, negative bitflip) reduce a QUBO problem before solving it, and record what they did as `Instance` subclasses. Wrapping an `Instance` this way keeps the applied transform attached to the problem, so it can later be used to lift a solution of the reduced problem back to a solution of the original one:
 
 ```python exec="on" source="tabbed-left" result="text"
-from qubosolver import Instance, matrix, solving, transforms, analysis
+import numpy as np
+
+from qubosolver import Instance, solving, transforms, analysis
 
 instance = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [10.0, 1.0, 1.0],
             [1.0, -3.0, 2.0],
             [1.0, 2.0, -1.0],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 
@@ -82,9 +87,11 @@ print(analysis.to_dataframe([solution]))
 ### Code example
 
 ```python exec="on" source="tabbed-left" session="solution" result="text"
-from qubosolver import Instance, Solution, matrix, solving
+import numpy as np
 
-instance = Instance(matrix.tensor([[0, 1, 2], [1, 0, 3], [2, 3, 0]]))
+from qubosolver import Instance, Solution, solving
+
+instance = Instance(np.asarray([[0, 1, 2], [1, 0, 3], [2, 3, 0]], dtype=np.float64))
 
 solution = solving.brute_force.solve(instance)
 

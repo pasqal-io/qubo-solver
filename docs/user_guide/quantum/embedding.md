@@ -31,8 +31,8 @@ The example below runs BLaDE sized for a target device via `embed_for_device` â€
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="embedding" result="text"
-from qubosolver import Instance, matrix, embedding
-import torch
+from qubosolver import Instance, embedding
+import numpy as np
 import qoolqit
 
 # Private utility to set seed.
@@ -41,23 +41,26 @@ from qubosolver.utils._random import manual_seed
 manual_seed(958)
 
 instance = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [0, 1, 2, 1],
             [1, 0, 3, 0],
             [2, 3, 0, 5],
             [1, 0, 5, 0],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 register = embedding.blade.embed_for_device(instance, qoolqit.AnalogDevice())
-interaction_matrix = matrix.as_tensor(register.interaction_matrix())
+interaction_matrix = np.asarray(register.interaction_matrix(), dtype=np.float64)
 
-torch.set_printoptions(precision=2)
+np.set_printoptions(precision=2)
 print(f"QUBO matrix:\n{instance.matrix}\n")
 print(f"Interaction matrix:\n{interaction_matrix}\n")
 
-relative_error = 100 * (instance.matrix - interaction_matrix).norm() / instance.matrix.norm()
+relative_error = (
+    100 * np.linalg.norm(instance.matrix - interaction_matrix) / np.linalg.norm(instance.matrix)
+)
 print(f"Relative error = {relative_error:.2f} %")
 ```
 Plot the resulting register:
@@ -91,8 +94,8 @@ The greedy embedder picks atom positions from a fixed lattice of candidate trap 
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="embedding" result="text"
-from qubosolver import Instance, matrix, embedding
-import torch
+from qubosolver import Instance, embedding
+import numpy as np
 import qoolqit
 
 # Private utility to set seed.
@@ -101,13 +104,14 @@ from qubosolver.utils._random import manual_seed
 manual_seed(851)
 
 instance = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [0, 1, 2, 1],
             [1, 0, 3, 0],
             [2, 3, 0, 5],
             [1, 0, 5, 0],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 
@@ -115,13 +119,15 @@ register = embedding.greedy_layout.embed_for_device(
     instance,
     qoolqit.AnalogDevice(),
 )
-interaction_matrix = matrix.as_tensor(register.interaction_matrix())
+interaction_matrix = np.asarray(register.interaction_matrix(), dtype=np.float64)
 
-torch.set_printoptions(precision=2)
+np.set_printoptions(precision=2)
 print(f"QUBO matrix:\n{instance.matrix}\n")
 print(f"Interaction matrix:\n{interaction_matrix}\n")
 
-relative_error = 100 * (instance.matrix - interaction_matrix).norm() / instance.matrix.norm()
+relative_error = (
+    100 * np.linalg.norm(instance.matrix - interaction_matrix) / np.linalg.norm(instance.matrix)
+)
 print(f"Relative error = {relative_error:.2f} %")
 ```
 Plot the resulting register:
@@ -161,7 +167,7 @@ Each subproblem runs on the register found by the embedder, with a drive shaped 
 
 ```python exec="on" source="tabbed-left" session="decomposition" result="text"
 import qoolqit
-import torch
+import numpy as np
 from qubosolver import (
     Instance,
     LocalEmulator,
@@ -169,7 +175,6 @@ from qubosolver import (
     analysis,
     drive_shaping,
     embedding,
-    matrix,
     solving,
 )
 from qubosolver.transforms import variable_fixing
@@ -181,9 +186,9 @@ manual_seed(10)
 
 # A random QUBO: negative diagonal, sparse non-negative off-diagonal coefficients
 n = 50
-upper = (20 * torch.rand(n, n) * (torch.rand(n, n) < 0.5)).triu(1)
-Q = upper + upper.T - torch.diag(100 * torch.rand(n))
-instance = Instance(matrix.as_tensor(Q))
+upper = np.triu(20 * np.random.rand(n, n) * (np.random.rand(n, n) < 0.5), k=1)
+Q = upper + upper.T - np.diag(100 * np.random.rand(n))
+instance = Instance(np.asarray(Q, dtype=np.float64))
 
 device = qoolqit.AnalogDeviceWithDMM()
 backend = LocalEmulator(num_shots=1000)
@@ -232,9 +237,9 @@ manual_seed(10)
 
 # A sparser random QUBO
 n = 50
-upper = (20 * torch.rand(n, n) * (torch.rand(n, n) < 0.3)).triu(1)
-Q = upper + upper.T - torch.diag(100 * torch.rand(n))
-instance = Instance(matrix.as_tensor(Q))
+upper = np.triu(20 * np.random.rand(n, n) * (np.random.rand(n, n) < 0.3), k=1)
+Q = upper + upper.T - np.diag(100 * np.random.rand(n))
+instance = Instance(np.asarray(Q, dtype=np.float64))
 
 # Pre-process to fix variables with positive linear weight
 reduced_instance = variable_fixing.apply_recursively(instance)

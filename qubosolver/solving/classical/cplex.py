@@ -20,10 +20,11 @@ from __future__ import annotations
 import contextlib
 import math
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from qubosolver import Instance, Solution, bitstrings, vector, vectori
-from qubosolver._checks import TYPE_CHECKING
+import numpy as np
+
+from qubosolver import Instance, Solution, bitstrings
 
 if TYPE_CHECKING:
     import cplex
@@ -75,7 +76,7 @@ def _qubo_instance_to_sparsepairs(
     size = instance.size
 
     sparsepairs: list[cplex.SparsePair] = []
-    matrix = instance.matrix.cpu().numpy()
+    matrix = instance.matrix
 
     for i in range(size):
         indices: list[int] = []
@@ -163,8 +164,8 @@ def _to_solution(cplex_solution: cplex.SolutionInterface) -> Solution:
     # Convert the solution into a Solution.
     # CPLEX's default integrality tolerance is 1e-5, looser than `round`'s default.
     bitstring_tensor = bitstrings.round([solution_values], atol=1e-4)
-    counts = vectori.tensor([1])
-    cost_tensor = vector.tensor([solution_cost])
+    counts = np.asarray([1], dtype=np.int64)
+    cost_tensor = np.asarray([solution_cost], dtype=np.float64)
 
     return Solution(
         bitstrings=bitstring_tensor, counts=counts, costs=cost_tensor

@@ -12,11 +12,15 @@ explores bit-flip moves in parallel across multiple starting points.
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
-import torch
+import numpy as np
 
-from qubosolver.types import Bitstrings, Instance, Solution, bitstrings, vector, vectori
+from qubosolver.types import Instance, Solution, bitstrings
 from qubosolver.utils._costs import _flip_deltas
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 # How often the incremental QX/f_current tracking is refreshed by an exact
 # recompute. Bounds the rounding drift accumulated by the incremental update
@@ -27,7 +31,7 @@ _REFRESH_EVERY = 128
 def solve(  # noqa: PLR0913
     instance: Instance,
     *,
-    starts: Bitstrings | int = 1,
+    starts: NDArray[np.int8] | int = 1,
     max_iter: int = 100,
     tabu_tenure: int = 7,
     max_no_improve: int = 20,
@@ -48,7 +52,7 @@ def solve(  # noqa: PLR0913
             independent run, each of length ``n``, or an ``int`` giving the
             number of uniformly random starts to generate. This random draw
             is *not* reproducible via a caller-supplied `rng`; callers who
-            need reproducibility should sample their own [`Bitstrings`][]
+            need reproducibility should sample their own bitstrings
             (e.g. with a seeded [`bitstrings.rand`][]) and pass it in
             directly.
         max_iter: Maximum number of search iterations.
@@ -80,25 +84,24 @@ def solve(  # noqa: PLR0913
         return Solution.zeros(0, count=starts.shape[0])
 
     Q = instance.matrix
-    device = Q.device
     n_bitstrings, n = starts.shape
 
     # Repeat x0 for each parallel run
-    X = starts.detach().clone().to(Q)
+    X = starts.astype(Q.dtype)
     QX = X @ Q
-    f_current = (X * QX).sum(dim=1)
-    x_best = X.clone()
-    f_best = f_current.clone()
+    f_current = (X * QX).sum(axis=1)
+    x_best = X.copy()
+    f_best = f_current.copy()
 
     # Tabu list per run and bit
-    tabu_list = torch.zeros((n_bitstrings, n), dtype=torch.int64, device=device)
-    iter_since_last_improve = torch.zeros(n_bitstrings, dtype=torch.int64, device=device)
+    tabu_list = np.zeros((n_bitstrings, n), dtype=np.int64)
+    iter_since_last_improve = np.zeros(n_bitstrings, dtype=np.int64)
 
     deadline = time.perf_counter() + time_limit
-    rows = torch.arange(n_bitstrings, device=device)
-    cols = torch.arange(n, device=device)
+    rows = np.arange(n_bitstrings)
+    cols = np.arange(n)
     diagonal = Q.diagonal()
-    dE_buffer = torch.empty_like(QX)
+    dE_buffer = np.empty_like(QX)
 
     for iteration in range(max_iter):
         if time.perf_counter() >= deadline:
@@ -111,34 +114,35 @@ def solve(  # noqa: PLR0913
         # matmul amortized over many iterations.
         if iteration % _REFRESH_EVERY == 0:
             QX = X @ Q
-            f_current = (X * QX).sum(dim=1)
+            f_current = (X * QX).sum(axis=1)
 
         # Tabu tenure counts down to 0 every iteration, regardless of whether
         # a move is made; a bit is tabu while its counter is still positive.
-        tabu_list.sub_(1).clamp_(min=0)
+        tabu_list -= 1
+        np.maximum(tabu_list, 0, out=tabu_list)
 
         # Delta of each candidate one-bit-flip move, for every run at once;
         # avoids recomputing the full x^T Q x per candidate.
         dE = _flip_deltas(Q, X, QX, diagonal=diagonal, out=dE_buffer)
-        f_candidates = f_current.unsqueeze(1) + dE
+        f_candidates = f_current[:, np.newaxis] + dE
 
         # Tabu and aspiration
         tabu_mask = tabu_list > 0
-        aspiration_mask = f_candidates < f_best.unsqueeze(1)
+        aspiration_mask = f_candidates < f_best[:, np.newaxis]
         allowed = (~tabu_mask) | aspiration_mask
 
         # Mask out disallowed moves
-        f_masked = torch.where(allowed, f_candidates, torch.inf)
+        f_masked = np.where(allowed, f_candidates, np.inf)
 
         # Pick best move per run
-        best_moves = torch.argmin(f_masked, dim=1)
-        move_mask = cols.unsqueeze(0) == best_moves.unsqueeze(1)
+        best_moves = np.argmin(f_masked, axis=1)
+        move_mask = cols[np.newaxis, :] == best_moves[:, np.newaxis]
 
         # Apply the best move
         xi = X[rows, best_moves]
         step = 1.0 - 2.0 * xi
         X[rows, best_moves] = xi + step
-        QX += step.unsqueeze(1) * Q[best_moves, :]
+        QX += step[:, np.newaxis] * Q[best_moves, :]
         # Read the new cost from `f_candidates`, not from the tabu-masked
         # `f_masked`: when every move of a run is disallowed, `f_masked` is
         # all-`inf` for that row and its minimum is the `inf` sentinel, not a
@@ -157,7 +161,7 @@ def solve(  # noqa: PLR0913
         iter_since_last_improve[improved] = 0
 
         # Early stop if all stagnated
-        if torch.all(iter_since_last_improve >= max_no_improve):
+        if np.all(iter_since_last_improve >= max_no_improve):
             break
 
     # `f_best` was accumulated incrementally, drifting from the true x^T Q x
@@ -166,9 +170,9 @@ def solve(  # noqa: PLR0913
     # recompute (`update=False`) and instead recompute exactly via `_update`
     # right after.
     solution = Solution(
-        bitstrings=bitstrings.as_tensor(x_best),
+        bitstrings=np.asarray(x_best, dtype=np.int8),
         costs=f_best,
-        counts=vectori.zeros(n_bitstrings).fill_(1),
-        probabilities=vector.zeros(n_bitstrings).fill_(1.0 / n_bitstrings),
+        counts=np.ones(n_bitstrings, dtype=np.int64),
+        probabilities=np.full(n_bitstrings, 1.0 / n_bitstrings, dtype=np.float64),
     )
     return solution.deduplicate(update=False)._update(instance)

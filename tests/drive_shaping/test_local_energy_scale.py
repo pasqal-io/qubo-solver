@@ -13,7 +13,6 @@ import numpy as np
 import pytest
 import pytest_check as check
 import qoolqit
-import torch
 from qoolqit import AnalogDevice, DigitalAnalogDevice
 
 from qubosolver import (
@@ -24,10 +23,7 @@ from qubosolver import (
     analysis,
     drive_shaping,
     embedding,
-    matrix,
     solving,
-    tensor,
-    vector,
 )
 
 
@@ -51,26 +47,29 @@ def test_with_perfect_embedding(
     """Test the heuristic on exactly embeddable QUBOs."""
     random.seed(seed)
     np.random.seed(seed)
-    torch.manual_seed(seed)
+    np.random.seed(seed)
 
     sqrt3 = np.sqrt(3.0)
 
-    vertices = tensor.tensor(
+    vertices = np.asarray(
         [
             [0.0, 0.0],
             [-1.0, 0.0],
             [-1.5, -0.5 * sqrt3],
             [-0.5, -0.5 * sqrt3],
-        ]
+        ],
+        dtype=np.float64,
     )
-    interaction_matrix = matrix.as_tensor(
-        qoolqit.Register.from_coordinates(vertices).interaction_matrix()
+    interaction_matrix = np.asarray(
+        qoolqit.Register.from_coordinates(vertices).interaction_matrix(), dtype=np.float64
     )
 
     diagonal = (
-        vector.zeros(4).fill_(1.0) if constant_diagonal else vector.tensor([1.0, 1.25, 0.2, 1.167])
+        np.full(4, 1.0, dtype=np.float64)
+        if constant_diagonal
+        else np.asarray([1.0, 1.25, 0.2, 1.167], dtype=np.float64)
     )
-    qubo = interaction_matrix + diagonal_scale * torch.diag(diagonal)
+    qubo = interaction_matrix + diagonal_scale * np.diag(diagonal)
     qubo /= qubo.max()
     instance = Instance(matrix=qubo)
 
@@ -137,7 +136,9 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
             [D, 0.0],
         ]
     )
-    Q = matrix.as_tensor(register.interaction_matrix()) + vector.zeros(3).fill_(-50.0).diag()
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
+        np.full(3, -50.0, dtype=np.float64)
+    )
     instance = Instance(Q)
 
     with caplog.at_level(logging.INFO, logger="qubosolver.drive_shaping.local_energy_scale"):
@@ -169,9 +170,11 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
 
 def test_dmm_labels_are_ints() -> None:
 
-    vertices = tensor.tensor([[0.0, 0.0], [1.0, 0.0]])
+    vertices = np.asarray([[0.0, 0.0], [1.0, 0.0]], dtype=np.float64)
     register = qoolqit.Register.from_coordinates(vertices)
-    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
+        np.asarray([-1.0, -2.0], dtype=np.float64)
+    )
     instance = Instance(Q)
 
     check.is_instance(register.qubits_ids[0], int)
@@ -192,8 +195,12 @@ def test_dmm_labels_are_ints() -> None:
 
 
 def test_dmm_requested_on_device_without_dmm(caplog: pytest.LogCaptureFixture) -> None:
-    register = qoolqit.Register.from_coordinates(tensor.tensor([[0.0, 0.0], [1.0, 0.0]]))
-    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+    register = qoolqit.Register.from_coordinates(
+        np.asarray([[0.0, 0.0], [1.0, 0.0]], dtype=np.float64)
+    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
+        np.asarray([-1.0, -2.0], dtype=np.float64)
+    )
 
     with caplog.at_level(logging.WARNING, logger="qubosolver.drive_shaping.local_energy_scale"):
         drive = drive_shaping.local_energy_scale.build_drive(
@@ -205,8 +212,12 @@ def test_dmm_requested_on_device_without_dmm(caplog: pytest.LogCaptureFixture) -
 
 
 def test_device_without_max_amplitude() -> None:
-    register = qoolqit.Register.from_coordinates(tensor.tensor([[0.0, 0.0], [1.0, 0.0]]))
-    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+    register = qoolqit.Register.from_coordinates(
+        np.asarray([[0.0, 0.0], [1.0, 0.0]], dtype=np.float64)
+    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
+        np.asarray([-1.0, -2.0], dtype=np.float64)
+    )
     drive = drive_shaping.local_energy_scale.build_drive(
         Instance(Q), register, dmm=False, device=qoolqit.MockDevice()
     )
@@ -217,7 +228,7 @@ def test_dmm_final_detuning_is_clipped_to_total_bottom_detuning(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     n = 6
-    Q = matrix.zeros(n)
+    Q = np.zeros((n, n), dtype=np.float64)
     for i in range(n):
         Q[i, i] = -50.0 if i % 2 == 0 else 50.0
     for i in range(n):

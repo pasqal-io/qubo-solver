@@ -63,19 +63,13 @@ repos:
         types_or: [python, pyi, jupyter]
         require_serial: true
 
-      - &mypy_base
-        id: mypy
-        name: mypy (float32)
+      - id: mypy
+        name: mypy
         entry: uv run --locked mypy
         language: system
         types_or: [python, pyi]
         exclude: examples|docs
         require_serial: true
-        args: [--always-false=_USE_DOUBLE_PRECISION, --cache-dir=.mypy_cache_f32]
-
-      - <<: *mypy_base
-        name: mypy (float64)
-        args: [--always-true=_USE_DOUBLE_PRECISION, --cache-dir=.mypy_cache_f64]
 
       - id: bandit
         name: bandit

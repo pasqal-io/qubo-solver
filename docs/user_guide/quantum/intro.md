@@ -55,6 +55,8 @@ Qubo Solver can solve a QUBO instance using Pasqal's Rydberg analog devices, eit
 ## Example
 
 ```python exec="on" session="negative" source="tabbed-left" result="text"
+import numpy as np
+
 from qubosolver import (
     Instance,
     Solution,
@@ -62,7 +64,6 @@ from qubosolver import (
     embedding,
     drive_shaping,
     solving,
-    matrix,
     analysis,
 )
 import qoolqit
@@ -73,12 +74,13 @@ from qubosolver.utils._random import manual_seed
 manual_seed(147)
 
 instance = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [-0.2, 0.0, 1.0],
             [0.0, -1.0, 1.5],
             [1.0, 1.5, -0.1],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 

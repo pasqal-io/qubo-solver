@@ -23,19 +23,19 @@ from __future__ import annotations
 import itertools
 import time
 from copy import deepcopy
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
-import torch
 
-from qubosolver import Bitstring, Bitstrings, Instance, Matrix, Solution, bitstring, bitstrings
-from qubosolver._checks import TYPE_CHECKING
+from qubosolver import Instance, Solution, bitstring, bitstrings
 from qubosolver.utils._costs import _flip_deltas
 
 from .random_sampling import solve as random_sampling_solve
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+
+    from numpy.typing import NDArray
 
 
 def _iterations(n: int) -> Iterable[int]:
@@ -67,11 +67,11 @@ def _iterations(n: int) -> Iterable[int]:
 
 
 def _best_improvement_search_batch(
-    Q: Matrix,
-    X: Bitstrings,
+    Q: NDArray[np.float64],
+    X: NDArray[np.int8],
     max_iterations: int = -1,
     time_limit: float = float("inf"),
-) -> Bitstrings:
+) -> NDArray[np.int8]:
     """Improve every row of `X` via best-improvement bit-flip search, in lockstep.
 
     At each round, every row that still has an improving flip applies its own
@@ -104,40 +104,41 @@ def _best_improvement_search_batch(
         msg = "_best_improvement_search_batch does not support a 0x0 matrix."
         raise ValueError(msg)
 
-    X = X.detach().clone().to(Q)
-    QX = X @ Q
-    rows = torch.arange(X.shape[0], device=X.device)
+    Xf = X.astype(Q.dtype)
+    QX = Xf @ Q
+    rows = np.arange(Xf.shape[0])
     deadline = time.monotonic() + time_limit
     diagonal = Q.diagonal()
-    dE_buffer = torch.empty_like(QX)
+    dE_buffer = np.empty_like(QX)
 
     for _ in _iterations(max_iterations):
         if time.monotonic() > deadline:
             break
 
-        dE = _flip_deltas(Q, X, QX, diagonal=diagonal, out=dE_buffer)
-        best_dE, best_idx = dE.min(dim=1)
+        dE = _flip_deltas(Q, Xf, QX, diagonal=diagonal, out=dE_buffer)
+        best_idx = dE.argmin(axis=1)
+        best_dE = dE[rows, best_idx]
 
         improving = best_dE < 0.0
         if not bool(improving.any()):
             break
 
         idx = best_idx[improving]
-        xi = X[rows[improving], idx]
+        xi = Xf[rows[improving], idx]
         step = 1.0 - 2.0 * xi
-        X[rows[improving], idx] = xi + step
-        QX[improving] += step.unsqueeze(1) * Q[idx, :]
+        Xf[rows[improving], idx] = xi + step
+        QX[improving] += step[:, np.newaxis] * Q[idx, :]
 
-    return bitstrings.round(X)
+    return bitstrings.round(Xf)
 
 
 def _first_improvement_search(
-    Q_torch: Matrix,
-    s: Bitstring,
-    rng: torch.Generator | None = None,
+    Q: NDArray[np.float64],
+    s: NDArray[np.int8],
+    rng: np.random.Generator | None = None,
     max_iterations: int = -1,
     time_limit: float = float("inf"),
-) -> Bitstring:
+) -> NDArray[np.int8]:
     """Improve a single bitstring via first-improvement bit-flip search.
 
     At each iteration, applies the first single-bit flip found that reduces
@@ -146,7 +147,7 @@ def _first_improvement_search(
     `time_limit` has elapsed.
 
     Args:
-        Q_torch: Symmetric QUBO coefficient matrix of shape ``(n, n)``.
+        Q: Symmetric QUBO coefficient matrix of shape ``(n, n)``.
         s: Binary tensor of shape ``(n,)``, the starting solution. The
             tensor is cloned internally; the original is not modified.
         rng: Optional Generator
@@ -168,25 +169,18 @@ def _first_improvement_search(
             recompute it exactly instead of trusting an incremental value.
 
     Raises:
-        ValueError: If `Q_torch` is a 0x0 matrix.
+        ValueError: If `Q` is a 0x0 matrix.
     """
-    if Q_torch.shape[0] == 0:
+    if Q.shape[0] == 0:
         msg = "_first_improvement_search does not support a 0x0 matrix."
         raise ValueError(msg)
 
-    Q = Q_torch.detach().cpu().numpy()
-    x = s.to(Q_torch).detach().cpu().numpy().copy()
+    x = s.astype(Q.dtype)
     deadline = time.monotonic() + time_limit
     n = x.shape[0]
     indices = np.arange(n)
-    np_rng = None
-    if rng is not None:
-        seed = int(torch.randint(0, 2**63 - 1, (1,), generator=rng).item())
-        np_rng = np.random.default_rng(seed)
+    np_rng = rng
 
-    # NumPy gives the cheapest combination here too (see `_greedy_sweep_search`
-    # above): scalar element access is far cheaper than torch's per-element
-    # dispatch/.item() sync, and the row update stays a vectorized C loop.
     Qx = Q @ x
     diagonal = Q.diagonal()
 
@@ -214,16 +208,16 @@ def _first_improvement_search(
         x[i] = x_i + step
         Qx += step * Q[i, :]
 
-    return bitstring.round(torch.from_numpy(x).to(device=Q_torch.device, dtype=Q_torch.dtype))
+    return bitstring.round(x)
 
 
 def _greedy_sweep_search(
-    Q_torch: Matrix,
-    s: Bitstring,
-    rng: torch.Generator | None = None,
+    Q: NDArray[np.float64],
+    s: NDArray[np.int8],
+    rng: np.random.Generator | None = None,
     max_iterations: int = -1,
     time_limit: float = float("inf"),
-) -> Bitstring:
+) -> NDArray[np.int8]:
     """Improve a single bitstring via greedy-sweep bit-flip search.
 
     At each iteration, sweeps through every bit position and applies every
@@ -233,7 +227,7 @@ def _greedy_sweep_search(
     reached, or `time_limit` has elapsed.
 
     Args:
-        Q_torch: Symmetric QUBO coefficient matrix of shape ``(n, n)``.
+        Q: Symmetric QUBO coefficient matrix of shape ``(n, n)``.
         s: Binary tensor of shape ``(n,)``, the starting solution. The
             tensor is cloned internally; the original is not modified.
         rng: Optional generator
@@ -255,28 +249,18 @@ def _greedy_sweep_search(
             recompute it exactly instead of trusting an incremental value.
 
     Raises:
-        ValueError: If `Q_torch` is a 0x0 matrix.
+        ValueError: If `Q` is a 0x0 matrix.
     """
-    if Q_torch.shape[0] == 0:
+    if Q.shape[0] == 0:
         msg = "_greedy_sweep_search does not support a 0x0 matrix."
         raise ValueError(msg)
 
-    Q = Q_torch.detach().cpu().numpy()
-    x = s.to(Q_torch).detach().cpu().numpy().copy()
+    x = s.astype(Q.dtype)
     deadline = time.monotonic() + time_limit
     n = x.shape[0]
     visit_order = range(n)
-    np_rng = None
-    if rng is not None:
-        seed = int(torch.randint(0, 2**63 - 1, (1,), generator=rng).item())
-        np_rng = np.random.default_rng(seed)
+    np_rng = rng
 
-    # NumPy gives the cheapest combination for this sweep: scalar element
-    # access is far cheaper than torch's per-element dispatch/.item() sync,
-    # and row updates (`Qx += step * Q[i, :]`) still run as a vectorized
-    # C loop rather than the Python-level loop a plain list would need.
-    # Measured ~5-12x faster than both a Python-list and an all-tensor
-    # version of this same sweep at n=4000.
     Qx = Q @ x
     diagonal = Q.diagonal()
 
@@ -307,10 +291,10 @@ def _greedy_sweep_search(
         if not improved:
             break
 
-    return bitstring.round(torch.from_numpy(x).to(device=Q_torch.device, dtype=Q_torch.dtype))
+    return bitstring.round(x)
 
 
-_ROW_STRATEGIES: dict[str, Callable[..., Bitstring]] = {
+_ROW_STRATEGIES: dict[str, Callable[..., NDArray[np.int8]]] = {
     "first_improvement": _first_improvement_search,
     "greedy_sweep": _greedy_sweep_search,
 }

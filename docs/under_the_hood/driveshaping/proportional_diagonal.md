@@ -170,15 +170,17 @@ These parameters are keyword arguments of
 ### Example
 
 ```python
+import numpy as np
 import qoolqit
-from qubosolver import Instance, embedding, drive_shaping, matrix
+from qubosolver import Instance, embedding, drive_shaping
 
-Q = matrix.tensor(
+Q = np.asarray(
     [
         [-1.0, 0.5, 0.2],
         [0.5, -2.0, 0.3],
         [0.2, 0.3, -3.0],
-    ]
+    ],
+    dtype=np.float64,
 )
 
 instance = Instance(Q)

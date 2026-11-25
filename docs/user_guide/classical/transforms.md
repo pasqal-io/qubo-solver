@@ -19,9 +19,11 @@ Every transform exposes the same pair of functions:
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="transforms" result="text"
-from qubosolver import Instance, transforms, solving, matrix, bitstrings
+import numpy as np
 
-instance = Instance(matrix.tensor([[-2.0, 1.0], [1.0, -2.0]]))
+from qubosolver import Instance, transforms, solving, bitstrings
+
+instance = Instance(np.asarray([[-2.0, 1.0], [1.0, -2.0]], dtype=np.float64))
 
 reduced_instance = transforms.variable_fixing.apply_recursively(instance)
 reduced_solution = solving.brute_force.solve(reduced_instance)
@@ -70,9 +72,11 @@ solver.
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="varfix" result="text"
-from qubosolver import Instance, transforms, solving, matrix, bitstrings
+import numpy as np
 
-Q = Instance(matrix.tensor([[-2.0, 1.0], [1.0, -2.0]]))
+from qubosolver import Instance, transforms, solving, bitstrings
+
+Q = Instance(np.asarray([[-2.0, 1.0], [1.0, -2.0]], dtype=np.float64))
 
 reduced = transforms.variable_fixing.apply_recursively(Q)
 reduced_solution = solving.brute_force.solve(reduced)
@@ -115,21 +119,24 @@ them, and returns an `Instance` that records the flip vector and metrics.
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="bitflip" result="text"
-from qubosolver import Instance, transforms, matrix, torch_rng
+import numpy as np
+
+from qubosolver import Instance, transforms, numpy_rng
 
 Q_hard = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [0.0, -2.0, 1.0, 1.0],
             [-2.0, 0.0, -2.0, 1.0],
             [1.0, -2.0, 0.0, -2.0],
             [1.0, 1.0, -2.0, 0.0],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 
 reduced_hard = transforms.negative_bitflip.apply(
-    Q_hard, time_limit_s=60.0, rng=torch_rng(223130196)
+    Q_hard, time_limit_s=60.0, rng=numpy_rng(223130196)
 )
 
 print(f"Flip vector: {reduced_hard.flips}")
@@ -153,21 +160,24 @@ not modify its argument in place.
 
 ### Code example
 ```python exec="on" source="tabbed-left" session="zeroing" result="text"
-from qubosolver import Instance, transforms, matrix, torch_rng
+import numpy as np
+
+from qubosolver import Instance, transforms, numpy_rng
 
 Q_hard = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [0.0, -2.0, 1.0, 1.0],
             [-2.0, 0.0, -2.0, 1.0],
             [1.0, -2.0, 0.0, -2.0],
             [1.0, 1.0, -2.0, 0.0],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 
 reduced_hard = transforms.negative_bitflip.apply(
-    Q_hard, time_limit_s=60.0, rng=torch_rng(223130196)
+    Q_hard, time_limit_s=60.0, rng=numpy_rng(223130196)
 )
 zeroed_hard = transforms.zeroing.apply(reduced_hard)
 

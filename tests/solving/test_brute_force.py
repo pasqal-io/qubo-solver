@@ -8,10 +8,10 @@ from __future__ import annotations
 import itertools
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pytest_check as check
-import torch
 
-from qubosolver import Candidate, Instance, bitstrings, matrix, solving, torch_rng
+from qubosolver import Candidate, Instance, numpy_rng, solving
 
 if TYPE_CHECKING:
     import pytest
@@ -21,7 +21,7 @@ def _reference_sorted(instance: Instance) -> list[Candidate]:
     """All candidate solutions sorted by ascending cost, by exhaustive search."""
     solutions = [
         Candidate(bitstring=b, cost=instance.cost(b))
-        for b in bitstrings.tensor(list(itertools.product([0, 1], repeat=instance.size)))
+        for b in np.asarray(list(itertools.product([0, 1], repeat=instance.size)), dtype=np.int8)
     ]
     solutions.sort(key=lambda s: s.cost)
     return solutions
@@ -29,13 +29,14 @@ def _reference_sorted(instance: Instance) -> list[Candidate]:
 
 def sample_qubo() -> Instance:
     return Instance(
-        matrix.tensor(
+        np.asarray(
             [
                 [0.0, -2.0, 1.0, 1.0],
                 [-2.0, 0.0, -2.0, 1.0],
                 [1.0, -2.0, 0.0, -2.0],
                 [1.0, 1.0, -2.0, 0.0],
-            ]
+            ],
+            dtype=np.float64,
         )
     )
 
@@ -68,7 +69,7 @@ def test_top_k_sorted_matches_reference() -> None:
 
 def test_max_bitstrings_capped_at_2_to_the_n() -> None:
     # A 2-variable QUBO has only 4 assignments; asking for more returns 4.
-    Q = matrix.tensor([[1.0, -1.0], [-1.0, 1.0]])
+    Q = np.asarray([[1.0, -1.0], [-1.0, 1.0]], dtype=np.float64)
 
     solution = solving.brute_force.solve(Instance(Q), max_bitstrings=100)
 
@@ -82,7 +83,7 @@ def test_probabilities_are_normalised() -> None:
 
 
 def test_empty_instance_returns_zero_length_solution() -> None:
-    instance = Instance(matrix.zeros(0))
+    instance = Instance(np.zeros((0, 0), dtype=np.float64))
     solution = solving.brute_force.solve(instance)
 
     check.is_true(solution.check_consistency(instance=instance, throw=True))
@@ -97,7 +98,7 @@ def test_time_limit_returns_best_so_far_without_enumerating_all() -> None:
     # 24 variables => ~1.6e7 assignments. A tiny budget must return promptly with
     # the requested number of bitstrings rather than hang or exhaust memory.
     instance = Instance(
-        matrix.as_tensor(torch.randn(24, 24, generator=torch_rng(26))), symmetrize=True
+        np.asarray(numpy_rng(26).standard_normal((24, 24)), dtype=np.float64), symmetrize=True
     )
 
     solution = solving.brute_force.solve(instance, max_bitstrings=2, time_limit=0.05)
@@ -105,7 +106,7 @@ def test_time_limit_returns_best_so_far_without_enumerating_all() -> None:
     check.equal(len(solution), 2)
     # Costs are consistent with the instance (sanity: finite, correctly evaluated).
     for b in solution.bitstrings:
-        check.is_true(torch.isfinite(torch.tensor(instance.cost(b))))
+        check.is_true(np.isfinite(instance.cost(b)))
 
 
 def test_large_instance_with_no_time_limit_logs_warning(
@@ -114,7 +115,7 @@ def test_large_instance_with_no_time_limit_logs_warning(
     # 21 variables exceeds the 20-variable threshold; 2^21 assignments still
     # completes quickly enough for a test.
     instance = Instance(
-        matrix.as_tensor(torch.randn(21, 21, generator=torch_rng(1))), symmetrize=True
+        np.asarray(numpy_rng(1).standard_normal((21, 21)), dtype=np.float64), symmetrize=True
     )
 
     with caplog.at_level("WARNING", logger="qubosolver.solving.classical.brute_force"):
@@ -127,7 +128,7 @@ def test_large_instance_with_finite_time_limit_does_not_log_warning(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     instance = Instance(
-        matrix.as_tensor(torch.randn(21, 21, generator=torch_rng(1))), symmetrize=True
+        np.asarray(numpy_rng(1).standard_normal((21, 21)), dtype=np.float64), symmetrize=True
     )
 
     with caplog.at_level("WARNING", logger="qubosolver.solving.classical.brute_force"):

@@ -12,25 +12,23 @@ random dataset generation and binary (de)serialization helpers.
 
 from __future__ import annotations
 
-import io
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
-import torch
+import numpy as np
 
-from qubosolver._checks import TYPE_CHECKING
 from qubosolver._io import utils as io_utils
 
-from . import matrix
 from .instance import Instance
-from .random import torch_rng
+from .random import numpy_rng
 from .solution import Solution
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
 
-    from qubosolver._io.utils import FileLike
+    from numpy.typing import DTypeLike, NDArray
 
-    from .linalg import Tensor
+    from qubosolver._io.utils import FileLike
 
 
 class Dataset:
@@ -63,11 +61,15 @@ class Dataset:
     """
 
     def __init__(
-        self, matrices: Tensor, solutions: Sequence[Solution] = (), *, copy: bool = True
+        self,
+        matrices: NDArray[np.float64],
+        solutions: Sequence[Solution] = (),
+        *,
+        copy: bool = True,
     ) -> None:
         """Build a dataset from `matrices` and optional `solutions`, deep-copying by default."""
         if copy:
-            matrices = matrices.detach().clone()
+            matrices = matrices.copy()
             solutions = deepcopy(solutions)
         self.matrices = matrices
         self.solutions = solutions
@@ -109,8 +111,8 @@ class Dataset:
         *,
         densities: Sequence[float] = (0.5,),
         coefficient_bounds: tuple[float, float] = (-10.0, 10.0),
-        dtype: torch.dtype | None = None,
-        rng: torch.Generator | None = None,
+        dtype: DTypeLike | None = None,
+        rng: np.random.Generator | None = None,
         negative_offdiag_rate: float = 0.0,
     ) -> Dataset:
         """Generates a Dataset of random, symmetric QUBO coefficient matrices.
@@ -141,15 +143,12 @@ class Dataset:
                 coefficient matrices, with no associated solutions.
         """
         # Step 1: Initialize a reproducible random generator.
-        dtype = dtype or matrix.dtype()
-        rng = rng or torch_rng()
-        device = rng.device.type
+        dtype = np.dtype(dtype or np.float64)
+        rng = rng or numpy_rng()
 
-        # Step 2: Create a tensor for the coefficients.
+        # Step 2: Create an array for the coefficients.
         total_instances = n_matrices * len(densities)
-        coefficients = torch.zeros(
-            matrix_dim, matrix_dim, total_instances, device=device, dtype=dtype
-        )
+        coefficients = np.zeros((matrix_dim, matrix_dim, total_instances), dtype=dtype)
 
         # Step 3: Generate matrices for each density.
         idx = 0
@@ -157,31 +156,31 @@ class Dataset:
             target = int(d * matrix_dim * matrix_dim)
             for idx in range(n_matrices):
                 # generate mask
-                mask = _generate_symmetric_mask(matrix_dim, target, device, rng)
+                mask = _generate_symmetric_mask(matrix_dim, target, rng)
 
                 # random sampling and apply mask
-                random_vals = torch.empty(
-                    matrix_dim, matrix_dim, device=device, dtype=dtype
-                ).uniform_(*coefficient_bounds, generator=rng)
-                random_vals = random_vals * mask.to(dtype)
+                random_vals = rng.uniform(
+                    *coefficient_bounds, size=(matrix_dim, matrix_dim)
+                ).astype(dtype)
+                random_vals = random_vals * mask.astype(dtype)
 
-                original_diag = random_vals.diag().clone()
-                coeff = torch.triu(random_vals, diagonal=1)
+                original_diag = random_vals.diagonal().copy()
+                coeff = np.triu(random_vals, k=1)
                 coeff = coeff + coeff.T
-                coeff.diagonal().copy_(original_diag)
+                np.fill_diagonal(coeff, original_diag)
 
-                off_diag = ~torch.eye(matrix_dim, dtype=torch.bool, device=device)
-                coeff[off_diag] = coeff[off_diag].abs()
+                off_diag = ~np.eye(matrix_dim, dtype=bool)
+                coeff[off_diag] = np.abs(coeff[off_diag])
                 if negative_offdiag_rate > 0.0:
                     # make non-diagonal negative elements
                     rate = float(max(0.0, min(1.0, negative_offdiag_rate)))
-                    upper_mask = torch.triu(mask, diagonal=1)
-                    nz_pairs = upper_mask.nonzero(as_tuple=False)
-                    M = nz_pairs.size(0)
+                    upper_mask = np.triu(mask, k=1)
+                    nz_pairs = np.argwhere(upper_mask)
+                    M = nz_pairs.shape[0]
                     # Return K negative elements
                     if M > 0:
                         K = max(1, round(rate * M))
-                        perm = torch.randperm(M, generator=rng, device=device)[:K]
+                        perm = rng.permutation(M)[:K]
                         chosen = nz_pairs[perm]
                         i_idx, j_idx = chosen[:, 0], chosen[:, 1]
                         vals = coeff[i_idx, j_idx]
@@ -191,59 +190,36 @@ class Dataset:
                     else:
                         # Edge case to force creating one a negative element
                         i, j = 0, 1 if matrix_dim > 1 else (0, 0)
-                        coeff[i, j] = -torch.rand(1, device=device, generator=rng) * abs(
-                            coefficient_bounds[0]
-                        )
+                        coeff[i, j] = -rng.random() * abs(coefficient_bounds[0])
                         coeff[j, i] = coeff[i, j]
-                if not (coeff.diag() < 0).any():
-                    diag_vals = coeff.diag()
-                    non_neg = (diag_vals >= 0).nonzero(as_tuple=True)[0]
+                if not (coeff.diagonal() < 0).any():
+                    diag_vals = coeff.diagonal()
+                    non_neg = np.flatnonzero(diag_vals >= 0)
                     diag_idx = (
-                        int(non_neg[0].item())
-                        if non_neg.numel() > 0
-                        else int(
-                            torch.randint(0, matrix_dim, (1,), device=device, generator=rng).item()
-                        )
+                        int(non_neg[0]) if non_neg.size > 0 else int(rng.integers(0, matrix_dim))
                     )
                     if coefficient_bounds[0] < 0:
                         neg_val = coefficient_bounds[0]
                     else:
-                        neg_val = (
-                            -torch.empty(1, device=device, dtype=dtype)
-                            .uniform_(*coefficient_bounds, generator=rng)
-                            .abs()
-                            .item()
+                        neg_val = -abs(
+                            float(np.asarray(rng.uniform(*coefficient_bounds), dtype=dtype))
                         )
                     coeff[diag_idx, diag_idx] = neg_val
                 if not (coeff == coefficient_bounds[1]).any():
                     # do not select negative coefficients
-                    nz = (coeff > 0).nonzero(as_tuple=False)
+                    nz = np.argwhere(coeff > 0)
                     filtered = [
                         idx_pair
                         for idx_pair in nz.tolist()
                         if not (
                             idx_pair[0] == idx_pair[1]
-                            and coeff[idx_pair[0], idx_pair[1]].item() == coefficient_bounds[0]
+                            and coeff[idx_pair[0], idx_pair[1]] == coefficient_bounds[0]
                         )
                     ]
                     if filtered:
-                        chosen = filtered[
-                            int(
-                                torch.randint(
-                                    0,
-                                    len(filtered),
-                                    (1,),
-                                    device=device,
-                                    generator=rng,
-                                    dtype=torch.int64,
-                                ).item()
-                            )
-                        ]
+                        i_ch, j_ch = filtered[int(rng.integers(0, len(filtered)))]
                     else:
-                        chosen = torch.randint(
-                            0, matrix_dim, (1,), device=device, generator=rng
-                        ).repeat(2)
-                    i_ch, j_ch = chosen
+                        i_ch = j_ch = int(rng.integers(0, matrix_dim))
                     coeff[i_ch, j_ch] = coefficient_bounds[1]
                     if i_ch != j_ch:
                         coeff[j_ch, i_ch] = coefficient_bounds[1]
@@ -254,7 +230,7 @@ class Dataset:
         return cls(matrices=coefficients, copy=False)
 
     def save(self, file_like: FileLike[bytes]) -> None:
-        """Persist this dataset to disk using [`torch.save`][].
+        """Persist this dataset to disk.
 
         Args:
             file_like: Destination file path or writable binary file object.
@@ -269,9 +245,7 @@ class Dataset:
         """
         with io_utils.open(file_like, "wb") as f:
             io_utils.save_header(f)
-            buffer = io.BytesIO()
-            torch.save(self.matrices, buffer)
-            io_utils.save_sized_buffer(f, buffer.getbuffer())
+            io_utils.save_array(f, self.matrices)
             io_utils.save(f, ">I", len(self.solutions))
             # Written into the already-open stream *f*, not into `file_like`:
             # re-opening a path here would truncate everything written above.
@@ -303,19 +277,14 @@ class Dataset:
         """
         with io_utils.open(file_like, "rb") as f:
             io_utils.load_header(f)
-            # torch.load might consume too much of the src buffer.
-            #  Use a dedicated limited buffer
-            buffer = io.BytesIO(io_utils.load_sized_buffer(f))
-            matrices = torch.load(buffer, weights_only=True)
+            matrices = io_utils.load_array(f)
             n = io_utils.load(f, ">I")
             solutions = [Solution.load(f) for _ in range(n)]
 
         return Dataset(matrices, solutions, copy=False)
 
 
-def _generate_symmetric_mask(
-    size: int, target: int, device: str, rng: torch.Generator
-) -> torch.Tensor:
+def _generate_symmetric_mask(size: int, target: int, rng: np.random.Generator) -> np.ndarray:
     """Generate a symmetric boolean mask with exactly *target* ``True`` entries.
 
     The mask is used by :meth:`Dataset.from_random` to enforce an exact
@@ -327,11 +296,10 @@ def _generate_symmetric_mask(
     Args:
         size: Side length of the square mask (``size x size``).
         target: Exact number of ``True`` entries in the returned mask.
-        device: Torch device string (e.g. ``"cpu"``, ``"cuda"``).
         rng: Random number generator for reproducible sampling.
 
     Returns:
-        Boolean tensor of shape ``(size, size)`` with exactly *target*
+        Boolean array of shape ``(size, size)`` with exactly *target*
             ``True`` values and perfect symmetry (``mask == mask.T``).
     """
     possible_x = []
@@ -343,22 +311,19 @@ def _generate_symmetric_mask(
     if not possible_x:
         x, y = 1, 0
     else:
-        x = possible_x[
-            int(torch.randint(0, len(possible_x), (1,), device=device, generator=rng).item())
-        ]
+        x = possible_x[int(rng.integers(0, len(possible_x)))]
         y = (target - x) // 2
 
-    mask = torch.zeros((size, size), dtype=torch.bool, device=device)
-    diag_indices = torch.randperm(size, device=device, generator=rng)[:x]
+    mask = np.zeros((size, size), dtype=bool)
+    diag_indices = rng.permutation(size)[:x]
     for i in diag_indices.tolist():
         mask[i, i] = True
 
-    upper_indices = torch.tensor(
-        [(i, j) for i in range(size) for j in range(i + 1, size)],
-        device=device,
-    )
-    if upper_indices.size(0) > 0 and y > 0:
-        perm = torch.randperm(upper_indices.size(0), device=device, generator=rng)[:y]
+    upper_indices = np.array(
+        [(i, j) for i in range(size) for j in range(i + 1, size)], dtype=np.int64
+    ).reshape(-1, 2)
+    if upper_indices.shape[0] > 0 and y > 0:
+        perm = rng.permutation(upper_indices.shape[0])[:y]
         chosen_upper = upper_indices[perm]
         for i, j in chosen_upper.tolist():
             mask[i, j] = True
