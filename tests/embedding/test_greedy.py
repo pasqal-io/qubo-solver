@@ -54,7 +54,7 @@ def assert_close_up_to_isometry(
     A = np.linalg.lstsq(expected_vertices, actual_vertices)[0]
     # A has a symmetry. Apply a symmetry to get a pure rotation.
     if np.linalg.det(A) < 0.0:
-        A = np.diag(np.asarray([-1.0, 1.0])) @ A
+        A = np.diag([-1.0, 1.0]) @ A
 
     # A is a rotation matrix
     np.testing.assert_allclose(A.T @ A, np.eye(2, dtype=A.dtype), atol=1e-6, rtol=1e-6, strict=True)
@@ -531,7 +531,7 @@ def test_resolve_max_possible_term_not_positive(
 
 
 def test_embed_rejects_diagonal_instance() -> None:
-    instance = Instance(np.diag(np.asarray([1.0, 2.0, 3.0])))
+    instance = Instance(np.diag([1.0, 2.0, 3.0]))
     with pytest.raises(ValueError, match="trivial_solution_search"):
         embedding.greedy_layout.embed(instance, config=embedding.greedy_layout.Config(traps=3))
 
@@ -543,7 +543,7 @@ def test_embed_for_device_single_atom() -> None:
 
 
 def test_embed_for_device_rejects_diagonal_instance() -> None:
-    instance = Instance(np.diag(np.asarray([-1.0, -2.0, -3.0])))
+    instance = Instance(np.diag([-1.0, -2.0, -3.0]))
     with pytest.raises(ValueError, match="trivial_solution_search"):
         embedding.greedy_layout.embed_for_device(instance, AnalogDeviceWithDMM())
 

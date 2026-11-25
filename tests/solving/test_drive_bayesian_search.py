@@ -363,9 +363,7 @@ def test_dmm_labels_are_ints() -> None:
 
     vertices = np.asarray([[0.0, 0.0], [1.0, 0.0]])
     register = qoolqit.Register.from_coordinates(vertices)
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
-        np.asarray([-1.0, -2.0])
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag([-1.0, -2.0])
     instance = Instance(Q)
 
     check.is_instance(register.qubits_ids[0], int)

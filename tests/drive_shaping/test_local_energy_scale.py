@@ -164,9 +164,7 @@ def test_dmm_labels_are_ints() -> None:
 
     vertices = np.asarray([[0.0, 0.0], [1.0, 0.0]])
     register = qoolqit.Register.from_coordinates(vertices)
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
-        np.asarray([-1.0, -2.0])
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag([-1.0, -2.0])
     instance = Instance(Q)
 
     check.is_instance(register.qubits_ids[0], int)
@@ -188,9 +186,7 @@ def test_dmm_labels_are_ints() -> None:
 
 def test_dmm_requested_on_device_without_dmm(caplog: pytest.LogCaptureFixture) -> None:
     register = qoolqit.Register.from_coordinates(np.asarray([[0.0, 0.0], [1.0, 0.0]]))
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
-        np.asarray([-1.0, -2.0])
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag([-1.0, -2.0])
 
     with caplog.at_level(logging.WARNING, logger="qubosolver.drive_shaping.local_energy_scale"):
         drive = drive_shaping.local_energy_scale.build_drive(
@@ -203,9 +199,7 @@ def test_dmm_requested_on_device_without_dmm(caplog: pytest.LogCaptureFixture) -
 
 def test_device_without_max_amplitude() -> None:
     register = qoolqit.Register.from_coordinates(np.asarray([[0.0, 0.0], [1.0, 0.0]]))
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
-        np.asarray([-1.0, -2.0])
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag([-1.0, -2.0])
     drive = drive_shaping.local_energy_scale.build_drive(
         Instance(Q), register, dmm=False, device=qoolqit.MockDevice()
     )

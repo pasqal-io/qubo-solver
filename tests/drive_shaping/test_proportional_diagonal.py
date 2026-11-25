@@ -167,9 +167,7 @@ def test_dmm_labels_are_ints() -> None:
 
     vertices = np.asarray([[0.0, 0.0], [1.0, 0.0]])
     register = qoolqit.Register.from_coordinates(vertices)
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
-        np.asarray([-1.0, -2.0])
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag([-1.0, -2.0])
     instance = Instance(Q)
 
     check.is_instance(register.qubits_ids[0], int)
@@ -191,9 +189,7 @@ def test_dmm_labels_are_ints() -> None:
 
 def test_too_small_kappa(caplog: pytest.LogCaptureFixture) -> None:
     register = qoolqit.Register.from_coordinates(np.asarray([[0.0, 0.0], [1.0, 0.0]]))
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
-        np.asarray([-1.0, -2.0])
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag([-1.0, -2.0])
 
     with caplog.at_level(logging.WARNING, logger="qubosolver.drive_shaping.proportional_diagonal"):
         drive_shaping.proportional_diagonal.build_drive(
@@ -205,9 +201,7 @@ def test_too_small_kappa(caplog: pytest.LogCaptureFixture) -> None:
 
 def test_device_without_max_amplitude() -> None:
     register = qoolqit.Register.from_coordinates(np.asarray([[0.0, 0.0], [1.0, 0.0]]))
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
-        np.asarray([-1.0, -2.0])
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag([-1.0, -2.0])
     drive = drive_shaping.proportional_diagonal.build_drive(
         Instance(Q), register, dmm=False, device=qoolqit.MockDevice()
     )
