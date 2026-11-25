@@ -6,15 +6,16 @@
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING
 
 import numpy as np
+import pytest
 import pytest_check as check
 
 from qubosolver import Candidate, Instance, numpy_rng, solving
+from qubosolver.solving.classical.brute_force import _LARGE_INSTANCE_SIZE
 
-if TYPE_CHECKING:
-    import pytest
+# Smallest size that triggers the no-time_limit warning.
+_WARNED_SIZE = _LARGE_INSTANCE_SIZE + 1
 
 
 def _reference_sorted(instance: Instance) -> list[Candidate]:
@@ -93,6 +94,17 @@ def test_empty_instance_returns_zero_length_solution() -> None:
     check.equal(solution[0].probability, 1.0)
 
 
+@pytest.mark.parametrize("size", [0, 4])
+def test_zero_max_bitstrings_returns_empty_solution(size: int) -> None:
+    instance = sample_qubo() if size else Instance(np.zeros((0, 0)))
+
+    solution = solving.brute_force.solve(instance, max_bitstrings=0)
+
+    check.is_true(solution.check_consistency(instance=instance, throw=True))
+    check.equal(len(solution), 0)
+    check.equal(solution.bitstrings.shape, (0, size))
+
+
 def test_time_limit_returns_best_so_far_without_enumerating_all() -> None:
     # 24 variables => ~1.6e7 assignments. A tiny budget must return promptly with
     # the requested number of bitstrings rather than hang or exhaust memory.
@@ -111,10 +123,11 @@ def test_time_limit_returns_best_so_far_without_enumerating_all() -> None:
 def test_large_instance_with_no_time_limit_logs_warning(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    # 21 variables exceeds the 20-variable threshold; 2^21 assignments still
-    # completes quickly enough for a test.
+    # Just above the threshold; enumerating it with max_bitstrings=1 still completes
+    # quickly enough for a test.
     instance = Instance(
-        np.asarray(numpy_rng(1).standard_normal((21, 21)), dtype=np.float64), symmetrize=True
+        np.asarray(numpy_rng(1).standard_normal((_WARNED_SIZE, _WARNED_SIZE)), dtype=np.float64),
+        symmetrize=True,
     )
 
     with caplog.at_level("WARNING", logger="qubosolver.solving.classical.brute_force"):
@@ -127,7 +140,8 @@ def test_large_instance_with_finite_time_limit_does_not_log_warning(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     instance = Instance(
-        np.asarray(numpy_rng(1).standard_normal((21, 21)), dtype=np.float64), symmetrize=True
+        np.asarray(numpy_rng(1).standard_normal((_WARNED_SIZE, _WARNED_SIZE)), dtype=np.float64),
+        symmetrize=True,
     )
 
     with caplog.at_level("WARNING", logger="qubosolver.solving.classical.brute_force"):
