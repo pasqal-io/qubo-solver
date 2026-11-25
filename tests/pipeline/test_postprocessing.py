@@ -35,7 +35,7 @@ def test_basic_qubo_2d() -> None:
     solution = Solution(
         bitstrings=np.zeros((1, 2), dtype=np.int8),
         costs=np.zeros(1),
-        counts=np.asarray([1], dtype=np.int64),
+        counts=np.asarray([1]),
         probabilities=np.asarray([1.0]),
     )
 
@@ -66,7 +66,7 @@ def test_random_qubos(density: float) -> None:
             solution = Solution(
                 bitstrings=bitstring_[np.newaxis],
                 costs=np.asarray([cost], dtype=np.float64),
-                counts=np.asarray([1], dtype=np.int64),
+                counts=np.asarray([1]),
                 probabilities=np.asarray([1.0]),
             )
             pp_solution = solving.iterative_bitflip_local_search.solve(instance, starts=solution)

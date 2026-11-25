@@ -170,9 +170,7 @@ def test_lift_sorts_by_pre_zeroing_cost() -> None:
 def test_lift_is_identity_when_nothing_zeroed() -> None:
     zeroed = transforms.zeroing.apply(positive_qubo())
 
-    sol = Solution(
-        bitstrings=bitstrings.from_strings(["101"]), counts=np.asarray([1], dtype=np.int64)
-    )
+    sol = Solution(bitstrings=bitstrings.from_strings(["101"]), counts=np.asarray([1]))
     restored = transforms.zeroing.lift(sol, zeroed)
 
     np.testing.assert_allclose(restored.bitstrings, sol.bitstrings, rtol=0, strict=True)
@@ -287,9 +285,7 @@ def test_apply_does_not_alias_the_parent_instance() -> None:
 
     instance._matrix.fill(0.0)
 
-    sol = Solution(
-        bitstrings=bitstrings.from_strings(["1111"]), counts=np.asarray([1], dtype=np.int64)
-    )
+    sol = Solution(bitstrings=bitstrings.from_strings(["1111"]), counts=np.asarray([1]))
     restored = transforms.zeroing.lift(sol, zeroed)
 
     check.not_equal(restored[0].cost, 0.0)

@@ -391,9 +391,7 @@ def test_lift_is_a_copy_when_nothing_fixed() -> None:
     instance = unfixable_qubo()
     reduced = transforms.variable_fixing.apply(instance)
 
-    sol = Solution(
-        bitstrings=bitstrings.from_strings(["101"]), counts=np.asarray([1], dtype=np.int64)
-    )
+    sol = Solution(bitstrings=bitstrings.from_strings(["101"]), counts=np.asarray([1]))
     sol._update(instance)
     restored = transforms.variable_fixing.lift(sol, reduced)
 

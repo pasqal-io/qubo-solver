@@ -60,7 +60,7 @@ def test_single_zero_width_bitstring_against_empty_qubo_is_valid() -> None:
     solution = Solution(
         bitstrings=np.asarray([[]], dtype=np.int8),
         costs=np.asarray([0.0]),
-        counts=np.asarray([1], dtype=np.int64),
+        counts=np.asarray([1]),
         probabilities=np.asarray([1.0]),
     )
     _assert_valid(solution, Instance())
@@ -404,7 +404,7 @@ def test_concat_disjoint_bitstrings_concatenates(instance: Instance) -> None:
     b = Solution(
         bitstrings=np.asarray([[0, 1]], dtype=np.int8),
         costs=np.asarray([2.0]),
-        counts=np.asarray([1], dtype=np.int64),
+        counts=np.asarray([1]),
         probabilities=np.asarray([1.0]),
     )
     concatenated = Solution.concat([a, b]).deduplicate()
@@ -434,7 +434,7 @@ def test_concat_three_solutions(instance: Instance) -> None:
     b = Solution(
         bitstrings=np.asarray([[0, 1]], dtype=np.int8),
         costs=np.asarray([2.0]),
-        counts=np.asarray([1], dtype=np.int64),
+        counts=np.asarray([1]),
         probabilities=np.asarray([1.0]),
     )
     c = Solution(
@@ -555,7 +555,7 @@ def test_concat_accepts_generator(instance: Instance) -> None:
     b = Solution(
         bitstrings=np.asarray([[0, 1]], dtype=np.int8),
         costs=np.asarray([2.0]),
-        counts=np.asarray([1], dtype=np.int64),
+        counts=np.asarray([1]),
         probabilities=np.asarray([1.0]),
     )
     concatenated = Solution.concat(s for s in (a, b)).deduplicate()
@@ -790,7 +790,7 @@ def test_update_without_counts_raises(instance: Instance) -> None:
 def test_update_with_counts_of_wrong_length_raises(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[0, 1], [1, 0]], dtype=np.int8),
-        counts=np.asarray([1], dtype=np.int64),
+        counts=np.asarray([1]),
     )
     with pytest.raises(ValueError, match="2 candidates but 1 counts"):
         solution._update(instance)
