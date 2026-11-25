@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 def test_valid_qubo_passes_without_error() -> None:
     # A 5x5 QUBO with all coefficients >= 0 (identity matrix)
-    coeffs = np.asarray(np.eye(5), dtype=np.float64)
+    coeffs = np.eye(5)
     qi = Instance(coeffs)
     assert qi.size == 5
     # Verify that the matrix is stored correctly
@@ -52,7 +52,7 @@ def test_symmetrize_keeps_symmetric_matrix_unchanged() -> None:
 
 
 def test_len_matches_size() -> None:
-    qi = Instance(np.asarray(np.eye(5), dtype=np.float64))
+    qi = Instance(np.eye(5))
     check.equal(len(qi), 5)
     check.is_true(bool(qi))
 

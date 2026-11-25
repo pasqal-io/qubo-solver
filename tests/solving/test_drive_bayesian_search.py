@@ -73,7 +73,7 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
     # Choose scaling factor so that coefficients and costs are in a human readable range (~10)
     Q = 10.0 * np.asarray(register.interaction_matrix(), dtype=np.float64)
     # Choose diagonal coefficients so that the solutions are 011, 101 and 110
-    Q = Q - 2.5 * np.asarray(np.eye(3), dtype=np.float64) * Q[0, 1]
+    Q = Q - 2.5 * np.eye(3) * Q[0, 1]
 
     instance = Instance(Q)
 
@@ -146,7 +146,7 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
     # Choose scaling factor so that coefficients and costs are in a human readable range (~10)
     Q = 400.0 * np.asarray(register.interaction_matrix(), dtype=np.float64)
     # Choose diagonal coefficients so that the solution is 110
-    Q = Q - 2.5 * np.asarray(np.eye(3), dtype=np.float64) * Q[0, 1]
+    Q = Q - 2.5 * np.eye(3) * Q[0, 1]
 
     instance = Instance(Q)
 
@@ -209,9 +209,7 @@ def test_errors(raise_exception: bool) -> None:
         ]
     )
     register = Register.from_coordinates(vertices)
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.asarray(
-        np.eye(3), dtype=np.float64
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.eye(3)
     instance = Instance(Q)
 
     def error(_solution: Solution) -> float:
@@ -248,9 +246,7 @@ def test_callback_fn() -> None:
         ]
     )
     register = Register.from_coordinates(vertices)
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.asarray(
-        np.eye(3), dtype=np.float64
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.eye(3)
 
     device = AnalogDeviceWithDMM()
     backend = LocalEmulator()
@@ -286,9 +282,7 @@ def test_failed_simulation() -> None:
         ]
     )
     register = Register.from_coordinates(vertices)
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.asarray(
-        np.eye(3), dtype=np.float64
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.eye(3)
 
     config = solving.drive_bayesian_search.Config(
         n_evaluations=11,
@@ -315,9 +309,7 @@ def test_failed_simulation_2() -> None:
         ]
     )
     register = Register.from_coordinates(vertices)
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.asarray(
-        np.eye(3), dtype=np.float64
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.eye(3)
 
     config = solving.drive_bayesian_search.Config(
         n_evaluations=11,
@@ -347,9 +339,7 @@ def test_failed_skopt() -> None:
         ]
     )
     register = Register.from_coordinates(vertices)
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.asarray(
-        np.eye(3), dtype=np.float64
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.eye(3)
 
     config = solving.drive_bayesian_search.Config(
         n_evaluations=11,
@@ -397,9 +387,7 @@ def test_dmm_labels_are_ints() -> None:
 
 def test_dmm_requested_on_device_without_dmm(caplog: pytest.LogCaptureFixture) -> None:
     register = Register.from_coordinates(np.asarray([[0.0, 0.0], [1.0, 0.0]]))
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.asarray(
-        np.eye(2), dtype=np.float64
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.eye(2)
 
     with caplog.at_level(logging.WARNING, logger="qubosolver.solving.hybrid.drive_bayesian_search"):
         _, drive = solving.drive_bayesian_search.solve(
