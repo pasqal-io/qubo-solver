@@ -248,7 +248,7 @@ def test_apply_keeps_the_optimum_of_a_near_tie() -> None:
 
     check.equal(reduced.fixed_history, [{1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}])
     np.testing.assert_allclose(
-        reduced.matrix, np.asarray([[2.0**-12]], dtype=np.float64), rtol=0, atol=0, strict=True
+        reduced.matrix, np.asarray([[2.0**-12]]), rtol=0, atol=0, strict=True
     )
 
 

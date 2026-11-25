@@ -53,7 +53,6 @@ def simple_qubo() -> tuple[Instance, list[Candidate]]:
             [-0.5, -0.5 * sqrt3],
             [4.0, 0.0],
         ],
-        dtype=np.float64,
     )
     print(vertices)
     d = scipy.spatial.distance.cdist(vertices, vertices)

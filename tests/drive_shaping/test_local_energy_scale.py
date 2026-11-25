@@ -56,7 +56,6 @@ def test_with_perfect_embedding(
             [-1.5, -0.5 * sqrt3],
             [-0.5, -0.5 * sqrt3],
         ],
-        dtype=np.float64,
     )
     interaction_matrix = np.asarray(
         qoolqit.Register.from_coordinates(vertices).interaction_matrix(), dtype=np.float64

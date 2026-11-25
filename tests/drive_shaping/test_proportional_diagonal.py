@@ -56,7 +56,6 @@ def test_with_perfect_embedding(
             [-1.5, -0.5 * sqrt3],
             [-0.5, -0.5 * sqrt3],
         ],
-        dtype=np.float64,
     )
     register = qoolqit.Register.from_coordinates(vertices)
     diagonal = np.ones(4) if constant_diagonal else np.asarray([1.0, 1.25, 0.2, 1.167])

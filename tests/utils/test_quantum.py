@@ -97,7 +97,6 @@ def test_extract_qubo_diagonal_with_dmm_weights_per_atom() -> None:
             -2 * (-2.0 + -1.0 * 0.5),
             -2 * (-2.0 + -1.0 * 0.0),
         ],
-        dtype=np.float64,
     )
     np.testing.assert_allclose(np.diag(instance.matrix), expected_diagonal, strict=True)
 

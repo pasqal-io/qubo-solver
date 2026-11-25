@@ -90,7 +90,7 @@ def test_single_atom_register_radial_distance(x: float, fits: bool) -> None:
     # of the device's minimum distance.
     instance = Instance(np.asarray([[-2.0]]))
     device = qoolqit.AnalogDeviceWithDMM()
-    register = qoolqit.Register.from_coordinates(np.asarray([[x, 0.0]], dtype=np.float64))
+    register = qoolqit.Register.from_coordinates(np.asarray([[x, 0.0]]))
     drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
 
     if fits:

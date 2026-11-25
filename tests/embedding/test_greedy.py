@@ -103,7 +103,6 @@ def test_triangular_qubo(traps: int, relative_noise: float, max_min_dist_ratio: 
             [0.5, 0.5 * np.sqrt(3)],
             [1.0, 0.0],
         ],
-        dtype=np.float64,
     )
     #  Matrix Q should match the spacing of the triangular layout so that the embedding returns
     # an equilateral triangle, hence the scale alpha.
