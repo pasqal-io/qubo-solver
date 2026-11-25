@@ -26,7 +26,7 @@ from .solution import Solution
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
 
-    from numpy.typing import DTypeLike, NDArray
+    from numpy.typing import NDArray
 
     from qubosolver._io.utils import FileLike
 
@@ -111,7 +111,6 @@ class Dataset:
         *,
         densities: Sequence[float] = (0.5,),
         coefficient_bounds: tuple[float, float] = (-10.0, 10.0),
-        dtype: DTypeLike | None = None,
         rng: np.random.Generator | None = None,
         negative_offdiag_rate: float = 0.0,
     ) -> Dataset:
@@ -131,7 +130,6 @@ class Dataset:
             densities: List of densities (ratio of non-zero elements).
             coefficient_bounds: Range (min, max) of
                 random values for the coefficients.
-            dtype: Data type for the coefficient matrices.
             rng: Random number generator controlling
                 the sampling.
             negative_offdiag_rate: Fraction of the non-zero
@@ -143,12 +141,11 @@ class Dataset:
                 coefficient matrices, with no associated solutions.
         """
         # Step 1: Initialize a reproducible random generator.
-        dtype = np.dtype(dtype or np.float64)
         rng = rng or numpy_rng()
 
         # Step 2: Create an array for the coefficients.
         total_instances = n_matrices * len(densities)
-        coefficients = np.zeros((matrix_dim, matrix_dim, total_instances), dtype=dtype)
+        coefficients = np.zeros((matrix_dim, matrix_dim, total_instances))
 
         # Step 3: Generate matrices for each density.
         idx = 0
@@ -159,10 +156,8 @@ class Dataset:
                 mask = _generate_symmetric_mask(matrix_dim, target, rng)
 
                 # random sampling and apply mask
-                random_vals = rng.uniform(
-                    *coefficient_bounds, size=(matrix_dim, matrix_dim)
-                ).astype(dtype)
-                random_vals = random_vals * mask.astype(dtype)
+                random_vals = rng.uniform(*coefficient_bounds, size=(matrix_dim, matrix_dim))
+                random_vals = random_vals * mask
 
                 original_diag = random_vals.diagonal().copy()
                 coeff = np.triu(random_vals, k=1)
@@ -201,9 +196,7 @@ class Dataset:
                     if coefficient_bounds[0] < 0:
                         neg_val = coefficient_bounds[0]
                     else:
-                        neg_val = -abs(
-                            float(np.asarray(rng.uniform(*coefficient_bounds), dtype=dtype))
-                        )
+                        neg_val = -abs(rng.uniform(*coefficient_bounds))
                     coeff[diag_idx, diag_idx] = neg_val
                 if not (coeff == coefficient_bounds[1]).any():
                     # do not select negative coefficients
