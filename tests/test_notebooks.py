@@ -8,8 +8,10 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -63,17 +65,21 @@ for file in notebooks_files:
 
 @pytest.mark.duration(22)
 @pytest.mark.parametrize("notebook", notebooks, ids=notebooks_names)
-def test_notebooks(notebook: Path, tmp_path: Path) -> None:
+def test_notebooks(notebook: Path) -> None:
     """Execute docs notebooks as a test, passes if it returns 0."""
     jupyter_cmd = ["-m", "jupyter", "nbconvert", "--to", "python", "--execute"]
+    kernel_dir = None
     if sys.platform != "win32":
         # Kernels started in parallel (pytest-xdist) pick free TCP ports before binding them,
         # so two can race for the same port ("Address already in use"). IPC sockets avoid
         # ports altogether (they are unavailable on Windows). Their path must be absolute,
-        # since the kernel runs in the notebook's directory, and unique per test.
+        # since the kernel runs in the notebook's directory, and unique per test. It must also
+        # be short: Unix socket paths are limited to 103 characters on macOS, which pytest's
+        # tmp_path under the macOS $TMPDIR (/private/var/folders/...) exceeds.
+        kernel_dir = Path(tempfile.mkdtemp(prefix="nb-", dir="/tmp"))
         jupyter_cmd += [
             "--KernelManager.transport=ipc",
-            f"--KernelManager.ip={tmp_path / 'kernel'}",
+            f"--KernelManager.ip={kernel_dir / 'kernel'}",
         ]
     cmd: list[str | Path] = [sys.executable, *jupyter_cmd, notebook]
     py_file = notebook.with_suffix(".py")
@@ -97,3 +103,5 @@ def test_notebooks(notebook: Path, tmp_path: Path) -> None:
     finally:
         # Cleanup always runs, even if errors happen
         py_file.unlink(missing_ok=True)
+        if kernel_dir is not None:
+            shutil.rmtree(kernel_dir, ignore_errors=True)
