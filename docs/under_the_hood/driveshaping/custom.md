@@ -31,7 +31,7 @@ def simple_drive() -> Drive:
     return Drive(amplitude=wf_amp, detuning=wf_det)
 
 
-instance = Instance(np.asarray([[-1.0, 0.5], [0.5, -2.0]], dtype=np.float64))
+instance = Instance(np.asarray([[-1.0, 0.5], [0.5, -2.0]]))
 device = qoolqit.AnalogDevice()
 register = embedding.blade.embed_for_device(instance, device)
 

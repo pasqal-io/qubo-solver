@@ -33,8 +33,7 @@ Q = np.asarray(
         [-0.2, 0.0, 1.0],
         [0.0, -1.0, 1.5],
         [1.0, 1.5, -0.1],
-    ],
-    dtype=np.float64,
+    ]
 )
 instance = Instance(Q)
 device = qoolqit.AnalogDeviceWithDMM()

@@ -176,14 +176,14 @@ def test_round_returns_empty_tensor_for_empty_input() -> None:
 
 
 def test_round_accepts_a_float_tensor() -> None:
-    source = np.array([1.0, 0.0, 0.9999999], dtype=np.float64)
+    source = np.array([1.0, 0.0, 0.9999999])
     result = bitstring.round(source)
     check.equal(result.dtype, np.int8)
     np.testing.assert_allclose(result, np.asarray([1, 0, 1], dtype=np.int8), rtol=0, strict=True)
 
 
 def test_round_accepts_a_numpy_float_array() -> None:
-    source = np.array([0.0, 1.0, 1e-9], dtype=np.float64)
+    source = np.array([0.0, 1.0, 1e-9])
     result = bitstring.round(source)
     check.equal(result.dtype, np.int8)
     np.testing.assert_allclose(result, np.asarray([0, 1, 0], dtype=np.int8), rtol=0, strict=True)

@@ -28,15 +28,15 @@ def test_basic_qubo_2d() -> None:
     Q = np.asarray([
         [-10.0, 1.0],
         [1.0, -10.0]
-    ], dtype=np.float64)
+    ])
     # fmt: on
 
     instance = Instance(matrix=Q)
     solution = Solution(
         bitstrings=np.zeros((1, 2), dtype=np.int8),
-        costs=np.zeros(1, dtype=np.float64),
+        costs=np.zeros(1),
         counts=np.asarray([1], dtype=np.int64),
-        probabilities=np.asarray([1.0], dtype=np.float64),
+        probabilities=np.asarray([1.0]),
     )
 
     pp_solution = solving.iterative_bitflip_local_search.solve(instance, starts=solution)
@@ -45,9 +45,7 @@ def test_basic_qubo_2d() -> None:
     np.testing.assert_allclose(
         pp_solution.bitstrings[0, :], np.asarray([1, 1], dtype=np.int8), rtol=0, strict=True
     )
-    np.testing.assert_allclose(
-        pp_solution.costs, np.asarray([-18.0], dtype=np.float64), strict=True
-    )
+    np.testing.assert_allclose(pp_solution.costs, np.asarray([-18.0]), strict=True)
 
     df = analysis.to_dataframe([pp_solution])
     print(f"\n{df}")
@@ -69,7 +67,7 @@ def test_random_qubos(density: float) -> None:
                 bitstrings=bitstring_[np.newaxis],
                 costs=np.asarray([cost], dtype=np.float64),
                 counts=np.asarray([1], dtype=np.int64),
-                probabilities=np.asarray([1.0], dtype=np.float64),
+                probabilities=np.asarray([1.0]),
             )
             pp_solution = solving.iterative_bitflip_local_search.solve(instance, starts=solution)
             pp_solution._sort_by_cost()
@@ -85,7 +83,7 @@ def test_best_improvement_search_basic() -> None:
     Q = np.asarray([
         [-10.0, 1.0],
         [1.0, -10.0]
-    ], dtype=np.float64)
+    ])
     # fmt: on
 
     s = np.zeros(2, dtype=np.int8)

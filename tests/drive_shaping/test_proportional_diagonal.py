@@ -61,11 +61,7 @@ def test_with_perfect_embedding(
         dtype=np.float64,
     )
     register = qoolqit.Register.from_coordinates(vertices)
-    diagonal = (
-        np.ones(4, dtype=np.float64)
-        if constant_diagonal
-        else np.asarray([1.0, 1.25, 0.2, 1.167], dtype=np.float64)
-    )
+    diagonal = np.ones(4) if constant_diagonal else np.asarray([1.0, 1.25, 0.2, 1.167])
     Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + diagonal_scale * np.diag(
         diagonal
     )
@@ -139,9 +135,7 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
             [D, 0.0],
         ]
     )
-    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
-        np.full(3, -50.0, dtype=np.float64)
-    )
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(np.full(3, -50.0))
     instance = Instance(Q)
 
     with caplog.at_level(logging.INFO, logger="qubosolver.drive_shaping.proportional_diagonal"):
@@ -173,10 +167,10 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
 
 def test_dmm_labels_are_ints() -> None:
 
-    vertices = np.asarray([[0.0, 0.0], [1.0, 0.0]], dtype=np.float64)
+    vertices = np.asarray([[0.0, 0.0], [1.0, 0.0]])
     register = qoolqit.Register.from_coordinates(vertices)
     Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
-        np.asarray([-1.0, -2.0], dtype=np.float64)
+        np.asarray([-1.0, -2.0])
     )
     instance = Instance(Q)
 
@@ -198,11 +192,9 @@ def test_dmm_labels_are_ints() -> None:
 
 
 def test_too_small_kappa(caplog: pytest.LogCaptureFixture) -> None:
-    register = qoolqit.Register.from_coordinates(
-        np.asarray([[0.0, 0.0], [1.0, 0.0]], dtype=np.float64)
-    )
+    register = qoolqit.Register.from_coordinates(np.asarray([[0.0, 0.0], [1.0, 0.0]]))
     Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
-        np.asarray([-1.0, -2.0], dtype=np.float64)
+        np.asarray([-1.0, -2.0])
     )
 
     with caplog.at_level(logging.WARNING, logger="qubosolver.drive_shaping.proportional_diagonal"):
@@ -214,11 +206,9 @@ def test_too_small_kappa(caplog: pytest.LogCaptureFixture) -> None:
 
 
 def test_device_without_max_amplitude() -> None:
-    register = qoolqit.Register.from_coordinates(
-        np.asarray([[0.0, 0.0], [1.0, 0.0]], dtype=np.float64)
-    )
+    register = qoolqit.Register.from_coordinates(np.asarray([[0.0, 0.0], [1.0, 0.0]]))
     Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
-        np.asarray([-1.0, -2.0], dtype=np.float64)
+        np.asarray([-1.0, -2.0])
     )
     drive = drive_shaping.proportional_diagonal.build_drive(
         Instance(Q), register, dmm=False, device=qoolqit.MockDevice()

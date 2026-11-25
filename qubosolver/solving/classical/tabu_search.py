@@ -173,6 +173,6 @@ def solve(  # noqa: PLR0913
         bitstrings=np.asarray(x_best, dtype=np.int8),
         costs=f_best,
         counts=np.ones(n_bitstrings, dtype=np.int64),
-        probabilities=np.full(n_bitstrings, 1.0 / n_bitstrings, dtype=np.float64),
+        probabilities=np.full(n_bitstrings, 1.0 / n_bitstrings),
     )
     return solution.deduplicate(update=False)._update(instance)

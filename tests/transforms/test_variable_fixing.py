@@ -33,8 +33,7 @@ def fully_fixable_qubo() -> Instance:
             [
                 [1.0, 2.0],
                 [2.0, 2.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
 
@@ -48,8 +47,7 @@ def bipartisable_negative_qubo_for_bitflip() -> Instance:
                 [-2.0, 0.0, 1.0, -1.0],
                 [-1.0, 1.0, 0.0, -2.0],
                 [1.0, -1.0, -2.0, 0.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
 
@@ -64,8 +62,7 @@ def fixable_qubo() -> Instance:
                 [19.7365809, 20.67626392, -10.0, 0.85604541, 0.17675796],
                 [5.42015853, 0.17675796, 0.85604541, -10.0, 0.32306662],
                 [5.42015853, 0.85604541, 0.17675796, 0.32306662, -10.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
 
@@ -78,8 +75,7 @@ def unfixable_qubo() -> Instance:
                 [1.0, -3.0, 3.0],
                 [-3.0, 1.0, -3.0],
                 [3.0, -3.0, 1.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
 
@@ -103,8 +99,7 @@ def near_tie_qubo() -> Instance:
             [214.60260009765625, 0.0, 0.0, 0.0, -10000.0, 0.0, 0.0],
             [546.004150390625, 0.0, 0.0, 0.0, 0.0, -10000.0, 0.0],
             [592.7294311523438, 0.0, 0.0, 0.0, 0.0, 0.0, -10000.0],
-        ],
-        dtype=np.float64,
+        ]
     )
     return Instance(Q)
 
@@ -179,7 +174,7 @@ def test_hansen_fixing_is_empty_when_nothing_can_be_fixed() -> None:
 def test_hansen_fixing_does_not_fix_exact_ties() -> None:
     # Variable 0 has an all-zero row: both bounds are exactly 0, so it is left
     # unfixed although either value is optimal.
-    instance = Instance(np.asarray([[0.0, 0.0], [0.0, -1.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[0.0, 0.0], [0.0, -1.0]]))
 
     check.equal(hansen_fixing(instance), {1: 1})
 

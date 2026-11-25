@@ -24,8 +24,7 @@ def non_bipartisable_negative_qubo_for_bitflip() -> Instance:
                 [-2.0, 0.0, -2.0, 1.0],
                 [1.0, -2.0, 0.0, -2.0],
                 [1.0, 1.0, -2.0, 0.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
 
@@ -39,8 +38,7 @@ def non_bipartisable_negative_qubo() -> Instance:
                 [-2.0, 0.0, -2.0, 1.0],
                 [1.0, -2.0, 0.0, -2.0],
                 [1.0, 1.0, -2.0, 0.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
 
@@ -53,8 +51,7 @@ def positive_qubo() -> Instance:
                 [0.0, 1.0, 2.0],
                 [1.0, 0.0, 3.0],
                 [2.0, 3.0, 0.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
 
@@ -122,7 +119,7 @@ def test_empty_when_nothing_to_zero() -> None:
 
     np.testing.assert_allclose(
         zeroed.negative_matrix,
-        np.zeros((instance.size, instance.size), dtype=np.float64),
+        np.zeros((instance.size, instance.size)),
         strict=True,
     )
     check.is_true(np.all(zeroed.negative_matrix == 0.0))

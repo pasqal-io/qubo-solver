@@ -119,7 +119,7 @@ def solve(
         max_bitstrings = total
 
     best_bits = np.zeros((0, n), dtype=Q.dtype)
-    best_costs = np.zeros(0, dtype=np.float64)
+    best_costs = np.zeros(0)
 
     # Batch b covers indices [b * 2^low, (b + 1) * 2^low): the low `low` bits run through
     # the same table in every batch and the high `n - low` bits are constant (equal to b).

@@ -15,7 +15,7 @@ from qubosolver.embedding import blade
 
 
 def test_empty_embedding() -> None:
-    instance = Instance(np.zeros((0, 0), dtype=np.float64))
+    instance = Instance(np.zeros((0, 0)))
     with pytest.raises(ValueError, match="empty instance"):
         blade.embed(instance)
 
@@ -28,7 +28,7 @@ def test_single_atom_embedding(value: float) -> None:
 
 
 def test_single_atom_embedding_for_device() -> None:
-    instance = Instance(np.asarray([[-1.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[-1.0]]))
     register = blade.embed_for_device(instance, qoolqit.AnalogDeviceWithDMM())
     check.equal(len(register), 1)
 
@@ -95,6 +95,6 @@ def test_tuned_defaults() -> None:
 
 
 def test_negative_off_diagonal_raises() -> None:
-    instance = Instance(np.asarray([[1.0, -1.0], [-1.0, 1.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[1.0, -1.0], [-1.0, 1.0]]))
     with pytest.raises(ValueError, match="negative off-diagonal"):
         blade.embed(instance)

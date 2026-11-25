@@ -66,8 +66,7 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
             [0.0, 1.0 / np.sqrt(3.0)],
             [-0.5, -0.5 / np.sqrt(3.0)],
             [0.5, -0.5 / np.sqrt(3.0)],
-        ],
-        dtype=np.float64,
+        ]
     )
     register = Register.from_coordinates(vertices)
     # Choose scaling factor so that coefficients and costs are in a human readable range (~10)
@@ -139,8 +138,7 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
-        ],
-        dtype=np.float64,
+        ]
     )
     register = Register.from_coordinates(vertices)
 
@@ -207,8 +205,7 @@ def test_errors(raise_exception: bool) -> None:
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
-        ],
-        dtype=np.float64,
+        ]
     )
     register = Register.from_coordinates(vertices)
     Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.asarray(
@@ -247,8 +244,7 @@ def test_callback_fn() -> None:
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
-        ],
-        dtype=np.float64,
+        ]
     )
     register = Register.from_coordinates(vertices)
     Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.asarray(
@@ -286,8 +282,7 @@ def test_failed_simulation() -> None:
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
-        ],
-        dtype=np.float64,
+        ]
     )
     register = Register.from_coordinates(vertices)
     Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.asarray(
@@ -316,8 +311,7 @@ def test_failed_simulation_2() -> None:
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
-        ],
-        dtype=np.float64,
+        ]
     )
     register = Register.from_coordinates(vertices)
     Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.asarray(
@@ -349,8 +343,7 @@ def test_failed_skopt() -> None:
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
-        ],
-        dtype=np.float64,
+        ]
     )
     register = Register.from_coordinates(vertices)
     Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.asarray(
@@ -377,10 +370,10 @@ def test_failed_skopt() -> None:
 @pytest.mark.duration(4)
 def test_dmm_labels_are_ints() -> None:
 
-    vertices = np.asarray([[0.0, 0.0], [1.0, 0.0]], dtype=np.float64)
+    vertices = np.asarray([[0.0, 0.0], [1.0, 0.0]])
     register = qoolqit.Register.from_coordinates(vertices)
     Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
-        np.asarray([-1.0, -2.0], dtype=np.float64)
+        np.asarray([-1.0, -2.0])
     )
     instance = Instance(Q)
 
@@ -402,7 +395,7 @@ def test_dmm_labels_are_ints() -> None:
 
 
 def test_dmm_requested_on_device_without_dmm(caplog: pytest.LogCaptureFixture) -> None:
-    register = Register.from_coordinates(np.asarray([[0.0, 0.0], [1.0, 0.0]], dtype=np.float64))
+    register = Register.from_coordinates(np.asarray([[0.0, 0.0], [1.0, 0.0]]))
     Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.asarray(
         np.eye(2), dtype=np.float64
     )

@@ -329,7 +329,7 @@ def random_point_in_geometry(
         raise ValueError(msg)
 
     minx, miny, maxx, maxy = geometry.bounds
-    p = np.zeros(2, dtype=np.float64)
+    p = np.zeros(2)
 
     for _ in range(max_trials):
         p[0] = minx + (maxx - minx) * rng.random()

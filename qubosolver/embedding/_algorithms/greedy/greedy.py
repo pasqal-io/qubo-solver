@@ -94,7 +94,7 @@ class Greedy:
         divide a distance by.
         """
         n_traps = len(coordinates)
-        U = np.zeros((n_traps, n_traps), dtype=np.float64)
+        U = np.zeros((n_traps, n_traps))
         distances = cdist(coordinates, coordinates)
         off_diagonal = ~np.eye(n_traps, dtype=bool)
         U[off_diagonal] = 1.0 / distances[off_diagonal] ** 6
@@ -208,7 +208,7 @@ class Greedy:
         placed_mask = np.zeros(n_nodes, dtype=bool)
         free_traps = np.ones(n_traps, dtype=bool)
         # couplings[i] = sum of Q[i, j] over the placed nodes j, kept incrementally
-        couplings: NDArray[np.float64] = np.zeros(n_nodes, dtype=np.float64)
+        couplings: NDArray[np.float64] = np.zeros(n_nodes)
 
         def _place(node: int, trap: int) -> None:
             nonlocal n_placed
@@ -291,7 +291,7 @@ class Greedy:
                 self._emit_step(on_step, **_snapshot(u, trap, inc_val, candidates))
 
         # finalize coordinates array
-        final_coords = np.zeros((n_nodes, 2), dtype=np.float64)
+        final_coords = np.zeros((n_nodes, 2))
         final_coords[placed_nodes] = coords[placed_traps]
 
         iu, ju = np.triu_indices(n_nodes, k=1)

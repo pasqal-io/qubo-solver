@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 def test_solution_not_mutated(
     strategy: Literal["greedy_sweep", "best_improvement", "first_improvement"],
 ) -> None:
-    Q = np.asarray([[-1.0, 2.0], [2.0, -2.0]], dtype=np.float64)
+    Q = np.asarray([[-1.0, 2.0], [2.0, -2.0]])
     instance = Instance(Q)
 
     solution = Solution(np.zeros((1, 2), dtype=np.int8), counts=np.asarray([1], dtype=np.int64))
@@ -63,7 +63,7 @@ def test_solution_not_mutated(
 def test_strategy_selection_improves_solution(
     strategy: Literal["greedy_sweep", "best_improvement", "first_improvement"],
 ) -> None:
-    Q = np.asarray([[-10.0, 1.0], [1.0, -10.0]], dtype=np.float64)
+    Q = np.asarray([[-10.0, 1.0], [1.0, -10.0]])
     instance = Instance(Q)
 
     solution = Solution(np.zeros((1, 2), dtype=np.int8), counts=np.asarray([1], dtype=np.int64))
@@ -83,7 +83,7 @@ def test_int_starts_generates_that_many_random_starts() -> None:
     They are drawn via random_sampling.solve and each is locally optimized, instead of
     requiring a pre-built Solution.
     """
-    Q = np.asarray([[-10.0, 1.0], [1.0, -10.0]], dtype=np.float64)
+    Q = np.asarray([[-10.0, 1.0], [1.0, -10.0]])
     instance = Instance(Q)
 
     result = solving.iterative_bitflip_local_search.solve(
@@ -98,7 +98,7 @@ def test_int_starts_generates_that_many_random_starts() -> None:
 
 def test_default_starts_is_one_random_start() -> None:
     """Omitting `starts` must default to a single uniformly random starting bitstring."""
-    Q = np.asarray([[-10.0, 1.0], [1.0, -10.0]], dtype=np.float64)
+    Q = np.asarray([[-10.0, 1.0], [1.0, -10.0]])
     instance = Instance(Q)
 
     result = solving.iterative_bitflip_local_search.solve(instance)
@@ -109,7 +109,7 @@ def test_default_starts_is_one_random_start() -> None:
 
 
 def test_unknown_strategy_raises() -> None:
-    Q = np.asarray([[-1.0, 2.0], [2.0, -2.0]], dtype=np.float64)
+    Q = np.asarray([[-1.0, 2.0], [2.0, -2.0]])
     instance = Instance(Q)
     solution = Solution(np.zeros((1, 2), dtype=np.int8), counts=np.asarray([1], dtype=np.int64))
     solution._update(instance)
@@ -127,7 +127,7 @@ def test_starts_length_mismatch_raises(
     strategy: Literal["greedy_sweep", "best_improvement", "first_improvement"],
 ) -> None:
     """`starts` bitstrings shorter or longer than `instance.size` must raise, not crash."""
-    Q = np.asarray([[-1.0, 2.0], [2.0, -2.0]], dtype=np.float64)
+    Q = np.asarray([[-1.0, 2.0], [2.0, -2.0]])
     instance = Instance(Q)
 
     short_solution = Solution(
@@ -158,8 +158,7 @@ def test_max_iterations_limits_progress(
             [-1.0, 0.0, 5.0],
             [0.0, -1.0, 0.0],
             [5.0, 0.0, -1.0],
-        ],
-        dtype=np.float64,
+        ]
     )
     instance = Instance(Q)
     solution = Solution(np.zeros((1, 3), dtype=np.int8), counts=np.asarray([1], dtype=np.int64))
@@ -197,7 +196,7 @@ def test_solve_reaches_a_consistent_local_minimum(
     """
     rng = numpy_rng(n)
     Q = rng.standard_normal((n, n))
-    Q = np.asarray((Q + Q.T) / 2, dtype=np.float64)
+    Q = np.asarray((Q + Q.T) / 2)
     instance = Instance(Q)
 
     m = 20
@@ -221,7 +220,7 @@ def test_solve_reaches_a_consistent_local_minimum(
 def test_time_limit_is_global_and_skips_remaining_batch(monkeypatch: pytest.MonkeyPatch) -> None:
     n = 4
     Q = numpy_rng(0).standard_normal((n, n))
-    Q = np.asarray((Q + Q.T) / 2, dtype=np.float64)
+    Q = np.asarray((Q + Q.T) / 2)
     instance = Instance(Q)
 
     # Fake monotonic clock, ticked by the deadline checks themselves, so the
@@ -287,7 +286,7 @@ def test_row_budget_is_the_remaining_batch_budget(
     """
     n = 4
     Q = numpy_rng(0).standard_normal((n, n))
-    Q = np.asarray((Q + Q.T) / 2, dtype=np.float64)
+    Q = np.asarray((Q + Q.T) / 2)
     instance = Instance(Q)
 
     time_limit = 1.0
@@ -339,7 +338,7 @@ def test_best_improvement_batch_matches_per_row_result() -> None:
     n, m = 12, 8
     rng = numpy_rng(7)
     Q = rng.standard_normal((n, n))
-    Q = np.asarray((Q + Q.T) / 2, dtype=np.float64)
+    Q = np.asarray((Q + Q.T) / 2)
 
     X = bitstrings.rand(m, n, rng=rng)
 
@@ -397,7 +396,7 @@ def test_benchmark_grid_report(
 
     rng = numpy_rng(0)
     Q = rng.standard_normal((variables, variables))
-    Q = np.asarray((Q + Q.T) / 2, dtype=np.float64)
+    Q = np.asarray((Q + Q.T) / 2)
     instance = Instance(Q)
 
     starts_ = bitstrings.rand(starts, variables, rng=rng)
@@ -437,7 +436,7 @@ def test_benchmark_grid_report(
 
 
 def test_search_functions_raise_on_zero_size_matrix() -> None:
-    Q = np.zeros((0, 0), dtype=np.float64)
+    Q = np.zeros((0, 0))
     X = np.zeros((1, 0), dtype=np.int8)
 
     with pytest.raises(ValueError):
@@ -472,7 +471,7 @@ def test_no_solution() -> None:
     Q = np.asarray([
         [-10.0, 1.0],
         [1.0, -10.0]
-    ], dtype=np.float64)
+    ])
     # fmt: on
 
     instance = Instance(matrix=Q)
@@ -492,7 +491,7 @@ def test_local_search_stops_at_the_deadline(search: Callable[..., np.ndarray]) -
     Q = np.asarray([
         [-10.0, 1.0],
         [1.0, -10.0]
-    ], dtype=np.float64)
+    ])
     # fmt: on
     s = np.zeros(2, dtype=np.int8)
     if search is _best_improvement_search_batch:
@@ -507,7 +506,7 @@ def test_local_search_with_rng(search: Callable[..., np.ndarray]) -> None:
     Q = np.asarray([
         [-10.0, 1.0],
         [1.0, -10.0]
-    ], dtype=np.float64)
+    ])
     # fmt: on
     best_bitstring = search(Q, np.zeros(2, dtype=np.int8), rng=numpy_rng(2005221736))
     np.testing.assert_allclose(
@@ -518,7 +517,7 @@ def test_local_search_with_rng(search: Callable[..., np.ndarray]) -> None:
 def test_greedy_sweep_stops_after_max_iterations_while_still_improving() -> None:
     # From 00, the first sweep only flips bit 1 (flipping bit 0 first would raise the
     # cost); a second sweep would then flip bit 0 and reach the optimum 11.
-    Q = np.asarray([[1.0, -2.0], [-2.0, -0.5]], dtype=np.float64)
+    Q = np.asarray([[1.0, -2.0], [-2.0, -0.5]])
     start = np.zeros(2, dtype=np.int8)
 
     one_sweep = _greedy_sweep_search(Q, start, max_iterations=1)

@@ -41,7 +41,7 @@ def _program(*, n_qubits: int) -> qoolqit.QuantumProgram:
     """Build a compiled program of `n_qubits` atoms."""
     register = qoolqit.Register.circle(n_qubits)
     Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
-        np.full(n_qubits, -1.0, dtype=np.float64)
+        np.full(n_qubits, -1.0)
     )
     instance = Instance(Q)
     device = qoolqit.AnalogDevice()
@@ -211,8 +211,7 @@ def test_end_to_end() -> None:
             [-0.2, 0.0, 1.0],
             [0.0, 0.0, 1.5],
             [1.0, 1.5, 0.0],
-        ],
-        dtype=np.float64,
+        ]
     )
     instance = Instance(Q)
     connection = LocalConnection()

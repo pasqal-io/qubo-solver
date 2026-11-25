@@ -531,7 +531,7 @@ def _run_vectorized(  # noqa: PLR0913
             bitstrings=np.asarray(visited_bits[:, r, :], dtype=np.int8),
             costs=visited_energy[:, r],
             counts=np.ones(visits, dtype=np.int64),
-            probabilities=np.full(visits, 1.0 / visits, dtype=np.float64),
+            probabilities=np.full(visits, 1.0 / visits),
         )
         # `costs` was accumulated incrementally, drifting from the true x^T Q x
         # by up to _REFRESH_EVERY steps of rounding error. `deduplicate` picks

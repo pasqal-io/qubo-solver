@@ -55,11 +55,9 @@ def test_embed_is_reproducible_with_the_global_seed(decomposable_qubo: Instance)
 @pytest.mark.parametrize(
     "instance",
     [
-        Instance(np.asarray([[-1.0]], dtype=np.float64)),
-        Instance(np.asarray([[1.0]], dtype=np.float64)),
-        Instance(
-            np.asarray([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]], dtype=np.float64)
-        ),
+        Instance(np.asarray([[-1.0]])),
+        Instance(np.asarray([[1.0]])),
+        Instance(np.asarray([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])),
     ],
     ids=["single", "single_non_negative", "weakly_coupled"],
 )
@@ -71,7 +69,7 @@ def test_embed_places_at_least_one_atom(instance: Instance) -> None:
 
 
 def test_embed_for_device_single_atom() -> None:
-    instance = Instance(np.asarray([[-1.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[-1.0]]))
     register, variables = embedding.partial_greedy.embed_for_device(
         instance, qoolqit.AnalogDeviceWithDMM(), rng=numpy_rng(0)
     )
@@ -81,13 +79,13 @@ def test_embed_for_device_single_atom() -> None:
 
 
 def test_embed_rejects_diagonal_instance() -> None:
-    instance = Instance(np.asarray([[-1.0, 0.0], [0.0, -2.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[-1.0, 0.0], [0.0, -2.0]]))
     with pytest.raises(ValueError, match="trivial_solution_search"):
         embedding.partial_greedy.embed(instance, rng=numpy_rng(0))
 
 
 def test_embed_for_device_rejects_diagonal_instance() -> None:
-    instance = Instance(np.asarray([[-1.0, 0.0], [0.0, -2.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[-1.0, 0.0], [0.0, -2.0]]))
     with pytest.raises(ValueError, match="trivial_solution_search"):
         embedding.partial_greedy.embed_for_device(
             instance, qoolqit.AnalogDeviceWithDMM(), rng=numpy_rng(0)
@@ -126,13 +124,13 @@ def test_embed_rejects_empty_instance() -> None:
 
 
 def test_embed_rejects_negative_off_diagonal() -> None:
-    instance = Instance(np.asarray([[-1.0, -1.0], [-1.0, -1.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[-1.0, -1.0], [-1.0, -1.0]]))
     with pytest.raises(ValueError, match="negative off-diagonal"):
         embedding.partial_greedy.embed(instance)
 
 
 def test_embed_rejects_positive_diagonal() -> None:
-    instance = Instance(np.asarray([[-1.0, 2.0], [2.0, 1.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[-1.0, 2.0], [2.0, 1.0]]))
     with pytest.raises(ValueError, match=r"Variables \[1\] .*apply_recursively"):
         embedding.partial_greedy.embed(instance)
 
@@ -141,7 +139,7 @@ def test_embed_rejects_positive_diagonal() -> None:
 @pytest.mark.parametrize("seed", [0, 1, 2])
 def test_embed_accepts_zero_diagonal(seed: int) -> None:
     # A zero diagonal coefficient has an infinite blocking radius.
-    instance = Instance(np.asarray([[-1.0, 2.0], [2.0, 0.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[-1.0, 2.0], [2.0, 0.0]]))
     register, variables = embedding.partial_greedy.embed(instance, rng=numpy_rng(seed))
     check.is_in(variables, [[0], [1], [0, 1]])
     check.equal(len(register), len(variables))
@@ -197,8 +195,7 @@ def test_compute_distance_interaction_diagonal() -> None:
             [0, 5, 0, 0],
             [0, 0, 0.5, 0],
             [0, 0, 0, 0],
-        ],
-        dtype=np.float64,
+        ]
     )
 
     dist_matrix = compute_distance_interaction_matrix(
@@ -237,11 +234,9 @@ def test_cost_interaction_point_continuous_blocked_indices() -> None:
 
 def test_bfgs_placement_with_blocking_vertex() -> None:
     placed_vertices = {0: WeightedZone(0, 0.0, 0.0, -1.0, 0.1)}
-    qubo = np.asarray([[-1.0, 0.5], [0.5, -1.0]], dtype=np.float64)
+    qubo = np.asarray([[-1.0, 0.5], [0.5, -1.0]])
     vertices = {1: {"blocking_vertices": np.array([0])}}
-    result = bfgs_placement(
-        1, np.asarray([1.0, 0.0], dtype=np.float64), placed_vertices, qubo, vertices, 0.1, 10.0
-    )
+    result = bfgs_placement(1, np.asarray([1.0, 0.0]), placed_vertices, qubo, vertices, 0.1, 10.0)
     check.less_equal(result.fun, 1e-6)
 
 

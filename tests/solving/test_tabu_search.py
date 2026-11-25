@@ -22,8 +22,7 @@ instance = Instance(
             [-1.0, 0.0, 1.0, -2.0, 1.0, 0.0],
             [0.0, 0.0, -2.0, 1.0, -1.0, 2.0],
             [0.0, -1.0, 0.0, 0.0, 2.0, -2.0],
-        ],
-        dtype=np.float64,
+        ]
     )
 )
 
@@ -130,7 +129,7 @@ def test_tabu_search_never_lets_f_current_go_inf(
     every bit tabu before any tenure expires; any symmetric 2x2 does it.
     """
     n = 2
-    small_instance = Instance(matrix=np.asarray([[-3.0, 1.0], [1.0, -3.0]], dtype=np.float64))
+    small_instance = Instance(matrix=np.asarray([[-3.0, 1.0], [1.0, -3.0]]))
     starts = np.zeros((1, n), dtype=np.int8)
 
     real_where = np.where
@@ -212,7 +211,7 @@ def test_tabu_search_still_finds_optimum_when_all_moves_become_tabu() -> None:
                 [0.628231406211853, -0.45010146498680115, 0.5505266189575195, -0.4758329391479492],
                 [-0.10774004459381104, 0.5505266189575195, 0.4487120509147644, -0.22096946835517883],  # noqa: E501
                 [1.2844055891036987, -0.4758329391479492, -0.22096946835517883, -0.5388421416282654],  # noqa: E501
-            ], dtype=np.float64)
+            ])
     )  # fmt: skip
 
     solution = solving.tabu_search.solve(
@@ -231,7 +230,7 @@ def test_tabu_search_still_finds_optimum_when_all_moves_become_tabu() -> None:
 
 
 def test_tabu_search_zero_time_limit_returns_start() -> None:
-    instance = Instance(matrix=np.asarray([[-3.0, 1.0], [1.0, -3.0]], dtype=np.float64))
+    instance = Instance(matrix=np.asarray([[-3.0, 1.0], [1.0, -3.0]]))
     starts = np.zeros((1, 2), dtype=np.int8)
     solution = solving.tabu_search.solve(instance, starts=starts, time_limit=0.0)
     check.equal(solution[0].string, "00")

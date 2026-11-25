@@ -67,7 +67,7 @@ class Instance:
             ValueError: If `matrix` is not symmetric and `symmetrize` is false.
         """
         if matrix is None:
-            matrix = np.zeros((0, 0), dtype=np.float64)
+            matrix = np.zeros((0, 0))
         elif symmetrize:
             matrix = (matrix + matrix.T) / 2
         elif not np.allclose(matrix, matrix.T):

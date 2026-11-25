@@ -31,8 +31,7 @@ def triangular_qubo() -> NDArray[np.float64]:
             [0.0, 1.0, 1.0],
             [1.0, 0.0, 1.0],
             [1.0, 1.0, 0.0],
-        ],
-        dtype=np.float64,
+        ]
     )
 
 
@@ -43,8 +42,7 @@ def square_qubo() -> NDArray[np.float64]:
             [1.0, 0.0, 1.0, 1.0 / 8.0],
             [1.0 / 8.0, 1.0, 0.0, 1.0],
             [1.0, 1.0 / 8.0, 1.0, 0.0],
-        ],
-        dtype=np.float64,
+        ]
     )
 
 
@@ -56,7 +54,7 @@ def assert_close_up_to_isometry(
     A = np.linalg.lstsq(expected_vertices, actual_vertices)[0]
     # A has a symmetry. Apply a symmetry to get a pure rotation.
     if np.linalg.det(A) < 0.0:
-        A = np.diag(np.asarray([-1.0, 1.0], dtype=np.float64)) @ A
+        A = np.diag(np.asarray([-1.0, 1.0])) @ A
 
     # A is a rotation matrix
     np.testing.assert_allclose(A.T @ A, np.eye(2, dtype=A.dtype), atol=1e-6, rtol=1e-6, strict=True)
@@ -78,7 +76,7 @@ def assert_close_to_lattice(vertices: NDArray[np.float64], basis: NDArray[np.flo
 
 def interaction_matrix_from_vertices(vertices: NDArray[np.float64]) -> NDArray[np.float64]:
     n = vertices.shape[0]
-    U = np.zeros((n, n), dtype=np.float64)
+    U = np.zeros((n, n))
     for i in range(n):
         for j in range(i + 1, n):
             U[i, j] = 1.0 / np.linalg.norm(vertices[i] - vertices[j]) ** 6
@@ -131,7 +129,7 @@ def test_triangular_qubo(traps: int, relative_noise: float, max_min_dist_ratio: 
     basis = spacing * np.asarray([
             [1.0, 0.0],
             [0.5, np.sqrt(3) / 2.0],
-        ], dtype=np.float64).T
+        ]).T
     # fmt: on
     assert_close_to_lattice(vertices, basis)
 
@@ -161,8 +159,7 @@ def test_square_qubo(
             [0.0, 1.0],
             [1.0, 1.0],
             [1.0, 0.0],
-        ],
-        dtype=np.float64,
+        ]
     )
     #  Matrix Q should match the spacing of the square layout so that the embedding returns
     # a square, hence the scale alpha.
@@ -188,7 +185,7 @@ def test_square_qubo(
     basis = spacing * np.asarray([
             [1.0, 0.0],
             [0.0, 1.0],
-        ], dtype=np.float64).T
+        ]).T
     # fmt: on
     assert_close_to_lattice(vertices, basis)
 
@@ -233,8 +230,7 @@ def test_too_large_spacing(
             [0.0, 1.0, 1.0 / 64.0],
             [1.0, 0.0, 1.0 / 125.0],
             [1.0 / 64.0, 1.0 / 125.0, 0.0],
-        ],
-        dtype=np.float64,
+        ]
     ) * (1.0 + relative_noise)
 
     # Tailored right triangle. With a correct spacing (e.g. 7.0):
@@ -246,8 +242,7 @@ def test_too_large_spacing(
             [0.0, 0.0],
             [0.0, 1.0],
             [2.0, 0.0],
-        ],
-        dtype=np.float64,
+        ]
     )
     #  Matrix Q should match the spacing of the square layout so that the embedding returns
     # an the expected right triangle, hence the scale alpha.
@@ -276,7 +271,7 @@ def test_too_large_spacing(
     basis = spacing * np.asarray([
             [1.0, 0.0],
             [0.0, 1.0],
-        ], dtype=np.float64).T
+        ]).T
     # fmt: on
     assert_close_to_lattice(vertices, basis)
 
@@ -296,8 +291,7 @@ def test_too_large_spacing(
                 [0.0, 0.0],
                 [1.0, 0.0],
                 [-1.0, 1.0],
-            ],
-            dtype=np.float64,
+            ]
         )
         assert_close_up_to_isometry(vertices, expected_imperfect_vertices, np.pi / 2.0)
 
@@ -353,8 +347,7 @@ def norm_tradeoff_qubo() -> NDArray[np.float64]:
             [0.00, 1.000, 0.530],
             [1.00, 0.000, 0.125],
             [0.53, 0.125, 0.000],
-        ],
-        dtype=np.float64,
+        ]
     )
 
 
@@ -466,7 +459,7 @@ def test_empty_embedding() -> None:
 
 def test_single_atom_embedding() -> None:
     config = embedding.greedy_layout.Config(traps=1)
-    instance = Instance(np.zeros((1, 1), dtype=np.float64))
+    instance = Instance(np.zeros((1, 1)))
     register = embedding.greedy_layout.embed(instance, config=config)
     check.equal(len(register), 1)
 
@@ -474,9 +467,9 @@ def test_single_atom_embedding() -> None:
 @pytest.mark.parametrize(
     "Q, traps",
     [
-        (np.zeros((1, 1), dtype=np.float64), 1),
-        (np.zeros((1, 1), dtype=np.float64), 2),
-        (np.asarray([[0.0, 1.0], [1.0, 0.0]], dtype=np.float64), 2),
+        (np.zeros((1, 1)), 1),
+        (np.zeros((1, 1)), 2),
+        (np.asarray([[0.0, 1.0], [1.0, 0.0]]), 2),
     ],
     ids=["1-node-1-trap", "1-node-2-traps", "2-nodes-2-traps"],
 )
@@ -513,8 +506,7 @@ def test_resolve_max_possible_term_quantile() -> None:
             [5.0, 1.0, 0.0],
             [1.0, 5.0, 3.0],
             [0.0, 3.0, 5.0],
-        ],
-        dtype=np.float64,
+        ]
     )
     instance = Instance(qubo)
     check.almost_equal(_resolve_max_possible_term(("quantile", 0.5), instance), 2.0)
@@ -524,7 +516,7 @@ def test_resolve_max_possible_term_quantile() -> None:
 @pytest.mark.parametrize("kind", ["quantile", "factor"])
 @pytest.mark.parametrize("size", [0, 1, 3])
 def test_resolve_max_possible_term_no_positive_off_diag(kind: str, size: int) -> None:
-    instance = Instance(np.zeros((size, size), dtype=np.float64))
+    instance = Instance(np.zeros((size, size)))
     with pytest.raises(ValueError, match="no strictly positive off-diagonal"):
         _resolve_max_possible_term((kind, 0.5), instance)  # type: ignore[arg-type]
 
@@ -539,45 +531,45 @@ def test_resolve_max_possible_term_not_positive(
 
 
 def test_embed_rejects_diagonal_instance() -> None:
-    instance = Instance(np.diag(np.asarray([1.0, 2.0, 3.0], dtype=np.float64)))
+    instance = Instance(np.diag(np.asarray([1.0, 2.0, 3.0])))
     with pytest.raises(ValueError, match="trivial_solution_search"):
         embedding.greedy_layout.embed(instance, config=embedding.greedy_layout.Config(traps=3))
 
 
 def test_embed_for_device_single_atom() -> None:
-    instance = Instance(np.asarray([[-1.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[-1.0]]))
     register = embedding.greedy_layout.embed_for_device(instance, AnalogDeviceWithDMM())
     check.equal(len(register), 1)
 
 
 def test_embed_for_device_rejects_diagonal_instance() -> None:
-    instance = Instance(np.diag(np.asarray([-1.0, -2.0, -3.0], dtype=np.float64)))
+    instance = Instance(np.diag(np.asarray([-1.0, -2.0, -3.0])))
     with pytest.raises(ValueError, match="trivial_solution_search"):
         embedding.greedy_layout.embed_for_device(instance, AnalogDeviceWithDMM())
 
 
 def test_embed_rejects_diagonal_instance_with_float_max_possible_term() -> None:
-    instance = Instance(np.zeros((3, 3), dtype=np.float64))
+    instance = Instance(np.zeros((3, 3)))
     config = embedding.greedy_layout.Config(traps=3, max_possible_term=1.0)
     with pytest.raises(ValueError, match="trivial_solution_search"):
         embedding.greedy_layout.embed(instance, config=config)
 
 
 def test_negative_off_diagonal_raises() -> None:
-    instance = Instance(np.asarray([[1.0, -1.0], [-1.0, 1.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[1.0, -1.0], [-1.0, 1.0]]))
     with pytest.raises(ValueError, match="negative off-diagonal"):
         embedding.greedy_layout.embed(instance)
 
 
 def test_embed_fewer_traps_than_atoms_raises() -> None:
-    instance = Instance(np.asarray([[1.0, 1.0], [1.0, 1.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[1.0, 1.0], [1.0, 1.0]]))
     config = embedding.greedy_layout.Config(traps=1)
     with pytest.raises(ValueError, match="Number of traps must be at least"):
         embedding.greedy_layout.embed(instance, config=config)
 
 
 def test_embed_for_device() -> None:
-    instance = Instance(np.asarray([[1.0, 1.0], [1.0, 1.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[1.0, 1.0], [1.0, 1.0]]))
     register = embedding.greedy_layout.embed_for_device(instance, AnalogDeviceWithDMM())
     check.equal(register.n_qubits, 2)
 

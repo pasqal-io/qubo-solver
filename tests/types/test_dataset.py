@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 def test_dataset_copies_input_matrices() -> None:
     """Test that Dataset copies the input array instead of aliasing it."""
-    matrices = np.zeros((3, 3, 2), dtype=np.float64)
+    matrices = np.zeros((3, 3, 2))
     dataset = Dataset(matrices)
 
     matrices[0, 0, 0] = 42.0
@@ -32,12 +32,12 @@ def test_dataset_copies_input_matrices() -> None:
 
 def test_dataset_copies_input_solutions() -> None:
     """Test that Dataset deep-copies the input solutions instead of aliasing them."""
-    matrices = np.zeros((3, 3, 1), dtype=np.float64)
+    matrices = np.zeros((3, 3, 1))
     solution = Solution(
         bitstrings=np.zeros((1, 3), dtype=np.int8),
-        costs=np.zeros(1, dtype=np.float64),
+        costs=np.zeros(1),
         counts=np.zeros(1, dtype=np.int64),
-        probabilities=np.zeros(1, dtype=np.float64),
+        probabilities=np.zeros(1),
     )
     dataset = Dataset(matrices, [solution])
 
@@ -50,12 +50,12 @@ def test_dataset_copies_input_solutions() -> None:
 
 def test_dataset_copy_false_aliases_input() -> None:
     """Test that Dataset(copy=False) stores the given matrices/solutions directly."""
-    matrices = np.zeros((3, 3, 1), dtype=np.float64)
+    matrices = np.zeros((3, 3, 1))
     solution = Solution(
         bitstrings=np.zeros((1, 3), dtype=np.int8),
-        costs=np.zeros(1, dtype=np.float64),
+        costs=np.zeros(1),
         counts=np.zeros(1, dtype=np.int64),
-        probabilities=np.zeros(1, dtype=np.float64),
+        probabilities=np.zeros(1),
     )
     dataset = Dataset(matrices, [solution], copy=False)
 
@@ -116,15 +116,15 @@ def test_save_load_to_a_path_preserves_nested_solutions(tmp_path: Path) -> None:
         solutions=[
             Solution(
                 bitstrings=np.asarray([[1, 0]], dtype=np.int8),
-                costs=np.asarray([1.0], dtype=np.float64),
+                costs=np.asarray([1.0]),
                 counts=np.asarray([2], dtype=np.int64),
-                probabilities=np.asarray([1.0], dtype=np.float64),
+                probabilities=np.asarray([1.0]),
             ),
             Solution(
                 bitstrings=np.asarray([[0, 1]], dtype=np.int8),
-                costs=np.asarray([2.0], dtype=np.float64),
+                costs=np.asarray([2.0]),
                 counts=np.asarray([5], dtype=np.int64),
-                probabilities=np.asarray([1.0], dtype=np.float64),
+                probabilities=np.asarray([1.0]),
             ),
         ],
     )
@@ -149,10 +149,8 @@ def test_load_rejects_a_stream_that_is_not_a_qubosolver_file() -> None:
 
 
 def test_getitem_returns_the_matching_solution() -> None:
-    solution = Solution(
-        bitstrings=np.zeros((1, 3), dtype=np.int8), costs=np.zeros(1, dtype=np.float64)
-    )
-    dataset = Dataset(np.zeros((3, 3, 1), dtype=np.float64), [solution])
+    solution = Solution(bitstrings=np.zeros((1, 3), dtype=np.int8), costs=np.zeros(1))
+    dataset = Dataset(np.zeros((3, 3, 1)), [solution])
     _, item_solution = dataset[0]
     np.testing.assert_allclose(item_solution.bitstrings, solution.bitstrings, rtol=0, strict=True)
 

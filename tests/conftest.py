@@ -94,15 +94,15 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 def basic_solution() -> Solution:
     return Solution(
         bitstrings=np.asarray([[0, 1, 0], [1, 0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([15, 5], dtype=np.int64),
-        probabilities=np.asarray([0.75, 0.25], dtype=np.float64),
+        probabilities=np.asarray([0.75, 0.25]),
     )
 
 
 @pytest.fixture
 def simple_qubo_instance() -> Instance:
-    Q = np.asarray([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]], dtype=np.float64)
+    Q = np.asarray([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
     return Instance(matrix=Q)
 
 

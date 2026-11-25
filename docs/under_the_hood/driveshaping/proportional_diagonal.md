@@ -179,8 +179,7 @@ Q = np.asarray(
         [-1.0, 0.5, 0.2],
         [0.5, -2.0, 0.3],
         [0.2, 0.3, -3.0],
-    ],
-    dtype=np.float64,
+    ]
 )
 
 instance = Instance(Q)

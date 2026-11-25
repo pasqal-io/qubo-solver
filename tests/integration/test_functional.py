@@ -61,7 +61,7 @@ def simple_qubo() -> tuple[Instance, list[Candidate]]:
     print(d)
     n_qubits = vertices.shape[0]
     diagonal_scale = -2.0
-    diagonal = np.full(n_qubits, 1.0, dtype=np.float64)
+    diagonal = np.full(n_qubits, 1.0)
     Q = interaction_matrix_from_vertices(vertices) + diagonal_scale * np.diag(diagonal)
     Q /= Q.max()
 

@@ -128,7 +128,7 @@ def embed(
     if instance.size == 1:
         # A single atom has no off-diagonal term to place it relative to,
         # so it is placed at the origin without running the algorithm.
-        return qoolqit.Register.from_coordinates(np.zeros((1, 2), dtype=np.float64))
+        return qoolqit.Register.from_coordinates(np.zeros((1, 2)))
 
     if instance.is_diagonal():
         msg = (

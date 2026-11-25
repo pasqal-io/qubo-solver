@@ -44,8 +44,8 @@ def solve(
     rng = rng or numpy_rng()
     solution = Solution(
         bitstrings=bitstrings.rand(max_bitstrings, instance.size, rng=rng),
-        costs=np.zeros(max_bitstrings, dtype=np.float64),
+        costs=np.zeros(max_bitstrings),
         counts=np.ones(max_bitstrings, dtype=np.int64),
-        probabilities=np.zeros(max_bitstrings, dtype=np.float64),
+        probabilities=np.zeros(max_bitstrings),
     )
     return solution.deduplicate(update=False)._update(instance)

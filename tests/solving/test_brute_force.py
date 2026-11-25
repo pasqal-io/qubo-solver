@@ -35,8 +35,7 @@ def sample_qubo() -> Instance:
                 [-2.0, 0.0, -2.0, 1.0],
                 [1.0, -2.0, 0.0, -2.0],
                 [1.0, 1.0, -2.0, 0.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
 
@@ -69,7 +68,7 @@ def test_top_k_sorted_matches_reference() -> None:
 
 def test_max_bitstrings_capped_at_2_to_the_n() -> None:
     # A 2-variable QUBO has only 4 assignments; asking for more returns 4.
-    Q = np.asarray([[1.0, -1.0], [-1.0, 1.0]], dtype=np.float64)
+    Q = np.asarray([[1.0, -1.0], [-1.0, 1.0]])
 
     solution = solving.brute_force.solve(Instance(Q), max_bitstrings=100)
 
@@ -83,7 +82,7 @@ def test_probabilities_are_normalised() -> None:
 
 
 def test_empty_instance_returns_zero_length_solution() -> None:
-    instance = Instance(np.zeros((0, 0), dtype=np.float64))
+    instance = Instance(np.zeros((0, 0)))
     solution = solving.brute_force.solve(instance)
 
     check.is_true(solution.check_consistency(instance=instance, throw=True))

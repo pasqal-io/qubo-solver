@@ -35,9 +35,9 @@ def test_apply_full_and_post_process_fixation() -> None:
 
     reduced_solution = Solution(
         np.zeros((1, 0), dtype=np.int8),
-        np.asarray([0.0], dtype=np.float64),
+        np.asarray([0.0]),
         np.asarray([1], dtype=np.int64),
-        np.asarray([1.0], dtype=np.float64),
+        np.asarray([1.0]),
     )
 
     solution = transforms.variable_fixing.lift(reduced_solution, reduced_instance)
@@ -106,8 +106,7 @@ def test_reduce_qubo_2() -> None:
             [19.7365809, 20.67626392, -10.0, 0.85604541, 0.17675796],
             [5.42015853, 0.17675796, 0.85604541, -10.0, 0.32306662],
             [5.42015853, 0.85604541, 0.17675796, 0.32306662, -10.0],
-        ],
-        dtype=np.float64,
+        ]
     )
 
     qubo = Instance(Q)
@@ -119,7 +118,7 @@ def test_reduce_qubo_2() -> None:
     # Hardcode solution
     reduced_solution = Solution(
         bitstrings=np.asarray([[0, 1]], dtype=np.int8),
-        costs=np.asarray([0.0], dtype=np.float64),
+        costs=np.asarray([0.0]),
     )
 
     solution = transforms.variable_fixing.lift(reduced_solution, reduced_qubo)

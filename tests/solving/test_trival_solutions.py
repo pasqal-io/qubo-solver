@@ -13,7 +13,7 @@ from qubosolver import Instance, solving
 
 def test_all_positive_trivial() -> None:
     """For a QUBO with all coefficients >= 0, the trivial solution search returns all zeros."""
-    coeffs = np.asarray([[1.0, 0.5], [0.5, 2.0]], dtype=np.float64)
+    coeffs = np.asarray([[1.0, 0.5], [0.5, 2.0]])
     instance = Instance(matrix=coeffs)
 
     sol = solving.trivial_solution_search.solve(instance)
@@ -25,7 +25,7 @@ def test_all_positive_trivial() -> None:
 
 def test_all_negative_trivial() -> None:
     """For a QUBO with all coefficients <= 0, the trivial solution search returns all ones."""
-    coeffs = np.asarray([[-1.0, 0.0], [0.0, -3.0]], dtype=np.float64)
+    coeffs = np.asarray([[-1.0, 0.0], [0.0, -3.0]])
     instance = Instance(matrix=coeffs)
 
     sol = solving.trivial_solution_search.solve(instance)
@@ -36,7 +36,7 @@ def test_all_negative_trivial() -> None:
 
 
 def test_diagonal_trivial() -> None:
-    coeffs = np.asarray([[-1.0, 0.0], [0.0, 3.0]], dtype=np.float64)
+    coeffs = np.asarray([[-1.0, 0.0], [0.0, 3.0]])
     instance = Instance(matrix=coeffs)
 
     sol = solving.trivial_solution_search.solve(instance)

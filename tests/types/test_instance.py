@@ -33,25 +33,21 @@ def test_valid_qubo_passes_without_error() -> None:
 
 
 def test_non_symmetric_matrix_raises() -> None:
-    coeffs = np.asarray([[1.0, 2.0], [0.0, 3.0]], dtype=np.float64)
+    coeffs = np.asarray([[1.0, 2.0], [0.0, 3.0]])
     with pytest.raises(ValueError, match="symmetric"):
         Instance(coeffs)
 
 
 def test_symmetrize_uses_symmetrized_matrix() -> None:
-    coeffs = np.asarray([[1.0, 2.0], [0.0, 3.0]], dtype=np.float64)
+    coeffs = np.asarray([[1.0, 2.0], [0.0, 3.0]])
     qi = Instance(coeffs, symmetrize=True)
-    np.testing.assert_allclose(
-        qi.matrix, np.asarray([[1.0, 1.0], [1.0, 3.0]], dtype=np.float64), strict=True
-    )
+    np.testing.assert_allclose(qi.matrix, np.asarray([[1.0, 1.0], [1.0, 3.0]]), strict=True)
     # The original matrix is left untouched.
-    np.testing.assert_allclose(
-        coeffs, np.asarray([[1.0, 2.0], [0.0, 3.0]], dtype=np.float64), strict=True
-    )
+    np.testing.assert_allclose(coeffs, np.asarray([[1.0, 2.0], [0.0, 3.0]]), strict=True)
 
 
 def test_symmetrize_keeps_symmetric_matrix_unchanged() -> None:
-    coeffs = np.asarray([[1.0, 2.0], [2.0, 3.0]], dtype=np.float64)
+    coeffs = np.asarray([[1.0, 2.0], [2.0, 3.0]])
     np.testing.assert_allclose(Instance(coeffs, symmetrize=True).matrix, coeffs, strict=True)
 
 
@@ -62,61 +58,59 @@ def test_len_matches_size() -> None:
 
 
 def test_len_zero_is_falsy() -> None:
-    qi = Instance(np.zeros((0, 0), dtype=np.float64))
+    qi = Instance(np.zeros((0, 0)))
     check.equal(len(qi), 0)
     check.is_false(bool(qi))
 
 
 @pytest.mark.parametrize("size", [0, 1])
 def test_max_off_diag_no_off_diag_entries(size: int) -> None:
-    qi = Instance(np.zeros((size, size), dtype=np.float64))
+    qi = Instance(np.zeros((size, size)))
     with pytest.raises(RuntimeError, match="undefined"):
         _ = qi._max_off_diag
 
 
 def test_is_diagonal() -> None:
     check.is_true(Instance().is_diagonal())
-    check.is_true(Instance(np.asarray([[-1.0]], dtype=np.float64)).is_diagonal())
-    check.is_true(Instance(np.asarray([[-1.0, 0.0], [0.0, 2.0]], dtype=np.float64)).is_diagonal())
-    check.is_false(
-        Instance(np.asarray([[-1.0, 1e-3], [1e-3, 2.0]], dtype=np.float64)).is_diagonal()
-    )
+    check.is_true(Instance(np.asarray([[-1.0]])).is_diagonal())
+    check.is_true(Instance(np.asarray([[-1.0, 0.0], [0.0, 2.0]])).is_diagonal())
+    check.is_false(Instance(np.asarray([[-1.0, 1e-3], [1e-3, 2.0]])).is_diagonal())
 
 
 def test_is_trivial() -> None:
-    check.is_true(Instance(np.asarray([[1.0, 2.0], [2.0, 1.0]], dtype=np.float64)).is_trivial())
-    check.is_true(Instance(np.asarray([[-1.0, -2.0], [-2.0, -1.0]], dtype=np.float64)).is_trivial())
-    check.is_true(Instance(np.asarray([[-1.0, 0.0], [0.0, 2.0]], dtype=np.float64)).is_trivial())
-    check.is_false(Instance(np.asarray([[-1.0, 2.0], [2.0, -1.0]], dtype=np.float64)).is_trivial())
+    check.is_true(Instance(np.asarray([[1.0, 2.0], [2.0, 1.0]])).is_trivial())
+    check.is_true(Instance(np.asarray([[-1.0, -2.0], [-2.0, -1.0]])).is_trivial())
+    check.is_true(Instance(np.asarray([[-1.0, 0.0], [0.0, 2.0]])).is_trivial())
+    check.is_false(Instance(np.asarray([[-1.0, 2.0], [2.0, -1.0]])).is_trivial())
 
 
 def test_trivial_solution_search_reads_off_the_optimum() -> None:
-    Q = np.asarray([[1.0, 2.0], [2.0, 1.0]], dtype=np.float64)
+    Q = np.asarray([[1.0, 2.0], [2.0, 1.0]])
     solution = solving.trivial_solution_search.solve(Instance(Q))
     assert len(solution) == 1
     check.equal(solution[0].string, "00")
 
-    Q = np.asarray([[0.0, 1.0], [1.0, 0.0]], dtype=np.float64)
+    Q = np.asarray([[0.0, 1.0], [1.0, 0.0]])
     solution = solving.trivial_solution_search.solve(Instance(Q))
     assert len(solution) == 1
     check.equal(solution[0].string, "00")
 
-    Q = np.asarray([[-1.0, -2.0], [-2.0, -1.0]], dtype=np.float64)
+    Q = np.asarray([[-1.0, -2.0], [-2.0, -1.0]])
     solution = solving.trivial_solution_search.solve(Instance(Q))
     assert len(solution) == 1
     check.equal(solution[0].string, "11")
 
-    Q = np.asarray([[0.0, -1.0], [-1.0, 0.0]], dtype=np.float64)
+    Q = np.asarray([[0.0, -1.0], [-1.0, 0.0]])
     solution = solving.trivial_solution_search.solve(Instance(Q))
     assert len(solution) == 1
     check.equal(solution[0].string, "11")
 
-    Q = np.asarray([[-1.0, 0.0], [0.0, 2.0]], dtype=np.float64)
+    Q = np.asarray([[-1.0, 0.0], [0.0, 2.0]])
     solution = solving.trivial_solution_search.solve(Instance(Q))
     assert len(solution) == 1
     check.equal(solution[0].string, "10")
 
-    Q = np.asarray([[-1.0, 2.0], [2.0, -1.0]], dtype=np.float64)
+    Q = np.asarray([[-1.0, 2.0], [2.0, -1.0]])
     solution = solving.trivial_solution_search.solve(Instance(Q))
     check.is_false(solution)
 
@@ -250,8 +244,8 @@ def test_classify_density_out_of_range_raises(density: float) -> None:
 
 
 def test_calculate_density() -> None:
-    check.equal(_calculate_density(np.zeros((0, 0), dtype=np.float64)), 0.0)
-    check.equal(_calculate_density(np.asarray([[1.0, 0.0], [0.0, 1.0]], dtype=np.float64)), 0.5)
+    check.equal(_calculate_density(np.zeros((0, 0))), 0.0)
+    check.equal(_calculate_density(np.asarray([[1.0, 0.0], [0.0, 1.0]])), 0.5)
 
 
 def _subinstance_qubo() -> Instance:
@@ -261,8 +255,7 @@ def _subinstance_qubo() -> Instance:
                 [-1.0, 2.0, 3.0],
                 [2.0, -4.0, 5.0],
                 [3.0, 5.0, -6.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
 
@@ -270,9 +263,7 @@ def _subinstance_qubo() -> Instance:
 def test_subinstance_keeps_the_given_variable_order() -> None:
     sub = _subinstance_qubo().subinstance([2, 0])
 
-    np.testing.assert_allclose(
-        sub.matrix, np.asarray([[-6.0, 3.0], [3.0, -1.0]], dtype=np.float64), strict=True
-    )
+    np.testing.assert_allclose(sub.matrix, np.asarray([[-6.0, 3.0], [3.0, -1.0]]), strict=True)
 
 
 def test_subinstance_is_an_independent_copy() -> None:
@@ -288,7 +279,7 @@ def test_subinstance_is_a_plain_instance_on_subclasses() -> None:
     sub = reduced.subinstance([1])
 
     check.is_true(type(sub) is Instance)
-    np.testing.assert_allclose(sub.matrix, np.asarray([[-4.0]], dtype=np.float64), strict=True)
+    np.testing.assert_allclose(sub.matrix, np.asarray([[-4.0]]), strict=True)
 
 
 def test_subinstance_of_no_variables_is_empty() -> None:

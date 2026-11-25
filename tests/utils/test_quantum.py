@@ -43,8 +43,7 @@ def test_extract_qubo_off_diagonal_matches_interactions() -> None:
             [0.0, 1.0 / r01**6, 1.0 / r02**6],
             [1.0 / r01**6, 0.0, 1.0 / r12**6],
             [1.0 / r02**6, 1.0 / r12**6, 0.0],
-        ],
-        dtype=np.float64,
+        ]
     )
 
     check.equal(instance.size, 3)
@@ -60,7 +59,7 @@ def test_extract_qubo_diagonal_from_constant_detuning() -> None:
 
     instance = extract_qubo(register, drive)
 
-    expected_diagonal = np.asarray([6.0, 6.0, 6.0], dtype=np.float64)  # -2 * (-3.0)
+    expected_diagonal = np.asarray([6.0, 6.0, 6.0])  # -2 * (-3.0)
     np.testing.assert_allclose(np.diag(instance.matrix), expected_diagonal, strict=True)
 
 
@@ -73,7 +72,7 @@ def test_extract_qubo_diagonal_from_ramp_detuning_uses_final_value() -> None:
 
     instance = extract_qubo(register, drive)
 
-    expected_diagonal = np.asarray([4.0, 4.0, 4.0], dtype=np.float64)  # -2 * -2.0
+    expected_diagonal = np.asarray([4.0, 4.0, 4.0])  # -2 * -2.0
     np.testing.assert_allclose(np.diag(instance.matrix), expected_diagonal, strict=True)
 
 
@@ -125,7 +124,7 @@ def test_extract_qubo_round_trip_through_greedy_embedding_and_drive_shaping() ->
     assert isinstance(Q, np.ndarray)
     # qoolqit forces float64
     Q = np.asarray(Q, dtype=np.float64)
-    np.fill_diagonal(Q, np.asarray([-1.0, -0.5, -1.1], dtype=np.float64))
+    np.fill_diagonal(Q, np.asarray([-1.0, -0.5, -1.1]))
 
     original = Instance(matrix=Q)
 
@@ -165,20 +164,19 @@ def test_extract_qubo_with_instance_diagonal() -> None:
                 [-1.0, 9.0, 9.0],
                 [9.0, -2.0, 9.0],
                 [9.0, 9.0, -3.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
 
     extracted = extract_qubo(register, instance)
 
     expected = np.asarray(register.interaction_matrix(), dtype=np.float64)
-    np.fill_diagonal(expected, np.asarray([-1.0, -2.0, -3.0], dtype=np.float64))
+    np.fill_diagonal(expected, np.asarray([-1.0, -2.0, -3.0]))
     np.testing.assert_allclose(extracted.matrix, expected, strict=True)
 
 
 def test_extract_qubo_rejects_instance_of_another_size() -> None:
-    instance = Instance(np.asarray([[-1.0, 0.0], [0.0, -1.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[-1.0, 0.0], [0.0, -1.0]]))
     with pytest.raises(ValueError, match="3 qubits"):
         extract_qubo(_register(), instance)
 
@@ -248,7 +246,7 @@ def _dmm_drive() -> qoolqit.Drive:
 
 def test_detuning_infers_qubit_ids_from_dmm_weights() -> None:
     delta = _detuning(_dmm_drive(), 10.0, n=2)
-    np.testing.assert_allclose(delta, np.asarray([-3.0, -2.5], dtype=np.float64), strict=True)
+    np.testing.assert_allclose(delta, np.asarray([-3.0, -2.5]), strict=True)
 
 
 def test_detuning_rejects_mismatched_qubit_ids() -> None:

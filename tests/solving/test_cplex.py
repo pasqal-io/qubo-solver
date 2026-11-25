@@ -62,7 +62,7 @@ def test_cplex_solve_identity() -> None:
     # Create a simple 2x2 QUBO instance.
     # For example, consider a QUBO where the optimum is known.
     # Here we use an identity matrix.
-    Q = np.asarray([[1.0, 0.0], [0.0, 1.0]], dtype=np.float64)
+    Q = np.asarray([[1.0, 0.0], [0.0, 1.0]])
     instance = Instance(matrix=Q)
 
     solution = solving.cplex.solve(instance, time_limit=10.0)

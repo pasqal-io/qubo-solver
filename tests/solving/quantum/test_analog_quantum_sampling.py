@@ -43,8 +43,7 @@ def test_too_large_register() -> None:
             [-0.5, 0.0],
             [0.5, 0.0],
             [0.0, 9.9],
-        ],
-        dtype=np.float64,
+        ]
     )
     config = embedding.blade.Config(
         starting_positions=coords,
@@ -69,10 +68,10 @@ def test_too_large_register() -> None:
 def test_single_atom_register() -> None:
     manual_seed(156617)
 
-    instance = Instance(np.asarray([[-2.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[-2.0]]))
 
     device = qoolqit.AnalogDeviceWithDMM()
-    register = qoolqit.Register.from_coordinates(np.zeros((1, 2), dtype=np.float64))
+    register = qoolqit.Register.from_coordinates(np.zeros((1, 2)))
     drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
     program = solving.analog_quantum_sampling.compile(register, drive, device)
     job = LocalEmulator().run(program)
@@ -89,7 +88,7 @@ def test_single_atom_register() -> None:
 def test_single_atom_register_radial_distance(x: float, fits: bool) -> None:
     # A single atom has no minimum distance: its radial distance is measured in units
     # of the device's minimum distance.
-    instance = Instance(np.asarray([[-2.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[-2.0]]))
     device = qoolqit.AnalogDeviceWithDMM()
     register = qoolqit.Register.from_coordinates(np.asarray([[x, 0.0]], dtype=np.float64))
     drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)

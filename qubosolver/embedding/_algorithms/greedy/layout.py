@@ -54,7 +54,7 @@ def get_layout(
         raise ValueError(msg)
 
     if n_traps == 0:
-        return np.zeros((0, 2), dtype=np.float64)
+        return np.zeros((0, 2))
 
     match layout_type:
         case Lattice.TRIANGULAR | "triangular":

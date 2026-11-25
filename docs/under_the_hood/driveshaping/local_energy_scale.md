@@ -288,8 +288,7 @@ qubo = np.asarray(
         [2.0, -7.5, 2.0, 2.0],
         [2.0, 2.0, -7.5, 2.0],
         [2.0, 2.0, 2.0, -7.0],
-    ],
-    dtype=np.float64,
+    ]
 )
 
 instance = Instance(matrix=qubo)

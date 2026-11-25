@@ -34,8 +34,7 @@ def bipartisable_negative_qubo() -> tuple[Instance, Instance]:
                 [-2.0, 0.0, 1.0, -1.0],
                 [-1.0, 1.0, 0.0, -2.0],
                 [1.0, -1.0, -2.0, 0.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
     flipped_instance = Instance(
@@ -45,8 +44,7 @@ def bipartisable_negative_qubo() -> tuple[Instance, Instance]:
                 [2.0, -6.0, 1.0, 1.0],
                 [1.0, 1.0, -6.0, 2.0],
                 [1.0, 1.0, 2.0, -2.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
     return instance, flipped_instance
@@ -61,8 +59,7 @@ def non_bipartisable_negative_qubo() -> tuple[Instance, Instance]:
                 [-2.0, 0.0, -2.0, 1.0],
                 [1.0, -2.0, 0.0, -2.0],
                 [1.0, 1.0, -2.0, 0.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
     flipped_instance = Instance(
@@ -72,8 +69,7 @@ def non_bipartisable_negative_qubo() -> tuple[Instance, Instance]:
                 [2.0, -8.0, 2.0, 1.0],
                 [1.0, 2.0, -2.0, 2.0],
                 [-1.0, 1.0, 2.0, -2.0],
-            ],
-            dtype=np.float64,
+            ]
         )
     )
     return instance, flipped_instance
@@ -84,8 +80,7 @@ def test_has_negative_offdiagonal_detects_negative_interactions() -> None:
         [
             [0.0, -1.0],
             [-1.0, 0.0],
-        ],
-        dtype=np.float64,
+        ]
     )
 
     check.is_true(_has_negative_offdiagonal(Q))
@@ -96,8 +91,7 @@ def test_has_negative_offdiagonal_ignores_negative_diagonal() -> None:
         [
             [-3.0, 1.0],
             [1.0, -2.0],
-        ],
-        dtype=np.float64,
+        ]
     )
 
     check.is_false(_has_negative_offdiagonal(Q))
@@ -132,7 +126,7 @@ def test_bitflip_preprocessing_can_leave_negative_coefficients() -> None:
 
 
 def test_bitflip_apply_is_noop_without_negative_coefficients() -> None:
-    instance = Instance(np.asarray([[1.0, 2.0], [2.0, 1.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[1.0, 2.0], [2.0, 1.0]]))
 
     flipped_instance = transforms.negative_bitflip.apply(instance)
 
@@ -357,7 +351,7 @@ def test_heuristic_methods_match_brute_force_negative_weight(
 
 
 def test_metrics_skip_zero_edges_and_handle_no_negative_coefficient() -> None:
-    Q = np.asarray([[0.0, 0.0, 1.0], [0.0, 0.0, 2.0], [1.0, 2.0, 0.0]], dtype=np.float64)
+    Q = np.asarray([[0.0, 0.0, 1.0], [0.0, 0.0, 2.0], [1.0, 2.0, 0.0]])
     metrics = _compute_negative_weight_metrics(Q, np.zeros(3, dtype=np.int8))
     check.equal(metrics["n_edges"], 2)
     check.equal(metrics["neg_count_before"], 0)
@@ -372,7 +366,7 @@ def test_apply_rejects_unknown_method(has_negative_offdiagonal: bool) -> None:
     if has_negative_offdiagonal:
         instance, _ = bipartisable_negative_qubo()
     else:
-        instance = Instance(np.asarray([[1.0, 0.0], [0.0, 1.0]], dtype=np.float64))
+        instance = Instance(np.asarray([[1.0, 0.0], [0.0, 1.0]]))
     with pytest.raises(ValueError):
         transforms.negative_bitflip.apply(instance, method="dummy")  # type: ignore[arg-type]
 
@@ -385,7 +379,7 @@ def test_solve_bitflip_returns_trivial_solution() -> None:
 
 
 def test_lift_without_flips_returns_an_equal_copy() -> None:
-    instance = Instance(np.asarray([[-1.0, 2.0], [2.0, -1.0]], dtype=np.float64))
+    instance = Instance(np.asarray([[-1.0, 2.0], [2.0, -1.0]]))
     flipped_instance = transforms.negative_bitflip.apply(instance)
     check.is_false(bool(np.any(flipped_instance.flips != 0)))
     solution = solving.brute_force.solve(flipped_instance)

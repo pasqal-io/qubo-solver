@@ -20,7 +20,7 @@ from qubosolver.types.solution import _unique_rows
 
 @pytest.fixture
 def instance() -> Instance:
-    Q = np.asarray([[1.0, -1.0], [-1.0, 2.0]], dtype=np.float64)
+    Q = np.asarray([[1.0, -1.0], [-1.0, 2.0]])
     return Instance(matrix=Q)
 
 
@@ -38,9 +38,9 @@ def _assert_invalid(solution: Solution, instance: Instance) -> None:
 def test_valid_solution_passes(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([3, 1], dtype=np.int64),
-        probabilities=np.asarray([0.75, 0.25], dtype=np.float64),
+        probabilities=np.asarray([0.75, 0.25]),
     )
     _assert_valid(solution, instance)
 
@@ -59,9 +59,9 @@ def test_single_zero_width_bitstring_against_empty_qubo_is_valid() -> None:
     # zero-width arrays.
     solution = Solution(
         bitstrings=np.asarray([[]], dtype=np.int8),
-        costs=np.asarray([0.0], dtype=np.float64),
+        costs=np.asarray([0.0]),
         counts=np.asarray([1], dtype=np.int64),
-        probabilities=np.asarray([1.0], dtype=np.float64),
+        probabilities=np.asarray([1.0]),
     )
     _assert_valid(solution, Instance())
 
@@ -72,9 +72,9 @@ def test_repeated_zero_width_bitstrings_is_invalid() -> None:
     # invalid rather than crashing (see test above) or being reported valid.
     solution = Solution(
         bitstrings=np.asarray([[], []], dtype=np.int8),
-        costs=np.asarray([0.0, 0.0], dtype=np.float64),
+        costs=np.asarray([0.0, 0.0]),
         counts=np.asarray([1, 1], dtype=np.int64),
-        probabilities=np.asarray([0.5, 0.5], dtype=np.float64),
+        probabilities=np.asarray([0.5, 0.5]),
     )
     _assert_invalid(solution, Instance())
 
@@ -96,9 +96,9 @@ def test_repeated_zero_width_bitstrings_is_invalid() -> None:
 def test_wrong_bitstring_width_is_invalid(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0, 1], [0, 1, 0]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([1, 1], dtype=np.int64),
-        probabilities=np.asarray([0.5, 0.5], dtype=np.float64),
+        probabilities=np.asarray([0.5, 0.5]),
     )
     _assert_invalid(solution, instance)
 
@@ -107,9 +107,9 @@ def test_wrong_bitstring_width_is_invalid(instance: Instance) -> None:
 def test_missing_field_is_invalid(instance: Instance, missing: str) -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([1, 1], dtype=np.int64),
-        probabilities=np.asarray([0.5, 0.5], dtype=np.float64),
+        probabilities=np.asarray([0.5, 0.5]),
     )
     setattr(solution, missing, np.array([], dtype=getattr(solution, missing).dtype))
     _assert_invalid(solution, instance)
@@ -118,9 +118,9 @@ def test_missing_field_is_invalid(instance: Instance, missing: str) -> None:
 def test_wrong_costs_is_invalid(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 999.0], dtype=np.float64),
+        costs=np.asarray([1.0, 999.0]),
         counts=np.asarray([1, 1], dtype=np.int64),
-        probabilities=np.asarray([0.5, 0.5], dtype=np.float64),
+        probabilities=np.asarray([0.5, 0.5]),
     )
     _assert_invalid(solution, instance)
 
@@ -137,7 +137,7 @@ def test_tiny_cost_error_on_zero_cost_bitstring_is_tolerated() -> None:
     so the very same absolute error is tolerated there too.
     """
     # x = [1, 1] costs 1 - 1 - 1 + 1 = 0 exactly; x = [1, 0] costs 1.
-    Q = np.asarray([[1.0, -1.0], [-1.0, 1.0]], dtype=np.float64)
+    Q = np.asarray([[1.0, -1.0], [-1.0, 1.0]])
     zero_cost_instance = Instance(matrix=Q)
     two_bitstrings = np.asarray([[1, 1], [1, 0]], dtype=np.int8)
     error = 1e-6
@@ -147,7 +147,7 @@ def test_tiny_cost_error_on_zero_cost_bitstring_is_tolerated() -> None:
             bitstrings=two_bitstrings,
             costs=np.asarray(costs, dtype=np.float64),
             counts=np.asarray([1, 1], dtype=np.int64),
-            probabilities=np.asarray([0.5, 0.5], dtype=np.float64),
+            probabilities=np.asarray([0.5, 0.5]),
         )
 
     # The same absolute error is tolerated on the cost-1.0 bitstring ...
@@ -165,9 +165,9 @@ def test_tiny_cost_error_on_zero_cost_bitstring_is_tolerated() -> None:
 def test_unsorted_costs_is_invalid(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[0, 1], [1, 0]], dtype=np.int8),
-        costs=np.asarray([2.0, 1.0], dtype=np.float64),
+        costs=np.asarray([2.0, 1.0]),
         counts=np.asarray([1, 1], dtype=np.int64),
-        probabilities=np.asarray([0.5, 0.5], dtype=np.float64),
+        probabilities=np.asarray([0.5, 0.5]),
     )
     _assert_invalid(solution, instance)
 
@@ -175,9 +175,9 @@ def test_unsorted_costs_is_invalid(instance: Instance) -> None:
 def test_duplicate_bitstrings_is_invalid(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [1, 0]], dtype=np.int8),
-        costs=np.asarray([1.0, 1.0], dtype=np.float64),
+        costs=np.asarray([1.0, 1.0]),
         counts=np.asarray([1, 1], dtype=np.int64),
-        probabilities=np.asarray([0.5, 0.5], dtype=np.float64),
+        probabilities=np.asarray([0.5, 0.5]),
     )
     _assert_invalid(solution, instance)
 
@@ -185,9 +185,9 @@ def test_duplicate_bitstrings_is_invalid(instance: Instance) -> None:
 def test_non_positive_counts_is_invalid(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([0, 1], dtype=np.int64),
-        probabilities=np.asarray([0.0, 1.0], dtype=np.float64),
+        probabilities=np.asarray([0.0, 1.0]),
     )
     _assert_invalid(solution, instance)
 
@@ -195,9 +195,9 @@ def test_non_positive_counts_is_invalid(instance: Instance) -> None:
 def test_probabilities_inconsistent_with_counts_is_invalid(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([3, 1], dtype=np.int64),
-        probabilities=np.asarray([0.5, 0.5], dtype=np.float64),
+        probabilities=np.asarray([0.5, 0.5]),
     )
     _assert_invalid(solution, instance)
 
@@ -205,9 +205,9 @@ def test_probabilities_inconsistent_with_counts_is_invalid(instance: Instance) -
 def test_non_binary_bitstrings_is_invalid(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([1, 1], dtype=np.int64),
-        probabilities=np.asarray([0.5, 0.5], dtype=np.float64),
+        probabilities=np.asarray([0.5, 0.5]),
     )
     solution.bitstrings[0, 0] = 2
     _assert_invalid(solution, instance)
@@ -216,9 +216,9 @@ def test_non_binary_bitstrings_is_invalid(instance: Instance) -> None:
 def test_non_integer_counts_is_invalid(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([1, 1], dtype=np.int64),
-        probabilities=np.asarray([0.5, 0.5], dtype=np.float64),
+        probabilities=np.asarray([0.5, 0.5]),
     )
     solution.counts = np.array([1.5, 1.5])
     _assert_invalid(solution, instance)
@@ -227,9 +227,9 @@ def test_non_integer_counts_is_invalid(instance: Instance) -> None:
 def test_deduplicate_sums_counts_for_duplicate_bitstrings(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1], [1, 0]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0, 1.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0, 1.0]),
         counts=np.asarray([2, 1, 3], dtype=np.int64),
-        probabilities=np.asarray([1 / 3, 1 / 6, 1 / 2], dtype=np.float64),
+        probabilities=np.asarray([1 / 3, 1 / 6, 1 / 2]),
     )
     solution.deduplicate()
     _assert_valid(solution, instance)
@@ -251,9 +251,9 @@ def test_deduplicate_sums_counts_for_duplicate_bitstrings(instance: Instance) ->
 def test_deduplicate_update_false_skips_sort_and_probabilities() -> None:
     solution = Solution(
         bitstrings=np.asarray([[0, 1], [1, 0], [1, 0]], dtype=np.int8),
-        costs=np.asarray([2.0, 1.0, 1.0], dtype=np.float64),
+        costs=np.asarray([2.0, 1.0, 1.0]),
         counts=np.asarray([1, 2, 3], dtype=np.int64),
-        probabilities=np.asarray([1 / 6, 1 / 3, 1 / 2], dtype=np.float64),
+        probabilities=np.asarray([1 / 6, 1 / 3, 1 / 2]),
     )
     solution.deduplicate(update=False)
     assert len(solution) == 2
@@ -301,9 +301,9 @@ def test_deduplicate_keeps_first_appearance_order_for_ties(update: bool) -> None
     rows = distinct + distinct
     solution = Solution(
         bitstrings=np.asarray(rows, dtype=np.int8),
-        costs=np.zeros(len(rows), dtype=np.float64),
+        costs=np.zeros(len(rows)),
         counts=np.ones(len(rows), dtype=np.int64),
-        probabilities=np.full(len(rows), 1.0 / len(rows), dtype=np.float64),
+        probabilities=np.full(len(rows), 1.0 / len(rows)),
     )
     solution.deduplicate(update=update)
 
@@ -318,9 +318,9 @@ def test_deduplicate_keeps_first_appearance_order_for_ties(update: bool) -> None
 def test_deduplicate_keeps_minimum_cost_for_duplicate_bitstrings() -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [1, 0], [1, 0]], dtype=np.int8),
-        costs=np.asarray([3.0, 1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([3.0, 1.0, 2.0]),
         counts=np.asarray([1, 1, 1], dtype=np.int64),
-        probabilities=np.asarray([1 / 3, 1 / 3, 1 / 3], dtype=np.float64),
+        probabilities=np.asarray([1 / 3, 1 / 3, 1 / 3]),
     )
     solution.deduplicate()
     assert len(solution) == 1
@@ -334,9 +334,9 @@ def test_deduplicate_keeps_minimum_cost_for_duplicate_bitstrings() -> None:
 def test_deduplicate_no_duplicates_is_noop(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([3, 1], dtype=np.int64),
-        probabilities=np.asarray([0.75, 0.25], dtype=np.float64),
+        probabilities=np.asarray([0.75, 0.25]),
     )
     solution.deduplicate()
     _assert_valid(solution, instance)
@@ -379,7 +379,7 @@ def test_deduplicate_empty_solution_is_noop() -> None:
 def test_deduplicate_missing_counts_is_invalid() -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1], [1, 0]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0, 1.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0, 1.0]),
     )
     with pytest.raises(AssertionError):
         solution.deduplicate()
@@ -397,15 +397,15 @@ def test_deduplicate_missing_costs_is_invalid() -> None:
 def test_concat_disjoint_bitstrings_concatenates(instance: Instance) -> None:
     a = Solution(
         bitstrings=np.asarray([[1, 0]], dtype=np.int8),
-        costs=np.asarray([1.0], dtype=np.float64),
+        costs=np.asarray([1.0]),
         counts=np.asarray([3], dtype=np.int64),
-        probabilities=np.asarray([1.0], dtype=np.float64),
+        probabilities=np.asarray([1.0]),
     )
     b = Solution(
         bitstrings=np.asarray([[0, 1]], dtype=np.int8),
-        costs=np.asarray([2.0], dtype=np.float64),
+        costs=np.asarray([2.0]),
         counts=np.asarray([1], dtype=np.int64),
-        probabilities=np.asarray([1.0], dtype=np.float64),
+        probabilities=np.asarray([1.0]),
     )
     concatenated = Solution.concat([a, b]).deduplicate()
     _assert_valid(concatenated, instance)
@@ -427,21 +427,21 @@ def test_concat_disjoint_bitstrings_concatenates(instance: Instance) -> None:
 def test_concat_three_solutions(instance: Instance) -> None:
     a = Solution(
         bitstrings=np.asarray([[1, 0]], dtype=np.int8),
-        costs=np.asarray([1.0], dtype=np.float64),
+        costs=np.asarray([1.0]),
         counts=np.asarray([3], dtype=np.int64),
-        probabilities=np.asarray([1.0], dtype=np.float64),
+        probabilities=np.asarray([1.0]),
     )
     b = Solution(
         bitstrings=np.asarray([[0, 1]], dtype=np.int8),
-        costs=np.asarray([2.0], dtype=np.float64),
+        costs=np.asarray([2.0]),
         counts=np.asarray([1], dtype=np.int64),
-        probabilities=np.asarray([1.0], dtype=np.float64),
+        probabilities=np.asarray([1.0]),
     )
     c = Solution(
         bitstrings=np.asarray([[1, 0]], dtype=np.int8),
-        costs=np.asarray([1.0], dtype=np.float64),
+        costs=np.asarray([1.0]),
         counts=np.asarray([2], dtype=np.int64),
-        probabilities=np.asarray([1.0], dtype=np.float64),
+        probabilities=np.asarray([1.0]),
     )
     concatenated = Solution.concat([a, b, c]).deduplicate()
     _assert_valid(concatenated, instance)
@@ -463,15 +463,15 @@ def test_concat_three_solutions(instance: Instance) -> None:
 def test_concat_keeps_duplicate_bitstrings_as_separate_rows(instance: Instance) -> None:
     a = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([3, 1], dtype=np.int64),
-        probabilities=np.asarray([0.75, 0.25], dtype=np.float64),
+        probabilities=np.asarray([0.75, 0.25]),
     )
     b = Solution(
         bitstrings=np.asarray([[1, 0]], dtype=np.int8),
-        costs=np.asarray([1.0], dtype=np.float64),
+        costs=np.asarray([1.0]),
         counts=np.asarray([2], dtype=np.int64),
-        probabilities=np.asarray([1.0], dtype=np.float64),
+        probabilities=np.asarray([1.0]),
     )
     concatenated = Solution.concat([a, b])
     check.equal(len(concatenated), 3)
@@ -483,15 +483,15 @@ def test_concat_then_deduplicate_sums_counts_for_overlapping_bitstrings(
 ) -> None:
     a = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([3, 1], dtype=np.int64),
-        probabilities=np.asarray([0.75, 0.25], dtype=np.float64),
+        probabilities=np.asarray([0.75, 0.25]),
     )
     b = Solution(
         bitstrings=np.asarray([[1, 0]], dtype=np.int8),
-        costs=np.asarray([1.0], dtype=np.float64),
+        costs=np.asarray([1.0]),
         counts=np.asarray([2], dtype=np.int64),
-        probabilities=np.asarray([1.0], dtype=np.float64),
+        probabilities=np.asarray([1.0]),
     )
     merged = Solution.concat([a, b]).deduplicate()
     _assert_valid(merged, instance)
@@ -513,15 +513,15 @@ def test_concat_then_deduplicate_sums_counts_for_overlapping_bitstrings(
 def test_concat_unit_counts_sets_counts_to_one_before_dedup(instance: Instance) -> None:
     a = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([3, 7], dtype=np.int64),
-        probabilities=np.asarray([3 / 10, 7 / 10], dtype=np.float64),
+        probabilities=np.asarray([3 / 10, 7 / 10]),
     )
     b = Solution(
         bitstrings=np.asarray([[1, 0]], dtype=np.int8),
-        costs=np.asarray([1.0], dtype=np.float64),
+        costs=np.asarray([1.0]),
         counts=np.asarray([99], dtype=np.int64),
-        probabilities=np.asarray([1.0], dtype=np.float64),
+        probabilities=np.asarray([1.0]),
     )
     merged = Solution.concat([a, b], unit_counts=True).deduplicate()
     _assert_valid(merged, instance)
@@ -539,12 +539,8 @@ def test_concat_unit_counts_sets_counts_to_one_before_dedup(instance: Instance) 
 
 
 def test_concat_unit_counts_without_counts_is_invalid() -> None:
-    a = Solution(
-        bitstrings=np.asarray([[1, 0]], dtype=np.int8), costs=np.asarray([1.0], dtype=np.float64)
-    )
-    b = Solution(
-        bitstrings=np.asarray([[0, 1]], dtype=np.int8), costs=np.asarray([2.0], dtype=np.float64)
-    )
+    a = Solution(bitstrings=np.asarray([[1, 0]], dtype=np.int8), costs=np.asarray([1.0]))
+    b = Solution(bitstrings=np.asarray([[0, 1]], dtype=np.int8), costs=np.asarray([2.0]))
     with pytest.raises(AssertionError):
         Solution.concat([a, b], unit_counts=True)
 
@@ -552,15 +548,15 @@ def test_concat_unit_counts_without_counts_is_invalid() -> None:
 def test_concat_accepts_generator(instance: Instance) -> None:
     a = Solution(
         bitstrings=np.asarray([[1, 0]], dtype=np.int8),
-        costs=np.asarray([1.0], dtype=np.float64),
+        costs=np.asarray([1.0]),
         counts=np.asarray([3], dtype=np.int64),
-        probabilities=np.asarray([1.0], dtype=np.float64),
+        probabilities=np.asarray([1.0]),
     )
     b = Solution(
         bitstrings=np.asarray([[0, 1]], dtype=np.int8),
-        costs=np.asarray([2.0], dtype=np.float64),
+        costs=np.asarray([2.0]),
         counts=np.asarray([1], dtype=np.int64),
-        probabilities=np.asarray([1.0], dtype=np.float64),
+        probabilities=np.asarray([1.0]),
     )
     concatenated = Solution.concat(s for s in (a, b)).deduplicate()
     _assert_valid(concatenated, instance)
@@ -595,9 +591,9 @@ def test_concat_empty_sequence_is_empty() -> None:
 def test_concat_one_empty_returns_other(instance: Instance, empty_first: bool) -> None:
     nonempty = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([3, 1], dtype=np.int64),
-        probabilities=np.asarray([0.75, 0.25], dtype=np.float64),
+        probabilities=np.asarray([0.75, 0.25]),
     )
     a, b = (Solution(), nonempty) if empty_first else (nonempty, Solution())
     concatenated = Solution.concat([a, b])
@@ -624,7 +620,7 @@ def test_concat_mixed_populated_and_empty_costs_raises() -> None:
     )
     b = Solution(
         bitstrings=np.asarray([[0, 1]], dtype=np.int8),
-        costs=np.asarray([1.5], dtype=np.float64),
+        costs=np.asarray([1.5]),
         counts=np.asarray([3], dtype=np.int64),
     )
     with pytest.raises(AssertionError):
@@ -634,9 +630,9 @@ def test_concat_mixed_populated_and_empty_costs_raises() -> None:
 def test_truncate_keeps_first_k_rows(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([3, 1], dtype=np.int64),
-        probabilities=np.asarray([0.75, 0.25], dtype=np.float64),
+        probabilities=np.asarray([0.75, 0.25]),
     )
     solution.truncate(1)
     _assert_valid(solution, instance)
@@ -652,9 +648,9 @@ def test_truncate_keeps_first_k_rows(instance: Instance) -> None:
 def test_truncate_recomputes_probabilities_from_counts() -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1], [0, 0]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0, 3.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0, 3.0]),
         counts=np.asarray([3, 1, 4], dtype=np.int64),
-        probabilities=np.asarray([3 / 8, 1 / 8, 4 / 8], dtype=np.float64),
+        probabilities=np.asarray([3 / 8, 1 / 8, 4 / 8]),
     )
     solution.truncate(2)
     assert len(solution) == 2
@@ -665,9 +661,9 @@ def test_truncate_recomputes_probabilities_from_counts() -> None:
 def test_truncate_k_greater_than_len_is_noop(instance: Instance) -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([3, 1], dtype=np.int64),
-        probabilities=np.asarray([0.75, 0.25], dtype=np.float64),
+        probabilities=np.asarray([0.75, 0.25]),
     )
     solution.truncate(10)
     _assert_valid(solution, instance)
@@ -690,7 +686,7 @@ def test_truncate_empty_solution_is_noop() -> None:
 def test_truncate_probabilities_without_counts_raises() -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1], [0, 0]], dtype=np.int8),
-        probabilities=np.asarray([0.375, 0.125, 0.5], dtype=np.float64),
+        probabilities=np.asarray([0.375, 0.125, 0.5]),
     )
     with pytest.raises(AssertionError):
         solution.truncate(2)
@@ -703,23 +699,19 @@ def test_compute_costs_mutates_in_place(instance: Instance) -> None:
     )
     result = solution._compute_costs(instance.matrix)
     check.is_(result, solution)
-    np.testing.assert_allclose(
-        solution.costs, np.asarray([2.0, 1.0], dtype=np.float64), strict=True
-    )
+    np.testing.assert_allclose(solution.costs, np.asarray([2.0, 1.0]), strict=True)
 
 
 def test_sort_by_cost_mutates_in_place() -> None:
     solution = Solution(
         bitstrings=np.asarray([[0, 1], [1, 0]], dtype=np.int8),
-        costs=np.asarray([2.0, 1.0], dtype=np.float64),
+        costs=np.asarray([2.0, 1.0]),
         counts=np.asarray([1, 3], dtype=np.int64),
-        probabilities=np.asarray([0.25, 0.75], dtype=np.float64),
+        probabilities=np.asarray([0.25, 0.75]),
     )
     result = solution._sort_by_cost()
     check.is_(result, solution)
-    np.testing.assert_allclose(
-        solution.costs, np.asarray([1.0, 2.0], dtype=np.float64), strict=True
-    )
+    np.testing.assert_allclose(solution.costs, np.asarray([1.0, 2.0]), strict=True)
     np.testing.assert_allclose(
         solution.bitstrings, np.asarray([[1, 0], [0, 1]], dtype=np.int8), rtol=0, strict=True
     )
@@ -728,14 +720,12 @@ def test_sort_by_cost_mutates_in_place() -> None:
 def test_compute_probabilities_mutates_in_place() -> None:
     solution = Solution(
         bitstrings=np.asarray([[0, 1], [1, 0]], dtype=np.int8),
-        costs=np.asarray([2.0, 1.0], dtype=np.float64),
+        costs=np.asarray([2.0, 1.0]),
         counts=np.asarray([1, 3], dtype=np.int64),
     )
     result = solution._compute_probabilities()
     check.is_(result, solution)
-    np.testing.assert_allclose(
-        solution.probabilities, np.asarray([0.25, 0.75], dtype=np.float64), strict=True
-    )
+    np.testing.assert_allclose(solution.probabilities, np.asarray([0.25, 0.75]), strict=True)
 
 
 def test_update_mutates_in_place(instance: Instance) -> None:
@@ -748,15 +738,11 @@ def test_update_mutates_in_place(instance: Instance) -> None:
     np.testing.assert_allclose(
         solution.bitstrings, np.asarray([[1, 0], [0, 1]], dtype=np.int8), rtol=0, strict=True
     )
-    np.testing.assert_allclose(
-        solution.costs, np.asarray([1.0, 2.0], dtype=np.float64), strict=True
-    )
+    np.testing.assert_allclose(solution.costs, np.asarray([1.0, 2.0]), strict=True)
     np.testing.assert_allclose(
         solution.counts, np.asarray([3, 1], dtype=np.int64), rtol=0, strict=True
     )
-    np.testing.assert_allclose(
-        solution.probabilities, np.asarray([0.75, 0.25], dtype=np.float64), strict=True
-    )
+    np.testing.assert_allclose(solution.probabilities, np.asarray([0.75, 0.25]), strict=True)
 
 
 def test_update_computes_costs_sorts_and_computes_probabilities(instance: Instance) -> None:
@@ -788,15 +774,11 @@ def test_update_with_unit_counts_on_bare_bitstrings(instance: Instance) -> None:
     np.testing.assert_allclose(
         solution.bitstrings, np.asarray([[1, 0], [0, 1]], dtype=np.int8), rtol=0, strict=True
     )
-    np.testing.assert_allclose(
-        solution.costs, np.asarray([1.0, 2.0], dtype=np.float64), strict=True
-    )
+    np.testing.assert_allclose(solution.costs, np.asarray([1.0, 2.0]), strict=True)
     np.testing.assert_allclose(
         solution.counts, np.asarray([1, 1], dtype=np.int64), rtol=0, strict=True
     )
-    np.testing.assert_allclose(
-        solution.probabilities, np.asarray([0.5, 0.5], dtype=np.float64), strict=True
-    )
+    np.testing.assert_allclose(solution.probabilities, np.asarray([0.5, 0.5]), strict=True)
 
 
 def test_update_without_counts_raises(instance: Instance) -> None:
@@ -823,9 +805,7 @@ def test_update_with_unit_counts_overwrites_existing_counts(instance: Instance) 
     np.testing.assert_allclose(
         solution.counts, np.asarray([1, 1], dtype=np.int64), rtol=0, strict=True
     )
-    np.testing.assert_allclose(
-        solution.probabilities, np.asarray([0.5, 0.5], dtype=np.float64), strict=True
-    )
+    np.testing.assert_allclose(solution.probabilities, np.asarray([0.5, 0.5]), strict=True)
 
 
 def test_update_with_unit_counts_on_empty_solution(instance: Instance) -> None:
@@ -839,9 +819,9 @@ def test_update_with_unit_counts_on_empty_solution(instance: Instance) -> None:
 def test_deepcopy_is_independent_of_original() -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([3, 1], dtype=np.int64),
-        probabilities=np.asarray([0.75, 0.25], dtype=np.float64),
+        probabilities=np.asarray([0.75, 0.25]),
     )
     cloned = copy.deepcopy(solution)
 
@@ -859,9 +839,9 @@ def test_deepcopy_is_independent_of_original() -> None:
 def test_save_load() -> None:
     solution = Solution(
         bitstrings=np.asarray([[1, 0], [0, 1]], dtype=np.int8),
-        costs=np.asarray([1.0, 2.0], dtype=np.float64),
+        costs=np.asarray([1.0, 2.0]),
         counts=np.asarray([3, 1], dtype=np.int64),
-        probabilities=np.asarray([0.75, 0.25], dtype=np.float64),
+        probabilities=np.asarray([0.75, 0.25]),
     )
 
     buffer = io.BytesIO()
@@ -932,7 +912,7 @@ def test_zeros_custom_count() -> None:
 
 
 def test_zeros_is_valid_against_matching_instance() -> None:
-    Q = np.asarray([[1.0, -1.0], [-1.0, 2.0]], dtype=np.float64)
+    Q = np.asarray([[1.0, -1.0], [-1.0, 2.0]])
     instance = Instance(matrix=Q)
     _assert_valid(Solution.zeros(2), instance)
 
@@ -947,11 +927,11 @@ def test_zeros_length_zero() -> None:
 def test_concat_mixed_populated_and_empty_counts_raises() -> None:
     a = Solution(
         bitstrings=np.asarray([[1, 0]], dtype=np.int8),
-        costs=np.asarray([1.0], dtype=np.float64),
+        costs=np.asarray([1.0]),
     )
     b = Solution(
         bitstrings=np.asarray([[0, 1]], dtype=np.int8),
-        costs=np.asarray([1.5], dtype=np.float64),
+        costs=np.asarray([1.5]),
         counts=np.asarray([3], dtype=np.int64),
     )
     with pytest.raises(AssertionError):
@@ -963,7 +943,7 @@ def test_parse_results() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"001": 10, "110": 5, "010": 3}
 
-    solution = Solution.from_results(mock_result, Instance(np.zeros((3, 3), dtype=np.float64)))
+    solution = Solution.from_results(mock_result, Instance(np.zeros((3, 3))))
 
     expected_bitstrings = np.asarray([[0, 0, 1], [1, 1, 0], [0, 1, 0]], dtype=np.int8)
     expected_counts = np.asarray([10, 5, 3], dtype=np.int64)
@@ -990,7 +970,7 @@ def test_parse_results_binary_string_conversion() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"0101": 8, "1010": 12, "1111": 4}
 
-    solution = Solution.from_results(mock_result, Instance(np.zeros((4, 4), dtype=np.float64)))
+    solution = Solution.from_results(mock_result, Instance(np.zeros((4, 4))))
 
     expected_bitstrings = np.asarray([[0, 1, 0, 1], [1, 0, 1, 0], [1, 1, 1, 1]], dtype=np.int8)
     expected_counts = np.asarray([8, 12, 4], dtype=np.int64)
@@ -1004,7 +984,7 @@ def test_parse_results_single_bitstring() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"101": 25}
 
-    solution = Solution.from_results(mock_result, Instance(np.zeros((3, 3), dtype=np.float64)))
+    solution = Solution.from_results(mock_result, Instance(np.zeros((3, 3))))
 
     expected_bitstrings = np.asarray([[1, 0, 1]], dtype=np.int8)
     expected_counts = np.asarray([25], dtype=np.int64)
@@ -1018,7 +998,7 @@ def test_parse_results_string_counts_to_integer_tensor() -> None:
     mock_result = Mock(spec=Results)
     mock_result.final_bitstrings = {"101": "15", "010": "8", "111": "12"}
 
-    solution = Solution.from_results(mock_result, Instance(np.zeros((3, 3), dtype=np.float64)))
+    solution = Solution.from_results(mock_result, Instance(np.zeros((3, 3))))
 
     expected_bitstrings = np.asarray([[1, 0, 1], [0, 1, 0], [1, 1, 1]], dtype=np.int8)
     expected_counts = np.asarray([15, 8, 12], dtype=np.int64)

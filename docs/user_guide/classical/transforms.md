@@ -23,7 +23,7 @@ import numpy as np
 
 from qubosolver import Instance, transforms, solving, bitstrings
 
-instance = Instance(np.asarray([[-2.0, 1.0], [1.0, -2.0]], dtype=np.float64))
+instance = Instance(np.asarray([[-2.0, 1.0], [1.0, -2.0]]))
 
 reduced_instance = transforms.variable_fixing.apply_recursively(instance)
 reduced_solution = solving.brute_force.solve(reduced_instance)
@@ -76,7 +76,7 @@ import numpy as np
 
 from qubosolver import Instance, transforms, solving, bitstrings
 
-Q = Instance(np.asarray([[-2.0, 1.0], [1.0, -2.0]], dtype=np.float64))
+Q = Instance(np.asarray([[-2.0, 1.0], [1.0, -2.0]]))
 
 reduced = transforms.variable_fixing.apply_recursively(Q)
 reduced_solution = solving.brute_force.solve(reduced)
@@ -130,8 +130,7 @@ Q_hard = Instance(
             [-2.0, 0.0, -2.0, 1.0],
             [1.0, -2.0, 0.0, -2.0],
             [1.0, 1.0, -2.0, 0.0],
-        ],
-        dtype=np.float64,
+        ]
     )
 )
 
@@ -171,8 +170,7 @@ Q_hard = Instance(
             [-2.0, 0.0, -2.0, 1.0],
             [1.0, -2.0, 0.0, -2.0],
             [1.0, 1.0, -2.0, 0.0],
-        ],
-        dtype=np.float64,
+        ]
     )
 )
 

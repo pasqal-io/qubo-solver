@@ -73,7 +73,7 @@ import numpy as np
 import qoolqit
 from qubosolver import Instance, LocalEmulator, embedding, solving
 
-Q = np.asarray([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]], dtype=np.float64)
+Q = np.asarray([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
 
 instance = Instance(Q)
 device = qoolqit.AnalogDeviceWithDMM()

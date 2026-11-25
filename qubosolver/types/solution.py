@@ -660,6 +660,6 @@ class Solution:
         return Solution(
             bitstrings=np.zeros((1, length), dtype=np.int8),
             counts=np.asarray([count], dtype=np.int64),
-            probabilities=np.asarray([1.0], dtype=np.float64),
-            costs=np.asarray([0.0], dtype=np.float64),
+            probabilities=np.asarray([1.0]),
+            costs=np.asarray([0.0]),
         )

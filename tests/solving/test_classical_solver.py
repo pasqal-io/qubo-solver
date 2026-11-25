@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def test_random() -> None:
-    Q = np.asarray([[1.0, 0.0], [0.0, 1.0]], dtype=np.float64)
+    Q = np.asarray([[1.0, 0.0], [0.0, 1.0]])
     instance = Instance(matrix=Q)
 
     # Solve the QUBO problem.
