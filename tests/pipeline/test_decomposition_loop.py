@@ -31,7 +31,7 @@ def _random_qubo(n: int, density: float, seed: int) -> Instance:
     gen = numpy_rng(seed)
     upper = np.triu(20 * gen.random((n, n)) * (gen.random((n, n)) < density), k=1)
     Q = upper + upper.T - np.diag(100 * gen.random(n))
-    return Instance(np.asarray(Q, dtype=np.float64))
+    return Instance(Q)
 
 
 @pytest.fixture
@@ -117,7 +117,7 @@ def test_classical_loop_with_a_zero_diagonal_coefficient() -> None:
     Q = upper + upper.T
     np.fill_diagonal(Q, -10.0)
     Q[0, 0] = 0.0
-    instance = Instance(np.asarray(Q, dtype=np.float64))
+    instance = Instance(Q)
     device = qoolqit.AnalogDeviceWithDMM()
 
     reduced = variable_fixing.apply_recursively(instance)

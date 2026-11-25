@@ -188,7 +188,7 @@ manual_seed(10)
 n = 50
 upper = np.triu(20 * np.random.rand(n, n) * (np.random.rand(n, n) < 0.5), k=1)
 Q = upper + upper.T - np.diag(100 * np.random.rand(n))
-instance = Instance(np.asarray(Q, dtype=np.float64))
+instance = Instance(Q)
 
 device = qoolqit.AnalogDeviceWithDMM()
 backend = LocalEmulator(num_shots=1000)
@@ -239,7 +239,7 @@ manual_seed(10)
 n = 50
 upper = np.triu(20 * np.random.rand(n, n) * (np.random.rand(n, n) < 0.3), k=1)
 Q = upper + upper.T - np.diag(100 * np.random.rand(n))
-instance = Instance(np.asarray(Q, dtype=np.float64))
+instance = Instance(Q)
 
 # Pre-process to fix variables with positive linear weight
 reduced_instance = variable_fixing.apply_recursively(instance)
