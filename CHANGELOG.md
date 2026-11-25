@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Record variable fixings in original indices: `fixed_history` and `fixed_variables` replace `fixed_indices` and `n_fixed_indices`, and the save/load format changes accordingly, with no backward compatibility. ([#352](https://github.com/pasqal-io/qubo-solver/pull/352))
 - Hansen fixing uses a margin relative to the magnitude of the coefficients instead of an absolute 1e-8, so the fixed variables no longer depend on the scale of the matrix. It is also much faster on large instances. ([#355](https://github.com/pasqal-io/qubo-solver/pull/355))
 - The blade and greedy layout embedders raise `ValueError` on diagonal instances with at least 2 variables, which have no coupling to reproduce; use `trivial_solution_search.solve` instead. Blade always starts from MDS unless `starting_positions` is set. ([#361](https://github.com/pasqal-io/qubo-solver/pull/361))
-- Require `qoolqit>=1.6.0,<1.7` and cap the other runtime and extras dependencies at their next major version. ([#360](https://github.com/pasqal-io/qubo-solver/pull/360))
+- Require `qoolqit>=1.7.0,<1.8` and cap the other runtime and extras dependencies at their next major version. ([#360](https://github.com/pasqal-io/qubo-solver/pull/360), [#376](https://github.com/pasqal-io/qubo-solver/pull/376))
 - Ship only the package, changelog and citation in the source distribution. ([#360](https://github.com/pasqal-io/qubo-solver/pull/360))
 
 ### Removed

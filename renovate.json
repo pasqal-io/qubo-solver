@@ -24,13 +24,13 @@
 
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["* 4-5 * * 1,3,5"],
+    "schedule": ["every weekend"],
     "minimumReleaseAge": null
   },
 
   "packageRules": [
     {
-      "description": "Runtime and extras dependencies are capped (e.g. numpy<3, qoolqit<1.7). 'widen' raises the cap and keeps the old versions supported (numpy>=2,<3 becomes numpy>=2,<4). Renovate forbids rangeStrategy in rules that use matchUpdateTypes, so it gets its own rule.",
+      "description": "Runtime and extras dependencies are capped (e.g. numpy<3, qoolqit<1.8). 'widen' raises the cap and keeps the old versions supported (numpy>=2,<3 becomes numpy>=2,<4). Renovate forbids rangeStrategy in rules that use matchUpdateTypes, so it gets its own rule.",
       "matchManagers": ["pep621"],
       "matchDepTypes": ["project.dependencies", "project.optional-dependencies"],
       "rangeStrategy": "widen"
@@ -59,12 +59,31 @@
       "enabled": true
     },
     {
-      "description": "qoolqit is capped at the next minor (qoolqit>=1.6.0,<1.7): also propose raising the cap for new minors. No release-age wait, like its uv cooldown exemption.",
+      "description": "qoolqit is capped at the next minor (qoolqit>=1.7.0,<1.8): also propose raising the cap for new minors. No release-age wait, like its uv cooldown exemption.",
       "matchManagers": ["pep621"],
       "matchPackageNames": ["qoolqit"],
       "matchUpdateTypes": ["major", "minor"],
       "minimumReleaseAge": null,
       "enabled": true
-    }
-  ]
+    },
+    {
+      "description": "One PR per tool: the zizmor hook (whose version CI reads) and zizmor-action. Required: zizmor-action only runs versions it ships a lockfile for.",
+      "matchDepNames": ["zizmorcore/zizmor-pre-commit", "zizmorcore/zizmor-action"],
+      "groupName": "zizmor"
+    },
+    {
+      "description": "One PR per tool: setup-uv and the uv version it installs.",
+      "matchDepNames": ["astral-sh/setup-uv", "astral-sh/uv"],
+      "groupName": "uv"
+    },
+    {
+      "description": "One PR per tool: trivy-action and the trivy version it runs.",
+      "matchDepNames": ["aquasecurity/trivy-action", "aquasecurity/trivy"],
+      "groupName": "trivy"
+    },
+    {
+      "description": "One PR per tool: the betterleaks hook (whose version CI reads) and betterleaks-action.",
+      "matchDepNames": ["betterleaks/betterleaks", "dortort/betterleaks-action"],
+      "groupName": "betterleaks"
+    }  ]
 }
