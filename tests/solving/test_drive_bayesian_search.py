@@ -19,6 +19,7 @@ from qoolqit.register import Register
 
 from qubosolver import Candidate, Instance, LocalEmulator, Solution, solving
 from qubosolver.utils import analysis
+from qubosolver.utils._random import manual_seed
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -55,7 +56,7 @@ def probability_based_ojective(
 @pytest.mark.parametrize("use_probability_based_objective", [True, False])
 def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective: bool) -> None:
 
-    np.random.seed(seed)
+    manual_seed(seed)
 
     spacing = 1.1
 
@@ -128,7 +129,7 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
 @pytest.mark.parametrize("use_probability_based_objective", [True, False])
 def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> None:
 
-    np.random.seed(seed)
+    manual_seed(seed)
 
     spacing = 1.5
 

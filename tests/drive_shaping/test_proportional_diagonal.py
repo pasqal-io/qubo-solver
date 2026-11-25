@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import logging
-import random
 import re
 
 import numpy as np
@@ -25,6 +24,7 @@ from qubosolver import (
     solving,
 )
 from qubosolver.utils import analysis
+from qubosolver.utils._random import manual_seed
 
 
 def gather_optimal_solutions(
@@ -46,9 +46,7 @@ def test_with_perfect_embedding(
     diagonal_scale: float,
 ) -> None:
 
-    random.seed(seed)
-    np.random.seed(seed)
-    np.random.seed(seed)
+    manual_seed(seed)
 
     sqrt3 = np.sqrt(3.0)
     vertices = np.asarray(

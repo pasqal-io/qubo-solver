@@ -21,6 +21,7 @@ from qubosolver.solving.classical.iterative_bitflip_local_search import (
     _best_improvement_search_batch,
 )
 from qubosolver.utils import _costs
+from qubosolver.utils._random import manual_seed
 
 
 def test_basic_qubo_2d() -> None:
@@ -59,7 +60,7 @@ def test_random_qubos(density: float) -> None:
 
     for seed in [545, 87, 89993]:
         dataset = Dataset.from_random(1, size, densities=[density], rng=numpy_rng(seed))
-        np.random.seed(seed)
+        manual_seed(seed)
         for instance, _ in dataset:
             bitstring_ = (np.random.rand(size) > 0.5).astype(np.int8)
             cost = instance.cost(bitstring_)

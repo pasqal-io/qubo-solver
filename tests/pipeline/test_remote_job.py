@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import io
-import random
 from typing import TYPE_CHECKING, Literal, get_args
 
 import numpy as np
@@ -33,6 +32,7 @@ from qubosolver import (
     transforms,
 )
 from qubosolver.utils import analysis
+from qubosolver.utils._random import manual_seed
 
 if TYPE_CHECKING:
     from mock.connection import MockConnection
@@ -126,9 +126,7 @@ def test_quantum_remote_job(
         pytest.skip(reason="Does not work with the Bayesian-search drive shaping method")
 
     seed = 7979
-    np.random.seed(seed)
-    np.random.seed(seed)
-    random.seed(seed)
+    manual_seed(seed)
 
     Q = np.asarray(
         [

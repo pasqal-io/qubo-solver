@@ -5,8 +5,6 @@
 
 from __future__ import annotations
 
-import random
-
 import numpy as np
 import pytest
 import pytest_check as check
@@ -20,16 +18,10 @@ from qubosolver import (
     drive_shaping,
     embedding,
     extract_qubo,
-    numpy_rng,
     solving,
 )
 from qubosolver.utils import analysis
-
-
-def manual_seed(seed: int) -> np.random.Generator:
-    np.random.seed(seed)
-    random.seed(seed)
-    return numpy_rng(seed)
+from qubosolver.utils._random import manual_seed
 
 
 def gather_optimal_solutions(solutions: Solution) -> list[Candidate]:

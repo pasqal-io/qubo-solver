@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import itertools
-import random
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -21,11 +20,11 @@ from qubosolver import (
     Solution,
     drive_shaping,
     embedding,
-    numpy_rng,
     solving,
     transforms,
 )
 from qubosolver.utils import analysis
+from qubosolver.utils._random import manual_seed
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -81,12 +80,6 @@ def simple_qubo() -> tuple[Instance, list[Candidate]]:
     print(f"Number of expected optimal solutions: {len(expected_optimal_solutions)}\n")
 
     return Instance(matrix=Q), expected_optimal_solutions
-
-
-def manual_seed(seed: int) -> np.random.Generator:
-    np.random.seed(seed)
-    random.seed(seed)
-    return numpy_rng(seed)
 
 
 def check_solution(
