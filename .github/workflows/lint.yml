@@ -28,9 +28,12 @@ jobs:
         - name: Install uv
           uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
           with:
-            version: 0.13.6
+            version: 0.13.9
             python-version: ${{ matrix.python-version }}
             enable-cache: true
         - name: Check files and lint
+          env:
+            # Needs origin/main, absent from this shallow clone; betterleaks.yml scans the full history.
+            SKIP: betterleaks-branch
           run: |
             uv run --no-default-groups --group dev --group cpu prek run --all-files

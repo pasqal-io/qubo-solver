@@ -43,7 +43,7 @@ dependencies = [
   "pandas<4",
   "seaborn<1",
   "scikit-optimize<1",
-  "qoolqit[extras]>=1.6.0,<1.7",  # Capped at the next minor, not major
+  "qoolqit[extras]>=1.7.0,<1.8",  # Capped at the next minor, not major
   "shapely<3",
   "scipy<2",
   "pasqal-cloud<1",
@@ -72,11 +72,13 @@ dev = [
   "matplotlib",
   "tqdm",
   "mypy",
+  "ruff>=0.17.4",
   "jaxtyping",
   "beartype>=0.23",
   "typing_extensions",
   "bandit[sarif,toml]>=1.9.4",
   "deptry",
+  "nb-clean>=6",
   "prek",
 ]
 doc = [
@@ -91,6 +93,7 @@ doc = [
   "mkdocs-macros-plugin",
   "mike",
   "python-markdown-math",
+  "ruff>=0.17.4",  # mkdocstrings formats the signatures with it
 ]
 # torch wheel selection (uv only, see [tool.uv.sources]):
 # plain `uv sync` installs the default PyPI wheels (CUDA on Linux), `uv sync --group cpu`
@@ -104,6 +107,9 @@ cuda = [
 ]
 
 [tool.uv]
+# Minimum uv version, so an outdated local uv doesn't rewrite uv.lock. CI pins the exact version
+# (setup-uv `version:`); raise this floor when a uv bump changes how uv.lock is written.
+required-version = ">=0.13.9"
 default-groups = ["dev", "doc"]
 conflicts = [[{ group = "cpu" }, { group = "cuda" }]]
 # Security floors on packages we only get through other packages. They limit the version when
