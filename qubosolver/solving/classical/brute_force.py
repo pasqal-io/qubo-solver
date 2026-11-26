@@ -59,11 +59,11 @@ def _decode_bits(indices: NDArray[np.int64], n: int) -> NDArray[np.int8]:
     Returns:
         A ``(len(indices), n)`` bitstrings array.
     """
-    # One column at a time, so the only temporary is a single int64 column, not (len, n).
-    out = np.empty((indices.shape[0], n), dtype=np.int8)
-    for j in range(n):
-        out[:, j] = (indices >> (n - 1 - j)) & 1
-    return out
+    # Big-endian bytes put the most-significant bit first; only the `nbytes` low-order
+    # bytes are unpacked, so the temporary is (len, n + 7) bits, not (len, 64).
+    nbytes = (n + 7) // 8
+    as_bytes = indices.astype(">u8").view(np.uint8).reshape(-1, 8)[:, 8 - nbytes :]
+    return np.unpackbits(as_bytes, axis=1)[:, nbytes * 8 - n :].astype(np.int8)
 
 
 def _stable_smallest(costs: NDArray[np.float64], k: int) -> NDArray[np.intp]:
