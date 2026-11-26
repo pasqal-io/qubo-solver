@@ -148,8 +148,7 @@ class Dataset:
         coefficients = np.zeros((matrix_dim, matrix_dim, total_instances))
 
         # Step 3: Generate matrices for each density.
-        idx = 0
-        for d in densities:
+        for k, d in enumerate(densities):
             target = int(d * matrix_dim * matrix_dim)
             for idx in range(n_matrices):
                 # generate mask
@@ -217,7 +216,8 @@ class Dataset:
                     if i_ch != j_ch:
                         coeff[j_ch, i_ch] = coefficient_bounds[1]
 
-                coefficients[:, :, idx] = coeff
+                # Density k fills slots [k * n_matrices, (k + 1) * n_matrices).
+                coefficients[:, :, k * n_matrices + idx] = coeff
 
         # Step 4: Return the dataset.
         return cls(matrices=coefficients, copy=False)

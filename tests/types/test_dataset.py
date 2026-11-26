@@ -203,3 +203,12 @@ def test_from_random_extreme_densities(density: float) -> None:
     dataset = Dataset.from_random(1, 3, densities=[density], rng=numpy_rng(445670878))
     instance, _ = dataset[0]
     check.equal(instance.size, 3)
+
+
+def test_from_random_keeps_each_density_in_its_own_slots() -> None:
+    # Matrices are laid out density by density: n_matrices slots per density, in order.
+    dataset = Dataset.from_random(2, 6, densities=(0.2, 1.0), rng=numpy_rng(3449876512))
+    densities = [_calculate_density(instance.matrix) for instance, _ in dataset]
+    check.equal(len(densities), 4)
+    for actual, expected in zip(densities, (0.2, 0.2, 1.0, 1.0), strict=True):
+        check.almost_equal(actual, expected, abs=0.1)

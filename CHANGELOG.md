@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Make Hansen fixing robust to rounding: in float32, near-ties between large coefficients could fix a variable to a value that excludes the optimum. ([#355](https://github.com/pasqal-io/qubo-solver/pull/355))
 - Make `negative_bitflip.apply` reject an unknown `method` when the instance has no negative off-diagonal coefficient: it used to return the instance unchanged. ([#354](https://github.com/pasqal-io/qubo-solver/pull/354))
 - Fix a factor-2 error in `embedding.partial_greedy`: a pair of variables blocked each other when Q_ij > -max(Q_ii, Q_jj) instead of -max(Q_ii, Q_jj) / 2, and the blocking radius was off by the same factor. ([#341](https://github.com/pasqal-io/qubo-solver/pull/341))
+- Make `Dataset.from_random` keep every density's matrices: with several `densities`, each density overwrote the previous one's matrices and the remaining slots were left as all-zero matrices (since 0.4.0). ([#379](https://github.com/pasqal-io/qubo-solver/pull/379))
 
 ## [0.10.0] - 2026-10-28
 
