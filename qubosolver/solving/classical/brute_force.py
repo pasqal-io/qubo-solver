@@ -66,7 +66,7 @@ def _decode_bits(indices: NDArray[np.int64], n: int) -> NDArray[np.int8]:
     return out
 
 
-def _stable_smallest(costs: NDArray[np.float64], k: int) -> np.ndarray:
+def _stable_smallest(costs: NDArray[np.float64], k: int) -> NDArray[np.intp]:
     """Indices of the ``k`` smallest `costs`, sorted, ties broken by lower index.
 
     Same result as ``np.argsort(costs, kind="stable")[:k]``, but only sorts the

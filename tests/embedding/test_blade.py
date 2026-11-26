@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 import pytest_check as check
@@ -12,6 +14,9 @@ import qoolqit
 
 from qubosolver import Instance
 from qubosolver.embedding import blade
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 def test_empty_embedding() -> None:
@@ -47,7 +52,7 @@ def test_embed_for_device_rejects_diagonal_instance() -> None:
 
 def captured_starting_positions(
     monkeypatch: pytest.MonkeyPatch, instance: Instance, config: blade.Config
-) -> np.ndarray | None:
+) -> NDArray[np.float64] | None:
     captured = {}
     real_blade = blade.Blade
 

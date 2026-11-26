@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-def quadratic_cost(x: np.ndarray, Q: NDArray[np.float64]) -> float:
+def quadratic_cost(x: NDArray[np.int8], Q: NDArray[np.float64]) -> float:
     """Compute the quadratic cost for a single binary vector under a QUBO matrix.
 
     The cost is defined as the quadratic form :math:`x^T Q x`.

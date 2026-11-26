@@ -103,7 +103,7 @@ class Greedy:
     # ----------------------------
     # Next node heuristic
     # ----------------------------
-    def _get_best(self, couplings: NDArray[np.float64], placed: np.ndarray) -> int:
+    def _get_best(self, couplings: NDArray[np.float64], placed: NDArray[np.bool_]) -> int:
         """Pick the next logical node: the unplaced one most coupled to the placed set.
 
         Args:
@@ -308,7 +308,7 @@ class Greedy:
     def _render_animation(  # noqa: C901, PLR0913, PLR0915, PLR0917 (viz setup, not worth splitting)  # pragma: no cover
         self,
         frames: list[dict[str, Any]],
-        all_coords_np: np.ndarray,
+        all_coords_np: NDArray[np.float64],
         spacing: float,
         top_k: int = 5,
         save_path: str | None = None,
@@ -561,7 +561,7 @@ class Greedy:
         max_min_dist_ratio: float,
         params: dict,
         on_step: Callable[[dict[str, Any]], None] | None = None,
-    ) -> tuple[Any, np.ndarray]:
+    ) -> tuple[Any, NDArray[np.float64]]:
         """Run greedy from each start node and keep the best result.
 
         Instrumentation rules:

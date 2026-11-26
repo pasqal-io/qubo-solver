@@ -6,12 +6,16 @@
 from __future__ import annotations
 
 import copy
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 import pytest_check as check
 
 from qubosolver import Instance, analysis, bitstrings, solving
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 instance = Instance(
     np.asarray(
@@ -136,7 +140,9 @@ def test_tabu_search_never_lets_f_current_go_inf(
     saw_all_tabu_iteration = False
     saw_inf_at_allowed_move = False
 
-    def spying_where(condition: np.ndarray, x: np.ndarray, y: float) -> np.ndarray:
+    def spying_where(
+        condition: NDArray[np.bool_], x: NDArray[np.float64], y: float
+    ) -> NDArray[np.float64]:
         nonlocal saw_all_tabu_iteration, saw_inf_at_allowed_move
         saw_inf_at_allowed_move |= bool(np.isinf(x[condition]).any())
         saw_all_tabu_iteration |= not condition.any()

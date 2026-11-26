@@ -5,11 +5,16 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 import pytest_check as check
 
 from qubosolver import numpy_rng
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 @pytest.mark.flaky(reruns=4)
@@ -28,7 +33,7 @@ def test_seeded_rngs_match() -> None:
 
 @pytest.mark.usefixtures("restore_rng_state")
 def test_global_rngs_follow_global_seed() -> None:
-    def draw() -> np.ndarray:
+    def draw() -> NDArray[np.int64]:
         return numpy_rng("global").integers(0, 2, (64,))
 
     np.random.seed(1)

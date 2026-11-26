@@ -21,8 +21,10 @@ from qubosolver.utils._random import manual_seed, register_seeded_magic, reset_s
 if TYPE_CHECKING:
     from collections.abc import Generator
 
+    from numpy.typing import NDArray
 
-def draw() -> tuple[float, float, np.ndarray]:
+
+def draw() -> tuple[float, float, NDArray[np.float64]]:
     return random.random(), np.random.rand(), numpy_rng("global").random(4)  # noqa: S311 (seeded test data, not cryptographic)
 
 

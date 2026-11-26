@@ -277,7 +277,7 @@ class Dataset:
         return Dataset(matrices, solutions, copy=False)
 
 
-def _generate_symmetric_mask(size: int, target: int, rng: np.random.Generator) -> np.ndarray:
+def _generate_symmetric_mask(size: int, target: int, rng: np.random.Generator) -> NDArray[np.bool_]:
     """Generate a symmetric boolean mask with exactly *target* ``True`` entries.
 
     The mask is used by :meth:`Dataset.from_random` to enforce an exact

@@ -83,7 +83,7 @@ class Instance(qubosolver.Instance):
         return instance
 
     @property
-    def zeroed_edges(self) -> np.ndarray:
+    def zeroed_edges(self) -> NDArray[np.int64]:
         """The zeroed interactions as an ``(N, 2)`` array of ``(i, j)`` index pairs.
 
         Each symmetric pair is reported once (``i < j``); ``N`` is the number of

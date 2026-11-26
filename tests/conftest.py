@@ -120,7 +120,7 @@ def generate_qubo_matrix(
         seed (int): Random seed for reproducibility.
 
     Returns:
-        np.ndarray: Qubo matrix.
+        NDArray[np.float64]: Qubo matrix.
     """
     np.random.seed(seed)
     matrix_ = np.zeros((size, size))

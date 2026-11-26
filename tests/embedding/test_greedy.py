@@ -409,11 +409,11 @@ def embedding_deviations(
     return (Q - U)[upper]
 
 
-def l1_norm(deviations: np.ndarray) -> float:
+def l1_norm(deviations: NDArray[np.float64]) -> float:
     return float(np.abs(deviations).sum())
 
 
-def l2_norm(deviations: np.ndarray) -> float:
+def l2_norm(deviations: NDArray[np.float64]) -> float:
     return float(np.sqrt(np.square(deviations).sum()))
 
 
@@ -424,7 +424,7 @@ def l2_norm(deviations: np.ndarray) -> float:
 )
 def test_greedy_norm_reported_distance(
     p: Literal[1, 2],
-    reference_norm: Callable[[np.ndarray], float],
+    reference_norm: Callable[[NDArray[np.float64]], float],
     max_min_dist_ratio: float,
 ) -> None:
     """The reported distance is the norm of the returned embedding's deviations.
@@ -472,7 +472,7 @@ def test_single_atom_embedding() -> None:
     ],
     ids=["1-node-1-trap", "1-node-2-traps", "2-nodes-2-traps"],
 )
-def test_greedy_on_minimal_layouts(Q: np.ndarray, traps: int) -> None:
+def test_greedy_on_minimal_layouts(Q: NDArray[np.float64], traps: int) -> None:
     best, coords = Greedy().launch_greedy(
         Q=Q,
         params={"layout": embedding.Lattice.SQUARE, "traps": traps, "spacing": 1.0},

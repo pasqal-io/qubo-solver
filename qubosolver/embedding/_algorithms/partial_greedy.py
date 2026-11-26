@@ -10,7 +10,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypedDict
 
 import numpy as np
-import numpy.typing as npt
 from scipy.optimize import OptimizeResult, minimize
 from shapely.geometry import MultiPolygon, Point, Polygon
 
@@ -36,11 +35,11 @@ class VertexToPlace(TypedDict):
     """
 
     id: int
-    weight: np.ndarray
-    blocking_vertices: np.ndarray
-    separated_vertices: np.ndarray
-    neighbors_id: np.ndarray
-    neighbors_weight: np.ndarray
+    weight: np.float64
+    blocking_vertices: NDArray[np.intp]
+    separated_vertices: NDArray[np.intp]
+    neighbors_id: NDArray[np.intp]
+    neighbors_weight: NDArray[np.float64]
 
 
 class WeightedZone:
@@ -141,14 +140,14 @@ def compute_distance_interaction_matrix(
     """Compute the matrix of interaction distances (adimensional, ``U(r) = 1 / r ** 6``).
 
     Args:
-        qubo_matrix (np.ndarray): Matrix of qubo coefficients.
+        qubo_matrix (NDArray[np.float64]): Matrix of qubo coefficients.
         neglecting_inter_distance (float, optional): Default distance value
             for neglecting interactions.
         neglecting_max_coefficient: Qubo coefficient from which we consider an
             interaction is neglecting.
 
     Returns:
-        np.ndarray: distance matrix (adimensional units),
+        NDArray[np.float64]: distance matrix (adimensional units),
             diagonal elements are taken from `qubo_matrix`,
             neglecting interactions (coefficients less than 1) are set to the
             `neglecting_inter_distance` value. The rest derived from ``U(r) = 1 / r ** 6``.
@@ -196,9 +195,9 @@ def vertices_to_place(
     Neighbors have the distances close to a vertex, or less than `separation_threshold`.
 
     Args:
-        dist_matrix (np.ndarray): interaction distances computed from
+        dist_matrix (NDArray[np.float64]): interaction distances computed from
             `compute_distance_interaction_matrix`.
-        qubo_matrix (np.ndarray): Matrix of qubo coefficients.
+        qubo_matrix (NDArray[np.float64]): Matrix of qubo coefficients.
         separation_threshold (float): threshold we consider 2 vertices separated. Should be equal
             to the `neglecting_inter_distance` parameter from `compute_distance_interaction_matrix`.
 
@@ -237,7 +236,7 @@ def vertices_to_place(
 
 def zone_intersection(
     current_intersection_result: Polygon | MultiPolygon,
-    list_vertices: np.ndarray,
+    list_vertices: NDArray[np.intp],
     placed_vertices: dict[int, WeightedZone],
     attribute: str,
 ) -> Polygon | MultiPolygon:
@@ -245,7 +244,7 @@ def zone_intersection(
 
     Args:
         current_intersection_result (Polygon): Current intersection geometry.
-        list_vertices (np.ndarray): A list of vertices to loop over.
+        list_vertices (NDArray[np.intp]): A list of vertices to loop over.
         placed_vertices (dict[int, WeightedZone]): Placed vertices to access zones.
         attribute (str): The attribute of the weighted zone for intersection.
 
@@ -263,14 +262,14 @@ def zone_intersection(
 
 def separated_zone_intersection(
     current_intersection_result: Polygon | MultiPolygon,
-    list_vertices: np.ndarray,
+    list_vertices: NDArray[np.intp],
     placed_vertices: dict[int, WeightedZone],
 ) -> Polygon | MultiPolygon:
     """Calculate intersection of zones for separated vertices.
 
     Args:
         current_intersection_result (Polygon): Current intersection geometry.
-        list_vertices (list): A list of vertices to loop over.
+        list_vertices (NDArray[np.intp]): A list of vertices to loop over.
         placed_vertices (dict[int, WeightedZone]): Placed vertices to access zones.
 
     Returns:
@@ -342,7 +341,7 @@ def random_point_in_geometry(
 
 
 def cost_interaction_point_continuous(  # noqa: PLR0913, PLR0917
-    pos_new: npt.NDArray[np.float64],
+    pos_new: NDArray[np.float64],
     placed_points: list[list[float]],
     Q_target: list[float],
     blocked_indices: list[int],
@@ -405,7 +404,7 @@ def bfgs_placement(  # noqa: PLR0913, PLR0917
         vertex (int): Vertex to place.
         init_guess (Vector): Initial guess for the BFGS search.
         placed_vertices (dict[int, WeightedZone]): Placed vertices.
-        matrix (np.ndarray): qubo matrix.
+        matrix (NDArray[np.float64]): qubo matrix.
         dict_vertices_to_place (dict): Vertices to place.
         min_distance (float): Minimum allowed distance to any placed point.
         max_radial_distance (float): Maximum allowed radial distance from origin.
@@ -488,7 +487,7 @@ def test_placing_vertex(  # noqa: PLR0913, PLR0917
         placed_vertices (dict[int, WeightedZone]): Placed vertices.
         min_distance (float): Minimum allowed distance to any placed point.
         max_radial_distance (float): Maximum allowed radial distance from origin.
-        matrix (np.ndarray): Qubo matrix.
+        matrix (NDArray[np.float64]): Qubo matrix.
         cost_function_thresold (float): Threshold for cost function.
         tested_vertices (list[int]): Already tested vertices.
         queue (list[int]): Current queue of vertices to place.
@@ -622,7 +621,7 @@ def geometric_search(  # noqa: PLR0913, PLR0917
     """Search an embeddable subproblem on the device for solving it during the decomposition.
 
     Args:
-        matrix (np.ndarray): Full updated qubo matrix.
+        matrix (NDArray[np.float64]): Full updated qubo matrix.
         dict_vertices_to_place (dict[int, VertexToPlace]): Vertices to place.
         first_vertex (int): First vertex to start search from.
         cost_function_thresold (float): Threshold between sum of target

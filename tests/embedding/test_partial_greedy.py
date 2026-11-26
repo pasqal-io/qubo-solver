@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 import pytest_check as check
@@ -25,8 +27,11 @@ from qubosolver.embedding._algorithms.partial_greedy import (
 from qubosolver.utils._random import manual_seed
 from qubosolver.utils.quantum import _max_min_distance_ratio
 
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
-def _coords(register: qoolqit.Register) -> np.ndarray:
+
+def _coords(register: qoolqit.Register) -> NDArray[np.float64]:
     return np.array([register.qubits[q] for q in register.qubits_ids], dtype=np.float64)
 
 
@@ -249,7 +254,7 @@ def test_check_prohibited_zones() -> None:
     check.is_true(check_prohibited_zones(placed_vertices, Point(1.0, 0.0)))
 
 
-def _pair_qubo(q_ii: float, q_jj: float, q_ij: float) -> np.ndarray:
+def _pair_qubo(q_ii: float, q_jj: float, q_ij: float) -> NDArray[np.float64]:
     return np.asarray([[q_ii, q_ij], [q_ij, q_jj]], dtype=np.float64)
 
 

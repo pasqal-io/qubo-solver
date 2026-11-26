@@ -38,7 +38,7 @@ from . import bitstring
 logger = logging.getLogger(__name__)
 
 
-def _unique_rows(rows: NDArray[np.int8]) -> tuple[np.ndarray, np.ndarray]:
+def _unique_rows(rows: NDArray[np.int8]) -> tuple[NDArray[np.intp], NDArray[np.intp]]:
     """Group identical rows of a 0/1 matrix.
 
     Faster than ``np.unique(rows, axis=0)``, which sorts a structured dtype with one field

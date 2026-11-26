@@ -24,6 +24,8 @@ from qubosolver.solving.classical.iterative_bitflip_local_search import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from numpy.typing import NDArray
+
 
 @pytest.mark.parametrize("strategy", ["best_improvement", "first_improvement", "greedy_sweep"])
 def test_solution_not_mutated(
@@ -300,7 +302,7 @@ def test_row_budget_is_the_remaining_batch_budget(
     row_budgets: list[float] = []
     search_fn = iterative_bitflip_local_search._ROW_STRATEGIES[strategy]
 
-    def recording_search(*args: object, **kwargs: object) -> np.ndarray:
+    def recording_search(*args: object, **kwargs: object) -> NDArray[np.int8]:
         row_budgets.append(float(kwargs["time_limit"]))  # type: ignore[arg-type]
         return search_fn(*args, **{**kwargs, "time_limit": 0.0})
 
@@ -482,7 +484,7 @@ def test_no_solution() -> None:
 @pytest.mark.parametrize(
     "search", [_first_improvement_search, _greedy_sweep_search, _best_improvement_search_batch]
 )
-def test_local_search_stops_at_the_deadline(search: Callable[..., np.ndarray]) -> None:
+def test_local_search_stops_at_the_deadline(search: Callable[..., NDArray[np.int8]]) -> None:
     # fmt: off
     Q = np.asarray([
         [-10.0, 1.0],
@@ -497,7 +499,7 @@ def test_local_search_stops_at_the_deadline(search: Callable[..., np.ndarray]) -
 
 
 @pytest.mark.parametrize("search", [_first_improvement_search, _greedy_sweep_search])
-def test_local_search_with_rng(search: Callable[..., np.ndarray]) -> None:
+def test_local_search_with_rng(search: Callable[..., NDArray[np.int8]]) -> None:
     # fmt: off
     Q = np.asarray([
         [-10.0, 1.0],

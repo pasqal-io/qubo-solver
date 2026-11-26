@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from contextlib import AbstractContextManager
     from typing import Any, Literal
 
+    from numpy.typing import NDArray
     from typing_extensions import Buffer  # deptry: ignore[DEP004]
 
 _T = TypeVar("_T", bytes, str)
@@ -163,7 +164,7 @@ def load_sized_buffer(src: Stream[bytes], *, max_size: int = _MAX_BUFFER_SIZE) -
     return read_exact(src, length)
 
 
-def save_array(output: Stream[bytes], array: np.ndarray) -> None:
+def save_array(output: Stream[bytes], array: NDArray[Any]) -> None:
     """Write a numpy array to a binary stream as a length-prefixed ``.npy`` payload.
 
     Args:
@@ -175,7 +176,7 @@ def save_array(output: Stream[bytes], array: np.ndarray) -> None:
     save_sized_buffer(output, buffer.getbuffer())
 
 
-def load_array(src: Stream[bytes]) -> np.ndarray:
+def load_array(src: Stream[bytes]) -> NDArray[Any]:
     """Read an array previously written by `save_array`.
 
     The payload is read into its own buffer first, so `numpy.load` cannot over-consume
@@ -188,7 +189,7 @@ def load_array(src: Stream[bytes]) -> np.ndarray:
     Returns:
         The array that was saved.
     """
-    array: np.ndarray = np.load(io.BytesIO(load_sized_buffer(src)), allow_pickle=False)
+    array: NDArray[Any] = np.load(io.BytesIO(load_sized_buffer(src)), allow_pickle=False)
     return array
 
 
