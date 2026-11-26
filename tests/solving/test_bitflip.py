@@ -34,7 +34,7 @@ def test_solution_not_mutated(
     Q = np.asarray([[-1.0, 2.0], [2.0, -2.0]])
     instance = Instance(Q)
 
-    solution = Solution(np.zeros((1, 2), dtype=np.int8), counts=np.asarray([1]))
+    solution = Solution(np.zeros((1, 2), dtype=np.int8), counts=np.asarray([1], dtype=np.int64))
     solution._update(instance)
     check.equal(len(solution), 1)
     check.equal(solution[0].string, "00")
@@ -68,7 +68,7 @@ def test_strategy_selection_improves_solution(
     Q = np.asarray([[-10.0, 1.0], [1.0, -10.0]])
     instance = Instance(Q)
 
-    solution = Solution(np.zeros((1, 2), dtype=np.int8), counts=np.asarray([1]))
+    solution = Solution(np.zeros((1, 2), dtype=np.int8), counts=np.asarray([1], dtype=np.int64))
     solution._update(instance)
 
     new_solution = solving.iterative_bitflip_local_search.solve(
@@ -113,7 +113,7 @@ def test_default_starts_is_one_random_start() -> None:
 def test_unknown_strategy_raises() -> None:
     Q = np.asarray([[-1.0, 2.0], [2.0, -2.0]])
     instance = Instance(Q)
-    solution = Solution(np.zeros((1, 2), dtype=np.int8), counts=np.asarray([1]))
+    solution = Solution(np.zeros((1, 2), dtype=np.int8), counts=np.asarray([1], dtype=np.int64))
     solution._update(instance)
 
     with pytest.raises(ValueError):
@@ -132,8 +132,12 @@ def test_starts_length_mismatch_raises(
     Q = np.asarray([[-1.0, 2.0], [2.0, -2.0]])
     instance = Instance(Q)
 
-    short_solution = Solution(np.zeros((1, 1), dtype=np.int8), counts=np.asarray([1]))
-    long_solution = Solution(np.zeros((1, 3), dtype=np.int8), counts=np.asarray([1]))
+    short_solution = Solution(
+        np.zeros((1, 1), dtype=np.int8), counts=np.asarray([1], dtype=np.int64)
+    )
+    long_solution = Solution(
+        np.zeros((1, 3), dtype=np.int8), counts=np.asarray([1], dtype=np.int64)
+    )
 
     with pytest.raises(ValueError, match=r"instance\.size"):
         solving.iterative_bitflip_local_search.solve(
@@ -159,7 +163,7 @@ def test_max_iterations_limits_progress(
         ]
     )
     instance = Instance(Q)
-    solution = Solution(np.zeros((1, 3), dtype=np.int8), counts=np.asarray([1]))
+    solution = Solution(np.zeros((1, 3), dtype=np.int8), counts=np.asarray([1], dtype=np.int64))
     solution._update(instance)
 
     limited = solving.iterative_bitflip_local_search.solve(

@@ -36,7 +36,7 @@ def test_apply_full_and_post_process_fixation() -> None:
     reduced_solution = Solution(
         np.zeros((1, 0), dtype=np.int8),
         np.asarray([0.0]),
-        np.asarray([1]),
+        np.asarray([1], dtype=np.int64),
         np.asarray([1.0]),
     )
 
