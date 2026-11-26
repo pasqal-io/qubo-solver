@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pandas as pd
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -38,34 +39,55 @@ from . import bitstring
 logger = logging.getLogger(__name__)
 
 
-def _unique_rows(rows: NDArray[np.int8]) -> tuple[NDArray[np.intp], NDArray[np.intp]]:
-    """Group identical rows of a 0/1 matrix.
+def _pack_rows_uint64(rows: NDArray[np.int8]) -> NDArray[np.uint64]:
+    """Pack each row of a 0/1 matrix into ``uint64`` words.
 
-    Faster than ``np.unique(rows, axis=0)``, which sorts a structured dtype with one field
-    per column: rows are packed into ``uint64`` words first and grouped by a stable
-    ``lexsort`` over those few words.
+    Rows are bit-packed, zero-padded to whole words and reinterpreted as ``uint64``.
+    The word values depend on bit and byte order, so they are only meaningful for
+    equality: two rows are equal iff their words are equal.
 
     Args:
         rows: ``(m, n)`` array of 0/1 values.
 
     Returns:
-        ``(first, inverse)``: ``first[g]`` is the index of the first row of group ``g``,
-        and ``inverse[i]`` is the group of row ``i``. Groups come in an unspecified order.
+        ``(m, ceil(n / 64))`` array of ``uint64`` words.
     """
-    m = rows.shape[0]
     packed = np.packbits(rows, axis=1)
-    # Pad to whole uint64 words, with at least one word so `lexsort` gets a key.
-    pad = -packed.shape[1] % 8 or (8 if packed.shape[1] == 0 else 0)
+    pad = -packed.shape[1] % 8  # bytes missing to reach whole uint64 words
     if pad:
         packed = np.pad(packed, ((0, 0), (0, pad)))
-    words = np.ascontiguousarray(packed).view(np.uint64)
-    order = np.lexsort(words.T)  # stable: each group's rows stay in input order
-    sorted_words = words[order]
-    starts = np.ones(m, dtype=bool)
-    starts[1:] = np.any(sorted_words[1:] != sorted_words[:-1], axis=1)
-    inverse = np.empty(m, dtype=np.intp)
-    inverse[order] = np.cumsum(starts) - 1
-    return order[starts], inverse
+    return np.ascontiguousarray(packed).view(np.uint64)
+
+
+def _unique_rows(rows: NDArray[np.int8]) -> tuple[NDArray[np.intp], int]:
+    """Group identical rows of a 0/1 matrix.
+
+    Faster than ``np.unique(rows, axis=0)``, which sorts a structured dtype with one field
+    per column: rows are packed into ``uint64`` words first, then grouped by hashing with
+    ``pd.factorize``, one word at a time.
+
+    Args:
+        rows: ``(m, n)`` array of 0/1 values.
+
+    Returns:
+        ``(inverse, n_groups)``: ``inverse[i]`` is the group of row ``i``, in
+        ``range(n_groups)``. Groups are numbered in order of first appearance.
+    """
+    m, n = rows.shape
+    if n == 0:
+        # Zero-width rows are all identical.
+        return np.zeros(m, dtype=np.intp), min(m, 1)
+    words = _pack_rows_uint64(rows)
+    # `pd.factorize` hashes instead of sorting, and numbers its codes in order of first
+    # appearance, which is the group numbering we want.
+    inverse, uniques = pd.factorize(words[:, 0])
+    for k in range(1, words.shape[1]):
+        # Refine the groups with the next word: rows stay together iff they share both
+        # their current group and this word. Both codes are < m, so the pair is exactly
+        # encoded by one integer.
+        codes, _ = pd.factorize(words[:, k])
+        inverse, uniques = pd.factorize(inverse * m + codes)
+    return inverse, len(uniques)
 
 
 @dataclass
@@ -339,20 +361,23 @@ class Solution:
 
         self.check_consistency(throw=True, full=False)
 
-        first, inverse = _unique_rows(self.bitstrings)
+        m = len(self.bitstrings)
+        # `inverse` maps each of the `m` current rows to its row in the deduplicated
+        # solution, which has `n` rows, one per distinct bitstring, in order of first
+        # appearance. It can be seen as a surjective map [0, m - 1] -> [0, n - 1], so
+        # m >= n.
+        inverse, n = _unique_rows(self.bitstrings)
 
-        n = first.shape[0]
-        # Groups come out in packed-key order; put merged rows back in
-        # first-appearance order.
-        order = first.argsort()
-        rank = np.empty_like(order)
-        rank[order] = np.arange(n)
-        inverse = rank[inverse]
+        # Each row's position is its index; a group's position is its earliest row's.
+        current_positions = np.arange(m)
+        positions = np.full(n, m, dtype=np.intp)
+        np.minimum.at(positions, inverse, current_positions)
+        self.bitstrings = self.bitstrings[positions]
 
-        self.bitstrings = self.bitstrings[first[order]]
         counts = np.zeros(n, dtype=np.int64)
         np.add.at(counts, inverse, self.counts)
         self.counts = counts
+
         costs = np.full(n, np.inf, dtype=self.costs.dtype)
         np.minimum.at(costs, inverse, self.costs)
         self.costs = costs

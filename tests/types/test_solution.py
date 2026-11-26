@@ -362,11 +362,23 @@ def test_unique_rows_groups_identical_rows(n: int) -> None:
     distinct = bitstrings.rand(5, n, rng=rng)
     rows = distinct[rng.integers(0, 5, 20)]
 
-    first, inverse = _unique_rows(rows)
+    inverse, n_groups = _unique_rows(rows)
 
-    np.testing.assert_array_equal(rows[first][inverse], rows)
-    check.equal(len(first), len(np.unique(rows, axis=0)))
-    check.equal(sorted(inverse[first].tolist()), list(range(len(first))))
+    # Reference: number each distinct row by order of first appearance.
+    labels: dict[bytes, int] = {}
+    expected = [labels.setdefault(row.tobytes(), len(labels)) for row in rows]
+    check.equal(inverse.tolist(), expected)
+    check.equal(n_groups, len(labels))
+    check.equal(inverse.dtype, np.intp)
+
+
+@pytest.mark.parametrize("n", [0, 1, 64, 65])
+def test_unique_rows_no_rows_has_no_groups(n: int) -> None:
+    inverse, n_groups = _unique_rows(np.empty((0, n), dtype=np.int8))
+
+    check.equal(inverse.shape, (0,))
+    check.equal(inverse.dtype, np.intp)
+    check.equal(n_groups, 0)
 
 
 def test_deduplicate_empty_solution_is_noop() -> None:
