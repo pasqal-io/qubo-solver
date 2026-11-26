@@ -7,18 +7,16 @@
 
 from __future__ import annotations
 
-from qubosolver._checks import TYPE_CHECKING
-from qubosolver.types import Instance, Solution, bitstrings, torch_rng, vector, vectori
+import numpy as np
 
-if TYPE_CHECKING:
-    import torch
+from qubosolver.types import Instance, Solution, bitstrings, numpy_rng
 
 
 def solve(
     instance: Instance,
     *,
     max_bitstrings: int = 1,
-    rng: torch.Generator | None = None,
+    rng: np.random.Generator | None = None,
 ) -> Solution:
     """Sample uniformly random bitstring solutions for a QUBO instance.
 
@@ -38,16 +36,16 @@ def solve(
         max_bitstrings: Number of random bitstrings to draw before
             deduplication.  The returned solution may contain fewer unique
             bitstrings.
-        rng: PyTorch random number generator controlling the sampling.
+        rng: NumPy random number generator controlling the sampling.
 
     Returns:
         A solution with unique bitstrings, their QUBO costs, draw counts, and probabilities.
     """
-    rng = rng or torch_rng()
+    rng = rng or numpy_rng()
     solution = Solution(
         bitstrings=bitstrings.rand(max_bitstrings, instance.size, rng=rng),
-        costs=vector.zeros(max_bitstrings),
-        counts=vectori.zeros(max_bitstrings).fill_(1),
-        probabilities=vector.zeros(max_bitstrings),
+        costs=np.zeros(max_bitstrings),
+        counts=np.ones(max_bitstrings, dtype=np.int64),
+        probabilities=np.zeros(max_bitstrings),
     )
     return solution.deduplicate(update=False)._update(instance)

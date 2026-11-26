@@ -6,13 +6,11 @@
 from __future__ import annotations
 
 import io
-import random
 from typing import TYPE_CHECKING, Literal, get_args
 
 import numpy as np
 import pytest
 import pytest_check as check
-import torch
 from pulser.backend.results import Results
 from qoolqit import AnalogDeviceWithDMM
 from qoolqit.execution import (
@@ -30,14 +28,15 @@ from qubosolver import (
     Solution,
     drive_shaping,
     embedding,
-    matrix,
     solving,
     transforms,
 )
 from qubosolver.utils import analysis
+from qubosolver.utils._random import manual_seed
 
 if TYPE_CHECKING:
     from mock.connection import MockConnection
+    from numpy.typing import NDArray
     from pulser.backend.remote import RemoteConnection
 
     from qubosolver.types import protocols
@@ -47,7 +46,7 @@ _EmbeddingAlgorithm = Literal["blade", "greedy_layout"]
 
 
 def _pre_remote_job(  # noqa: PLR0913
-    Q: matrix.Matrix,
+    Q: NDArray[np.float64],
     *,
     drive_method: _DriveShapingAlgorithm,
     embedding_method: _EmbeddingAlgorithm,
@@ -127,11 +126,9 @@ def test_quantum_remote_job(
         pytest.skip(reason="Does not work with the Bayesian-search drive shaping method")
 
     seed = 7979
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    random.seed(seed)
+    manual_seed(seed)
 
-    Q = matrix.tensor(
+    Q = np.asarray(
         [
             [0.0, 19.7365809, 19.7365809, 5.42015853, 5.42015853],
             [19.7365809, -10.0, 20.67626392, 0.17675796, 0.85604541],
@@ -178,10 +175,14 @@ def test_quantum_remote_job(
     check.equal(remote_job_2.get_status(), JobStatus.DONE)
     remote_solution = _post_remote_job(remote_job_2, remote_instance_2, preprocessing=preprocessing)
 
-    torch.testing.assert_close(remote_solution.bitstrings, local_solution.bitstrings)
-    torch.testing.assert_close(remote_solution.costs, local_solution.costs)
-    torch.testing.assert_close(remote_solution.probabilities, local_solution.probabilities)
-    torch.testing.assert_close(remote_solution.counts, local_solution.counts)
+    np.testing.assert_allclose(
+        remote_solution.bitstrings, local_solution.bitstrings, rtol=0, strict=True
+    )
+    np.testing.assert_allclose(remote_solution.costs, local_solution.costs, strict=True)
+    np.testing.assert_allclose(
+        remote_solution.probabilities, local_solution.probabilities, strict=True
+    )
+    np.testing.assert_allclose(remote_solution.counts, local_solution.counts, rtol=0, strict=True)
 
     df_all = analysis.to_dataframe([local_solution, remote_solution], labels=["local", "remote"])
     print(f"\n{df_all}")

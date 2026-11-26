@@ -8,11 +8,10 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
+import numpy as np
 import qoolqit
-import torch
-
-from qubosolver import Instance, Vector, matrix
 
 from ._device_specs import (
     detuning_amplitude_ratio,
@@ -21,10 +20,17 @@ from ._device_specs import (
 )
 from ._waveforms import constant_weighted_dmm
 
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+    from qubosolver import Instance
+
 logger = logging.getLogger(__name__)
 
 
-def _detunings(d: Vector, use_dmm: bool) -> tuple[float, float, Vector, bool]:
+def _detunings(
+    d: NDArray[np.float64], use_dmm: bool
+) -> tuple[float, float, NDArray[np.float64], bool]:
 
     d_min = d.min().item()
     d_max = d.max().item()
@@ -47,13 +53,13 @@ def _detunings(d: Vector, use_dmm: bool) -> tuple[float, float, Vector, bool]:
             use_dmm = False
             delta_g_T = d.mean().item()
             delta_dmm_T = 0.0
-            weights = torch.zeros_like(d)
+            weights = np.zeros_like(d)
     else:
         # Without DMM, all atoms receive the same
         # final global detuning.
         delta_g_T = d.mean().item()
         delta_dmm_T = 0.0
-        weights = torch.zeros_like(d)
+        weights = np.zeros_like(d)
 
     return delta_g_T, delta_dmm_T, weights, use_dmm
 
@@ -137,7 +143,7 @@ def build_drive(
             )
 
     # Target local final detunings.
-    d = (-0.5 * torch.diag(instance.matrix)).detach().cpu()
+    d = -0.5 * np.diag(instance.matrix)
     delta_g_T, delta_dmm_T, weights, use_dmm = _detunings(d, use_dmm)
 
     # Final detuning effectively applied to each qubit:
@@ -154,12 +160,14 @@ def build_drive(
     # For each qubit i, compute:
     #
     # sum_{j != i} |V_ij|.
-    interaction_scale = matrix.as_tensor(register.interaction_matrix()).abs().sum(dim=0)
+    interaction_scale = np.abs(np.asarray(register.interaction_matrix(), dtype=np.float64)).sum(
+        axis=0
+    )
 
     # Local physical energy scale:
     #
     # E_i = |delta_i(T)| + sum_{j != i} |V_ij|.
-    local_energy_scale = final_local_detunings.abs() + interaction_scale
+    local_energy_scale = np.abs(final_local_detunings) + interaction_scale
 
     # Average local physical energy scale:
     #
@@ -186,7 +194,7 @@ def build_drive(
 
     # Ensure that the target detunings remain compilable for the selected amplitude.
     max_detuning = detuning_amplitude_ratio(device) * omega_max * (1.0 - 1e-3)
-    max_abs_d = d.abs().max().item()
+    max_abs_d = np.abs(d).max().item()
 
     if max_abs_d > max_detuning:
         logger.info(
@@ -201,7 +209,7 @@ def build_drive(
         delta_g_T, delta_dmm_T, weights, use_dmm = _detunings(d, use_dmm)
 
     # Keep the initial detuning rule identical to the standard heuristic drive.
-    delta_0 = -d.abs().max().item()
+    delta_0 = -np.abs(d).max().item()
 
     # Amplitude waveform: 0 -> omega_max -> omega_max -> 0.
     eps = 1e-9

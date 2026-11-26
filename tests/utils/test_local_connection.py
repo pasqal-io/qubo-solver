@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pytest
 import pytest_check as check
 import qoolqit
-import torch
 from pulser.backend import EmulationConfig
 from pulser.backend.default_observables import BitStrings
 from pulser.backend.remote import BatchStatus, RemoteResults, RemoteResultsError
@@ -25,9 +25,7 @@ from qubosolver import (
     analysis,
     drive_shaping,
     embedding,
-    matrix,
     solving,
-    vector,
 )
 from qubosolver.utils._local_connection import _QUBIT_LIMIT, LocalConnection
 
@@ -42,8 +40,8 @@ NUM_SHOTS = 50
 def _program(*, n_qubits: int) -> qoolqit.QuantumProgram:
     """Build a compiled program of `n_qubits` atoms."""
     register = qoolqit.Register.circle(n_qubits)
-    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(
-        vector.zeros(n_qubits).fill_(-1.0)
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(
+        np.full(n_qubits, -1.0)
     )
     instance = Instance(Q)
     device = qoolqit.AnalogDevice()
@@ -208,7 +206,7 @@ def test_runs_through_remote_emulator(num_shots: int) -> None:
 @pytest.mark.duration(5)
 def test_end_to_end() -> None:
 
-    Q = matrix.tensor(
+    Q = np.asarray(
         [
             [-0.2, 0.0, 1.0],
             [0.0, 0.0, 1.5],
@@ -237,7 +235,9 @@ def test_end_to_end() -> None:
     print("\nReloaded Solution:")
     print(analysis.to_dataframe([reloaded_solution]))
 
-    torch.testing.assert_close(reloaded_solution.bitstrings, solution.bitstrings)
-    torch.testing.assert_close(reloaded_solution.costs, solution.costs)
-    torch.testing.assert_close(reloaded_solution.counts, solution.counts)
-    torch.testing.assert_close(reloaded_solution.probabilities, solution.probabilities)
+    np.testing.assert_allclose(
+        reloaded_solution.bitstrings, solution.bitstrings, rtol=0, strict=True
+    )
+    np.testing.assert_allclose(reloaded_solution.costs, solution.costs, strict=True)
+    np.testing.assert_allclose(reloaded_solution.counts, solution.counts, rtol=0, strict=True)
+    np.testing.assert_allclose(reloaded_solution.probabilities, solution.probabilities, strict=True)

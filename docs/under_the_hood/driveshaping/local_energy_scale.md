@@ -278,10 +278,11 @@ When DMM is active, the weighted detuning waveform is created with
 ### Example
 
 ```python
+import numpy as np
 import qoolqit
-from qubosolver import Instance, embedding, drive_shaping, matrix
+from qubosolver import Instance, embedding, drive_shaping
 
-qubo = matrix.tensor(
+qubo = np.asarray(
     [
         [-6.0, 2.0, 2.0, 2.0],
         [2.0, -7.5, 2.0, 2.0],

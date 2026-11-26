@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import logging
 import warnings
-from typing import Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from emu_mps import MPSBackend
 from emu_sv import SVBackend
@@ -42,8 +42,6 @@ from qoolqit.execution import (
 from qoolqit.execution import (
     RemoteEmulator as QoolqitRemoteEmulator,
 )
-
-from qubosolver._checks import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import pulser

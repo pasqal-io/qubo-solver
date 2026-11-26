@@ -10,12 +10,11 @@ import warnings
 from typing import TYPE_CHECKING, Literal
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pulser
 import pytest
 import pytest_check as check
 import qoolqit
-import torch
-from beartype.roar import BeartypeCallHintParamViolation
 from emu_mps import MPSBackend
 from emu_sv import SVBackend
 from mock.connection import MockConnection
@@ -37,7 +36,6 @@ from qubosolver import (
     Solution,
     drive_shaping,
     embedding,
-    matrix,
     solving,
 )
 from qubosolver.types.backends import (
@@ -222,7 +220,7 @@ def test_emulator_backend_selection(
     # With only 2 BLaDE steps per round, some random initial positions violate the device
     # distance ratio, so seed it.
     manual_seed(4203573563)
-    Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
+    Q = np.ones((size, size)) + np.diag(np.full((size,), -3.0))
     instance = Instance(Q)
 
     backend, results = backend_and_results
@@ -254,7 +252,7 @@ def test_default_remote_emulator_backend() -> None:
 def test_remote_emulator_warning() -> None:
     """Test that RemoteEmulator warns when using suboptimal backend."""
     size = 2
-    Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
+    Q = np.ones((size, size)) + np.diag(np.full((size,), -3.0))
     instance = Instance(Q)
     mock_connection, mock_results = mock_connection_and_results()
     attach_bitstring(mock_results, size)
@@ -272,7 +270,7 @@ def test_remote_emulator_warning() -> None:
 def test_local_emulator_warning() -> None:
     """Test that LocalEmulator warns when using suboptimal backend."""
     size = 2
-    Q = matrix.as_tensor(torch.ones(size, size) + torch.diag(torch.full((size,), -3.0)))
+    Q = np.ones((size, size)) + np.diag(np.full((size,), -3.0))
     instance = Instance(Q)
     backend = LocalEmulator(backend_type=SVBackend)
     results = MagicMock(spec=pulser.backend.Results)
@@ -321,9 +319,7 @@ def test_get_remote_backend_type(
 
 def test_get_backend_type_invalid_backend_id() -> None:
     """Test that _get_backend_type raises ValueError for invalid backend_id."""
-    with pytest.raises(
-        (ValueError, BeartypeCallHintParamViolation), match=r"not recognized|violates type hint"
-    ):
+    with pytest.raises(ValueError, match="not recognized"):
         _get_backend_type("invalid", False)  # type: ignore[arg-type]
 
 

@@ -1,2 +1,1 @@
-::: qubosolver.Bitstrings
 ::: qubosolver.bitstrings

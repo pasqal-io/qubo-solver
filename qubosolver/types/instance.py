@@ -13,37 +13,23 @@ $$\\text{cost}(x) = x^T Q x, \\quad x \\in \\{0, 1\\}^n$$
 
 from __future__ import annotations
 
-import io
-from typing import ClassVar, TypeVar
+from typing import TYPE_CHECKING, ClassVar, TypeVar
 
-import torch
+import numpy as np
 
-from qubosolver._checks import (
-    _RUNTIME_TYPE_CHECKING,
-    TYPE_CHECKING,
-    no_runtime_typecheck,
-)
 from qubosolver._io import utils as io_utils
 
-from . import bitstring, matrix, vectori
 from ._enums import _DensityType
-
-_matrix_module = matrix  # alias so the shadowed `matrix` parameter can still reach this module
-
-if TYPE_CHECKING and not _RUNTIME_TYPE_CHECKING:  # no cov
-    from qubosolver.transforms import (  # noqa: TC001 (already typing-only; ruff misses the compound guard)
-        negative_bitflip,
-        variable_fixing,
-        zeroing,
-    )
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Self
 
-    from qubosolver._io.utils import FileLike, Stream
+    from numpy.typing import NDArray
 
-    from .linalg import Bitstring, Matrix
+    from qubosolver._io.utils import FileLike, Stream
+    from qubosolver.transforms import negative_bitflip, variable_fixing, zeroing
+
 
 _InstanceT = TypeVar("_InstanceT", bound="Instance")
 
@@ -71,7 +57,7 @@ class Instance:
 
     def __init__(
         self,
-        matrix: Matrix | None = None,
+        matrix: NDArray[np.float64] | None = None,
         *,
         symmetrize: bool = False,
     ) -> None:
@@ -81,32 +67,32 @@ class Instance:
             ValueError: If `matrix` is not symmetric and `symmetrize` is false.
         """
         if matrix is None:
-            matrix = _matrix_module.zeros(0)
+            matrix = np.zeros((0, 0))
         elif symmetrize:
             matrix = (matrix + matrix.T) / 2
-        elif not torch.allclose(matrix, matrix.T):
+        elif not np.allclose(matrix, matrix.T):
             msg = "QUBO matrix must be symmetric; pass `symmetrize=True` to use (Q + Q^T) / 2."
             raise ValueError(msg)
-        self._matrix: Matrix = matrix
+        self._matrix: NDArray[np.float64] = matrix
 
     @property
     def size(self) -> int:
         """Number of binary variables in the QUBO problem."""
-        return self.matrix.shape[0]
+        return int(self.matrix.shape[0])
 
     def __len__(self) -> int:
         """Number of binary variables in the QUBO problem (same as [`size`][])."""
         return self.size
 
     @property
-    def matrix(self) -> Matrix:
+    def matrix(self) -> NDArray[np.float64]:
         """The QUBO symmetric matrix.
 
         Returns:
              QUBO symmetric matrix of shape ``(size, size)``.
 
         Raises:
-            AssertionError: If the internal tensor is not 2-D or not square.
+            AssertionError: If the internal matrix is not 2-D or not square.
         """
         assert self._matrix.ndim == 2 and self._matrix.shape[0] == self._matrix.shape[1]  # nosec B101  # noqa: PLR2004 (2-D matrix)
         return self._matrix
@@ -123,15 +109,15 @@ class Instance:
             RuntimeError: If [`size`][] is less than 2, since there are then no
                 off-diagonal entries and the maximum is undefined.
         """
-        mask = ~torch.eye(self.size, dtype=torch.bool, device=self.matrix.device)
+        mask = ~np.eye(self.size, dtype=bool)
         off_diag = self.matrix[mask]
-        if off_diag.numel() == 0:
+        if off_diag.size == 0:
             msg = (
                 "_max_off_diag is undefined for an instance with no off-diagonal entries "
                 f"(size={self.size})."
             )
             raise RuntimeError(msg)
-        return off_diag.max().item()
+        return float(off_diag.max())
 
     def is_diagonal(self) -> bool:
         """Whether every off-diagonal coefficient of [`matrix`][] is 0.
@@ -142,7 +128,7 @@ class Instance:
         m = self.matrix
         # Every nonzero is on the diagonal. Unlike masking or comparing with
         # `m.diagonal().diag()`, this allocates no (size, size) temporary.
-        return int(m.count_nonzero()) == int(m.diagonal().count_nonzero())
+        return int(np.count_nonzero(m)) == int(np.count_nonzero(m.diagonal()))
 
     def is_trivial(self) -> bool:
         """Whether the optimum can be read off the coefficients without any search.
@@ -154,7 +140,7 @@ class Instance:
         """
         return _trivial_optimum(self) is not None
 
-    def cost(self, solution: Bitstring) -> float:
+    def cost(self, solution: NDArray[np.int8]) -> float:
         """Compute the QUBO objective $x^T Q x$ for a candidate solution $x$.
 
         Args:
@@ -193,8 +179,8 @@ class Instance:
         if any(not 0 <= v < self.size for v in variables):
             msg = f"Variables must be in range({self.size}), got {variables}."
             raise ValueError(msg)
-        index = vectori.as_tensor(variables)
-        sub = self.matrix.detach().index_select(0, index).index_select(1, index)
+        index = np.asarray(variables, dtype=np.int64)
+        sub = self.matrix[np.ix_(index, index)]
         return Instance(sub)
 
     @classmethod
@@ -229,14 +215,9 @@ class Instance:
         carry extra state override this to write that state too (typically
         after calling `super()._write_body(f)`).
         """
-        # The coefficient matrix is written into an internal `io.BytesIO`
-        # buffer and then flushed to *f* using `io_utils.save_sized_buffer`,
-        # which prefixes the payload with its byte length. This framing
-        # allows multiple objects to be stored contiguously in the same
-        # stream.
-        buffer = io.BytesIO()
-        torch.save(self.matrix, buffer)
-        io_utils.save_sized_buffer(f, buffer.getbuffer())
+        # Length-prefixed framing lets multiple objects be stored contiguously in the
+        # same stream.
+        io_utils.save_array(f, self.matrix)
 
     @classmethod
     def _read_body(cls, f: Stream[bytes]) -> Instance:
@@ -247,16 +228,10 @@ class Instance:
         read it back in the same order.
 
         Note:
-            [`torch.load`][] is called with `weights_only=True` to prevent
-            arbitrary code execution from untrusted checkpoint files.
+            Pickled payloads are refused, to prevent arbitrary code execution from
+            untrusted files.
         """
-        # Reads a length-prefixed byte block from *f* into a dedicated
-        # `io.BytesIO` buffer before calling `torch.load`. The isolated buffer
-        # prevents `torch.load` from over-consuming the source stream when
-        # multiple objects are packed together.
-        buffer = io.BytesIO(io_utils.load_sized_buffer(f))
-        Q = torch.load(buffer, weights_only=True)
-        return Instance(Q)
+        return Instance(io_utils.load_array(f))
 
     def save(self, file_like: FileLike[bytes]) -> None:
         """Serialize this instance to ``file_like``, tagged with its type.
@@ -358,7 +333,6 @@ class Instance:
         return self
 
     @property
-    @no_runtime_typecheck
     def variable_fixing(self) -> variable_fixing.Instance:
         """View of this instance as a variable-fixing instance.
 
@@ -382,7 +356,6 @@ class Instance:
         return self._narrow(variable_fixing.Instance)
 
     @property
-    @no_runtime_typecheck
     def zeroing(self) -> zeroing.Instance:
         """View of this instance as a zeroing instance.
 
@@ -406,7 +379,6 @@ class Instance:
         return self._narrow(zeroing.Instance)
 
     @property
-    @no_runtime_typecheck
     def negative_bitflip(self) -> negative_bitflip.Instance:
         """View of this instance as a negative-bitflip instance.
 
@@ -479,7 +451,7 @@ def _classify_density(density: float) -> _DensityType:
     raise ValueError(msg)
 
 
-def _calculate_density(m: Matrix) -> float:
+def _calculate_density(m: NDArray[np.float64]) -> float:
     """Compute the fraction of non-zero entries in a coefficient matrix.
 
     Args:
@@ -488,14 +460,14 @@ def _calculate_density(m: Matrix) -> float:
     Returns:
         Value in ``[0.0, 1.0]`` where ``0.0`` means all entries are zero
             and ``1.0`` means no entry is zero. Returns ``0.0`` for empty
-            matrices (``m.numel() == 0``) to avoid division by zero.
+            matrices (``m.size == 0``) to avoid division by zero.
     """
-    if m.numel() == 0:
+    if m.size == 0:
         return 0.0
-    return torch.count_nonzero(m).item() / m.numel()
+    return np.count_nonzero(m) / m.size
 
 
-def _trivial_optimum(instance: Instance) -> Bitstring | None:
+def _trivial_optimum(instance: Instance) -> NDArray[np.int8] | None:
     """The optimum of `instance` when its coefficient structure is trivial.
 
     Args:
@@ -509,9 +481,9 @@ def _trivial_optimum(instance: Instance) -> Bitstring | None:
     """
     m = instance.matrix
     if (m >= 0).all():
-        return bitstring.zeros(instance.size)
+        return np.zeros(instance.size, dtype=np.int8)
     if (m <= 0).all():
-        return bitstring.zeros(instance.size).fill_(1)
+        return np.ones(instance.size, dtype=np.int8)
     if instance.is_diagonal():
-        return (m.diagonal() < 0).to(bitstring.dtype())
+        return (m.diagonal() < 0).astype(np.int8)
     return None

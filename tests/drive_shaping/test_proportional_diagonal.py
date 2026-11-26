@@ -6,14 +6,12 @@
 from __future__ import annotations
 
 import logging
-import random
 import re
 
 import numpy as np
 import pytest
 import pytest_check as check
 import qoolqit
-import torch
 from qoolqit import AnalogDevice, DigitalAnalogDevice
 
 from qubosolver import (
@@ -23,12 +21,10 @@ from qubosolver import (
     Solution,
     drive_shaping,
     embedding,
-    matrix,
     solving,
-    tensor,
-    vector,
 )
 from qubosolver.utils import analysis
+from qubosolver.utils._random import manual_seed
 
 
 def gather_optimal_solutions(
@@ -50,26 +46,22 @@ def test_with_perfect_embedding(
     diagonal_scale: float,
 ) -> None:
 
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
+    manual_seed(seed)
 
     sqrt3 = np.sqrt(3.0)
-    vertices = tensor.tensor(
+    vertices = np.asarray(
         [
             [0.0, 0.0],
             [-1.0, 0.0],
             [-1.5, -0.5 * sqrt3],
             [-0.5, -0.5 * sqrt3],
-        ]
+        ],
     )
     register = qoolqit.Register.from_coordinates(vertices)
-    diagonal = (
-        torch.ones(4, dtype=vector.dtype())
-        if constant_diagonal
-        else vector.tensor([1.0, 1.25, 0.2, 1.167])
+    diagonal = np.ones(4) if constant_diagonal else np.asarray([1.0, 1.25, 0.2, 1.167])
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + diagonal_scale * np.diag(
+        diagonal
     )
-    Q = matrix.as_tensor(register.interaction_matrix()) + diagonal_scale * torch.diag(diagonal)
     Q /= Q.max()
     instance = Instance(matrix=Q)
 
@@ -140,7 +132,7 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
             [D, 0.0],
         ]
     )
-    Q = matrix.as_tensor(register.interaction_matrix()) + vector.zeros(3).fill_(-50.0).diag()
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag(np.full(3, -50.0))
     instance = Instance(Q)
 
     with caplog.at_level(logging.INFO, logger="qubosolver.drive_shaping.proportional_diagonal"):
@@ -172,9 +164,9 @@ def test_too_high_diagonal(caplog: pytest.LogCaptureFixture) -> None:
 
 def test_dmm_labels_are_ints() -> None:
 
-    vertices = tensor.tensor([[0.0, 0.0], [1.0, 0.0]])
+    vertices = np.asarray([[0.0, 0.0], [1.0, 0.0]])
     register = qoolqit.Register.from_coordinates(vertices)
-    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag([-1.0, -2.0])
     instance = Instance(Q)
 
     check.is_instance(register.qubits_ids[0], int)
@@ -195,8 +187,8 @@ def test_dmm_labels_are_ints() -> None:
 
 
 def test_too_small_kappa(caplog: pytest.LogCaptureFixture) -> None:
-    register = qoolqit.Register.from_coordinates(tensor.tensor([[0.0, 0.0], [1.0, 0.0]]))
-    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+    register = qoolqit.Register.from_coordinates(np.asarray([[0.0, 0.0], [1.0, 0.0]]))
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag([-1.0, -2.0])
 
     with caplog.at_level(logging.WARNING, logger="qubosolver.drive_shaping.proportional_diagonal"):
         drive_shaping.proportional_diagonal.build_drive(
@@ -207,8 +199,8 @@ def test_too_small_kappa(caplog: pytest.LogCaptureFixture) -> None:
 
 
 def test_device_without_max_amplitude() -> None:
-    register = qoolqit.Register.from_coordinates(tensor.tensor([[0.0, 0.0], [1.0, 0.0]]))
-    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+    register = qoolqit.Register.from_coordinates(np.asarray([[0.0, 0.0], [1.0, 0.0]]))
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag([-1.0, -2.0])
     drive = drive_shaping.proportional_diagonal.build_drive(
         Instance(Q), register, dmm=False, device=qoolqit.MockDevice()
     )

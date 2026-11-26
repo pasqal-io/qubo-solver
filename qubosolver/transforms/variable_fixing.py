@@ -20,13 +20,6 @@ reduced_instance = variable_fixing.apply_recursively(instance)
 reduced_solution = brute_force.solve(reduced_instance)
 solution = variable_fixing.lift(reduced_solution, reduced_instance)
 ```
-
-Fixing decisions and the reduced matrix are computed in float64 whatever the
-matrix dtype, so they are as accurate as float64 allows. In float32, the reduced
-matrix is still rounded to float32, and solvers can then not tell apart solutions
-whose costs differ by less than float32 resolution, e.g. near-ties between large
-coefficients. Set ``USE_DOUBLE_PRECISION=1`` for more robust results on
-such instances.
 """
 
 from __future__ import annotations
@@ -35,13 +28,13 @@ import copy
 import json
 import logging
 from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING
 
-import torch
+import numpy as np
 
 import qubosolver
-from qubosolver._checks import TYPE_CHECKING
 from qubosolver._io import utils as io_utils
-from qubosolver.types import Solution, bitstrings, vectori
+from qubosolver.types import Solution
 
 if TYPE_CHECKING:
     from qubosolver._io.utils import Stream
@@ -70,8 +63,7 @@ def hansen_fixing(instance: qubosolver.Instance) -> dict[int, int]:
     to 1 when its upper bound is negative (it can only improve it), both
     strictly and by a margin against rounding errors of ``rtol * magnitude``,
     where ``rtol = n * eps`` (``n`` the instance size and ``eps`` the machine
-    epsilon of float64, in which the bounds are summed whatever the matrix
-    dtype) and ``magnitude`` the sum of the absolute values of the terms summed
+    epsilon of float64) and ``magnitude`` the sum of the absolute values of the terms summed
     in that bound. Exact ties are never fixed, so every optimal solution of the
     instance is preserved, and the fixed variables do not change when the
     matrix is scaled by a positive factor.
@@ -83,27 +75,26 @@ def hansen_fixing(instance: qubosolver.Instance) -> dict[int, int]:
         Mapping of variable index to fixed value (``0`` or ``1``).
             Variables that cannot be fixed are omitted.
     """
-    # Summed in float64: in float32, near-ties between large coefficients would
-    # otherwise round to the wrong sign.
-    diagonal = instance.matrix.diagonal().double()
-    off_diagonal = instance.matrix.to(torch.float64, copy=True).fill_diagonal_(0)
-    negative = off_diagonal.clamp(max=0).sum(dim=1)
-    positive = off_diagonal.clamp(min=0).sum(dim=1)
+    diagonal = instance.matrix.diagonal()
+    off_diagonal = instance.matrix.copy()
+    np.fill_diagonal(off_diagonal, 0)
+    negative = np.minimum(off_diagonal, 0).sum(axis=1)
+    positive = np.maximum(off_diagonal, 0).sum(axis=1)
     lower = diagonal + 2 * negative
     upper = diagonal + 2 * positive
 
     # The rounding error of a sum of n terms is at most about n * eps times the
     # sum of their absolute values. Strict comparisons refuse exact ties, e.g. a
     # zero row, whose margin is 0.
-    rtol = instance.size * torch.finfo(diagonal.dtype).eps
-    abs_diagonal = diagonal.abs()
+    rtol = instance.size * np.finfo(diagonal.dtype).eps
+    abs_diagonal = np.abs(diagonal)
 
     to_0 = lower > rtol * (abs_diagonal - 2 * negative)
     to_1 = upper < -rtol * (abs_diagonal + 2 * positive)
-    fixed = (to_0 | to_1).nonzero().flatten()
+    fixed = np.flatnonzero(to_0 | to_1)
     # to_1 is False both for variables fixed to 0 and for unfixed ones; restricted
     # to the fixed variables, False only leaves those of to_0.
-    return dict(zip(fixed.tolist(), to_1[fixed].int().tolist(), strict=True))
+    return dict(zip(fixed.tolist(), to_1[fixed].astype(int).tolist(), strict=True))
 
 
 class Instance(qubosolver.Instance):
@@ -122,7 +113,7 @@ class Instance(qubosolver.Instance):
                 A deep copy is kept internally for later reconstruction.
         """
         super().__init__(
-            parent_instance.matrix.detach().clone(),
+            parent_instance.matrix.copy(),
         )
         self._parent_instance = copy.deepcopy(parent_instance)
         self._fixed_history: list[dict[int, int]] = []
@@ -214,14 +205,13 @@ def _reduce_qubo(
         return instance
 
     remaining = instance._remaining_variables()
-    kept = vectori.tensor([i for i in range(instance.size) if i not in fixed_indices])
-    fixed_to_1 = vectori.tensor([i for i, v in fixed_indices.items() if v == 1])
+    kept = np.asarray([i for i in range(instance.size) if i not in fixed_indices], dtype=np.int64)
+    fixed_to_1 = np.asarray([i for i, v in fixed_indices.items() if v == 1], dtype=np.int64)
 
-    rows = instance.matrix.index_select(0, kept)
-    reduced = rows.index_select(1, kept)
-    # Folded in float64 and rounded once to the matrix dtype, see hansen_fixing.
-    folded = 2 * rows.index_select(1, fixed_to_1).sum(dim=1, dtype=torch.float64)
-    reduced.diagonal().copy_(reduced.diagonal().double() + folded)
+    rows = instance.matrix[kept]
+    reduced = rows[:, kept]
+    folded = 2 * rows[:, fixed_to_1].sum(axis=1)
+    np.fill_diagonal(reduced, reduced.diagonal() + folded)
     instance._matrix = reduced
 
     instance._fixed_history.append(
@@ -336,8 +326,8 @@ def lift(reduced_solution: Solution, reduced_instance: Instance) -> Solution:
     if not fixed:
         return copy.deepcopy(reduced_solution)
 
-    full = bitstrings.zeros(len(reduced_solution), parent_size)
-    full[:, list(fixed)] = bitstrings.tensor([list(fixed.values())])
+    full = np.zeros((len(reduced_solution), parent_size), dtype=np.int8)
+    full[:, list(fixed)] = np.asarray([list(fixed.values())], dtype=np.int8)
     full[:, reduced_instance._remaining_variables()] = reduced_solution.bitstrings
 
     return Solution(

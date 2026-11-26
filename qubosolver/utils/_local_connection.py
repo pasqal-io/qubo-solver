@@ -12,7 +12,7 @@ credentials are needed.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from pulser.backend.remote import (
@@ -24,7 +24,6 @@ from pulser.backend.remote import (
 )
 from pulser_simulation import QutipBackendV2
 
-from qubosolver._checks import TYPE_CHECKING, no_runtime_typecheck
 from qubosolver.types.backends import _SV_THRESHOLD
 
 if TYPE_CHECKING:
@@ -54,7 +53,6 @@ class LocalConnection(RemoteConnection):
         """Instantiate a connection with no submitted batch."""
         self._batches: dict[str, Results] = {}
 
-    @no_runtime_typecheck
     def submit(
         self,
         sequence: PulserSequence,

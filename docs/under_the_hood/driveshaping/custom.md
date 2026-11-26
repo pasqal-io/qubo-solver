@@ -11,10 +11,11 @@ For concrete examples, see the [proportional-diagonal](./proportional_diagonal.m
 Let us show an example of a custom simple hard-coded drive.
 
 ```python
+import numpy as np
 import qoolqit
 from qoolqit import ConstantWaveform, Drive, RampWaveform
 
-from qubosolver import Instance, LocalEmulator, Solution, embedding, matrix, solving
+from qubosolver import Instance, LocalEmulator, Solution, embedding, solving
 
 
 def simple_drive() -> Drive:
@@ -30,7 +31,7 @@ def simple_drive() -> Drive:
     return Drive(amplitude=wf_amp, detuning=wf_det)
 
 
-instance = Instance(matrix.tensor([[-1.0, 0.5], [0.5, -2.0]]))
+instance = Instance(np.asarray([[-1.0, 0.5], [0.5, -2.0]]))
 device = qoolqit.AnalogDevice()
 register = embedding.blade.embed_for_device(instance, device)
 

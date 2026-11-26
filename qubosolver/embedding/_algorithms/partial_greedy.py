@@ -7,16 +7,14 @@
 
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 import numpy as np
-import numpy.typing as npt
-import torch
 from scipy.optimize import OptimizeResult, minimize
 from shapely.geometry import MultiPolygon, Point, Polygon
 
-from qubosolver._checks import no_runtime_typecheck
-from qubosolver.types import Matrix, Vector, vector
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 # Find a better way to compute this ?
@@ -37,11 +35,11 @@ class VertexToPlace(TypedDict):
     """
 
     id: int
-    weight: torch.Tensor
-    blocking_vertices: torch.Tensor
-    separated_vertices: torch.Tensor
-    neighbors_id: torch.Tensor
-    neighbors_weight: torch.Tensor
+    weight: np.float64
+    blocking_vertices: NDArray[np.intp]
+    separated_vertices: NDArray[np.intp]
+    neighbors_id: NDArray[np.intp]
+    neighbors_weight: NDArray[np.float64]
 
 
 class WeightedZone:
@@ -70,7 +68,7 @@ class WeightedZone:
         y: float,
         weight: float,
         min_distance: float,
-        max_radial_distance: float = torch.inf,
+        max_radial_distance: float = np.inf,
     ) -> None:
         """Initialize the zone geometry for a placed vertex.
 
@@ -109,7 +107,7 @@ class WeightedZone:
 
 
 def compute_min_max_distances(
-    interactions: Matrix, *, max_min_dist_ratio: float
+    interactions: NDArray[np.float64], *, max_min_dist_ratio: float
 ) -> tuple[float, float]:
     """Compute the minimum inter-atom distance and the maximum radial distance.
 
@@ -124,43 +122,39 @@ def compute_min_max_distances(
 
     Returns:
         tuple[float, float]: The minimum inter-atom distance and the maximum
-            radial distance. Returns ``(0, torch.inf)`` when
+            radial distance. Returns ``(0, np.inf)`` when
             ``max_min_dist_ratio`` is infinite (no distance limits).
     """
-    if max_min_dist_ratio == torch.inf:
-        return 0.0, torch.inf
+    if max_min_dist_ratio == np.inf:
+        return 0.0, np.inf
     min_distance = float(np.max(np.triu(interactions, k=1)) ** (-1 / 6))
     max_radial_distance = min_distance * max_min_dist_ratio
     return min_distance, max_radial_distance
 
 
 def compute_distance_interaction_matrix(
-    qubo_matrix: Matrix,
+    qubo_matrix: NDArray[np.float64],
     neglecting_inter_distance: float = 1.5,
     neglecting_max_coefficient: float = 1.0,
-) -> Matrix:
+) -> NDArray[np.float64]:
     """Compute the matrix of interaction distances (adimensional, ``U(r) = 1 / r ** 6``).
 
     Args:
-        qubo_matrix (torch.Tensor): Matrix of qubo coefficients.
+        qubo_matrix (NDArray[np.float64]): Matrix of qubo coefficients.
         neglecting_inter_distance (float, optional): Default distance value
             for neglecting interactions.
         neglecting_max_coefficient: Qubo coefficient from which we consider an
             interaction is neglecting.
 
     Returns:
-        torch.Tensor: distance matrix (adimensional units),
+        NDArray[np.float64]: distance matrix (adimensional units),
             diagonal elements are taken from `qubo_matrix`,
             neglecting interactions (coefficients less than 1) are set to the
             `neglecting_inter_distance` value. The rest derived from ``U(r) = 1 / r ** 6``.
     """
-
-    def rydberg_blockade_radius(x: float) -> float:
-        return float(x ** (-1 / 6))
-
-    diag_mat = torch.diag(qubo_matrix)
+    diag_mat = np.diag(qubo_matrix)
     # note: blocking interactions already set to 0
-    dist_matrix = torch.diag(diag_mat)
+    dist_matrix = np.diag(diag_mat)
 
     # neglecting interactions
     dist_matrix[(qubo_matrix < neglecting_max_coefficient) & (qubo_matrix >= 0.0)] = (
@@ -180,15 +174,16 @@ def compute_distance_interaction_matrix(
 
     if cond.any():
         # set value to the adimensional interaction distance
-        dist_matrix[cond] = qubo_matrix[cond].apply_(rydberg_blockade_radius)
+        # Rydberg blockade radius
+        dist_matrix[cond] = qubo_matrix[cond].astype(np.float64) ** (-1 / 6)
     # set diagonal elements to `qubo_matrix` diagonal
     dist_matrix[range(len(dist_matrix)), range(len(dist_matrix))] = diag_mat
     return dist_matrix
 
 
 def vertices_to_place(
-    dist_matrix: Matrix,
-    qubo_matrix: Matrix,
+    dist_matrix: NDArray[np.float64],
+    qubo_matrix: NDArray[np.float64],
     separation_threshold: float = 1.5,
 ) -> dict[int, VertexToPlace]:
     """Obtain the dictionary of vertices to place, with blocking, separated and neighbors.
@@ -200,9 +195,9 @@ def vertices_to_place(
     Neighbors have the distances close to a vertex, or less than `separation_threshold`.
 
     Args:
-        dist_matrix (torch.Tensor): interaction distances computed from
+        dist_matrix (NDArray[np.float64]): interaction distances computed from
             `compute_distance_interaction_matrix`.
-        qubo_matrix (torch.Tensor): Matrix of qubo coefficients.
+        qubo_matrix (NDArray[np.float64]): Matrix of qubo coefficients.
         separation_threshold (float): threshold we consider 2 vertices separated. Should be equal
             to the `neglecting_inter_distance` parameter from `compute_distance_interaction_matrix`.
 
@@ -217,15 +212,15 @@ def vertices_to_place(
         distances = dist_matrix[i, :].ravel()
         # possible to check for 0 as `compute_distance_interaction_matrix` sets to 0 some elements
         # should be <= 0.1 ?
-        blocking_vertices = torch.argwhere(torch.eq(distances, 0))
+        blocking_vertices = np.argwhere(distances == 0)
         blocking_vertices = blocking_vertices[blocking_vertices != i]
 
         # should be >= separation_threshold
-        separated_vertices = torch.argwhere(torch.eq(distances, separation_threshold))
+        separated_vertices = np.argwhere(distances == separation_threshold)
         separated_vertices = separated_vertices[separated_vertices != i]
 
         # 1e-2 is an arbitrary value to consider them neighbor.
-        neighbors = torch.argwhere((distances > 1e-2) & (distances < separation_threshold))  # noqa: PLR2004 (numerical tolerance)
+        neighbors = np.argwhere((distances > 1e-2) & (distances < separation_threshold))  # noqa: PLR2004 (numerical tolerance)
         neighbors = neighbors[neighbors != i]
 
         vertices_dict[i] = {
@@ -241,7 +236,7 @@ def vertices_to_place(
 
 def zone_intersection(
     current_intersection_result: Polygon | MultiPolygon,
-    list_vertices: torch.Tensor,
+    list_vertices: NDArray[np.intp],
     placed_vertices: dict[int, WeightedZone],
     attribute: str,
 ) -> Polygon | MultiPolygon:
@@ -249,7 +244,7 @@ def zone_intersection(
 
     Args:
         current_intersection_result (Polygon): Current intersection geometry.
-        list_vertices (torch.Tensor): A list of vertices to loop over.
+        list_vertices (NDArray[np.intp]): A list of vertices to loop over.
         placed_vertices (dict[int, WeightedZone]): Placed vertices to access zones.
         attribute (str): The attribute of the weighted zone for intersection.
 
@@ -267,14 +262,14 @@ def zone_intersection(
 
 def separated_zone_intersection(
     current_intersection_result: Polygon | MultiPolygon,
-    list_vertices: torch.Tensor,
+    list_vertices: NDArray[np.intp],
     placed_vertices: dict[int, WeightedZone],
 ) -> Polygon | MultiPolygon:
     """Calculate intersection of zones for separated vertices.
 
     Args:
         current_intersection_result (Polygon): Current intersection geometry.
-        list_vertices (list): A list of vertices to loop over.
+        list_vertices (NDArray[np.intp]): A list of vertices to loop over.
         placed_vertices (dict[int, WeightedZone]): Placed vertices to access zones.
 
     Returns:
@@ -313,8 +308,8 @@ def random_point_in_geometry(
     geometry: Polygon | MultiPolygon,
     max_trials: int = 10000,
     *,
-    rng: torch.Generator,
-) -> Vector:
+    rng: np.random.Generator,
+) -> NDArray[np.float64]:
     """Obtain a random point from a geometry.
 
     Args:
@@ -323,7 +318,7 @@ def random_point_in_geometry(
         rng: Random number generator for reproducibility.
 
     Returns:
-        Vector: Coordinates of the sampled point.
+        Coordinates of the sampled point.
 
     Raises:
         ValueError: If `max_trials` is not a positive integer.
@@ -333,11 +328,11 @@ def random_point_in_geometry(
         raise ValueError(msg)
 
     minx, miny, maxx, maxy = geometry.bounds
-    p = vector.zeros(2)
+    p = np.zeros(2)
 
     for _ in range(max_trials):
-        p[0] = (minx + (maxx - minx) * torch.rand((), generator=rng)).item()
-        p[1] = (miny + (maxy - miny) * torch.rand((), generator=rng)).item()
+        p[0] = minx + (maxx - minx) * rng.random()
+        p[1] = miny + (maxy - miny) * rng.random()
 
         if geometry.contains(Point(p[0].item(), p[1].item())):
             break
@@ -345,9 +340,8 @@ def random_point_in_geometry(
     return p
 
 
-@no_runtime_typecheck
 def cost_interaction_point_continuous(  # noqa: PLR0913, PLR0917
-    pos_new: npt.NDArray[np.float64],
+    pos_new: NDArray[np.float64],
     placed_points: list[list[float]],
     Q_target: list[float],
     blocked_indices: list[int],
@@ -373,7 +367,7 @@ def cost_interaction_point_continuous(  # noqa: PLR0913, PLR0917
         dy = pos_new[1] - yi
         dist2 = dx**2 + dy**2
 
-        interaction = 1 / (dist2**3) if dist2 != 0 else torch.inf
+        interaction = 1 / (dist2**3) if dist2 != 0 else np.inf
 
         diff = Q_target[i] - interaction
 
@@ -397,9 +391,9 @@ def cost_interaction_point_continuous(  # noqa: PLR0913, PLR0917
 
 def bfgs_placement(  # noqa: PLR0913, PLR0917
     vertex: int,
-    init_guess: Vector,
+    init_guess: NDArray[np.float64],
     placed_vertices: dict[int, WeightedZone],
-    matrix: Matrix,
+    matrix: NDArray[np.float64],
     dict_vertices_to_place: dict,
     min_distance: float,
     max_radial_distance: float,
@@ -410,7 +404,7 @@ def bfgs_placement(  # noqa: PLR0913, PLR0917
         vertex (int): Vertex to place.
         init_guess (Vector): Initial guess for the BFGS search.
         placed_vertices (dict[int, WeightedZone]): Placed vertices.
-        matrix (torch.Tensor): qubo matrix.
+        matrix (NDArray[np.float64]): qubo matrix.
         dict_vertices_to_place (dict): Vertices to place.
         min_distance (float): Minimum allowed distance to any placed point.
         max_radial_distance (float): Maximum allowed radial distance from origin.
@@ -432,7 +426,7 @@ def bfgs_placement(  # noqa: PLR0913, PLR0917
 
     return minimize(
         cost_interaction_point_continuous,
-        x0=init_guess.to(torch.float64).numpy(),
+        x0=init_guess.astype(np.float64),
         args=(placed_points, Q_target, current_blocked_edges, min_distance, max_radial_distance),
         method="BFGS",
     )
@@ -479,11 +473,11 @@ def test_placing_vertex(  # noqa: PLR0913, PLR0917
     placed_vertices: dict[int, WeightedZone],
     min_distance: float,
     max_radial_distance: float,
-    matrix: Matrix,
+    matrix: NDArray[np.float64],
     cost_function_thresold: float,
     tested_vertices: list[int],
     queue: list[int],
-    rng: torch.Generator,
+    rng: np.random.Generator,
 ) -> None:
     """Test placing vertex.
 
@@ -493,21 +487,21 @@ def test_placing_vertex(  # noqa: PLR0913, PLR0917
         placed_vertices (dict[int, WeightedZone]): Placed vertices.
         min_distance (float): Minimum allowed distance to any placed point.
         max_radial_distance (float): Maximum allowed radial distance from origin.
-        matrix (torch.Tensor): Qubo matrix.
+        matrix (NDArray[np.float64]): Qubo matrix.
         cost_function_thresold (float): Threshold for cost function.
         tested_vertices (list[int]): Already tested vertices.
         queue (list[int]): Current queue of vertices to place.
         rng: Random number generator for reproducibility.
     """
-    places_vertices_tensor = torch.tensor(list(placed_vertices.keys()))
+    placed_ids = list(placed_vertices.keys())
     neighbors = dict_vertices_to_place[vertex]["neighbors_id"][
-        torch.isin(dict_vertices_to_place[vertex]["neighbors_id"], places_vertices_tensor)
+        np.isin(dict_vertices_to_place[vertex]["neighbors_id"], placed_ids)
     ]
     blockings = dict_vertices_to_place[vertex]["blocking_vertices"][
-        torch.isin(dict_vertices_to_place[vertex]["blocking_vertices"], places_vertices_tensor)
+        np.isin(dict_vertices_to_place[vertex]["blocking_vertices"], placed_ids)
     ]
     separated = dict_vertices_to_place[vertex]["separated_vertices"][
-        torch.isin(dict_vertices_to_place[vertex]["separated_vertices"], places_vertices_tensor)
+        np.isin(dict_vertices_to_place[vertex]["separated_vertices"], placed_ids)
     ]
 
     center_poly = Point(0, 0)
@@ -553,12 +547,12 @@ def test_placing_vertex(  # noqa: PLR0913, PLR0917
             placed_vertices[vertex] = temp_zone
 
             # update queue
-            for j_tensor in dict_vertices_to_place[vertex]["blocking_vertices"]:
-                j = j_tensor.item()
+            for j_item in dict_vertices_to_place[vertex]["blocking_vertices"]:
+                j = j_item.item()
                 if j not in placed_vertices and j not in tested_vertices and j not in queue:
                     queue.append(j)
-            for j_tensor in dict_vertices_to_place[vertex]["neighbors_id"]:
-                j = j_tensor.item()
+            for j_item in dict_vertices_to_place[vertex]["neighbors_id"]:
+                j = j_item.item()
                 if j not in placed_vertices and j not in tested_vertices and j not in queue:
                     queue.append(j)
 
@@ -570,7 +564,7 @@ def obtain_vertice_to_test(
     vertices_list: list[int],
     dict_vertices_to_place: dict[int, VertexToPlace],
     placed_vertices: dict[int, WeightedZone],
-    rng: torch.Generator,
+    rng: np.random.Generator,
 ) -> int:
     """Select a vertex to test placing.
 
@@ -584,7 +578,7 @@ def obtain_vertice_to_test(
         int: identifier of a vertex to test placing.
     """
     best_score = 0.0
-    idx: int = int(torch.randint(0, len(vertices_list), (), generator=rng).item())
+    idx: int = int(rng.integers(0, len(vertices_list)))
     chosen_vertice = vertices_list[idx]
 
     for vertex in vertices_list:
@@ -616,25 +610,25 @@ def obtain_vertice_to_test(
 
 
 def geometric_search(  # noqa: PLR0913, PLR0917
-    matrix: Matrix,
+    matrix: NDArray[np.float64],
     dict_vertices_to_place: dict[int, VertexToPlace],
     first_vertex: int,
     cost_function_thresold: float,
     min_distance: float,
     max_radial_distance: float,
-    rng: torch.Generator,
+    rng: np.random.Generator,
 ) -> dict[int, WeightedZone]:
     """Search an embeddable subproblem on the device for solving it during the decomposition.
 
     Args:
-        matrix (torch.Tensor): Full updated qubo matrix.
+        matrix (NDArray[np.float64]): Full updated qubo matrix.
         dict_vertices_to_place (dict[int, VertexToPlace]): Vertices to place.
         first_vertex (int): First vertex to start search from.
         cost_function_thresold (float): Threshold between sum of target
             interactions and sum of interactions from embedding.
         min_distance (float): Minimum allowed distance between placed points.
         max_radial_distance (float): Maximum allowed radial distance from origin.
-        rng (torch.Generator): Random number generator used to break ties.
+        rng (np.random.Generator): Random number generator used to break ties.
 
     Returns:
         dict[int, WeightedZone]: placed vertices (from the matrix variables)
@@ -653,7 +647,7 @@ def geometric_search(  # noqa: PLR0913, PLR0917
     placed_vertices[first_vertex] = zone0
 
     # list of vertices with an edge with the first vertex
-    add_block = torch.cat(
+    add_block = np.concatenate(
         [
             dict_vertices_to_place[first_vertex]["blocking_vertices"],
             dict_vertices_to_place[first_vertex]["neighbors_id"],

@@ -101,8 +101,6 @@ uv run --extra extras pytest --cov
 
 `--cov` also works on a subset of the tests, to see which lines they cover, but then fails the 100% threshold: add `--cov-fail-under=0` if the exit code matters.
 
-Coverage is measured without runtime type checking. With `QUBO_SOLVER_RUNTIME_CHECKS=1`, beartype rejects invalid arguments before the explicit validation code runs, so `--cov` reports less than 100% by design.
-
 ## A Word on Patents
 
 Quantum computing is a heavily patented field. If your contribution introduces a new quantum algorithm, rather than an improvement to the existing library, please check beforehand that it is not covered by an existing patent.

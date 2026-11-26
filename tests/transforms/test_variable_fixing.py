@@ -9,9 +9,9 @@ import io
 import itertools
 import logging
 
+import numpy as np
 import pytest
 import pytest_check as check
-import torch
 
 from qubosolver import (
     Candidate,
@@ -19,11 +19,9 @@ from qubosolver import (
     Solution,
     bitstring,
     bitstrings,
-    matrix,
+    numpy_rng,
     solving,
-    torch_rng,
     transforms,
-    vectori,
 )
 from qubosolver.transforms.variable_fixing import hansen_fixing
 
@@ -31,7 +29,7 @@ from qubosolver.transforms.variable_fixing import hansen_fixing
 def fully_fixable_qubo() -> Instance:
     """QUBO where recursive Hansen fixing eliminates every variable."""
     return Instance(
-        matrix.tensor(
+        np.asarray(
             [
                 [1.0, 2.0],
                 [2.0, 2.0],
@@ -43,7 +41,7 @@ def fully_fixable_qubo() -> Instance:
 def bipartisable_negative_qubo_for_bitflip() -> Instance:
     """QUBO where bit flips can remove all negative off-diagonal coefficients."""
     return Instance(
-        matrix.tensor(
+        np.asarray(
             [
                 [0.0, -2.0, -1.0, 1.0],
                 [-2.0, 0.0, 1.0, -1.0],
@@ -57,7 +55,7 @@ def bipartisable_negative_qubo_for_bitflip() -> Instance:
 def fixable_qubo() -> Instance:
     """QUBO where recursive Hansen fixing stabilizes with 2 of 5 variables left."""
     return Instance(
-        matrix.tensor(
+        np.asarray(
             [
                 [1.0, 19.7365809, 19.7365809, 5.42015853, 5.42015853],
                 [19.7365809, -10.0, 20.67626392, 0.17675796, 0.85604541],
@@ -72,7 +70,7 @@ def fixable_qubo() -> Instance:
 def unfixable_qubo() -> Instance:
     """QUBO where Hansen's criterion cannot fix any variable."""
     return Instance(
-        matrix.tensor(
+        np.asarray(
             [
                 [1.0, -3.0, 3.0],
                 [-3.0, 1.0, -3.0],
@@ -84,7 +82,7 @@ def unfixable_qubo() -> Instance:
 
 def near_tie_qubo() -> Instance:
     """QUBO whose variable 0 has an upper Hansen bound of almost exactly 0."""
-    Q = matrix.tensor(
+    Q = np.asarray(
         [
             [
                 -7502.08154296875,
@@ -101,23 +99,23 @@ def near_tie_qubo() -> Instance:
             [214.60260009765625, 0.0, 0.0, 0.0, -10000.0, 0.0, 0.0],
             [546.004150390625, 0.0, 0.0, 0.0, 0.0, -10000.0, 0.0],
             [592.7294311523438, 0.0, 0.0, 0.0, 0.0, 0.0, -10000.0],
-        ],
+        ]
     )
     return Instance(Q)
 
 
 def random_instance(n: int, seed: int, *, integer: bool) -> Instance:
     """Seeded sparse QUBO; integer coefficients make Hansen bounds hit exact ties."""
-    rng = torch_rng(seed)
+    rng = numpy_rng(seed)
     if integer:
-        Q = torch.randint(-3, 4, (n, n), generator=rng)
-        diag = torch.randint(-6, 7, (n,), generator=rng)
+        Q = rng.integers(-3, 4, (n, n))
+        diag = rng.integers(-6, 7, n)
     else:
-        Q = torch.randn(n, n, generator=rng)
-        diag = 4 * torch.randn(n, generator=rng)
-    Q = Q * (torch.rand(n, n, generator=rng) < 2 / n)  # ~4 neighbours per variable
-    Q.diagonal().copy_(diag)
-    return Instance(matrix.as_tensor(Q), symmetrize=True)
+        Q = rng.standard_normal((n, n))
+        diag = 4 * rng.standard_normal(n)
+    Q = Q * (rng.random((n, n)) < 2 / n)  # ~4 neighbours per variable
+    np.fill_diagonal(Q, diag)
+    return Instance(np.asarray(Q, dtype=np.float64), symmetrize=True)
 
 
 def reference_apply(
@@ -142,20 +140,21 @@ def reference_apply(
     ones = [k for k, v in fixed.items() if v == 1]
     remaining = [i for i in range(len(Q)) if i not in fixed]
     reduced = transforms.variable_fixing.Instance(instance)
-    reduced._matrix = matrix.tensor(
+    reduced._matrix = np.asarray(
         [
             [Q[i][j] + (2 * sum(Q[i][k] for k in ones) if i == j else 0.0) for j in remaining]
             for i in remaining
-        ]
-    )
+        ],
+        dtype=np.float64,
+    ).reshape(len(remaining), len(remaining))  # (0, 0), not (0,), when all are fixed
     if fixed:
         reduced._fixed_history.append(dict(sorted(fixed.items())))
     return reduced
 
 
 def random_fixation(n: int, n_fixed: int, seed: int) -> dict[int, int]:
-    rng = torch_rng(seed)
-    variables = torch.randperm(n, generator=rng)[:n_fixed].tolist()
+    rng = numpy_rng(seed)
+    variables = rng.permutation(n)[:n_fixed].tolist()
     values = bitstring.rand(n_fixed, rng=rng).tolist()
     return dict(zip(variables, values, strict=True))
 
@@ -175,12 +174,11 @@ def test_hansen_fixing_is_empty_when_nothing_can_be_fixed() -> None:
 def test_hansen_fixing_does_not_fix_exact_ties() -> None:
     # Variable 0 has an all-zero row: both bounds are exactly 0, so it is left
     # unfixed although either value is optimal.
-    instance = Instance(matrix.tensor([[0.0, 0.0], [0.0, -1.0]]))
+    instance = Instance(np.asarray([[0.0, 0.0], [0.0, -1.0]]))
 
     check.equal(hansen_fixing(instance), {1: 1})
 
 
-@pytest.mark.skipif(matrix.dtype() != torch.float64, reason="float64 only")
 @pytest.mark.parametrize(
     ("ulps", "sign", "expected"),
     [
@@ -193,38 +191,11 @@ def test_hansen_fixing_does_not_fix_exact_ties() -> None:
         pytest.param(8, -1.0, {0: 1}, id="beyond-margin-to_1"),
     ],
 )
-def test_hansen_fixing_relative_margin_in_float64(  # no cov (coverage runs in float32)
-    ulps: int, sign: float, expected: dict[int, int]
-) -> None:
+def test_hansen_fixing_relative_margin(ulps: int, sign: float, expected: dict[int, int]) -> None:
     # Variable 0 has a bound of exactly sign * ulps * eps, for a magnitude of ~2.
     # Variable 1 is an exact tie, never fixed.
-    diagonal = 1.0 + ulps * torch.finfo(torch.float64).eps
-    instance = Instance(sign * matrix.tensor([[diagonal, -0.5], [-0.5, 1.0]]))
-
-    check.equal(hansen_fixing(instance), expected)
-
-
-@pytest.mark.skipif(matrix.dtype() != torch.float32, reason="float32 only")
-@pytest.mark.parametrize(
-    ("ulps", "sign", "expected"),
-    [
-        pytest.param(0, 1.0, {}, id="tie-to_0"),
-        pytest.param(0, -1.0, {}, id="tie-to_1"),
-        # Bounds are summed in float64, whose eps is 2**29 times smaller than that
-        # of float32: any nonzero float32 bound is beyond the margin.
-        pytest.param(1, 1.0, {0: 0}, id="one-ulp-to_0"),
-        pytest.param(1, -1.0, {0: 1}, id="one-ulp-to_1"),
-        pytest.param(8, 1.0, {0: 0}, id="eight-ulps-to_0"),
-        pytest.param(8, -1.0, {0: 1}, id="eight-ulps-to_1"),
-    ],
-)
-def test_hansen_fixing_relative_margin_in_float32(
-    ulps: int, sign: float, expected: dict[int, int]
-) -> None:
-    # Variable 0 has a bound of exactly sign * ulps * eps, for a magnitude of ~2.
-    # Variable 1 is an exact tie, never fixed.
-    diagonal = 1.0 + ulps * torch.finfo(torch.float32).eps
-    instance = Instance(sign * matrix.tensor([[diagonal, -0.5], [-0.5, 1.0]]))
+    diagonal = 1.0 + ulps * np.finfo(np.float64).eps
+    instance = Instance(sign * np.asarray([[diagonal, -0.5], [-0.5, 1.0]], dtype=np.float64))
 
     check.equal(hansen_fixing(instance), expected)
 
@@ -243,7 +214,7 @@ def test_hansen_fixing_is_scale_invariant(seed: int, integer: bool, scale: float
 
 @pytest.mark.parametrize(("diagonal", "expected"), [(-1.0, {0: 1}), (0.0, {}), (1.0, {0: 0})])
 def test_hansen_fixing_of_a_single_variable(diagonal: float, expected: dict[int, int]) -> None:
-    instance = Instance(matrix.tensor([[diagonal]]))
+    instance = Instance(np.asarray([[diagonal]], dtype=np.float64))
 
     check.equal(hansen_fixing(instance), expected)
 
@@ -262,7 +233,7 @@ def test_hansen_fixing_matches_reference(n: int, seed: int, integer: bool) -> No
     expected = reference_apply(instance)
 
     check.equal(reduced.fixed_history, expected.fixed_history)
-    torch.testing.assert_close(reduced.matrix, expected.matrix)
+    np.testing.assert_allclose(reduced.matrix, expected.matrix, strict=True)
 
     fixed = hansen_fixing(instance)
     # Plain ints, in increasing order: the dict ends up JSON-encoded in the history.
@@ -271,13 +242,14 @@ def test_hansen_fixing_matches_reference(n: int, seed: int, integer: bool) -> No
 
 
 def test_apply_keeps_the_optimum_of_a_near_tie() -> None:
-    # The upper bound of variable 0 is exactly 2**-12, but summed in float32 it
-    # rounds to -2**-11, which would wrongly fix it to 1 and exclude the optimum.
+    # The upper bound of variable 0 is exactly 2**-12: fixing it to 1 would exclude
+    # the optimum.
     reduced = transforms.variable_fixing.apply(near_tie_qubo())
 
     check.equal(reduced.fixed_history, [{1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}])
-    # Folding the variables fixed to 1 into the diagonal also needs float64.
-    torch.testing.assert_close(reduced.matrix, matrix.tensor([[2.0**-12]]), rtol=0, atol=0)
+    np.testing.assert_allclose(
+        reduced.matrix, np.asarray([[2.0**-12]]), rtol=0, atol=0, strict=True
+    )
 
 
 def test_apply_recursively_finds_the_optimum_of_a_near_tie() -> None:
@@ -295,15 +267,17 @@ def test_apply_recursively_finds_the_optimum_of_a_near_tie() -> None:
 @pytest.mark.parametrize("n_fixed", [0, 1, 5, 12])
 def test_reduce_qubo_matches_reference(n_fixed: int, seed: int) -> None:
     instance = random_instance(12, seed, integer=False)
-    original = instance.matrix.clone()
+    original = instance.matrix.copy()
     fixed = random_fixation(12, n_fixed, seed)
 
     reduced = transforms.variable_fixing._reduce_qubo(instance, fixed)
     expected = reference_apply(instance, fixed)
 
-    torch.testing.assert_close(reduced.matrix, expected.matrix)
+    np.testing.assert_allclose(reduced.matrix, expected.matrix, strict=True)
     check.equal(reduced.fixed_history, expected.fixed_history)
-    torch.testing.assert_close(instance.matrix, original)  # not inplace: input untouched
+    np.testing.assert_allclose(
+        instance.matrix, original, strict=True
+    )  # not inplace: input untouched
 
 
 @pytest.mark.parametrize("seed", [399497325, 1357894654, 2608074856])
@@ -313,14 +287,14 @@ def test_reduce_qubo_preserves_costs_up_to_a_constant(seed: int) -> None:
     instance = random_instance(8, seed, integer=False)
     reduced = transforms.variable_fixing._reduce_qubo(instance, random_fixation(8, 4, seed))
 
-    all_bitstrings = bitstrings.tensor(list(itertools.product([0, 1], repeat=reduced.size)))
+    all_bitstrings = np.asarray(list(itertools.product([0, 1], repeat=reduced.size)), dtype=np.int8)
     reduced_solution = Solution(bitstrings=all_bitstrings)._update(reduced, unit_counts=True)
     lifted = transforms.variable_fixing.lift(reduced_solution, reduced)
 
     # The original and reduced costs differ by the same offset for every bitstring.
     offsets = lifted.costs - reduced_solution.costs
-    expected_offsets = offsets.detach().clone().fill_(offsets[0])
-    torch.testing.assert_close(offsets, expected_offsets)
+    expected_offsets = np.full_like(offsets, offsets[0])
+    np.testing.assert_allclose(offsets, expected_offsets, strict=True)
 
 
 def test_init_preserves_the_parent_instance_type() -> None:
@@ -354,7 +328,7 @@ def test_apply_is_noop_when_nothing_can_be_fixed() -> None:
 
     check.equal(reduced.size, instance.size)
     check.equal(reduced.fixed_variables, {})
-    torch.testing.assert_close(reduced.matrix, instance.matrix)
+    np.testing.assert_allclose(reduced.matrix, instance.matrix, strict=True)
 
 
 def test_apply_logs_when_instance_is_reduced_to_zero_variables(
@@ -417,11 +391,13 @@ def test_lift_is_a_copy_when_nothing_fixed() -> None:
     instance = unfixable_qubo()
     reduced = transforms.variable_fixing.apply(instance)
 
-    sol = Solution(bitstrings=bitstrings.from_strings(["101"]), counts=vectori.tensor([1]))
+    sol = Solution(
+        bitstrings=bitstrings.from_strings(["101"]), counts=np.asarray([1], dtype=np.int64)
+    )
     sol._update(instance)
     restored = transforms.variable_fixing.lift(sol, reduced)
 
-    torch.testing.assert_close(restored.bitstrings, sol.bitstrings)
+    np.testing.assert_allclose(restored.bitstrings, sol.bitstrings, rtol=0, strict=True)
 
 
 def test_lift_when_every_variable_gets_fixed() -> None:
@@ -528,7 +504,7 @@ def test_apply_does_not_alias_the_parent_instance() -> None:
     instance = fixable_qubo()
     reduced = transforms.variable_fixing.apply_recursively(instance)
 
-    instance._matrix.fill_(0.0)
+    instance._matrix.fill(0.0)
 
     reduced_solution = solving.brute_force.solve(reduced)
     restored_solution = transforms.variable_fixing.lift(reduced_solution, reduced)
@@ -550,9 +526,11 @@ def test_save_load_roundtrips_variable_fixing_state() -> None:
     loaded = transforms.variable_fixing.Instance.load(buffer)
 
     check.is_instance(loaded, transforms.variable_fixing.Instance)
-    torch.testing.assert_close(loaded.matrix, reduced.matrix)
+    np.testing.assert_allclose(loaded.matrix, reduced.matrix, strict=True)
     check.equal(loaded.fixed_history, reduced.fixed_history)
-    torch.testing.assert_close(loaded._parent_instance.matrix, reduced._parent_instance.matrix)
+    np.testing.assert_allclose(
+        loaded._parent_instance.matrix, reduced._parent_instance.matrix, strict=True
+    )
 
 
 def test_base_instance_load_dispatches_to_variable_fixing_instance() -> None:
@@ -570,10 +548,10 @@ def test_base_instance_load_dispatches_to_variable_fixing_instance() -> None:
     loaded = Instance.load(buffer)
 
     check.is_instance(loaded, transforms.variable_fixing.Instance)
-    torch.testing.assert_close(loaded.matrix, reduced.matrix)
+    np.testing.assert_allclose(loaded.matrix, reduced.matrix, strict=True)
     check.equal(loaded.variable_fixing.fixed_history, reduced.fixed_history)
-    torch.testing.assert_close(
-        loaded.variable_fixing._parent_instance.matrix, reduced._parent_instance.matrix
+    np.testing.assert_allclose(
+        loaded.variable_fixing._parent_instance.matrix, reduced._parent_instance.matrix, strict=True
     )
 
 
@@ -592,10 +570,10 @@ def test_load_of_saved_variable_fixing_instance_can_be_lifted() -> None:
     restored = transforms.variable_fixing.lift(reduced_solution, loaded)
     expected = transforms.variable_fixing.lift(reduced_solution, reduced)
 
-    torch.testing.assert_close(restored.bitstrings, expected.bitstrings)
-    torch.testing.assert_close(restored.costs, expected.costs)
-    torch.testing.assert_close(restored.counts, expected.counts)
-    torch.testing.assert_close(restored.probabilities, expected.probabilities)
+    np.testing.assert_allclose(restored.bitstrings, expected.bitstrings, rtol=0, strict=True)
+    np.testing.assert_allclose(restored.costs, expected.costs, strict=True)
+    np.testing.assert_allclose(restored.counts, expected.counts, rtol=0, strict=True)
+    np.testing.assert_allclose(restored.probabilities, expected.probabilities, strict=True)
 
 
 def test_save_load_roundtrips_variable_fixing_over_negative_bitflip_parent() -> None:
@@ -614,8 +592,10 @@ def test_save_load_roundtrips_variable_fixing_over_negative_bitflip_parent() -> 
     loaded = transforms.variable_fixing.Instance.load(buffer)
 
     assert isinstance(loaded._parent_instance, transforms.negative_bitflip.Instance)
-    torch.testing.assert_close(loaded._parent_instance.matrix, flipped_parent.matrix)
-    torch.testing.assert_close(loaded._parent_instance.flips, flipped_parent.flips)
+    np.testing.assert_allclose(loaded._parent_instance.matrix, flipped_parent.matrix, strict=True)
+    np.testing.assert_allclose(
+        loaded._parent_instance.flips, flipped_parent.flips, rtol=0, strict=True
+    )
     check.equal(loaded._parent_instance._offset, flipped_parent._offset)
 
 
@@ -643,11 +623,11 @@ def test_fixed_history_uses_original_indices_over_several_rounds() -> None:
 )
 def test_apply_rejects_out_of_range_indices(fixed: dict[int, int]) -> None:
     instance = transforms.variable_fixing.Instance(fixable_qubo())
-    matrix = instance.matrix.clone()
+    matrix = instance.matrix.copy()
 
     with pytest.raises(ValueError, match="outside range"):
         transforms.variable_fixing.apply(instance, (lambda _: fixed,), inplace=True)
-    torch.testing.assert_close(instance.matrix, matrix)
+    np.testing.assert_allclose(instance.matrix, matrix, strict=True)
     check.equal(instance.fixed_history, [])
 
 

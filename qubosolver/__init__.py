@@ -19,18 +19,6 @@ import logging
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
-from qubosolver._checks import _RUNTIME_TYPE_CHECKING  # noqa: E402
-
-if _RUNTIME_TYPE_CHECKING:  # no cov
-    from beartype import BeartypeConf  # deptry: ignore[DEP004]
-    from beartype.claw import (  # deptry: ignore[DEP004]
-        beartype_this_package,
-        warn_if_beartype_claw_inactive,
-    )
-
-    beartype_this_package(conf=BeartypeConf(warning_cls_on_decorator_exception=None))
-    warn_if_beartype_claw_inactive()
-
 # isort: split
 # qubosolver.types must be imported (and fully initialized) before qubosolver.drive_shaping,
 # qubosolver.solving, etc., since those submodules import names back from the qubosolver
@@ -39,31 +27,19 @@ if _RUNTIME_TYPE_CHECKING:  # no cov
 from qubosolver.types import (  # noqa: E402
     AutoLocalEmulatorBackend,
     AutoRemoteEmulatorBackend,
-    # Type Aliases
-    Bitstring,
-    Bitstrings,
     Candidate,
     Dataset,
     Instance,
     LocalEmulator,
-    Matrix,
     RemoteEmulator,
     # Classes
     Solution,
-    Tensor,
-    Vector,
-    Vectori,
     # Submodules
     bitstring,
     bitstrings,
-    linalg,
-    matrix,
-    protocols,
-    tensor,
     # Functions
-    torch_rng,
-    vector,
-    vectori,
+    numpy_rng,
+    protocols,
 )
 
 # isort: split
@@ -73,33 +49,22 @@ from qubosolver.utils import analysis, extract_qubo  # noqa: E402
 __all__ = [
     "AutoLocalEmulatorBackend",
     "AutoRemoteEmulatorBackend",
-    "Bitstring",
-    "Bitstrings",
     "Candidate",
     "Dataset",
     "Instance",
     "LocalEmulator",
-    "Matrix",
     "RemoteEmulator",
     "Solution",
-    "Tensor",
-    "Vector",
-    "Vectori",
     "analysis",
     "bitstring",
     "bitstrings",
     "drive_shaping",
     "embedding",
     "extract_qubo",
-    "linalg",
-    "matrix",
+    "numpy_rng",
     "protocols",
     "solving",
-    "tensor",
-    "torch_rng",
     "transforms",
-    "vector",
-    "vectori",
 ]
 
 from importlib.metadata import version  # noqa: E402

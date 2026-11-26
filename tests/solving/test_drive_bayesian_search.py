@@ -14,21 +14,12 @@ import numpy as np
 import pytest
 import pytest_check as check
 import qoolqit
-import torch
 from qoolqit.devices.device import AnalogDevice, AnalogDeviceWithDMM
 from qoolqit.register import Register
 
-from qubosolver import (
-    Candidate,
-    Instance,
-    LocalEmulator,
-    Solution,
-    matrix,
-    solving,
-    tensor,
-    vector,
-)
+from qubosolver import Candidate, Instance, LocalEmulator, Solution, solving
 from qubosolver.utils import analysis
+from qubosolver.utils._random import manual_seed
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -65,25 +56,24 @@ def probability_based_ojective(
 @pytest.mark.parametrize("use_probability_based_objective", [True, False])
 def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective: bool) -> None:
 
-    np.random.seed(seed)
-    torch.manual_seed(seed)
+    manual_seed(seed)
 
     spacing = 1.1
 
     # Set a Register and compute the associated QUBO
     # Equilateral triangle centered on origin
-    vertices = spacing * tensor.tensor(
+    vertices = spacing * np.asarray(
         [
             [0.0, 1.0 / np.sqrt(3.0)],
             [-0.5, -0.5 / np.sqrt(3.0)],
             [0.5, -0.5 / np.sqrt(3.0)],
-        ],
+        ]
     )
     register = Register.from_coordinates(vertices)
     # Choose scaling factor so that coefficients and costs are in a human readable range (~10)
-    Q = 10.0 * matrix.as_tensor(register.interaction_matrix())
+    Q = 10.0 * np.asarray(register.interaction_matrix(), dtype=np.float64)
     # Choose diagonal coefficients so that the solutions are 011, 101 and 110
-    Q = Q - 2.5 * matrix.as_tensor(torch.eye(3)) * Q[0, 1]
+    Q = Q - 2.5 * np.eye(3) * Q[0, 1]
 
     instance = Instance(Q)
 
@@ -139,25 +129,24 @@ def test_equilateral_triangular_qubo(seed: int, use_probability_based_objective:
 @pytest.mark.parametrize("use_probability_based_objective", [True, False])
 def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> None:
 
-    np.random.seed(seed)
-    torch.manual_seed(seed)
+    manual_seed(seed)
 
     spacing = 1.5
 
     # Set a Register and compute the associated QUBO
-    vertices = spacing * tensor.tensor(
+    vertices = spacing * np.asarray(
         [
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
-        ],
+        ]
     )
     register = Register.from_coordinates(vertices)
 
     # Choose scaling factor so that coefficients and costs are in a human readable range (~10)
-    Q = 400.0 * matrix.as_tensor(register.interaction_matrix())
+    Q = 400.0 * np.asarray(register.interaction_matrix(), dtype=np.float64)
     # Choose diagonal coefficients so that the solution is 110
-    Q = Q - 2.5 * matrix.as_tensor(torch.eye(3)) * Q[0, 1]
+    Q = Q - 2.5 * np.eye(3) * Q[0, 1]
 
     instance = Instance(Q)
 
@@ -212,15 +201,15 @@ def test_triangular_qubo(seed: int, use_probability_based_objective: bool) -> No
 def test_errors(raise_exception: bool) -> None:
 
     # Set a Register and compute the associated QUBO
-    vertices = tensor.tensor(
+    vertices = np.asarray(
         [
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
-        ],
+        ]
     )
     register = Register.from_coordinates(vertices)
-    Q = matrix.as_tensor(register.interaction_matrix()) - matrix.as_tensor(torch.eye(3))
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.eye(3)
     instance = Instance(Q)
 
     def error(_solution: Solution) -> float:
@@ -249,15 +238,15 @@ def test_errors(raise_exception: bool) -> None:
 def test_callback_fn() -> None:
     """`_callback_fn` is private/experimental: set it by attribute after construction."""
     # Set a Register and compute the associated QUBO
-    vertices = tensor.tensor(
+    vertices = np.asarray(
         [
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
-        ],
+        ]
     )
     register = Register.from_coordinates(vertices)
-    Q = matrix.as_tensor(register.interaction_matrix()) - matrix.as_tensor(torch.eye(3))
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.eye(3)
 
     device = AnalogDeviceWithDMM()
     backend = LocalEmulator()
@@ -285,15 +274,15 @@ def test_callback_fn() -> None:
 def test_failed_simulation() -> None:
 
     # Set a Register and compute the associated QUBO
-    vertices = tensor.tensor(
+    vertices = np.asarray(
         [
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
-        ],
+        ]
     )
     register = Register.from_coordinates(vertices)
-    Q = matrix.as_tensor(register.interaction_matrix()) - matrix.as_tensor(torch.eye(3))
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.eye(3)
 
     config = solving.drive_bayesian_search.Config(
         n_evaluations=11,
@@ -312,15 +301,15 @@ def test_failed_simulation() -> None:
 def test_failed_simulation_2() -> None:
 
     # Set a Register and compute the associated QUBO
-    vertices = tensor.tensor(
+    vertices = np.asarray(
         [
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
-        ],
+        ]
     )
     register = Register.from_coordinates(vertices)
-    Q = matrix.as_tensor(register.interaction_matrix()) - matrix.as_tensor(torch.eye(3))
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.eye(3)
 
     config = solving.drive_bayesian_search.Config(
         n_evaluations=11,
@@ -342,15 +331,15 @@ def test_failed_simulation_2() -> None:
 def test_failed_skopt() -> None:
 
     # Set a Register and compute the associated QUBO
-    vertices = tensor.tensor(
+    vertices = np.asarray(
         [
             [0.0, 0.5],
             [-0.8, -0.4],
             [0.2, -0.15],
-        ],
+        ]
     )
     register = Register.from_coordinates(vertices)
-    Q = matrix.as_tensor(register.interaction_matrix()) - matrix.as_tensor(torch.eye(3))
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.eye(3)
 
     config = solving.drive_bayesian_search.Config(
         n_evaluations=11,
@@ -372,9 +361,9 @@ def test_failed_skopt() -> None:
 @pytest.mark.duration(4)
 def test_dmm_labels_are_ints() -> None:
 
-    vertices = tensor.tensor([[0.0, 0.0], [1.0, 0.0]])
+    vertices = np.asarray([[0.0, 0.0], [1.0, 0.0]])
     register = qoolqit.Register.from_coordinates(vertices)
-    Q = matrix.as_tensor(register.interaction_matrix()) + torch.diag(vector.tensor([-1.0, -2.0]))
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) + np.diag([-1.0, -2.0])
     instance = Instance(Q)
 
     check.is_instance(register.qubits_ids[0], int)
@@ -395,8 +384,8 @@ def test_dmm_labels_are_ints() -> None:
 
 
 def test_dmm_requested_on_device_without_dmm(caplog: pytest.LogCaptureFixture) -> None:
-    register = Register.from_coordinates(tensor.tensor([[0.0, 0.0], [1.0, 0.0]]))
-    Q = matrix.as_tensor(register.interaction_matrix()) - matrix.as_tensor(torch.eye(2))
+    register = Register.from_coordinates(np.asarray([[0.0, 0.0], [1.0, 0.0]]))
+    Q = np.asarray(register.interaction_matrix(), dtype=np.float64) - np.eye(2)
 
     with caplog.at_level(logging.WARNING, logger="qubosolver.solving.hybrid.drive_bayesian_search"):
         _, drive = solving.drive_bayesian_search.solve(

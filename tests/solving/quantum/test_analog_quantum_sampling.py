@@ -17,9 +17,7 @@ from qubosolver import (
     analysis,
     drive_shaping,
     embedding,
-    matrix,
     solving,
-    tensor,
 )
 from qubosolver.utils._random import manual_seed
 
@@ -33,14 +31,14 @@ def test_too_large_register() -> None:
 
     np.random.seed(1048)
 
-    instance = Instance(matrix.tensor([[0, 1, 0], [1, 0, 0], [0, 0, 0]]))
+    instance = Instance(np.asarray([[0, 1, 0], [1, 0, 0], [0, 0, 0]], dtype=np.float64))
 
     # Two close atoms and one far one: a large max/min distance ratio that a
     # device-aware blade config would have avoided. These are passed as
     # starting_positions rather than left for blade to optimize from scratch,
     # because blade may otherwise settle on a (less optimal but still valid)
     # layout that isn't spread out enough to reproduce the ratio violation.
-    coords = tensor.tensor(
+    coords = np.asarray(
         [
             [-0.5, 0.0],
             [0.5, 0.0],
@@ -48,7 +46,7 @@ def test_too_large_register() -> None:
         ]
     )
     config = embedding.blade.Config(
-        starting_positions=coords.numpy(),
+        starting_positions=coords,
     )
 
     register = embedding.blade.embed(instance, config=config)
@@ -70,10 +68,10 @@ def test_too_large_register() -> None:
 def test_single_atom_register() -> None:
     manual_seed(156617)
 
-    instance = Instance(matrix.tensor([[-2.0]]))
+    instance = Instance(np.asarray([[-2.0]]))
 
     device = qoolqit.AnalogDeviceWithDMM()
-    register = qoolqit.Register.from_coordinates(tensor.zeros(1, 2))
+    register = qoolqit.Register.from_coordinates(np.zeros((1, 2)))
     drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
     program = solving.analog_quantum_sampling.compile(register, drive, device)
     job = LocalEmulator().run(program)
@@ -90,9 +88,9 @@ def test_single_atom_register() -> None:
 def test_single_atom_register_radial_distance(x: float, fits: bool) -> None:
     # A single atom has no minimum distance: its radial distance is measured in units
     # of the device's minimum distance.
-    instance = Instance(matrix.tensor([[-2.0]]))
+    instance = Instance(np.asarray([[-2.0]]))
     device = qoolqit.AnalogDeviceWithDMM()
-    register = qoolqit.Register.from_coordinates(tensor.tensor([[x, 0.0]]))
+    register = qoolqit.Register.from_coordinates(np.asarray([[x, 0.0]]))
     drive = drive_shaping.local_energy_scale.build_drive(instance, register, device=device)
 
     if fits:

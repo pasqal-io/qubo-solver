@@ -5,13 +5,10 @@
 
 from __future__ import annotations
 
-import random
-
 import numpy as np
 import pytest
 import pytest_check as check
 import qoolqit
-import torch
 from qubos import QUBOS
 
 from qubosolver import (
@@ -22,16 +19,9 @@ from qubosolver import (
     embedding,
     extract_qubo,
     solving,
-    torch_rng,
 )
 from qubosolver.utils import analysis
-
-
-def manual_seed(seed: int) -> torch.Generator:
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    random.seed(seed)
-    return torch_rng(seed)
+from qubosolver.utils._random import manual_seed
 
 
 def gather_optimal_solutions(solutions: Solution) -> list[Candidate]:
@@ -46,7 +36,7 @@ def check_solution(
 ) -> float:
 
     # Solutions are not duplicated
-    check.equal(solution.bitstrings.unique(dim=0).shape[0], len(solution))
+    check.equal(np.unique(solution.bitstrings, axis=0).shape[0], len(solution))
 
     print(f"\n{analysis.to_dataframe([solution])}")
 
@@ -85,15 +75,15 @@ def check_hamiltonian_qubo(
 ) -> tuple[float, float]:
     extracted = extract_qubo(register, drive)
     with np.printoptions(precision=2, suppress=True):
-        print(f"\nExtracted QUBO matrix:\n{extracted.matrix.numpy()}\n")
-        print(f"Expected QUBO matrix:\n{qubo.matrix.numpy()}\n")
+        print(f"\nExtracted QUBO matrix:\n{extracted.matrix}\n")
+        print(f"Expected QUBO matrix:\n{qubo.matrix}\n")
 
     diff = extracted.matrix - qubo.matrix
-    diagonal_diff_norm = torch.diag(diff).norm().item()
-    off_diagonal_diff_norm = diff.fill_diagonal_(0.0).norm().item()
+    diagonal_diff_norm = np.linalg.norm(np.diag(diff)).item()
+    off_diagonal_diff_norm = np.linalg.norm(diff - np.diag(np.diag(diff))).item()
 
-    diagonal_norm = torch.diag(qubo.matrix).norm().item()
-    off_diagonal_norm = qubo.matrix.clone().fill_diagonal_(0.0).norm().item()
+    diagonal_norm = np.linalg.norm(np.diag(qubo.matrix)).item()
+    off_diagonal_norm = np.linalg.norm(qubo.matrix - np.diag(np.diag(qubo.matrix))).item()
 
     rel_diagonal_error = _relative_norm(diagonal_diff_norm, diagonal_norm)
     rel_offdiagonal_error = _relative_norm(off_diagonal_diff_norm, off_diagonal_norm)

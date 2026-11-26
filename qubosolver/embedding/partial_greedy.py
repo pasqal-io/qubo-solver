@@ -42,10 +42,10 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
+import numpy as np
 import qoolqit
-import torch
 
-from qubosolver import Instance, tensor, torch_rng
+from qubosolver import Instance, numpy_rng
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from qubosolver.utils.quantum import _max_min_distance_ratio
 
@@ -113,7 +113,7 @@ def embed_for_device(
     instance: Instance,
     device: qoolqit.Device,
     *,
-    rng: torch.Generator | None = None,
+    rng: np.random.Generator | None = None,
 ) -> tuple[qoolqit.Register, list[int]]:
     """Embed part of a QUBO instance with the geometric search, sized for *device*.
 
@@ -124,7 +124,7 @@ def embed_for_device(
         instance: The QUBO instance to partially embed.
         device: Target quantum device the resulting register must fit.
         rng: Random number generator choosing the first variable and driving the
-            search. Defaults to `torch_rng("global")`.
+            search. Defaults to `numpy_rng("global")`.
 
     Returns:
         The register and the placed variables; see [`embed`][].
@@ -137,7 +137,7 @@ def embed(
     instance: Instance,
     *,
     config: Config | None = None,
-    rng: torch.Generator | None = None,
+    rng: np.random.Generator | None = None,
 ) -> tuple[qoolqit.Register, list[int]]:
     """Embed part of a QUBO instance with the geometric search.
 
@@ -157,8 +157,8 @@ def embed(
         config: Geometric search parameters (see [`Config.from_device`][] for
             deriving `max_min_dist_ratio` from a device).
         rng: Random number generator choosing the first variable and driving the
-            search. Defaults to `torch_rng("global")`, so that it follows
-            `torch.manual_seed`.
+            search. Defaults to `numpy_rng("global")`, so that it follows
+            `numpy.random.seed`.
 
     Returns:
         A tuple `(register, variables)`: qubit *i* of `register` (labelled *i*)
@@ -180,7 +180,7 @@ def embed(
     """
     logger.info(_PROTOTYPE_NOTICE)
     config = config or Config()
-    rng = rng or torch_rng("global")
+    rng = rng or numpy_rng("global")
     logger.debug("embed: instance size=%d, config=%r", instance.size, config)
     if not instance:
         msg = "Cannot embed an empty instance (size=0): nothing to place."
@@ -193,9 +193,9 @@ def embed(
     if instance.size == 1:
         # A single atom has no off-diagonal term to place it relative to,
         # so it is placed at the origin without running the search.
-        return qoolqit.Register.from_coordinates(tensor.zeros(1, 2)), [0]
+        return qoolqit.Register.from_coordinates(np.zeros((1, 2))), [0]
 
-    if positive := (instance.matrix.diagonal() > 0).nonzero().flatten().tolist():
+    if positive := np.flatnonzero(instance.matrix.diagonal() > 0).tolist():
         msg = (
             f"Variables {positive} have positive diagonal coefficients, but the partial greedy "
             "embedder requires non-positive ones. Fix these variables first, e.g. with "
@@ -221,7 +221,7 @@ def embed(
     )
 
     # A random first variable works better according to some performed numerics.
-    first_vertex = int(torch.randint(0, instance.size, (), generator=rng).item())
+    first_vertex = int(rng.integers(0, instance.size))
 
     # The distance scale comes from the largest off-diagonal coefficient of `instance`. In a
     # decomposition loop, that is the reduced instance, so each round gets its own scale. This is
@@ -240,5 +240,5 @@ def embed(
     )
 
     variables = sorted(placed)
-    coords = tensor.tensor([[placed[v].x, placed[v].y] for v in variables])
+    coords = np.asarray([[placed[v].x, placed[v].y] for v in variables], dtype=np.float64)
     return qoolqit.Register.from_coordinates(coords), variables

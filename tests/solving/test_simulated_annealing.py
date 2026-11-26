@@ -9,21 +9,11 @@ import copy
 import inspect
 from typing import assert_type, get_overloads
 
+import numpy as np
 import pytest
 import pytest_check as check
-import torch
 
-from qubosolver import (
-    Dataset,
-    Instance,
-    Solution,
-    bitstring,
-    bitstrings,
-    matrix,
-    solving,
-    torch_rng,
-    vectori,
-)
+from qubosolver import Dataset, Instance, Solution, bitstring, bitstrings, numpy_rng, solving
 from qubosolver.solving.classical.simulated_annealing import (
     _Data,
     _from_key,
@@ -34,7 +24,7 @@ from qubosolver.solving.classical.simulated_annealing import (
 )
 
 instance_symmetric = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [-2.0, 1.0, 0.0, -1.0, 0.0, 0.0],
             [1.0, -3.0, 2.0, 0.0, 0.0, -1.0],
@@ -42,18 +32,18 @@ instance_symmetric = Instance(
             [-1.0, 0.0, 1.0, -2.0, 1.0, 0.0],
             [0.0, 0.0, -2.0, 1.0, -1.0, 2.0],
             [0.0, -1.0, 0.0, 0.0, 2.0, -2.0],
-        ],
+        ]
     )
 )
 
 instance_small = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [1.0, 3.0, -1.0, 0.5],
             [3.0, -2.0, 1.0, 0.0],
             [-1.0, 1.0, 0.5, -1.5],
             [0.5, 0.0, -1.5, -1.0],
-        ],
+        ]
     )
 )
 
@@ -65,7 +55,7 @@ vectorized_params = [
     pytest.param(False, id="sequential"),
 ]
 
-# The non-vectorized path does one Python-level torch call per (start, iteration)
+# The non-vectorized path does one Python-level numpy call per (start, iteration)
 # pair, so its wall-clock cost scales with n_starts * max_iter regardless of
 # instance size; skip it once that product gets large enough to slow the suite.
 _MAX_SEQUENTIAL_WORK = 2000
@@ -83,7 +73,7 @@ def test_to_key_from_key_round_trip() -> None:
     key = _to_key(bits)
     restored = _from_key(key)
 
-    torch.testing.assert_close(restored, bits)
+    np.testing.assert_allclose(restored, bits, rtol=0, strict=True)
 
 
 def test_to_key_distinguishes_different_bitstrings() -> None:
@@ -154,8 +144,8 @@ def test_shrink_noop_when_already_within_top_k() -> None:
 def test_simulated_annealing_costs_match_bitstrings(instance: Instance, vectorized: bool) -> None:
     """Every reported cost must correspond to x^T Q x of its own bitstring."""
     skip_if_sequential_too_slow(vectorized, n_starts=1, max_iter=3000)
-    start = bitstrings.zeros(1, instance.size)
-    rng = torch_rng(0)
+    start = np.zeros((1, instance.size), dtype=np.int8)
+    rng = numpy_rng(0)
 
     solution = solving.simulated_annealing.solve(
         instance,
@@ -170,9 +160,9 @@ def test_simulated_annealing_costs_match_bitstrings(instance: Instance, vectoriz
 
     true_solution = copy.deepcopy(solution)._compute_costs(instance.matrix)
 
-    torch.testing.assert_close(solution.costs, true_solution.costs)
-    torch.testing.assert_close(
-        solution.costs, torch.sort(solution.costs).values, atol=0.0, rtol=0.0
+    np.testing.assert_allclose(solution.costs, true_solution.costs, strict=True)
+    np.testing.assert_allclose(
+        solution.costs, np.sort(solution.costs), atol=0.0, rtol=0.0, strict=True
     )
 
 
@@ -186,7 +176,7 @@ def test_simulated_annealing_energy_does_not_drift_on_large_batch(vectorized: bo
     `_REFRESH_EVERY`), and recompute it once more from the final bitstrings before
     returning.
     """
-    rng = torch_rng(64548)
+    rng = numpy_rng(64548)
     dataset = Dataset.from_random(1, 100, rng=rng)
     instance, _ = dataset[0]
     starts = bitstrings.rand(400, instance.size, rng=rng)
@@ -208,8 +198,8 @@ def test_simulated_annealing_solution_is_internally_consistent(
     and probabilities matching normalised counts.
     """
     skip_if_sequential_too_slow(vectorized, n_starts=1, max_iter=3000)
-    start = bitstrings.zeros(1, instance.size)
-    rng = torch_rng(0)
+    start = np.zeros((1, instance.size), dtype=np.int8)
+    rng = numpy_rng(0)
 
     solution = solving.simulated_annealing.solve(
         instance,
@@ -232,8 +222,8 @@ def test_simulated_annealing_counts_sum_to_visits(instance: Instance, vectorized
 
     Their total must be at least the number of returned bitstrings.
     """
-    start = bitstrings.zeros(1, instance.size)
-    rng = torch_rng(0)
+    start = np.zeros((1, instance.size), dtype=np.int8)
+    rng = numpy_rng(0)
 
     solution = solving.simulated_annealing.solve(
         instance,
@@ -246,7 +236,7 @@ def test_simulated_annealing_counts_sum_to_visits(instance: Instance, vectorized
         vectorized=vectorized,
     )
 
-    check.is_true(torch.all(solution.counts > 0).item())
+    check.is_true(np.all(solution.counts > 0).item())
     check.greater_equal(solution.counts.sum().item(), len(solution))
 
 
@@ -254,8 +244,8 @@ def test_simulated_annealing_counts_sum_to_visits(instance: Instance, vectorized
 @pytest.mark.parametrize("vectorized", vectorized_params)
 def test_simulated_annealing_respects_top_k(instance: Instance, vectorized: bool) -> None:
     """The number of returned solutions never exceeds top_k."""
-    start = bitstrings.zeros(1, instance.size)
-    rng = torch_rng(0)
+    start = np.zeros((1, instance.size), dtype=np.int8)
+    rng = numpy_rng(0)
 
     solution = solving.simulated_annealing.solve(
         instance,
@@ -277,7 +267,7 @@ def test_simulated_annealing_deterministic_with_seeded_rng(
     instance: Instance, vectorized: bool
 ) -> None:
     """Two runs with the same seed must produce identical solutions."""
-    start = bitstrings.zeros(1, instance.size)
+    start = np.zeros((1, instance.size), dtype=np.int8)
 
     solution_a = solving.simulated_annealing.solve(
         instance,
@@ -286,7 +276,7 @@ def test_simulated_annealing_deterministic_with_seeded_rng(
         max_iter=500,
         initial_temp=4.0,
         final_temp=0.05,
-        rng=torch_rng(565111),
+        rng=numpy_rng(565111),
         vectorized=vectorized,
     )
     solution_b = solving.simulated_annealing.solve(
@@ -296,15 +286,15 @@ def test_simulated_annealing_deterministic_with_seeded_rng(
         max_iter=500,
         initial_temp=4.0,
         final_temp=0.05,
-        rng=torch_rng(565111),
+        rng=numpy_rng(565111),
         vectorized=vectorized,
     )
 
-    torch.testing.assert_close(solution_a.bitstrings, solution_b.bitstrings)
-    torch.testing.assert_close(solution_a.costs, solution_b.costs, atol=0.0, rtol=0.0)
-    torch.testing.assert_close(solution_a.counts, solution_b.counts)
-    torch.testing.assert_close(
-        solution_a.probabilities, solution_b.probabilities, atol=0.0, rtol=0.0
+    np.testing.assert_allclose(solution_a.bitstrings, solution_b.bitstrings, rtol=0, strict=True)
+    np.testing.assert_allclose(solution_a.costs, solution_b.costs, atol=0.0, rtol=0.0, strict=True)
+    np.testing.assert_allclose(solution_a.counts, solution_b.counts, rtol=0, strict=True)
+    np.testing.assert_allclose(
+        solution_a.probabilities, solution_b.probabilities, atol=0.0, rtol=0.0, strict=True
     )
 
 
@@ -314,8 +304,8 @@ def test_simulated_annealing_zero_max_iter_returns_start(
     instance: Instance, vectorized: bool
 ) -> None:
     """With max_iter=0, only the starting bitstring is returned."""
-    start = bitstrings.zeros(1, instance.size)
-    rng = torch_rng(0)
+    start = np.zeros((1, instance.size), dtype=np.int8)
+    rng = numpy_rng(0)
 
     solution = solving.simulated_annealing.solve(
         instance,
@@ -339,8 +329,8 @@ def test_simulated_annealing_zero_time_limit_returns_start(
     instance: Instance, vectorized: bool
 ) -> None:
     """An exhausted time budget stops the loop before any iteration runs."""
-    start = bitstrings.zeros(1, instance.size)
-    rng = torch_rng(0)
+    start = np.zeros((1, instance.size), dtype=np.int8)
+    rng = numpy_rng(0)
 
     solution = solving.simulated_annealing.solve(
         instance,
@@ -367,8 +357,8 @@ def test_simulated_annealing_explicit_cooling_rate_used(
 
     No error is raised even if final_temp is invalid (<= 0).
     """
-    start = bitstrings.zeros(1, instance.size)
-    rng = torch_rng(0)
+    start = np.zeros((1, instance.size), dtype=np.int8)
+    rng = numpy_rng(0)
 
     solution = solving.simulated_annealing.solve(
         instance,
@@ -401,18 +391,18 @@ def test_simulated_annealing_explicit_cooling_rate_used(
     ],
 )
 def test_simulated_annealing_raises_on_invalid_arguments(kwargs: dict, match: str) -> None:
-    start = bitstrings.zeros(1, instance_symmetric.size)
+    start = np.zeros((1, instance_symmetric.size), dtype=np.int8)
 
     with pytest.raises(ValueError, match=match):
         solving.simulated_annealing.solve(
-            instance_symmetric, starts=start, rng=torch_rng(658), **kwargs
+            instance_symmetric, starts=start, rng=numpy_rng(658), **kwargs
         )
 
 
 def test_simulated_annealing_raises_on_starts_length_mismatch() -> None:
     """`starts` bitstrings shorter or longer than `instance.size` must raise, not crash."""
-    short_start = bitstrings.zeros(1, instance_symmetric.size - 1)
-    long_start = bitstrings.zeros(1, instance_symmetric.size + 1)
+    short_start = np.zeros((1, instance_symmetric.size - 1), dtype=np.int8)
+    long_start = np.zeros((1, instance_symmetric.size + 1), dtype=np.int8)
 
     with pytest.raises(ValueError, match=r"instance\.size"):
         solving.simulated_annealing.solve(instance_symmetric, starts=short_start)
@@ -430,8 +420,8 @@ def test_simulated_annealing_merge_false_returns_one_solution_per_start(
 
     They are returned in the same order, none of them merged with the others.
     """
-    start = bitstrings.zeros(3, instance.size)
-    rng = torch_rng(0)
+    start = np.zeros((3, instance.size), dtype=np.int8)
+    rng = numpy_rng(0)
 
     solutions = solving.simulated_annealing.solve(
         instance,
@@ -460,7 +450,7 @@ def test_simulated_annealing_merge_true_matches_manual_concat_and_deduplicate(
     Equivalent to merging the merge=False per-start results via
     Solution.concat(...).deduplicate(), as documented on the function.
     """
-    start = bitstrings.rand(4, instance.size, rng=torch_rng(574))
+    start = bitstrings.rand(4, instance.size, rng=numpy_rng(574))
     top_k = 3
 
     merged_solution = solving.simulated_annealing.solve(
@@ -470,7 +460,7 @@ def test_simulated_annealing_merge_true_matches_manual_concat_and_deduplicate(
         max_iter=200,
         initial_temp=4.0,
         final_temp=0.05,
-        rng=torch_rng(7874),
+        rng=numpy_rng(7874),
         vectorized=vectorized,
     )
     solutions = solving.simulated_annealing.solve(
@@ -481,15 +471,19 @@ def test_simulated_annealing_merge_true_matches_manual_concat_and_deduplicate(
         max_iter=200,
         initial_temp=4.0,
         final_temp=0.05,
-        rng=torch_rng(7874),
+        rng=numpy_rng(7874),
         vectorized=vectorized,
     )
     manually_merged = Solution.concat(solutions).deduplicate()
 
     check.is_true(merged_solution.check_consistency(instance=instance, throw=True))
-    torch.testing.assert_close(merged_solution.bitstrings, manually_merged.bitstrings)
-    torch.testing.assert_close(merged_solution.costs, manually_merged.costs, atol=0.0, rtol=0.0)
-    torch.testing.assert_close(merged_solution.counts, manually_merged.counts)
+    np.testing.assert_allclose(
+        merged_solution.bitstrings, manually_merged.bitstrings, rtol=0, strict=True
+    )
+    np.testing.assert_allclose(
+        merged_solution.costs, manually_merged.costs, atol=0.0, rtol=0.0, strict=True
+    )
+    np.testing.assert_allclose(merged_solution.counts, manually_merged.counts, rtol=0, strict=True)
 
 
 @pytest.mark.parametrize("vectorized", vectorized_params)
@@ -501,7 +495,7 @@ def test_simulated_annealing_int_starts_generates_that_many_random_runs(vectoriz
     """
     n_starts = 3
 
-    rng_int = torch_rng(5821)
+    rng_int = numpy_rng(5821)
     solution = solving.simulated_annealing.solve(
         instance_symmetric,
         starts=n_starts,
@@ -512,7 +506,7 @@ def test_simulated_annealing_int_starts_generates_that_many_random_runs(vectoriz
         vectorized=vectorized,
     )
 
-    rng_explicit = torch_rng(5821)
+    rng_explicit = numpy_rng(5821)
     expected_starts = bitstrings.rand(n_starts, instance_symmetric.size, rng=rng_explicit)
     expected = solving.simulated_annealing.solve(
         instance_symmetric,
@@ -526,8 +520,8 @@ def test_simulated_annealing_int_starts_generates_that_many_random_runs(vectoriz
 
     check.equal(len(solution), n_starts)
     for actual, exp in zip(solution, expected, strict=True):
-        torch.testing.assert_close(actual.bitstrings, exp.bitstrings)
-        torch.testing.assert_close(actual.costs, exp.costs, atol=0.0, rtol=0.0)
+        np.testing.assert_allclose(actual.bitstrings, exp.bitstrings, rtol=0, strict=True)
+        np.testing.assert_allclose(actual.costs, exp.costs, atol=0.0, rtol=0.0, strict=True)
 
 
 @pytest.mark.parametrize("vectorized", vectorized_params)
@@ -541,7 +535,7 @@ def test_simulated_annealing_default_starts_is_one_random_start(vectorized: bool
         merge=False,
         top_k=1,
         max_iter=50,
-        rng=torch_rng(0),
+        rng=numpy_rng(0),
         vectorized=vectorized,
     )
 
@@ -554,10 +548,10 @@ def test_simulated_annealing_empty_start_merge_false_returns_empty_list() -> Non
 
     No runs are performed.
     """
-    start = bitstrings.zeros(0, instance_symmetric.size)
+    start = np.zeros((0, instance_symmetric.size), dtype=np.int8)
 
     solutions = solving.simulated_annealing.solve(
-        instance_symmetric, start, merge=False, rng=torch_rng(0)
+        instance_symmetric, start, merge=False, rng=numpy_rng(0)
     )
 
     check.equal(solutions, [])
@@ -568,9 +562,9 @@ def test_simulated_annealing_empty_start_merge_true_returns_empty_solution() -> 
 
     No runs are performed.
     """
-    start = bitstrings.zeros(0, instance_symmetric.size)
+    start = np.zeros((0, instance_symmetric.size), dtype=np.int8)
 
-    solution = solving.simulated_annealing.solve(instance_symmetric, starts=start, rng=torch_rng(0))
+    solution = solving.simulated_annealing.solve(instance_symmetric, starts=start, rng=numpy_rng(0))
 
     check.is_false(solution)
 
@@ -587,8 +581,8 @@ def test_simulated_annealing_stats_per_run_sets_single_run_counts_to_one(
     uniformly 1 -- see
     test_simulated_annealing_stats_per_run_merged_counts_reflect_run_agreement.
     """
-    start = bitstrings.zeros(1, instance.size)
-    rng = torch_rng(0)
+    start = np.zeros((1, instance.size), dtype=np.int8)
+    rng = numpy_rng(0)
 
     solution = solving.simulated_annealing.solve(
         instance,
@@ -601,8 +595,8 @@ def test_simulated_annealing_stats_per_run_sets_single_run_counts_to_one(
         stats="per_run",
         vectorized=vectorized,
     )
-    expected_counts = vectori.zeros(len(solution)).fill_(1)
-    torch.testing.assert_close(solution.counts, expected_counts)
+    expected_counts = np.zeros(len(solution), dtype=np.int64) + 1
+    np.testing.assert_allclose(solution.counts, expected_counts, rtol=0, strict=True)
 
 
 @pytest.mark.parametrize("vectorized", vectorized_params)
@@ -616,7 +610,7 @@ def test_simulated_annealing_stats_per_run_merged_counts_reflect_run_agreement(
     across bitstrings.
     """
     skip_if_sequential_too_slow(vectorized, n_starts=8, max_iter=300)
-    start = bitstrings.rand(8, instance_symmetric.size, rng=torch_rng(11))
+    start = bitstrings.rand(8, instance_symmetric.size, rng=numpy_rng(11))
 
     solution = solving.simulated_annealing.solve(
         instance_symmetric,
@@ -625,13 +619,13 @@ def test_simulated_annealing_stats_per_run_merged_counts_reflect_run_agreement(
         max_iter=300,
         initial_temp=4.0,
         final_temp=0.05,
-        rng=torch_rng(0),
+        rng=numpy_rng(0),
         stats="per_run",
         vectorized=vectorized,
     )
 
     check.equal(solution.counts.sum().item(), 8)
-    check.is_true(torch.all(solution.counts >= 1).item())
+    check.is_true(np.all(solution.counts >= 1).item())
 
 
 @pytest.mark.parametrize("vectorized", vectorized_params)
@@ -652,7 +646,7 @@ def test_simulated_annealing_stats_per_run_top_k_one_merge_true_matches_manual_e
     needed.
     """
     skip_if_sequential_too_slow(vectorized, n_starts=8, max_iter=300)
-    start = bitstrings.rand(8, instance_symmetric.size, rng=torch_rng(1350))
+    start = bitstrings.rand(8, instance_symmetric.size, rng=numpy_rng(1350))
 
     per_run_solution = solving.simulated_annealing.solve(
         instance_symmetric,
@@ -660,7 +654,7 @@ def test_simulated_annealing_stats_per_run_top_k_one_merge_true_matches_manual_e
         max_iter=300,
         initial_temp=4.0,
         final_temp=0.05,
-        rng=torch_rng(0),
+        rng=numpy_rng(0),
         vectorized=vectorized,
     )
 
@@ -672,7 +666,7 @@ def test_simulated_annealing_stats_per_run_top_k_one_merge_true_matches_manual_e
         max_iter=300,
         initial_temp=4.0,
         final_temp=0.05,
-        rng=torch_rng(0),
+        rng=numpy_rng(0),
         stats="full",
         vectorized=vectorized,
     )
@@ -680,13 +674,21 @@ def test_simulated_annealing_stats_per_run_top_k_one_merge_true_matches_manual_e
         [solution.truncate(1) for solution in solutions], unit_counts=True
     ).deduplicate()
 
-    torch.testing.assert_close(per_run_solution.bitstrings, manually_equivalent.bitstrings)
-    torch.testing.assert_close(
-        per_run_solution.costs, manually_equivalent.costs, atol=0.0, rtol=0.0
+    np.testing.assert_allclose(
+        per_run_solution.bitstrings, manually_equivalent.bitstrings, rtol=0, strict=True
     )
-    torch.testing.assert_close(per_run_solution.counts, manually_equivalent.counts)
-    torch.testing.assert_close(
-        per_run_solution.probabilities, manually_equivalent.probabilities, atol=0.0, rtol=0.0
+    np.testing.assert_allclose(
+        per_run_solution.costs, manually_equivalent.costs, atol=0.0, rtol=0.0, strict=True
+    )
+    np.testing.assert_allclose(
+        per_run_solution.counts, manually_equivalent.counts, rtol=0, strict=True
+    )
+    np.testing.assert_allclose(
+        per_run_solution.probabilities,
+        manually_equivalent.probabilities,
+        atol=0.0,
+        rtol=0.0,
+        strict=True,
     )
 
 
@@ -694,7 +696,7 @@ def test_simulated_annealing_stats_per_run_top_k_one_merge_true_matches_manual_e
 @pytest.mark.parametrize("vectorized", vectorized_params)
 def test_simulated_annealing_stats_per_run_is_default(instance: Instance, vectorized: bool) -> None:
     """Omitting stats must be equivalent to passing stats='per_run' explicitly."""
-    start = bitstrings.zeros(1, instance.size)
+    start = np.zeros((1, instance.size), dtype=np.int8)
 
     default_solution = solving.simulated_annealing.solve(
         instance,
@@ -703,7 +705,7 @@ def test_simulated_annealing_stats_per_run_is_default(instance: Instance, vector
         max_iter=500,
         initial_temp=4.0,
         final_temp=0.05,
-        rng=torch_rng(23),
+        rng=numpy_rng(23),
         vectorized=vectorized,
     )
     explicit_per_run_solution = solving.simulated_annealing.solve(
@@ -713,12 +715,14 @@ def test_simulated_annealing_stats_per_run_is_default(instance: Instance, vector
         max_iter=500,
         initial_temp=4.0,
         final_temp=0.05,
-        rng=torch_rng(23),
+        rng=numpy_rng(23),
         stats="per_run",
         vectorized=vectorized,
     )
 
-    torch.testing.assert_close(default_solution.counts, explicit_per_run_solution.counts)
+    np.testing.assert_allclose(
+        default_solution.counts, explicit_per_run_solution.counts, rtol=0, strict=True
+    )
 
 
 def test_simulated_annealing_stats_per_run_top_k_above_one_logs_info(
@@ -728,7 +732,7 @@ def test_simulated_annealing_stats_per_run_top_k_above_one_logs_info(
 
     The log notes that merged counts won't simply be 1 per run.
     """
-    start = bitstrings.zeros(1, instance_symmetric.size)
+    start = np.zeros((1, instance_symmetric.size), dtype=np.int8)
 
     with caplog.at_level("INFO", logger="qubosolver.solving.classical.simulated_annealing"):
         solving.simulated_annealing.solve(
@@ -738,7 +742,7 @@ def test_simulated_annealing_stats_per_run_top_k_above_one_logs_info(
             max_iter=50,
             initial_temp=4.0,
             final_temp=0.05,
-            rng=torch_rng(0),
+            rng=numpy_rng(0),
             stats="per_run",
         )
 
@@ -752,7 +756,7 @@ def test_simulated_annealing_stats_per_run_top_k_one_does_not_log(
 
     It must not emit the top_k > 1 caveat log.
     """
-    start = bitstrings.zeros(1, instance_symmetric.size)
+    start = np.zeros((1, instance_symmetric.size), dtype=np.int8)
 
     with caplog.at_level("INFO", logger="qubosolver.solving.classical.simulated_annealing"):
         solving.simulated_annealing.solve(
@@ -762,7 +766,7 @@ def test_simulated_annealing_stats_per_run_top_k_one_does_not_log(
             max_iter=50,
             initial_temp=4.0,
             final_temp=0.05,
-            rng=torch_rng(12),
+            rng=numpy_rng(12),
             stats="per_run",
         )
 
@@ -811,7 +815,7 @@ def test_simulated_annealing_overload_return_types_are_statically_correct() -> N
     This function's body never actually executes assertions at runtime --
     assert_type is a no-op there -- its only purpose is to be type-checked.
     """
-    start = bitstrings.zeros(1, instance_symmetric.size)
+    start = np.zeros((1, instance_symmetric.size), dtype=np.int8)
 
     default_result = solving.simulated_annealing.solve(instance_symmetric, starts=start)
     assert_type(default_result, Solution)
@@ -832,9 +836,9 @@ def test_simulated_annealing_full_stats_counts_iterations(instance: Instance) ->
     """With `stats="full"`, counts are the number of iterations spent at each bitstring."""
     solution = solving.simulated_annealing.solve(
         instance,
-        starts=bitstrings.zeros(1, instance.size),
+        starts=np.zeros((1, instance.size), dtype=np.int8),
         max_iter=500,
-        rng=torch_rng(1916666555),
+        rng=numpy_rng(1916666555),
         stats="full",
         vectorized=False,
     )

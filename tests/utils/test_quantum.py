@@ -8,13 +8,14 @@ from __future__ import annotations
 import math
 from unittest.mock import MagicMock
 
+import numpy as np
 import pytest
 import pytest_check as check
 import qoolqit
-import torch
+import scipy
 from qoolqit import ConstantWaveform, RampWaveform
 
-from qubosolver import Instance, drive_shaping, embedding, extract_qubo, matrix, torch_rng, vector
+from qubosolver import Instance, drive_shaping, embedding, extract_qubo, numpy_rng
 from qubosolver.embedding._algorithms.greedy.layout import get_layout
 from qubosolver.utils.quantum import _detuning, _max_min_distance_ratio
 
@@ -37,7 +38,7 @@ def test_extract_qubo_off_diagonal_matches_interactions() -> None:
     instance = extract_qubo(register, drive)
 
     r01, r02, r12 = 1.0, 2.0, math.sqrt(5)
-    expected = matrix.tensor(
+    expected = np.asarray(
         [
             [0.0, 1.0 / r01**6, 1.0 / r02**6],
             [1.0 / r01**6, 0.0, 1.0 / r12**6],
@@ -46,7 +47,7 @@ def test_extract_qubo_off_diagonal_matches_interactions() -> None:
     )
 
     check.equal(instance.size, 3)
-    torch.testing.assert_close(instance.matrix, expected)
+    np.testing.assert_allclose(instance.matrix, expected, strict=True)
 
 
 def test_extract_qubo_diagonal_from_constant_detuning() -> None:
@@ -58,8 +59,8 @@ def test_extract_qubo_diagonal_from_constant_detuning() -> None:
 
     instance = extract_qubo(register, drive)
 
-    expected_diagonal = vector.tensor([6.0, 6.0, 6.0])  # -2 * (-3.0)
-    torch.testing.assert_close(torch.diag(instance.matrix), expected_diagonal)
+    expected_diagonal = np.asarray([6.0, 6.0, 6.0])  # -2 * (-3.0)
+    np.testing.assert_allclose(np.diag(instance.matrix), expected_diagonal, strict=True)
 
 
 def test_extract_qubo_diagonal_from_ramp_detuning_uses_final_value() -> None:
@@ -71,8 +72,8 @@ def test_extract_qubo_diagonal_from_ramp_detuning_uses_final_value() -> None:
 
     instance = extract_qubo(register, drive)
 
-    expected_diagonal = vector.tensor([4.0, 4.0, 4.0])  # -2 * -2.0
-    torch.testing.assert_close(torch.diag(instance.matrix), expected_diagonal)
+    expected_diagonal = np.asarray([4.0, 4.0, 4.0])  # -2 * -2.0
+    np.testing.assert_allclose(np.diag(instance.matrix), expected_diagonal, strict=True)
 
 
 def test_extract_qubo_diagonal_with_dmm_weights_per_atom() -> None:
@@ -90,14 +91,14 @@ def test_extract_qubo_diagonal_with_dmm_weights_per_atom() -> None:
     instance = extract_qubo(register, drive)
 
     # Q[i,i] = -2 * (delta_g_T + dmm_final * weight_i) for each qubit i
-    expected_diagonal = vector.tensor(
+    expected_diagonal = np.asarray(
         [
             -2 * (-2.0 + -1.0 * 1.0),
             -2 * (-2.0 + -1.0 * 0.5),
             -2 * (-2.0 + -1.0 * 0.0),
-        ]
+        ],
     )
-    torch.testing.assert_close(torch.diag(instance.matrix), expected_diagonal)
+    np.testing.assert_allclose(np.diag(instance.matrix), expected_diagonal, strict=True)
 
 
 def test_extract_qubo_matrix_is_symmetric() -> None:
@@ -109,7 +110,7 @@ def test_extract_qubo_matrix_is_symmetric() -> None:
 
     instance = extract_qubo(register, drive)
 
-    torch.testing.assert_close(instance.matrix, instance.matrix.T)
+    np.testing.assert_allclose(instance.matrix, instance.matrix.T, strict=True)
 
 
 def test_extract_qubo_round_trip_through_greedy_embedding_and_drive_shaping() -> None:
@@ -119,10 +120,10 @@ def test_extract_qubo_round_trip_through_greedy_embedding_and_drive_shaping() ->
     coords = get_layout(layout_type=embedding.Lattice.TRIANGULAR, n_traps=12)
     triangle = qoolqit.Register.from_coordinates(coords[(5, 1, 10), :])
     Q = triangle.interaction_matrix()
-    assert isinstance(Q, torch.Tensor)
+    assert isinstance(Q, np.ndarray)  # noqa: TID251 (runtime check, not a hint)
     # qoolqit forces float64
-    Q = matrix.as_tensor(Q)
-    Q.diagonal().copy_(vector.tensor([-1.0, -0.5, -1.1]))
+    Q = np.asarray(Q, dtype=np.float64)
+    np.fill_diagonal(Q, np.asarray([-1.0, -0.5, -1.1]))
 
     original = Instance(matrix=Q)
 
@@ -136,21 +137,19 @@ def test_extract_qubo_round_trip_through_greedy_embedding_and_drive_shaping() ->
     )
 
     extracted = extract_qubo(register, drive)
-    torch.testing.assert_close(extracted.matrix, original.matrix)
+    np.testing.assert_allclose(extracted.matrix, original.matrix, strict=True)
 
     # Example metrics to assess the quality of the embedding and drive
     # shaping: the Frobenius distance between the original and extracted
     # QUBO, on the full matrix and on the diagonal/off-diagonal parts
     # separately (which are encoded independently, by the register's
     # geometry and the drive's detuning, respectively).
-    full_distance = torch.linalg.norm(extracted.matrix - original.matrix).item()
-    off_diag_mask = ~torch.eye(original.size, dtype=torch.bool)
-    off_diag_distance = torch.linalg.norm(
+    full_distance = np.linalg.norm(extracted.matrix - original.matrix).item()
+    off_diag_mask = ~np.eye(original.size, dtype=bool)
+    off_diag_distance = np.linalg.norm(
         extracted.matrix[off_diag_mask] - original.matrix[off_diag_mask]
     ).item()
-    diag_distance = torch.linalg.norm(
-        torch.diag(extracted.matrix) - torch.diag(original.matrix)
-    ).item()
+    diag_distance = np.linalg.norm(np.diag(extracted.matrix) - np.diag(original.matrix)).item()
     check.almost_equal(full_distance, 0.0, abs=1e-6)
     check.almost_equal(off_diag_distance, 0.0, abs=1e-6)
     check.almost_equal(diag_distance, 0.0, abs=1e-6)
@@ -159,7 +158,7 @@ def test_extract_qubo_round_trip_through_greedy_embedding_and_drive_shaping() ->
 def test_extract_qubo_with_instance_diagonal() -> None:
     register = _register()
     instance = Instance(
-        matrix.tensor(
+        np.asarray(
             [
                 [-1.0, 9.0, 9.0],
                 [9.0, -2.0, 9.0],
@@ -170,13 +169,13 @@ def test_extract_qubo_with_instance_diagonal() -> None:
 
     extracted = extract_qubo(register, instance)
 
-    expected = matrix.as_tensor(register.interaction_matrix())
-    expected.diagonal().copy_(vector.tensor([-1.0, -2.0, -3.0]))
-    torch.testing.assert_close(extracted.matrix, expected)
+    expected = np.asarray(register.interaction_matrix(), dtype=np.float64)
+    np.fill_diagonal(expected, np.asarray([-1.0, -2.0, -3.0]))
+    np.testing.assert_allclose(extracted.matrix, expected, strict=True)
 
 
 def test_extract_qubo_rejects_instance_of_another_size() -> None:
-    instance = Instance(matrix.tensor([[-1.0, 0.0], [0.0, -1.0]]))
+    instance = Instance(np.asarray([[-1.0, 0.0], [0.0, -1.0]]))
     with pytest.raises(ValueError, match="3 qubits"):
         extract_qubo(_register(), instance)
 
@@ -186,17 +185,21 @@ def test_extract_qubo_from_partial_greedy_embedding_and_subinstance(
 ) -> None:
     # The QUBO the partial embedding implements: 1 / r^6 between the placed
     # positions off the diagonal, the (conditioned) weights on the diagonal.
-    register, variables = embedding.partial_greedy.embed(decomposable_qubo, rng=torch_rng(0))
+    register, variables = embedding.partial_greedy.embed(decomposable_qubo, rng=numpy_rng(0))
     exact = decomposable_qubo.subinstance(variables)
 
     extracted = extract_qubo(register, exact)
 
-    coords = torch.stack([torch.as_tensor(register.qubits[q]) for q in register.qubits_ids])
-    coords = coords.to(matrix.dtype())
-    off_diag = ~torch.eye(len(variables), dtype=torch.bool)
-    expected_interactions = torch.cdist(coords, coords) ** -6
-    torch.testing.assert_close(extracted.matrix[off_diag], expected_interactions[off_diag])
-    torch.testing.assert_close(torch.diag(extracted.matrix), torch.diag(exact.matrix))
+    coords = np.array([register.qubits[q] for q in register.qubits_ids], dtype=np.float64)
+    off_diag = ~np.eye(len(variables), dtype=bool)
+    with np.errstate(divide="ignore"):  # the diagonal, masked out below
+        expected_interactions = (scipy.spatial.distance.cdist(coords, coords) ** -6).astype(
+            coords.dtype
+        )
+    np.testing.assert_allclose(
+        extracted.matrix[off_diag], expected_interactions[off_diag], strict=True
+    )
+    np.testing.assert_allclose(np.diag(extracted.matrix), np.diag(exact.matrix), strict=True)
 
 
 def test_max_min_distance_ratio_from_device_specs() -> None:
@@ -242,7 +245,7 @@ def _dmm_drive() -> qoolqit.Drive:
 
 def test_detuning_infers_qubit_ids_from_dmm_weights() -> None:
     delta = _detuning(_dmm_drive(), 10.0, n=2)
-    torch.testing.assert_close(delta, vector.tensor([-3.0, -2.5]))
+    np.testing.assert_allclose(delta, np.asarray([-3.0, -2.5]), strict=True)
 
 
 def test_detuning_rejects_mismatched_qubit_ids() -> None:

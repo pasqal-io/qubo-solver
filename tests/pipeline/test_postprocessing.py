@@ -8,30 +8,25 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import pytest_check as check
-import torch
 
 from qubosolver import (
     Dataset,
     Instance,
     Solution,
     analysis,
-    bitstring,
-    bitstrings,
-    matrix,
+    numpy_rng,
     solving,
-    torch_rng,
-    vector,
-    vectori,
 )
 from qubosolver.solving.classical.iterative_bitflip_local_search import (
     _best_improvement_search_batch,
 )
 from qubosolver.utils import _costs
+from qubosolver.utils._random import manual_seed
 
 
 def test_basic_qubo_2d() -> None:
     # fmt: off
-    Q = matrix.tensor([
+    Q = np.asarray([
         [-10.0, 1.0],
         [1.0, -10.0]
     ])
@@ -39,17 +34,19 @@ def test_basic_qubo_2d() -> None:
 
     instance = Instance(matrix=Q)
     solution = Solution(
-        bitstrings=bitstrings.zeros(1, 2),
-        costs=vector.zeros(1),
-        counts=vectori.tensor([1]),
-        probabilities=vector.tensor([1.0]),
+        bitstrings=np.zeros((1, 2), dtype=np.int8),
+        costs=np.zeros(1),
+        counts=np.asarray([1], dtype=np.int64),
+        probabilities=np.asarray([1.0]),
     )
 
     pp_solution = solving.iterative_bitflip_local_search.solve(instance, starts=solution)
     pp_solution._sort_by_cost()
 
-    torch.testing.assert_close(pp_solution.bitstrings[0, :], bitstring.tensor([1, 1]))
-    torch.testing.assert_close(pp_solution.costs, vector.tensor([-18.0]))
+    np.testing.assert_allclose(
+        pp_solution.bitstrings[0, :], np.asarray([1, 1], dtype=np.int8), rtol=0, strict=True
+    )
+    np.testing.assert_allclose(pp_solution.costs, np.asarray([-18.0]), strict=True)
 
     df = analysis.to_dataframe([pp_solution])
     print(f"\n{df}")
@@ -62,16 +59,16 @@ def test_random_qubos(density: float) -> None:
     size = 5
 
     for seed in [545, 87, 89993]:
-        dataset = Dataset.from_random(1, size, densities=[density], rng=torch_rng(seed))
-        torch.manual_seed(seed)
+        dataset = Dataset.from_random(1, size, densities=[density], rng=numpy_rng(seed))
+        manual_seed(seed)
         for instance, _ in dataset:
-            bitstring_ = (torch.rand(size) > 0.5).to(bitstring.dtype())
+            bitstring_ = (np.random.rand(size) > 0.5).astype(np.int8)
             cost = instance.cost(bitstring_)
             solution = Solution(
-                bitstrings=bitstring_.unsqueeze(0),
-                costs=vector.tensor([cost]),
-                counts=vectori.tensor([1]),
-                probabilities=vector.tensor([1.0]),
+                bitstrings=bitstring_[np.newaxis],
+                costs=np.asarray([cost], dtype=np.float64),
+                counts=np.asarray([1], dtype=np.int64),
+                probabilities=np.asarray([1.0]),
             )
             pp_solution = solving.iterative_bitflip_local_search.solve(instance, starts=solution)
             pp_solution._sort_by_cost()
@@ -84,17 +81,17 @@ def test_random_qubos(density: float) -> None:
 
 def test_best_improvement_search_basic() -> None:
     # fmt: off
-    Q = matrix.tensor([
+    Q = np.asarray([
         [-10.0, 1.0],
         [1.0, -10.0]
     ])
     # fmt: on
 
-    s = bitstring.zeros(2)
+    s = np.zeros(2, dtype=np.int8)
     initial_cost = _costs.quadratic_cost(s, Q)
     check.almost_equal(initial_cost, 0.0)
 
-    best_bitstrings = _best_improvement_search_batch(Q, s.unsqueeze(0))
+    best_bitstrings = _best_improvement_search_batch(Q, s[np.newaxis])
     best_bitstring = best_bitstrings.squeeze(0)
     best_cost = _costs.quadratic_cost(best_bitstring, Q)
 
@@ -109,12 +106,12 @@ def test_best_improvement_search_randoms(density: float) -> None:
     size = 5
 
     for seed in [454, 85, 989751]:
-        rng = torch_rng(seed)
+        rng = numpy_rng(seed)
         dataset = Dataset.from_random(1, size, densities=[density], rng=rng)
-        s = bitstring.zeros(size)
+        s = np.zeros(size, dtype=np.int8)
 
         for instance, _ in dataset:
             initial_cost = _costs.quadratic_cost(s, instance.matrix)
-            best_bitstrings = _best_improvement_search_batch(instance.matrix, s.unsqueeze(0))
+            best_bitstrings = _best_improvement_search_batch(instance.matrix, s[np.newaxis])
             best_cost = _costs.quadratic_cost(best_bitstrings.squeeze(0), instance.matrix)
             check.less_equal(best_cost, initial_cost)

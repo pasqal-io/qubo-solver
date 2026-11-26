@@ -48,13 +48,13 @@ Runs the Bayesian optimization loop and returns the optimized drive and correspo
 - `build_drive(self, params: list) -> Drive`:
 Creates a Drive from a 6-element parameter list: the first 3 for amplitude, the last 3 for detuning.
 
-- `_compute_norm_weights(self, QUBO: torch.Tensor) -> list[float]`:
+- `_compute_norm_weights(self, QUBO: NDArray[np.float64]) -> list[float]`:
 Normalizes the QUBO diagonal weights (used in DMM shaping).
 
 - `run_simulation(...) -> tuple[...]`:
 Runs a simulation of the current drive on a quantum backend and returns bitstring results, probabilities, and QUBO costs.
 
-- `compute_qubo_cost(self, bitstring: str, QUBO: torch.Tensor) -> float`:
+- `compute_qubo_cost(self, bitstring: str, QUBO: NDArray[np.float64]) -> float`:
 Computes the QUBO cost of a specific bitstring.
 
 
@@ -64,15 +64,16 @@ After the final round of optimization, the following attributes are populated:
 - `drive`: Final Drive object with optimized waveform parameters.
 - `best_cost`: Minimum cost found during optimization.
 - `best_bitstring`: Corresponding bitstring with the lowest cost.
-- `bitstrings, counts, probabilities, costs`: Full result distributions as PyTorch tensors.
+- `bitstrings, counts, probabilities, costs`: Full result distributions as NumPy arrays.
 
 ### Example
 
 ```python
+import numpy as np
 import qoolqit
-from qubosolver import Instance, LocalEmulator, embedding, matrix, solving
+from qubosolver import Instance, LocalEmulator, embedding, solving
 
-Q = matrix.tensor([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
+Q = np.asarray([[-1.0, 0.5, 0.2], [0.5, -2.0, 0.3], [0.2, 0.3, -3.0]])
 
 instance = Instance(Q)
 device = qoolqit.AnalogDeviceWithDMM()

@@ -5,10 +5,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest_check as check
 
 from qubosolver.embedding._algorithms.mds import embed_mds, reduce_distances_by_shortest_paths
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 def test_embed_mds_shape() -> None:
@@ -30,7 +35,7 @@ def test_embed_mds_disconnected() -> None:
     check.is_true(np.isfinite(positions).all())
 
 
-def path_distances() -> np.ndarray:
+def path_distances() -> NDArray[np.float64]:
     # Path 0 - 1 - 2 with a long direct 0 - 2 edge, and 3 only linked to 2.
     inf = np.inf
     return np.array(

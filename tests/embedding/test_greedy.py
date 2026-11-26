@@ -12,75 +12,74 @@ import numpy as np
 import pytest
 import pytest_check as check
 import qoolqit
-import torch
-from beartype.roar import BeartypeCallHintParamViolation
 from qoolqit import AnalogDeviceWithDMM
 
-from qubosolver import Dataset, Instance, Matrix, Tensor, embedding, matrix, tensor, vector
+from qubosolver import Dataset, Instance, embedding
 from qubosolver.embedding._algorithms.greedy import Greedy
 from qubosolver.embedding.greedy_layout import _resolve_max_possible_term
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from numpy.typing import NDArray
     from qoolqit.devices.device import BaseDevice
 
-    from qubosolver.types.linalg import Tensord
 
-
-def triangular_qubo() -> Matrix:
-    return matrix.tensor(
+def triangular_qubo() -> NDArray[np.float64]:
+    return np.asarray(
         [
             [0.0, 1.0, 1.0],
             [1.0, 0.0, 1.0],
             [1.0, 1.0, 0.0],
-        ],
+        ]
     )
 
 
-def square_qubo() -> Matrix:
-    return matrix.tensor(
+def square_qubo() -> NDArray[np.float64]:
+    return np.asarray(
         [
             [0.0, 1.0, 1.0 / 8.0, 1.0],
             [1.0, 0.0, 1.0, 1.0 / 8.0],
             [1.0 / 8.0, 1.0, 0.0, 1.0],
             [1.0, 1.0 / 8.0, 1.0, 0.0],
-        ],
+        ]
     )
 
 
 def assert_close_up_to_isometry(
-    actual_vertices: Tensor, expected_vertices: Tensor, layout_angle: float
+    actual_vertices: NDArray[np.float64],
+    expected_vertices: NDArray[np.float64],
+    layout_angle: float,
 ) -> None:
-    A = torch.linalg.lstsq(expected_vertices, actual_vertices).solution
+    A = np.linalg.lstsq(expected_vertices, actual_vertices)[0]
     # A has a symmetry. Apply a symmetry to get a pure rotation.
-    if torch.linalg.det(A) < 0.0:
-        A = torch.diag(vector.tensor([-1.0, 1.0])) @ A
+    if np.linalg.det(A) < 0.0:
+        A = np.diag([-1.0, 1.0]) @ A
 
     # A is a rotation matrix
-    torch.testing.assert_close(A.T @ A, torch.eye(2, dtype=A.dtype), atol=1e-6, rtol=1e-6)
-    check.almost_equal(torch.linalg.det(A), 1.0)
+    np.testing.assert_allclose(A.T @ A, np.eye(2, dtype=A.dtype), atol=1e-6, rtol=1e-6, strict=True)
+    check.almost_equal(np.linalg.det(A), 1.0)
 
     # Triangular Layout has a pi/3 rotation invariance
     # Square Layout has a pi/2 rotation invariance
     # The angle of rotation should be an integer multiple of it
-    angle = torch.atan2(A[1, 0], A[0, 0]).item()
+    angle = np.arctan2(A[1, 0], A[0, 0]).item()
     normalized_angle = angle / layout_angle
     check.almost_equal(normalized_angle, round(normalized_angle), abs=1e-6)
 
 
-def assert_close_to_lattice(vertices: Tensor, basis: Tensor) -> None:
+def assert_close_to_lattice(vertices: NDArray[np.float64], basis: NDArray[np.float64]) -> None:
     for v in vertices:
-        v_lattice = basis.inverse() @ v
-        torch.testing.assert_close(v_lattice, v_lattice.round(), atol=1e-6, rtol=1e-6)
+        v_lattice = np.linalg.inv(basis) @ v
+        np.testing.assert_allclose(v_lattice, v_lattice.round(), atol=1e-6, rtol=1e-6, strict=True)
 
 
-def interaction_matrix_from_vertices(vertices: Tensor) -> Tensor:
+def interaction_matrix_from_vertices(vertices: NDArray[np.float64]) -> NDArray[np.float64]:
     n = vertices.shape[0]
-    U = matrix.zeros(n)
+    U = np.zeros((n, n))
     for i in range(n):
         for j in range(i + 1, n):
-            U[i, j] = 1.0 / torch.norm(vertices[i] - vertices[j]) ** 6
+            U[i, j] = 1.0 / np.linalg.norm(vertices[i] - vertices[j]) ** 6
             U[j, i] = U[i, j]
     return U
 
@@ -98,12 +97,12 @@ def test_triangular_qubo(traps: int, relative_noise: float, max_min_dist_ratio: 
     }
 
     # Equilateral triangle
-    expected_vertices = spacing * tensor.tensor(
+    expected_vertices = spacing * np.asarray(
         [
             [0.0, 0.0],
             [0.5, 0.5 * np.sqrt(3)],
             [1.0, 0.0],
-        ]
+        ],
     )
     #  Matrix Q should match the spacing of the triangular layout so that the embedding returns
     # an equilateral triangle, hence the scale alpha.
@@ -111,10 +110,10 @@ def test_triangular_qubo(traps: int, relative_noise: float, max_min_dist_ratio: 
     # All off-diagonal coefficients are equal to alpha
     alpha = expected_U[0, 1]
     Q = alpha * triangular_qubo() * (1.0 + relative_noise)
-    # Tolerances from https://docs.pytorch.org/docs/stable/testing.html
+    # Tolerances on top of the relative noise
     atol = 1e-5
     rtol = 1.3e-6 + abs(relative_noise)
-    torch.testing.assert_close(Q, expected_U, atol=atol, rtol=rtol)
+    np.testing.assert_allclose(Q, expected_U, atol=atol, rtol=rtol, strict=True)
 
     if traps < 3:
         with pytest.raises(ValueError):
@@ -124,19 +123,17 @@ def test_triangular_qubo(traps: int, relative_noise: float, max_min_dist_ratio: 
     result = Greedy().launch_greedy(Q=Q, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
     vertices = result[1]
 
-    assert_close_up_to_isometry(vertices, expected_vertices, torch.pi / 3.0)
+    assert_close_up_to_isometry(vertices, expected_vertices, np.pi / 3.0)
     # fmt: off
-    basis = spacing * tensor.tensor(
-        [
+    basis = spacing * np.asarray([
             [1.0, 0.0],
             [0.5, np.sqrt(3) / 2.0],
-        ],
-    ).T
+        ]).T
     # fmt: on
     assert_close_to_lattice(vertices, basis)
 
     U = interaction_matrix_from_vertices(vertices)
-    torch.testing.assert_close(U, expected_U)
+    np.testing.assert_allclose(U, expected_U, rtol=1e-7, atol=1e-7, strict=True)
 
 
 @pytest.mark.parametrize("traps", [1, 2, 6, 9])
@@ -155,7 +152,7 @@ def test_square_qubo(
     }
 
     # Square
-    expected_vertices = spacing * tensor.tensor(
+    expected_vertices = spacing * np.asarray(
         [
             [0.0, 0.0],
             [0.0, 1.0],
@@ -169,10 +166,10 @@ def test_square_qubo(
     # All off-diagonal coefficients are equal to alpha
     alpha = expected_U[0, 1]
     Q = alpha * square_qubo() * (1.0 + relative_noise)
-    # Tolerances from https://docs.pytorch.org/docs/stable/testing.html
+    # Tolerances on top of the relative noise
     atol = 1e-5
     rtol = 1.3e-6 + abs(relative_noise)
-    torch.testing.assert_close(Q, expected_U, atol=atol, rtol=rtol)
+    np.testing.assert_allclose(Q, expected_U, atol=atol, rtol=rtol, strict=True)
 
     if traps < 4:
         with pytest.raises(ValueError):
@@ -182,19 +179,17 @@ def test_square_qubo(
     result = Greedy().launch_greedy(Q=Q, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
     vertices = result[1]
 
-    assert_close_up_to_isometry(vertices, expected_vertices, torch.pi / 2.0)
+    assert_close_up_to_isometry(vertices, expected_vertices, np.pi / 2.0)
     # fmt: off
-    basis = spacing * tensor.tensor(
-        [
+    basis = spacing * np.asarray([
             [1.0, 0.0],
             [0.0, 1.0],
-        ]
-    ).T
+        ]).T
     # fmt: on
     assert_close_to_lattice(vertices, basis)
 
     U = interaction_matrix_from_vertices(vertices)
-    torch.testing.assert_close(U, expected_U)
+    np.testing.assert_allclose(U, expected_U, rtol=1e-7, atol=1e-7, strict=True)
 
 
 @pytest.mark.parametrize("too_large", ["no", "barely", "extremely"])
@@ -229,7 +224,7 @@ def test_too_large_spacing(
     }
 
     # Tailored QUBO to match the vertices below
-    Q = matrix.tensor(
+    Q = np.asarray(
         [
             [0.0, 1.0, 1.0 / 64.0],
             [1.0, 0.0, 1.0 / 125.0],
@@ -241,7 +236,7 @@ def test_too_large_spacing(
     #   - Vertex 0 is at the origin
     #   - Vertex 1 is on the inner square
     #   - Vertex 2 is on the outer square
-    expected_vertices = spacing * tensor.tensor(
+    expected_vertices = spacing * np.asarray(
         [
             [0.0, 0.0],
             [0.0, 1.0],
@@ -255,10 +250,10 @@ def test_too_large_spacing(
     alpha = expected_U[0, 1]
 
     Q = alpha * Q
-    # Tolerances from https://docs.pytorch.org/docs/stable/testing.html
+    # Tolerances on top of the relative noise
     atol = 1e-5
     rtol = 1.3e-6 + abs(relative_noise)
-    torch.testing.assert_close(Q, expected_U, atol=atol, rtol=rtol)
+    np.testing.assert_allclose(Q, expected_U, atol=atol, rtol=rtol, strict=True)
 
     greedy = Greedy()
 
@@ -272,34 +267,32 @@ def test_too_large_spacing(
     U = interaction_matrix_from_vertices(vertices)
 
     # fmt: off
-    basis = spacing * matrix.tensor(
-        [
+    basis = spacing * np.asarray([
             [1.0, 0.0],
             [0.0, 1.0],
-        ]
-    ).T
+        ]).T
     # fmt: on
     assert_close_to_lattice(vertices, basis)
 
     if too_large == "no":
-        torch.testing.assert_close(U, expected_U)
-        assert_close_up_to_isometry(vertices, expected_vertices, torch.pi / 2.0)
+        np.testing.assert_allclose(U, expected_U, rtol=1e-7, atol=1e-7, strict=True)
+        assert_close_up_to_isometry(vertices, expected_vertices, np.pi / 2.0)
 
     if too_large == "barely":
         # expected_U is the interaction matrix if Q was perfectly embeddable
         # in the square layout, with the given parameters, which is not the case here
         expected_imperfect_U = expected_U
         expected_imperfect_U[0, 2] = expected_imperfect_U[2, 0] = 1.0 / 8.0 * expected_U[0, 1]
-        torch.testing.assert_close(U, expected_imperfect_U)
+        np.testing.assert_allclose(U, expected_imperfect_U, rtol=1e-7, atol=1e-7, strict=True)
 
-        expected_imperfect_vertices = spacing * tensor.tensor(
+        expected_imperfect_vertices = spacing * np.asarray(
             [
                 [0.0, 0.0],
                 [1.0, 0.0],
                 [-1.0, 1.0],
             ]
         )
-        assert_close_up_to_isometry(vertices, expected_imperfect_vertices, torch.pi / 2.0)
+        assert_close_up_to_isometry(vertices, expected_imperfect_vertices, np.pi / 2.0)
 
 
 def test_max_distance_constraint() -> None:
@@ -328,7 +321,7 @@ def test_max_distance_constraint() -> None:
         Greedy().launch_greedy(Q=Q.matrix, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
 
 
-def norm_tradeoff_qubo() -> Matrix:
+def norm_tradeoff_qubo() -> NDArray[np.float64]:
     """A 3-node QUBO whose best embedding depends on the norm.
 
     Embedded on a unit square lattice, two of its couplings are exactly
@@ -348,7 +341,7 @@ def norm_tradeoff_qubo() -> Matrix:
     but a smaller worst case. L1 minimizes the total and takes the first; L2
     penalizes the large error and takes the second.
     """
-    return matrix.tensor(
+    return np.asarray(
         [
             [0.00, 1.000, 0.530],
             [1.00, 0.000, 0.125],
@@ -357,20 +350,22 @@ def norm_tradeoff_qubo() -> Matrix:
     )
 
 
-def run_greedy(Q: Matrix, max_min_dist_ratio: float, **params: object) -> tuple[Any, Tensor]:
+def run_greedy(
+    Q: NDArray[np.float64], max_min_dist_ratio: float, **params: object
+) -> tuple[Any, NDArray[np.float64]]:
     """Run the greedy embedder on the unit square lattice the norm tests use."""
     parameters = {"layout": embedding.Lattice.SQUARE, "traps": 9, "spacing": 1.0, **params}
     return Greedy().launch_greedy(Q=Q, params=parameters, max_min_dist_ratio=max_min_dist_ratio)
 
 
-def squared_pair_distances(vertices: Tensor) -> Tensor:
+def squared_pair_distances(vertices: NDArray[np.float64]) -> NDArray[np.float64]:
     """Squared distances over the pairs (0,1), (0,2), (1,2), in that order.
 
     The square lattice is invariant under rotations by pi/2, so the raw
     coordinates are not stable but these distances are.
     """
-    squared = (vertices[:, None, :] - vertices[None, :, :]).square().sum(dim=-1)
-    upper = torch.triu(torch.ones_like(squared, dtype=torch.bool), diagonal=1)
+    squared = ((vertices[:, None, :] - vertices[None, :, :]) ** 2).sum(axis=-1)
+    upper = np.triu(np.ones_like(squared, dtype=bool), k=1)
     return squared[upper]
 
 
@@ -397,27 +392,29 @@ def test_greedy_norm_picks_its_own_optimum(
 
     best, vertices = run_greedy(Q, max_min_dist_ratio, p=p)
 
-    torch.testing.assert_close(
+    np.testing.assert_allclose(
         squared_pair_distances(vertices),
-        tensor.tensor(expected_squared_distances),
+        np.asarray(expected_squared_distances, dtype=np.float64),
+        strict=True,
     )
     check.almost_equal(best[1]["distance"], expected_distance, rel=1e-5)
 
 
-def embedding_deviations(vertices: Tensor, Q: Matrix) -> Tensord:
+def embedding_deviations(
+    vertices: NDArray[np.float64], Q: NDArray[np.float64]
+) -> NDArray[np.float64]:
     """The ``Q - U`` deviations over the distinct pairs of an embedding."""
     U = interaction_matrix_from_vertices(vertices)
-    upper = torch.triu(torch.ones_like(U, dtype=torch.bool), diagonal=1)
-    deviations: Tensord = (Q - U).double()
-    return deviations[upper]
+    upper = np.triu(np.ones_like(U, dtype=bool), k=1)
+    return (Q - U)[upper]
 
 
-def l1_norm(deviations: torch.Tensor) -> float:
-    return float(deviations.abs().sum())
+def l1_norm(deviations: NDArray[np.float64]) -> float:
+    return float(np.abs(deviations).sum())
 
 
-def l2_norm(deviations: torch.Tensor) -> float:
-    return float(deviations.square().sum().sqrt())
+def l2_norm(deviations: NDArray[np.float64]) -> float:
+    return float(np.sqrt(np.square(deviations).sum()))
 
 
 @pytest.mark.parametrize(
@@ -427,7 +424,7 @@ def l2_norm(deviations: torch.Tensor) -> float:
 )
 def test_greedy_norm_reported_distance(
     p: Literal[1, 2],
-    reference_norm: Callable[[torch.Tensor], float],
+    reference_norm: Callable[[NDArray[np.float64]], float],
     max_min_dist_ratio: float,
 ) -> None:
     """The reported distance is the norm of the returned embedding's deviations.
@@ -461,7 +458,7 @@ def test_empty_embedding() -> None:
 
 def test_single_atom_embedding() -> None:
     config = embedding.greedy_layout.Config(traps=1)
-    instance = Instance(matrix.zeros(1))
+    instance = Instance(np.zeros((1, 1)))
     register = embedding.greedy_layout.embed(instance, config=config)
     check.equal(len(register), 1)
 
@@ -469,13 +466,13 @@ def test_single_atom_embedding() -> None:
 @pytest.mark.parametrize(
     "Q, traps",
     [
-        (matrix.zeros(1), 1),
-        (matrix.zeros(1), 2),
-        (matrix.tensor([[0.0, 1.0], [1.0, 0.0]]), 2),
+        (np.zeros((1, 1)), 1),
+        (np.zeros((1, 1)), 2),
+        (np.asarray([[0.0, 1.0], [1.0, 0.0]]), 2),
     ],
     ids=["1-node-1-trap", "1-node-2-traps", "2-nodes-2-traps"],
 )
-def test_greedy_on_minimal_layouts(Q: torch.Tensor, traps: int) -> None:
+def test_greedy_on_minimal_layouts(Q: NDArray[np.float64], traps: int) -> None:
     best, coords = Greedy().launch_greedy(
         Q=Q,
         params={"layout": embedding.Lattice.SQUARE, "traps": traps, "spacing": 1.0},
@@ -498,15 +495,12 @@ def test_resolve_max_possible_term_factor() -> None:
 
 def test_resolve_max_possible_term_invalid_kind() -> None:
     instance = Instance(triangular_qubo())
-    with pytest.raises(
-        (ValueError, BeartypeCallHintParamViolation),
-        match=r"must be 'quantile' or 'factor'|violates type hint",
-    ):
+    with pytest.raises(ValueError, match="must be 'quantile' or 'factor'"):
         _resolve_max_possible_term(("bogus", 2.0), instance)  # type: ignore[arg-type]
 
 
 def test_resolve_max_possible_term_quantile() -> None:
-    qubo = matrix.tensor(
+    qubo = np.asarray(
         [
             [5.0, 1.0, 0.0],
             [1.0, 5.0, 3.0],
@@ -521,7 +515,7 @@ def test_resolve_max_possible_term_quantile() -> None:
 @pytest.mark.parametrize("kind", ["quantile", "factor"])
 @pytest.mark.parametrize("size", [0, 1, 3])
 def test_resolve_max_possible_term_no_positive_off_diag(kind: str, size: int) -> None:
-    instance = Instance(matrix.zeros(size))
+    instance = Instance(np.zeros((size, size)))
     with pytest.raises(ValueError, match="no strictly positive off-diagonal"):
         _resolve_max_possible_term((kind, 0.5), instance)  # type: ignore[arg-type]
 
@@ -536,45 +530,45 @@ def test_resolve_max_possible_term_not_positive(
 
 
 def test_embed_rejects_diagonal_instance() -> None:
-    instance = Instance(vector.tensor([1.0, 2.0, 3.0]).diag())
+    instance = Instance(np.diag([1.0, 2.0, 3.0]))
     with pytest.raises(ValueError, match="trivial_solution_search"):
         embedding.greedy_layout.embed(instance, config=embedding.greedy_layout.Config(traps=3))
 
 
 def test_embed_for_device_single_atom() -> None:
-    instance = Instance(matrix.tensor([[-1.0]]))
+    instance = Instance(np.asarray([[-1.0]]))
     register = embedding.greedy_layout.embed_for_device(instance, AnalogDeviceWithDMM())
     check.equal(len(register), 1)
 
 
 def test_embed_for_device_rejects_diagonal_instance() -> None:
-    instance = Instance(vector.tensor([-1.0, -2.0, -3.0]).diag())
+    instance = Instance(np.diag([-1.0, -2.0, -3.0]))
     with pytest.raises(ValueError, match="trivial_solution_search"):
         embedding.greedy_layout.embed_for_device(instance, AnalogDeviceWithDMM())
 
 
 def test_embed_rejects_diagonal_instance_with_float_max_possible_term() -> None:
-    instance = Instance(matrix.zeros(3))
+    instance = Instance(np.zeros((3, 3)))
     config = embedding.greedy_layout.Config(traps=3, max_possible_term=1.0)
     with pytest.raises(ValueError, match="trivial_solution_search"):
         embedding.greedy_layout.embed(instance, config=config)
 
 
 def test_negative_off_diagonal_raises() -> None:
-    instance = Instance(matrix.tensor([[1.0, -1.0], [-1.0, 1.0]]))
+    instance = Instance(np.asarray([[1.0, -1.0], [-1.0, 1.0]]))
     with pytest.raises(ValueError, match="negative off-diagonal"):
         embedding.greedy_layout.embed(instance)
 
 
 def test_embed_fewer_traps_than_atoms_raises() -> None:
-    instance = Instance(matrix.tensor([[1.0, 1.0], [1.0, 1.0]]))
+    instance = Instance(np.asarray([[1.0, 1.0], [1.0, 1.0]]))
     config = embedding.greedy_layout.Config(traps=1)
     with pytest.raises(ValueError, match="Number of traps must be at least"):
         embedding.greedy_layout.embed(instance, config=config)
 
 
 def test_embed_for_device() -> None:
-    instance = Instance(matrix.tensor([[1.0, 1.0], [1.0, 1.0]]))
+    instance = Instance(np.asarray([[1.0, 1.0], [1.0, 1.0]]))
     register = embedding.greedy_layout.embed_for_device(instance, AnalogDeviceWithDMM())
     check.equal(register.n_qubits, 2)
 

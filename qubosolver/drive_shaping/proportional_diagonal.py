@@ -8,12 +8,10 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 import numpy as np
 import qoolqit
-import torch
-
-from qubosolver._checks import TYPE_CHECKING
 
 from ._device_specs import (
     detuning_amplitude_ratio,
@@ -82,7 +80,7 @@ def build_drive(  # noqa: PLR0915
     n = instance.size
 
     # Target local final detunings
-    d = (-0.5 * torch.diag(instance.matrix)).cpu().numpy()
+    d = -0.5 * np.diag(instance.matrix)
     d_min = float(np.min(d))
     d_max = float(np.max(d))
 

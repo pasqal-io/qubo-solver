@@ -11,6 +11,8 @@ search.
 
 from __future__ import annotations
 
+import numpy as np
+
 from qubosolver import Instance, Solution
 from qubosolver.types.instance import _trivial_optimum
 
@@ -35,4 +37,4 @@ def solve(instance: Instance) -> Solution:
     optimum = _trivial_optimum(instance)
     if optimum is None:
         return Solution()
-    return Solution(bitstrings=optimum.unsqueeze(0))._update(instance, unit_counts=True)
+    return Solution(bitstrings=optimum[np.newaxis, :])._update(instance, unit_counts=True)

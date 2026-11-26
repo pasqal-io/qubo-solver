@@ -20,23 +20,24 @@ from qubosolver.transforms import negative_bitflip, zeroing
 reduced_instance = negative_bitflip.apply(instance, time_limit_s=60.0)
 # drop any negative coefficient bit flips could not remove
 zeroed_instance = zeroing.apply(reduced_instance)
-print(zeroed_instance.zeroed_edges)       # (N, 2) tensor of zeroed (i, j) index pairs
+print(zeroed_instance.zeroed_edges)       # (N, 2) array of zeroed (i, j) index pairs
 ```
 """
 
 from __future__ import annotations
 
 import copy
-import io
+from typing import TYPE_CHECKING
 
-import torch
+import numpy as np
 
 import qubosolver
-from qubosolver._checks import TYPE_CHECKING
 from qubosolver._io import utils as io_utils
-from qubosolver.types import Matrix, Solution, vectori
+from qubosolver.types import Solution
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     from qubosolver._io.utils import Stream
 
 
@@ -57,9 +58,9 @@ class Instance(qubosolver.Instance):
         Args:
             parent_instance: The QUBO instance to extend with zeroing state.
         """
-        super().__init__(parent_instance.matrix.detach().clone())
+        super().__init__(parent_instance.matrix.copy())
         self._parent_instance = copy.deepcopy(parent_instance)
-        self.negative_matrix: Matrix = torch.zeros_like(self._matrix)
+        self.negative_matrix: NDArray[np.float64] = np.zeros_like(self._matrix)
         """Matrix of removed negative coefficients: same (symmetric) shape as the
         QUBO matrix, holding the original values at zeroed positions and 0 elsewhere."""
 
@@ -67,9 +68,7 @@ class Instance(qubosolver.Instance):
         """Write the matrix, removed-coefficients matrix, and parent instance to `f`."""
         super()._write_body(f)
 
-        buffer = io.BytesIO()
-        torch.save(self.negative_matrix, buffer)
-        io_utils.save_sized_buffer(f, buffer.getbuffer())
+        io_utils.save_array(f, self.negative_matrix)
 
         self._parent_instance.save(f)
 
@@ -78,21 +77,20 @@ class Instance(qubosolver.Instance):
         """Read back a zeroing instance written by [`_write_body`][]."""
         instance = Instance(qubosolver.Instance._read_body(f))
 
-        buffer = io.BytesIO(io_utils.load_sized_buffer(f))
-        instance.negative_matrix = torch.load(buffer, weights_only=True)
+        instance.negative_matrix = io_utils.load_array(f)
 
         instance._parent_instance = qubosolver.Instance.load(f)
         return instance
 
     @property
-    def zeroed_edges(self) -> torch.Tensor:
-        """The zeroed interactions as an ``(N, 2)`` tensor of ``(i, j)`` index pairs.
+    def zeroed_edges(self) -> NDArray[np.int64]:
+        """The zeroed interactions as an ``(N, 2)`` array of ``(i, j)`` index pairs.
 
         Each symmetric pair is reported once (``i < j``); ``N`` is the number of
         zeroed off-diagonal interactions.
         """
-        upper = torch.triu(self.negative_matrix != 0, diagonal=1)
-        return upper.nonzero().to(dtype=vectori.dtype(), device=vectori.device())
+        upper = np.triu(self.negative_matrix != 0, k=1)
+        return np.argwhere(upper).astype(np.int64)
 
 
 def apply(instance: qubosolver.Instance) -> Instance:
@@ -114,7 +112,7 @@ def apply(instance: qubosolver.Instance) -> Instance:
 
     Q = instance.matrix
     n = Q.shape[0]
-    offdiag_mask = ~torch.eye(n, dtype=torch.bool, device=Q.device)
+    offdiag_mask = ~np.eye(n, dtype=bool)
     negative_mask = offdiag_mask & (Q < 0)
 
     zeroed_instance.negative_matrix[negative_mask] = Q[negative_mask]
@@ -141,7 +139,7 @@ def lift(zeroed_solution: Solution, zeroed_instance: Instance) -> Solution:
         A new solution with costs evaluated against the pre-zeroing matrix,
             sorted by ascending cost.
     """
-    if not zeroed_instance.zeroed_edges.numel():
+    if not zeroed_instance.zeroed_edges.size:
         return copy.deepcopy(zeroed_solution)
 
     solution = Solution()

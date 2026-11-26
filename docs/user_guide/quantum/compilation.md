@@ -9,7 +9,9 @@ Embedding and drive shaping produce a `Register` and a `Drive` in dimensionless 
 `qubosolver` exposes this step as [`solving.analog_quantum_sampling.compile`][qubosolver.solving.quantum.analog_quantum_sampling.compile]:
 
 ```python exec="on" source="tabbed-left" result="text"
-from qubosolver import Instance, matrix, embedding, drive_shaping, solving
+import numpy as np
+
+from qubosolver import Instance, embedding, drive_shaping, solving
 import qoolqit
 
 # Private utility to set seed.
@@ -18,13 +20,14 @@ from qubosolver.utils._random import manual_seed
 manual_seed(958)
 
 instance = Instance(
-    matrix.tensor(
+    np.asarray(
         [
             [-1, 1, 2, 1],
             [1, -3, 3, 0],
             [2, 3, -1, 5],
             [1, 0, 5, -2],
-        ]
+        ],
+        dtype=np.float64,
     )
 )
 device = qoolqit.AnalogDeviceWithDMM()

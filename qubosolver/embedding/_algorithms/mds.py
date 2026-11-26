@@ -7,15 +7,20 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 from qoolqit.embedding.algorithms.blade._helpers import normalized_best_dist
 from scipy.sparse.csgraph import shortest_path
 from sklearn.manifold import smacof
 
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
 
 def reduce_distances_by_shortest_paths(
-    distances: np.ndarray, *, infinite_only: bool = False
-) -> np.ndarray:
+    distances: NDArray[np.float64], *, infinite_only: bool = False
+) -> NDArray[np.float64]:
     """Return shortest-path distances.
 
     Args:
@@ -39,10 +44,10 @@ def reduce_distances_by_shortest_paths(
 
 
 def embed_mds(
-    matrix: np.ndarray,
+    matrix: NDArray[np.float64],
     max_iter: int = 3000,
     shortest_path_infinite_only: bool = False,
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     """Compute 2D positions for a QUBO with multi-dimensional scaling.
 
     Args:

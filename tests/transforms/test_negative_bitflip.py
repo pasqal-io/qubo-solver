@@ -9,20 +9,11 @@ import io
 import itertools
 from typing import Literal
 
+import numpy as np
 import pytest
 import pytest_check as check
-import torch
-from beartype.roar import BeartypeCallHintParamViolation
 
-from qubosolver import (
-    Instance,
-    bitstring,
-    bitstrings,
-    matrix,
-    solving,
-    torch_rng,
-    transforms,
-)
+from qubosolver import Instance, bitstring, bitstrings, numpy_rng, solving, transforms
 from qubosolver.transforms.negative_bitflip import (
     _apply_bitflips,
     _bitflip_qubo,
@@ -37,7 +28,7 @@ from qubosolver.utils._costs import quadratic_cost
 def bipartisable_negative_qubo() -> tuple[Instance, Instance]:
     """QUBO where bit flips can remove all negative off-diagonal coefficients."""
     instance = Instance(
-        matrix.tensor(
+        np.asarray(
             [
                 [0.0, -2.0, -1.0, 1.0],
                 [-2.0, 0.0, 1.0, -1.0],
@@ -47,7 +38,7 @@ def bipartisable_negative_qubo() -> tuple[Instance, Instance]:
         )
     )
     flipped_instance = Instance(
-        matrix.tensor(
+        np.asarray(
             [
                 [-2.0, 2.0, 1.0, 1.0],
                 [2.0, -6.0, 1.0, 1.0],
@@ -62,7 +53,7 @@ def bipartisable_negative_qubo() -> tuple[Instance, Instance]:
 def non_bipartisable_negative_qubo() -> tuple[Instance, Instance]:
     """QUBO where bit flips reduce but do not remove all negative coefficients."""
     instance = Instance(
-        matrix.tensor(
+        np.asarray(
             [
                 [0.0, -2.0, 1.0, 1.0],
                 [-2.0, 0.0, -2.0, 1.0],
@@ -72,7 +63,7 @@ def non_bipartisable_negative_qubo() -> tuple[Instance, Instance]:
         )
     )
     flipped_instance = Instance(
-        matrix.tensor(
+        np.asarray(
             [
                 [-2.0, 2.0, 1.0, -1.0],
                 [2.0, -8.0, 2.0, 1.0],
@@ -85,7 +76,7 @@ def non_bipartisable_negative_qubo() -> tuple[Instance, Instance]:
 
 
 def test_has_negative_offdiagonal_detects_negative_interactions() -> None:
-    Q = matrix.tensor(
+    Q = np.asarray(
         [
             [0.0, -1.0],
             [-1.0, 0.0],
@@ -96,7 +87,7 @@ def test_has_negative_offdiagonal_detects_negative_interactions() -> None:
 
 
 def test_has_negative_offdiagonal_ignores_negative_diagonal() -> None:
-    Q = matrix.tensor(
+    Q = np.asarray(
         [
             [-3.0, 1.0],
             [1.0, -2.0],
@@ -110,10 +101,12 @@ def test_bitflip_preprocessing_removes_all_negative_coefficients() -> None:
     instance, expected_flipped_instance = bipartisable_negative_qubo()
     # f and 1 - f are equally optimal; which one the search returns depends
     # on the random starts, so seed them to pin the expected orientation.
-    flipped_instance = transforms.negative_bitflip.apply(instance, rng=torch_rng(1247461927))
+    flipped_instance = transforms.negative_bitflip.apply(instance, rng=numpy_rng(4284000990))
 
     check.is_instance(flipped_instance, transforms.negative_bitflip.Instance)
-    torch.testing.assert_close(flipped_instance.matrix, expected_flipped_instance.matrix)
+    np.testing.assert_allclose(
+        flipped_instance.matrix, expected_flipped_instance.matrix, strict=True
+    )
     check.is_true(flipped_instance.flips.any())
     check.is_false(_has_negative_offdiagonal(flipped_instance.matrix))
 
@@ -122,22 +115,24 @@ def test_bitflip_preprocessing_can_leave_negative_coefficients() -> None:
     instance, expected_flipped_instance = non_bipartisable_negative_qubo()
     # Several flip vectors are equally optimal; seed the random starts to pin
     # the expected one.
-    flipped_instance = transforms.negative_bitflip.apply(instance, rng=torch_rng(4039706482))
+    flipped_instance = transforms.negative_bitflip.apply(instance, rng=numpy_rng(4039706482))
 
     check.is_instance(flipped_instance, transforms.negative_bitflip.Instance)
-    torch.testing.assert_close(flipped_instance.matrix, expected_flipped_instance.matrix)
+    np.testing.assert_allclose(
+        flipped_instance.matrix, expected_flipped_instance.matrix, strict=True
+    )
     check.is_true(flipped_instance.flips.any())
     check.is_true(_has_negative_offdiagonal(flipped_instance.matrix))
 
 
 def test_bitflip_apply_is_noop_without_negative_coefficients() -> None:
-    instance = Instance(matrix.tensor([[1.0, 2.0], [2.0, 1.0]]))
+    instance = Instance(np.asarray([[1.0, 2.0], [2.0, 1.0]]))
 
     flipped_instance = transforms.negative_bitflip.apply(instance)
 
     check.is_false(flipped_instance.flips.any())
     check.equal(flipped_instance._offset, 0.0)
-    torch.testing.assert_close(flipped_instance.matrix, instance.matrix)
+    np.testing.assert_allclose(flipped_instance.matrix, instance.matrix, strict=True)
 
 
 def test_init_preserves_the_parent_instance_type() -> None:
@@ -162,7 +157,7 @@ def test_bitflip_lift_restores_original_variables() -> None:
 
     restored = transforms.negative_bitflip.lift(flipped_solution, flipped_instance)
 
-    torch.testing.assert_close(restored[0].bitstring, solution[0].bitstring)
+    np.testing.assert_allclose(restored[0].bitstring, solution[0].bitstring, rtol=0, strict=True)
     check.almost_equal(restored[0].cost, solution[0].cost)
 
 
@@ -177,8 +172,8 @@ def test_transform_qubo_with_bitflips_preserves_objective() -> None:
     Q_flipped, offset = _transform_qubo_with_bitflips(Q.matrix, flips)
 
     for bits in itertools.product([0, 1], repeat=n):
-        y = bitstring.tensor(bits)
-        x = torch.abs(y - flips)  # undo the flips: y -> x
+        y = np.asarray(bits, dtype=np.int8)
+        x = np.abs(y - flips)  # undo the flips: y -> x
         cost_original = quadratic_cost(x, Q.matrix)
         cost_flipped = quadratic_cost(y, Q_flipped) + offset
         check.almost_equal(cost_flipped, cost_original)
@@ -194,16 +189,16 @@ def test_apply_bitflips_is_batched_xor_and_involutive() -> None:
     flipped = _apply_bitflips(batch, flips)
 
     # Per-row XOR against the flip vector (broadcast over the batch).
-    torch.testing.assert_close(flipped, expected)
+    np.testing.assert_allclose(flipped, expected, rtol=0, strict=True)
     # Applying the same flips twice restores the original batch (involution).
-    torch.testing.assert_close(_apply_bitflips(flipped, flips), batch)
+    np.testing.assert_allclose(_apply_bitflips(flipped, flips), batch, rtol=0, strict=True)
 
 
 def test_apply_bitflips_empty_batch_is_noop() -> None:
     flips = bitstring.from_string("1001")
-    empty = bitstrings.zeros(0, 4)
+    empty = np.zeros((0, 4), dtype=np.int8)
 
-    torch.testing.assert_close(_apply_bitflips(empty, flips), empty)
+    np.testing.assert_allclose(_apply_bitflips(empty, flips), empty, rtol=0, strict=True)
 
 
 def test_metrics_reflect_the_original_matrix_not_the_flipped_one() -> None:
@@ -248,15 +243,15 @@ def test_bitflip_lift_restores_original_variables_for_a_batch() -> None:
     restored = transforms.negative_bitflip.lift(flipped_solution, flipped_instance)
     restored._sort_by_cost()
 
-    torch.testing.assert_close(restored.costs, solution.costs)
-    torch.testing.assert_close(restored[0].bitstring, solution[0].bitstring)
+    np.testing.assert_allclose(restored.costs, solution.costs, strict=True)
+    np.testing.assert_allclose(restored[0].bitstring, solution[0].bitstring, rtol=0, strict=True)
 
     # Every restored bitstring must be exactly the flip-undo of its
     # corresponding flipped-QUBO bitstring, and evaluate to the same cost on
     # the original matrix.
     for i in range(len(restored)):
-        x = torch.abs(flipped_solution[i].bitstring - flipped_instance.flips)
-        torch.testing.assert_close(restored[i].bitstring, x)
+        x = np.abs(flipped_solution[i].bitstring - flipped_instance.flips)
+        np.testing.assert_allclose(restored[i].bitstring, x, rtol=0, strict=True)
         check.almost_equal(restored[i].cost, instance.cost(restored[i].bitstring))
 
 
@@ -273,12 +268,14 @@ def test_save_load_roundtrips_bitflip_state() -> None:
     loaded_instance = transforms.negative_bitflip.Instance.load(buffer)
 
     check.is_instance(loaded_instance, transforms.negative_bitflip.Instance)
-    torch.testing.assert_close(loaded_instance.matrix, flipped_instance.matrix)
-    torch.testing.assert_close(loaded_instance.flips, flipped_instance.flips)
+    np.testing.assert_allclose(loaded_instance.matrix, flipped_instance.matrix, strict=True)
+    np.testing.assert_allclose(loaded_instance.flips, flipped_instance.flips, rtol=0, strict=True)
     check.equal(loaded_instance._offset, flipped_instance._offset)
     check.equal(loaded_instance._metrics, flipped_instance._metrics)
-    torch.testing.assert_close(
-        loaded_instance._parent_instance.matrix, flipped_instance._parent_instance.matrix
+    np.testing.assert_allclose(
+        loaded_instance._parent_instance.matrix,
+        flipped_instance._parent_instance.matrix,
+        strict=True,
     )
 
 
@@ -319,8 +316,10 @@ def test_base_instance_load_dispatches_to_negative_bitflip_instance() -> None:
     loaded = Instance.load(buffer)
 
     check.is_instance(loaded, transforms.negative_bitflip.Instance)
-    torch.testing.assert_close(loaded.matrix, flipped_instance.matrix)
-    torch.testing.assert_close(loaded.negative_bitflip.flips, flipped_instance.flips)
+    np.testing.assert_allclose(loaded.matrix, flipped_instance.matrix, strict=True)
+    np.testing.assert_allclose(
+        loaded.negative_bitflip.flips, flipped_instance.flips, rtol=0, strict=True
+    )
 
 
 def test_negative_bitflip_load_rejects_a_stream_saved_as_a_different_type() -> None:
@@ -352,8 +351,8 @@ def test_heuristic_methods_match_brute_force_negative_weight(
 
 
 def test_metrics_skip_zero_edges_and_handle_no_negative_coefficient() -> None:
-    Q = matrix.tensor([[0.0, 0.0, 1.0], [0.0, 0.0, 2.0], [1.0, 2.0, 0.0]])
-    metrics = _compute_negative_weight_metrics(Q, bitstring.zeros(3))
+    Q = np.asarray([[0.0, 0.0, 1.0], [0.0, 0.0, 2.0], [1.0, 2.0, 0.0]])
+    metrics = _compute_negative_weight_metrics(Q, np.zeros(3, dtype=np.int8))
     check.equal(metrics["n_edges"], 2)
     check.equal(metrics["neg_count_before"], 0)
     check.equal(metrics["neg_count_reduction_pct"], 0.0)
@@ -367,8 +366,8 @@ def test_apply_rejects_unknown_method(has_negative_offdiagonal: bool) -> None:
     if has_negative_offdiagonal:
         instance, _ = bipartisable_negative_qubo()
     else:
-        instance = Instance(matrix.tensor([[1.0, 0.0], [0.0, 1.0]]))
-    with pytest.raises((ValueError, BeartypeCallHintParamViolation)):
+        instance = Instance(np.asarray([[1.0, 0.0], [0.0, 1.0]]))
+    with pytest.raises(ValueError):
         transforms.negative_bitflip.apply(instance, method="dummy")  # type: ignore[arg-type]
 
 
@@ -380,13 +379,13 @@ def test_solve_bitflip_returns_trivial_solution() -> None:
 
 
 def test_lift_without_flips_returns_an_equal_copy() -> None:
-    instance = Instance(matrix.tensor([[-1.0, 2.0], [2.0, -1.0]]))
+    instance = Instance(np.asarray([[-1.0, 2.0], [2.0, -1.0]]))
     flipped_instance = transforms.negative_bitflip.apply(instance)
-    check.is_false(bool(torch.any(flipped_instance.flips != 0)))
+    check.is_false(bool(np.any(flipped_instance.flips != 0)))
     solution = solving.brute_force.solve(flipped_instance)
 
     restored = transforms.negative_bitflip.lift(solution, flipped_instance)
 
     check.is_not(restored, solution)
-    torch.testing.assert_close(restored.bitstrings, solution.bitstrings)
-    torch.testing.assert_close(restored.costs, solution.costs)
+    np.testing.assert_allclose(restored.bitstrings, solution.bitstrings, rtol=0, strict=True)
+    np.testing.assert_allclose(restored.costs, solution.costs, strict=True)

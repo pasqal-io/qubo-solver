@@ -16,14 +16,13 @@ Example:
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
 import seaborn as sns
 
 from qubosolver import Solution, bitstrings
-from qubosolver._checks import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -51,7 +50,7 @@ def _solution_to_dataframe(solution: Solution, solution_label: str) -> pd.DataFr
     """
     solution.check_consistency(instance=None, throw=True)
 
-    # Convert each row of the bitstring tensor into a string (e.g., "010101").
+    # Convert each row of the bitstrings array into a string (e.g., "010101").
     bitstring_list = bitstrings.to_strings(solution.bitstrings)
     data = {
         _LABELS: [solution_label] * len(solution),

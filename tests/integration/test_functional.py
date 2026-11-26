@@ -6,31 +6,28 @@
 from __future__ import annotations
 
 import itertools
-import random
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 import pytest_check as check
 import qoolqit
-import torch
+import scipy
 
 from qubosolver import (
     Candidate,
     Instance,
-    Matrix,
     Solution,
-    Tensor,
-    bitstrings,
     drive_shaping,
     embedding,
     solving,
-    tensor,
-    torch_rng,
     transforms,
-    vector,
-    vectori,
 )
 from qubosolver.utils import analysis
+from qubosolver.utils._random import manual_seed
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 def gather_optimal_solutions(solutions: Solution) -> list[Candidate]:
@@ -38,16 +35,17 @@ def gather_optimal_solutions(solutions: Solution) -> list[Candidate]:
     return [d for d in solutions if np.allclose(d.cost, min_cost)]
 
 
-def interaction_matrix_from_vertices(vertices: Tensor) -> Matrix:
-    U = 1.0 / torch.cdist(vertices, vertices) ** 6
-    U.fill_diagonal_(0.0)
-    return U
+def interaction_matrix_from_vertices(vertices: NDArray[np.float64]) -> NDArray[np.float64]:
+    with np.errstate(divide="ignore"):
+        U = 1.0 / scipy.spatial.distance.cdist(vertices, vertices) ** 6
+    np.fill_diagonal(U, 0.0)
+    return np.asarray(U, dtype=np.float64)
 
 
 def simple_qubo() -> tuple[Instance, list[Candidate]]:
 
     sqrt3 = np.sqrt(3.0)
-    vertices = tensor.tensor(
+    vertices = np.asarray(
         [
             [0.0, 0.0],
             [-1.0, 0.0],
@@ -57,17 +55,19 @@ def simple_qubo() -> tuple[Instance, list[Candidate]]:
         ],
     )
     print(vertices)
-    d = torch.cdist(vertices, vertices, p=2)
+    d = scipy.spatial.distance.cdist(vertices, vertices)
     print(d)
     n_qubits = vertices.shape[0]
     diagonal_scale = -2.0
-    diagonal = vector.zeros(n_qubits).fill_(1.0)
-    Q = interaction_matrix_from_vertices(vertices) + diagonal_scale * torch.diag(diagonal)
+    diagonal = np.full(n_qubits, 1.0)
+    Q = interaction_matrix_from_vertices(vertices) + diagonal_scale * np.diag(diagonal)
     Q /= Q.max()
 
     solutions = Solution()
-    solutions.bitstrings = bitstrings.tensor(list(itertools.product([0, 1], repeat=n_qubits)))
-    solutions.counts = vectori.zeros(solutions.bitstrings.shape[0]).fill_(1)
+    solutions.bitstrings = np.asarray(
+        list(itertools.product([0, 1], repeat=n_qubits)), dtype=np.int8
+    )
+    solutions.counts = np.full(solutions.bitstrings.shape[0], 1, dtype=np.int64)
     solutions._compute_costs(Q)._sort_by_cost()._compute_probabilities()
 
     # Get all bitstrings with minimum cost
@@ -81,13 +81,6 @@ def simple_qubo() -> tuple[Instance, list[Candidate]]:
     return Instance(matrix=Q), expected_optimal_solutions
 
 
-def manual_seed(seed: int) -> torch.Generator:
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    random.seed(seed)
-    return torch_rng(seed)
-
-
 def check_solution(
     solutions: Solution,
     expected_optimal_solutions: list[Candidate],
@@ -96,11 +89,11 @@ def check_solution(
 ) -> None:
 
     # Solutions are not duplicated
-    check.equal(solutions.bitstrings.unique(dim=0).shape[0], solutions.bitstrings.shape[0])
+    check.equal(np.unique(solutions.bitstrings, axis=0).shape[0], solutions.bitstrings.shape[0])
 
     print(f"{analysis.to_dataframe([solutions])}")
 
-    assert isinstance(solutions.probabilities, torch.Tensor)
+    assert isinstance(solutions.probabilities, np.ndarray)  # noqa: TID251 (runtime check, not a hint)
     optimal_solutions = gather_optimal_solutions(solutions)
     check.is_not(optimal_solutions, [])
 
@@ -238,12 +231,12 @@ def test_classical_solve(
     elif solving_method == "sa":
         solution = solving.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=1)
         solution = solving.simulated_annealing.solve(
-            effective_qubo, starts=solution[0].bitstring.unsqueeze(0), top_k=1
+            effective_qubo, starts=solution[0].bitstring[np.newaxis], top_k=1
         )
     elif solving_method == "sa+tabu":
         solution = solving.random_sampling.solve(effective_qubo, rng=rng, max_bitstrings=1)
         solution = solving.simulated_annealing.solve(
-            effective_qubo, starts=solution[0].bitstring.unsqueeze(0), top_k=1
+            effective_qubo, starts=solution[0].bitstring[np.newaxis], top_k=1
         )
         solution = solving.tabu_search.solve(effective_qubo, starts=solution.bitstrings)
     elif solving_method == "random":

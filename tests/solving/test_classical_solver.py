@@ -8,17 +8,18 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pytest
 import pytest_check as check
 
-from qubosolver import Instance, Solution, matrix, solving
+from qubosolver import Instance, Solution, solving
 
 if TYPE_CHECKING:
     from types import ModuleType
 
 
 def test_random() -> None:
-    Q = matrix.tensor([[1.0, 0.0], [0.0, 1.0]])
+    Q = np.asarray([[1.0, 0.0], [0.0, 1.0]])
     instance = Instance(matrix=Q)
 
     # Solve the QUBO problem.

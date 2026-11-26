@@ -15,13 +15,11 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import qoolqit
 
-from qubosolver import Instance, tensor
-from qubosolver._checks import TYPE_CHECKING
 from qubosolver.transforms.negative_bitflip import _has_negative_offdiagonal
 from qubosolver.utils.quantum import _max_min_distance_ratio
 
@@ -30,6 +28,8 @@ from .enums import Lattice
 
 if TYPE_CHECKING:
     import pathlib
+
+    from qubosolver import Instance
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +134,7 @@ def _resolve_max_possible_term(
             "'quantile' or 'factor'."
         )
         raise ValueError(msg)
-    off_diag = instance.matrix.numpy()[np.triu_indices(instance.size, k=1)]
+    off_diag = instance.matrix[np.triu_indices(instance.size, k=1)]
     positive = off_diag[off_diag > 0]
     if not positive.size:
         msg = (
@@ -268,7 +268,7 @@ def embed(
     if instance.size == 1:
         # A single atom has no off-diagonal term to place it relative to,
         # so it is placed at the origin without running the algorithm.
-        return qoolqit.Register.from_coordinates(tensor.zeros(1, 2))
+        return qoolqit.Register.from_coordinates(np.zeros((1, 2)))
 
     if instance.is_diagonal():
         msg = (

@@ -1,2 +1,0 @@
-::: qubosolver.Vectori
-::: qubosolver.vectori

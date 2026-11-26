@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from typing import Self
@@ -16,16 +16,13 @@ if TYPE_CHECKING:
     from pulser.backend import Results
     from qoolqit.execution import job
 
-from ._protocol import Protocol
-
 
 class Backend(Protocol):
     """Structural protocol for quantum backends.
 
     Any object that implements [`run`][] with the expected signature is considered a
     [`Backend`][], without requiring explicit subclassing. This enables duck-typed
-    compatibility checks (via [`isinstance`][] when beartype runtime checking is
-    active, or static type checking via mypy/pyright).
+    compatibility checks with static type checkers (mypy/pyright).
 
     Typical implementations wrap a remote or local quantum execution engine
     (e.g. a Qoolqit emulator or a real QPU) and return a handle to the

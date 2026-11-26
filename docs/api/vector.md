@@ -1,2 +1,0 @@
-::: qubosolver.Vector
-::: qubosolver.vector

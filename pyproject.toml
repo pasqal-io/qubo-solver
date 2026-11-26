@@ -38,7 +38,6 @@ classifiers = [
 # to maintain consistency
 dependencies = [
   "numpy>=2,<3",
-  "torch<3",
   "scikit-learn<2",
   "pandas<4",
   "seaborn<1",
@@ -73,8 +72,6 @@ dev = [
   "tqdm",
   "mypy",
   "ruff>=0.17.4",
-  "jaxtyping",
-  "beartype>=0.23",
   "typing_extensions",
   "bandit[sarif,toml]>=1.9.4",
   "deptry",
@@ -274,6 +271,9 @@ flake8-copyright = { notice-rgx = "Copyright \\(c\\) Pasqal, 2026", min-file-siz
 "tests/**" = ["D100", "D101", "D102", "D103", "D104", "D105", "D107", "T201", "PLR2004"]
 "docs/**" = ["T201"]
 "*.ipynb" = ["CPY001"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"numpy.ndarray".msg = "Use numpy.typing.NDArray[<dtype>] in type hints (noqa runtime uses such as isinstance)"
 
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "examples"]
