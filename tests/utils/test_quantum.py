@@ -120,7 +120,7 @@ def test_extract_qubo_round_trip_through_greedy_embedding_and_drive_shaping() ->
     coords = get_layout(layout_type=embedding.Lattice.TRIANGULAR, n_traps=12)
     triangle = qoolqit.Register.from_coordinates(coords[(5, 1, 10), :])
     Q = triangle.interaction_matrix()
-    assert isinstance(Q, np.ndarray)
+    assert isinstance(Q, np.ndarray)  # noqa: TID251 (runtime check, not a hint)
     # qoolqit forces float64
     Q = np.asarray(Q, dtype=np.float64)
     np.fill_diagonal(Q, np.asarray([-1.0, -0.5, -1.1]))

@@ -93,7 +93,7 @@ def check_solution(
 
     print(f"{analysis.to_dataframe([solutions])}")
 
-    assert isinstance(solutions.probabilities, np.ndarray)
+    assert isinstance(solutions.probabilities, np.ndarray)  # noqa: TID251 (runtime check, not a hint)
     optimal_solutions = gather_optimal_solutions(solutions)
     check.is_not(optimal_solutions, [])
 

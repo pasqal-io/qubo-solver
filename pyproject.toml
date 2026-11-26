@@ -272,6 +272,9 @@ flake8-copyright = { notice-rgx = "Copyright \\(c\\) Pasqal, 2026", min-file-siz
 "docs/**" = ["T201"]
 "*.ipynb" = ["CPY001"]
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"numpy.ndarray".msg = "Use numpy.typing.NDArray[<dtype>] in type hints (noqa runtime uses such as isinstance)"
+
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "examples"]
 

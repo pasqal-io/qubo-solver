@@ -31,7 +31,7 @@ def n_traps(request: pytest.FixtureRequest) -> int:
 
 def test_get_layout_returns_tensor_shape(layout_type: embedding.Lattice, n_traps: int) -> None:
     coords = get_layout(layout_type=layout_type, n_traps=n_traps)
-    assert isinstance(coords, np.ndarray)
+    assert isinstance(coords, np.ndarray)  # noqa: TID251 (runtime check, not a hint)
     assert coords.ndim == 2
     assert coords.shape == (n_traps, 2)
     assert np.unique(coords, axis=0).shape[0] == coords.shape[0]

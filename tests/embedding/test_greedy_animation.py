@@ -54,7 +54,7 @@ def test_greedy_coords_shape_no_animation() -> None:
         Q=Q, params=params, max_min_dist_ratio=params["max_min_dist_ratio"]
     )
 
-    assert isinstance(coords, np.ndarray)
+    assert isinstance(coords, np.ndarray)  # noqa: TID251 (runtime check, not a hint)
     assert tuple(coords.shape) == (n, 2)
 
 
