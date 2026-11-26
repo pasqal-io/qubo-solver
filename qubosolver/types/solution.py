@@ -468,7 +468,10 @@ class Solution:
         """
         with io_utils.open(file_like, "wb") as f:
             io_utils.save_header(f)
-            for array in (self.bitstrings, self.costs, self.counts, self.probabilities):
+            # Bits are packed 8 per byte; the width is saved since packing pads it.
+            io_utils.save(f, ">I", self.bitstrings.shape[1])
+            io_utils.save_array(f, np.packbits(self.bitstrings, axis=1))
+            for array in (self.costs, self.counts, self.probabilities):
                 io_utils.save_array(f, array)
 
     @staticmethod
@@ -500,7 +503,10 @@ class Solution:
         """
         with io_utils.open(file_like, "rb") as f:
             io_utils.load_header(f)
-            bitstrings, costs, counts, probabilities = (io_utils.load_array(f) for _ in range(4))
+            width = io_utils.load(f, ">I")
+            packed = io_utils.load_array(f)
+            costs, counts, probabilities = (io_utils.load_array(f) for _ in range(3))
+        bitstrings = np.unpackbits(packed, axis=1, count=width).astype(np.int8)
 
         return Solution(
             bitstrings=bitstrings, costs=costs, counts=counts, probabilities=probabilities
