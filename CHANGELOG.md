@@ -22,9 +22,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - The blade and greedy layout embedders raise `ValueError` on diagonal instances with at least 2 variables, which have no coupling to reproduce; use `trivial_solution_search.solve` instead. Blade always starts from MDS unless `starting_positions` is set. ([#361](https://github.com/pasqal-io/qubo-solver/pull/361))
 - Require `qoolqit>=1.7.0,<1.8` and cap the other runtime and extras dependencies at their next major version. ([#360](https://github.com/pasqal-io/qubo-solver/pull/360), [#376](https://github.com/pasqal-io/qubo-solver/pull/376))
 - Ship only the package, changelog and citation in the source distribution. ([#360](https://github.com/pasqal-io/qubo-solver/pull/360))
+- Port the package from PyTorch to NumPy: instances, solutions, datasets and solvers take and return NumPy arrays instead of torch tensors, and the solvers' `rng` arguments take a `numpy.random.Generator`. `numpy_rng` replaces `torch_rng`, and `numpy_rng("global")` draws its seed from NumPy's global RNG, so seed with `numpy.random.seed(...)` instead of `torch.manual_seed(...)`. torch is no longer a direct dependency. ([#379](https://github.com/pasqal-io/qubo-solver/pull/379))
+- `Solution.save` packs the bitstrings 8 per byte, with no backward compatibility. ([#379](https://github.com/pasqal-io/qubo-solver/pull/379))
 
 ### Removed
 - Remove the object-oriented API, the `qubosolver.solver` module with `Solver`, `SolverConfig`, `ClassicalSolvingConfig`, `QuantumSolvingConfig`, `EmbeddingConfig` and `DriveShapingConfig`; use the functional `transforms`, `embedding`, `drive_shaping` and `solving` submodules instead, see the user guide. ([#378](https://github.com/pasqal-io/qubo-solver/pull/378))
+- Remove the `Tensor`, `Matrix`, `Vector`, `Vectori`, `Bitstring` and `Bitstrings` type aliases, the `tensor`, `matrix`, `vector`, `vectori` and `linalg` submodules, and the `dtype` argument of `Dataset.from_random`. ([#379](https://github.com/pasqal-io/qubo-solver/pull/379))
 
 ### Fixed
 - Make variable fixing raise `ValueError` when a rule returns an index outside the instance: `apply_recursively` used to loop forever. ([#352](https://github.com/pasqal-io/qubo-solver/pull/352))
