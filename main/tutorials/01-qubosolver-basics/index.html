@@ -2886,14 +2886,6 @@
       
         
       
-        
-      
-        
-      
-        
-      
-        
-      
     
     
     
@@ -2917,7 +2909,7 @@
   <span class="md-ellipsis">
     
   
-    Tensors
+    Bitstrings
   
 
     
@@ -2933,7 +2925,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Tensors
+    Bitstrings
   
 
           </label>
@@ -2982,118 +2974,6 @@
     
   
     qubosolver.bitstrings
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/matrix/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.matrix
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/tensor/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.tensor
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/vector/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.vector
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/vectori/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.vectori
   
 
     
@@ -3833,6 +3713,7 @@ We have more advanced tutorials on the quantum-related components to dive deeper
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -3842,11 +3723,10 @@ We have more advanced tutorials on the quantum-related components to dive deeper
     <span class="n">analysis</span><span class="p">,</span>
     <span class="n">drive_shaping</span><span class="p">,</span>
     <span class="n">embedding</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
     <span class="n">solving</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
     <span class="p">[</span>
         <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
         <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
@@ -3869,6 +3749,7 @@ We have more advanced tutorials on the quantum-related components to dive deeper
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-1">from __future__ import annotations
 
+import numpy as np
 import qoolqit
 
 from qubosolver import (
@@ -3878,11 +3759,10 @@ from qubosolver import (
     analysis,
     drive_shaping,
     embedding,
-    matrix,
     solving,
 )
 
-Q = matrix.tensor(
+Q = np.asarray(
     [
         [-0.2, 0.0, 1.0],
         [0.0, -1.0, 1.5],
@@ -3958,7 +3838,8 @@ To do so, we have to provide several information after <a href="https://docs.pas
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pasqal_cloud</span><span class="w"> </span><span class="kn">import</span> <span class="n">PasqalCloudConnection</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qoolqit.execution</span><span class="w"> </span><span class="kn">import</span> <span class="n">QPU</span>
 
@@ -3968,7 +3849,6 @@ To do so, we have to provide several information after <a href="https://docs.pas
     <span class="n">analysis</span><span class="p">,</span>
     <span class="n">drive_shaping</span><span class="p">,</span>
     <span class="n">embedding</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
     <span class="n">solving</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -3977,7 +3857,7 @@ To do so, we have to provide several information after <a href="https://docs.pas
 <span class="n">PROJECT_ID</span> <span class="o">=</span> <span class="s2">"#TO_PROVIDE"</span>
 <span class="n">PASSWORD</span> <span class="o">=</span> <span class="kc">None</span>
 
-<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
     <span class="p">[</span>
         <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
         <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
@@ -4017,7 +3897,8 @@ To do so, we have to provide several information after <a href="https://docs.pas
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-2">import qoolqit
+<div class="clipboard-copy-txt" id="cell-2">import numpy as np
+import qoolqit
 from pasqal_cloud import PasqalCloudConnection
 from qoolqit.execution import QPU
 
@@ -4027,7 +3908,6 @@ from qubosolver import (
     analysis,
     drive_shaping,
     embedding,
-    matrix,
     solving,
 )
 
@@ -4036,7 +3916,7 @@ USERNAME = "#TO_PROVIDE"
 PROJECT_ID = "#TO_PROVIDE"
 PASSWORD = None
 
-Q = matrix.tensor(
+Q = np.asarray(
     [
         [-0.2, 0.0, 1.0],
         [0.0, -1.0, 1.5],
@@ -4129,7 +4009,8 @@ print(analysis.to_dataframe([solution]))</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pasqal_cloud</span><span class="w"> </span><span class="kn">import</span> <span class="n">PasqalCloudConnection</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pasqal_cloud</span><span class="w"> </span><span class="kn">import</span> <span class="n">PasqalCloudConnection</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Instance</span><span class="p">,</span>
@@ -4138,7 +4019,6 @@ print(analysis.to_dataframe([solution]))</div>
     <span class="n">analysis</span><span class="p">,</span>
     <span class="n">drive_shaping</span><span class="p">,</span>
     <span class="n">embedding</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
     <span class="n">solving</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -4147,7 +4027,7 @@ print(analysis.to_dataframe([solution]))</div>
 <span class="n">PROJECT_ID</span> <span class="o">=</span> <span class="s2">"#TO_PROVIDE"</span>
 <span class="n">PASSWORD</span> <span class="o">=</span> <span class="kc">None</span>
 
-<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
     <span class="p">[</span>
         <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
         <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
@@ -4180,7 +4060,8 @@ print(analysis.to_dataframe([solution]))</div>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-3">from pasqal_cloud import PasqalCloudConnection
+<div class="clipboard-copy-txt" id="cell-3">import numpy as np
+from pasqal_cloud import PasqalCloudConnection
 
 from qubosolver import (
     Instance,
@@ -4189,7 +4070,6 @@ from qubosolver import (
     analysis,
     drive_shaping,
     embedding,
-    matrix,
     solving,
 )
 
@@ -4198,7 +4078,7 @@ USERNAME = "#TO_PROVIDE"
 PROJECT_ID = "#TO_PROVIDE"
 PASSWORD = None
 
-Q = matrix.tensor(
+Q = np.asarray(
     [
         [-0.2, 0.0, 1.0],
         [0.0, -1.0, 1.5],
@@ -4285,14 +4165,15 @@ More information on classical approaches can be found in the <a href="https://pa
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Instance</span><span class="p">,</span>
     <span class="n">analysis</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
     <span class="n">solving</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
     <span class="p">[</span>
         <span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
         <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
@@ -4306,14 +4187,15 @@ More information on classical approaches can be found in the <a href="https://pa
 
 <span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">([</span><span class="n">solution</span><span class="p">]))</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-4">from qubosolver import (
+<div class="clipboard-copy-txt" id="cell-4">import numpy as np
+
+from qubosolver import (
     Instance,
     analysis,
-    matrix,
     solving,
 )
 
-Q = matrix.tensor(
+Q = np.asarray(
     [
         [-0.2, 0.0, 1.0],
         [0.0, -1.0, 1.5],

@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../api/vectori/">
+        <link rel="prev" href="../api/bitstrings/">
       
       
         <link rel="next" href="../CODE_OF_CONDUCT/">
@@ -2733,14 +2733,6 @@
       
         
       
-        
-      
-        
-      
-        
-      
-        
-      
     
     
     
@@ -2764,7 +2756,7 @@
   <span class="md-ellipsis">
     
   
-    Tensors
+    Bitstrings
   
 
     
@@ -2780,7 +2772,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Tensors
+    Bitstrings
   
 
           </label>
@@ -2829,118 +2821,6 @@
     
   
     qubosolver.bitstrings
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../api/matrix/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.matrix
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../api/tensor/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.tensor
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../api/vector/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.vector
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../api/vectori/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.vectori
   
 
     
@@ -3606,7 +3486,6 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>uv<span class="w"> </span>run<span class="w"> </span>--extra<span class="w"> </span>extras<span class="w"> </span>pytest<span class="w"> </span>--cov
 </code></pre></div>
 <p><code>--cov</code> also works on a subset of the tests, to see which lines they cover, but then fails the 100% threshold: add <code>--cov-fail-under=0</code> if the exit code matters.</p>
-<p>Coverage is measured without runtime type checking. With <code>QUBO_SOLVER_RUNTIME_CHECKS=1</code>, beartype rejects invalid arguments before the explicit validation code runs, so <code>--cov</code> reports less than 100% by design.</p>
 <h2 id="a-word-on-patents">A Word on Patents</h2>
 <p>Quantum computing is a heavily patented field. If your contribution introduces a new quantum algorithm, rather than an improvement to the existing library, please check beforehand that it is not covered by an existing patent.</p>
 <h2 id="contributing-terms">Contributing Terms</h2>
@@ -3652,7 +3531,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../api/vectori/" class="md-footer__link md-footer__link--prev" aria-label="Previous: qubosolver.vectori">
+          <a href="../api/bitstrings/" class="md-footer__link md-footer__link--prev" aria-label="Previous: qubosolver.bitstrings">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -3662,7 +3541,7 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                qubosolver.vectori
+                qubosolver.bitstrings
               </div>
             </div>
           </a>

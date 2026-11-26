@@ -2874,14 +2874,6 @@
       
         
       
-        
-      
-        
-      
-        
-      
-        
-      
     
     
     
@@ -2905,7 +2897,7 @@
   <span class="md-ellipsis">
     
   
-    Tensors
+    Bitstrings
   
 
     
@@ -2921,7 +2913,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Tensors
+    Bitstrings
   
 
           </label>
@@ -2970,118 +2962,6 @@
     
   
     qubosolver.bitstrings
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../api/matrix/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.matrix
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../api/tensor/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.tensor
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../api/vector/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.vector
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../api/vectori/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    qubosolver.vectori
   
 
     
@@ -3620,7 +3500,7 @@ Runs the Bayesian optimization loop and returns the optimized drive and correspo
 Creates a Drive from a 6-element parameter list: the first 3 for amplitude, the last 3 for detuning.</p>
 </li>
 <li>
-<p><code>_compute_norm_weights(self, QUBO: torch.Tensor) -&gt; list[float]</code>:
+<p><code>_compute_norm_weights(self, QUBO: NDArray[np.float64]) -&gt; list[float]</code>:
 Normalizes the QUBO diagonal weights (used in DMM shaping).</p>
 </li>
 <li>
@@ -3628,7 +3508,7 @@ Normalizes the QUBO diagonal weights (used in DMM shaping).</p>
 Runs a simulation of the current drive on a quantum backend and returns bitstring results, probabilities, and QUBO costs.</p>
 </li>
 <li>
-<p><code>compute_qubo_cost(self, bitstring: str, QUBO: torch.Tensor) -&gt; float</code>:
+<p><code>compute_qubo_cost(self, bitstring: str, QUBO: NDArray[np.float64]) -&gt; float</code>:
 Computes the QUBO cost of a specific bitstring.</p>
 </li>
 </ul>
@@ -3638,26 +3518,27 @@ Computes the QUBO cost of a specific bitstring.</p>
 <li><code>drive</code>: Final Drive object with optimized waveform parameters.</li>
 <li><code>best_cost</code>: Minimum cost found during optimization.</li>
 <li><code>best_bitstring</code>: Corresponding bitstring with the lowest cost.</li>
-<li><code>bitstrings, counts, probabilities, costs</code>: Full result distributions as PyTorch tensors.</li>
+<li><code>bitstrings, counts, probabilities, costs</code>: Full result distributions as NumPy arrays.</li>
 </ul>
 <h3 id="example">Example</h3>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">LocalEmulator</span><span class="p">,</span> <span class="n">embedding</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">solving</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">Q</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">]])</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">device</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">AnalogDeviceWithDMM</span><span class="p">()</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">register</span> <span class="o">=</span> <span class="n">embedding</span><span class="o">.</span><span class="n">blade</span><span class="o">.</span><span class="n">embed_for_device</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">solution</span><span class="p">,</span> <span class="n">drive</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">drive_bayesian_search</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">instance</span><span class="p">,</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">register</span><span class="p">,</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">backend</span><span class="o">=</span><span class="n">LocalEmulator</span><span class="p">(),</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">config</span><span class="o">=</span><span class="n">solving</span><span class="o">.</span><span class="n">drive_bayesian_search</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">n_evaluations</span><span class="o">=</span><span class="mi">25</span><span class="p">),</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">)</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="nb">print</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">qoolqit</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">qubosolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">LocalEmulator</span><span class="p">,</span> <span class="n">embedding</span><span class="p">,</span> <span class="n">solving</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">]])</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">device</span> <span class="o">=</span> <span class="n">qoolqit</span><span class="o">.</span><span class="n">AnalogDeviceWithDMM</span><span class="p">()</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">register</span> <span class="o">=</span> <span class="n">embedding</span><span class="o">.</span><span class="n">blade</span><span class="o">.</span><span class="n">embed_for_device</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">solution</span><span class="p">,</span> <span class="n">drive</span> <span class="o">=</span> <span class="n">solving</span><span class="o">.</span><span class="n">drive_bayesian_search</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">instance</span><span class="p">,</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">register</span><span class="p">,</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">backend</span><span class="o">=</span><span class="n">LocalEmulator</span><span class="p">(),</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">config</span><span class="o">=</span><span class="n">solving</span><span class="o">.</span><span class="n">drive_bayesian_search</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">n_evaluations</span><span class="o">=</span><span class="mi">25</span><span class="p">),</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">)</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="nb">print</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
 </code></pre></div>
 This will return a <code>Solution</code> instance, which comprehends the solution bitstrings, the counts of each bitstring, their probabilities and costs.</p>
 <hr />
