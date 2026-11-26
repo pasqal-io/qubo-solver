@@ -98,7 +98,10 @@ def solve(
             ``max_bitstrings > 2^n``, only ``2^n`` bitstrings are returned.
         time_limit: Wall-clock budget in seconds.  Enumeration stops between
             batches once the budget is exhausted and returns the best solutions
-            found so far.  Use ``float("inf")`` for no limit.
+            found so far.  Use ``float("inf")`` for no limit.  Only the
+            enumeration is limited: sorting and decoding the kept assignments
+            runs afterwards, so with many bitstrings kept (e.g.
+            ``max_bitstrings=-1``) the call can take well over ``time_limit``.
 
     Returns:
         A solution with up to ``max_bitstrings`` bitstrings, their QUBO costs,
@@ -156,7 +159,9 @@ def solve(
     # The running top-k tracks global assignment indices, decoded to bitstrings only at
     # the end. Ties go to the lower index: `best_*` (earlier batches) precede the batch in
     # the merge, and `_stable_smallest` breaks ties by merge position.
-    all_costs = np.empty(total if keep_all else 0)
+    # keep_all collects one cost chunk per step, so memory follows the steps actually run
+    # (a time_limit can stop long before 2^n), and concatenates once at the end.
+    cost_chunks: list[NDArray[np.float64]] = []
     best_idx = np.zeros(0, dtype=np.int64)
     best_costs = np.zeros(0)
     done = 0
@@ -169,7 +174,7 @@ def solve(
         costs = (low_costs + H @ P.T + hh[:, np.newaxis]).ravel()
 
         if keep_all:
-            all_costs[done : done + span] = costs
+            cost_chunks.append(costs)
         else:
             # Once k are kept, only costs <= the current k-th best can enter (<= keeps ties,
             # still won by the earlier `best_*`); usually few, so the selection is tiny.
@@ -185,8 +190,9 @@ def solve(
             break
 
     if keep_all:
+        all_costs = np.concatenate(cost_chunks)
         # Evaluated indices are exactly [0, done), so sorted positions are the indices.
-        best_idx = np.argsort(all_costs[:done], kind="stable")
+        best_idx = np.argsort(all_costs, kind="stable")
         best_costs = all_costs[best_idx]
 
     solution = Solution(
