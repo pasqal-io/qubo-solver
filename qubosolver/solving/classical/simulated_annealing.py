@@ -37,7 +37,7 @@ class _Data:
 
 
 def _to_key(bits: NDArray[np.int8]) -> bytes:
-    return bytes(bits.tolist())
+    return bits.tobytes()
 
 
 def _from_key(key: bytes) -> NDArray[np.int8]:
@@ -331,7 +331,7 @@ def _run_sequential(  # noqa: PLR0913
     solutions: list[Solution] = []
 
     for b in starts:
-        bits: NDArray[np.int8] = b.copy()
+        bits: NDArray[np.int8] = b.astype(np.int8)  # int8, so `_to_key` gives 1 byte per bit
 
         Qx = Q @ bits.astype(Q.dtype)
         energy = float(bits.astype(Q.dtype).dot(Qx))
