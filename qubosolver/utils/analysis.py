@@ -50,7 +50,7 @@ def _solution_to_dataframe(solution: Solution, solution_label: str) -> pd.DataFr
     """
     solution.check_consistency(instance=None, throw=True)
 
-    # Convert each row of the bitstring tensor into a string (e.g., "010101").
+    # Convert each row of the bitstrings array into a string (e.g., "010101").
     bitstring_list = bitstrings.to_strings(solution.bitstrings)
     data = {
         _LABELS: [solution_label] * len(solution),

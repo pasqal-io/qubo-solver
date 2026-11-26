@@ -48,7 +48,7 @@ class Dataset:
             owns them exclusively.
 
     Attributes:
-        matrices: Matrices stored as a 3-D tensor of shape
+        matrices: Matrices stored as a 3-D array of shape
             ``(size, size, num_instances)``.  The third axis indexes individual
             problem instances.
         solutions: Known solutions for each instance.  Empty when the dataset was

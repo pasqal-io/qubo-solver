@@ -163,12 +163,12 @@ def _to_solution(cplex_solution: cplex.SolutionInterface) -> Solution:
 
     # Convert the solution into a Solution.
     # CPLEX's default integrality tolerance is 1e-5, looser than `round`'s default.
-    bitstring_tensor = bitstrings.round([solution_values], atol=1e-4)
+    solution_bitstrings = bitstrings.round([solution_values], atol=1e-4)
     counts = np.asarray([1], dtype=np.int64)
-    cost_tensor = np.asarray([solution_cost], dtype=np.float64)
+    solution_costs = np.asarray([solution_cost], dtype=np.float64)
 
     return Solution(
-        bitstrings=bitstring_tensor, counts=counts, costs=cost_tensor
+        bitstrings=solution_bitstrings, counts=counts, costs=solution_costs
     )._compute_probabilities()
 
 

@@ -547,12 +547,12 @@ def test_placing_vertex(  # noqa: PLR0913, PLR0917
             placed_vertices[vertex] = temp_zone
 
             # update queue
-            for j_tensor in dict_vertices_to_place[vertex]["blocking_vertices"]:
-                j = j_tensor.item()
+            for j_item in dict_vertices_to_place[vertex]["blocking_vertices"]:
+                j = j_item.item()
                 if j not in placed_vertices and j not in tested_vertices and j not in queue:
                     queue.append(j)
-            for j_tensor in dict_vertices_to_place[vertex]["neighbors_id"]:
-                j = j_tensor.item()
+            for j_item in dict_vertices_to_place[vertex]["neighbors_id"]:
+                j = j_item.item()
                 if j not in placed_vertices and j not in tested_vertices and j not in queue:
                     queue.append(j)
 

@@ -92,7 +92,7 @@ class Instance:
              QUBO symmetric matrix of shape ``(size, size)``.
 
         Raises:
-            AssertionError: If the internal tensor is not 2-D or not square.
+            AssertionError: If the internal matrix is not 2-D or not square.
         """
         assert self._matrix.ndim == 2 and self._matrix.shape[0] == self._matrix.shape[1]  # nosec B101  # noqa: PLR2004 (2-D matrix)
         return self._matrix

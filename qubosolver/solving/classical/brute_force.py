@@ -10,10 +10,12 @@ $x^T Q x$ for each, and returns the ``max_bitstrings`` lowest-cost ones.  This
 is exact but scales exponentially in ``n``; it is meant for small instances,
 validation, and as a ground-truth reference for other solvers.
 
-Enumeration proceeds in fixed-size batches so peak memory stays bounded and a
-wall-clock ``time_limit`` can interrupt it between batches.  When the limit is
-reached the best assignments found so far are returned, so the result is a valid
-(possibly non-optimal) solution rather than an error.
+Enumeration proceeds in fixed-size batches so a wall-clock ``time_limit`` can
+interrupt it between batches.  When the limit is reached the best assignments
+found so far are returned, so the result is a valid (possibly non-optimal)
+solution rather than an error.  Keeping the lowest-cost ``max_bitstrings`` bounds
+memory to that many assignments; keeping all of them (``max_bitstrings=-1``)
+needs memory for every assignment evaluated.
 """
 
 from __future__ import annotations

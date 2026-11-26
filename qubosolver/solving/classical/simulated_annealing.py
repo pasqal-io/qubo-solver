@@ -167,7 +167,7 @@ def solve(  # noqa: PLR0913
     Args:
         instance: The QUBO instance to solve.  Its coefficient matrix is
             symmetrised internally as ``(Q + Qᵀ) / 2``.
-        starts: Either a batch of initial binary solutions, a tensor of
+        starts: Either a batch of initial binary solutions, an array of
             shape ``(k, n)`` with values in ``{0, 1}`` (one independent run
             is performed per row), or an ``int`` giving the number of
             uniformly random starts to generate.
@@ -211,7 +211,7 @@ def solve(  # noqa: PLR0913
             instead reflect how many iterations were spent at each
             bitstring.
         vectorized: When ``True`` (default), step every start forward together
-            so each iteration costs a handful of batched tensor operations
+            so each iteration costs a handful of batched array operations
             regardless of how many starts there are -- markedly faster for
             large batches. When ``False``, anneal the starts one at a time;
             this is the reference implementation, kept for comparison. The two

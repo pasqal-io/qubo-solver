@@ -82,8 +82,8 @@ def _best_improvement_search_batch(
 
     Args:
         Q: Symmetric QUBO coefficient matrix of shape ``(n, n)``.
-        X: Binary tensor of shape ``(m, n)``, one starting solution per row.
-            The tensor is cloned internally; the original is not modified.
+        X: Binary array of shape ``(m, n)``, one starting solution per row.
+            The array is copied internally; the original is not modified.
         max_iterations: Maximum number of rounds. Each round applies one flip
             to every row that still has an improving one, so a row may end
             up with fewer flips than `max_iterations` if it converges first,
@@ -148,8 +148,8 @@ def _first_improvement_search(
 
     Args:
         Q: Symmetric QUBO coefficient matrix of shape ``(n, n)``.
-        s: Binary tensor of shape ``(n,)``, the starting solution. The
-            tensor is cloned internally; the original is not modified.
+        s: Binary array of shape ``(n,)``, the starting solution. The
+            array is copied internally; the original is not modified.
         rng: Optional Generator
             used to randomize the order in which bit positions are evaluated
             at each iteration. When provided, positions are visited in a
@@ -228,8 +228,8 @@ def _greedy_sweep_search(
 
     Args:
         Q: Symmetric QUBO coefficient matrix of shape ``(n, n)``.
-        s: Binary tensor of shape ``(n,)``, the starting solution. The
-            tensor is cloned internally; the original is not modified.
+        s: Binary array of shape ``(n,)``, the starting solution. The
+            array is copied internally; the original is not modified.
         rng: Optional generator
             used to randomize the order in which bit positions are visited
             within each sweep. When provided, positions are visited in a

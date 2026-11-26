@@ -128,16 +128,16 @@ class Solution:
 
     Attributes:
         bitstrings:
-            ``int8`` tensor of shape ``(num_solutions, n)`` containing candidate
+            ``int8`` array of shape ``(num_solutions, n)`` containing candidate
                 binary vectors (values in $\\{0, 1\\}^n$).
         costs:
-            Float tensor of shape ``(num_solutions,)`` with the QUBO objective
+            Float array of shape ``(num_solutions,)`` with the QUBO objective
                 $x^T Q x$ for each bitstring.
         counts:
-            ``int64`` tensor of shape ``(num_solutions,)`` with the number of
+            ``int64`` array of shape ``(num_solutions,)`` with the number of
                 times each bitstring was sampled.
         probabilities:
-            Float tensor of shape ``(num_solutions,)`` with the empirical
+            Float array of shape ``(num_solutions,)`` with the empirical
                 sampling probability of each bitstring.
     """
 
@@ -206,7 +206,7 @@ class Solution:
         """Derive empirical sampling probabilities from `counts`.
 
         Divides each count by the total number of samples.  When the total is
-        zero (no counts recorded), the probabilities tensor is set to all zeros.
+        zero (no counts recorded), the probabilities array is set to all zeros.
         The result is cast to the same dtype as `costs` and overwrites
         `probabilities` in-place.
 
@@ -215,8 +215,8 @@ class Solution:
 
         Note:
             `counts` must be populated before calling this method;
-            calling it on an empty `counts` tensor produces an all-zero
-            probabilities tensor.
+            calling it on an empty `counts` array produces an all-zero
+            probabilities array.
         """
         total_counts = int(self.counts.sum())
         self.probabilities = (
@@ -236,7 +236,7 @@ class Solution:
 
         Note:
             `costs` must be populated (via `_compute_costs`) before
-            calling this method; sorting by an empty tensor raises an error.
+            calling this method; with empty `costs`, every row is dropped.
         """
         sorted_indices = np.argsort(self.costs, kind="stable")
         self.bitstrings = self.bitstrings[sorted_indices]
@@ -463,7 +463,7 @@ class Solution:
 
         Note:
             When ``final_bitstrings`` is empty (no samples recorded),
-            ``bitstrings`` is set to a ``(0, 0)`` tensor rather than the
+            ``bitstrings`` is set to a ``(0, 0)`` array rather than the
             default shape inferred from an empty list, avoiding shape ambiguity.
         """
         counter = results.final_bitstrings
@@ -509,7 +509,7 @@ class Solution:
                 data written by [`save`][].
 
         Returns:
-            A new solution with the tensor fields deserialized from `file_like`.
+            A new solution with the array fields deserialized from `file_like`.
 
         Raises:
             ValueError: If the stream is not a qubosolver file.
@@ -574,7 +574,7 @@ class Solution:
             throw: When ``True``, raise an `AssertionError` on the first
                 failing check instead of returning ``False``.
             full: When ``True`` (default), run every check listed above.
-                When ``False``, only check tensor shapes (constant-time)
+                When ``False``, only check array shapes (constant-time)
                 and skip the rest (cost recomputation, sortedness,
                 duplicate/binary/count/probability checks), which scale
                 with the number of solutions.
@@ -608,10 +608,10 @@ class Solution:
         )
 
         valid = True
-        for name, tensor, expected_shape in expected_shapes:
+        for name, array, expected_shape in expected_shapes:
             valid &= check(
-                tuple(tensor.shape) == expected_shape,
-                f"{name} has shape {tuple(tensor.shape)}, expected {expected_shape}",
+                tuple(array.shape) == expected_shape,
+                f"{name} has shape {tuple(array.shape)}, expected {expected_shape}",
             )
 
         if not valid:

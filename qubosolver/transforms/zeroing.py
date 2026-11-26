@@ -20,7 +20,7 @@ from qubosolver.transforms import negative_bitflip, zeroing
 reduced_instance = negative_bitflip.apply(instance, time_limit_s=60.0)
 # drop any negative coefficient bit flips could not remove
 zeroed_instance = zeroing.apply(reduced_instance)
-print(zeroed_instance.zeroed_edges)       # (N, 2) tensor of zeroed (i, j) index pairs
+print(zeroed_instance.zeroed_edges)       # (N, 2) array of zeroed (i, j) index pairs
 ```
 """
 

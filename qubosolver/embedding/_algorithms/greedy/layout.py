@@ -36,7 +36,7 @@ def get_layout(
         n_traps: Number of trap sites to return.
 
     Returns:
-        A tensor of shape `(n_traps, 2)` with unit-spacing trap coordinates.
+        An array of shape `(n_traps, 2)` with unit-spacing trap coordinates.
 
     Raises:
         ValueError: If `layout_type` is not a recognized layout.
