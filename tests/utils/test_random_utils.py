@@ -16,6 +16,7 @@ from IPython.core import getipython
 from IPython.core.interactiveshell import InteractiveShell
 
 from qubosolver import numpy_rng
+from qubosolver.utils import _random
 from qubosolver.utils._random import manual_seed, register_seeded_magic, reset_seed, seed_context
 
 if TYPE_CHECKING:
@@ -56,6 +57,15 @@ def test_seed_context_is_reproducible_and_restores_state() -> None:
     np.testing.assert_allclose(first[2], second[2], strict=True)
     check.equal(after[:2], expected_after[:2])
     np.testing.assert_allclose(after[2], expected_after[2], strict=True)
+
+
+@pytest.mark.usefixtures("restore_rng_state")
+def test_seeding_works_without_torch(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_random, "torch", None)
+    check.is_instance(manual_seed(1), np.random.Generator)
+    check.is_instance(reset_seed(), np.random.Generator)
+    with seed_context(2) as rng:
+        check.is_instance(rng, np.random.Generator)
 
 
 @pytest.mark.usefixtures("restore_rng_state")

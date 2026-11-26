@@ -15,7 +15,7 @@ from qubosolver.types import numpy_rng
 
 try:
     import torch  # deptry: ignore[DEP004] (optional, installed via pulser[torch])
-except ImportError:
+except ImportError:  # no cov
     torch = None  # type: ignore[assignment]
 
 if TYPE_CHECKING:
